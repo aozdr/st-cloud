@@ -1,0 +1,207 @@
+import { useState, useEffect, useCallback } from 'react';
+import { Share2, Copy, Trash2, Globe, Lock, Eye, Download, Clock, Link2, RefreshCw } from 'lucide-react';
+import api from '../lib/api';
+import { useToast } from '../components/ui/Toast';
+import { formatSize } from '../lib/utils';
+import type { FileShare, PageResult } from '../types';
+
+export default function ShareManagePage() {
+  const { showToast } = useToast();
+  const [shares, setShares] = useState<FileShare[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+
+  const fetchShares = useCallback(async () => {
+    setLoading(true);
+    try {
+      const data: PageResult<FileShare> = await api.get('/share/list', { params: { page, size: 20 } });
+      setShares(data.records || []);
+      setTotal(parseInt(data.total) || 0);
+    } catch {
+      setShares([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [page]);
+
+  useEffect(() => {
+    fetchShares();
+  }, [fetchShares]);
+
+  const handleCancel = async (shareId: string) => {
+    if (!confirm('确定取消此分享？取消后链接将失效。')) return;
+    try {
+      await api.delete(`/share/${shareId}`);
+      showToast('分享已取消', 'success');
+      fetchShares();
+    } catch (e: any) {
+      showToast(e.message || '操作失败', 'error');
+    }
+  };
+
+  const copyLink = (shareCode: string, password?: string) => {
+    const pwdParam = password ? `?pwd=${password}` : '';
+    navigator.clipboard.writeText(`${window.location.origin}/share/${shareCode}${pwdParam}`);
+    showToast('链接已复制', 'success');
+  };
+
+  const copyPassword = (password: string) => {
+    navigator.clipboard.writeText(password);
+    showToast('提取码已复制', 'success');
+  };
+
+  return (
+    <div className="flex flex-col h-full">
+      {/* Header */}
+      <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200 bg-white">
+        <div className="flex items-center gap-2.5">
+          <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
+            <Share2 className="w-4 h-4 text-white" />
+          </div>
+          <h1 className="text-lg font-semibold text-stone-900">分享管理</h1>
+          <span className="text-sm text-stone-400">({total})</span>
+        </div>
+        <button
+          onClick={fetchShares}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-stone-600 bg-stone-100 rounded-md hover:bg-stone-200 transition-colors cursor-pointer"
+        >
+          <RefreshCw className="w-4 h-4" />
+          刷新
+        </button>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 overflow-auto p-6">
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="w-8 h-8 border-3 border-primary-600 border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : shares.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-stone-400">
+            <Link2 className="w-12 h-12 mb-3 opacity-30" />
+            <p className="text-sm">暂无分享记录</p>
+            <p className="text-xs mt-1">右键文件即可创建分享链接</p>
+          </div>
+        ) : (
+          <div className="bg-white rounded-lg border border-stone-200 overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-stone-200 bg-stone-50">
+                  <th className="text-left px-4 py-3 font-medium text-stone-500">文件名</th>
+                  <th className="text-left px-4 py-3 font-medium text-stone-500">类型</th>
+                  <th className="text-left px-4 py-3 font-medium text-stone-500">提取码</th>
+                  <th className="text-left px-4 py-3 font-medium text-stone-500">链接</th>
+                  <th className="text-left px-4 py-3 font-medium text-stone-500">有效期</th>
+                  <th className="text-center px-4 py-3 font-medium text-stone-500">访问/下载</th>
+                  <th className="text-center px-4 py-3 font-medium text-stone-500">状态</th>
+                  <th className="text-center px-4 py-3 font-medium text-stone-500">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {shares.map((share) => (
+                  <tr key={share.id} className="border-b border-stone-100 hover:bg-stone-50 transition-colors">
+                    <td className="px-4 py-3 text-stone-800 font-medium truncate max-w-[200px]">{share.fileName}</td>
+                    <td className="px-4 py-3">
+                      {share.shareType === 0 ? (
+                        <span className="inline-flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                          <Globe className="w-3 h-3" /> 公开
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-xs text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full">
+                          <Lock className="w-3 h-3" /> 提取码
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {share.shareType === 1 ? (
+                        <button
+                          onClick={() => share.password && copyPassword(share.password)}
+                          className="inline-flex items-center gap-1.5 text-xs font-mono tracking-widest text-stone-600 hover:text-primary-600 transition-colors cursor-pointer"
+                          title="点击复制提取码"
+                        >
+                          {share.password || '—'}
+                          {share.password && <Copy className="w-3 h-3" />}
+                        </button>
+                      ) : (
+                        <span className="text-xs text-stone-300">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => copyLink(share.shareCode, share.password || undefined)}
+                        className="flex items-center gap-1 text-primary-600 hover:text-primary-700 transition-colors cursor-pointer"
+                      >
+                        <Copy className="w-3.5 h-3.5" />
+                        <span className="text-xs">复制链接</span>
+                      </button>
+                    </td>
+                    <td className="px-4 py-3 text-xs text-stone-500">
+                      {share.expireAt ? (
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {share.expireAt.substring(0, 10)}
+                        </span>
+                      ) : (
+                        <span>永久</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="inline-flex items-center gap-1 text-xs text-stone-500">
+                        <Eye className="w-3 h-3" />{share.viewCount}
+                      </span>
+                      <span className="mx-1 text-stone-300">/</span>
+                      <span className="inline-flex items-center gap-1 text-xs text-stone-500">
+                        <Download className="w-3 h-3" />{share.downloadCount}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {share.status === 1 ? (
+                        <span className="inline-block text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">有效</span>
+                      ) : (
+                        <span className="inline-block text-xs text-stone-400 bg-stone-100 px-2 py-0.5 rounded-full">已取消</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {share.status === 1 && (
+                        <button
+                          onClick={() => handleCancel(share.id)}
+                          className="text-red-500 hover:text-red-600 transition-colors cursor-pointer"
+                          title="取消分享"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {total > 20 && (
+              <div className="flex items-center justify-between px-4 py-3 border-t border-stone-100">
+                <span className="text-xs text-stone-400">共 {total} 条</span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    disabled={page === 1}
+                    className="px-3 py-1 text-xs text-stone-600 bg-stone-100 rounded-md hover:bg-stone-200 disabled:opacity-40 cursor-pointer transition-colors"
+                  >
+                    上一页
+                  </button>
+                  <span className="px-3 py-1 text-xs text-stone-500">{page}</span>
+                  <button
+                    onClick={() => setPage((p) => p + 1)}
+                    disabled={shares.length < 20}
+                    className="px-3 py-1 text-xs text-stone-600 bg-stone-100 rounded-md hover:bg-stone-200 disabled:opacity-40 cursor-pointer transition-colors"
+                  >
+                    下一页
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

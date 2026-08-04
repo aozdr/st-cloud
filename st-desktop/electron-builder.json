@@ -1,0 +1,27 @@
+{
+  "appId": "com.stcloud.desktop",
+  "productName": "星云盘",
+  "directories": {
+    "output": "release"
+  },
+  "files": [
+    "dist/**/*",
+    "../st-web/dist/**/*",
+    "package.json"
+  ],
+  "extraResources": [
+    {
+      "from": "../st-web/dist",
+      "to": "web"
+    }
+  ],
+  "win": {
+    "target": ["nsis"],
+    "icon": "build/icon.ico"
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true,
+    "createDesktopShortcut": true
+  }
+}

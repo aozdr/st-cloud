@@ -1,0 +1,50 @@
+# Maven
+target/
+*.jar
+*.war
+*.ear
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+.settings/
+.project
+.classpath
+inspectionProfiles/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+boot-err.log
+boot.log
+_springboot.log
+
+# Docker volumes
+docker/data/
+
+# Environment
+.env
+.env.*
+
+# Frontend
+node_modules/
+dist/
+*.tsbuildinfo
+vite_dev.txt
+
+# Temporary / scratch files
+_*.py
+_*.js
+_*.html
+skill/
+plans/
+teams/
+design/
+elasticsearch/

@@ -1,0 +1,18 @@
+-- 09_remove_two_factor.sql
+-- 移除两步验证(TOTP)相关字段（功能已下线）
+-- 幂等：列不存在时跳过，新建库与存量库均可安全执行。
+
+DROP PROCEDURE IF EXISTS stcloud_drop_2fa_cols;
+DELIMITER $$
+CREATE PROCEDURE stcloud_drop_2fa_cols()
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'sys_user' AND column_name = 'two_factor_enabled') THEN
+        ALTER TABLE sys_user DROP COLUMN two_factor_enabled;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'sys_user' AND column_name = 'two_factor_secret') THEN
+        ALTER TABLE sys_user DROP COLUMN two_factor_secret;
+    END IF;
+END$$
+DELIMITER ;
+CALL stcloud_drop_2fa_cols();
+DROP PROCEDURE IF EXISTS stcloud_drop_2fa_cols;

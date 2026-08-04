@@ -1,0 +1,128 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-primary-50: 254 242 243;
+    --color-primary-100: 253 230 231;
+    --color-primary-200: 250 203 206;
+    --color-primary-300: 245 160 165;
+    --color-primary-400: 237 101 108;
+    --color-primary-500: 227 59 67;
+    --color-primary-600: 217 39 46;
+    --color-primary-700: 185 30 36;
+    --color-primary-800: 151 24 29;
+    --color-primary-900: 125 22 27;
+    --color-primary-950: 68 10 12;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    font-family: 'Plus Jakarta Sans', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+    background: #FAFAF9;
+    color: #1c1917;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-md hover:bg-primary-700 active:bg-primary-800 transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 px-4 py-2 bg-white text-stone-700 text-sm font-medium rounded-md border border-stone-200 hover:bg-stone-50 hover:border-stone-300 transition-colors duration-150 cursor-pointer;
+  }
+  .btn-danger {
+    @apply inline-flex items-center gap-2 px-3 py-2 text-red-600 text-sm font-medium rounded-md hover:bg-red-50 transition-colors duration-150 cursor-pointer;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center gap-2 px-3 py-2 text-stone-600 text-sm font-medium rounded-md hover:bg-stone-100 hover:text-stone-900 transition-colors duration-150 cursor-pointer;
+  }
+  .input-field {
+    @apply w-full px-3 py-2 bg-white border border-stone-200 rounded-md text-sm text-stone-900 placeholder-stone-400 outline-none transition-all duration-150 focus:border-primary-400 focus:ring-2 focus:ring-primary-100;
+  }
+  .modal-overlay {
+    @apply fixed inset-0 z-50 flex items-center justify-center bg-stone-900/40 animate-fade-in;
+  }
+  .modal-content {
+    @apply bg-white rounded-xl shadow-lg animate-scale-in;
+  }
+}
+
+/* Search highlight */
+.search-highlight em {
+  color: rgb(var(--color-primary-600));
+  font-weight: 600;
+  font-style: normal;
+  background-color: rgb(var(--color-primary-50));
+  padding: 0 2px;
+  border-radius: 3px;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d6d3d1;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a29e;
+}
+
+/* Hide scrollbar for time wheel picker */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* Toast slide-down animation */
+@keyframes toast-slide-down {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-toast-slide-down {
+  animation: toast-slide-down 0.2s ease-out;
+}
+
+/* Dialog pop-in animation */
+@keyframes dialog-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+.animate-dialog-pop {
+  animation: dialog-pop 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Toast progress bar countdown */
+@keyframes toast-progress {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+.animate-toast-progress {
+  animation: toast-progress 3s linear forwards;
+}

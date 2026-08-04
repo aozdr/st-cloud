@@ -1,0 +1,75 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /
+  tomcat:
+    max-swallow-size: -1
+    max-http-form-post-size: -1
+
+spring:
+  profiles:
+    active: dev
+  application:
+    name: st-cloud
+  servlet:
+    multipart:
+      max-file-size: 10GB
+      max-request-size: 10GB
+      file-size-threshold: 0
+
+# MyBatis-Plus
+mybatis-plus:
+  mapper-locations: classpath*:mapper/**/*.xml
+  type-aliases-package: com.stcloud.**.entity
+  global-config:
+    db-config:
+      id-type: ASSIGN_ID
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+
+# 星云盘 自定义配置
+stcloud:
+  # 租户模式：SAAS-多租户 PRIVATE-单租户
+  tenant:
+    mode: SAAS
+  # JWT 配置
+  jwt:
+    secret: stcloud-secret-key-must-be-at-least-32-chars-long
+    expiration: 604800000
+  # 对象存储 (RustFS)
+  storage:
+    endpoint: http://127.0.0.1:9000
+    access-key: stcloud
+    secret-key: stcloud123
+    region: us-east-1
+    bucket: stcloud
+    chunk-bucket: stcloud-chunks
+    preview-bucket: stcloud-preview
+  # Elasticsearch 全文搜索
+  elasticsearch:
+    uris: http://127.0.0.1:9200
+    connect-timeout: 5000
+    socket-timeout: 30000
+
+
+# Knife4j
+knife4j:
+  enable: true
+  setting:
+    language: zh_cn
+
+# RocketMQ
+rocketmq:
+  name-server: 127.0.0.1:9876
+  producer:
+    group: stcloud-producer
+    send-message-timeout: 10000
+
+logging:
+  level:
+    com.stcloud: debug
+    org.springframework.security: info

@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  # MySQL 8.0
+  mysql:
+    image: mysql:8.0
+    container_name: stcloud-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: "123456"
+      MYSQL_DATABASE: stcloud
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./mysql/init:/docker-entrypoint-initdb.d
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --default-authentication-plugin=mysql_native_password
+
+  # Redis 7
+  redis:
+    image: redis:7-alpine
+    container_name: stcloud-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --requirepass ""
+
+  # RustFS (S3 兼容对象存储)
+  rustfs:
+    image: rustfs/rustfs:latest
+    container_name: stcloud-rustfs
+    restart: unless-stopped
+    environment:
+      RUSTFS_ACCESS_KEY: stcloud
+      RUSTFS_SECRET_KEY: stcloud123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - rustfs_data:/data
+
+  # RocketMQ NameServer
+  rocketmq-namesrv:
+    image: apache/rocketmq:5.3.1
+    container_name: stcloud-rocketmq-namesrv
+    restart: unless-stopped
+    ports:
+      - "9876:9876"
+    command: sh mqnamesrv
+
+  # RocketMQ Broker
+  rocketmq-broker:
+    image: apache/rocketmq:5.3.1
+    container_name: stcloud-rocketmq-broker
+    restart: unless-stopped
+    ports:
+      - "10909:10909"
+      - "10911:10911"
+      - "10912:10912"
+    depends_on:
+      - rocketmq-namesrv
+    environment:
+      NAMESRV_ADDR: "rocketmq-namesrv:9876"
+    command: sh -c "echo 'brokerIP1 = 127.0.0.1' >> /home/rocketmq/rocketmq-5.3.1/conf/broker.conf && echo 'namesrvAddr = rocketmq-namesrv:9876' >> /home/rocketmq/rocketmq-5.3.1/conf/broker.conf && echo 'autoCreateTopicEnable = true' >> /home/rocketmq/rocketmq-5.3.1/conf/broker.conf && sh mqbroker -c /home/rocketmq/rocketmq-5.3.1/conf/broker.conf"
+
+  # RocketMQ Dashboard (可选)
+  rocketmq-dashboard:
+    image: apacherocketmq/rocketmq-dashboard:1.0.0
+    container_name: stcloud-rocketmq-dashboard
+    restart: unless-stopped
+    ports:
+      - "9080:8080"
+    depends_on:
+      - rocketmq-namesrv
+    environment:
+      JAVA_OPTS: "-Drocketmq.namesrv.addr=rocketmq-namesrv:9876"
+
+  # Elasticsearch 8.x (全文搜索 + 文档解析)
+  elasticsearch:
+    build:
+      context: ./elasticsearch
+      dockerfile: Dockerfile
+    container_name: stcloud-elasticsearch
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms256m -Xmx256m
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+
+volumes:
+  mysql_data:
+  redis_data:
+  rustfs_data:
+  es_data:

@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.stcloud</groupId>
+        <artifactId>st-cloud-parent</artifactId>
+        <version>1.0.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>st-api</artifactId>
+    <name>星云盘 API</name>
+    <description>启动聚合模块：主启动类、配置、聚合所有业务模块</description>
+
+    <dependencies>
+        <!-- 业务模块 -->
+        <dependency>
+            <groupId>com.stcloud</groupId>
+            <artifactId>st-auth</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.stcloud</groupId>
+            <artifactId>st-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.stcloud</groupId>
+            <artifactId>st-share</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.stcloud</groupId>
+            <artifactId>st-team</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.stcloud</groupId>
+            <artifactId>st-sync</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.stcloud</groupId>
+            <artifactId>st-search</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.stcloud</groupId>
+            <artifactId>st-preview</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.stcloud</groupId>
+            <artifactId>st-admin</artifactId>
+        </dependency>
+
+        <!-- Spring Boot Test -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <configuration>
+                    <excludes>
+                        <exclude>
+                            <groupId>org.projectlombok</groupId>
+                            <artifactId>lombok</artifactId>
+                        </exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>
