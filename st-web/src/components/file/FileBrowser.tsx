@@ -18,6 +18,7 @@ import { useToast } from '../ui/Toast';
 import { useConfirm } from '../ui/ConfirmDialog';
 import { useUpload } from '../../hooks/useUpload';
 import { formatSize, cn } from '../../lib/utils';
+import { usePermission } from '../../lib/permission';
 import { List, LayoutGrid, FolderPlus, Download, Trash2, Copy, FolderInput, X, RefreshCw, ArrowDownUp, Home, ChevronRight, MapPin, Upload } from 'lucide-react';
 
 export interface FileBrowserProps {
@@ -67,6 +68,7 @@ export default function FileBrowser({
 
   const { showToast } = useToast();
   const { confirm } = useConfirm();
+  const { has } = usePermission();
 
   const dragStartRef = useRef<{ x: number; y: number } | null>(null);
   const [dragRect, setDragRect] = useState<{ startX: number; startY: number; currentX: number; currentY: number } | null>(null);
@@ -250,6 +252,10 @@ export default function FileBrowser({
     }
   }, []);
 
+  const onBackRef = useRef<() => void>(() => {});
+  onBackRef.current = () => onBack?.();
+  const onNavigateFolderRef = useRef<(node: FileNode) => void>(() => {});
+  onNavigateFolderRef.current = (node: FileNode) => onNavigateFolder(node);
   const handlePasteRef = useRef<() => void>(() => {});
   handlePasteRef.current = async () => {
     const st = stateRef.current;
@@ -396,13 +402,19 @@ export default function FileBrowser({
             if (node) setRenameTarget(node);
           }
           return;
+        case 'F5':
+          if (isElectron()) {
+            e.preventDefault();
+            refresh();
+          }
+          return;
         case 'Enter':
           if (stateRef.current.selectedIds.size === 1) {
             const node = stateRef.current.files.find((f) => stateRef.current.selectedIds.has(f.id));
             if (node) {
               if (node.nodeType === 0) {
                 onNavigateFolderRef.current(node);
-              } else {
+              } else if (has('file:preview')) {
                 const fileFiles = stateRef.current.files.filter((f) => f.nodeType === 1);
                 const idx = fileFiles.findIndex((f) => f.id === node.id);
                 setPreview({ files: fileFiles, index: idx >= 0 ? idx : 0 });
@@ -668,40 +680,53 @@ export default function FileBrowser({
         </div>
       )}
 
-      <div className="flex items-center justify-between px-5 py-2.5 border-b border-stone-200 bg-white">
-        <div className="flex items-center gap-1.5">
-          <button onClick={() => setShowCreateFolder(true)} className="btn-primary">
-            <FolderPlus className="w-4 h-4" />
-            <span>{'\u65b0\u5efa\u6587\u4ef6\u5939'}</span>
-          </button>
-          <button onClick={handleUploadClick} className="btn-ghost">
-            <Upload className="w-4 h-4" />
-            <span>{'\u4e0a\u4f20\u6587\u4ef6'}</span>
-          </button>
+      <div className="flex items-center justify-between gap-2 px-5 py-2.5 border-b border-stone-200 bg-white overflow-x-auto">
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          {has('file:upload') && (
+            <button onClick={() => setShowCreateFolder(true)} className="btn-primary flex-shrink-0 whitespace-nowrap">
+              <FolderPlus className="w-4 h-4" />
+              <span>{'\u65b0\u5efa\u6587\u4ef6\u5939'}</span>
+            </button>
+          )}
+          {has('file:upload') && (
+            <button onClick={handleUploadClick} className="btn-ghost flex-shrink-0 whitespace-nowrap">
+              <Upload className="w-4 h-4" />
+              <span>{'\u4e0a\u4f20\u6587\u4ef6'}</span>
+            </button>
+          )}
           {selectedIds.size > 0 && (
             <>
-              <div className="w-px h-5 bg-stone-200 mx-1" />
-              <button onClick={() => handleDownload([...selectedIds])} className="btn-ghost">
-                <Download className="w-4 h-4" />
-                <span>{'\u4e0b\u8f7d'}</span>
-              </button>
-              <button onClick={() => setMoveTarget({ nodeIds: [...selectedIds], mode: 'move' })} className="btn-ghost">
-                <FolderInput className="w-4 h-4" />
-                <span>{'\u79fb\u52a8'}</span>
-              </button>
-              <button onClick={() => setMoveTarget({ nodeIds: [...selectedIds], mode: 'copy' })} className="btn-ghost">
-                <Copy className="w-4 h-4" />
-                <span>{'\u590d\u5236'}</span>
-              </button>
-              <button onClick={() => handleDeleteRef.current([...selectedIds])} className="btn-ghost text-red-600 hover:bg-red-50">
-                <Trash2 className="w-4 h-4" />
-                <span>{'\u5220\u9664'}</span>
-              </button>
+              <div className="w-px h-5 bg-stone-200 mx-1 flex-shrink-0" />
+              {has('file:download') && (
+                <button onClick={() => handleDownload([...selectedIds])} className="btn-ghost flex-shrink-0 whitespace-nowrap">
+                  <Download className="w-4 h-4" />
+                  <span>{'\u4e0b\u8f7d'}</span>
+                </button>
+              )}
+              {has('file:move') && (
+                <button onClick={() => setMoveTarget({ nodeIds: [...selectedIds], mode: 'move' })} className="btn-ghost flex-shrink-0 whitespace-nowrap">
+                  <FolderInput className="w-4 h-4" />
+                  <span>{'\u79fb\u52a8'}</span>
+                </button>
+              )}
+              {has('file:copy') && (
+                <button onClick={() => setMoveTarget({ nodeIds: [...selectedIds], mode: 'copy' })} className="btn-ghost flex-shrink-0 whitespace-nowrap">
+                  <Copy className="w-4 h-4" />
+                  <span>{'\u590d\u5236'}</span>
+                </button>
+              )}
+              {has('file:delete') && (
+                <button onClick={() => handleDeleteRef.current([...selectedIds])} className="btn-ghost text-red-600 hover:bg-red-50 flex-shrink-0 whitespace-nowrap">
+                  <Trash2 className="w-4 h-4" />
+                  <span>{'\u5220\u9664'}</span>
+                </button>
+              )}
             </>
           )}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 flex-shrink-0">
+          {selectedIds.size === 0 && (
           <div className="flex items-center gap-1.5">
             <ArrowDownUp className="w-3.5 h-3.5 text-stone-400" />
             <select
@@ -725,6 +750,7 @@ export default function FileBrowser({
               {sortDir === 'asc' ? '\u2191' : '\u2193'}
             </button>
           </div>
+          )}
           {selectedIds.size > 0 && (
             <div className="flex items-center gap-2 px-2.5 py-1 bg-primary-50 rounded-lg text-sm text-primary-700">
               <span className="font-medium">{'\u5df2\u9009'} {selectedIds.size} {'\u9879'}</span>
@@ -737,6 +763,7 @@ export default function FileBrowser({
           <button onClick={refresh} className="btn-ghost" title={'\u5237\u65b0'} >
             <RefreshCw className="w-4 h-4" />
           </button>
+          {selectedIds.size === 0 && (
           <div className="flex items-center bg-stone-100 rounded-lg p-0.5">
             <button
               onClick={() => setView('list')}
@@ -751,6 +778,7 @@ export default function FileBrowser({
               <LayoutGrid className="w-4 h-4" />
             </button>
           </div>
+          )}
         </div>
       </div>
 
@@ -864,7 +892,7 @@ export default function FileBrowser({
             onDoubleClick={(node) => {
               if (node.nodeType === 0) {
                 onNavigateFolder(node);
-              } else {
+              } else if (has('file:preview')) {
                 const fileFiles = files.filter((f) => f.nodeType === 1);
                 const idx = fileFiles.findIndex((f) => f.id === node.id);
                 setPreview({ files: fileFiles, index: idx >= 0 ? idx : 0 });
@@ -883,7 +911,7 @@ export default function FileBrowser({
             onDoubleClick={(node) => {
               if (node.nodeType === 0) {
                 onNavigateFolder(node);
-              } else {
+              } else if (has('file:preview')) {
                 const fileFiles = files.filter((f) => f.nodeType === 1);
                 const idx = fileFiles.findIndex((f) => f.id === node.id);
                 setPreview({ files: fileFiles, index: idx >= 0 ? idx : 0 });

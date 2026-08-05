@@ -18,7 +18,7 @@
 | **新增章节** | 第 6 章 实现状态矩阵 | 全新章节，按 Epic -> 代码模块逐行映射实现现状 |
 | **关闭问题** | Q3 PC 客户端框架 | 代码已选 Electron（非 Tauri），关闭该开放问题 |
 | **新增问题** | Q9 限速默认策略、Q10 同步引擎算法选型 | 新增待决策项 |
-| **优先级重排** | 同步后端引擎、版本恢复、2FA 升为 P0 阻断项 | 基于"同步后端空白"现状重排 |
+| **优先级重排** | 同步后端引擎、版本恢复升为 P0 阻断项 | 基于"同步后端空白"现状重排 |
 | **缺口补齐** | 视频转码、Office 预览、存储加密、版本恢复 | 标注 P 级与待实现 |
 | **叙事补充** | 限速 vs "不限速"卖点 | 明确区分"对免费用户人为限速（反对）"与"管理员可配带宽治理（已实现，默认关闭）" |
 | **范围维持** | 第 9 章 范围外 | 移动端、协同编辑、E2EE 仍为范围外 |
@@ -288,7 +288,6 @@
 | **安全与访问控制** | 传输加密（TLS） | P0 | ✅ | ✅ 已实现 |
 | | 存储加密（AES-256） | P0 | ✅ | ⛔ 待实现 |
 | | 多租户数据隔离 | P0 | ✅ | ✅ 已实现 |
-| | 两步验证（TOTP） | P1 | ✅ | ⛔ 待实现 |
 | **管理员限速治理**（v2.0 新增） | 限速规则管理 | P1 | ✅ | ✅ 已实现 |
 | | 令牌桶限流执行 | P1 | ✅ | ✅ 已实现 |
 | **前端设计系统**（v2.0 新增） | 设计令牌锁定 | P1 | ✅ | ⚠️ 重构中 |
@@ -334,7 +333,7 @@
 | Epic 5 | 文件搜索 | `st-search` | SearchController / ElasticsearchConfig / SearchIndexInitializer / FileIndexEventListener / SearchService | ✅ 完整 |
 | Epic 6 | 版本与回收站 | `st-core` | RecycleBinController / RecycleBinService / FileVersion / FileVersionMapper | ⚠️ 回收站✅；版本恢复待实现 |
 | Epic 7 | 团队协作 | `st-team` | TeamController / TeamSpace / TeamMember / TeamService | ✅ 完整 |
-| Epic 8 | 安全与访问控制 | `st-auth` + `st-common` + `st-admin` | JwtAuthenticationFilter / SecurityConfig / TenantContext / UserContext / AuditAspect / AuditLog | ⚠️ 多租户✅/审计✅/TLS✅；2FA⛔/存储加密⛔ |
+| Epic 8 | 安全与访问控制 | `st-auth` + `st-common` + `st-admin` | JwtAuthenticationFilter / SecurityConfig / TenantContext / UserContext / AuditAspect / AuditLog | ⚠️ 多租户✅/审计✅/TLS✅；存储加密⛔ |
 | Epic 9（新增） | 管理员限速治理 | `st-admin` + `st-common` | SpeedLimitController / SpeedLimitManageService / UserTransferLimiter / SpeedLimitCache / SysRateLimit | ✅ 完整 |
 | - | 公共基础设施 | `st-common` | Result / GlobalExceptionHandler / TenantContext / UserContext / JwtUtils / S3StorageConfig / RedisConfig / MyBatisPlusConfig | ✅ 完整 |
 | - | 管理后台 | `st-admin` | AuditLogController / PermissionController / RoleController / SpeedLimitController / StatsController / UserManageController | ✅ 完整 |
@@ -373,7 +372,6 @@
 |------|------|------|------|
 | 同步引擎后端 | Epic 3 | P0 | `st-sync` 模块无源码，需从零实现增量同步/冲突处理 |
 | 版本恢复接口 | Epic 6 | P0 | FileVersion entity 存在，但无 restore/revert 逻辑 |
-| 两步验证（TOTP） | Epic 8 | P0 | 无 TOTP/OTP 相关代码 |
 | 视频转码（HLS） | Epic 4 | P1 | 无 FFmpeg/HLS/m3u8 集成 |
 | Office 文档预览 | Epic 4 | P1 | 无 LibreOffice/JODConverter 集成 |
 | 存储加密（AES-256） | Epic 8 | P1 | 无 AES/cipher 存储加密代码 |
@@ -751,22 +749,6 @@ So that 可以追踪文件操作历史，满足合规要求
 实现现状：AuditAspect + AuditLog + AuditLogController 已实现，基于 Auditable 注解切面记录。
 ```
 
-**Story 8.4：两步验证** ⛔ 待实现
-```
-As a 用户
-I want 启用两步验证保护我的账号
-So that 即使密码泄露他人也无法登录
-
-验收标准：
-- [ ] 支持 TOTP 协议（Google Authenticator 等）
-- [ ] 启用时显示二维码供扫码绑定
-- [ ] 提供备用恢复码（10 个一次性使用）
-- [ ] 登录时需输入动态验证码
-- [ ] 支持管理员强制全员启用两步验证
-
-实现现状：无 TOTP/OTP 相关代码，待实现（v2.0 升为 P0）。
-```
-
 ### 8.10 Epic 9：管理员限速治理 ✅（v2.0 新增）
 
 > 本 Epic 基于已实现代码原样纳入为正式需求。详见第 2.5 节叙事澄清。
@@ -1050,7 +1032,7 @@ So that 不必从头重传
 - **新增实现状态矩阵（第 6 章）**：将 PRD 与代码逐行对齐，使需求与实现可追溯，消除"文档与代码脱节"问题。
 - **新增 3 个 Epic（9/10/11）**：将已落地但未文档化的能力（限速治理、设计系统、传输管理）正式纳入需求基线。
 - **关闭 Q3**：消除文档与代码关于桌面端框架的矛盾。
-- **重排优先级**：基于"同步后端空白"现状，将同步引擎、版本恢复、2FA 升为 P0，使发布路径更清晰。
+- **重排优先级**：基于"同步后端空白"现状，将同步引擎、版本恢复升为 P0，使发布路径更清晰。
 - **叙事澄清（2.5）**：化解限速与"不限速"卖点的潜在误解。
 
 ### 12.2 最强章节
@@ -1070,7 +1052,7 @@ So that 不必从头重传
 ### 12.5 下一步建议
 
 1. **同步引擎原型**：优先实现 `st-sync` 最小可用同步引擎（增量上传 + 冲突副本），解除 P0 阻断
-2. **缺口补齐**：按 P0 优先级实现版本恢复接口、2FA（TOTP）
+2. **缺口补齐**：按 P0 优先级实现版本恢复接口
 3. **前端重构收尾**：按 `.ulpi/design/frontend-redesign.md` 完成组件库重构
 4. **用户验证**：对 3 类目标用户各访谈 5-10 人，验证问题陈述和需求假设
 5. **MVP 定义**：从功能清单中提炼最小可行产品范围，制定迭代计划

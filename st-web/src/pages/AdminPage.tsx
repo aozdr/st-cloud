@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Settings, Users, HardDrive, FileText, Share2, Activity, Ban, Key, Trash2, Shield, ChevronDown, ChevronRight, Search, Calendar as CalendarIcon, Edit3 } from 'lucide-react';
+import { Settings, Users, HardDrive, FileText, Share2, Activity, Ban, Key, Trash2, Shield, ChevronDown, ChevronRight, Search, Calendar as CalendarIcon, Edit3, UserPlus } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { format } from 'date-fns';
 import { Button } from '@/components/ui/button';
@@ -14,12 +14,17 @@ import api from '../lib/api';
 import { useToast } from '../components/ui/Toast';
 import { usePrompt } from '../components/ui/PromptDialog';
 import { formatSize, cn } from '../lib/utils';
-import type { StatsVO, AdminUser, AuditLog, AuditLogDetail, AuditLogFileDetail, PageResult } from '../types';
+import type { StatsVO, AdminUser, AuditLog, AuditLogDetail, AuditLogFileDetail, PageResult, RoleVO } from '../types';
 import SpeedLimitPanel from '../components/admin/SpeedLimitPanel';
+import RoleManagePanel from '../components/admin/RoleManagePanel';
 import { useStorageStore } from '../store/storage';
+import { usePermission } from '../lib/permission';
+import { Dialog } from '../components/ui/Dialog';
+import { RoleMultiSelect } from '../components/ui/RoleMultiSelect';
 
 const ACTION_LABELS: Record<string, string> = {
   CREATE_FOLDER: '创建文件夹',
+  CREATE_USER: '创建用户',
   TEAM_CREATE_FOLDER: '创建文件夹',
   RENAME: '重命名',
   MOVE: '移动',
@@ -96,7 +101,7 @@ const ACTION_FILTER_GROUPS = [
   { label: '系统', actions: ['REINDEX'] },
 ];
 
-type Tab = 'dashboard' | 'users' | 'storage' | 'audit' | 'speedLimit';
+type Tab = 'dashboard' | 'users' | 'storage' | 'audit' | 'speedLimit' | 'roles';
 
 /** 解析审计日志的JSON detail字段 */
 function parseAuditDetail(detail: string | null): AuditLogDetail | null {
@@ -416,6 +421,38 @@ function AuditTableRow({ log }: { log: AuditLog }) {
   );
 }
 
+function RoleAssignDialog({ user, roles, initialRoleIds, onClose, onSave }: {
+  user: AdminUser;
+  roles: RoleVO[];
+  initialRoleIds: string[];
+  onClose: () => void;
+  onSave: (roleIds: string[]) => void;
+}) {
+  const [selected, setSelected] = useState<Set<string>>(new Set(initialRoleIds));
+
+  return (
+    <Dialog
+      onClose={onClose}
+      width="max-w-2xl"
+      title="分配角色"
+      description={user.username}
+      footer={
+        <>
+          <button onClick={onClose} className="btn-secondary">取消</button>
+          <button onClick={() => onSave([...selected])} className="btn-primary">保存</button>
+        </>
+      }
+    >
+        <RoleMultiSelect
+          roles={roles}
+          selectedIds={selected}
+          onChange={setSelected}
+          placeholder="选择角色"
+        />
+    </Dialog>
+  );
+}
+
 function QuotaEditDialog({ user, onClose, onSave }: {
   user: AdminUser;
   onClose: () => void;
@@ -439,12 +476,18 @@ function QuotaEditDialog({ user, onClose, onSave }: {
   const quotaBytes = value ? Math.round(parseFloat(value) * (unit === 'GB' ? 1024 ** 3 : 1024 ** 2)) : 0;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content w-[400px] max-w-[92vw] p-6" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-semibold text-stone-900 mb-1">修改存储配额</h2>
-        <p className="text-sm text-stone-500 mb-5">
-          {user.username}（已用 {formatSize(Number(user.storageUsed))}）
-        </p>
+    <Dialog
+      onClose={onClose}
+      width="max-w-lg"
+      title="修改存储配额"
+      description={`${user.username}（已用 ${formatSize(Number(user.storageUsed))}）`}
+      footer={
+        <>
+          <button onClick={onClose} className="btn-secondary">取消</button>
+          <button onClick={() => onSave(quotaBytes)} className="btn-primary">保存</button>
+        </>
+      }
+    >
 
         <label className="block text-sm font-medium text-stone-700 mb-2">配额大小</label>
         <div className="flex items-center gap-2 mb-3">
@@ -477,7 +520,7 @@ function QuotaEditDialog({ user, onClose, onSave }: {
           <p className="text-xs text-amber-600 mb-2">不填写或填0表示不限制</p>
         )}
 
-        <div className="flex flex-wrap gap-1.5 mb-5">
+        <div className="flex flex-wrap gap-1.5">
           {[
             { label: '5 GB', val: 5 * 1024 ** 3 },
             { label: '10 GB', val: 10 * 1024 ** 3 },
@@ -496,19 +539,14 @@ function QuotaEditDialog({ user, onClose, onSave }: {
                   setUnit('GB');
                 }
               }}
-              className="px-2.5 py-1 text-xs text-stone-600 bg-stone-100 hover:bg-primary-50 hover:text-primary-600 rounded-md cursor-pointer transition-colors"
+              className="px-3 py-1.5 text-xs text-stone-600 bg-stone-50 border border-stone-200 hover:bg-primary-50 hover:text-primary-600 hover:border-primary-300 rounded-md cursor-pointer transition-colors"
             >
               {preset.label}
             </button>
           ))}
         </div>
 
-        <div className="flex justify-end gap-2">
-          <button onClick={onClose} className="btn-secondary">取消</button>
-          <button onClick={() => onSave(quotaBytes)} className="btn-primary">保存</button>
-        </div>
-      </div>
-    </div>
+    </Dialog>
   );
 }
 
@@ -536,11 +574,18 @@ function CloudCapacityEditDialog({ currentCapacity, used, onClose, onSave }: {
   const capacityBytes = value ? Math.round(parseFloat(value) * (unit === "TB" ? 1024 ** 4 : unit === "GB" ? 1024 ** 3 : 1024 ** 2)) : 0;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content w-[400px] max-w-[92vw] p-6" onClick={(e) => e.stopPropagation()}>
-        <h2 className="text-lg font-semibold text-stone-900 mb-1">云盘总容量</h2>
-        <p className="text-sm text-stone-500 mb-5">当前已用 {formatSize(used)}</p>
-
+    <Dialog
+      onClose={onClose}
+      width="max-w-lg"
+      title="云盘总容量"
+      description={`当前已用 ${formatSize(used)}`}
+      footer={
+        <>
+          <button onClick={onClose} className="btn-secondary">取消</button>
+          <button onClick={() => onSave(capacityBytes)} className="btn-primary">保存</button>
+        </>
+      }
+    >
         <label className="block text-sm font-medium text-stone-700 mb-2">总容量</label>
         <div className="flex items-center gap-2 mb-3">
           <input
@@ -566,7 +611,7 @@ function CloudCapacityEditDialog({ currentCapacity, used, onClose, onSave }: {
           <p className="text-xs text-amber-600 mb-2">不填写或填0表示不限制</p>
         )}
 
-        <div className="flex flex-wrap gap-1.5 mb-5">
+        <div className="flex flex-wrap gap-1.5">
           {[
             { label: "50 GB", val: 50 * 1024 ** 3 },
             { label: "100 GB", val: 100 * 1024 ** 3 },
@@ -585,25 +630,21 @@ function CloudCapacityEditDialog({ currentCapacity, used, onClose, onSave }: {
                   setUnit("GB");
                 }
               }}
-              className="px-2.5 py-1 text-xs text-stone-600 bg-stone-100 hover:bg-primary-50 hover:text-primary-600 rounded-md cursor-pointer transition-colors"
+              className="px-3 py-1.5 text-xs text-stone-600 bg-stone-50 border border-stone-200 hover:bg-primary-50 hover:text-primary-600 hover:border-primary-300 rounded-md cursor-pointer transition-colors"
             >
               {preset.label}
             </button>
           ))}
         </div>
 
-        <div className="flex justify-end gap-2">
-          <button onClick={onClose} className="btn-secondary">取消</button>
-          <button onClick={() => onSave(capacityBytes)} className="btn-primary">保存</button>
-        </div>
-      </div>
-    </div>
+    </Dialog>
   );
 }
 
 export default function AdminPage() {
   const { showToast } = useToast();
   const { prompt } = usePrompt();
+  const { has, hasAny } = usePermission();
   const [tab, setTab] = useState<Tab>('dashboard');
   const [stats, setStats] = useState<StatsVO | null>(null);
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -701,6 +742,69 @@ export default function AdminPage() {
     }
   };
 
+  const [roleTarget, setRoleTarget] = useState<AdminUser | null>(null);
+  const [createUserOpen, setCreateUserOpen] = useState(false);
+  const [createUserForm, setCreateUserForm] = useState({ username: '', password: '', nickname: '', email: '', phone: '' });
+  const [createUserRoleIds, setCreateUserRoleIds] = useState<Set<string>>(new Set());
+  const [allRoles, setAllRoles] = useState<RoleVO[]>([]);
+
+  const handleOpenRoleDialog = async (user: AdminUser) => {
+    try {
+      const list = await api.get<RoleVO[]>('/admin/role/list');
+      setAllRoles(list);
+      setRoleTarget(user);
+    } catch (e: any) {
+      showToast(e.message || '获取角色列表失败', 'error');
+    }
+  };
+
+  const openCreateUser = async () => {
+    setCreateUserForm({ username: '', password: '', nickname: '', email: '', phone: '' });
+    setCreateUserRoleIds(new Set());
+    let roles: RoleVO[] = [];
+    try {
+      const list = await api.get<RoleVO[]>('/admin/role/list');
+      setAllRoles(list || []);
+      roles = list || [];
+    } catch { /* ignore */ }
+    const userRole = roles.find((r) => r.roleCode === 'user');
+    if (userRole) setCreateUserRoleIds(new Set([userRole.id]));
+    setCreateUserOpen(true);
+  };
+  const handleCreateUser = async () => {
+    if (!createUserForm.username.trim() || !createUserForm.password.trim()) {
+      showToast('请输入用户名和密码', 'error');
+      return;
+    }
+    try {
+      await api.post('/admin/user', {
+        username: createUserForm.username.trim(),
+        password: createUserForm.password,
+        nickname: createUserForm.nickname.trim() || undefined,
+        email: createUserForm.email.trim() || undefined,
+        phone: createUserForm.phone.trim() || undefined,
+        roleIds: [...createUserRoleIds].map(Number),
+      });
+      showToast('用户已创建', 'success');
+      setCreateUserOpen(false);
+      setCreateUserForm({ username: '', password: '', nickname: '', email: '', phone: '' });
+      setCreateUserRoleIds(new Set());
+      fetchUsers();
+    } catch (e: any) {
+      showToast(e.message || '创建失败', 'error');
+    }
+  };
+  const handleAssignRoles = async (userId: string, roleIds: string[]) => {
+    try {
+      await api.put(`/admin/role/user/${userId}`, { roleIds: roleIds.map(Number) });
+      showToast('角色已更新', 'success');
+      setRoleTarget(null);
+      fetchUsers();
+    } catch (e: any) {
+      showToast(e.message || '操作失败', 'error');
+    }
+  };
+
   const handleUpdateQuota = async (userId: string, quotaBytes: number) => {
     try {
       await api.put(`/admin/user/${userId}`, { storageQuota: quotaBytes });
@@ -750,12 +854,13 @@ export default function AdminPage() {
         {/* Tabs */}
         <div className="flex gap-1 bg-stone-100 rounded-lg p-1">
           {([
-            { v: 'dashboard', label: '仪表盘' },
-            { v: 'users', label: '用户管理' },
-            { v: 'storage', label: '存储管理' },
-            { v: 'audit', label: '审计日志' },
-            { v: 'speedLimit', label: '限速管理' },
-          ] as { v: Tab; label: string }[]).map((t) => (
+            { v: 'dashboard', label: '仪表盘', can: hasAny(['admin:user:manage', 'admin:role:manage', 'admin:audit:view', 'admin:stats:view', 'transfer:speed:limit', 'admin:storage:manage']) },
+            { v: 'users', label: '用户管理', can: has('admin:user:manage') },
+            { v: 'storage', label: '存储管理', can: has('admin:storage:manage') },
+            { v: 'audit', label: '审计日志', can: has('admin:audit:view') },
+            { v: 'speedLimit', label: '限速管理', can: has('transfer:speed:limit') },
+            { v: 'roles', label: '角色管理', can: has('admin:role:manage') },
+          ] as { v: Tab; label: string; can: boolean }[]).filter((t) => t.can).map((t) => (
             <button
               key={t.v}
               onClick={() => setTab(t.v)}
@@ -825,6 +930,16 @@ export default function AdminPage() {
 
         {/* Users Tab */}
         {tab === 'users' && (
+          <>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-base font-semibold text-stone-900">用户管理</h2>
+            <button
+              onClick={() => openCreateUser()}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md transition-colors cursor-pointer"
+            >
+              <UserPlus className="w-4 h-4" /> 新建用户
+            </button>
+          </div>
           <div className="bg-white rounded-lg border border-stone-200 overflow-hidden">
             <table className="w-full text-sm">
               <thead>
@@ -846,7 +961,7 @@ export default function AdminPage() {
                       {formatSize(Number(user.storageUsed))} / {formatSize(Number(user.storageQuota))}
                     </td>
                     <td className="px-4 py-3 text-center">
-                      {user.isAdmin === 1 ? (
+                      {user.roles?.some((r) => r.roleCode === 'admin') ? (
                         <span className="inline-flex items-center gap-1 text-xs text-primary-700 bg-primary-50 px-2 py-0.5 rounded-md">
                           <Shield className="w-3 h-3" /> 管理员
                         </span>
@@ -884,6 +999,13 @@ export default function AdminPage() {
                         >
                           <Edit3 className="w-4 h-4" />
                         </button>
+                        <button
+                          onClick={() => handleOpenRoleDialog(user)}
+                          className="text-stone-400 hover:text-primary-600 transition-colors cursor-pointer"
+                          title="分配角色"
+                        >
+                          <Shield className="w-4 h-4" />
+                        </button>
                       </div>
                     </td>
                   </tr>
@@ -903,6 +1025,7 @@ export default function AdminPage() {
               </div>
             )}
           </div>
+          </>
         )}
 
         {/* Storage Tab */}
@@ -1238,6 +1361,7 @@ export default function AdminPage() {
 
         {/* 限速管理 */}
         {tab === 'speedLimit' && <SpeedLimitPanel />}
+        {tab === 'roles' && <RoleManagePanel />}
 
         {/* Quota edit dialog */}
         {quotaTarget && (
@@ -1245,6 +1369,65 @@ export default function AdminPage() {
             user={quotaTarget}
             onClose={() => setQuotaTarget(null)}
             onSave={(bytes) => handleUpdateQuota(quotaTarget.id, bytes)}
+          />
+        )}
+
+        {/* Create user dialog */}
+        {createUserOpen && (
+          <Dialog
+            onClose={() => setCreateUserOpen(false)}
+            width="max-w-xl"
+            title="新建用户"
+            footer={
+              <>
+                <button onClick={() => setCreateUserOpen(false)} className="btn-secondary">取消</button>
+                <button onClick={handleCreateUser} className="btn-primary">创建</button>
+              </>
+            }
+          >
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-1.5">用户名</label>
+                  <input type="text" value={createUserForm.username} onChange={(e) => setCreateUserForm((f) => ({ ...f, username: e.target.value }))} className="input-field" placeholder="登录用户名" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-1.5">密码</label>
+                  <input type="password" value={createUserForm.password} onChange={(e) => setCreateUserForm((f) => ({ ...f, password: e.target.value }))} className="input-field" placeholder="初始密码" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-1.5">昵称</label>
+                  <input type="text" value={createUserForm.nickname} onChange={(e) => setCreateUserForm((f) => ({ ...f, nickname: e.target.value }))} className="input-field" placeholder="可选" />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-stone-700 mb-1.5">邮箱</label>
+                    <input type="text" value={createUserForm.email} onChange={(e) => setCreateUserForm((f) => ({ ...f, email: e.target.value }))} className="input-field" placeholder="可选" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-stone-700 mb-1.5">手机号</label>
+                    <input type="text" value={createUserForm.phone} onChange={(e) => setCreateUserForm((f) => ({ ...f, phone: e.target.value }))} className="input-field" placeholder="可选" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-stone-700 mb-1.5">角色</label>
+                  <RoleMultiSelect
+                    roles={allRoles}
+                    selectedIds={createUserRoleIds}
+                    onChange={setCreateUserRoleIds}
+                    placeholder="选择角色"
+                  />
+                </div>
+              </div>
+          </Dialog>
+        )}
+        {/* Role assign dialog */}
+        {roleTarget && (
+          <RoleAssignDialog
+            user={roleTarget}
+            roles={allRoles}
+            initialRoleIds={roleTarget.roles?.map((r) => r.id) ?? []}
+            onClose={() => setRoleTarget(null)}
+            onSave={(ids) => handleAssignRoles(roleTarget.id, ids)}
           />
         )}
 
@@ -1261,3 +1444,4 @@ export default function AdminPage() {
     </div>
   );
 }
+

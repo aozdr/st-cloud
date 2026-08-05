@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { ClipboardPaste, FolderPlus, RefreshCw, CheckSquare, Upload } from 'lucide-react';
+import { usePermission } from '../../lib/permission';
 
 interface Props {
   x: number;
@@ -10,6 +11,7 @@ interface Props {
 }
 
 export default function BlankContextMenu({ x, y, hasClipboard, onAction, onClose }: Props) {
+  const { has } = usePermission();
   useEffect(() => {
     const handler = () => onClose();
     document.addEventListener('click', handler);
@@ -20,9 +22,9 @@ export default function BlankContextMenu({ x, y, hasClipboard, onAction, onClose
   const adjustedY = Math.min(y, window.innerHeight - 290);
 
   const items: Array<{ action: string; label: string; icon: any; disabled?: boolean }> = [
-    { action: 'newFolder', label: '新建文件夹', icon: FolderPlus },
-    { action: 'upload', label: '上传文件', icon: Upload },
-    { action: 'paste', label: '粘贴', icon: ClipboardPaste, disabled: !hasClipboard },
+    ...(has('file:upload') ? [{ action: 'newFolder', label: '新建文件夹', icon: FolderPlus }] : []),
+    ...(has('file:upload') ? [{ action: 'upload', label: '上传文件', icon: Upload }] : []),
+    { action: 'paste', label: '粘贴', icon: ClipboardPaste, disabled: !hasClipboard || (!has('file:copy') && !has('file:move')) },
     { action: 'refresh', label: '刷新', icon: RefreshCw },
     { action: 'selectAll', label: '全选', icon: CheckSquare },
   ];

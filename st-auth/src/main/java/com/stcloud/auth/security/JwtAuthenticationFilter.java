@@ -30,6 +30,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private static final String AUTH_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
+    private final JwtUtils jwtUtils;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
@@ -37,19 +38,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         try {
             String token = extractToken(request);
-            if (StringUtils.hasText(token) && JwtUtils.validateToken(token)) {
-                Claims claims = JwtUtils.parseToken(token);
+            if (StringUtils.hasText(token) && jwtUtils.validateToken(token)) {
+                Claims claims = jwtUtils.parseToken(token);
 
                 Long userId = claims.get("userId", Long.class);
                 Long tenantId = claims.get("tenantId", Long.class);
                 String username = claims.getSubject();
-                Boolean admin = claims.get("admin", Boolean.class);
 
                 // 解析角色和权限
                 List<String> roles = claims.get("roles", List.class);
                 List<String> permissions = claims.get("permissions", List.class);
                 if (roles == null) roles = List.of();
                 if (permissions == null) permissions = List.of();
+
+                // 解析数据范围（旧 token 缺失该 claim 时按角色回退，保证平滑过渡）
+                Integer dataScope = claims.get("dataScope", Integer.class);
+                if (dataScope == null) {
+                    dataScope = roles.contains("admin") ? 3 : 1;
+                }
 
                 // 设置租户上下文
                 TenantContext.setTenantId(tenantId);
@@ -60,17 +66,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                         .userId(userId)
                         .tenantId(tenantId)
                         .username(username)
-                        .admin(admin != null && admin)
                         .roles(roles)
                         .permissions(permSet)
+                        .dataScope(dataScope)
                         .build());
 
                 // 设置 Spring Security 上下文
                 List<SimpleGrantedAuthority> authorities = new ArrayList<>();
                 authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
-                if (admin != null && admin) {
-                    authorities.add(new SimpleGrantedAuthority("ROLE_ADMIN"));
-                }
                 // 每个权限码作为一个 GrantedAuthority，支持 @PreAuthorize("hasAuthority('xxx')")
                 for (String perm : permissions) {
                     authorities.add(new SimpleGrantedAuthority(perm));

@@ -2,6 +2,7 @@ package com.stcloud.admin.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.stcloud.common.annotation.Auditable;
+import com.stcloud.admin.dto.CreateUserRequest;
 import com.stcloud.admin.dto.UpdateUserRequest;
 import com.stcloud.admin.dto.UserManageVO;
 import com.stcloud.admin.service.UserManageService;
@@ -35,6 +36,12 @@ public class UserManageController {
         return Result.success(userManageService.getUser(userId));
     }
 
+    @Operation(summary = "创建用户")
+    @Auditable(action = "CREATE_USER", targetType = "USER")
+    @PostMapping
+    public Result<UserManageVO> createUser(@RequestBody CreateUserRequest request) {
+        return Result.success(userManageService.createUser(request));
+    }
     @Operation(summary = "修改用户（禁用/配额/重置密码）")
     @Auditable(action = "UPDATE_USER", targetType = "USER")
     @PutMapping("/{userId}")

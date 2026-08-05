@@ -226,7 +226,7 @@ public class UploadServiceImpl implements UploadService {
             if (node == null) {
                 throw new BusinessException(ResultCode.FILE_NOT_FOUND);
             }
-            if (!userId.equals(node.getOwnerId()) && !UserContext.isAdmin()) {
+            if (!userId.equals(node.getOwnerId()) && !UserContext.canAccessTenant()) {
                 throw new BusinessException(ResultCode.FORBIDDEN);
             }
             if (!node.isFile()) {
@@ -336,7 +336,7 @@ public class UploadServiceImpl implements UploadService {
         if (node == null) {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
         }
-        if (!userId.equals(node.getOwnerId())) {
+        if (!userId.equals(node.getOwnerId()) && !UserContext.canAccessTenant()) {
             throw new BusinessException(ResultCode.PERMISSION_DENIED);
         }
         int rateKb = SpeedLimitService.capRate(speedLimitService.resolve().getUploadSpeedLimit(), clientLimit);
@@ -363,7 +363,7 @@ public class UploadServiceImpl implements UploadService {
         if (node == null) {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
         }
-        if (!userId.equals(node.getOwnerId())) {
+        if (!userId.equals(node.getOwnerId()) && !UserContext.canAccessTenant()) {
             throw new BusinessException(ResultCode.PERMISSION_DENIED);
         }
         userTransferLimiter.releaseUpload(userId);

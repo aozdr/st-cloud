@@ -7,6 +7,7 @@ import { teamFileSource } from '../lib/fileSource';
 import { useToast } from '../components/ui/Toast';
 import { useUpload } from '../hooks/useUpload';
 import { formatSize, cn } from '../lib/utils';
+import { usePermission } from '../lib/permission';
 import type { TeamSpace, TeamMember, FileNode, PageResult } from '../types';
 
 export default function TeamSpacePage() {
@@ -14,6 +15,7 @@ export default function TeamSpacePage() {
   const navigate = useNavigate();
   const { showToast } = useToast();
   const { addFiles } = useUpload();
+  const { has } = usePermission();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const source = useMemo(() => teamFileSource(spaceId!), [spaceId]);
@@ -187,13 +189,15 @@ export default function TeamSpacePage() {
             <Settings className="w-4 h-4" />
             <span className="hidden sm:inline">设置</span>
           </button>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-primary-600 rounded-md hover:bg-primary-700 transition-colors cursor-pointer"
-          >
-            <Upload className="w-4 h-4" />
-            <span className="hidden sm:inline">上传</span>
-          </button>
+          {has('file:upload') && (
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-primary-600 rounded-md hover:bg-primary-700 transition-colors cursor-pointer"
+            >
+              <Upload className="w-4 h-4" />
+              <span className="hidden sm:inline">上传</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -246,7 +250,7 @@ export default function TeamSpacePage() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-stone-800">当前已用 {formatSize(Number(space?.storageUsed || 0))}</p>
-                  <p className="text-xs text-stone-400">{Number(space?.storageQuota) > 0 ? `配额 ${formatSize(Number(space.storageQuota))}` : '无配额限制'}</p>
+                  <p className="text-xs text-stone-400">{Number(space?.storageQuota) > 0 ? `配额 ${formatSize(Number(space?.storageQuota))}` : '无配额限制'}</p>
                 </div>
               </div>
               {/* Quota input */}

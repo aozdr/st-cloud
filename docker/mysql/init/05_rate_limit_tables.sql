@@ -23,11 +23,7 @@ CREATE TABLE IF NOT EXISTS `sys_rate_limit` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='传输限速规则表';
 
 -- ========================================
--- 限速管理权限码
+-- 限速管理权限码：transfer:speed:limit
+-- 已在 04_rbac_tables.sql 中种入并分配给 admin 角色，此处不再重复插入。
+-- 历史遗留的 admin:ratelimit:manage 由 13_remove_ratelimit_orphan.sql 清理。
 -- ========================================
-INSERT INTO `sys_permission` (`permission_code`, `permission_name`, `module`, `description`) VALUES
-('admin:ratelimit:manage', '限速管理', 'admin', '配置用户/角色上传下载速度限速规则');
-
--- 为 admin 角色(id=1)分配限速管理权限(默认租户 tenant_id=1)
-INSERT INTO `sys_role_permission` (`tenant_id`, `role_id`, `permission_id`)
-SELECT 1, 1, `id` FROM `sys_permission` WHERE `permission_code` = 'admin:ratelimit:manage';

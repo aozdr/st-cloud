@@ -28,6 +28,9 @@ public class RoleVO {
     @Schema(description = "是否内置角色")
     private Boolean builtIn;
 
+    @Schema(description = "数据范围：1-本人 2-租户 3-全部")
+    private Integer dataScope;
+
     @Schema(description = "权限列表")
     private List<PermissionVO> permissions;
 

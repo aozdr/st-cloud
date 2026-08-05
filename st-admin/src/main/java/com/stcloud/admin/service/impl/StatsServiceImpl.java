@@ -17,7 +17,7 @@ public class StatsServiceImpl implements StatsService {
 
     @Override
     public StatsVO getStats() {
-        if (!UserContext.isAdmin()) {
+        if (!UserContext.hasPermission("admin:stats:view")) {
             throw new BusinessException(ResultCode.FORBIDDEN, "需要管理员权限");
         }
         StatsVO vo = new StatsVO();

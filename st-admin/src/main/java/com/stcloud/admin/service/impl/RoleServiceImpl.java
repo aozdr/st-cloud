@@ -8,11 +8,13 @@ import com.stcloud.admin.dto.RoleVO;
 import com.stcloud.admin.service.RoleService;
 import com.stcloud.auth.entity.SysPermission;
 import com.stcloud.auth.entity.SysRole;
+import com.stcloud.auth.entity.SysUser;
 import com.stcloud.auth.entity.SysRolePermission;
 import com.stcloud.auth.entity.SysUserRole;
 import com.stcloud.auth.mapper.SysPermissionMapper;
 import com.stcloud.auth.mapper.SysRoleMapper;
 import com.stcloud.auth.mapper.SysRolePermissionMapper;
+import com.stcloud.auth.mapper.SysUserMapper;
 import com.stcloud.auth.mapper.SysUserRoleMapper;
 import com.stcloud.common.exception.BusinessException;
 import com.stcloud.common.response.ResultCode;
@@ -40,6 +42,9 @@ public class RoleServiceImpl implements RoleService {
 
     @Resource
     private SysUserRoleMapper userRoleMapper;
+
+    @Resource
+    private SysUserMapper userMapper;
 
     @Override
     public List<RoleVO> listRoles() {
@@ -79,6 +84,7 @@ public class RoleServiceImpl implements RoleService {
         role.setDescription(request.getDescription());
         role.setStatus(request.getStatus() != null ? request.getStatus() : 1);
         role.setBuiltIn(0);
+        role.setDataScope(request.getDataScope() != null ? request.getDataScope() : 1);
         roleMapper.insert(role);
         log.info("创建角色: code={}, name={}", role.getRoleCode(), role.getRoleName());
         return toVO(role);
@@ -97,6 +103,9 @@ public class RoleServiceImpl implements RoleService {
         if (request.getStatus() != null) {
             role.setStatus(request.getStatus());
         }
+        if (request.getDataScope() != null) {
+            role.setDataScope(request.getDataScope());
+        }
         roleMapper.updateById(role);
         log.info("更新角色: roleId={}", roleId);
         return toVO(role);
@@ -113,12 +122,10 @@ public class RoleServiceImpl implements RoleService {
             throw new BusinessException(ResultCode.BUSINESS_ERROR, "内置角色不可删除");
         }
 
-        // 删除角色-权限关联
-        rolePermissionMapper.delete(
-                new LambdaQueryWrapper<SysRolePermission>().eq(SysRolePermission::getRoleId, roleId));
-        // 删除用户-角色关联
-        userRoleMapper.delete(
-                new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getRoleId, roleId));
+        // 物理删除角色-权限关联
+        rolePermissionMapper.physicalDeleteByRoleId(roleId);
+        // 物理删除用户-角色关联
+        userRoleMapper.physicalDeleteByRoleId(roleId);
         // 删除角色
         roleMapper.deleteById(roleId);
         log.info("删除角色: roleId={}", roleId);
@@ -132,9 +139,8 @@ public class RoleServiceImpl implements RoleService {
             throw new BusinessException(ResultCode.BUSINESS_ERROR, "角色不存在");
         }
 
-        // 先删除旧关联
-        rolePermissionMapper.delete(
-                new LambdaQueryWrapper<SysRolePermission>().eq(SysRolePermission::getRoleId, roleId));
+        // 物理删除旧关联（避免软删除+唯一键冲突）
+        rolePermissionMapper.physicalDeleteByRoleId(roleId);
 
         // 再插入新关联
         if (request.getPermissionIds() != null) {
@@ -152,16 +158,18 @@ public class RoleServiceImpl implements RoleService {
     @Override
     @Transactional
     public void assignRolesToUser(Long userId, List<Long> roleIds) {
-        // 先删除旧关联
-        userRoleMapper.delete(
-                new LambdaQueryWrapper<SysUserRole>().eq(SysUserRole::getUserId, userId));
+        // 物理删除旧关联（避免软删除+唯一键冲突）
+        userRoleMapper.physicalDeleteByUserId(userId);
 
-        // 再插入新关联
+        // 再插入新关联（关联记录继承目标用户的租户）
         if (roleIds != null) {
+            SysUser user = userMapper.selectById(userId);
+            Long targetTenantId = user != null ? user.getTenantId() : 0L;
             for (Long roleId : roleIds) {
                 SysUserRole userRole = new SysUserRole();
                 userRole.setUserId(userId);
                 userRole.setRoleId(roleId);
+                userRole.setTenantId(targetTenantId);
                 userRoleMapper.insert(userRole);
             }
         }
@@ -206,6 +214,7 @@ public class RoleServiceImpl implements RoleService {
         vo.setDescription(role.getDescription());
         vo.setStatus(role.getStatus());
         vo.setBuiltIn(role.getBuiltIn() == 1);
+        vo.setDataScope(role.getDataScope());
         vo.setCreatedAt(role.getCreatedAt());
         return vo;
     }

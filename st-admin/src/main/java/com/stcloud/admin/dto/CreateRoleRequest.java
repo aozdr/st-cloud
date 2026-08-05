@@ -21,4 +21,7 @@ public class CreateRoleRequest {
 
     @Schema(description = "状态：0-禁用 1-启用")
     private Integer status;
+
+    @Schema(description = "数据范围：1-本人 2-租户 3-全部")
+    private Integer dataScope;
 }

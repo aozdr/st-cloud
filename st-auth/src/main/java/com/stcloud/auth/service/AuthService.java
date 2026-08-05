@@ -38,6 +38,7 @@ public class AuthService {
     private final SysUserRoleMapper userRoleMapper;
     private final SysRolePermissionMapper rolePermissionMapper;
     private final StringRedisTemplate stringRedisTemplate;
+    private final JwtUtils jwtUtils;
 
     private static final String REFRESH_TOKEN_PREFIX = "stcloud:refresh:";
     private static final Long DEFAULT_QUOTA = 10L * 1024 * 1024 * 1024; // 10GB
@@ -76,7 +77,6 @@ public class AuthService {
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
         user.setStatus(1);
-        user.setIsAdmin(0);
         user.setStorageUsed(0L);
         user.setStorageQuota(DEFAULT_QUOTA);
         userMapper.insert(user);
@@ -87,16 +87,16 @@ public class AuthService {
         log.info("用户注册成功: username={}, userId={}, tenantId={}", user.getUsername(), user.getId(), tenant.getId());
 
         UserPermissions userPerms = loadUserPermissions(user);
-        String token = JwtUtils.generateToken(user.getId(), tenant.getId(), user.getUsername(),
-                false, userPerms.roles, userPerms.permissions);
-        String refreshToken = JwtUtils.generateRefreshToken(user.getId(), user.getUsername());
+        String token = jwtUtils.generateToken(user.getId(), tenant.getId(), user.getUsername(),
+                userPerms.roles, userPerms.permissions, userPerms.dataScope);
+        String refreshToken = jwtUtils.generateRefreshToken(user.getId(), user.getUsername());
 
         stringRedisTemplate.opsForValue().set(
                 REFRESH_TOKEN_PREFIX + user.getId(),
                 refreshToken,
                 30, TimeUnit.DAYS);
 
-        return buildLoginResponse(token, refreshToken, user, false, userPerms);
+        return buildLoginResponse(token, refreshToken, user, userPerms);
     }
 
     /**
@@ -130,11 +130,10 @@ public class AuthService {
         user.setLastLoginIp(ip);
         userMapper.updateById(user);
 
-        boolean isAdmin = user.getIsAdmin() == 1;
         UserPermissions userPerms = loadUserPermissions(user);
-        String token = JwtUtils.generateToken(user.getId(), tenant.getId(), user.getUsername(),
-                isAdmin, userPerms.roles, userPerms.permissions);
-        String refreshToken = JwtUtils.generateRefreshToken(user.getId(), user.getUsername());
+        String token = jwtUtils.generateToken(user.getId(), tenant.getId(), user.getUsername(),
+                userPerms.roles, userPerms.permissions, userPerms.dataScope);
+        String refreshToken = jwtUtils.generateRefreshToken(user.getId(), user.getUsername());
 
         stringRedisTemplate.opsForValue().set(
                 REFRESH_TOKEN_PREFIX + user.getId(),
@@ -143,18 +142,18 @@ public class AuthService {
 
         log.info("用户登录成功: username={}, userId={}", user.getUsername(), user.getId());
 
-        return buildLoginResponse(token, refreshToken, user, isAdmin, userPerms);
+        return buildLoginResponse(token, refreshToken, user, userPerms);
     }
 
     /**
      * 刷新Token
      */
     public LoginResponse refreshToken(String refreshToken) {
-        if (!JwtUtils.validateToken(refreshToken)) {
+        if (!jwtUtils.validateToken(refreshToken)) {
             throw new BusinessException(ResultCode.TOKEN_EXPIRED);
         }
 
-        Long userId = JwtUtils.getUserId(refreshToken);
+        Long userId = jwtUtils.getUserId(refreshToken);
         String cachedToken = stringRedisTemplate.opsForValue().get(REFRESH_TOKEN_PREFIX + userId);
         if (cachedToken == null || !cachedToken.equals(refreshToken)) {
             throw new BusinessException(ResultCode.TOKEN_INVALID);
@@ -168,18 +167,26 @@ public class AuthService {
         SysTenant tenant = tenantMapper.selectById(user.getTenantId());
         TenantContext.setTenantId(user.getTenantId());
 
-        boolean isAdmin = user.getIsAdmin() == 1;
         UserPermissions userPerms = loadUserPermissions(user);
-        String newToken = JwtUtils.generateToken(user.getId(), tenant.getId(), user.getUsername(),
-                isAdmin, userPerms.roles, userPerms.permissions);
-        String newRefreshToken = JwtUtils.generateRefreshToken(user.getId(), user.getUsername());
+        String newToken = jwtUtils.generateToken(user.getId(), tenant.getId(), user.getUsername(),
+                userPerms.roles, userPerms.permissions, userPerms.dataScope);
+        String newRefreshToken = jwtUtils.generateRefreshToken(user.getId(), user.getUsername());
 
         stringRedisTemplate.opsForValue().set(
                 REFRESH_TOKEN_PREFIX + user.getId(),
                 newRefreshToken,
                 30, TimeUnit.DAYS);
 
-        return buildLoginResponse(newToken, newRefreshToken, user, isAdmin, userPerms);
+        return buildLoginResponse(newToken, newRefreshToken, user, userPerms);
+    }
+
+    /**
+     * 吊销用户 refresh token（禁用/重置密码时调用），使其无法刷新 access token
+     */
+    public void revokeRefreshToken(Long userId) {
+        if (userId != null) {
+            stringRedisTemplate.delete(REFRESH_TOKEN_PREFIX + userId);
+        }
     }
 
     /**
@@ -197,8 +204,7 @@ public class AuthService {
         }
 
         UserPermissions userPerms = loadUserPermissions(user);
-        boolean isAdmin = user.getIsAdmin() == 1;
-        return buildLoginResponse(null, null, user, isAdmin, userPerms);
+        return buildLoginResponse(null, null, user, userPerms);
     }
 
     // ==================== 角色权限加载 ====================
@@ -209,22 +215,13 @@ public class AuthService {
     private UserPermissions loadUserPermissions(SysUser user) {
         TenantContext.setTenantId(user.getTenantId());
 
-        // 超管旁路：is_admin=1 直接授予全部权限
-        if (user.getIsAdmin() == 1) {
-            List<SysPermission> allPerms = permissionMapper.selectList(null);
-            List<String> permCodes = allPerms.stream()
-                    .map(SysPermission::getPermissionCode)
-                    .collect(Collectors.toList());
-            return new UserPermissions(List.of("admin"), permCodes);
-        }
-
         // 查询用户角色关联
         List<SysUserRole> userRoles = userRoleMapper.selectList(
                 new LambdaQueryWrapper<SysUserRole>()
                         .eq(SysUserRole::getUserId, user.getId()));
 
         if (userRoles.isEmpty()) {
-            return new UserPermissions(List.of(), List.of());
+            return new UserPermissions(List.of(), List.of(), 1);
         }
 
         List<Long> roleIds = userRoles.stream()
@@ -238,7 +235,7 @@ public class AuthService {
                         .eq(SysRole::getStatus, 1));
 
         if (roles.isEmpty()) {
-            return new UserPermissions(List.of(), List.of());
+            return new UserPermissions(List.of(), List.of(), 1);
         }
 
         List<String> roleCodes = roles.stream()
@@ -248,13 +245,21 @@ public class AuthService {
                 .map(SysRole::getId)
                 .collect(Collectors.toList());
 
+        // 数据范围取用户所持角色的最大值（默认本人）
+        int maxDataScope = 1;
+        for (SysRole r : roles) {
+            if (r.getDataScope() != null && r.getDataScope() > maxDataScope) {
+                maxDataScope = r.getDataScope();
+            }
+        }
+
         // 查询角色-权限关联
         List<SysRolePermission> rolePerms = rolePermissionMapper.selectList(
                 new LambdaQueryWrapper<SysRolePermission>()
                         .in(SysRolePermission::getRoleId, enabledRoleIds));
 
         if (rolePerms.isEmpty()) {
-            return new UserPermissions(roleCodes, List.of());
+            return new UserPermissions(roleCodes, List.of(), maxDataScope);
         }
 
         // 查询权限码
@@ -267,7 +272,7 @@ public class AuthService {
                 .map(SysPermission::getPermissionCode)
                 .collect(Collectors.toList());
 
-        return new UserPermissions(roleCodes, permCodes);
+        return new UserPermissions(roleCodes, permCodes, maxDataScope);
     }
 
     /**
@@ -283,12 +288,13 @@ public class AuthService {
             SysUserRole userRole = new SysUserRole();
             userRole.setUserId(userId);
             userRole.setRoleId(defaultRole.getId());
+            userRole.setTenantId(tenantId);
             userRoleMapper.insert(userRole);
         }
     }
 
     private LoginResponse buildLoginResponse(String token, String refreshToken,
-                                              SysUser user, boolean isAdmin, UserPermissions userPerms) {
+                                              SysUser user, UserPermissions userPerms) {
         return LoginResponse.builder()
                 .token(token)
                 .refreshToken(refreshToken)
@@ -296,7 +302,6 @@ public class AuthService {
                 .username(user.getUsername())
                 .nickname(user.getNickname())
                 .avatar(user.getAvatar())
-                .isAdmin(isAdmin)
                 .storageUsed(user.getStorageUsed())
                 .storageQuota(user.getStorageQuota())
                 .roles(userPerms.roles)
@@ -307,5 +312,5 @@ public class AuthService {
     /**
      * 用户权限加载结果
      */
-    private record UserPermissions(List<String> roles, List<String> permissions) {}
+    private record UserPermissions(List<String> roles, List<String> permissions, int dataScope) {}
 }

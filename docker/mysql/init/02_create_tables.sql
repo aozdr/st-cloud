@@ -36,7 +36,6 @@ CREATE TABLE IF NOT EXISTS sys_user (
     phone           VARCHAR(20)     DEFAULT NULL             COMMENT '手机号',
     avatar          VARCHAR(500)    DEFAULT NULL             COMMENT '头像URL',
     status          TINYINT         NOT NULL DEFAULT 1       COMMENT '状态：0-禁用 1-正常',
-    is_admin        TINYINT         NOT NULL DEFAULT 0       COMMENT '是否管理员',
     storage_used    BIGINT          NOT NULL DEFAULT 0       COMMENT '已用存储(字节)',
     storage_quota   BIGINT          DEFAULT NULL             COMMENT '存储配额(字节)，NULL=使用租户默认',
     last_login_at   DATETIME        DEFAULT NULL             COMMENT '最后登录时间',
@@ -245,6 +244,6 @@ VALUES (1, '默认租户', 'default', 1, 10737418240)
 ON DUPLICATE KEY UPDATE tenant_name='默认租户';
 
 -- 默认管理员 (密码: admin123, BCrypt加密)
-INSERT INTO sys_user (id, tenant_id, username, password, nickname, is_admin, storage_quota)
-VALUES (1, 1, 'admin', '$2b$10$mLMRBZxVo/uyk0EvmfvC9eCUPOFCcs4EA38LYI4gmq8oHfJe6ALWW', '管理员', 1, 10737418240)
+INSERT INTO sys_user (id, tenant_id, username, password, nickname, storage_quota)
+VALUES (1, 1, 'admin', '$2b$10$mLMRBZxVo/uyk0EvmfvC9eCUPOFCcs4EA38LYI4gmq8oHfJe6ALWW', '管理员', 10737418240)
 ON DUPLICATE KEY UPDATE nickname='管理员';

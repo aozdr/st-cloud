@@ -32,8 +32,6 @@ public class UserManageVO {
     @Schema(description = "状态：0-禁用 1-正常")
     private Integer status;
 
-    @Schema(description = "是否管理员：0-否 1-是")
-    private Integer isAdmin;
 
     @Schema(description = "已用存储(字节)")
     private Long storageUsed;

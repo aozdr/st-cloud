@@ -71,16 +71,19 @@ export async function initDatabase(): Promise<void> {
     )
   `);
 
-  // 同步根配置（客户端侧：本地路径与游标）
+  // 同步根配置（客户端侧：本地路径与游标，按用户隔离）
   db.run(`
     CREATE TABLE IF NOT EXISTS sync_config (
       root_id       TEXT PRIMARY KEY,
       local_path    TEXT NOT NULL,
       cursor        INTEGER DEFAULT 0,
       status        TEXT DEFAULT 'active',
+      user_id       TEXT,
       updated_at    TEXT NOT NULL
     )
   `);
+  // 迁移：为已有数据库补充 user_id 列
+  try { db.run('ALTER TABLE sync_config ADD COLUMN user_id TEXT'); } catch { /* 列已存在 */ }
   persist();
 }
 
@@ -327,17 +330,18 @@ export interface SyncConfigRow {
   localPath: string;
   cursor: number;
   status: string;
+  userId?: string;
 }
 
 export function upsertSyncConfig(row: Partial<SyncConfigRow> & { rootId: string; localPath: string }): void {
   const now = new Date().toISOString();
   db.run(
-    `INSERT INTO sync_config (root_id, local_path, cursor, status, updated_at)
-     VALUES (?, ?, ?, ?, ?)
+    `INSERT INTO sync_config (root_id, local_path, cursor, status, user_id, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?)
      ON CONFLICT(root_id) DO UPDATE SET
        local_path=excluded.local_path, cursor=excluded.cursor,
-       status=excluded.status, updated_at=excluded.updated_at`,
-    [row.rootId, row.localPath, row.cursor ?? 0, row.status ?? 'active', now],
+       status=excluded.status, user_id=excluded.user_id, updated_at=excluded.updated_at`,
+    [row.rootId, row.localPath, row.cursor ?? 0, row.status ?? 'active', row.userId ?? null, now],
   );
   persist();
 }
@@ -359,8 +363,11 @@ export function getSyncConfig(rootId: string): SyncConfigRow | null {
   return result;
 }
 
-export function getAllSyncConfigs(): SyncConfigRow[] {
-  const stmt = db.prepare('SELECT * FROM sync_config');
+export function getAllSyncConfigs(userId?: string): SyncConfigRow[] {
+  const stmt = userId
+    ? db.prepare('SELECT * FROM sync_config WHERE user_id = ?')
+    : db.prepare('SELECT * FROM sync_config');
+  if (userId) stmt.bind([userId]);
   const results: SyncConfigRow[] = [];
   while (stmt.step()) {
     const row = stmt.getAsObject() as Record<string, unknown>;
@@ -369,6 +376,7 @@ export function getAllSyncConfigs(): SyncConfigRow[] {
       localPath: row.local_path as string,
       cursor: (row.cursor as number | null) ?? 0,
       status: (row.status as string | null) ?? 'active',
+      userId: (row.user_id as string | null) ?? undefined,
     });
   }
   stmt.free();
@@ -377,5 +385,11 @@ export function getAllSyncConfigs(): SyncConfigRow[] {
 
 export function deleteSyncConfig(rootId: string): void {
   db.run('DELETE FROM sync_config WHERE root_id = ?', [rootId]);
+  persist();
+}
+
+/** 迁移：将 user_id 为空的旧配置认领给当前用户（一次性） */
+export function claimLegacySyncConfigs(userId: string): void {
+  db.run('UPDATE sync_config SET user_id = ? WHERE user_id IS NULL', [userId]);
   persist();
 }

@@ -138,6 +138,7 @@ public class TeamController {
 
     @Operation(summary = "在空间中创建文件夹")
     @Auditable(action = "TEAM_CREATE_FOLDER", targetType = "FOLDER")
+    @PreAuthorize("hasAuthority('file:upload') or hasRole('ADMIN')")
     @PostMapping("/{spaceId}/folder")
     public Result<FileNodeVO> createFolder(
             @PathVariable Long spaceId,
@@ -149,6 +150,7 @@ public class TeamController {
 
     @Operation(summary = "删除空间文件/文件夹至回收站")
     @Auditable(action = "DELETE", targetType = "FILE")
+    @PreAuthorize("hasAuthority('file:delete') or hasRole('ADMIN')")
     @PostMapping("/{spaceId}/files/delete")
     public Result<Void> deleteFiles(@PathVariable Long spaceId, @RequestBody List<Long> nodeIds) {
         teamService.checkPermission(spaceId, 1);
@@ -158,6 +160,7 @@ public class TeamController {
 
     @Operation(summary = "重命名空间文件/文件夹")
     @Auditable(action = "RENAME", targetType = "FILE", targetIdParam = "nodeId")
+    @PreAuthorize("hasAuthority('file:rename') or hasRole('ADMIN')")
     @PutMapping("/{spaceId}/files/{nodeId}/rename")
     public Result<Void> renameFile(@PathVariable Long spaceId, @PathVariable Long nodeId, @RequestParam String newName) {
         teamService.checkPermission(spaceId, 1);
@@ -167,6 +170,7 @@ public class TeamController {
 
     @Operation(summary = "移动空间文件/文件夹")
     @Auditable(action = "MOVE", targetType = "FILE")
+    @PreAuthorize("hasAuthority('file:move') or hasRole('ADMIN')")
     @PostMapping("/{spaceId}/files/move")
     public Result<Void> moveFiles(@PathVariable Long spaceId, @RequestBody MoveRequest request) {
         teamService.checkPermission(spaceId, 1);
@@ -176,6 +180,7 @@ public class TeamController {
 
     @Operation(summary = "复制空间文件/文件夹")
     @Auditable(action = "COPY", targetType = "FILE")
+    @PreAuthorize("hasAuthority('file:copy') or hasRole('ADMIN')")
     @PostMapping("/{spaceId}/files/copy")
     public Result<Void> copyFiles(@PathVariable Long spaceId, @RequestBody MoveRequest request) {
         teamService.checkPermission(spaceId, 2);

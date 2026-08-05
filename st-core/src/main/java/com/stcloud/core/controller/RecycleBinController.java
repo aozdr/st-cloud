@@ -31,6 +31,7 @@ public class RecycleBinController {
 
     @Operation(summary = "恢复文件")
     @Auditable(action = "RESTORE", targetType = "FILE")
+    @PreAuthorize("hasAuthority('file:delete') or hasRole('ADMIN')")
     @PostMapping("/restore")
     public Result<Void> restore(@Valid @RequestBody BatchIdsRequest request) {
         recycleBinService.restore(request.getNodeIds());
@@ -48,6 +49,7 @@ public class RecycleBinController {
 
     @Operation(summary = "清空回收站")
     @Auditable(action = "EMPTY_RECYCLE", targetType = "FILE")
+    @PreAuthorize("hasAuthority('file:delete') or hasRole('ADMIN')")
     @PostMapping("/empty")
     public Result<Void> emptyRecycleBin() {
         recycleBinService.emptyRecycleBin();

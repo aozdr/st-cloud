@@ -92,7 +92,7 @@ public class FileServiceImpl implements FileService {
         LambdaQueryWrapper<FileNode> wrapper = new LambdaQueryWrapper<FileNode>()
                 .eq(FileNode::getParentId, parentId)
                 .eq(FileNode::getStatus, NodeStatus.NORMAL.getCode())
-                .eq(FileNode::getOwnerId, userId)
+                .eq(!UserContext.canAccessTenant(), FileNode::getOwnerId, userId)
                 .and(w -> w.eq(FileNode::getNodeType, NodeType.FOLDER.getCode())
                         .or().eq(FileNode::getUploadStatus, UploadStatus.COMPLETED.getCode()))
                 .orderByDesc(FileNode::getNodeType)
@@ -104,7 +104,7 @@ public class FileServiceImpl implements FileService {
     public List<FileNodeVO> searchFiles(String keyword) {
         Long userId = UserContext.getUserId();
         LambdaQueryWrapper<FileNode> wrapper = new LambdaQueryWrapper<FileNode>()
-                .eq(FileNode::getOwnerId, userId)
+                .eq(!UserContext.canAccessTenant(), FileNode::getOwnerId, userId)
                 .eq(FileNode::getStatus, NodeStatus.NORMAL.getCode())
                 .like(FileNode::getName, keyword)
                 .orderByDesc(FileNode::getNodeType)
@@ -279,7 +279,7 @@ public class FileServiceImpl implements FileService {
         LambdaQueryWrapper<FileNode> wrapper = new LambdaQueryWrapper<FileNode>()
                 .eq(FileNode::getNodeType, NodeType.FOLDER.getCode())
                 .eq(FileNode::getStatus, NodeStatus.NORMAL.getCode())
-                .eq(FileNode::getOwnerId, userId)
+                .eq(!UserContext.canAccessTenant(), FileNode::getOwnerId, userId)
                 .orderByAsc(FileNode::getName);
         List<FileNode> folders = fileNodeMapper.selectList(wrapper);
         Map<Long, List<FileNode>> parentIdMap = folders.stream()
@@ -397,7 +397,7 @@ public class FileServiceImpl implements FileService {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
         }
         Long userId = UserContext.getUserId();
-        if (!node.getOwnerId().equals(userId) && !UserContext.isAdmin()) {
+        if (!node.getOwnerId().equals(userId) && !UserContext.canAccessTenant()) {
             throw new BusinessException(ResultCode.FORBIDDEN);
         }
         return node;
@@ -659,7 +659,7 @@ public class FileServiceImpl implements FileService {
     @Override
     public FileNodeVO resolveByPath(String path) {
         Long userId = UserContext.getUserId();
-        return resolvePathInternal(path, userId, null);
+        return resolvePathInternal(path, UserContext.canAccessTenant() ? null : userId, null);
     }
 
     @Override

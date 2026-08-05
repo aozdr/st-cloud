@@ -16,7 +16,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/admin/speed-limit")
 @RequiredArgsConstructor
-@PreAuthorize("hasAuthority('admin:ratelimit:manage') or hasRole('ADMIN')")
+@PreAuthorize("hasAuthority('transfer:speed:limit') or hasRole('ADMIN')")
 public class SpeedLimitController {
 
     private final SpeedLimitManageService speedLimitManageService;

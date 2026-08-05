@@ -26,6 +26,7 @@ public class MyBatisPlusConfig {
     static {
         IGNORE_TABLES.add("sys_tenant");
         IGNORE_TABLES.add("sys_permission");
+        IGNORE_TABLES.add("sys_jwt_secret");
     }
 
     @Bean

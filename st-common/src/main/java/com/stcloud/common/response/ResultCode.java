@@ -10,6 +10,7 @@ public enum ResultCode {
     UNAUTHORIZED(401, "未认证"),
     FORBIDDEN(403, "无权限"),
     NOT_FOUND(404, "资源不存在"),
+    METHOD_NOT_ALLOWED(405, "请求方法不支持"),
     CONFLICT(409, "资源冲突"),
 
     // 业务错误码 1xxx
@@ -19,6 +20,7 @@ public enum ResultCode {
     PASSWORD_INCORRECT(1003, "密码错误"),
     TOKEN_EXPIRED(1004, "Token已过期"),
     TOKEN_INVALID(1005, "Token无效"),
+    // 1006 已废弃：原两步验证相关错误码随 2FA 下线移除（见 09_remove_two_factor.sql）
     ROLE_NOT_FOUND(1007, "角色不存在"),
     PERMISSION_DENIED(1008, "无操作权限"),
 

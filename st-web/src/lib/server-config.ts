@@ -7,7 +7,7 @@ const STORAGE_KEY = 'stcloud:serverUrl';
 const DEFAULT_URL = 'http://127.0.0.1:8080';
 
 /** 规整地址：去掉末尾斜杠，补齐协议 */
-function normalize(url: string): string {
+export function normalize(url: string): string {
   let v = (url || '').trim();
   if (!v) return DEFAULT_URL;
   if (!/^https?:\/\//i.test(v)) v = 'http://' + v;

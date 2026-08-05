@@ -59,4 +59,16 @@ export function getToken(): string | null {
   return token;
 }
 
+/** 从 JWT 中解析当前用户 ID（用于同步配置按用户隔离） */
+export function getUserId(): string | null {
+  if (!token) return null;
+  try {
+    const payload = token.split('.')[1];
+    const decoded = JSON.parse(Buffer.from(payload, 'base64').toString('utf-8'));
+    return decoded.userId != null ? String(decoded.userId) : null;
+  } catch {
+    return null;
+  }
+}
+
 export { client as apiClient };

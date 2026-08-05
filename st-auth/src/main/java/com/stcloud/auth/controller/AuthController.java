@@ -6,6 +6,7 @@ import com.stcloud.auth.dto.RegisterRequest;
 import com.stcloud.auth.service.AuthService;
 import com.stcloud.common.annotation.Auditable;
 import com.stcloud.common.response.Result;
+import com.stcloud.common.utils.IpUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,7 +34,7 @@ public class AuthController {
     @PostMapping("/login")
     public Result<LoginResponse> login(@Valid @RequestBody LoginRequest request,
                                        HttpServletRequest httpRequest) {
-        String ip = getClientIp(httpRequest);
+        String ip = IpUtils.getClientIp(httpRequest);
         return Result.success(authService.login(request, ip));
     }
 
@@ -57,14 +58,9 @@ public class AuthController {
         return Result.success();
     }
 
-    private String getClientIp(HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("X-Real-IP");
-        }
-        if (ip == null || ip.isEmpty() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getRemoteAddr();
-        }
-        return ip != null && ip.contains(",") ? ip.split(",")[0].trim() : ip;
+    @Operation(summary = "服务连通性探测")
+    @GetMapping("/ping")
+    public Result<Void> ping() {
+        return Result.success();
     }
 }

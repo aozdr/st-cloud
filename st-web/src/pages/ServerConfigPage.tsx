@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Cloud, Server, ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react';
-import { getServerUrl, setServerUrl } from '../lib/server-config';
+import { getServerUrl, setServerUrl, normalize } from '../lib/server-config';
 import { updateApiBaseUrl } from '../lib/api';
 import { useToast } from '../components/ui/Toast';
 
@@ -23,15 +23,21 @@ export default function ServerConfigPage() {
   const handleTest = async () => {
     setTesting(true);
     setTestResult(null);
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 5000);
     try {
-      const base = url.replace(/\/+$/, '');
-      // 用登录端点探测：只要服务可达（返回任意 HTTP 状态）即视为连通
-      const res = await fetch(base + '/api/auth/login', { method: 'GET' });
-      // 405/404/401 都说明服务在线
-      setTestResult({ ok: true, message: '连接成功（服务器响应 ' + res.status + '）' });
+      const base = normalize(url);
+      const res = await fetch(base + '/api/auth/ping', { method: 'GET', signal: controller.signal });
+      if (res.ok) {
+        setTestResult({ ok: true, message: '连接成功（服务器响应 ' + res.status + '）' });
+      } else {
+        setTestResult({ ok: false, message: '服务器已可达，但响应异常（HTTP ' + res.status + '）' });
+      }
     } catch (e) {
-      setTestResult({ ok: false, message: e instanceof Error ? e.message : '无法连接服务器' });
+      const msg = e instanceof DOMException && e.name === 'AbortError' ? '连接超时，请确认地址与端口' : (e instanceof Error ? e.message : '无法连接服务器');
+      setTestResult({ ok: false, message: msg });
     } finally {
+      clearTimeout(timer);
       setTesting(false);
     }
   };

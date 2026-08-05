@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS `sys_role` (
     `description` VARCHAR(256) DEFAULT NULL COMMENT '描述',
     `status`      TINYINT      NOT NULL DEFAULT 1 COMMENT '状态：0-禁用 1-启用',
     `built_in`    TINYINT      NOT NULL DEFAULT 0 COMMENT '内置角色：0-否 1-是（不可删除）',
+    `data_scope`  TINYINT      NOT NULL DEFAULT 1 COMMENT '数据范围：1-本人 2-租户 3-全部',
     `data`        JSON         DEFAULT NULL COMMENT '扩展数据（如限速配置）',
     `created_at`  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `updated_at`  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -70,9 +71,11 @@ INSERT INTO `sys_permission` (`permission_code`, `permission_name`, `module`, `d
 -- 文件模块
 ('file:upload',       '文件上传',   'file',   '上传文件到云盘'),
 ('file:download',     '文件下载',   'file',   '下载云盘文件'),
+('file:preview',     '文件预览',   'file',   '在线预览文件（图片/视频/文档等）'),
 ('file:delete',       '文件删除',   'file',   '删除文件或文件夹'),
 ('file:rename',       '文件重命名', 'file',   '重命名文件或文件夹'),
 ('file:move',         '文件移动',   'file',   '移动文件到其他目录'),
+('file:copy',         '文件复制',   'file',   '复制文件或文件夹'),
 ('file:share',        '文件分享',   'file',   '创建文件分享链接'),
 -- 分享模块
 ('share:create',      '创建分享',   'share',  '创建分享链接'),
@@ -89,15 +92,16 @@ INSERT INTO `sys_permission` (`permission_code`, `permission_name`, `module`, `d
 ('admin:role:manage', '角色管理',   'admin',  '管理角色和权限分配'),
 ('admin:audit:view',  '审计查看',   'admin',  '查看系统审计日志'),
 ('admin:stats:view',  '统计查看',   'admin',  '查看系统统计数据'),
+('admin:storage:manage', '存储管理', 'admin',  '管理云盘总容量'),
 -- 传输限速模块（预留）
 ('transfer:speed:limit', '传输限速', 'transfer', '配置上传/下载限速');
 
 -- ========================================
--- 初始角色数据（租户 0 = 默认租户）
+-- 初始角色数据（默认租户 tenant_id=1；SAAS 模式受租户拦截器过滤）
 -- ========================================
-INSERT INTO `sys_role` (`tenant_id`, `role_code`, `role_name`, `description`, `status`, `built_in`, `data`) VALUES
-(1, 'admin', '系统管理员', '拥有系统全部权限', 1, 1, NULL),
-(1, 'user',  '普通用户',   '基础文件操作权限', 1, 1, NULL);
+INSERT INTO `sys_role` (`tenant_id`, `role_code`, `role_name`, `description`, `status`, `built_in`, `data_scope`, `data`) VALUES
+(1, 'admin', '系统管理员', '拥有系统全部权限', 1, 1, 3, NULL),
+(1, 'user',  '普通用户',   '基础文件操作权限', 1, 1, 1, NULL);
 
 -- ========================================
 -- 角色-权限关联数据

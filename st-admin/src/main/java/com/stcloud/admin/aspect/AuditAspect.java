@@ -6,6 +6,7 @@ import com.stcloud.admin.mapper.AuditLogMapper;
 import com.stcloud.common.annotation.Auditable;
 import com.stcloud.common.context.UserContext;
 import com.stcloud.common.utils.FileSizeUtil;
+import com.stcloud.common.utils.IpUtils;
 import com.stcloud.core.entity.FileNode;
 import com.stcloud.core.mapper.FileNodeMapper;
 import jakarta.annotation.PreDestroy;
@@ -61,7 +62,8 @@ public class AuditAspect {
             return joinPoint.proceed();
         } catch (Throwable e) {
             status = 0;
-            errorMsg = e.getMessage();
+            log.error("审计操作异常: action={}", auditable.action(), e);
+            errorMsg = "操作失败";
             throw e;
         } finally {
             try {
@@ -112,7 +114,7 @@ public class AuditAspect {
             ServletRequestAttributes attrs = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
             if (attrs != null) {
                 HttpServletRequest request = attrs.getRequest();
-                auditLog.setIpAddress(getClientIp(request));
+                auditLog.setIpAddress(IpUtils.getClientIp(request));
                 String ua = request.getHeader("User-Agent");
                 if (ua != null && ua.length() > 500) {
                     ua = ua.substring(0, 500);
@@ -621,20 +623,6 @@ public class AuditAspect {
     private String escapeJson(String s) {
         if (s == null) return "";
         return s.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "\\r");
-    }
-
-    private String getClientIp(HttpServletRequest request) {
-        String ip = request.getHeader("X-Forwarded-For");
-        if (ip == null || ip.isBlank() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getHeader("X-Real-IP");
-        }
-        if (ip == null || ip.isBlank() || "unknown".equalsIgnoreCase(ip)) {
-            ip = request.getRemoteAddr();
-        }
-        if (ip != null && ip.contains(",")) {
-            ip = ip.split(",")[0].trim();
-        }
-        return ip;
     }
 
     @PreDestroy

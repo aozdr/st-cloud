@@ -17,7 +17,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/admin/cloud-capacity")
 @RequiredArgsConstructor
-@PreAuthorize("hasRole('ADMIN')")
+@PreAuthorize("hasAuthority('admin:storage:manage') or hasRole('ADMIN')")
 public class CloudCapacityController {
 
     private final StatsMapper statsMapper;

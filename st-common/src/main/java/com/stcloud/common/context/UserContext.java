@@ -38,18 +38,39 @@ public class UserContext {
         return user != null ? user.getUsername() : null;
     }
 
-    public static boolean isAdmin() {
-        CurrentUser user = getCurrentUser();
-        return user != null && user.isAdmin();
-    }
-
     /**
-     * 编程式权限校验：is_admin 用户直接通过，否则检查权限码集合
+     * 编程式权限校验：检查当前用户是否拥有指定权限码
      */
     public static boolean hasPermission(String code) {
         CurrentUser user = getCurrentUser();
-        return user != null && (user.admin ||
-                (user.permissions != null && user.permissions.contains(code)));
+        return user != null && user.permissions != null && user.permissions.contains(code);
+    }
+
+    /**
+     * 编程式角色校验：检查当前用户是否拥有指定角色编码
+     */
+    public static boolean hasRole(String role) {
+        CurrentUser user = getCurrentUser();
+        return user != null && user.roles != null && user.roles.contains(role);
+    }
+
+    /**
+     * 数据范围校验：当前用户是否可访问全部数据（dataScope >= 3）。
+     * 替代散落的 hasRole("admin") 越权旁路，由角色 data_scope 驱动。
+     */
+    public static boolean canAccessAll() {
+        CurrentUser user = getCurrentUser();
+        return user != null && user.getDataScope() != null && user.getDataScope() >= 3;
+    }
+
+    /**
+     * 数据范围校验：当前用户是否可访问本租户全部数据（dataScope >= 2）。
+     * data_scope=2（租户级）可访问同租户下所有用户的文件；
+     * data_scope=3（全部）自然满足。
+     */
+    public static boolean canAccessTenant() {
+        CurrentUser user = getCurrentUser();
+        return user != null && user.getDataScope() != null && user.getDataScope() >= 2;
     }
 
     public static void clear() {
@@ -66,10 +87,11 @@ public class UserContext {
         private String username;
         private String nickname;
         private String avatar;
-        private boolean admin;
         /** 角色编码列表 */
         private List<String> roles;
         /** 权限码集合 */
         private Set<String> permissions;
+        /** 数据范围：1-本人 2-租户 3-全部 */
+        private Integer dataScope;
     }
 }

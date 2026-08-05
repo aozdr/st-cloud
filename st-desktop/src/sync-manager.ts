@@ -1,6 +1,6 @@
-import { apiClient } from './api-client';
+import { apiClient, getUserId } from './api-client';
 import { SyncEngine, type SyncRootInfo } from './sync-engine';
-import { getAllSyncConfigs, deleteSyncConfig, upsertSyncConfig } from './database';
+import { getAllSyncConfigs, deleteSyncConfig, upsertSyncConfig, claimLegacySyncConfigs } from './database';
 
 interface CloudSyncRootVO {
   id: string;
@@ -26,8 +26,13 @@ export async function startSync(rootId: string, cloudFolderNodeId: string, local
   };
 
   const engine = new SyncEngine(info);
-  await engine.start();
   engines.set(rootId, engine);
+  try {
+    await engine.start();
+  } catch (err) {
+    engines.delete(rootId);
+    throw err;
+  }
 }
 
 export async function stopSync(rootId: string): Promise<void> {
@@ -68,7 +73,7 @@ export async function registerSyncRoot(cloudFolderNodeId: string, localPath: str
   if (!root) throw new Error('注册同步根失败');
 
   const rootId = root.id;
-  upsertSyncConfig({ rootId, localPath, cursor: 0, status: 'active' });
+  upsertSyncConfig({ rootId, localPath, cursor: 0, status: 'active', userId: getUserId() ?? undefined });
   await startSync(rootId, root.cloudFolderNodeId, localPath);
 
   return root;
@@ -90,7 +95,13 @@ export async function deleteSyncRoot(rootId: string): Promise<void> {
  * 应用启动时恢复所有 active 同步根
  */
 export async function resumeSyncEngines(): Promise<void> {
-  const allConfigs = getAllSyncConfigs();
+  const userId = getUserId();
+  if (!userId) {
+    console.log('[sync] resume skipped: no user identified');
+    return;
+  }
+  claimLegacySyncConfigs(userId);
+  const allConfigs = getAllSyncConfigs(userId);
   const configs = allConfigs.filter((c) => c.status === 'active');
   if (configs.length === 0) return;
 
@@ -124,7 +135,7 @@ export async function resumeSyncEngines(): Promise<void> {
   // Auto-relink: if cloud has roots without local config, try to resume them
   // (covers the case where local config was deleted due to stale/precision-lost ID)
   try {
-    const localConfigs = getAllSyncConfigs();
+    const localConfigs = getAllSyncConfigs(userId);
     const orphaned = roots.filter(cr => !localConfigs.some(lc => String(lc.rootId) === String(cr.id)));
 
     for (const cloudRoot of orphaned) {

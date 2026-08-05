@@ -37,6 +37,7 @@ public class FileController {
 
     @Operation(summary = "创建文件夹")
     @Auditable(action = "CREATE_FOLDER", targetType = "FOLDER")
+    @PreAuthorize("hasAuthority('file:upload') or hasRole('ADMIN')")
     @PostMapping("/folder")
     public Result<FileNodeVO> createFolder(@Valid @RequestBody CreateFolderRequest request) {
         return Result.success(fileService.createFolder(request.getParentId(), request.getFolderName()));
@@ -84,6 +85,7 @@ public class FileController {
 
     @Operation(summary = "复制")
     @Auditable(action = "COPY", targetType = "FILE")
+    @PreAuthorize("hasAuthority('file:copy') or hasRole('ADMIN')")
     @PostMapping("/copy")
     public Result<Void> copy(@Valid @RequestBody MoveRequest request) {
         fileService.copy(request.getNodeIds(), request.getTargetParentId());
@@ -114,6 +116,7 @@ public class FileController {
     // ==================== 文件上传 ====================
 
     @Operation(summary = "秒传检查")
+    @PreAuthorize("hasAuthority('file:upload') or hasRole('ADMIN')")
     @PostMapping("/upload/check")
     public Result<UploadCheckResponse> checkInstantUpload(@Valid @RequestBody UploadCheckRequest request) {
         return Result.success(uploadService.checkInstantUpload(request));
@@ -127,6 +130,7 @@ public class FileController {
     }
 
     @Operation(summary = "查询上传状态（断点续传）")
+    @PreAuthorize("hasAuthority('file:upload') or hasRole('ADMIN')")
     @GetMapping("/upload/status")
     public Result<UploadStatusResponse> getUploadStatus(
             @RequestParam String uploadId,
@@ -136,6 +140,7 @@ public class FileController {
 
     @Operation(summary = "合并分片")
     @Auditable(action = "UPLOAD", targetType = "FILE", targetIdParam = "fileId", detail = "分片上传合并完成")
+    @PreAuthorize("hasAuthority('file:upload') or hasRole('ADMIN')")
     @PostMapping("/upload/merge")
     public Result<FileNodeVO> mergeChunks(@Valid @RequestBody UploadMergeRequest request) {
         return Result.success(uploadService.mergeChunks(request));
@@ -143,6 +148,7 @@ public class FileController {
 
     @Operation(summary = "中止分片上传")
     @Auditable(action = "ABORT_UPLOAD", targetType = "FILE")
+    @PreAuthorize("hasAuthority('file:upload') or hasRole('ADMIN')")
     @DeleteMapping("/upload/abort")
     public Result<Void> abortUpload(
             @RequestParam String uploadId,
@@ -178,6 +184,7 @@ public class FileController {
 
     @Operation(summary = "流式下载单文件（服务端限速、支持断点续传）")
     @Auditable(action = "DOWNLOAD", targetType = "FILE", targetIdParam = "nodeId", detail = "流式下载")
+    @PreAuthorize("hasAuthority('file:preview') or hasAuthority('file:download') or hasRole('ADMIN')")
     @GetMapping("/{nodeId}/stream")
     public void streamFile(@PathVariable Long nodeId, HttpServletRequest request, HttpServletResponse response) {
         downloadService.streamFile(nodeId, request, response);
@@ -185,6 +192,7 @@ public class FileController {
 
     @Operation(summary = "ZIP批量下载")
     @Auditable(action = "DOWNLOAD", targetType = "FILE", detail = "ZIP批量下载")
+    @PreAuthorize("hasAuthority('file:download') or hasRole('ADMIN')")
     @PostMapping("/download/zip")
     public void downloadAsZip(@Valid @RequestBody BatchIdsRequest request,
                               HttpServletResponse response) {

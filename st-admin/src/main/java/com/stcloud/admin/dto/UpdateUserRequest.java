@@ -16,8 +16,6 @@ public class UpdateUserRequest {
     @Schema(description = "存储配额(字节)")
     private Long storageQuota;
 
-    @Schema(description = "是否管理员")
-    private Integer isAdmin;
 
     @Schema(description = "重置密码（明文，自动BCrypt加密）")
     private String resetPassword;

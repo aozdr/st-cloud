@@ -17,12 +17,19 @@ import {
 } from './download-manager';
 import {
   startSync, stopSync, registerSyncRoot, listSyncRoots, deleteSyncRoot, getSyncStatus,
+  stopAllSync, resumeSyncEngines,
 } from './sync-manager';
 
 export function registerIpcHandlers(): void {
   // ==================== 认证 ====================
-  ipcMain.handle('auth:set', (_event, token: string, refreshToken: string) => {
+  ipcMain.handle('auth:set', async (_event, token: string, refreshToken: string) => {
+    // 切换用户时先停止所有同步引擎，防止旧用户引擎用新 token 访问导致失败日志
+    await stopAllSync();
     setAuth(token, refreshToken);
+    // 按新用户身份恢复同步引擎
+    resumeSyncEngines().catch((err) => {
+      console.warn('[sync] resume after auth change failed:', String(err).substring(0, 100));
+    });
   });
 
   // ==================== 服务器地址 ====================

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Download, Pencil, FolderInput, Copy, Trash2, FolderOpen, Eye, Scissors, ClipboardPaste, Share2, History } from 'lucide-react';
 import type { FileNode } from '../../types';
+import { usePermission } from '../../lib/permission';
 
 interface Props {
   x: number;
@@ -15,6 +16,7 @@ interface Props {
 
 export default function ContextMenu({ x, y, node, hasClipboard, showShare = true, showVersions = true, onAction, onClose }: Props) {
   const ref = useRef<HTMLDivElement>(null);
+  const { has } = usePermission();
 
   useEffect(() => {
     const handler = () => onClose();
@@ -26,23 +28,34 @@ export default function ContextMenu({ x, y, node, hasClipboard, showShare = true
   const adjustedX = Math.min(x, window.innerWidth - 200);
   const adjustedY = Math.min(y, window.innerHeight - 360);
 
-  const items: Array<{ action?: string; label?: string; icon?: any; danger?: boolean; type?: 'separator' }> = [
+  const rawItems: Array<{ action?: string; label?: string; icon?: any; danger?: boolean; type?: 'separator' }> = [
     ...(node.nodeType === 0
       ? [{ action: 'open', label: '打开', icon: FolderOpen }]
-      : [{ action: 'preview', label: '预览', icon: Eye }]),
-    { action: 'cut', label: '剪切', icon: Scissors },
-    { action: 'copy', label: '复制', icon: Copy },
-    ...(hasClipboard ? [{ action: 'paste', label: '粘贴', icon: ClipboardPaste }] : []),
+      : has('file:preview')
+        ? [{ action: 'preview', label: '预览', icon: Eye }]
+        : []),
+    ...(has('file:move') ? [{ action: 'cut', label: '剪切', icon: Scissors }] : []),
+    ...(has('file:copy') ? [{ action: 'copy', label: '复制', icon: Copy }] : []),
+    ...(hasClipboard && (has('file:copy') || has('file:move')) ? [{ action: 'paste', label: '粘贴', icon: ClipboardPaste }] : []),
     { type: 'separator' as const },
-    ...(node.nodeType === 1 ? [{ action: 'download', label: '下载', icon: Download }] : []),
-    { action: 'rename', label: '重命名', icon: Pencil },
-    { action: 'moveTo', label: '移动到…', icon: FolderInput },
+    ...(node.nodeType === 1 && has('file:download') ? [{ action: 'download', label: '下载', icon: Download }] : []),
+    ...(has('file:rename') ? [{ action: 'rename', label: '重命名', icon: Pencil }] : []),
+    ...(has('file:move') ? [{ action: 'moveTo', label: '移动到…', icon: FolderInput }] : []),
     ...(node.nodeType === 1 && showVersions ? [{ action: 'versions', label: '历史版本', icon: History }] : []),
     { type: 'separator' as const },
-    ...(showShare ? [{ action: 'share', label: '分享', icon: Share2 }] : []),
+    ...(showShare && has('file:share') ? [{ action: 'share', label: '分享', icon: Share2 }] : []),
     { type: 'separator' as const },
-    { action: 'delete', label: '删除', icon: Trash2, danger: true },
+    ...(has('file:delete') ? [{ action: 'delete', label: '删除', icon: Trash2, danger: true }] : []),
   ];
+  // 折叠连续分隔符、去除首尾分隔符
+  const items = rawItems.filter((item, idx, arr) => {
+    if (item.type === 'separator') {
+      const prev = arr[idx - 1];
+      const next = arr[idx + 1];
+      if (!prev || !next || prev.type === 'separator' || next.type === 'separator') return false;
+    }
+    return true;
+  });
 
   return (
     <div

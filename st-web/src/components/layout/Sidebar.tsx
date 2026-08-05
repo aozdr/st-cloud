@@ -3,7 +3,7 @@ import { Cloud, FolderClosed, Trash2, HardDrive, Share2, Users, Settings, ArrowU
 import { useEffect, useState } from 'react';
 import { formatSize } from '../../lib/utils';
 import { isElectron } from '../../lib/electron';
-import { useAuthStore } from '../../store/auth';
+import { usePermission } from '../../lib/permission';
 import { useStorageStore } from '../../store/storage';
 import SettingsDialog from '../SettingsDialog';
 
@@ -11,7 +11,8 @@ export default function Sidebar() {
   const storage = useStorageStore((s) => s.storage);
   const fetchStorage = useStorageStore((s) => s.fetchStorage);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const isAdmin = useAuthStore((s) => s.user?.isAdmin ?? false);
+  const { hasAny } = usePermission();
+  const canAccessAdmin = hasAny(['admin:user:manage', 'admin:role:manage', 'admin:audit:view', 'admin:stats:view', 'transfer:speed:limit', 'admin:storage:manage']);
 
   useEffect(() => {
     fetchStorage();
@@ -33,7 +34,7 @@ export default function Sidebar() {
     navItems.push({ to: '/sync', icon: FolderSync, label: '文件同步', end: false });
   }
 
-  if (isAdmin) {
+  if (canAccessAdmin) {
     navItems.push({ to: '/admin', icon: Settings, label: '系统管理', end: false });
   }
 

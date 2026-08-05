@@ -18,7 +18,8 @@ export interface LoginResponse {
   username: string;
   nickname: string;
   avatar: string | null;
-  isAdmin: boolean;
+  roles: string[];
+  permissions: string[];
   storageUsed: string;
   storageQuota: string;
 }
@@ -28,7 +29,8 @@ export interface UserInfo {
   username: string;
   nickname: string;
   avatar: string | null;
-  isAdmin: boolean;
+  roles: string[];
+  permissions: string[];
   storageUsed: string;
   storageQuota: string;
 }
@@ -270,7 +272,7 @@ export interface AdminUser {
   phone: string | null;
   avatar: string | null;
   status: number;
-  isAdmin: number;
+  roles: RoleVO[];
   storageUsed: string;
   storageQuota: string;
   lastLoginAt: string | null;
@@ -445,6 +447,14 @@ export interface SpeedLimitRule {
   updatedAt: string;
 }
 
+export interface PermissionVO {
+  id: string;
+  permissionCode: string;
+  permissionName: string;
+  module: string;
+  description: string | null;
+}
+
 export interface RoleVO {
   id: string;
   roleCode: string;
@@ -452,6 +462,8 @@ export interface RoleVO {
   description: string | null;
   status: number;
   builtIn: boolean;
+  dataScope: number;
+  permissions: PermissionVO[];
   createdAt: string;
 }
 
