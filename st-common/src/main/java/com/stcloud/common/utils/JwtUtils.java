@@ -57,6 +57,8 @@ public class JwtUtils {
 
     @Value("${stcloud.jwt.refresh-expiration:2592000000}")
     private long refreshExpiration;
+    @Value("${stcloud.jwt.download-expiration:300000}")
+    private long downloadExpiration;
 
     private SecretKey signingKey;
 
@@ -120,6 +122,25 @@ public class JwtUtils {
                 .subject(username)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + refreshExpiration))
+                .signWith(signingKey)
+                .compact();
+    }
+
+    public String generateDownloadToken(Long userId, Long tenantId, String username,
+                                        List<String> roles, List<String> permissions, int dataScope) {
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", userId);
+        claims.put("tenantId", tenantId);
+        claims.put("username", username);
+        claims.put("roles", roles);
+        claims.put("permissions", permissions);
+        claims.put("dataScope", dataScope);
+        claims.put("type", "download");
+        return Jwts.builder()
+                .claims(claims)
+                .subject(username)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + downloadExpiration))
                 .signWith(signingKey)
                 .compact();
     }

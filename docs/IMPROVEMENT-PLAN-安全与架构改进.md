@@ -125,7 +125,7 @@ if (tenantId == null) { return 1L; }  // 私有云模式默认租户
 
 - [x] P0-1 重构 JwtUtils 为 Bean，实现 DB+主密钥方案
 - [x] P0-2 access token 缩短至 2h，refresh 删除 Redis 条目实现禁用
-- [ ] P1-3 CORS 白名单从配置读取
-- [ ] P1-4 一次性下载令牌机制
-- [ ] P2-5 TenantContext SAAS 模式抛异常
-- [ ] P2-6 补安全链路单测
+- [x] P1-3 CORS 白名单从配置读取
+- [x] P1-4 一次性下载令牌机制
+- [x] P2-5 TenantContext SAAS 模式抛异常
+- [x] P2-6 补安全链路单测

@@ -309,7 +309,7 @@ export default function FileBrowser({
       if (nodeIds.length === 1) {
         const node = files.find((f) => f.id === nodeIds[0]);
         const dlLimit = useTransferStore.getState().effective.downloadSpeedLimit;
-        const url = source.getDownloadUrl(nodeIds[0]);
+        const url = await source.getDownloadUrl(nodeIds[0]);
         const sep = url.includes('?') ? '&' : '?';
         const finalUrl = dlLimit > 0 ? `${url}${sep}clientLimit=${dlLimit}` : url;
         const a = document.createElement('a');

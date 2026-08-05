@@ -13,7 +13,7 @@ export interface FileSource {
   move(nodeIds: string[], targetParentId: string): Promise<void>;
   copy(nodeIds: string[], targetParentId: string): Promise<void>;
   loadTree(): Promise<FileTreeNode[]>;
-  getDownloadUrl(nodeId: string): string;
+  getDownloadUrl(nodeId: string): Promise<string>;
   downloadZip(nodeIds: string[]): Promise<Blob>;
   getNodeById(nodeId: string): Promise<FileNode | null>;
   resolveByPath(path: string): Promise<FileNode | null>;
@@ -39,8 +39,8 @@ export const personalFileSource: FileSource = {
     api.get(`/file/${nodeId}`),
   resolveByPath: (path) =>
     api.get('/file/by-path', { params: { path: path || '/' } }),
-  getDownloadUrl: (nodeId) => {
-    const token = localStorage.getItem('accessToken');
+  getDownloadUrl: async (nodeId) => {
+    const { token } = await api.post(`/file/${nodeId}/download-token`);
     return `/api/file/${nodeId}/stream?token=${encodeURIComponent(token || '')}`;
   },
   downloadZip: (nodeIds) =>
@@ -68,8 +68,8 @@ export function teamFileSource(spaceId: string): FileSource {
       api.get(`/team/${spaceId}/files/${nodeId}`),
     resolveByPath: (path) =>
       api.get(`/team/${spaceId}/files/by-path`, { params: { path: path || '/' } }),
-    getDownloadUrl: (nodeId) => {
-      const token = localStorage.getItem('accessToken');
+    getDownloadUrl: async (nodeId) => {
+      const { token } = await api.post(`/file/${nodeId}/download-token`);
       return `/api/file/${nodeId}/stream?token=${encodeURIComponent(token || '')}`;
     },
     downloadZip: (nodeIds) =>

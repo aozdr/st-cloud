@@ -82,7 +82,7 @@ async function doDownload(taskId: string): Promise<void> {
     // 服务端限速流式下载（不再使用预签名直链，避免绕过限速）
     const token = getToken();
     const dlLimit = getTransferSettings().downloadSpeedLimit;
-    const streamUrl = `${apiClient.defaults.baseURL}/file/${task.nodeId}/stream?token=${encodeURIComponent(token || '')}${dlLimit > 0 ? `&clientLimit=${dlLimit}` : ''}`;
+    const streamUrl = `${apiClient.defaults.baseURL}/file/${task.nodeId}/stream${dlLimit > 0 ? `?clientLimit=${dlLimit}` : ''}`;
 
     // 检查已有临时文件
     const existingBytes = getDownloadedBytes(taskId);
@@ -93,6 +93,7 @@ async function doDownload(taskId: string): Promise<void> {
       const lib = url.protocol === 'https:' ? https : http;
 
       const headers: Record<string, string> = {};
+      headers['Authorization'] = `Bearer ${token || ''}`;
       if (existingBytes > 0) {
         headers['Range'] = `bytes=${existingBytes}-`;
       }

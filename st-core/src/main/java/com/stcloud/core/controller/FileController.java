@@ -3,6 +3,8 @@ package com.stcloud.core.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.stcloud.common.annotation.Auditable;
 import com.stcloud.common.response.Result;
+import com.stcloud.common.context.UserContext;
+import com.stcloud.common.utils.JwtUtils;
 import com.stcloud.core.dto.*;
 import com.stcloud.core.service.DownloadService;
 import com.stcloud.core.service.FileService;
@@ -21,6 +23,8 @@ import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.ArrayList;
+import java.util.Map;
 
 @Tag(name = "文件管理", description = "文件上传、下载、目录管理")
 @RestController
@@ -32,6 +36,7 @@ public class FileController {
     private final FileService fileService;
     private final UploadService uploadService;
     private final DownloadService downloadService;
+    private final JwtUtils jwtUtils;
 
     // ==================== 目录管理 ====================
 
@@ -206,5 +211,16 @@ public class FileController {
         } catch (Exception e) {
             response.setStatus(500);
         }
+    }
+
+    @Operation(summary = "签发短期下载令牌（5分钟有效）")
+    @PreAuthorize("hasAuthority('file:download') or hasAuthority('file:preview') or hasRole('ADMIN')")
+    @PostMapping("/{nodeId}/download-token")
+    public Result<Map<String, String>> issueDownloadToken(@PathVariable Long nodeId) {
+        UserContext.CurrentUser user = UserContext.getCurrentUser();
+        String token = jwtUtils.generateDownloadToken(
+                user.getUserId(), user.getTenantId(), user.getUsername(),
+                user.getRoles(), new ArrayList<>(user.getPermissions()), user.getDataScope());
+        return Result.success(Map.of("token", token));
     }
 }

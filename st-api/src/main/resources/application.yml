@@ -44,6 +44,9 @@ stcloud:
     expiration: 7200000
     # refresh token 有效期（毫秒），默认 30 天
     refresh-expiration: 2592000000
+  cors:
+    # 允许的前端来源（逗号分隔）；生产必须配置，留空则拒绝所有跨域
+    allowed-origins: ${STCLOUD_CORS_ORIGINS:}
   # 对象存储 (RustFS)
   storage:
     endpoint: http://127.0.0.1:9000

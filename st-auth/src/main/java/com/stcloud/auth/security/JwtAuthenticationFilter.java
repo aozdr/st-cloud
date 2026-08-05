@@ -104,6 +104,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
         // 允许下载/流式接口通过 query 参数传递 token
         String paramToken = request.getParameter("token");
-        return StringUtils.hasText(paramToken) ? paramToken : null;
+        if (StringUtils.hasText(paramToken) && isDownloadToken(paramToken)) {
+            return paramToken;
+        }
+        if (StringUtils.hasText(paramToken)) {
+            log.warn("拒绝在 URL query 中使用 access token，请改用下载令牌");
+        }
+        return null;
+    }
+
+    private boolean isDownloadToken(String token) {
+        try {
+            Claims claims = jwtUtils.parseToken(token);
+            return "download".equals(claims.get("type", String.class));
+        } catch (Exception e) {
+            return false;
+        }
     }
 }
