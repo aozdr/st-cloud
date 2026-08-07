@@ -26,6 +26,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * JWT 工具（Spring Bean）。
@@ -71,6 +72,7 @@ public class JwtUtils {
                             + "设置 stcloud.jwt.master-key（至少 32 字节）");
         }
 
+        ensureSecretTable();
         SecretKey aesKey = deriveAesKey(masterKey);
         SysJwtSecret record = loadRecord();
         if (record != null) {
@@ -127,7 +129,8 @@ public class JwtUtils {
     }
 
     public String generateDownloadToken(Long userId, Long tenantId, String username,
-                                        List<String> roles, List<String> permissions, int dataScope) {
+                                        List<String> roles, List<String> permissions, int dataScope,
+                                        Long nodeId) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);
         claims.put("tenantId", tenantId);
@@ -136,8 +139,10 @@ public class JwtUtils {
         claims.put("permissions", permissions);
         claims.put("dataScope", dataScope);
         claims.put("type", "download");
+        claims.put("nodeId", nodeId);
         return Jwts.builder()
                 .claims(claims)
+                .id(UUID.randomUUID().toString())
                 .subject(username)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + downloadExpiration))
@@ -191,6 +196,15 @@ public class JwtUtils {
     }
 
     // ==================== 密钥加密存储 ====================
+
+    /** 幂等确保密钥表存在：缺表时自建；DDL 受限则忽略（依赖 init 脚本已建表）。 */
+    private void ensureSecretTable() {
+        try {
+            jwtSecretMapper.createTableIfNotExists();
+        } catch (Exception e) {
+            log.debug("sys_jwt_secret 自建跳过（表已存在或无 DDL 权限）：{}", e.getMessage());
+        }
+    }
 
     private SysJwtSecret loadRecord() {
         return jwtSecretMapper.selectOne(

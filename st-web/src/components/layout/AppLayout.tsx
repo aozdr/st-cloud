@@ -1,7 +1,8 @@
 import { Outlet } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
+import ShortcutHelpDialog from '../ui/ShortcutHelpDialog';
 import { useAuthStore } from '../../store/auth';
 import { useTransferStore } from '../../store/transfer';
 import { UploadProvider } from '../../hooks/useUpload';
@@ -9,6 +10,7 @@ import { UploadProvider } from '../../hooks/useUpload';
 export default function AppLayout() {
   const { user, fetchUser } = useAuthStore();
   const fetchServerLimits = useTransferStore((s) => s.fetchServerLimits);
+  const [shortcutOpen, setShortcutOpen] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -17,6 +19,19 @@ export default function AppLayout() {
       fetchServerLimits();
     }
   }, [user, fetchUser, fetchServerLimits]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === '?' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const target = e.target as HTMLElement;
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
+        e.preventDefault();
+        setShortcutOpen((prev) => !prev);
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, []);
 
   return (
     <UploadProvider>
@@ -29,6 +44,7 @@ export default function AppLayout() {
           </main>
         </div>
       </div>
+      <ShortcutHelpDialog open={shortcutOpen} onClose={() => setShortcutOpen(false)} />
     </UploadProvider>
   );
 }

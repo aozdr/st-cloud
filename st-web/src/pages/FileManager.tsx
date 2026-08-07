@@ -17,6 +17,7 @@ export default function FileManager() {
       onBack={() => navigate(-1)}
       enableShare
       enableVersions
+      syncUrl
     />
   );
 }

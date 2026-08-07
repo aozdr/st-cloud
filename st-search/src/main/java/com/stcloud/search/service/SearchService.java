@@ -29,7 +29,8 @@ public interface SearchService {
      * @param size    每页数量
      * @return 搜索结果列表
      */
-    List<SearchResultVO> searchContent(String keyword, Long ownerId, int page, int size);
+    List<SearchResultVO> searchContent(String keyword, Long ownerId, int page, int size,
+            Integer nodeType, List<String> suffixes, Long sizeMin, Long sizeMax, Long dateFrom, Long dateTo);
 
     /**
      * 删除 ES 中的文件索引

@@ -20,4 +20,17 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (/[\\/]node_modules[\\/](recharts|victory-vendor|d3-[^\\/]+)/.test(id)) {
+              return 'recharts'
+            }
+          }
+        },
+      },
+    },
+  },
 })

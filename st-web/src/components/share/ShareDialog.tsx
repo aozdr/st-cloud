@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Link2, Lock, Globe, Copy, Download, Shield, RefreshCw } from 'lucide-react';
 import api from '../../lib/api';
 import { useToast } from '../ui/Toast';
 import type { FileShare, CreateShareRequest } from '../../types';
+import QRCode from 'qrcode';
 
 interface Props {
   fileNodeId: string;
@@ -18,6 +19,7 @@ export default function ShareDialog({ fileNodeId, fileName, onClose }: Props) {
   const [permission, setPermission] = useState(0);
   const [loading, setLoading] = useState(false);
   const [createdShare, setCreatedShare] = useState<FileShare | null>(null);
+  const [qrUrl, setQrUrl] = useState('');
 
   function generateShareCode(): string {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -58,8 +60,8 @@ export default function ShareDialog({ fileNodeId, fileName, onClose }: Props) {
       const data: FileShare = await api.post('/share/create', req);
       setCreatedShare(data);
       showToast('分享创建成功', 'success');
-    } catch (e: any) {
-      showToast(e.message || '创建失败', 'error');
+    } catch (e) {
+      showToast((e instanceof Error ? e.message : '') || '创建失败', 'error');
     } finally {
       setLoading(false);
     }
@@ -76,6 +78,16 @@ export default function ShareDialog({ fileNodeId, fileName, onClose }: Props) {
     ? `${window.location.origin}/share/${createdShare.shareCode}${createdShare.shareType === 1 ? `?pwd=${password}` : ''}`
     : '';
 
+  useEffect(() => {
+    if (shareLink) {
+      QRCode.toDataURL(shareLink, { width: 160, margin: 1 })
+        .then(setQrUrl)
+        .catch(() => setQrUrl(''));
+    } else {
+      setQrUrl('');
+    }
+  }, [shareLink]);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/40" onClick={onClose}>
       <div
@@ -90,8 +102,8 @@ export default function ShareDialog({ fileNodeId, fileName, onClose }: Props) {
             </div>
             <h2 className="text-base font-semibold text-stone-900">分享文件</h2>
           </div>
-          <button onClick={onClose} className="text-stone-400 hover:text-stone-600 transition-colors">
-            <X className="w-5 h-5" />
+          <button onClick={onClose} className="text-stone-400 hover:text-stone-600 transition-colors" aria-label="关闭">
+            <X className="w-5 h-5" aria-hidden />
           </button>
         </div>
 
@@ -111,7 +123,7 @@ export default function ShareDialog({ fileNodeId, fileName, onClose }: Props) {
                 onClick={copyLink}
                 className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-600 text-white text-xs font-medium rounded-lg hover:bg-primary-700 transition-colors cursor-pointer"
               >
-                <Copy className="w-3.5 h-3.5" />
+                <Copy className="w-3.5 h-3.5" aria-hidden />
                 复制
               </button>
             </div>
@@ -119,6 +131,12 @@ export default function ShareDialog({ fileNodeId, fileName, onClose }: Props) {
               <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 rounded-lg p-3">
                 <Lock className="w-4 h-4 flex-shrink-0" />
                 <span>提取码：{password}</span>
+              </div>
+            )}
+            {qrUrl && (
+              <div className="flex flex-col items-center gap-2">
+                <img src={qrUrl} alt="QR Code" className="w-36 h-36 rounded-lg border border-stone-200" />
+                <span className="text-xs text-stone-400">{'\u626b\u7801\u8bbf\u95ee'}</span>
               </div>
             )}
             <div className="flex items-center gap-2 text-xs text-stone-400">
@@ -142,24 +160,24 @@ export default function ShareDialog({ fileNodeId, fileName, onClose }: Props) {
               <div className="flex gap-2">
                 <button
                   onClick={() => setShareType(0)}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition cursor-pointer ${
                     shareType === 0
                       ? 'bg-primary-50 text-primary-700 ring-1 ring-primary-200'
                       : 'bg-stone-50 text-stone-500 hover:bg-stone-100'
                   }`}
                 >
-                  <Globe className="w-4 h-4" />
+                  <Globe className="w-4 h-4" aria-hidden />
                   公开
                 </button>
                 <button
                   onClick={() => setShareType(1)}
-                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all cursor-pointer ${
+                  className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition cursor-pointer ${
                     shareType === 1
                       ? 'bg-amber-50 text-amber-700 ring-1 ring-amber-200'
                       : 'bg-stone-50 text-stone-500 hover:bg-stone-100'
                   }`}
                 >
-                  <Lock className="w-4 h-4" />
+                  <Lock className="w-4 h-4" aria-hidden />
                   提取码
                 </button>
               </div>
@@ -181,7 +199,7 @@ export default function ShareDialog({ fileNodeId, fileName, onClose }: Props) {
                     onClick={() => setPassword(generateShareCode())}
                     className="flex items-center gap-1 px-3 py-2 text-xs text-stone-500 bg-stone-50 rounded-lg border border-stone-200 hover:bg-stone-100 hover:text-stone-700 transition-colors cursor-pointer whitespace-nowrap"
                   >
-                    <RefreshCw className="w-3.5 h-3.5" />
+                    <RefreshCw className="w-3.5 h-3.5" aria-hidden />
                     换一个
                   </button>
                 </div>
@@ -199,13 +217,13 @@ export default function ShareDialog({ fileNodeId, fileName, onClose }: Props) {
                   <button
                     key={opt.v}
                     onClick={() => setPermission(opt.v)}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition cursor-pointer ${
                       permission === opt.v
                         ? 'bg-primary-50 text-primary-700 ring-1 ring-primary-200'
                         : 'bg-stone-50 text-stone-500 hover:bg-stone-100'
                     }`}
                   >
-                    <opt.icon className="w-3.5 h-3.5" />
+                    <opt.icon className="w-3.5 h-3.5" aria-hidden />
                     {opt.label}
                   </button>
                 ))}
@@ -220,7 +238,7 @@ export default function ShareDialog({ fileNodeId, fileName, onClose }: Props) {
                   <button
                     key={idx}
                     onClick={() => setExpirePreset(idx)}
-                    className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all cursor-pointer ${
+                    className={`flex-1 py-2 rounded-lg text-xs font-medium transition cursor-pointer ${
                       expirePreset === idx
                         ? 'bg-primary-50 text-primary-700 ring-1 ring-primary-200'
                         : 'bg-stone-50 text-stone-500 hover:bg-stone-100'

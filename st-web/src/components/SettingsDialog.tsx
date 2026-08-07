@@ -1,4 +1,4 @@
-import { X, Check, Palette } from 'lucide-react';
+import { X, Check } from 'lucide-react';
 import { THEMES } from '../themes';
 import { useThemeStore } from '../store/theme';
 
@@ -37,7 +37,7 @@ export default function SettingsDialog({ open, onClose }: SettingsDialogProps) {
               <button
                 key={theme.key}
                 onClick={() => setTheme(theme.key)}
-                className={`relative flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all duration-150 cursor-pointer ${
+                className={`relative flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition duration-150 cursor-pointer ${
                   selected ? 'border-stone-800 bg-stone-50' : 'border-stone-200 hover:border-stone-300 hover:bg-stone-50'
                 }`}
               >

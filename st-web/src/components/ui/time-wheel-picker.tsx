@@ -99,7 +99,7 @@ function WheelColumn({
             >
               <span
                 className={cn(
-                  'text-sm transition-all',
+                  'text-sm transition',
                   item === value
                     ? 'text-primary-600 font-semibold scale-110'
                     : 'text-stone-400 hover:text-stone-600'

@@ -184,16 +184,16 @@ export default function TransferManager() {
             <button
               onClick={() => setTransferSettingsOpen(true)}
               className="p-1.5 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-md cursor-pointer transition-colors"
-              title="传输设置"
+              title="传输设置" aria-label="传输设置"
             >
-              <Settings2 className="w-4 h-4" />
+              <Settings2 className="w-4 h-4" aria-hidden />
             </button>
             <button
               onClick={refresh}
               className="p-1.5 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-md cursor-pointer transition-colors"
-              title="刷新"
+              title="刷新" aria-label="刷新"
             >
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw className="w-4 h-4" aria-hidden />
             </button>
           </div>
         </div>
@@ -210,7 +210,7 @@ export default function TransferManager() {
           <button
             key={tab.key}
             onClick={() => setFilter(tab.key)}
-            className={`px-3 py-1 text-xs rounded-full cursor-pointer transition-all ${
+            className={`px-3 py-1 text-xs rounded-full cursor-pointer transition ${
               filter === tab.key
                 ? 'bg-stone-800 text-white font-medium'
                 : 'text-stone-500 hover:text-stone-800 hover:bg-stone-100'
@@ -241,7 +241,7 @@ export default function TransferManager() {
             return (
               <div
                 key={task.id}
-                className="bg-white rounded-lg border border-stone-100 px-4 py-3 mb-2 hover:border-stone-200 hover:shadow-sm transition-all animate-fade-in"
+                className="bg-white rounded-lg border border-stone-100 px-4 py-3 mb-2 hover:border-stone-200 hover:shadow-sm transition animate-fade-in"
               >
                 <div className="flex items-start gap-3">
                   {/* 左侧：图标 + 文件信息 + 进度 */}
@@ -331,16 +331,16 @@ export default function TransferManager() {
                           <button
                             onClick={() => handleOpenFile(task.savePath!)}
                             className="p-1.5 text-stone-400 hover:text-primary-600 hover:bg-primary-50 rounded-md cursor-pointer transition-colors"
-                            title="打开文件"
+                            title="打开文件" aria-label="打开文件"
                           >
-                            <FileText className="w-4 h-4" />
+                            <FileText className="w-4 h-4" aria-hidden />
                           </button>
                           <button
                             onClick={() => handleShowInFolder(task.savePath!)}
                             className="p-1.5 text-stone-400 hover:text-primary-600 hover:bg-primary-50 rounded-md cursor-pointer transition-colors"
-                            title="打开所在文件夹"
+                            title="打开所在文件夹" aria-label="打开所在文件夹"
                           >
-                            <FolderOpen className="w-4 h-4" />
+                            <FolderOpen className="w-4 h-4" aria-hidden />
                           </button>
                         </>
                       )}
@@ -350,25 +350,25 @@ export default function TransferManager() {
                             <button
                               onClick={() => handleResume(task.id, task.type)}
                               className="p-1.5 text-stone-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md cursor-pointer transition-colors"
-                              title="继续"
+                              title="继续" aria-label="继续"
                             >
-                              <Play className="w-4 h-4" />
+                              <Play className="w-4 h-4" aria-hidden />
                             </button>
                           ) : (
                             <button
                               onClick={() => handlePause(task.id, task.type)}
                               className="p-1.5 text-stone-400 hover:text-amber-600 hover:bg-amber-50 rounded-md cursor-pointer transition-colors"
-                              title="暂停"
+                              title="暂停" aria-label="暂停"
                             >
-                              <Pause className="w-4 h-4" />
+                              <Pause className="w-4 h-4" aria-hidden />
                             </button>
                           )}
                           <button
                             onClick={() => handleCancel(task.id, task.type)}
                             className="p-1.5 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded-md cursor-pointer transition-colors"
-                            title="取消"
+                            title="取消" aria-label="取消"
                           >
-                            <X className="w-4 h-4" />
+                            <X className="w-4 h-4" aria-hidden />
                           </button>
                         </>
                       )}
@@ -376,9 +376,9 @@ export default function TransferManager() {
                         <button
                           onClick={() => { setDeleteTarget(task); setDeleteSourceFile(false); }}
                           className="p-1.5 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded-md cursor-pointer transition-colors"
-                          title="删除"
+                          title="删除" aria-label="删除"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-4 h-4" aria-hidden />
                         </button>
                       )}
                     </div>
@@ -447,7 +447,7 @@ export default function TransferManager() {
                 disabled={deleting}
                 className="px-4 py-2 text-sm text-white bg-red-500 hover:bg-red-600 rounded-lg cursor-pointer transition-colors disabled:opacity-50 flex items-center gap-1.5"
               >
-                {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" aria-hidden />}
                 {deleting ? '删除中...' : '删除'}
               </button>
             </div>

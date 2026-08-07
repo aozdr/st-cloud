@@ -1,53 +1,36 @@
-import { useEffect, useState, useRef } from 'react';
-import { X, Download, ChevronLeft, ChevronRight, FileText, Table, ChevronDown } from 'lucide-react';
-import Plyr from 'plyr';
-import 'plyr/dist/plyr.css';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import { X, Download, ChevronLeft, ChevronRight, Table, ChevronDown } from 'lucide-react';
 import api from '../../lib/api';
-import type { FileNode } from '../../types';
+import type { FileNode, PreviewResult } from '../../types';
+import { addRecentFile } from '../../lib/recentFiles';
 import { isImage, isVideo, isPdf, isAudio, isText, isWord, isExcel, getFileTypeConfig, cn } from '../../lib/utils';
-import { renderAsync } from 'docx-preview';
-import * as XLSX from 'xlsx';
+import type { WorkBook } from 'xlsx';
 
-function PlyrPlayer({ src }: { src: string }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const playerRef = useRef<Plyr | null>(null);
+const PlyrPlayer = lazy(() => import('./PlyrPlayer'));
 
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+async function renderDocx(blob: Blob, container: HTMLElement) {
+  const { renderAsync } = await import('docx-preview');
+  await renderAsync(blob, container, undefined, {
+    className: 'docx-container',
+    inWrapper: true,
+    ignoreWidth: false,
+    ignoreHeight: false,
+  });
+}
 
-    const video = document.createElement('video');
-    video.src = src;
-    video.controls = true;
-    video.playsInline = true;
-    video.style.maxWidth = '100%';
-    video.style.maxHeight = '80vh';
-    container.appendChild(video);
+async function parseExcel(data: ArrayBuffer): Promise<{ sheets: string[]; firstHtml: string; wb: WorkBook }> {
+  const XLSX = await import('xlsx');
+  const wb = XLSX.read(data);
+  return {
+    sheets: wb.SheetNames,
+    firstHtml: XLSX.utils.sheet_to_html(wb.Sheets[wb.SheetNames[0]], { editable: false }),
+    wb,
+  };
+}
 
-    playerRef.current = new Plyr(video, {
-      autoplay: true,
-      controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'settings', 'pip', 'airplay', 'fullscreen'],
-      settings: ['speed'],
-      speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
-      keyboard: { focused: true, global: true },
-      tooltips: { controls: true, seek: true },
-      seekTime: 10,
-    });
-
-    return () => {
-      playerRef.current?.destroy();
-      playerRef.current = null;
-      container.innerHTML = '';
-    };
-  }, [src]);
-
-  return (
-    <div
-      ref={containerRef}
-      style={{ width: '80vw', maxWidth: '1280px', '--plyr-color-main': '#D9272E', '--plyr-video-background': '#000' } as React.CSSProperties}
-      className="rounded-lg bg-black"
-    />
-  );
+async function excelSheetToHtml(wb: WorkBook, sheetName: string): Promise<string> {
+  const XLSX = await import('xlsx');
+  return XLSX.utils.sheet_to_html(wb.Sheets[sheetName], { editable: false });
 }
 
 interface Props {
@@ -68,9 +51,13 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
   const [sheetDropdownOpen, setSheetDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const docxContainerRef = useRef<HTMLDivElement>(null);
-  const excelWorkbookRef = useRef<XLSX.WorkBook | null>(null);
+  const excelWorkbookRef = useRef<WorkBook | null>(null);
 
   const file = files[index];
+
+  useEffect(() => {
+    if (file && file.nodeType === 1) addRecentFile(file);
+  }, [file]);
 
   useEffect(() => {
     if (!file || file.nodeType !== 1) return;
@@ -102,12 +89,7 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
           .then((res) => res.blob())
           .then((blob) => {
             if (docxContainerRef.current) {
-              renderAsync(blob, docxContainerRef.current, undefined, {
-                className: 'docx-container',
-                inWrapper: true,
-                ignoreWidth: false,
-                ignoreHeight: false,
-              }).then(() => setLoading(false));
+              renderDocx(blob, docxContainerRef.current).then(() => setLoading(false));
             }
           })
           .catch(() => setLoading(false));
@@ -116,13 +98,13 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
           .then((res) => res.blob())
           .then((blob) => blob.arrayBuffer())
           .then((data) => {
-            const wb = XLSX.read(data);
-            excelWorkbookRef.current = wb;
-            setExcelSheets(wb.SheetNames);
-            setExcelSheetIdx(0);
-            const html = XLSX.utils.sheet_to_html(wb.Sheets[wb.SheetNames[0]], { editable: false });
-            setExcelHtml(html);
-            setLoading(false);
+            parseExcel(data).then(({ sheets, firstHtml, wb }) => {
+              excelWorkbookRef.current = wb;
+              setExcelSheets(sheets);
+              setExcelSheetIdx(0);
+              setExcelHtml(firstHtml);
+              setLoading(false);
+            });
           })
           .catch(() => setLoading(false));
       } else {
@@ -131,9 +113,6 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
     } else {
       // 正常模式：需登录 token
       const token = localStorage.getItem('accessToken');
-      // 预览媒体直接走服务端限速流（inline），不再使用预签名直链
-      setUrl(`/api/file/${file.id}/stream?token=${encodeURIComponent(token || '')}&inline=1`);
-
       const streamUrl = `/api/file/${file.id}/stream`;
       const headers = { Authorization: `Bearer ${token}` };
 
@@ -150,12 +129,7 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
           .then((res) => res.blob())
           .then((blob) => {
             if (docxContainerRef.current) {
-              renderAsync(blob, docxContainerRef.current, undefined, {
-                className: 'docx-container',
-                inWrapper: true,
-                ignoreWidth: false,
-                ignoreHeight: false,
-              }).then(() => setLoading(false));
+              renderDocx(blob, docxContainerRef.current).then(() => setLoading(false));
             }
           })
           .catch(() => setLoading(false));
@@ -164,17 +138,45 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
           .then((res) => res.blob())
           .then((blob) => blob.arrayBuffer())
           .then((data) => {
-            const wb = XLSX.read(data);
-            excelWorkbookRef.current = wb;
-            setExcelSheets(wb.SheetNames);
-            setExcelSheetIdx(0);
-            const html = XLSX.utils.sheet_to_html(wb.Sheets[wb.SheetNames[0]], { editable: false });
-            setExcelHtml(html);
-            setLoading(false);
+            parseExcel(data).then(({ sheets, firstHtml, wb }) => {
+              excelWorkbookRef.current = wb;
+              setExcelSheets(sheets);
+              setExcelSheetIdx(0);
+              setExcelHtml(firstHtml);
+              setLoading(false);
+            });
+          })
+          .catch(() => setLoading(false));
+      } else if (isImage(file.suffix)) {
+        // 图片：通过预览 API 获取预签名 URL（access token 无法用于 <img src>）
+        api.get<string>(`/preview/${file.id}/thumbnail`, { params: { size: 'lg' } })
+          .then((u) => { setUrl(u); setLoading(false); })
+          .catch(() => setLoading(false));
+      } else if (isVideo(file.suffix) || isAudio(file.suffix) || isPdf(file.suffix)) {
+        // 视频/音频/PDF：通过预览 API 获取预签名 URL（支持 Range 请求/拖动进度条）
+        api.get<PreviewResult>(`/preview/${file.id}`)
+          .then((data) => {
+            if (data.url) {
+              setUrl(data.url);
+              setLoading(false);
+            } else {
+              // 后端不支持该格式预览，回退到下载令牌流
+              return api.post<{ token: string }>(`/file/${file.id}/download-token`)
+                .then((d) => {
+                  setUrl(`/api/file/${file.id}/stream?token=${encodeURIComponent(d.token)}&inline=1`);
+                  setLoading(false);
+                });
+            }
           })
           .catch(() => setLoading(false));
       } else {
-        setLoading(false);
+        // 不支持预览：获取下载令牌用于下载按钮
+        api.post<{ token: string }>(`/file/${file.id}/download-token`)
+          .then((data) => {
+            setUrl(`/api/file/${file.id}/stream?token=${encodeURIComponent(data.token)}&inline=1`);
+            setLoading(false);
+          })
+          .catch(() => setLoading(false));
       }
     }
   }, [file, shareContext?.shareCode, shareContext?.password]);
@@ -182,8 +184,7 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
   // Switch Excel sheet
   useEffect(() => {
     if (excelWorkbookRef.current && excelSheets.length > 0) {
-      const html = XLSX.utils.sheet_to_html(excelWorkbookRef.current.Sheets[excelSheets[excelSheetIdx]], { editable: false });
-      setExcelHtml(html);
+      excelSheetToHtml(excelWorkbookRef.current, excelSheets[excelSheetIdx]).then(setExcelHtml);
     }
   }, [excelSheetIdx]);
 
@@ -217,7 +218,7 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
       <div className="flex items-center justify-between px-5 py-3 bg-stone-900/80">
         <div className="flex items-center gap-3 min-w-0">
           <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0', config.bgColor)}>
-            <config.icon className={cn('w-4 h-4', config.color)} />
+            <config.icon className={cn('w-4 h-4', config.color)} aria-hidden />
           </div>
           <span className="text-white text-sm font-medium truncate">{file.name}</span>
           {/* Excel sheet selector */}
@@ -227,9 +228,9 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
                 onClick={() => setSheetDropdownOpen(!sheetDropdownOpen)}
                 className="flex items-center gap-1 px-2 py-1 text-xs text-white/70 hover:text-white hover:bg-white/10 rounded transition-colors"
               >
-                <Table className="w-3 h-3" />
+                <Table className="w-3 h-3" aria-hidden />
                 {excelSheets[excelSheetIdx]}
-                <ChevronDown className="w-3 h-3" />
+                <ChevronDown className="w-3 h-3" aria-hidden />
               </button>
               {sheetDropdownOpen && (
                 <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-md border border-stone-200 py-1 min-w-[120px] z-20">
@@ -256,7 +257,7 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
               onClick={() => onDownload(file)}
               className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white/80 hover:text-white hover:bg-white/10 rounded-lg cursor-pointer transition-colors"
             >
-              <Download className="w-4 h-4" />
+              <Download className="w-4 h-4" aria-hidden />
               <span>下载</span>
             </button>
           ) : url ? (
@@ -266,12 +267,12 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white/80 hover:text-white hover:bg-white/10 rounded-lg cursor-pointer transition-colors"
             >
-              <Download className="w-4 h-4" />
+              <Download className="w-4 h-4" aria-hidden />
               <span>下载</span>
             </a>
           ) : null}
-          <button onClick={onClose} className="text-white/60 hover:text-white p-1.5 cursor-pointer transition-colors">
-            <X className="w-5 h-5" />
+          <button onClick={onClose} aria-label="关闭" className="text-white/60 hover:text-white p-1.5 cursor-pointer transition-colors">
+            <X className="w-5 h-5" aria-hidden />
           </button>
         </div>
       </div>
@@ -280,11 +281,11 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
       <div className="flex-1 flex items-center justify-center relative overflow-hidden">
         {files.length > 1 && (
           <button
-            onClick={goPrev}
+            onClick={goPrev} aria-label="上一个"
             disabled={index === 0}
             className="absolute left-4 p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-full cursor-pointer transition-colors disabled:opacity-30 disabled:cursor-not-allowed z-10"
           >
-            <ChevronLeft className="w-6 h-6" />
+            <ChevronLeft className="w-6 h-6" aria-hidden />
           </button>
         )}
 
@@ -294,7 +295,7 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
           ) : !canPreview ? (
             <div className="text-center">
               <div className={cn('w-24 h-24 rounded-2xl flex items-center justify-center mx-auto mb-4', config.bgColor)}>
-                <config.icon className={cn('w-10 h-10', config.color)} />
+                <config.icon className={cn('w-10 h-10', config.color)} aria-hidden />
               </div>
               <p className="text-white/60 text-sm mb-3">此文件类型不支持在线预览</p>
               {url && onDownload ? (
@@ -302,7 +303,7 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
                   onClick={() => onDownload(file)}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm rounded-lg cursor-pointer transition-colors"
                 >
-                  <Download className="w-4 h-4" />
+                  <Download className="w-4 h-4" aria-hidden />
                   <span>下载文件</span>
                 </button>
               ) : url ? (
@@ -312,7 +313,7 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm rounded-lg cursor-pointer transition-colors"
                 >
-                  <Download className="w-4 h-4" />
+                  <Download className="w-4 h-4" aria-hidden />
                   <span>下载文件</span>
                 </a>
               ) : null}
@@ -320,7 +321,9 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
           ) : isImage(file.suffix) && url ? (
             <img src={url} alt={file.name} className="max-w-full max-h-full object-contain rounded-lg" />
           ) : isVideo(file.suffix) && url ? (
-            <PlyrPlayer src={url} />
+            <Suspense fallback={<div className="w-10 h-10 border-3 border-white/30 border-t-white rounded-full animate-spin" />}>
+              <PlyrPlayer src={url} />
+            </Suspense>
           ) : isAudio(file.suffix) && url ? (
             <div className="flex flex-col items-center gap-6">
               <div className={cn('w-32 h-32 rounded-3xl flex items-center justify-center', config.bgColor)}>
@@ -354,11 +357,11 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
 
         {files.length > 1 && (
           <button
-            onClick={goNext}
+            onClick={goNext} aria-label="下一个"
             disabled={index === files.length - 1}
             className="absolute right-4 p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-full cursor-pointer transition-colors disabled:opacity-30 disabled:cursor-not-allowed z-10"
           >
-            <ChevronRight className="w-6 h-6" />
+            <ChevronRight className="w-6 h-6" aria-hidden />
           </button>
         )}
       </div>

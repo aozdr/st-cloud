@@ -312,7 +312,7 @@ class SearchServiceImplTest {
 
             doReturn(mockResponse).when(client).search(any(Function.class), eq(Map.class));
 
-            List<SearchResultVO> results = searchService.searchContent("Hello", 1L, 1, 20);
+            List<SearchResultVO> results = searchService.searchContent("Hello", 1L, 1, 20, null, null, null, null, null, null);
 
             assertEquals(1, results.size());
             SearchResultVO vo = results.get(0);
@@ -342,7 +342,7 @@ class SearchServiceImplTest {
 
             doReturn(mockResponse).when(client).search(any(Function.class), eq(Map.class));
 
-            List<SearchResultVO> results = searchService.searchContent("test", null, 1, 10);
+            List<SearchResultVO> results = searchService.searchContent("test", null, 1, 10, null, null, null, null, null, null);
 
             assertEquals(1, results.size());
             SearchResultVO vo = results.get(0);
@@ -368,7 +368,7 @@ class SearchServiceImplTest {
 
             doReturn(mockResponse).when(client).search(any(Function.class), eq(Map.class));
 
-            List<SearchResultVO> results = searchService.searchContent("keyword", 1L, 1, 10);
+            List<SearchResultVO> results = searchService.searchContent("keyword", 1L, 1, 10, null, null, null, null, null, null);
 
             assertEquals(3, results.size());
             assertEquals(1L, results.get(0).getFileId());
@@ -384,7 +384,7 @@ class SearchServiceImplTest {
 
             doReturn(mockResponse).when(client).search(any(Function.class), eq(Map.class));
 
-            List<SearchResultVO> results = searchService.searchContent("nothing", 1L, 1, 10);
+            List<SearchResultVO> results = searchService.searchContent("nothing", 1L, 1, 10, null, null, null, null, null, null);
 
             assertNotNull(results);
             assertTrue(results.isEmpty());
@@ -396,7 +396,7 @@ class SearchServiceImplTest {
             when(client.search(any(Function.class), eq(Map.class)))
                     .thenThrow(new RuntimeException("ES connection refused"));
 
-            List<SearchResultVO> results = searchService.searchContent("test", 1L, 1, 10);
+            List<SearchResultVO> results = searchService.searchContent("test", 1L, 1, 10, null, null, null, null, null, null);
 
             assertNotNull(results);
             assertTrue(results.isEmpty(), "ES 异常时应返回空列表");
@@ -426,7 +426,7 @@ class SearchServiceImplTest {
 
             doReturn(mockResponse).when(client).search(any(Function.class), eq(Map.class));
 
-            List<SearchResultVO> results = searchService.searchContent("test", 1L, 1, 10);
+            List<SearchResultVO> results = searchService.searchContent("test", 1L, 1, 10, null, null, null, null, null, null);
 
             assertEquals(1, results.size(), "source 为 null 的 hit 应被跳过");
             assertEquals(2L, results.get(0).getFileId());
@@ -440,7 +440,7 @@ class SearchServiceImplTest {
 
             doReturn(mockResponse).when(client).search(any(Function.class), eq(Map.class));
 
-            assertDoesNotThrow(() -> searchService.searchContent("test", 1L, 0, 10));
+            assertDoesNotThrow(() -> searchService.searchContent("test", 1L, 0, 10, null, null, null, null, null, null));
         }
     }
 
@@ -584,7 +584,7 @@ class SearchServiceImplTest {
 
             doReturn(mockResponse).when(client).search(any(Function.class), eq(Map.class));
 
-            List<SearchResultVO> results = searchService.searchContent("test", 1L, 1, 10);
+            List<SearchResultVO> results = searchService.searchContent("test", 1L, 1, 10, null, null, null, null, null, null);
 
             assertEquals(1, results.size());
             assertNull(results.get(0).getFileId(), "非数字 fileId 应返回 null");
@@ -603,7 +603,7 @@ class SearchServiceImplTest {
 
             doReturn(mockResponse).when(client).search(any(Function.class), eq(Map.class));
 
-            List<SearchResultVO> results = searchService.searchContent("test", 1L, 1, 10);
+            List<SearchResultVO> results = searchService.searchContent("test", 1L, 1, 10, null, null, null, null, null, null);
 
             assertEquals(1, results.size());
             assertNull(results.get(0).getFileId());
@@ -625,7 +625,7 @@ class SearchServiceImplTest {
 
             doReturn(mockResponse).when(client).search(any(Function.class), eq(Map.class));
 
-            List<SearchResultVO> results = searchService.searchContent("test", 1L, 1, 10);
+            List<SearchResultVO> results = searchService.searchContent("test", 1L, 1, 10, null, null, null, null, null, null);
 
             assertEquals("<em>foo</em> ... <em>bar</em> ... <em>baz</em>",
                     results.get(0).getHighlight());
@@ -646,7 +646,7 @@ class SearchServiceImplTest {
 
             doReturn(mockResponse).when(client).search(any(Function.class), eq(Map.class));
 
-            List<SearchResultVO> results = searchService.searchContent("test", 1L, 1, 10);
+            List<SearchResultVO> results = searchService.searchContent("test", 1L, 1, 10, null, null, null, null, null, null);
 
             assertEquals(1, results.size());
             assertEquals("<em>test</em>.txt", results.get(0).getHighlight());

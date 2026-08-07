@@ -20,7 +20,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -144,7 +146,17 @@ public class SyncServiceImpl implements SyncService {
 
         List<FileNode> nodes = fileNodeMapper.selectList(wrapper);
         boolean hasMore = nodes.size() > PAGE_SIZE;
-        if (hasMore) {
+        // 排除回收子树中仍为 NORMAL 的节点，避免把已删除内容同步给客户端
+        if (!nodes.isEmpty()) {
+            List<Long> nodeIds = nodes.stream().map(FileNode::getId).collect(Collectors.toList());
+            Set<Long> inaccessible = new HashSet<>(fileNodeMapper.findIdsWithInaccessibleAncestor(nodeIds));
+            if (!inaccessible.isEmpty()) {
+                nodes = nodes.stream()
+                        .filter(n -> !inaccessible.contains(n.getId()))
+                        .collect(Collectors.toList());
+            }
+        }
+        if (hasMore && nodes.size() > PAGE_SIZE) {
             nodes = nodes.subList(0, PAGE_SIZE);
         }
 

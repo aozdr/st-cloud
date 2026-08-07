@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Download, Pencil, FolderInput, Copy, Trash2, FolderOpen, Eye, Scissors, ClipboardPaste, Share2, History } from 'lucide-react';
+import { Download, Pencil, FolderInput, Copy, Trash2, FolderOpen, Eye, Scissors, ClipboardPaste, Share2, History, Info, Star, type LucideIcon } from 'lucide-react';
 import type { FileNode } from '../../types';
 import { usePermission } from '../../lib/permission';
 
@@ -10,11 +10,12 @@ interface Props {
   hasClipboard: boolean;
   showShare?: boolean;
   showVersions?: boolean;
+  isFav?: boolean;
   onAction: (action: string, node: FileNode) => void;
   onClose: () => void;
 }
 
-export default function ContextMenu({ x, y, node, hasClipboard, showShare = true, showVersions = true, onAction, onClose }: Props) {
+export default function ContextMenu({ x, y, node, hasClipboard, showShare = true, showVersions = true, isFav = false, onAction, onClose }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const { has } = usePermission();
 
@@ -28,12 +29,14 @@ export default function ContextMenu({ x, y, node, hasClipboard, showShare = true
   const adjustedX = Math.min(x, window.innerWidth - 200);
   const adjustedY = Math.min(y, window.innerHeight - 360);
 
-  const rawItems: Array<{ action?: string; label?: string; icon?: any; danger?: boolean; type?: 'separator' }> = [
+  const rawItems: Array<{ action?: string; label?: string; icon?: LucideIcon; danger?: boolean; type?: 'separator' }> = [
     ...(node.nodeType === 0
       ? [{ action: 'open', label: '打开', icon: FolderOpen }]
       : has('file:preview')
         ? [{ action: 'preview', label: '预览', icon: Eye }]
         : []),
+    { action: 'details', label: '详情', icon: Info },
+    { action: 'favorite', label: isFav ? '取消收藏' : '收藏', icon: Star },
     ...(has('file:move') ? [{ action: 'cut', label: '剪切', icon: Scissors }] : []),
     ...(has('file:copy') ? [{ action: 'copy', label: '复制', icon: Copy }] : []),
     ...(hasClipboard && (has('file:copy') || has('file:move')) ? [{ action: 'paste', label: '粘贴', icon: ClipboardPaste }] : []),
@@ -68,7 +71,7 @@ export default function ContextMenu({ x, y, node, hasClipboard, showShare = true
         if (item.type === 'separator') {
           return <div key={idx} className="my-1 border-t border-stone-100" />;
         }
-        const Icon = item.icon;
+        const Icon = item.icon!;
         return (
           <button
             key={idx}
@@ -77,7 +80,7 @@ export default function ContextMenu({ x, y, node, hasClipboard, showShare = true
               item.danger ? 'text-red-600 hover:bg-red-50' : 'text-stone-700 hover:bg-stone-50'
             }`}
           >
-            <Icon className="w-4 h-4" />
+            <Icon className="w-4 h-4" aria-hidden />
             <span>{item.label}</span>
           </button>
         );

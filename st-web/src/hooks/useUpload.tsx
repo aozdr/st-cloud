@@ -4,11 +4,12 @@ import { isElectron } from '../lib/electron';
 import { useTransferStore } from '../store/transfer';
 import { useStorageStore } from '../store/storage';
 import type { UploadTask, UploadTaskStatus, TransferTask } from '../types';
+import UploadPanel from '../components/file/UploadPanel';
 
 interface UploadContextValue {
   tasks: UploadTask[];
   addFiles: (files: File[], parentId: string, replaceFileId?: string, spaceId?: string) => void;
-  addFilePaths: (filePaths: string[], parentId: string, replaceFileId?: string, spaceId?: string) => void;
+  addFilePaths: (filePaths: string[], parentId: string, replaceFileId?: string, _spaceId?: string) => void;
   removeTask: (id: string) => void;
   clearCompleted: () => void;
   panelOpen: boolean;
@@ -25,14 +26,19 @@ const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB
 import SparkMD5 from 'spark-md5';
 
 async function calculateMd5(file: File): Promise<string> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const spark = new SparkMD5.ArrayBuffer();
     const reader = new FileReader();
     reader.onload = (e) => {
       spark.append(e.target?.result as ArrayBuffer);
+      // Append file size so files with identical prefixes but different sizes do not collide
+      const sizeBuf = new ArrayBuffer(8);
+      new DataView(sizeBuf).setFloat64(0, file.size);
+      spark.append(sizeBuf);
       resolve(spark.end());
     };
-    // For large files, only hash first and last 2MB + file size for speed
+    reader.onerror = () => reject(new Error('Failed to read file for MD5'));
+    // For large files, hash the first 2MB + file size for speed; otherwise hash the whole file
     if (file.size > 10 * 1024 * 1024) {
       const blob = file.slice(0, 2 * 1024 * 1024);
       reader.readAsArrayBuffer(blob);
@@ -104,7 +110,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
 
         // Step 2: Check instant upload（替换上传跳过秒传，始终生成新版本）
         if (!replaceFileId) {
-          const checkRes = await api.post('/file/upload/check', {
+          const checkRes = await api.post<{ instant?: boolean }>('/file/upload/check', {
             fileMd5,
             fileSize: file.size,
             fileName: file.name,
@@ -131,7 +137,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
           parentId,
           ...(replaceFileId ? { replaceFileId } : {}),
           ...(spaceId ? { spaceId } : {}),
-        })) as any;
+        })) as { uploadId: string; s3UploadId: string };
 
         updateTask(taskId, {
           status: 'uploading',
@@ -154,7 +160,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
           while (!url) {
             const res = (await api.get('/file/upload/chunk-url', {
               params: { uploadId: initRes.uploadId, s3UploadId: initRes.s3UploadId, chunkIndex: index, clientLimit: useTransferStore.getState().effective.uploadSpeedLimit },
-            })) as any;
+            })) as { url: string; retryAfterMs?: number };
             if (res?.url) {
               url = res.url;
             } else {
@@ -171,10 +177,11 @@ export function UploadProvider({ children }: { children: ReactNode }) {
             // ignore confirm error
           }
           uploadedCount++;
-          updateTask(taskId, {
+          setTasks((prev) => prev.map((t) => t.id !== taskId ? t : {
+            ...t,
             progress: 10 + Math.floor((uploadedCount / totalChunks) * 80),
-            uploadedChunks: [...(tasks.find((t) => t.id === taskId)?.uploadedChunks || []), index],
-          });
+            uploadedChunks: [...(t.uploadedChunks || []), index],
+          }));
         };
 
         const chunkIndexes = Array.from({ length: totalChunks }, (_, i) => i + 1);
@@ -200,10 +207,10 @@ export function UploadProvider({ children }: { children: ReactNode }) {
         });
       }
     }
-  }, [updateTask, tasks]);
+  }, [updateTask]);
 
   // Electron 模式：通过 IPC 委托上传
-  const addFilePaths = useCallback(async (filePaths: string[], parentId: string, replaceFileId?: string, spaceId?: string) => {
+  const addFilePaths = useCallback(async (filePaths: string[], parentId: string, replaceFileId?: string, _spaceId?: string) => {
     if (!isElectron()) return;
     setPanelOpen(true);
 
@@ -225,7 +232,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
       try {
         const electronTaskId = await window.electronAPI!.startUpload(filePath, parentId, replaceFileId);
         // 标记为 electron 管理的任务，后续进度由 IPC 更新
-        updateTask(taskId, { status: 'uploading', electronTaskId: electronTaskId as any });
+        updateTask(taskId, { status: 'uploading', electronTaskId: electronTaskId as string });
       } catch (err) {
         updateTask(taskId, {
           status: 'failed',
@@ -241,7 +248,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
     const unsubscribe = window.electronAPI!.onTaskUpdate((transferTask: TransferTask) => {
       setTasks((prev) => {
         // 找到对应的 electron 任务
-        const idx = prev.findIndex((t) => (t as any).electronTaskId === transferTask.id);
+        const idx = prev.findIndex((t) => t.electronTaskId === transferTask.id);
         if (idx === -1) return prev;
 
         const statusMap: Record<string, UploadTaskStatus> = {
@@ -285,111 +292,6 @@ export function UploadProvider({ children }: { children: ReactNode }) {
       {children}
       <UploadPanel />
     </UploadContext.Provider>
-  );
-}
-
-// Upload progress panel
-import { X, CheckCircle2, AlertCircle, Loader2, Zap, FileUp, Pause, ListChecks } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import { formatSize } from '../lib/utils';
-
-function UploadPanel() {
-  const ctx = useContext(UploadContext);
-  const navigate = useNavigate();
-  if (!ctx) return null;
-  const { tasks, panelOpen, setPanelOpen, removeTask, clearCompleted } = ctx;
-
-  const activeCount = tasks.filter((t) => !['completed', 'instant', 'failed', 'paused'].includes(t.status)).length;
-  const hasCompleted = tasks.some((t) => t.status === 'completed' || t.status === 'instant');
-
-  // Collapsed: floating icon button (no tasks, or panel closed with tasks)
-  if (!panelOpen) {
-    return (
-      <div className="fixed bottom-6 right-6 z-50">
-        <button
-          onClick={() => setPanelOpen(true)}
-          className="relative w-12 h-12 bg-white rounded-full border border-stone-200 shadow-md flex items-center justify-center hover:scale-105 cursor-pointer transition-all"
-        >
-          <FileUp className="w-5 h-5 text-stone-600" />
-          {activeCount > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 bg-primary-600 text-white text-[11px] font-semibold rounded-full flex items-center justify-center">
-              {activeCount}
-            </span>
-          )}
-        </button>
-      </div>
-    );
-  }
-
-  // Expanded: full panel with task list
-  return (
-    <div className="fixed bottom-6 right-6 w-96 bg-white rounded-xl border border-stone-200 shadow-lg z-50 animate-slide-up overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b border-stone-100">
-        <div className="flex items-center gap-2">
-          <FileUp className="w-4 h-4 text-primary-600" />
-          <span className="text-sm font-semibold text-stone-900">
-            上传队列 {activeCount > 0 && `(${activeCount})`}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => navigate('/transfers')}
-            className="flex items-center gap-1 text-xs text-stone-500 hover:text-primary-600 cursor-pointer transition-colors"
-          >
-            <ListChecks className="w-3.5 h-3.5" />
-            传输列表
-          </button>
-          {hasCompleted && (
-            <button onClick={clearCompleted} className="text-xs text-stone-500 hover:text-stone-900 cursor-pointer transition-colors">
-              清除已完成
-            </button>
-          )}
-          <button onClick={() => setPanelOpen(false)} className="text-stone-400 hover:text-stone-900 cursor-pointer transition-colors">
-            <X className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      <div className="max-h-80 overflow-y-auto">
-        {tasks.map((task) => (
-          <div key={task.id} className="px-4 py-3 border-b border-stone-50 last:border-0">
-            <div className="flex items-start justify-between gap-2 mb-1.5">
-              <div className="text-sm text-stone-900 truncate flex-1">{task.fileName}</div>
-              <button onClick={() => removeTask(task.id)} className="text-stone-300 hover:text-stone-600 cursor-pointer flex-shrink-0">
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="flex-1 h-1.5 bg-stone-100 rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all duration-300 ${
-                    task.status === 'failed' ? 'bg-red-500' :
-                    task.status === 'paused' ? 'bg-amber-500' :
-                    task.status === 'completed' || task.status === 'instant' ? 'bg-green-500' :
-                    'bg-primary-600'
-                  }`}
-                  style={{ width: `${task.progress}%` }}
-                />
-              </div>
-              <div className="flex items-center gap-1 text-xs text-stone-500 flex-shrink-0 w-20 justify-end">
-                {task.status === 'hashing' && <><Loader2 className="w-3 h-3 animate-spin" />计算中</>}
-                {task.status === 'pending' && <span>等待中</span>}
-                {task.status === 'uploading' && <>{task.progress}%</>}
-                {task.status === 'merging' && <><Loader2 className="w-3 h-3 animate-spin" />合并中</>}
-                {task.status === 'completed' && <><CheckCircle2 className="w-3 h-3 text-green-500" />完成</>}
-                {task.status === 'instant' && <><Zap className="w-3 h-3 text-yellow-500" />秒传</>}
-                {task.status === 'failed' && <><AlertCircle className="w-3 h-3 text-red-500" />失败</>}
-                {task.status === 'paused' && <><Pause className="w-3 h-3 text-amber-500" />已暂停</>}
-              </div>
-            </div>
-            <div className="text-xs text-stone-400 mt-1">
-              {formatSize(task.fileSize)}
-              {task.status === 'failed' && task.error && ` · ${task.error}`}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
   );
 }
 

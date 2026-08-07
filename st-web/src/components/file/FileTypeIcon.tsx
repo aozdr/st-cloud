@@ -1,4 +1,3 @@
-import { cn } from '../../lib/utils';
 import type { FileTypeConfig } from '../../lib/utils';
 
 interface Props {
@@ -50,7 +49,7 @@ function FolderSVG({ size }: { size: number }) {
   );
 }
 
-function FileSVG({ size, color, label, suffix }: { size: number; color: string; label: string; suffix?: string | null }) {
+function FileSVG({ size, label }: { size: number; label: string }) {
   const w = size;
   const h = size;
   const badge = TYPE_BADGE[label];
@@ -94,12 +93,12 @@ function FileSVG({ size, color, label, suffix }: { size: number; color: string; 
   );
 }
 
-export default function FileTypeIcon({ config, size = 'md', isFolder = false, suffix, className }: Props) {
+export default function FileTypeIcon({ config, size = 'md', isFolder = false }: Props) {
   const iconSize = SIZE_MAP[size];
 
   if (isFolder) {
     return <FolderSVG size={iconSize} />;
   }
 
-  return <FileSVG size={iconSize} color={config.color} label={config.label} suffix={suffix} />;
+  return <FileSVG size={iconSize} label={config.label} />;
 }

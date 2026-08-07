@@ -1,4 +1,10 @@
 declare module 'spark-md5' {
-  const SparkMD5: any;
+  interface SparkMD5ArrayBuffer {
+    append(data: ArrayBuffer): void;
+    end(): string;
+  }
+  const SparkMD5: {
+    ArrayBuffer: new () => SparkMD5ArrayBuffer;
+  };
   export default SparkMD5;
 }

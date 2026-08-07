@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import type { FileTreeNode } from '../../types';
 import { X, FolderClosed, ChevronRight, FolderOpen } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { useToast } from '../ui/Toast';
 
 interface Props {
   nodeIds: string[];
@@ -14,6 +15,7 @@ interface Props {
 
 export default function MoveDialog({ nodeIds, mode, loadTree, onConfirm, onClose, onSuccess }: Props) {
   const [tree, setTree] = useState<FileTreeNode[]>([]);
+  const { showToast } = useToast();
   const [targetId, setTargetId] = useState('0');
   const [expanded, setExpanded] = useState<Set<string>>(new Set(['0']));
   const [loading, setLoading] = useState(false);
@@ -25,7 +27,7 @@ export default function MoveDialog({ nodeIds, mode, loadTree, onConfirm, onClose
   const toggleExpand = (id: string) => {
     setExpanded((prev) => {
       const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
+      if (next.has(id)) { next.delete(id); } else { next.add(id); }
       return next;
     });
   };
@@ -35,8 +37,8 @@ export default function MoveDialog({ nodeIds, mode, loadTree, onConfirm, onClose
     try {
       await onConfirm(nodeIds, targetId, mode);
       onSuccess();
-    } catch (err) {
-      console.error('Move/copy failed:', err);
+    } catch {
+      showToast('\u64cd\u4f5c\u5931\u8d25', 'error');
     } finally {
       setLoading(false);
     }
@@ -56,9 +58,9 @@ export default function MoveDialog({ nodeIds, mode, loadTree, onConfirm, onClose
           {node.children.length > 0 ? (
             <button
               onClick={(e) => { e.stopPropagation(); toggleExpand(node.id); }}
-              className="p-0.5 hover:bg-stone-100 rounded cursor-pointer"
+              className="p-0.5 hover:bg-stone-100 rounded cursor-pointer" aria-label="展开或折叠"
             >
-              <ChevronRight className={cn('w-3.5 h-3.5 transition-transform', expanded.has(node.id) && 'rotate-90')} />
+              <ChevronRight className={cn('w-3.5 h-3.5 transition-transform', expanded.has(node.id) && 'rotate-90')} aria-hidden />
             </button>
           ) : (
             <span className="w-4" />
@@ -82,8 +84,8 @@ export default function MoveDialog({ nodeIds, mode, loadTree, onConfirm, onClose
           <h3 className="text-base font-semibold text-stone-900">
             {mode === 'move' ? '移动到' : '复制到'}
           </h3>
-          <button onClick={onClose} className="text-stone-400 hover:text-stone-900 cursor-pointer">
-            <X className="w-4 h-4" />
+          <button onClick={onClose} className="text-stone-400 hover:text-stone-900 cursor-pointer" aria-label="关闭">
+            <X className="w-4 h-4" aria-hidden />
           </button>
         </div>
 

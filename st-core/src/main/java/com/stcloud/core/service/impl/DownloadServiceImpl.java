@@ -74,6 +74,7 @@ public class DownloadServiceImpl implements DownloadService {
         if (node == null || node.getStatus() != NodeStatus.NORMAL.getCode()) {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
         }
+        fileService.validateAccessible(nodeId);
         // 团队空间文件：检查 spaceId 归属由 TeamController 权限控制
         // 个人文件：检查 ownerId
         if (node.getSpaceId() == null || node.getSpaceId() <= 0) {
@@ -168,6 +169,7 @@ public class DownloadServiceImpl implements DownloadService {
 
         try (ZipOutputStream zos = new ZipOutputStream(outputStream)) {
             for (Long nodeId : nodeIds) {
+                fileService.validateAccessible(nodeId);
                 FileNode node = fileService.getNodeByIdAndOwner(nodeId);
                 if (node.isFolder()) {
                     totalSize += addFolderToZip(node, "", zos, userId, rateBytes);

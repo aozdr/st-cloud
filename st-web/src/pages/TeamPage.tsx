@@ -41,8 +41,8 @@ export default function TeamPage() {
       setShowCreate(false);
       setForm({ spaceName: '', description: '' });
       fetchSpaces();
-    } catch (e: any) {
-      showToast(e.message || '创建失败', 'error');
+    } catch (e) {
+      showToast((e instanceof Error ? e.message : '') || '创建失败', 'error');
     }
   };
 
@@ -89,7 +89,7 @@ export default function TeamPage() {
               <div
                 key={space.id}
                 onClick={() => navigate(`/team/${space.id}`)}
-                className="bg-white rounded-lg border border-stone-200 p-5 cursor-pointer hover:shadow-sm transition-all group"
+                className="bg-white rounded-lg border border-stone-200 p-5 cursor-pointer hover:shadow-sm transition group"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="w-12 h-12 bg-primary-50 rounded-lg flex items-center justify-center">
@@ -126,8 +126,8 @@ export default function TeamPage() {
           <div className="w-full max-w-md bg-white rounded-xl shadow-lg border border-stone-200 overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-stone-100">
               <h2 className="text-base font-semibold text-stone-900">创建团队空间</h2>
-              <button onClick={() => setShowCreate(false)} className="text-stone-400 hover:text-stone-600 cursor-pointer">
-                <X className="w-5 h-5" />
+              <button onClick={() => setShowCreate(false)} className="text-stone-400 hover:text-stone-600 cursor-pointer" aria-label="关闭">
+                <X className="w-5 h-5" aria-hidden />
               </button>
             </div>
             <div className="p-5 space-y-4">

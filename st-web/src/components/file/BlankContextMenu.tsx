@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { ClipboardPaste, FolderPlus, RefreshCw, CheckSquare, Upload } from 'lucide-react';
+import { ClipboardPaste, FolderPlus, RefreshCw, CheckSquare, Upload, type LucideIcon } from 'lucide-react';
 import { usePermission } from '../../lib/permission';
 
 interface Props {
@@ -21,7 +21,7 @@ export default function BlankContextMenu({ x, y, hasClipboard, onAction, onClose
   const adjustedX = Math.min(x, window.innerWidth - 200);
   const adjustedY = Math.min(y, window.innerHeight - 290);
 
-  const items: Array<{ action: string; label: string; icon: any; disabled?: boolean }> = [
+  const items: Array<{ action: string; label: string; icon: LucideIcon; disabled?: boolean }> = [
     ...(has('file:upload') ? [{ action: 'newFolder', label: '新建文件夹', icon: FolderPlus }] : []),
     ...(has('file:upload') ? [{ action: 'upload', label: '上传文件', icon: Upload }] : []),
     { action: 'paste', label: '粘贴', icon: ClipboardPaste, disabled: !hasClipboard || (!has('file:copy') && !has('file:move')) },
@@ -53,7 +53,7 @@ export default function BlankContextMenu({ x, y, hasClipboard, onAction, onClose
                 : 'text-stone-700 hover:bg-stone-50 cursor-pointer'
             }`}
           >
-            <Icon className="w-4 h-4" />
+            <Icon className="w-4 h-4" aria-hidden />
             <span>{item.label}</span>
           </button>
         );

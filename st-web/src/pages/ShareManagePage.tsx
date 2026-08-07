@@ -1,8 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Share2, Copy, Trash2, Globe, Lock, Eye, Download, Clock, Link2, RefreshCw } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Share2, Copy, Trash2, Globe, Lock, Eye, Download, Clock, Link2, RefreshCw, Search } from 'lucide-react';
 import api from '../lib/api';
 import { useToast } from '../components/ui/Toast';
-import { formatSize } from '../lib/utils';
 import type { FileShare, PageResult } from '../types';
 
 export default function ShareManagePage() {
@@ -11,6 +10,8 @@ export default function ShareManagePage() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'cancelled'>('all');
 
   const fetchShares = useCallback(async () => {
     setLoading(true);
@@ -35,8 +36,8 @@ export default function ShareManagePage() {
       await api.delete(`/share/${shareId}`);
       showToast('分享已取消', 'success');
       fetchShares();
-    } catch (e: any) {
-      showToast(e.message || '操作失败', 'error');
+    } catch (e) {
+      showToast((e instanceof Error ? e.message : '') || '操作失败', 'error');
     }
   };
 
@@ -50,6 +51,15 @@ export default function ShareManagePage() {
     navigator.clipboard.writeText(password);
     showToast('提取码已复制', 'success');
   };
+
+  const filteredShares = useMemo(() => {
+    return shares.filter((s) => {
+      if (searchQuery && !s.fileName.toLowerCase().includes(searchQuery.toLowerCase())) return false;
+      if (statusFilter === 'active' && s.status !== 1) return false;
+      if (statusFilter === 'cancelled' && s.status === 1) return false;
+      return true;
+    });
+  }, [shares, searchQuery, statusFilter]);
 
   return (
     <div className="flex flex-col h-full">
@@ -66,18 +76,37 @@ export default function ShareManagePage() {
           onClick={fetchShares}
           className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-stone-600 bg-stone-100 rounded-md hover:bg-stone-200 transition-colors cursor-pointer"
         >
-          <RefreshCw className="w-4 h-4" />
+          <RefreshCw className="w-4 h-4" aria-hidden />
           刷新
         </button>
       </div>
 
       {/* Content */}
+      {shares.length > 0 && (
+        <div className="flex items-center gap-3 px-6 py-2.5 border-b border-stone-200 bg-white">
+          <div className="relative flex-1 max-w-xs">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" aria-hidden />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="搜索分享文件..."
+              className="w-full pl-9 pr-3 py-1.5 text-sm bg-stone-50 border border-stone-200 rounded-md focus:bg-white focus:border-primary-400 focus:outline-none"
+            />
+          </div>
+          <div className="flex items-center gap-1 bg-stone-100 rounded-lg p-0.5">
+            <button onClick={() => setStatusFilter('all')} className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer ${statusFilter === 'all' ? 'bg-white text-primary-700 shadow-sm' : 'text-stone-500 hover:text-stone-700'}`}>全部</button>
+            <button onClick={() => setStatusFilter('active')} className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer ${statusFilter === 'active' ? 'bg-white text-primary-700 shadow-sm' : 'text-stone-500 hover:text-stone-700'}`}>有效</button>
+            <button onClick={() => setStatusFilter('cancelled')} className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer ${statusFilter === 'cancelled' ? 'bg-white text-primary-700 shadow-sm' : 'text-stone-500 hover:text-stone-700'}`}>已取消</button>
+          </div>
+        </div>
+      )}
       <div className="flex-1 overflow-auto p-6">
         {loading ? (
           <div className="flex items-center justify-center py-20">
             <div className="w-8 h-8 border-3 border-primary-600 border-t-transparent rounded-full animate-spin" />
           </div>
-        ) : shares.length === 0 ? (
+        ) : filteredShares.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-stone-400">
             <Link2 className="w-12 h-12 mb-3 opacity-30" />
             <p className="text-sm">暂无分享记录</p>
@@ -99,7 +128,7 @@ export default function ShareManagePage() {
                 </tr>
               </thead>
               <tbody>
-                {shares.map((share) => (
+                {filteredShares.map((share) => (
                   <tr key={share.id} className="border-b border-stone-100 hover:bg-stone-50 transition-colors">
                     <td className="px-4 py-3 text-stone-800 font-medium truncate max-w-[200px]">{share.fileName}</td>
                     <td className="px-4 py-3">
@@ -132,7 +161,7 @@ export default function ShareManagePage() {
                         onClick={() => copyLink(share.shareCode, share.password || undefined)}
                         className="flex items-center gap-1 text-primary-600 hover:text-primary-700 transition-colors cursor-pointer"
                       >
-                        <Copy className="w-3.5 h-3.5" />
+                        <Copy className="w-3.5 h-3.5" aria-hidden />
                         <span className="text-xs">复制链接</span>
                       </button>
                     </td>
@@ -167,9 +196,9 @@ export default function ShareManagePage() {
                         <button
                           onClick={() => handleCancel(share.id)}
                           className="text-red-500 hover:text-red-600 transition-colors cursor-pointer"
-                          title="取消分享"
+                          title="取消分享" aria-label="取消分享"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-4 h-4" aria-hidden />
                         </button>
                       )}
                     </td>

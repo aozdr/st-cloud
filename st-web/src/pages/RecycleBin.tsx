@@ -4,11 +4,13 @@ import type { RecycleItem } from '../types';
 import { getFileTypeConfig, formatDate, formatSize, cn } from '../lib/utils';
 import { Trash2, RotateCcw, AlertTriangle, ChevronDown } from 'lucide-react';
 import { useConfirm } from '../components/ui/ConfirmDialog';
+import { useToast } from '../components/ui/Toast';
 import { useStorageStore } from '../store/storage';
 import FileTypeIcon from '../components/file/FileTypeIcon';
 
 export default function RecycleBin() {
   const { confirm } = useConfirm();
+  const { showToast } = useToast();
   const [items, setItems] = useState<RecycleItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -70,8 +72,8 @@ export default function RecycleBin() {
       await api.post('/recycle/restore', { nodeIds: ids });
       fetchItems();
       setSelectedIds(new Set());
-    } catch (err) {
-      console.error('Restore failed:', err);
+    } catch {
+      showToast('\u6062\u590d\u5931\u8d25', 'error');
     }
   };
 
@@ -88,8 +90,8 @@ export default function RecycleBin() {
       fetchItems();
       setSelectedIds(new Set());
       useStorageStore.getState().fetchStorage();
-    } catch (err) {
-      console.error('Delete failed:', err);
+    } catch {
+      showToast('\u5220\u9664\u5931\u8d25', 'error');
     }
   };
 
@@ -106,8 +108,8 @@ export default function RecycleBin() {
       fetchItems();
       setSelectedIds(new Set());
       useStorageStore.getState().fetchStorage();
-    } catch (err) {
-      console.error('Empty recycle bin failed:', err);
+    } catch {
+      showToast('\u6e05\u7a7a\u56de\u6536\u7ad9\u5931\u8d25', 'error');
     }
   };
 
@@ -128,14 +130,14 @@ export default function RecycleBin() {
                 onClick={() => handleRestore([...selectedIds])}
                 className="btn-ghost"
               >
-                <RotateCcw className="w-4 h-4" />
+                <RotateCcw className="w-4 h-4" aria-hidden />
                 <span>恢复</span>
               </button>
               <button
                 onClick={() => handlePermanentDelete([...selectedIds])}
                 className="btn-ghost text-red-600 hover:bg-red-50"
               >
-                <Trash2 className="w-4 h-4" />
+                <Trash2 className="w-4 h-4" aria-hidden />
                 <span>永久删除</span>
               </button>
               <div className="w-px h-5 bg-stone-200 mx-1" />
@@ -146,7 +148,7 @@ export default function RecycleBin() {
               onClick={handleEmpty}
               className="btn-danger"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-4 h-4" aria-hidden />
               <span>清空回收站</span>
             </button>
           )}
@@ -161,8 +163,17 @@ export default function RecycleBin() {
         }}
       >
         {loading ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="w-8 h-8 border-3 border-primary-600 border-t-transparent rounded-full animate-spin" />
+          <div className="bg-white rounded-lg border border-stone-200 overflow-hidden">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 px-4 py-3 border-b border-stone-50 last:border-0">
+                <div className="w-4 h-4 bg-stone-100 rounded animate-pulse flex-shrink-0" />
+                <div className="w-8 h-8 bg-stone-100 rounded-lg animate-pulse flex-shrink-0" />
+                <div className="flex-1 h-4 bg-stone-100 rounded animate-pulse" />
+                <div className="w-32 h-4 bg-stone-100 rounded animate-pulse flex-shrink-0" />
+                <div className="w-28 h-4 bg-stone-100 rounded animate-pulse flex-shrink-0" />
+                <div className="w-20 h-4 bg-stone-100 rounded animate-pulse flex-shrink-0" />
+              </div>
+            ))}
           </div>
         ) : items.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full py-20">
@@ -179,13 +190,13 @@ export default function RecycleBin() {
                 <tr className="border-b border-stone-200 bg-stone-50">
                   <th className="w-10 px-4 py-2.5">
                     <button
-                      onClick={selectAll}
+                      onClick={selectAll} aria-label="全选"
                       className={cn(
                         'w-4 h-4 rounded border flex items-center justify-center cursor-pointer transition-colors',
                         allSelected ? 'bg-primary-600 border-primary-600' : 'border-stone-300 hover:border-primary-500'
                       )}
                     >
-                      {allSelected && <ChevronDown className="w-3 h-3 text-white" />}
+                      {allSelected && <ChevronDown className="w-3 h-3 text-white" aria-hidden />}
                     </button>
                   </th>
                   <th className="text-left text-xs font-medium text-stone-500 px-3 py-2.5">名称</th>
@@ -227,16 +238,16 @@ export default function RecycleBin() {
                           <div className="min-w-0">
                             <div className="text-sm text-stone-900 truncate">{item.name}</div>
                             {item.fileSize && (
-                              <div className="text-xs text-stone-400">{formatSize(item.fileSize)}</div>
+                              <div className="text-xs text-stone-400 tabular-nums">{formatSize(item.fileSize)}</div>
                             )}
                           </div>
                         </div>
                       </td>
                       <td className="px-3 py-2.5 text-sm text-stone-400 truncate">{item.path}</td>
-                      <td className="px-3 py-2.5 text-sm text-stone-500">{formatDate(item.updatedAt)}</td>
+                      <td className="px-3 py-2.5 text-sm text-stone-500 tabular-nums">{formatDate(item.updatedAt)}</td>
                       <td className="px-3 py-2.5">
                         {item.remainingDays > 0 ? (
-                          <span className="text-sm text-stone-500">{item.remainingDays} 天</span>
+                          <span className="text-sm text-stone-500 tabular-nums">{item.remainingDays} 天</span>
                         ) : (
                           <span className="text-xs text-red-600 flex items-center gap-1">
                             <AlertTriangle className="w-3 h-3" />
@@ -249,16 +260,16 @@ export default function RecycleBin() {
                           <button
                             onClick={(e) => { e.stopPropagation(); handleRestore([item.id]); }}
                             className="p-1.5 text-stone-500 hover:text-primary-600 hover:bg-primary-50 rounded-lg cursor-pointer transition-colors"
-                            title="恢复"
+                            title="恢复" aria-label="恢复"
                           >
-                            <RotateCcw className="w-4 h-4" />
+                            <RotateCcw className="w-4 h-4" aria-hidden />
                           </button>
                           <button
                             onClick={(e) => { e.stopPropagation(); handlePermanentDelete([item.id]); }}
                             className="p-1.5 text-stone-500 hover:text-red-600 hover:bg-red-50 rounded-lg cursor-pointer transition-colors"
-                            title="永久删除"
+                            title="永久删除" aria-label="永久删除"
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-4 h-4" aria-hidden />
                           </button>
                         </div>
                       </td>

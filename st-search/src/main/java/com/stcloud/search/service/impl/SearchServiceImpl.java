@@ -16,7 +16,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.*;
+
+import co.elastic.clients.elasticsearch._types.FieldValue;
+import co.elastic.clients.json.JsonData;
 
 /**
  * ES 搜索服务：文件内容索引、搜索、删除
@@ -87,6 +93,8 @@ public class SearchServiceImpl implements SearchService {
             doc.put(SearchIndexInitializer.FIELD_FILE_SIZE, fileNode.getFileSize());
             doc.put(SearchIndexInitializer.FIELD_PATH, fileNode.getPath());
             doc.put(SearchIndexInitializer.FIELD_NODE_TYPE, fileNode.getNodeType());
+            doc.put(SearchIndexInitializer.FIELD_CREATED_AT, fileNode.getCreatedAt() != null ? fileNode.getCreatedAt().toInstant(ZoneOffset.UTC).toEpochMilli() : null);
+            doc.put(SearchIndexInitializer.FIELD_UPDATED_AT, fileNode.getUpdatedAt() != null ? fileNode.getUpdatedAt().toInstant(ZoneOffset.UTC).toEpochMilli() : null);
             doc.put(SearchIndexInitializer.FIELD_DATA, base64Data);
 
             client.index(i -> i
@@ -117,6 +125,8 @@ public class SearchServiceImpl implements SearchService {
             doc.put(SearchIndexInitializer.FIELD_FILE_SIZE, fileNode.getFileSize());
             doc.put(SearchIndexInitializer.FIELD_PATH, fileNode.getPath());
             doc.put(SearchIndexInitializer.FIELD_NODE_TYPE, fileNode.getNodeType());
+            doc.put(SearchIndexInitializer.FIELD_CREATED_AT, fileNode.getCreatedAt() != null ? fileNode.getCreatedAt().toInstant(ZoneOffset.UTC).toEpochMilli() : null);
+            doc.put(SearchIndexInitializer.FIELD_UPDATED_AT, fileNode.getUpdatedAt() != null ? fileNode.getUpdatedAt().toInstant(ZoneOffset.UTC).toEpochMilli() : null);
 
             client.index(i -> i
                     .index(SearchIndexInitializer.INDEX_NAME)
@@ -139,42 +149,79 @@ public class SearchServiceImpl implements SearchService {
      * @return 搜索结果列表
      */
     @Override
-    public List<SearchResultVO> searchContent(String keyword, Long ownerId, int page, int size) {
-        log.info("Search request: keyword='{}', ownerId={}, page={}, size={}", keyword, ownerId, page, size);
+    public List<SearchResultVO> searchContent(String keyword, Long ownerId, int page, int size,
+            Integer nodeType, List<String> suffixes, Long sizeMin, Long sizeMax, Long dateFrom, Long dateTo) {
+        log.info("Search request: keyword='{}', ownerId={}, page={}, size={}, filters=[nodeType={}, suffixes={}, sizeMin={}, sizeMax={}, dateFrom={}, dateTo={}]", keyword, ownerId, page, size, nodeType, suffixes, sizeMin, sizeMax, dateFrom, dateTo);
         try {
             int from = Math.max(0, (page - 1) * size);
             String contentField = SearchIndexInitializer.FIELD_ATTACHMENT + "." + SearchIndexInitializer.FIELD_CONTENT;
             String fileNameField = SearchIndexInitializer.FIELD_FILE_NAME;
 
+            boolean matchAll = keyword == null || keyword.isBlank() || "*".equals(keyword.trim());
             SearchResponse<Map> response = client.search(s -> {
                 s.index(SearchIndexInitializer.INDEX_NAME)
                         .from(from)
                         .size(size)
                         .query(q -> q.bool(b -> {
-                            // 文件名 OR 内容匹配
-                            b.should(m -> m.match(mm -> mm
-                                    .field(contentField)
-                                    .query(keyword)
-                            ));
-                            b.should(m -> m.match(mm -> mm
-                                    .field(fileNameField)
-                                    .query(keyword)
-                            ));
-                            b.minimumShouldMatch("1");
+                            if (matchAll) {
+                                // 无关键词（首页按文件类型浏览）：匹配全部，仅靠过滤器筛选
+                                b.must(m -> m.matchAll(ma -> ma));
+                            } else {
+                                // 文件名 OR 内容匹配
+                                b.should(m -> m.match(mm -> mm
+                                        .field(contentField)
+                                        .query(keyword)
+                                ));
+                                b.should(m -> m.match(mm -> mm
+                                        .field(fileNameField)
+                                        .query(keyword)
+                                ));
+                                b.minimumShouldMatch("1");
+                            }
                             if (ownerId != null) {
                                 b.filter(f -> f.term(t -> t
                                         .field(SearchIndexInitializer.FIELD_OWNER_ID)
                                         .value(ownerId)
                                 ));
                             }
+                            if (nodeType != null) {
+                                b.filter(f -> f.term(t -> t
+                                        .field(SearchIndexInitializer.FIELD_NODE_TYPE)
+                                        .value(nodeType)
+                                ));
+                            }
+                            if (suffixes != null && !suffixes.isEmpty()) {
+                                b.filter(f -> f.terms(t -> t
+                                        .field(SearchIndexInitializer.FIELD_SUFFIX)
+                                        .terms(tt -> tt.value(suffixes.stream().map(FieldValue::of).toList()))
+                                ));
+                            }
+                            if (sizeMin != null || sizeMax != null) {
+                                b.filter(f -> f.range(r -> {
+                                    r.field(SearchIndexInitializer.FIELD_FILE_SIZE);
+                                    if (sizeMin != null) r.gte(JsonData.of(sizeMin));
+                                    if (sizeMax != null) r.lte(JsonData.of(sizeMax));
+                                    return r;
+                                }));
+                            }
+                            if (dateFrom != null || dateTo != null) {
+                                b.filter(f -> f.range(r -> {
+                                    r.field(SearchIndexInitializer.FIELD_UPDATED_AT);
+                                    if (dateFrom != null) r.gte(JsonData.of(dateFrom));
+                                    if (dateTo != null) r.lte(JsonData.of(dateTo));
+                                    return r;
+                                }));
+                            }
                             return b;
-                        }))
-                        .highlight(h -> h
-                                .fields(contentField,
-                                        f -> f.preTags("<em>").postTags("</em>").fragmentSize(150).numberOfFragments(3))
-                                .fields(fileNameField,
-                                        f -> f.preTags("<em>").postTags("</em>"))
-                        );
+                        }));
+                if (!matchAll) {
+                    s.highlight(h -> h
+                            .fields(contentField,
+                                    f -> f.preTags("<em>").postTags("</em>").fragmentSize(150).numberOfFragments(3))
+                            .fields(fileNameField,
+                                    f -> f.preTags("<em>").postTags("</em>"))
+                    );
+                }
                 return s;
             }, Map.class);
 
@@ -186,6 +233,33 @@ public class SearchServiceImpl implements SearchService {
                 }
                 results.add(toVO(source, hit));
             }
+
+            // Enrich with createdAt/updatedAt from database (ES index may not have them yet)
+            if (!results.isEmpty()) {
+                List<Long> fileIds = new ArrayList<>();
+                for (SearchResultVO vo : results) {
+                    if (vo.getFileId() != null) fileIds.add(vo.getFileId());
+                }
+                if (!fileIds.isEmpty()) {
+                    List<FileNode> nodes = fileNodeMapper.selectBatchIds(fileIds);
+                    Map<Long, FileNode> nodeMap = new HashMap<>();
+                    for (FileNode node : nodes) {
+                        nodeMap.put(node.getId(), node);
+                    }
+                    for (SearchResultVO vo : results) {
+                        FileNode node = nodeMap.get(vo.getFileId());
+                        if (node != null) {
+                            if (vo.getCreatedAt() == null && node.getCreatedAt() != null) {
+                                vo.setCreatedAt(node.getCreatedAt());
+                            }
+                            if (vo.getUpdatedAt() == null && node.getUpdatedAt() != null) {
+                                vo.setUpdatedAt(node.getUpdatedAt());
+                            }
+                        }
+                    }
+                }
+            }
+
             long total = response.hits().total() != null ? response.hits().total().value() : 0;
             log.info("Search completed: keyword='{}', ownerId={}, totalHits={}, returned={}",
                     keyword, ownerId, total, results.size());
@@ -280,6 +354,11 @@ public class SearchServiceImpl implements SearchService {
         vo.setContentType((String) source.get(SearchIndexInitializer.FIELD_CONTENT_TYPE));
         Object nodeTypeVal = source.get(SearchIndexInitializer.FIELD_NODE_TYPE);
         vo.setNodeType(nodeTypeVal instanceof Number ? ((Number) nodeTypeVal).intValue() : null);
+
+        Long createdAtMs = toLong(source.get(SearchIndexInitializer.FIELD_CREATED_AT));
+        Long updatedAtMs = toLong(source.get(SearchIndexInitializer.FIELD_UPDATED_AT));
+        if (createdAtMs != null) vo.setCreatedAt(LocalDateTime.ofInstant(Instant.ofEpochMilli(createdAtMs), ZoneOffset.UTC));
+        if (updatedAtMs != null) vo.setUpdatedAt(LocalDateTime.ofInstant(Instant.ofEpochMilli(updatedAtMs), ZoneOffset.UTC));
 
         // 合并高亮片段：优先内容高亮，没有则用文件名高亮
         String contentField = SearchIndexInitializer.FIELD_ATTACHMENT + "." + SearchIndexInitializer.FIELD_CONTENT;

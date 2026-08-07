@@ -167,8 +167,8 @@ export default function SpeedLimitPanel() {
       }
       setModalOpen(false);
       fetchRules();
-    } catch (e: any) {
-      showToast(e.message || '操作失败', 'error');
+    } catch (e) {
+      showToast((e instanceof Error ? e.message : '') || '操作失败', 'error');
     }
   };
 
@@ -176,8 +176,8 @@ export default function SpeedLimitPanel() {
     try {
       await api.put(`/admin/speed-limit/${r.id}/toggle`);
       fetchRules();
-    } catch (e: any) {
-      showToast(e.message || '操作失败', 'error');
+    } catch (e) {
+      showToast((e instanceof Error ? e.message : '') || '操作失败', 'error');
     }
   };
 
@@ -188,8 +188,8 @@ export default function SpeedLimitPanel() {
       await api.delete(`/admin/speed-limit/${r.id}`);
       showToast('已删除', 'success');
       fetchRules();
-    } catch (e: any) {
-      showToast(e.message || '操作失败', 'error');
+    } catch (e) {
+      showToast((e instanceof Error ? e.message : '') || '操作失败', 'error');
     }
   };
 

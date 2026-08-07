@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import type { FileNode } from '../../types';
 import { X, FolderPlus, FolderOpen, Pencil } from 'lucide-react';
 import { getFileTypeConfig, cn } from '../../lib/utils';
+import { useToast } from '../ui/Toast';
 
 // ==================== Create Folder Dialog ====================
 export function CreateFolderDialog({ open, parentId, onCreate, onClose, onSuccess }: {
@@ -17,6 +18,7 @@ export function CreateFolderDialog({ open, parentId, onCreate, onClose, onSucces
   useEffect(() => {
     if (open) setName('');
   }, [open]);
+  const { showToast } = useToast();
 
   if (!open) return null;
 
@@ -26,8 +28,8 @@ export function CreateFolderDialog({ open, parentId, onCreate, onClose, onSucces
     try {
       await onCreate(parentId, name.trim());
       onSuccess();
-    } catch (err) {
-      console.error('Create folder failed:', err);
+    } catch {
+      showToast('\u521b\u5efa\u6587\u4ef6\u5939\u5931\u8d25', 'error');
     } finally {
       setLoading(false);
     }
@@ -82,6 +84,7 @@ export function RenameDialog({ node, onRename, onClose, onSuccess }: {
   useEffect(() => {
     if (node) setName(node.name);
   }, [node]);
+  const { showToast } = useToast();
 
   if (!node) return null;
 
@@ -94,8 +97,8 @@ export function RenameDialog({ node, onRename, onClose, onSuccess }: {
     try {
       await onRename(node.id, name.trim());
       onSuccess();
-    } catch (err) {
-      console.error('Rename failed:', err);
+    } catch {
+      showToast('\u91cd\u547d\u540d\u5931\u8d25', 'error');
     } finally {
       setLoading(false);
     }
@@ -156,6 +159,39 @@ export function EmptyState({ onCreateFolder }: { onCreateFolder: () => void }) {
         <FolderPlus className="w-4 h-4" />
         <span>新建文件夹</span>
       </button>
+    </div>
+  );
+}
+
+
+// ==================== File List Skeleton ====================
+const SKELETON_WIDTHS = ['55%', '70%', '45%', '62%', '50%', '68%', '40%', '58%', '52%', '48%'];
+
+export function FileListSkeleton({ view = 'list' }: { view?: 'list' | 'grid' }) {
+  if (view === 'grid') {
+    return (
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-3">
+        {Array.from({ length: 16 }).map((_, i) => (
+          <div key={i} className="flex flex-col rounded-lg p-3">
+            <div className="h-20 mb-2 bg-stone-100 rounded-lg animate-pulse" />
+            <div className="h-3 bg-stone-100 rounded animate-pulse mx-auto" style={{ width: SKELETON_WIDTHS[i % SKELETON_WIDTHS.length] }} />
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return (
+    <div className="overflow-hidden rounded-xl border border-stone-200/80 bg-white">
+      {Array.from({ length: 10 }).map((_, i) => (
+        <div key={i} className="flex items-center gap-3 px-4 py-2.5 border-b border-stone-50 last:border-0">
+          <div className="w-[18px] h-[18px] bg-stone-100 rounded animate-pulse flex-shrink-0" />
+          <div className="w-8 h-8 bg-stone-100 rounded-lg animate-pulse flex-shrink-0" />
+          <div className="flex-1 h-4 bg-stone-100 rounded animate-pulse" style={{ maxWidth: SKELETON_WIDTHS[i % SKELETON_WIDTHS.length] }} />
+          <div className="w-16 h-4 bg-stone-100 rounded animate-pulse flex-shrink-0" />
+          <div className="w-20 h-4 bg-stone-100 rounded animate-pulse flex-shrink-0" />
+          <div className="w-28 h-4 bg-stone-100 rounded animate-pulse flex-shrink-0" />
+        </div>
+      ))}
     </div>
   );
 }

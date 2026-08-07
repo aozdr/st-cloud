@@ -40,7 +40,7 @@ export const personalFileSource: FileSource = {
   resolveByPath: (path) =>
     api.get('/file/by-path', { params: { path: path || '/' } }),
   getDownloadUrl: async (nodeId) => {
-    const { token } = await api.post(`/file/${nodeId}/download-token`);
+    const { token } = await api.post<{ token: string }>(`/file/${nodeId}/download-token`);
     return `/api/file/${nodeId}/stream?token=${encodeURIComponent(token || '')}`;
   },
   downloadZip: (nodeIds) =>
@@ -69,7 +69,7 @@ export function teamFileSource(spaceId: string): FileSource {
     resolveByPath: (path) =>
       api.get(`/team/${spaceId}/files/by-path`, { params: { path: path || '/' } }),
     getDownloadUrl: async (nodeId) => {
-      const { token } = await api.post(`/file/${nodeId}/download-token`);
+      const { token } = await api.post<{ token: string }>(`/file/${nodeId}/download-token`);
       return `/api/file/${nodeId}/stream?token=${encodeURIComponent(token || '')}`;
     },
     downloadZip: (nodeIds) =>

@@ -13,6 +13,11 @@ interface Props {
   onContextMenu: (e: React.MouseEvent, node: FileNode) => void;
   onNavigate: (node: FileNode) => void;
   onDoubleClick: (node: FileNode) => void;
+  onItemDragStart?: (e: React.DragEvent, node: FileNode) => void;
+  onFolderDragOver?: (e: React.DragEvent, folder: FileNode) => void;
+  onFolderDragLeave?: (e: React.DragEvent, folder: FileNode) => void;
+  onFolderDrop?: (e: React.DragEvent, folder: FileNode) => void;
+  dragOverFolderId?: string | null;
 }
 
 const IMAGE_SUFFIXES = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'];
@@ -57,7 +62,7 @@ function GridIcon({ file }: { file: FileNode }) {
   return <FileTypeIcon config={config} size="xl" isFolder={file.nodeType === 0} suffix={file.suffix} />;
 }
 
-export default function FileGrid({ files, selectedIds, focusedId, cutIds, onSelect, onContextMenu, onDoubleClick }: Props) {
+export default function FileGrid({ files, selectedIds, focusedId, cutIds, onSelect, onContextMenu, onDoubleClick, onItemDragStart, onFolderDragOver, onFolderDragLeave, onFolderDrop, dragOverFolderId }: Props) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-3">
       {files.map((file) => {
@@ -67,6 +72,11 @@ export default function FileGrid({ files, selectedIds, focusedId, cutIds, onSele
           <div
             key={file.id}
             data-file-id={file.id}
+            draggable
+            onDragStart={(e) => onItemDragStart?.(e, file)}
+            onDragOver={file.nodeType === 0 ? (e) => onFolderDragOver?.(e, file) : undefined}
+            onDragLeave={file.nodeType === 0 ? (e) => onFolderDragLeave?.(e, file) : undefined}
+            onDrop={file.nodeType === 0 ? (e) => onFolderDrop?.(e, file) : undefined}
             onClick={(e) => onSelect(file.id, e)}
             onDoubleClick={() => onDoubleClick(file)}
             onContextMenu={(e) => onContextMenu(e, file)}
@@ -74,9 +84,11 @@ export default function FileGrid({ files, selectedIds, focusedId, cutIds, onSele
               'group relative flex flex-col rounded-lg p-3 cursor-pointer select-none transition-colors duration-100',
               isSelected
                 ? 'bg-primary-50'
-                : focusedId === file.id
-                  ? 'bg-stone-100'
-                  : 'hover:bg-stone-100',
+                : dragOverFolderId === file.id
+                  ? 'bg-primary-50 ring-2 ring-primary-400'
+                  : focusedId === file.id
+                    ? 'bg-stone-100'
+                    : 'hover:bg-stone-100',
               cutIds?.has(file.id) && 'opacity-50'
             )}
           >

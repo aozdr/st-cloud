@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Users, Plus, X, UserPlus, Crown, Pencil, Eye, Upload, ChevronRight, Settings, HardDrive } from 'lucide-react';
+import { ArrowLeft, Users, X, UserPlus, Crown, Pencil, Eye, Upload, Settings, HardDrive } from 'lucide-react';
 import api from '../lib/api';
 import FileBrowser from '../components/file/FileBrowser';
 import { teamFileSource } from '../lib/fileSource';
@@ -56,8 +56,8 @@ export default function TeamSpacePage() {
       showToast('邀请成功', 'success');
       setInviteUsername('');
       fetchMembers();
-    } catch (e: any) {
-      showToast(e.message || '邀请失败', 'error');
+    } catch (e) {
+      showToast((e instanceof Error ? e.message : '') || '邀请失败', 'error');
     }
   };
 
@@ -67,8 +67,8 @@ export default function TeamSpacePage() {
       await api.delete(`/team/${spaceId}/member/${memberId}`);
       showToast('成员已移除', 'success');
       fetchMembers();
-    } catch (e: any) {
-      showToast(e.message || '操作失败', 'error');
+    } catch (e) {
+      showToast((e instanceof Error ? e.message : '') || '操作失败', 'error');
     }
   };
 
@@ -103,8 +103,8 @@ export default function TeamSpacePage() {
       showToast('存储配额已更新', 'success');
       setShowSettings(false);
       fetchSpace();
-    } catch (e: any) {
-      showToast(e.message || '更新失败', 'error');
+    } catch (e) {
+      showToast((e instanceof Error ? e.message : '') || '更新失败', 'error');
     } finally {
       setSettingsLoading(false);
     }
@@ -161,8 +161,8 @@ export default function TeamSpacePage() {
       {/* Header */}
       <div className="flex items-center justify-between px-6 py-3 border-b border-stone-200 bg-white">
         <div className="flex items-center gap-3 min-w-0">
-          <button onClick={() => navigate('/team')} className="text-stone-400 hover:text-stone-600 cursor-pointer flex-shrink-0">
-            <ArrowLeft className="w-5 h-5" />
+          <button onClick={() => navigate('/team')} className="text-stone-400 hover:text-stone-600 cursor-pointer flex-shrink-0" aria-label="返回">
+            <ArrowLeft className="w-5 h-5" aria-hidden />
           </button>
           <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center flex-shrink-0">
             <Users className="w-4 h-4 text-white" />
@@ -240,7 +240,7 @@ export default function TeamSpacePage() {
                 <HardDrive className="w-4 h-4 text-primary-600" />
                 <h2 className="text-base font-semibold text-stone-900">存储管理</h2>
               </div>
-              <button onClick={() => setShowSettings(false)} className="text-stone-400 hover:text-stone-600 cursor-pointer"><X className="w-5 h-5" /></button>
+              <button onClick={() => setShowSettings(false)} className="text-stone-400 hover:text-stone-600 cursor-pointer" aria-label="关闭"><X className="w-5 h-5" aria-hidden /></button>
             </div>
             <div className="p-5 space-y-4">
               {/* Current usage */}
@@ -267,7 +267,7 @@ export default function TeamSpacePage() {
                   />
                   <select
                     value={quotaUnit}
-                    onChange={(e) => { setQuotaUnit(e.target.value as any); if (e.target.value === '0') setQuotaInput(''); }}
+                    onChange={(e) => { setQuotaUnit(e.target.value as 'MB' | 'GB' | '0'); if (e.target.value === '0') setQuotaInput(''); }}
                     className="px-3 py-2 text-sm bg-stone-50 rounded-md border border-stone-200 outline-none cursor-pointer"
                   >
                     <option value="MB">MB</option>
@@ -294,7 +294,7 @@ export default function TeamSpacePage() {
           <div className="w-full max-w-lg bg-white rounded-xl shadow-lg border border-stone-200 overflow-hidden animate-scale-in" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-stone-100">
               <h2 className="text-base font-semibold text-stone-900">成员管理</h2>
-              <button onClick={() => setShowMembers(false)} className="text-stone-400 hover:text-stone-600 cursor-pointer"><X className="w-5 h-5" /></button>
+              <button onClick={() => setShowMembers(false)} className="text-stone-400 hover:text-stone-600 cursor-pointer" aria-label="关闭"><X className="w-5 h-5" aria-hidden /></button>
             </div>
             <div className="p-5 space-y-4">
               <div className="flex gap-2">
@@ -328,8 +328,8 @@ export default function TeamSpacePage() {
                           <role.icon className="w-3 h-3" />
                           {role.label}
                         </span>
-                        <button onClick={() => handleRemoveMember(member.id)} className="text-stone-300 hover:text-red-500 cursor-pointer p-1">
-                          <X className="w-4 h-4" />
+                        <button onClick={() => handleRemoveMember(member.id)} className="text-stone-300 hover:text-red-500 cursor-pointer p-1" aria-label="移除成员">
+                          <X className="w-4 h-4" aria-hidden />
                         </button>
                       </div>
                     </div>

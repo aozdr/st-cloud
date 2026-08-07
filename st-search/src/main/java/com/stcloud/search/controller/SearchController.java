@@ -32,11 +32,18 @@ public class SearchController {
     @PreAuthorize("hasAuthority('search:file') or hasRole('ADMIN')")
     @GetMapping
     public Result<List<SearchResultVO>> search(
-            @RequestParam String keyword,
+            @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) Integer nodeType,
+            @RequestParam(required = false) List<String> suffixes,
+            @RequestParam(required = false) Long sizeMin,
+            @RequestParam(required = false) Long sizeMax,
+            @RequestParam(required = false) Long dateFrom,
+            @RequestParam(required = false) Long dateTo) {
         Long ownerId = UserContext.getUserId();
-        List<SearchResultVO> results = searchService.searchContent(keyword, ownerId, page, size);
+        List<SearchResultVO> results = searchService.searchContent(keyword, ownerId, page, size,
+                nodeType, suffixes, sizeMin, sizeMax, dateFrom, dateTo);
         return Result.success(results);
     }
 

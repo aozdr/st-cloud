@@ -111,12 +111,16 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1.5">用户名</label>
+              <label htmlFor="login-username" className="block text-sm font-medium text-stone-700 mb-1.5">用户名</label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" aria-hidden />
                 <input
+                  id="login-username"
+                  name="username"
                   type="text"
                   required
+                  autoComplete="username"
+                  spellCheck={false}
                   value={form.username}
                   onChange={(e) => setForm({ ...form, username: e.target.value })}
                   className="input-field pl-10"
@@ -126,12 +130,15 @@ export default function Login() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1.5">密码</label>
+              <label htmlFor="login-password" className="block text-sm font-medium text-stone-700 mb-1.5">密码</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" aria-hidden />
                 <input
+                  id="login-password"
+                  name="password"
                   type="password"
                   required
+                  autoComplete="current-password"
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
                   className="input-field pl-10"
@@ -144,11 +151,15 @@ export default function Login() {
             {mode === 'register' && (
               <>
                 <div className="animate-slide-up">
-                  <label className="block text-sm font-medium text-stone-700 mb-1.5">邮箱（选填）</label>
+                  <label htmlFor="login-email" className="block text-sm font-medium text-stone-700 mb-1.5">邮箱（选填）</label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" aria-hidden />
                     <input
+                      id="login-email"
+                      name="email"
                       type="email"
+                      autoComplete="email"
+                      spellCheck={false}
                       value={form.email}
                       onChange={(e) => setForm({ ...form, email: e.target.value })}
                       className="input-field pl-10"
@@ -157,11 +168,14 @@ export default function Login() {
                   </div>
                 </div>
                 <div className="animate-slide-up">
-                  <label className="block text-sm font-medium text-stone-700 mb-1.5">组织名称（选填）</label>
+                  <label htmlFor="login-tenant" className="block text-sm font-medium text-stone-700 mb-1.5">组织名称（选填）</label>
                   <div className="relative">
-                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" aria-hidden />
                     <input
+                      id="login-tenant"
+                      name="tenantName"
                       type="text"
+                      autoComplete="organization"
                       value={form.tenantName}
                       onChange={(e) => setForm({ ...form, tenantName: e.target.value })}
                       className="input-field pl-10"

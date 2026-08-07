@@ -44,8 +44,8 @@ export default function ShareAccessPage() {
           setBreadcrumbs([{ id: data.fileNodeId, name: data.fileName }]);
           loadFiles(data.fileNodeId, pwd);
         }
-      } catch (e: any) {
-        setError(e.message || '访问失败');
+      } catch (e) {
+        setError((e instanceof Error ? e.message : '') || '访问失败');
       } finally {
         setLoading(false);
       }
@@ -68,8 +68,8 @@ export default function ShareAccessPage() {
         params: { shareCode, parentId, password: pwd || password || undefined },
       });
       setFileList(data);
-    } catch (e: any) {
-      setError(e.message || '加载文件列表失败');
+    } catch (e) {
+      setError((e instanceof Error ? e.message : '') || '加载文件列表失败');
     } finally {
       setListLoading(false);
     }
@@ -83,8 +83,8 @@ export default function ShareAccessPage() {
         params: { nodeId, password: password || undefined },
       });
       window.open(url, '_blank');
-    } catch (e: any) {
-      setError(e.message || '下载失败');
+    } catch (e) {
+      setError((e instanceof Error ? e.message : '') || '下载失败');
     }
   };
 
@@ -110,7 +110,7 @@ export default function ShareAccessPage() {
         onClick={() => navigate('/login')}
         className="absolute top-6 left-6 flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-900 transition-colors cursor-pointer"
       >
-        <ArrowLeft className="w-4 h-4" />
+        <ArrowLeft className="w-4 h-4" aria-hidden />
         返回登录
       </button>
 
@@ -161,7 +161,7 @@ export default function ShareAccessPage() {
                       onClick={() => handleDownload()}
                       className="flex items-center gap-1.5 text-xs text-primary-600 hover:text-primary-700 cursor-pointer"
                     >
-                      <Download className="w-3.5 h-3.5" />
+                      <Download className="w-3.5 h-3.5" aria-hidden />
                       下载整个文件夹
                     </button>
                   </div>
@@ -226,9 +226,9 @@ export default function ShareAccessPage() {
                                   setPreviewIndex(fileIdx);
                                 }}
                                 className="p-1 text-stone-400 hover:text-primary-600 cursor-pointer transition-colors"
-                                title="预览"
+                                title="预览" aria-label="预览"
                               >
-                                <Eye className="w-4 h-4" />
+                                <Eye className="w-4 h-4" aria-hidden />
                               </button>
                             )}
                             {canDownload && (
@@ -238,9 +238,9 @@ export default function ShareAccessPage() {
                                   handleDownload(file.id);
                                 }}
                                 className="p-1 text-stone-400 hover:text-primary-600 cursor-pointer transition-colors"
-                                title="下载"
+                                title="下载" aria-label="下载"
                               >
-                                <Download className="w-4 h-4" />
+                                <Download className="w-4 h-4" aria-hidden />
                               </button>
                             )}
                           </div>
@@ -287,7 +287,7 @@ export default function ShareAccessPage() {
                     onClick={() => setPreviewIndex(0)}
                     className="w-full flex items-center justify-center gap-2 py-3 bg-stone-800 text-white text-sm font-medium rounded-md hover:bg-stone-900 transition-colors cursor-pointer"
                   >
-                    <Eye className="w-4 h-4" />
+                    <Eye className="w-4 h-4" aria-hidden />
                     预览文件
                   </button>
                 )}
@@ -297,7 +297,7 @@ export default function ShareAccessPage() {
                     onClick={() => handleDownload()}
                     className="w-full flex items-center justify-center gap-2 py-3 bg-primary-600 text-white text-sm font-medium rounded-md hover:bg-primary-700 transition-colors cursor-pointer"
                   >
-                    <Download className="w-4 h-4" />
+                    <Download className="w-4 h-4" aria-hidden />
                     下载文件
                   </button>
                 )}
@@ -337,7 +337,7 @@ export default function ShareAccessPage() {
                 onKeyDown={(e) => e.key === 'Enter' && handleAccess()}
                 placeholder="提取码"
                 autoFocus
-                className="w-full px-4 py-3 text-center text-lg tracking-widest text-stone-900 bg-white border border-stone-200 rounded-md outline-none transition-all focus:border-primary-400 focus:ring-2 focus:ring-primary-100 placeholder:text-stone-400 placeholder:text-sm placeholder:tracking-normal"
+                className="w-full px-4 py-3 text-center text-lg tracking-widest text-stone-900 bg-white border border-stone-200 rounded-md outline-none transition focus:border-primary-400 focus:ring-2 focus:ring-primary-100 placeholder:text-stone-400 placeholder:text-sm placeholder:tracking-normal"
               />
 
               <button

@@ -28,4 +28,14 @@ public interface RecycleBinService {
      * 清空回收站
      */
     void emptyRecycleBin();
+
+    /**
+     * 查询超过保留期且为回收站根节点（父节点不在回收站）的节点 ID，供定时清理使用。
+     */
+    List<Long> findExpiredRecycleRoots();
+
+    /**
+     * 永久清理单个回收站节点（不依赖用户上下文，供定时任务调用）。
+     */
+    void purgeNode(Long nodeId);
 }

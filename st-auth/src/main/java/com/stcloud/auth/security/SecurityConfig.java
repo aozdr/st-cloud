@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
     @Value("${stcloud.cors.allowed-origins:}")
     private String allowedOrigins;
 
@@ -52,6 +53,7 @@ public class SecurityConfig {
                         // 其余接口需要认证
                         .anyRequest().authenticated()
                 )
+                .exceptionHandling(eh -> eh.authenticationEntryPoint(restAuthenticationEntryPoint))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

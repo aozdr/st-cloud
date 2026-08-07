@@ -24,6 +24,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -87,6 +88,9 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public IPage<FileNodeVO> listDirectory(Long parentId, int page, int size) {
+        if (parentId != null && parentId != 0) {
+            validateAccessible(parentId);
+        }
         Long userId = UserContext.getUserId();
         Page<FileNode> pageParam = new Page<>(page, size);
         LambdaQueryWrapper<FileNode> wrapper = new LambdaQueryWrapper<FileNode>()
@@ -249,19 +253,14 @@ public class FileServiceImpl implements FileService {
                 continue;
             }
 
-            LambdaQueryWrapper<FileNode> fileQuery = new LambdaQueryWrapper<FileNode>()
-                    .and(w -> w.eq(FileNode::getId, node.getId())
-                            .or().likeRight(FileNode::getPath, node.getPath() + "/"));
-            List<FileNode> affectedFiles = fileNodeMapper.selectList(fileQuery);
-
-            LambdaUpdateWrapper<FileNode> updateWrapper = new LambdaUpdateWrapper<FileNode>()
-                    .eq(FileNode::getId, node.getId())
-                    .or().likeRight(FileNode::getPath, node.getPath() + "/")
-                    .set(FileNode::getStatus, NodeStatus.RECYCLED.getCode());
-            fileNodeMapper.update(null, updateWrapper);
-
-            for (FileNode file : affectedFiles) {
-                eventPublisher.publishEvent(new FileIndexEvent(this, file, FileIndexEvent.ActionType.DELETE));
+            // 只置被删节点自身为回收态；子孙 status 不动，访问时由祖先链校验拦截
+            node.setStatus(NodeStatus.RECYCLED.getCode());
+            node.setUpdatedAt(LocalDateTime.now());
+            fileNodeMapper.updateById(node);
+            // ES：从索引移除被删节点及其子孙（子孙 status 虽未变，但需不可搜）
+            eventPublisher.publishEvent(new FileIndexEvent(this, node, FileIndexEvent.ActionType.DELETE));
+            for (FileNode descendant : collectDescendants(nodeId)) {
+                eventPublisher.publishEvent(new FileIndexEvent(this, descendant, FileIndexEvent.ActionType.DELETE));
             }
         }
     }
@@ -270,7 +269,9 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public FileNodeVO getNodeDetail(Long nodeId) {
-        return toVO(getNodeByIdAndOwner(nodeId));
+        FileNode node = getNodeByIdAndOwner(nodeId);
+        validateAccessible(nodeId);
+        return toVO(node);
     }
 
     @Override
@@ -387,6 +388,7 @@ public class FileServiceImpl implements FileService {
         if (parent.getStatus() != NodeStatus.NORMAL.getCode()) {
             throw new BusinessException(ResultCode.FILE_IN_RECYCLE);
         }
+        validateAccessible(parentId);
         return parent.getPath();
     }
 
@@ -401,6 +403,25 @@ public class FileServiceImpl implements FileService {
             throw new BusinessException(ResultCode.FORBIDDEN);
         }
         return node;
+    }
+
+    @Override
+    public void validateAccessible(Long nodeId) {
+        if (fileNodeMapper.countInaccessibleAncestors(nodeId) > 0) {
+            throw new BusinessException(ResultCode.FORBIDDEN);
+        }
+    }
+
+    @Override
+    public List<FileNode> collectDescendants(Long nodeId) {
+        List<FileNode> result = new ArrayList<>();
+        List<FileNode> children = fileNodeMapper.selectList(
+                new LambdaQueryWrapper<FileNode>().eq(FileNode::getParentId, nodeId));
+        for (FileNode child : children) {
+            result.add(child);
+            result.addAll(collectDescendants(child.getId()));
+        }
+        return result;
     }
 
     @Override
@@ -480,6 +501,9 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public IPage<FileNodeVO> listTeamFiles(Long spaceId, Long parentId, int page, int size) {
+        if (parentId != null && parentId > 0) {
+            validateAccessible(parentId);
+        }
         Page<FileNode> pageParam = new Page<>(page, size);
         LambdaQueryWrapper<FileNode> wrapper = new LambdaQueryWrapper<FileNode>()
                 .eq(FileNode::getSpaceId, spaceId)
@@ -578,19 +602,14 @@ public class FileServiceImpl implements FileService {
             if (node == null || node.getStatus() != NodeStatus.NORMAL.getCode()) {
                 continue;
             }
-            LambdaQueryWrapper<FileNode> fileQuery = new LambdaQueryWrapper<FileNode>()
-                    .and(w -> w.eq(FileNode::getId, node.getId())
-                            .or().likeRight(FileNode::getPath, node.getPath() + "/"));
-            List<FileNode> affectedFiles = fileNodeMapper.selectList(fileQuery);
-
-            LambdaUpdateWrapper<FileNode> updateWrapper = new LambdaUpdateWrapper<FileNode>()
-                    .eq(FileNode::getId, node.getId())
-                    .or().likeRight(FileNode::getPath, node.getPath() + "/")
-                    .set(FileNode::getStatus, NodeStatus.RECYCLED.getCode());
-            fileNodeMapper.update(null, updateWrapper);
-
-            for (FileNode file : affectedFiles) {
-                eventPublisher.publishEvent(new FileIndexEvent(this, file, FileIndexEvent.ActionType.DELETE));
+            // 只置被删节点自身为回收态；子孙 status 不动，访问时由祖先链校验拦截
+            node.setStatus(NodeStatus.RECYCLED.getCode());
+            node.setUpdatedAt(LocalDateTime.now());
+            fileNodeMapper.updateById(node);
+            // ES：从索引移除被删节点及其子孙（子孙 status 虽未变，但需不可搜）
+            eventPublisher.publishEvent(new FileIndexEvent(this, node, FileIndexEvent.ActionType.DELETE));
+            for (FileNode descendant : collectDescendants(nodeId)) {
+                eventPublisher.publishEvent(new FileIndexEvent(this, descendant, FileIndexEvent.ActionType.DELETE));
             }
         }
     }
@@ -675,6 +694,7 @@ public class FileServiceImpl implements FileService {
         if (node == null || node.getStatus() != NodeStatus.NORMAL.getCode()) {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
         }
+        validateAccessible(nodeId);
         return toVO(node);
     }
 

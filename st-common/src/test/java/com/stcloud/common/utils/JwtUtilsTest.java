@@ -43,12 +43,14 @@ class JwtUtilsTest {
     @DisplayName("下载令牌携带 type=download 声明")
     void downloadTokenHasTypeClaim() {
         String token = jwtUtils.generateDownloadToken(1L, 1L, "alice",
-                List.of("user"), List.of("file:download"), 1);
+                List.of("user"), List.of("file:download"), 1, 100L);
         assertTrue(jwtUtils.validateToken(token));
         Claims claims = jwtUtils.parseToken(token);
         assertEquals("download", claims.get("type"));
         assertEquals("alice", claims.getSubject());
         assertEquals(1L, claims.get("userId", Long.class));
+        assertEquals(100L, claims.get("nodeId", Long.class));
+        assertNotNull(claims.getId());
     }
 
     @Test
@@ -69,10 +71,11 @@ class JwtUtilsTest {
     @DisplayName("getUserId/getTenantId/getUsername 正确解析")
     void parseClaims() {
         String token = jwtUtils.generateDownloadToken(42L, 7L, "bob",
-                List.of("admin"), List.of("file:download"), 3);
+                List.of("admin"), List.of("file:download"), 3, 200L);
         assertEquals(42L, jwtUtils.getUserId(token));
         assertEquals(7L, jwtUtils.getTenantId(token));
         assertEquals("bob", jwtUtils.getUsername(token));
+        assertEquals(200L, jwtUtils.parseToken(token).get("nodeId", Long.class));
     }
 
     @Test

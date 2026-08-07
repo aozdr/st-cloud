@@ -5,6 +5,7 @@ import com.stcloud.common.exception.BusinessException;
 import com.stcloud.common.response.ResultCode;
 import com.stcloud.core.entity.FileNode;
 import com.stcloud.core.mapper.FileNodeMapper;
+import com.stcloud.core.service.FileService;
 import com.stcloud.core.service.StorageService;
 import com.stcloud.preview.dto.PreviewResultVO;
 import com.stcloud.preview.service.PreviewService;
@@ -46,6 +47,9 @@ public class PreviewServiceImpl implements PreviewService {
 
     @Resource
     private FileNodeMapper fileNodeMapper;
+
+    @Resource
+    private FileService fileService;
 
     @Resource
     private StorageService storageService;
@@ -195,6 +199,7 @@ public class PreviewServiceImpl implements PreviewService {
         if (node == null || node.getStatus() != 0) {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
         }
+        fileService.validateAccessible(nodeId);
         if (node.getNodeType() == 0) {
             throw new BusinessException(ResultCode.BAD_REQUEST, "文件夹不支持预览");
         }

@@ -7,7 +7,6 @@ import {
   Music,
   FileText,
   Archive,
-  FileType,
   Presentation,
   Sheet,
 } from 'lucide-react';
@@ -47,6 +46,12 @@ const FILE_TYPE_MAP: { exts: string[]; config: FileTypeConfig }[] = [
   { exts: TEXT_EXTS,    config: { icon: FileText,      color: 'text-stone-500',  bgColor: 'bg-stone-50',  label: '文档' } },
 ];
 
+// Pre-built O(1) lookup map: extension -> file type config
+const EXT_CONFIG_MAP: Map<string, FileTypeConfig> = new Map();
+for (const entry of FILE_TYPE_MAP) {
+  for (const ext of entry.exts) EXT_CONFIG_MAP.set(ext, entry.config);
+}
+
 export function getFileTypeConfig(nodeType: number, suffix: string | null | undefined): FileTypeConfig {
   if (nodeType === 0) {
     return { icon: FileIcon, color: 'text-amber-400', bgColor: 'bg-amber-50', label: '文件夹' };
@@ -54,11 +59,7 @@ export function getFileTypeConfig(nodeType: number, suffix: string | null | unde
   if (!suffix) {
     return { icon: FileIcon, color: 'text-stone-400', bgColor: 'bg-stone-50', label: '文件' };
   }
-  const ext = suffix.toLowerCase();
-  for (const entry of FILE_TYPE_MAP) {
-    if (entry.exts.includes(ext)) return entry.config;
-  }
-  return { icon: FileIcon, color: 'text-stone-400', bgColor: 'bg-stone-50', label: '文件'  };
+  return EXT_CONFIG_MAP.get(suffix.toLowerCase()) ?? { icon: FileIcon, color: 'text-stone-400', bgColor: 'bg-stone-50', label: '文件' };
 }
 
 export function isImage(suffix: string | null | undefined): boolean {
@@ -118,14 +119,20 @@ export function formatSize(bytes: string | number | undefined | null): string {
   return (n / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
 }
 
+const dateFormatter = new Intl.DateTimeFormat('zh-CN', {
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+});
+
 export function formatDate(dateStr: string | null | undefined): string {
   if (!dateStr) return '-';
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return dateStr;
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  const h = String(d.getHours()).padStart(2, '0');
-  const min = String(d.getMinutes()).padStart(2, '0');
-  return `${y}-${m}-${day} ${h}:${min}`;
+  const parts = dateFormatter.formatToParts(d);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value ?? '';
+  return `${get('year')}-${get('month')}-${get('day')} ${get('hour')}:${get('minute')}`;
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { RefreshCw, FolderSync, Trash2, Play, Square, Plus, HardDrive, Cloud, AlertCircle, CheckCircle2, FileUp, FileDown, FileX, GitBranch, Info, AlertTriangle, FileEdit, FilePlus, FolderInput } from 'lucide-react';
+import { RefreshCw, FolderSync, Trash2, Play, Square, Plus, HardDrive, Cloud, AlertCircle, FileUp, FileDown, FileX, GitBranch, Info, AlertTriangle, FileEdit, FilePlus, FolderInput } from 'lucide-react';
 import api from '../lib/api';
 import { isElectron } from '../lib/electron';
 import { useToast } from '../components/ui/Toast';
@@ -144,7 +144,7 @@ export default function SyncPage() {
         </div>
         <div className="flex items-center gap-2">
           <button onClick={fetchRoots} className="btn-ghost">
-            <RefreshCw className="w-4 h-4" />
+            <RefreshCw className="w-4 h-4" aria-hidden />
             <span>刷新</span>
           </button>
           <button onClick={() => setShowRegister(true)} className="btn-primary">
@@ -188,17 +188,17 @@ export default function SyncPage() {
                   <div className="flex items-center gap-1">
                     {isActive ? (
                       <button onClick={() => handleStop(root.id)} className="btn-ghost text-amber-600 hover:bg-amber-50">
-                        <Square className="w-4 h-4" />
+                        <Square className="w-4 h-4" aria-hidden />
                         <span>停止</span>
                       </button>
                     ) : (
                       <button onClick={() => handleStart(root.id, root.cloudFolderNodeId, root.localPathHint || '')} className="btn-ghost text-green-600 hover:bg-green-50">
-                        <Play className="w-4 h-4" />
+                        <Play className="w-4 h-4" aria-hidden />
                         <span>启动</span>
                       </button>
                     )}
-                    <button onClick={() => handleDelete(root.id)} className="btn-ghost text-red-600 hover:bg-red-50">
-                      <Trash2 className="w-4 h-4" />
+                    <button onClick={() => handleDelete(root.id)} className="btn-ghost text-red-600 hover:bg-red-50" aria-label="删除">
+                      <Trash2 className="w-4 h-4" aria-hidden />
                     </button>
                   </div>
                 </div>
@@ -283,8 +283,8 @@ function RegisterDialog({ onClose, onSuccess }: { onClose: () => void; onSuccess
   const [localPath, setLocalPath] = useState('');
 
   useEffect(() => {
-    api.get('/file/list', { params: { parentId: '0', page: 1, size: 100 } })
-      .then((res: any) => setFolders((res?.records || []).filter((f: FileNode) => f.nodeType === 0)))
+    api.get<{ records?: FileNode[] }>('/file/list', { params: { parentId: '0', page: 1, size: 100 } })
+      .then((res) => setFolders((res?.records || []).filter((f: FileNode) => f.nodeType === 0)))
       .catch(() => {});
   }, []);
 

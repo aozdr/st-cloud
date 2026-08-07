@@ -144,8 +144,8 @@ export default function RoleManagePanel() {
       await api.put(`/admin/role/${roleId}/permissions`, { permissionIds: permIds });
       setModalOpen(false);
       fetchRoles();
-    } catch (e: any) {
-      showToast(e.message || '操作失败', 'error');
+    } catch (e) {
+      showToast((e instanceof Error ? e.message : '') || '操作失败', 'error');
     }
   };
 
@@ -165,8 +165,8 @@ export default function RoleManagePanel() {
       await api.delete(`/admin/role/${r.id}`);
       showToast('角色已删除', 'success');
       fetchRoles();
-    } catch (e: any) {
-      showToast(e.message || '删除失败', 'error');
+    } catch (e) {
+      showToast((e instanceof Error ? e.message : '') || '删除失败', 'error');
     }
   };
 

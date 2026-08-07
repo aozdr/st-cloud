@@ -1,8 +1,8 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { isElectron } from '../../lib/electron';
 import { useTransferStore } from '../../store/transfer';
-import type { FileNode, PageResult, FileTreeNode } from '../../types';
+import type { FileNode } from '../../types';
 import type { FileSource } from '../../lib/fileSource';
 import FileTable from './FileTable';
 import FileGrid from './FileGrid';
@@ -10,7 +10,8 @@ import ContextMenu from './ContextMenu';
 import BlankContextMenu from './BlankContextMenu';
 import MoveDialog from './MoveDialog';
 import DownloadDialog from './DownloadDialog';
-import { CreateFolderDialog, RenameDialog, EmptyState } from './Dialogs';
+import { CreateFolderDialog, RenameDialog, EmptyState, FileListSkeleton } from './Dialogs';
+import FileDetailPanel from './FileDetailPanel';
 import PreviewModal from '../preview/PreviewModal';
 import ShareDialog from '../share/ShareDialog';
 import VersionHistoryDialog from './VersionHistoryDialog';
@@ -19,7 +20,10 @@ import { useConfirm } from '../ui/ConfirmDialog';
 import { useUpload } from '../../hooks/useUpload';
 import { formatSize, cn } from '../../lib/utils';
 import { usePermission } from '../../lib/permission';
-import { List, LayoutGrid, FolderPlus, Download, Trash2, Copy, FolderInput, X, RefreshCw, ArrowDownUp, Home, ChevronRight, MapPin, Upload } from 'lucide-react';
+import { useDragSelect } from '../../hooks/useDragSelect';
+import { useFileKeyboard } from '../../hooks/useFileKeyboard';
+import { toggleFavorite, isFavorite } from '../../lib/favorites';
+import { List, LayoutGrid, FolderPlus, Download, Trash2, Copy, FolderInput, X, RefreshCw, ArrowDownUp, Home, ChevronRight, MapPin, Upload, ArrowUp, Pencil, Search } from 'lucide-react';
 
 export interface FileBrowserProps {
   source: FileSource;
@@ -29,6 +33,7 @@ export interface FileBrowserProps {
   uploadSpaceId?: string;
   enableShare?: boolean;
   enableVersions?: boolean;
+  syncUrl?: boolean;
 }
 
 export default function FileBrowser({
@@ -39,6 +44,7 @@ export default function FileBrowser({
   uploadSpaceId,
   enableShare = true,
   enableVersions = true,
+  syncUrl = false,
 }: FileBrowserProps) {
 
   /** Returns true if the click landed on a file/folder item (not blank area) */
@@ -49,29 +55,56 @@ export default function FileBrowser({
 
 
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [files, setFiles] = useState<FileNode[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<'list' | 'grid'>(() => {
     return (localStorage.getItem('fileView') as 'list' | 'grid') || 'list';
   });
+  const [folderSearch, setFolderSearch] = useState('');
+  const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [sortBy, setSortBy] = useState<'name' | 'size' | 'time'>('name');
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
+  const [favVersion, setFavVersion] = useState(0);
+  const [sortBy, setSortBy] = useState<'name' | 'size' | 'time'>(() => {
+    if (syncUrl) {
+      const s = searchParams.get('sort');
+      if (s === 'name' || s === 'size' || s === 'time') return s;
+    }
+    return (localStorage.getItem('fileSortBy') as 'name' | 'size' | 'time') || 'name';
+  });
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>(() => {
+    if (syncUrl) {
+      const d = searchParams.get('dir');
+      if (d === 'asc' || d === 'desc') return d;
+    }
+    return (localStorage.getItem('fileSortDir') as 'asc' | 'desc') || 'asc';
+  });
+
+  useEffect(() => {
+    if (!syncUrl) return;
+    setSearchParams(
+      (prev) => {
+        if (prev.get('sort') === sortBy && prev.get('dir') === sortDir) return prev;
+        prev.set('sort', sortBy);
+        prev.set('dir', sortDir);
+        return prev;
+      },
+      { replace: true },
+    );
+  }, [sortBy, sortDir, syncUrl, setSearchParams]);
 
   const [clipboard, setClipboard] = useState<{ nodeIds: string[]; mode: 'copy' | 'cut' } | null>(null);
   const [focusedIndex, setFocusedIndex] = useState(-1);
-  const searchBuffer = useRef('');
-  const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { showToast } = useToast();
   const { confirm } = useConfirm();
   const { has } = usePermission();
 
-  const dragStartRef = useRef<{ x: number; y: number } | null>(null);
-  const [dragRect, setDragRect] = useState<{ startX: number; startY: number; currentX: number; currentY: number } | null>(null);
+  const fileListRef = useRef<HTMLDivElement>(null);
+  const { dragRect, startDrag } = useDragSelect(fileListRef, setSelectedIds);
 
   const [showCreateFolder, setShowCreateFolder] = useState(false);
   const [renameTarget, setRenameTarget] = useState<FileNode | null>(null);
@@ -118,6 +151,8 @@ export default function FileBrowser({
     fetchFiles();
     setSelectedIds(new Set());
     setFocusedIndex(-1);
+    setFolderSearch('');
+    setDetailFile(null);
   }, [fetchFiles, refreshKey]);
 
   useEffect(() => {
@@ -147,14 +182,17 @@ export default function FileBrowser({
   const refresh = () => setRefreshKey((k) => k + 1);
 
   const handleDragOver = (e: React.DragEvent) => {
+    if (e.dataTransfer.types.includes('application/x-file-ids')) return;
     e.preventDefault();
     setIsDragging(true);
   };
   const handleDragLeave = (e: React.DragEvent) => {
+    if (e.dataTransfer.types.includes('application/x-file-ids')) return;
     e.preventDefault();
     if (e.currentTarget === e.target) setIsDragging(false);
   };
   const handleDrop = (e: React.DragEvent) => {
+    if (e.dataTransfer.types.includes('application/x-file-ids')) return;
     e.preventDefault();
     setIsDragging(false);
     const droppedFiles = Array.from(e.dataTransfer.files);
@@ -169,6 +207,42 @@ export default function FileBrowser({
       }
     }
     addFiles(droppedFiles, parentId || '0', undefined, uploadSpaceId);
+  };
+
+  const handleItemDragStart = (e: React.DragEvent, node: FileNode) => {
+    const ids = selectedIds.has(node.id) ? [...selectedIds] : [node.id];
+    e.dataTransfer.setData('application/x-file-ids', JSON.stringify(ids));
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleFolderDragOver = (e: React.DragEvent, folder: FileNode) => {
+    if (!e.dataTransfer.types.includes('application/x-file-ids')) return;
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverFolderId(folder.id);
+  };
+
+  const handleFolderDragLeave = (e: React.DragEvent, folder: FileNode) => {
+    e.stopPropagation();
+    setDragOverFolderId((prev) => (prev === folder.id ? null : prev));
+  };
+
+  const handleFolderDrop = async (e: React.DragEvent, folder: FileNode) => {
+    const data = e.dataTransfer.getData('application/x-file-ids');
+    if (!data) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setDragOverFolderId(null);
+    const ids = JSON.parse(data) as string[];
+    if (ids.includes(folder.id)) return;
+    try {
+      await source.move(ids, folder.id);
+      showToast('\u79fb\u52a8\u6210\u529f', 'success');
+      fetchFiles();
+    } catch {
+      showToast('\u79fb\u52a8\u5931\u8d25', 'error');
+    }
   };
 
   const handleUploadClick = () => fileInputRef.current?.click();
@@ -252,10 +326,6 @@ export default function FileBrowser({
     }
   }, []);
 
-  const onBackRef = useRef<() => void>(() => {});
-  onBackRef.current = () => onBack?.();
-  const onNavigateFolderRef = useRef<(node: FileNode) => void>(() => {});
-  onNavigateFolderRef.current = (node: FileNode) => onNavigateFolder(node);
   const handlePasteRef = useRef<() => void>(() => {});
   handlePasteRef.current = async () => {
     const st = stateRef.current;
@@ -296,6 +366,20 @@ export default function FileBrowser({
     }
   };
 
+
+  useFileKeyboard(
+    () => stateRef.current,
+    {
+      setSelectedIds, setClipboard, setFocusedIndex, setLastSelectedId,
+      setRenameTarget, setPreview, setContextMenu, setBlankContextMenu, setShowCreateFolder,
+      selectAll, clearSelection, moveFocus, refresh, navigate,
+      onBack, onNavigateFolder,
+      handlePaste: () => handlePasteRef.current(),
+      handleDelete: (ids: string[]) => handleDeleteRef.current(ids),
+      showToast, hasPermission: has,
+    },
+  );
+
   const handleDownload = useCallback(async (nodeIds: string[]) => {
     try {
       if (isElectron() && nodeIds.length === 1) {
@@ -327,210 +411,10 @@ export default function FileBrowser({
         a.click();
         URL.revokeObjectURL(url);
       }
-    } catch (err) {
-      console.error('Download failed:', err);
+    } catch {
+      showToast('下载失败', 'error');
     }
-  }, [files, source]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement;
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
-      const hasTextSelection = (window.getSelection()?.toString().length ?? 0) > 0;
-
-      if (e.ctrlKey || e.metaKey) {
-        switch (e.key.toLowerCase()) {
-          case 'a':
-            e.preventDefault();
-            selectAll();
-            showToast(`\u5df2\u9009\u4e2d ${stateRef.current.files.length} \u9879`);
-            return;
-          case 'c':
-            if (!hasTextSelection && stateRef.current.selectedIds.size > 0) {
-              e.preventDefault();
-              setClipboard({ nodeIds: [...stateRef.current.selectedIds], mode: 'copy' });
-              showToast(`\u5df2\u590d\u5236 ${stateRef.current.selectedIds.size} \u9879`);
-            }
-            return;
-          case 'x':
-            if (!hasTextSelection && stateRef.current.selectedIds.size > 0) {
-              e.preventDefault();
-              setClipboard({ nodeIds: [...stateRef.current.selectedIds], mode: 'cut' });
-              showToast(`\u5df2\u526a\u5207 ${stateRef.current.selectedIds.size} \u9879`);
-            }
-            return;
-          case 'v':
-            if (stateRef.current.clipboard) {
-              e.preventDefault();
-              handlePasteRef.current();
-            }
-            return;
-          case 'n':
-            if (e.shiftKey) {
-              e.preventDefault();
-              setShowCreateFolder(true);
-            }
-            return;
-        }
-        return;
-      }
-
-      if (e.altKey) {
-        if (e.key === 'ArrowLeft') {
-          e.preventDefault();
-          onBackRef.current?.();
-        } else if (e.key === 'ArrowRight') {
-          e.preventDefault();
-          navigate(1);
-        }
-        return;
-      }
-
-      switch (e.key) {
-        case 'Escape':
-          clearSelection();
-          setContextMenu(null);
-          setBlankContextMenu(null);
-          setFocusedIndex(-1);
-          return;
-        case 'Delete':
-          if (stateRef.current.selectedIds.size > 0) handleDeleteRef.current([...stateRef.current.selectedIds]);
-          return;
-        case 'F2':
-          if (stateRef.current.selectedIds.size === 1) {
-            const node = stateRef.current.files.find((f) => stateRef.current.selectedIds.has(f.id));
-            if (node) setRenameTarget(node);
-          }
-          return;
-        case 'F5':
-          if (isElectron()) {
-            e.preventDefault();
-            refresh();
-          }
-          return;
-        case 'Enter':
-          if (stateRef.current.selectedIds.size === 1) {
-            const node = stateRef.current.files.find((f) => stateRef.current.selectedIds.has(f.id));
-            if (node) {
-              if (node.nodeType === 0) {
-                onNavigateFolderRef.current(node);
-              } else if (has('file:preview')) {
-                const fileFiles = stateRef.current.files.filter((f) => f.nodeType === 1);
-                const idx = fileFiles.findIndex((f) => f.id === node.id);
-                setPreview({ files: fileFiles, index: idx >= 0 ? idx : 0 });
-              }
-            }
-          }
-          return;
-        case 'Backspace':
-          if (stateRef.current.parentId && stateRef.current.parentId !== '0') {
-            e.preventDefault();
-            onBackRef.current?.();
-          }
-          return;
-        case 'ArrowDown':
-          e.preventDefault();
-          moveFocus(1, e.shiftKey);
-          return;
-        case 'ArrowUp':
-          e.preventDefault();
-          moveFocus(-1, e.shiftKey);
-          return;
-        case 'ArrowRight':
-          if (stateRef.current.view === 'grid') {
-            e.preventDefault();
-            moveFocus(1, e.shiftKey);
-          }
-          return;
-        case 'ArrowLeft':
-          if (stateRef.current.view === 'grid') {
-            e.preventDefault();
-            moveFocus(-1, e.shiftKey);
-          }
-          return;
-        case 'Home':
-          e.preventDefault();
-          if (stateRef.current.files.length > 0) {
-            setFocusedIndex(0);
-            setSelectedIds(new Set([stateRef.current.files[0].id]));
-            setLastSelectedId(stateRef.current.files[0].id);
-          }
-          return;
-        case 'End':
-          e.preventDefault();
-          if (stateRef.current.files.length > 0) {
-            const last = stateRef.current.files.length - 1;
-            setFocusedIndex(last);
-            setSelectedIds(new Set([stateRef.current.files[last].id]));
-            setLastSelectedId(stateRef.current.files[last].id);
-          }
-          return;
-      }
-
-      if (e.key.length === 1 && /[a-zA-Z0-9\u4e00-\u9fa5]/.test(e.key)) {
-        if (searchTimeout.current) clearTimeout(searchTimeout.current);
-        searchBuffer.current += e.key.toLowerCase();
-        searchTimeout.current = setTimeout(() => { searchBuffer.current = ''; }, 1000);
-
-        const match = stateRef.current.files.findIndex((f) => f.name.toLowerCase().startsWith(searchBuffer.current));
-        if (match >= 0) {
-          setFocusedIndex(match);
-          setSelectedIds(new Set([stateRef.current.files[match].id]));
-          setLastSelectedId(stateRef.current.files[match].id);
-        }
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }); // stable: reads state from stateRef
-
-  const rafRef = useRef<number | null>(null);
-  const lastMouseRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-
-  useEffect(() => {
-    let mounted = true;
-    const computeSelection = () => {
-      rafRef.current = null;
-      if (!dragStartRef.current) return;
-      const start = dragStartRef.current;
-      const x = lastMouseRef.current.x;
-      const y = lastMouseRef.current.y;
-      const left = Math.min(start.x, x);
-      const right = Math.max(start.x, x);
-      const top = Math.min(start.y, y);
-      const bottom = Math.max(start.y, y);
-      setDragRect({ startX: start.x, startY: start.y, currentX: x, currentY: y });
-
-      const newSelected = new Set<string>();
-      for (const item of document.querySelectorAll('[data-file-id]')) {
-        const rect = item.getBoundingClientRect();
-        if (rect.left < right && rect.right > left && rect.top < bottom && rect.bottom > top) {
-          newSelected.add(item.getAttribute('data-file-id')!);
-        }
-      }
-      if (mounted) setSelectedIds(newSelected);
-    };
-
-    const handleMove = (e: MouseEvent) => {
-      if (!dragStartRef.current) return;
-      lastMouseRef.current = { x: e.clientX, y: e.clientY };
-      if (rafRef.current === null) rafRef.current = requestAnimationFrame(computeSelection);
-    };
-
-    const handleUp = () => {
-      dragStartRef.current = null;
-      setDragRect(null);
-    };
-
-    document.addEventListener('mousemove', handleMove);
-    document.addEventListener('mouseup', handleUp);
-    return () => {
-      mounted = false;
-      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
-      document.removeEventListener('mousemove', handleMove);
-      document.removeEventListener('mouseup', handleUp);
-    };
-  }, []);
+  }, [files, source, showToast]);
 
   const enterPathEditMode = () => {
     setPathInput(currentPath === '/' ? '/' : currentPath);
@@ -594,6 +478,14 @@ export default function FileBrowser({
     return segments;
   }, [currentPath]);
 
+  const goUp = () => {
+    if (pathSegments.length <= 1) {
+      navigateToPath('/');
+    } else {
+      navigateToPath(pathSegments[pathSegments.length - 2].path);
+    }
+  };
+
   const handleContextAction = (action: string, node: FileNode) => {
     setContextMenu(null);
     switch (action) {
@@ -638,6 +530,15 @@ export default function FileBrowser({
       case 'versions':
         setVersionTarget(node);
         break;
+      case 'details':
+        setDetailFile(node);
+        break;
+      case 'favorite': {
+        const added = toggleFavorite(node);
+        showToast(added ? '已收藏' : '已取消收藏');
+        setFavVersion((v) => v + 1);
+        break;
+      }
     }
   };
 
@@ -663,6 +564,15 @@ export default function FileBrowser({
     [files, selectedIds],
   );
 
+  const [detailFile, setDetailFile] = useState<FileNode | null>(null);
+
+  const allSelected = files.length > 0 && files.every((f) => selectedIds.has(f.id));
+  const filteredFiles = useMemo(() => {
+    if (!folderSearch.trim()) return sortedFiles;
+    const q = folderSearch.toLowerCase();
+    return sortedFiles.filter((f) => f.name.toLowerCase().includes(q));
+  }, [sortedFiles, folderSearch]);
+
   return (
     <div
       className="flex flex-col h-full bg-white"
@@ -674,7 +584,7 @@ export default function FileBrowser({
       {isDragging && (
         <div className="absolute inset-0 bg-primary-50/80 border-2 border-dashed border-primary-400 rounded-lg z-40 flex items-center justify-center pointer-events-none">
           <div className="text-center">
-            <FolderInput className="w-12 h-12 text-primary-600 mx-auto mb-2" />
+            <FolderInput className="w-12 h-12 text-primary-600 mx-auto mb-2" aria-hidden />
             <p className="text-primary-700 font-medium">{'\u677e\u5f00\u9f20\u6807\u4e0a\u4f20\u6587\u4ef6'}</p>
           </div>
         </div>
@@ -684,13 +594,13 @@ export default function FileBrowser({
         <div className="flex items-center gap-1.5 flex-shrink-0">
           {has('file:upload') && (
             <button onClick={() => setShowCreateFolder(true)} className="btn-primary flex-shrink-0 whitespace-nowrap">
-              <FolderPlus className="w-4 h-4" />
+              <FolderPlus className="w-4 h-4" aria-hidden />
               <span>{'\u65b0\u5efa\u6587\u4ef6\u5939'}</span>
             </button>
           )}
           {has('file:upload') && (
             <button onClick={handleUploadClick} className="btn-ghost flex-shrink-0 whitespace-nowrap">
-              <Upload className="w-4 h-4" />
+              <Upload className="w-4 h-4" aria-hidden />
               <span>{'\u4e0a\u4f20\u6587\u4ef6'}</span>
             </button>
           )}
@@ -699,25 +609,25 @@ export default function FileBrowser({
               <div className="w-px h-5 bg-stone-200 mx-1 flex-shrink-0" />
               {has('file:download') && (
                 <button onClick={() => handleDownload([...selectedIds])} className="btn-ghost flex-shrink-0 whitespace-nowrap">
-                  <Download className="w-4 h-4" />
+                  <Download className="w-4 h-4" aria-hidden />
                   <span>{'\u4e0b\u8f7d'}</span>
                 </button>
               )}
               {has('file:move') && (
                 <button onClick={() => setMoveTarget({ nodeIds: [...selectedIds], mode: 'move' })} className="btn-ghost flex-shrink-0 whitespace-nowrap">
-                  <FolderInput className="w-4 h-4" />
+                  <FolderInput className="w-4 h-4" aria-hidden />
                   <span>{'\u79fb\u52a8'}</span>
                 </button>
               )}
               {has('file:copy') && (
                 <button onClick={() => setMoveTarget({ nodeIds: [...selectedIds], mode: 'copy' })} className="btn-ghost flex-shrink-0 whitespace-nowrap">
-                  <Copy className="w-4 h-4" />
+                  <Copy className="w-4 h-4" aria-hidden />
                   <span>{'\u590d\u5236'}</span>
                 </button>
               )}
               {has('file:delete') && (
                 <button onClick={() => handleDeleteRef.current([...selectedIds])} className="btn-ghost text-red-600 hover:bg-red-50 flex-shrink-0 whitespace-nowrap">
-                  <Trash2 className="w-4 h-4" />
+                  <Trash2 className="w-4 h-4" aria-hidden />
                   <span>{'\u5220\u9664'}</span>
                 </button>
               )}
@@ -727,11 +637,23 @@ export default function FileBrowser({
 
         <div className="flex items-center gap-3 flex-shrink-0">
           {selectedIds.size === 0 && (
+            <div className="relative">
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400" aria-hidden />
+              <input
+                type="text"
+                value={folderSearch}
+                onChange={(e) => setFolderSearch(e.target.value)}
+                placeholder="筛选..."
+                className="w-32 pl-7 pr-2 py-1 text-xs bg-stone-50 border border-stone-200 rounded-md focus:bg-white focus:border-primary-400 focus:outline-none transition-colors"
+              />
+            </div>
+          )}
+          {selectedIds.size === 0 && (
           <div className="flex items-center gap-1.5">
-            <ArrowDownUp className="w-3.5 h-3.5 text-stone-400" />
+            <ArrowDownUp className="w-3.5 h-3.5 text-stone-400" aria-hidden />
             <select
               value={sortBy}
-              onChange={(e) => { setSortBy(e.target.value as any); localStorage.setItem('fileSortBy', e.target.value); }}
+              onChange={(e) => { setSortBy(e.target.value as 'name' | 'size' | 'time'); localStorage.setItem('fileSortBy', e.target.value); }}
               className="text-xs text-stone-600 bg-white border border-stone-200 rounded-md px-2 py-1 cursor-pointer focus:outline-none focus:border-primary-400"
             >
               <option value="name">{'\u540d\u79f0'}</option>
@@ -752,30 +674,37 @@ export default function FileBrowser({
           </div>
           )}
           {selectedIds.size > 0 && (
-            <div className="flex items-center gap-2 px-2.5 py-1 bg-primary-50 rounded-lg text-sm text-primary-700">
+            <>
+              {!allSelected && files.length > 1 && (
+                <button onClick={selectAll} className="text-xs text-primary-600 hover:text-primary-700 cursor-pointer font-medium whitespace-nowrap">
+                  {'\u5168\u9009'}
+                </button>
+              )}
+              <div className="flex items-center gap-2 px-2.5 py-1 bg-primary-50 rounded-lg text-sm text-primary-700">
               <span className="font-medium">{'\u5df2\u9009'} {selectedIds.size} {'\u9879'}</span>
               {selectedSize > 0 && <span className="text-primary-400">{'\u00b7'} {formatSize(selectedSize)}</span>}
-              <button onClick={clearSelection} className="text-primary-400 hover:text-primary-700 cursor-pointer ml-0.5">
-                <X className="w-3.5 h-3.5" />
+              <button onClick={clearSelection} aria-label="取消选择" className="text-primary-400 hover:text-primary-700 cursor-pointer ml-0.5">
+                <X className="w-3.5 h-3.5" aria-hidden />
               </button>
             </div>
+            </>
           )}
-          <button onClick={refresh} className="btn-ghost" title={'\u5237\u65b0'} >
-            <RefreshCw className="w-4 h-4" />
+          <button onClick={refresh} aria-label="刷新" className="btn-ghost" title={'\u5237\u65b0'} >
+            <RefreshCw className="w-4 h-4" aria-hidden />
           </button>
           {selectedIds.size === 0 && (
           <div className="flex items-center bg-stone-100 rounded-lg p-0.5">
             <button
-              onClick={() => setView('list')}
-              className={cn('p-1.5 rounded-md cursor-pointer transition-all', view === 'list' ? 'bg-white text-primary-600 shadow-sm' : 'text-stone-400 hover:text-stone-600')}
+              onClick={() => setView('list')} aria-label="列表视图"
+              className={cn('p-1.5 rounded-md cursor-pointer transition', view === 'list' ? 'bg-white text-primary-600 shadow-sm' : 'text-stone-400 hover:text-stone-600')}
             >
-              <List className="w-4 h-4" />
+              <List className="w-4 h-4" aria-hidden />
             </button>
             <button
-              onClick={() => setView('grid')}
-              className={cn('p-1.5 rounded-md cursor-pointer transition-all', view === 'grid' ? 'bg-white text-primary-600 shadow-sm' : 'text-stone-400 hover:text-stone-600')}
+              onClick={() => setView('grid')} aria-label="网格视图"
+              className={cn('p-1.5 rounded-md cursor-pointer transition', view === 'grid' ? 'bg-white text-primary-600 shadow-sm' : 'text-stone-400 hover:text-stone-600')}
             >
-              <LayoutGrid className="w-4 h-4" />
+              <LayoutGrid className="w-4 h-4" aria-hidden />
             </button>
           </div>
           )}
@@ -783,10 +712,18 @@ export default function FileBrowser({
       </div>
 
       {/* Address bar - Windows Explorer style */}
-      <div className="flex items-center px-3 py-1.5 border-b border-stone-200 bg-stone-50/60">
+      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-stone-200 bg-white">
+        <button
+          onClick={goUp} aria-label="返回上一级"
+          disabled={currentPath === '/'}
+          title={'返回上一级'}
+          className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-stone-100 text-stone-500 hover:text-primary-600 transition-colors flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+        >
+          <ArrowUp className="w-4 h-4" aria-hidden />
+        </button>
         {pathEditMode ? (
-          <div className="flex items-center gap-1.5 flex-1">
-            <MapPin className={cn('w-3.5 h-3.5 flex-shrink-0', pathError ? 'text-red-500' : 'text-stone-400')} />
+          <div className={cn('flex items-center gap-2 flex-1 bg-white border rounded-md px-3 py-1.5 ring-2 ring-primary-100', pathError ? 'border-red-400' : 'border-primary-400')}>
+            <MapPin className={cn('w-4 h-4 flex-shrink-0', pathError ? 'text-red-500' : 'text-stone-400')} aria-hidden />
             <input
               ref={pathInputRef}
               value={pathInput}
@@ -797,8 +734,8 @@ export default function FileBrowser({
               }}
               onBlur={() => { if (pathInput === currentPath) setPathEditMode(false); }}
               className={cn(
-                'flex-1 text-sm bg-white rounded-md border px-2.5 py-1 outline-none transition-colors',
-                pathError ? 'border-red-400' : 'border-stone-300 focus:border-primary-400',
+                'flex-1 text-sm bg-transparent px-1 py-1.5 outline-none transition-colors',
+                pathError ? 'text-red-600' : 'text-stone-800',
               )}
               placeholder="/folder1/folder2"
               spellCheck={false}
@@ -810,34 +747,39 @@ export default function FileBrowser({
               {'转到'}
             </button>
             <button
-              onClick={() => { setPathEditMode(false); setPathError(false); }}
+              onClick={() => { setPathEditMode(false); setPathError(false); }} aria-label="取消"
               className="text-stone-400 hover:text-stone-600 cursor-pointer p-0.5"
             >
-              <X className="w-4 h-4" />
+              <X className="w-4 h-4" aria-hidden />
             </button>
           </div>
         ) : (
           <div
-            className="flex items-center gap-0.5 flex-1 min-w-0 overflow-hidden group cursor-text"
+            className="flex items-center gap-1 flex-1 min-w-0 overflow-hidden bg-white border border-stone-300 rounded-md px-3 py-2 hover:border-primary-400 hover:ring-2 hover:ring-primary-50 transition cursor-text group"
+            role="button"
+            tabIndex={0}
+            aria-label="编辑路径"
             onClick={enterPathEditMode}
+            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); enterPathEditMode(); } }}
             title={'点击编辑路径'}
           >
+            <MapPin className="w-4 h-4 text-stone-400 flex-shrink-0" aria-hidden />
             <button
-              onClick={(e) => { e.stopPropagation(); navigateToPath('/'); }}
-              className="flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-stone-200 text-stone-500 hover:text-primary-600 transition-colors flex-shrink-0"
+              onClick={(e) => { e.stopPropagation(); navigateToPath('/'); }} aria-label="根目录"
+              className="flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-stone-100 text-stone-500 hover:text-primary-600 transition-colors flex-shrink-0"
             >
-              <Home className="w-3.5 h-3.5" />
+              <Home className="w-4 h-4" aria-hidden />
             </button>
             {pathSegments.length === 0 ? (
               <span className="text-sm text-stone-400 px-1.5">{'根目录'}</span>
             ) : (
               pathSegments.map((seg, idx) => (
                 <div key={seg.path} className="flex items-center gap-0.5 min-w-0">
-                  <ChevronRight className="w-3 h-3 text-stone-300 flex-shrink-0" />
+                  <ChevronRight className="w-3.5 h-3.5 text-stone-300 flex-shrink-0" aria-hidden />
                   <button
                     onClick={(e) => { e.stopPropagation(); navigateToPath(seg.path); }}
                     className={cn(
-                      'px-1.5 py-0.5 rounded hover:bg-stone-200 text-sm transition-colors truncate',
+                      'px-1.5 py-0.5 rounded hover:bg-stone-100 text-sm transition-colors truncate',
                       idx === pathSegments.length - 1 ? 'text-stone-800 font-medium' : 'text-stone-500 hover:text-primary-600',
                     )}
                   >
@@ -847,19 +789,19 @@ export default function FileBrowser({
               ))
             )}
             <div className="flex-1" />
-            <span className="text-xs text-stone-300 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 pl-2">
-              {'点击编辑'}
-            </span>
+            <Pencil className="w-3.5 h-3.5 text-stone-300 group-hover:text-primary-500 transition-colors flex-shrink-0" aria-hidden />
           </div>
         )}
       </div>
 
+      <div className="flex-1 flex overflow-hidden">
       <div
+        ref={fileListRef}
         className="flex-1 overflow-auto px-5 py-4 relative"
         onMouseDown={(e) => {
           if (e.button === 0 && !isFileItemClick(e)) {
-            dragStartRef.current = { x: e.clientX, y: e.clientY };
-            setDragRect({ startX: e.clientX, startY: e.clientY, currentX: e.clientX, currentY: e.clientY });
+            e.preventDefault();
+            startDrag(e.clientX, e.clientY);
             clearSelection();
             if (contextMenu) setContextMenu(null);
           }
@@ -874,14 +816,12 @@ export default function FileBrowser({
         }}
       >
         {loading ? (
-          <div className="flex items-center justify-center h-full">
-            <div className="w-8 h-8 border-3 border-primary-600 border-t-transparent rounded-full animate-spin" />
-          </div>
+          <FileListSkeleton view={view} />
         ) : files.length === 0 ? (
           <EmptyState onCreateFolder={() => setShowCreateFolder(true)} />
         ) : view === 'list' ? (
           <FileTable
-            files={sortedFiles}
+            files={filteredFiles}
             selectedIds={selectedIds}
             focusedId={focusedId}
             cutIds={clipboard?.mode === 'cut' ? new Set(clipboard.nodeIds) : null}
@@ -889,6 +829,11 @@ export default function FileBrowser({
             onSelectAll={selectAll}
             onContextMenu={handleContextMenu}
             onNavigate={(node) => { if (node.nodeType === 0) onNavigateFolder(node); }}
+            onItemDragStart={handleItemDragStart}
+            onFolderDragOver={handleFolderDragOver}
+            onFolderDragLeave={handleFolderDragLeave}
+            onFolderDrop={handleFolderDrop}
+            dragOverFolderId={dragOverFolderId}
             onDoubleClick={(node) => {
               if (node.nodeType === 0) {
                 onNavigateFolder(node);
@@ -901,13 +846,18 @@ export default function FileBrowser({
           />
         ) : (
           <FileGrid
-            files={sortedFiles}
+            files={filteredFiles}
             selectedIds={selectedIds}
             focusedId={focusedId}
             cutIds={clipboard?.mode === 'cut' ? new Set(clipboard.nodeIds) : null}
             onSelect={handleSelect}
             onContextMenu={handleContextMenu}
             onNavigate={(node) => { if (node.nodeType === 0) onNavigateFolder(node); }}
+            onItemDragStart={handleItemDragStart}
+            onFolderDragOver={handleFolderDragOver}
+            onFolderDragLeave={handleFolderDragLeave}
+            onFolderDrop={handleFolderDrop}
+            dragOverFolderId={dragOverFolderId}
             onDoubleClick={(node) => {
               if (node.nodeType === 0) {
                 onNavigateFolder(node);
@@ -919,6 +869,10 @@ export default function FileBrowser({
             }}
           />
         )}
+      </div>
+      {detailFile && (
+        <FileDetailPanel file={detailFile} onClose={() => setDetailFile(null)} />
+      )}
       </div>
 
       {total > 50 && (
@@ -952,6 +906,7 @@ export default function FileBrowser({
           hasClipboard={!!clipboard}
           showShare={enableShare}
           showVersions={enableVersions}
+          isFav={favVersion >= 0 && isFavorite(contextMenu.node.id)}
           onAction={handleContextAction}
           onClose={() => setContextMenu(null)}
         />
@@ -1038,7 +993,7 @@ export default function FileBrowser({
               );
               showToast('\u5df2\u6dfb\u52a0\u5230\u4e0b\u8f7d\u961f\u5217', 'success');
               return true;
-            } catch (err) {
+            } catch {
               showToast('\u4e0b\u8f7d\u542f\u52a8\u5931\u8d25', 'error');
               return false;
             }

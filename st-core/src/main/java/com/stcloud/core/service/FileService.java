@@ -106,4 +106,10 @@ public interface FileService {
     FileNodeVO resolveTeamByPath(Long spaceId, String path);
     /** 团队空间：根据 ID 获取节点（不校验 ownerId） */
     FileNodeVO getTeamNodeById(Long spaceId, Long nodeId);
+
+    /** 校验节点可访问：自身及所有祖先必须处于正常态，否则抛 FORBIDDEN。 */
+    void validateAccessible(Long nodeId);
+
+    /** 递归收集指定节点的全部子孙（按 parentId，不依赖 path 前缀）。 */
+    List<FileNode> collectDescendants(Long nodeId);
 }

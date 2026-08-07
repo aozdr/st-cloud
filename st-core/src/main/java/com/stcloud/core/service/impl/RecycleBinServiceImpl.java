@@ -75,44 +75,47 @@ public class RecycleBinServiceImpl implements RecycleBinService {
                 continue;
             }
 
-            // 检查父目录
-            if (node.getParentId() != 0) {
-                FileNode parent = fileNodeMapper.selectById(node.getParentId());
+            String oldPath = node.getPath();
+            Long targetParentId = node.getParentId() == null ? 0L : node.getParentId();
+            String parentPath = "";
+
+            // 父目录校验：父不存在或非正常态则回归根目录
+            if (targetParentId != 0L) {
+                FileNode parent = fileNodeMapper.selectById(targetParentId);
                 if (parent == null || parent.getStatus() != NodeStatus.NORMAL.getCode()) {
-                    node.setParentId(0L);
-                    node.setPath("/" + node.getName());
+                    targetParentId = 0L;
+                } else {
+                    parentPath = parent.getPath();
                 }
             }
 
-            // 重名处理
+            // 重名冲突处理
             String name = node.getName();
-            if (fileNodeMapper.countByParentAndName(node.getParentId(), name) > 0) {
-                name = fileService.resolveNameConflict(node.getParentId(), name);
-                node.setName(name);
-                node.setPath(node.getParentId() == 0 ? "/" + name : "/" + name);
+            if (fileNodeMapper.countByParentAndName(targetParentId, name) > 0) {
+                name = fileService.resolveNameConflict(targetParentId, name);
             }
 
+            // 计算恢复后路径（id 不变，重命名/回归根仅改变 path 与 name）
+            String targetPath = targetParentId == 0L ? "/" + name : parentPath + "/" + name;
+
+            node.setParentId(targetParentId);
+            node.setName(name);
+            node.setPath(targetPath);
             node.setStatus(NodeStatus.NORMAL.getCode());
+            node.setUpdatedAt(LocalDateTime.now());
             fileNodeMapper.updateById(node);
 
-            // 查询待恢复的子节点（更新前查询，以便后续发 INDEX 事件）
-            LambdaQueryWrapper<FileNode> childQuery = new LambdaQueryWrapper<FileNode>()
-                    .likeRight(FileNode::getPath, node.getPath() + "/")
-                    .eq(FileNode::getStatus, NodeStatus.RECYCLED.getCode());
-            List<FileNode> children = fileNodeMapper.selectList(childQuery);
+            // 路径变更时同步子孙 path（状态判定已改为祖先链校验）
+            if (!oldPath.equals(targetPath) && node.isFolder()) {
+                fileNodeMapper.updateChildrenPath(oldPath, targetPath);
+            }
 
-            // 恢复子节点
-            LambdaUpdateWrapper<FileNode> childUpdate = new LambdaUpdateWrapper<FileNode>()
-                    .likeRight(FileNode::getPath, node.getPath() + "/")
-                    .eq(FileNode::getStatus, NodeStatus.RECYCLED.getCode())
-                    .set(FileNode::getStatus, NodeStatus.NORMAL.getCode());
-            fileNodeMapper.update(null, childUpdate);
-
-            // 发布 INDEX 事件：恢复的节点和子节点都需要重新索引到 ES
+            // ES：重新索引恢复节点及正常态子孙（独立回收的子孙保持不可搜）
             eventPublisher.publishEvent(new FileIndexEvent(this, node, FileIndexEvent.ActionType.INDEX));
-            for (FileNode child : children) {
-                child.setStatus(NodeStatus.NORMAL.getCode());
-                eventPublisher.publishEvent(new FileIndexEvent(this, child, FileIndexEvent.ActionType.INDEX));
+            for (FileNode descendant : fileService.collectDescendants(nodeId)) {
+                if (descendant.getStatus() == NodeStatus.NORMAL.getCode()) {
+                    eventPublisher.publishEvent(new FileIndexEvent(this, descendant, FileIndexEvent.ActionType.INDEX));
+                }
             }
         }
     }
@@ -169,5 +172,30 @@ public class RecycleBinServiceImpl implements RecycleBinService {
         for (FileNode node : nodes) {
             permanentDeleteNodeAndChildren(node);
         }
+    }
+
+    @Override
+    public List<Long> findExpiredRecycleRoots() {
+        LocalDateTime cutoff = LocalDateTime.now().minusDays(RETENTION_DAYS);
+        LambdaQueryWrapper<FileNode> wrapper = new LambdaQueryWrapper<FileNode>()
+                .eq(FileNode::getStatus, NodeStatus.RECYCLED.getCode())
+                .lt(FileNode::getUpdatedAt, cutoff)
+                .notInSql(FileNode::getParentId,
+                        "SELECT id FROM file_node WHERE status = " + NodeStatus.RECYCLED.getCode()
+                                + " AND deleted = 0");
+        return fileNodeMapper.selectList(wrapper).stream()
+                .map(FileNode::getId)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public void purgeNode(Long nodeId) {
+        FileNode node = fileNodeMapper.selectById(nodeId);
+        if (node == null || node.getStatus() != NodeStatus.RECYCLED.getCode()) {
+            // 已被恢复或已清理，跳过
+            return;
+        }
+        permanentDeleteNodeAndChildren(node);
     }
 }

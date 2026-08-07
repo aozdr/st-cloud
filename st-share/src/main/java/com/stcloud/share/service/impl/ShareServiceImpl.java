@@ -12,6 +12,7 @@ import com.stcloud.core.entity.FileNode;
 import com.stcloud.core.dto.FileNodeVO;
 import com.stcloud.core.mapper.FileNodeMapper;
 import com.stcloud.core.service.DownloadService;
+import com.stcloud.core.service.FileService;
 import com.stcloud.core.service.StorageService;
 import com.stcloud.share.dto.*;
 import com.stcloud.share.entity.FileShare;
@@ -48,6 +49,9 @@ public class ShareServiceImpl implements ShareService {
     private DownloadService downloadService;
 
     @Resource
+    private FileService fileService;
+
+    @Resource
     private StorageService storageService;
 
     @Override
@@ -57,6 +61,7 @@ public class ShareServiceImpl implements ShareService {
         if (fileNode == null || fileNode.getStatus() != 0) {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
         }
+        fileService.validateAccessible(request.getFileNodeId());
 
         FileShare share = new FileShare();
         share.setShareCode(generateShareCode());
@@ -153,6 +158,7 @@ public class ShareServiceImpl implements ShareService {
         if (node == null) {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
         }
+        fileService.validateAccessible(share.getFileNodeId());
 
         ShareAccessVO vo = new ShareAccessVO();
         vo.setFileName(node.getName());
@@ -180,6 +186,7 @@ public class ShareServiceImpl implements ShareService {
         if (targetNode == null || targetNode.getStatus() != 0) {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
         }
+        fileService.validateAccessible(targetNodeId);
         // 子文件下载时校验归属
         if (nodeId != null) {
             FileNode root = fileNodeMapper.selectById(share.getFileNodeId());
@@ -211,6 +218,7 @@ public class ShareServiceImpl implements ShareService {
         }
 
         Long queryParentId = parentId != null ? parentId : share.getFileNodeId();
+        fileService.validateAccessible(queryParentId);
 
         // 子目录归属校验：parentId 节点的 path 必须以根节点 path 为前缀
         if (parentId != null && !parentId.equals(share.getFileNodeId())) {
@@ -244,6 +252,7 @@ public class ShareServiceImpl implements ShareService {
         if (targetNode == null || targetNode.getStatus() != 0 || targetNode.getNodeType() != 1) {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
         }
+        fileService.validateAccessible(targetNodeId);
         // 子文件流式预览校验归属：path 必须以根节点 path 为前缀
         if (nodeId != null) {
             FileNode root = fileNodeMapper.selectById(share.getFileNodeId());

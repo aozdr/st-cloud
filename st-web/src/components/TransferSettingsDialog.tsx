@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { X, Settings2, ArrowUp, ArrowDown, Layers } from 'lucide-react';
-import { useTransferStore, type TransferSettings } from '../store/transfer';
+import { useTransferStore } from '../store/transfer';
 
 interface TransferSettingsDialogProps {
   open: boolean;
@@ -69,7 +69,7 @@ export default function TransferSettingsDialog({ open, onClose }: TransferSettin
               <button
                 key={n}
                 onClick={() => setSettings({ maxParallelTasks: n })}
-                className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all duration-150 cursor-pointer ${
+                className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition duration-150 cursor-pointer ${
                   settings.maxParallelTasks === n
                     ? 'bg-primary-600 text-white shadow-sm'
                     : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
@@ -188,7 +188,7 @@ function SpeedSection({ icon, title, unlimited, value, unit, onToggleUnlimited, 
               const v = parseInt(e.target.value, 10);
               onValueChange(isNaN(v) || v < 1 ? 1 : v);
             }}
-            className="flex-1 px-3 py-2 border border-stone-200 rounded-lg text-sm text-stone-900 focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-50 transition-all"
+            className="flex-1 px-3 py-2 border border-stone-200 rounded-lg text-sm text-stone-900 focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-50 transition"
             placeholder="输入数值"
           />
           <div className="flex rounded-lg overflow-hidden border border-stone-200">

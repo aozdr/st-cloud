@@ -59,7 +59,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
+      <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none" role="status" aria-live="polite">
         {toasts.map((toast) => {
           const Icon = ICONS[toast.type];
           const accent = ACCENTS[toast.type];
@@ -68,15 +68,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               key={toast.id}
               className={`flex items-center gap-3 bg-white rounded-lg border-l-4 ${accent.border} shadow-md pointer-events-auto animate-toast-slide-down min-w-[280px] px-4 py-3`}
             >
-              <Icon className={`w-4 h-4 flex-shrink-0 ${accent.icon}`} strokeWidth={2} />
+              <Icon className={`w-4 h-4 flex-shrink-0 ${accent.icon}`} strokeWidth={2} aria-hidden />
 
               <span className="text-sm font-medium text-stone-800 flex-1">{toast.message}</span>
 
               <button
                 onClick={() => removeToast(toast.id)}
+                aria-label="关闭"
                 className="text-stone-300 hover:text-stone-500 transition-colors flex-shrink-0 cursor-pointer"
               >
-                <X className="w-4 h-4" />
+                <X className="w-4 h-4" aria-hidden />
               </button>
             </div>
           );

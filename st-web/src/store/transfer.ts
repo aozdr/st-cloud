@@ -87,7 +87,7 @@ export const useTransferStore = create<TransferStore>((set, get) => ({
   },
   fetchServerLimits: async () => {
     try {
-      const data: any = await api.get('/transfer/speed-limit');
+      const data = await api.get<ServerLimits>('/transfer/speed-limit');
       get().setServerLimits({
         uploadSpeedLimit: data?.uploadSpeedLimit || 0,
         downloadSpeedLimit: data?.downloadSpeedLimit || 0,

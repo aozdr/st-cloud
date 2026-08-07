@@ -12,6 +12,15 @@ export function updateApiBaseUrl(): void {
   instance.defaults.baseURL = getApiBaseUrl();
 }
 
+// ApiError carries the business error code from the server
+class ApiError extends Error {
+  code?: number;
+  constructor(message: string, code?: number) {
+    super(message);
+    this.code = code;
+  }
+}
+
 // Request interceptor: inject JWT
 instance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
@@ -26,6 +35,16 @@ instance.interceptors.request.use(
 
 // Response interceptor: unwrap Result.data, attach business code, handle 401
 let isRefreshing = false;
+let refreshSubscribers: Array<(token: string | null) => void> = [];
+
+function subscribeTokenRefresh(cb: (token: string | null) => void) {
+  refreshSubscribers.push(cb);
+}
+
+function onRefreshed(token: string | null) {
+  refreshSubscribers.forEach((cb) => cb(token));
+  refreshSubscribers = [];
+}
 
 instance.interceptors.response.use(
   (response) => {
@@ -33,14 +52,25 @@ instance.interceptors.response.use(
     if (result.code === 200) {
       return result.data;
     }
-    console.error('API Error:', result.message);
-    const error = new Error(result.message || 'Request failed');
-    (error as any).code = result.code;
+    if (import.meta.env.DEV) console.error('API Error:', result.message);
+    const error = new ApiError(result.message || 'Request failed', result.code);
     return Promise.reject(error);
   },
   async (error) => {
     const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry && !isRefreshing) {
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      // If a refresh is already in flight, queue this request until it resolves
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          subscribeTokenRefresh((token) => {
+            if (!token) return reject(error);
+            originalRequest._retry = true;
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            resolve(instance(originalRequest));
+          });
+        });
+      }
+
       isRefreshing = true;
       originalRequest._retry = true;
       const refreshToken = localStorage.getItem('refreshToken');
@@ -52,10 +82,12 @@ instance.interceptors.response.use(
           localStorage.setItem('refreshToken', newRefreshToken);
           syncAuthToElectron();
           isRefreshing = false;
+          onRefreshed(token);
           originalRequest.headers.Authorization = `Bearer ${token}`;
           return instance(originalRequest);
         } catch {
           isRefreshing = false;
+          onRefreshed(null);
           localStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
           window.location.href = '/login';
@@ -63,10 +95,11 @@ instance.interceptors.response.use(
         }
       }
       isRefreshing = false;
+      onRefreshed(null);
       window.location.href = '/login';
     }
     const msg = error.response?.data?.message || error.message || 'Network error';
-    console.error('Request error:', msg);
+    if (import.meta.env.DEV) console.error('Request error:', msg);
     return Promise.reject(new Error(msg));
   },
 );
@@ -75,11 +108,11 @@ instance.interceptors.response.use(
 // actually resolves to the payload T. Narrow the type so callers can use
 // `await api.get<Foo>(...)` as `Foo` instead of AxiosResponse<Foo>.
 interface ApiClient {
-  get<T = any>(url: string, config?: AxiosRequestConfig): Promise<T>;
-  post<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T>;
-  put<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T>;
-  delete<T = any>(url: string, config?: AxiosRequestConfig): Promise<T>;
-  patch<T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T>;
+  get<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T>;
+  post<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>;
+  put<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>;
+  delete<T = unknown>(url: string, config?: AxiosRequestConfig): Promise<T>;
+  patch<T = unknown>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>;
 }
 
 const api = instance as unknown as ApiClient;

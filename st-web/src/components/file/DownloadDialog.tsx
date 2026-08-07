@@ -59,8 +59,8 @@ export default function DownloadDialog({ fileName, fileSize, onConfirm, onClose 
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-stone-100">
           <h3 className="text-base font-semibold text-stone-900">下载文件</h3>
-          <button onClick={onClose} className="text-stone-400 hover:text-stone-900 cursor-pointer">
-            <X className="w-4 h-4" />
+          <button onClick={onClose} className="text-stone-400 hover:text-stone-900 cursor-pointer" aria-label="关闭">
+            <X className="w-4 h-4" aria-hidden />
           </button>
         </div>
 

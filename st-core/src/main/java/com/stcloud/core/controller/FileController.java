@@ -220,7 +220,8 @@ public class FileController {
         UserContext.CurrentUser user = UserContext.getCurrentUser();
         String token = jwtUtils.generateDownloadToken(
                 user.getUserId(), user.getTenantId(), user.getUsername(),
-                user.getRoles(), new ArrayList<>(user.getPermissions()), user.getDataScope());
+                user.getRoles(), new ArrayList<>(user.getPermissions()), user.getDataScope(),
+                nodeId);
         return Result.success(Map.of("token", token));
     }
 }

@@ -32,6 +32,8 @@ public class SearchIndexInitializer {
     public static final String FIELD_FILE_SIZE = "fileSize";
     public static final String FIELD_PATH = "path";
     public static final String FIELD_NODE_TYPE = "nodeType";
+    public static final String FIELD_CREATED_AT = "createdAt";
+    public static final String FIELD_UPDATED_AT = "updatedAt";
     public static final String ANALYZER_INDEX = "ik_max_word";
     public static final String ANALYZER_SEARCH = "ik_smart";
 
@@ -85,6 +87,8 @@ public class SearchIndexInitializer {
                         .properties(FIELD_FILE_SIZE, p -> p.long_(l -> l))
                         .properties(FIELD_PATH, p -> p.keyword(k -> k))
                         .properties(FIELD_NODE_TYPE, p -> p.integer(i -> i))
+                        .properties(FIELD_CREATED_AT, p -> p.date(d -> d))
+                        .properties(FIELD_UPDATED_AT, p -> p.date(d -> d))
                         .properties(FIELD_ATTACHMENT, p -> p.object(o -> o
                                 .properties(FIELD_CONTENT, pp -> pp.text(t -> t.analyzer(ANALYZER_INDEX).searchAnalyzer(ANALYZER_SEARCH)))
                         ))

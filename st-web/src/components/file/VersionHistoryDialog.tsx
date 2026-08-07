@@ -96,9 +96,9 @@ export default function VersionHistoryDialog({ node, onClose, onRestored }: Prop
             </button>
             <button
               onClick={onClose}
-              className="p-1 text-stone-400 hover:text-stone-600 rounded-md hover:bg-stone-100 transition-colors cursor-pointer"
+              className="p-1 text-stone-400 hover:text-stone-600 rounded-md hover:bg-stone-100 transition-colors cursor-pointer" aria-label="关闭"
             >
-              <X className="w-5 h-5" />
+              <X className="w-5 h-5" aria-hidden />
             </button>
           </div>
         </div>

@@ -2,8 +2,10 @@ import { lazy, Suspense, useEffect, type ReactNode } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/auth';
 import { syncAuthToElectron } from './lib/electron';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const Login = lazy(() => import('./pages/Login'));
+const HomePage = lazy(() => import('./pages/HomePage'));
 const ServerConfigPage = lazy(() => import('./pages/ServerConfigPage'));
 const AppLayout = lazy(() => import('./components/layout/AppLayout'));
 const FileManager = lazy(() => import('./pages/FileManager'));
@@ -36,8 +38,9 @@ function ProtectedRoute({ children }: { children: ReactNode }) {
 
 export default function App() {
   return (
-    <Suspense fallback={<Loading />}>
-      <Routes>
+    <ErrorBoundary>
+      <Suspense fallback={<Loading />}>
+        <Routes>
         <Route path="/login" element={<Login />} />
         {/* 公开分享访问页 - 无需登录 */}
         <Route path="/share/:shareCode" element={<ShareAccessPage />} />
@@ -50,7 +53,7 @@ export default function App() {
             </ProtectedRoute>
           }
         >
-          <Route index element={<Navigate to="/files" replace />} />
+          <Route index element={<HomePage />} />
           <Route path="files" element={<FileManager />} />
           <Route path="files/:parentId" element={<FileManager />} />
           <Route path="search" element={<SearchPage />} />
@@ -64,6 +67,7 @@ export default function App() {
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </Suspense>
+      </Suspense>
+    </ErrorBoundary>
   );
 }
