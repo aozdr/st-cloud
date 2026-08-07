@@ -8,7 +8,7 @@ const IMAGE_SUFFIXES = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'
 
 interface Props {
   file: FileNode;
-  size?: 'sm' | 'xl';
+  size?: 'sm' | 'lg' | 'xl';
 }
 
 export default function FileThumbnail({ file, size = 'sm' }: Props) {
@@ -36,7 +36,7 @@ export default function FileThumbnail({ file, size = 'sm' }: Props) {
   }, [file.id, isImage]);
 
   if (isImage && url) {
-    const sizeClass = size === 'xl' ? 'w-20 h-20' : 'w-8 h-8';
+    const sizeClass = size === 'xl' ? 'w-20 h-20' : size === 'lg' ? 'w-10 h-10' : 'w-8 h-8';
     return (
       <div className={`${sizeClass} rounded-lg overflow-hidden flex-shrink-0`}>
         <img src={url} alt={file.name} className="w-full h-full object-cover" loading="lazy" draggable={false} />

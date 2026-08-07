@@ -172,8 +172,38 @@ public class SearchServiceImpl implements SearchService {
                                         .field(contentField)
                                         .query(keyword)
                                 ));
+                                b.should(m -> m.matchPhrasePrefix(mpp -> mpp
+                                        .field(contentField)
+                                        .query(keyword)
+                                ));
                                 b.should(m -> m.match(mm -> mm
                                         .field(fileNameField)
+                                        .query(keyword)
+                                ));
+                                b.should(m -> m.matchPhrasePrefix(mpp -> mpp
+                                        .field(fileNameField)
+                                        .query(keyword)
+                                ));
+                                String escapedKw = keyword.toLowerCase().replaceAll("[*?\\\\]", "\\\\$0");
+                                b.should(m -> m.wildcard(w -> w
+                                        .field(fileNameField)
+                                        .wildcard("*" + escapedKw + "*")
+                                ));
+                                // 英文子串兜底：IK 对粘连/驼峰英文合成单 token，standard/ngram 子字段补足召回
+                                b.should(m -> m.match(mm -> mm
+                                        .field(contentField + "." + SearchIndexInitializer.FIELD_ENG_SUFFIX)
+                                        .query(keyword)
+                                ));
+                                b.should(m -> m.match(mm -> mm
+                                        .field(contentField + "." + SearchIndexInitializer.FIELD_NGRAM_SUFFIX)
+                                        .query(keyword)
+                                ));
+                                b.should(m -> m.match(mm -> mm
+                                        .field(fileNameField + "." + SearchIndexInitializer.FIELD_ENG_SUFFIX)
+                                        .query(keyword)
+                                ));
+                                b.should(m -> m.match(mm -> mm
+                                        .field(fileNameField + "." + SearchIndexInitializer.FIELD_NGRAM_SUFFIX)
                                         .query(keyword)
                                 ));
                                 b.minimumShouldMatch("1");
@@ -218,8 +248,6 @@ public class SearchServiceImpl implements SearchService {
                     s.highlight(h -> h
                             .fields(contentField,
                                     f -> f.preTags("<em>").postTags("</em>").fragmentSize(150).numberOfFragments(3))
-                            .fields(fileNameField,
-                                    f -> f.preTags("<em>").postTags("</em>"))
                     );
                 }
                 return s;
@@ -231,7 +259,7 @@ public class SearchServiceImpl implements SearchService {
                 if (source == null) {
                     continue;
                 }
-                results.add(toVO(source, hit));
+                results.add(toVO(source, hit, keyword));
             }
 
             // Enrich with createdAt/updatedAt from database (ES index may not have them yet)
@@ -344,10 +372,11 @@ public class SearchServiceImpl implements SearchService {
      * 将 ES 文档转为 SearchResultVO
      */
     @SuppressWarnings("unchecked")
-    private SearchResultVO toVO(Map<String, Object> source, Hit<Map> hit) {
+    private SearchResultVO toVO(Map<String, Object> source, Hit<Map> hit, String keyword) {
         SearchResultVO vo = new SearchResultVO();
         vo.setFileId(toLong(source.get(SearchIndexInitializer.FIELD_FILE_ID)));
-        vo.setFileName((String) source.get(SearchIndexInitializer.FIELD_FILE_NAME));
+        String rawFileName = (String) source.get(SearchIndexInitializer.FIELD_FILE_NAME);
+        vo.setFileName(rawFileName);
         vo.setPath((String) source.get(SearchIndexInitializer.FIELD_PATH));
         vo.setFileSize(toLong(source.get(SearchIndexInitializer.FIELD_FILE_SIZE)));
         vo.setSuffix((String) source.get(SearchIndexInitializer.FIELD_SUFFIX));
@@ -362,16 +391,25 @@ public class SearchServiceImpl implements SearchService {
 
         // 合并高亮片段：优先内容高亮，没有则用文件名高亮
         String contentField = SearchIndexInitializer.FIELD_ATTACHMENT + "." + SearchIndexInitializer.FIELD_CONTENT;
-        String fileNameField = SearchIndexInitializer.FIELD_FILE_NAME;
         if (hit.highlight() != null) {
             List<String> contentFragments = hit.highlight().get(contentField);
             if (contentFragments != null && !contentFragments.isEmpty()) {
                 vo.setHighlight(String.join(" ... ", contentFragments));
-            } else {
-                List<String> nameFragments = hit.highlight().get(fileNameField);
-                if (nameFragments != null && !nameFragments.isEmpty()) {
-                    vo.setHighlight(String.join(" ... ", nameFragments));
-                }
+            }
+        }
+        // If no content highlight, build a file-name snippet with the keyword highlighted
+        if (vo.getHighlight() == null && keyword != null && !keyword.isBlank() && rawFileName != null) {
+            String lowerName = rawFileName.toLowerCase();
+            String lowerKw = keyword.toLowerCase();
+            int idx = lowerName.indexOf(lowerKw);
+            if (idx >= 0) {
+                int start = Math.max(0, idx - 30);
+                int end = Math.min(rawFileName.length(), idx + keyword.length() + 30);
+                String prefix = start > 0 ? "..." : "";
+                String suffix = end < rawFileName.length() ? "..." : "";
+                String matched = rawFileName.substring(idx, idx + keyword.length());
+                String snippet = prefix + rawFileName.substring(start, idx) + "<em>" + matched + "</em>" + rawFileName.substring(idx + keyword.length(), end) + suffix;
+                vo.setHighlight(snippet);
             }
         }
         return vo;

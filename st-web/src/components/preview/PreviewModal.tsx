@@ -10,11 +10,14 @@ const PlyrPlayer = lazy(() => import('./PlyrPlayer'));
 
 async function renderDocx(blob: Blob, container: HTMLElement) {
   const { renderAsync } = await import('docx-preview');
+  container.innerHTML = '';
   await renderAsync(blob, container, undefined, {
     className: 'docx-container',
     inWrapper: true,
     ignoreWidth: false,
     ignoreHeight: false,
+    breakPages: true,
+    experimental: true,
   });
 }
 
@@ -50,9 +53,19 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
   const [excelSheetIdx, setExcelSheetIdx] = useState(0);
   const [sheetDropdownOpen, setSheetDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [docxBlob, setDocxBlob] = useState<Blob | null>(null);
   const docxContainerRef = useRef<HTMLDivElement>(null);
   const excelWorkbookRef = useRef<WorkBook | null>(null);
 
+  // Separate effect: render docx blob into container when both are ready
+  useEffect(() => {
+    if (!docxBlob || !docxContainerRef.current) return;
+    let cancelled = false;
+    renderDocx(docxBlob, docxContainerRef.current)
+      .then(() => { if (!cancelled) setLoading(false); })
+      .catch((err) => { if (!cancelled) { console.error('docx render failed:', err); setLoading(false); } });
+    return () => { cancelled = true; };
+  }, [docxBlob]);
   const file = files[index];
 
   useEffect(() => {
@@ -68,6 +81,7 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
     setExcelSheets([]);
     setExcelSheetIdx(0);
     excelWorkbookRef.current = null;
+    setDocxBlob(null);
 
     if (shareContext) {
       // 分享模式：使用 stream 端点，无需登录 token，不会增加下载次数
@@ -87,11 +101,7 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
       } else if (isWord(file.suffix)) {
         fetch(streamUrl)
           .then((res) => res.blob())
-          .then((blob) => {
-            if (docxContainerRef.current) {
-              renderDocx(blob, docxContainerRef.current).then(() => setLoading(false));
-            }
-          })
+          .then((blob) => { setDocxBlob(blob); setLoading(false); })
           .catch(() => setLoading(false));
       } else if (isExcel(file.suffix)) {
         fetch(streamUrl)
@@ -126,13 +136,9 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
           .catch(() => setLoading(false));
       } else if (isWord(file.suffix)) {
         fetch(streamUrl, { headers })
-          .then((res) => res.blob())
-          .then((blob) => {
-            if (docxContainerRef.current) {
-              renderDocx(blob, docxContainerRef.current).then(() => setLoading(false));
-            }
-          })
-          .catch(() => setLoading(false));
+          .then((res) => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.blob(); })
+          .then((blob) => { setDocxBlob(blob); setLoading(false); })
+          .catch((err) => { console.error('docx fetch failed:', err); setLoading(false); });
       } else if (isExcel(file.suffix)) {
         fetch(streamUrl, { headers })
           .then((res) => res.blob())
@@ -340,7 +346,7 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
               </pre>
             </div>
           ) : isWord(file.suffix) ? (
-            <div className="w-[80vw] h-[80vh] bg-white rounded-lg overflow-hidden shadow-lg">
+            <div className="w-[80vw] h-[80vh] bg-white rounded-lg overflow-auto shadow-lg">
               <div ref={docxContainerRef} className="docx-container" />
             </div>
           ) : isExcel(file.suffix) && excelHtml ? (

@@ -403,6 +403,35 @@ class SearchServiceImplTest {
         }
 
         @Test
+        @DisplayName("英文子串搜索 - ngram/eng 子字段查询构建不报错且结果正确转换")
+        void testEnglishSubstringSearch() throws Exception {
+            Map<String, Object> source = new HashMap<>();
+            source.put(SearchIndexInitializer.FIELD_FILE_ID, 300);
+            source.put(SearchIndexInitializer.FIELD_FILE_NAME, "SpringBoot microservices guide.pdf");
+            source.put(SearchIndexInitializer.FIELD_PATH, "/guide/SpringBoot microservices guide.pdf");
+            source.put(SearchIndexInitializer.FIELD_FILE_SIZE, 8192);
+            source.put(SearchIndexInitializer.FIELD_SUFFIX, "pdf");
+
+            Map<String, List<String>> highlight = new HashMap<>();
+            String hlField = SearchIndexInitializer.FIELD_ATTACHMENT + "." + SearchIndexInitializer.FIELD_CONTENT;
+            highlight.put(hlField, List.of("<em>microservices</em> autoconfiguration"));
+
+            SearchResponse<Map> mockResponse = buildSearchResponse(
+                    List.of(source), List.of(highlight));
+
+            doReturn(mockResponse).when(client).search(any(Function.class), eq(Map.class));
+
+            // "services" 是 microservices 的词中子串，依赖新增的 .ngram 子字段召回
+            List<SearchResultVO> results = searchService.searchContent("services", 1L, 1, 10, null, null, null, null, null, null);
+
+            assertEquals(1, results.size());
+            SearchResultVO vo = results.get(0);
+            assertEquals(300L, vo.getFileId());
+            assertEquals("SpringBoot microservices guide.pdf", vo.getFileName());
+            assertEquals("<em>microservices</em> autoconfiguration", vo.getHighlight());
+        }
+
+        @Test
         @DisplayName("source 为 null 的 hit 被跳过")
         void testSearchNullSourceSkipped() throws Exception {
             Hit<Map> nullSourceHit = Hit.of(h -> h.id("1").index("file_content").source(null));

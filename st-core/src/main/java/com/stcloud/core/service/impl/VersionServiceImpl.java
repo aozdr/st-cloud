@@ -14,6 +14,8 @@ import com.stcloud.core.service.VersionService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.context.ApplicationEventPublisher;
+import com.stcloud.core.event.FileIndexEvent;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -30,6 +32,8 @@ public class VersionServiceImpl implements VersionService {
     private FileNodeMapper fileNodeMapper;
     @Resource
     private FileService fileService;
+    @Resource
+    private ApplicationEventPublisher eventPublisher;
     @Resource
     private com.stcloud.core.mapper.UserQuotaMapper userQuotaMapper;
     @Resource
@@ -115,6 +119,9 @@ public class VersionServiceImpl implements VersionService {
         }
 
         snapshotCurrentVersion(node);
+
+        // 恢复版本后重新索引到 ES（文件内容已变更）
+        eventPublisher.publishEvent(new FileIndexEvent(this, node, FileIndexEvent.ActionType.INDEX));
         log.info("恢复文件版本: nodeId={}, versionId={}, delta={}", fileNodeId, versionId, delta);
         return node;
     }

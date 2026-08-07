@@ -159,12 +159,12 @@ function DateRangeFilter({ value, onChange }: { value: DateRange | undefined; on
 }
 function SkeletonCard() {
   return (
-    <div className="flex items-start gap-3.5 py-3 px-3 rounded-lg border border-transparent">
-      <div className="w-7 h-7 rounded-lg bg-stone-200 animate-pulse flex-shrink-0 mt-0.5" />
+    <div className="flex items-start gap-3.5 py-3 px-4">
+      <div className="w-7 h-7 rounded-lg bg-stone-200 shimmer flex-shrink-0 mt-0.5" />
       <div className="flex-1 min-w-0 space-y-2">
-        <div className="h-4 bg-stone-200 rounded animate-pulse w-2/3" />
-        <div className="h-3 bg-stone-100 rounded animate-pulse w-1/3" />
-        <div className="h-3 bg-stone-100 rounded animate-pulse w-1/2" />
+        <div className="h-4 bg-stone-200 rounded shimmer w-2/3" />
+        <div className="h-3 bg-stone-100 rounded shimmer w-1/3" />
+        <div className="h-3 bg-stone-100 rounded shimmer w-1/2" />
       </div>
     </div>
   );
@@ -317,7 +317,7 @@ export default function SearchPage() {
       <div className="flex-1 overflow-auto">
         <div className="max-w-4xl mx-auto px-6 py-4">
           {loading ? (
-            <div className="space-y-1">{Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}</div>
+            <div className="space-y-1 rounded-xl bg-white overflow-hidden divide-y divide-stone-50">{Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}</div>
           ) : !searched ? (
             <div className="flex flex-col items-center justify-center py-20 text-stone-400">
               <div className="w-16 h-16 rounded-2xl bg-stone-100 flex items-center justify-center mb-4"><Search className="w-8 h-8 text-stone-300" strokeWidth={1.2} aria-hidden /></div>
@@ -337,7 +337,7 @@ export default function SearchPage() {
               {hasActiveFilters && (<button onClick={clearFilters} className="mt-4 px-4 py-2 bg-white border border-stone-200 rounded-lg text-sm text-stone-600 hover:bg-stone-50 hover:border-stone-300 transition-colors cursor-pointer">清除所有筛选</button>)}
             </div>
           ) : (
-            <div className="space-y-0.5">
+            <div className="rounded-xl bg-white overflow-hidden divide-y divide-stone-50">
               {sortedResults.map((item) => {
                 const isFolder = item.nodeType === 0 || (item.nodeType == null && !item.suffix);
                 const config = getFileTypeConfig(isFolder ? 0 : 1, item.suffix);
@@ -348,7 +348,7 @@ export default function SearchPage() {
                     const fileNodes: FileNode[] = sortedResults.filter(r => !(r.nodeType === 0 || (r.nodeType == null && !r.suffix))).map(r => ({ id: r.fileId, parentId: '', nodeType: 1, name: r.fileName.replace(/<[^>]*>/g, ''), path: r.path, fileSize: r.fileSize, suffix: r.suffix, contentType: r.contentType, status: 0, thumbnailPath: null, createdAt: r.createdAt, updatedAt: r.updatedAt }));
                     const idx = fileNodes.findIndex(f => f.id === item.fileId);
                     setPreview({ files: fileNodes, index: idx >= 0 ? idx : 0 });
-                  }} className="group flex items-start gap-3.5 py-3 px-3 hover:bg-white hover:shadow-sm rounded-lg cursor-pointer transition duration-150 border border-transparent hover:border-stone-200">
+                  }} className="group flex items-start gap-3.5 py-3 px-4 hover:bg-stone-50/70 rounded-none cursor-pointer transition-colors duration-150 animate-file-enter">
                     <div className="flex-shrink-0 mt-0.5"><FileTypeIcon config={config} size="lg" isFolder={isFolder} suffix={item.suffix} /></div>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-sm font-medium text-stone-900 truncate group-hover:text-primary-600 transition-colors"><span className="search-highlight" dangerouslySetInnerHTML={{ __html: item.fileName }} /></h3>

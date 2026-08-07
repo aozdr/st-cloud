@@ -3,6 +3,7 @@ import api from '../../lib/api';
 import { getFileTypeConfig, cn } from '../../lib/utils';
 import type { FileNode } from '../../types';
 import FileTypeIcon from './FileTypeIcon';
+import { Check, MoreHorizontal } from 'lucide-react';
 
 interface Props {
   files: FileNode[];
@@ -18,6 +19,7 @@ interface Props {
   onFolderDragLeave?: (e: React.DragEvent, folder: FileNode) => void;
   onFolderDrop?: (e: React.DragEvent, folder: FileNode) => void;
   dragOverFolderId?: string | null;
+  onItemMenu?: (e: React.MouseEvent, node: FileNode) => void;
 }
 
 const IMAGE_SUFFIXES = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'];
@@ -52,20 +54,16 @@ function GridIcon({ file }: { file: FileNode }) {
   }, [file.id]);
 
   if (isImage(file) && url) {
-    return (
-      <div className="h-20 w-20 rounded-lg overflow-hidden flex-shrink-0">
-        <img src={url} alt={file.name} className="w-full h-full object-cover" loading="lazy" draggable={false} />
-      </div>
-    );
+    return <img src={url} alt={file.name} className="w-full h-full object-cover" loading="lazy" draggable={false} />;
   }
 
   return <FileTypeIcon config={config} size="xl" isFolder={file.nodeType === 0} suffix={file.suffix} />;
 }
 
-export default function FileGrid({ files, selectedIds, focusedId, cutIds, onSelect, onContextMenu, onDoubleClick, onItemDragStart, onFolderDragOver, onFolderDragLeave, onFolderDrop, dragOverFolderId }: Props) {
+export default function FileGrid({ files, selectedIds, focusedId, cutIds, onSelect, onContextMenu, onDoubleClick, onItemDragStart, onFolderDragOver, onFolderDragLeave, onFolderDrop, dragOverFolderId, onItemMenu }: Props) {
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-3">
-      {files.map((file) => {
+      {files.map((file, index) => {
         const isSelected = selectedIds.has(file.id);
 
         return (
@@ -80,19 +78,42 @@ export default function FileGrid({ files, selectedIds, focusedId, cutIds, onSele
             onClick={(e) => onSelect(file.id, e)}
             onDoubleClick={() => onDoubleClick(file)}
             onContextMenu={(e) => onContextMenu(e, file)}
+            style={{ animationDelay: `${Math.min(index, 24) * 24}ms` }}
             className={cn(
-              'group relative flex flex-col rounded-lg p-3 cursor-pointer select-none transition-colors duration-100',
+              'group relative flex flex-col rounded-xl p-2.5 cursor-pointer select-none transition-all duration-200 animate-file-enter',
               isSelected
-                ? 'bg-primary-50'
+                ? 'bg-primary-50/70'
                 : dragOverFolderId === file.id
                   ? 'bg-primary-50 ring-2 ring-primary-400'
                   : focusedId === file.id
-                    ? 'bg-stone-100'
-                    : 'hover:bg-stone-100',
+                    ? 'bg-stone-100/80'
+                    : 'hover:bg-stone-50',
               cutIds?.has(file.id) && 'opacity-50'
             )}
           >
-            <div className="flex items-center justify-center h-20 mb-2">
+            <button
+              onClick={(e) => { e.stopPropagation(); onSelect(file.id, e); }}
+              aria-label="选择"
+              className={cn(
+                'absolute top-1.5 left-1.5 z-10 w-[18px] h-[18px] rounded-[5px] border flex items-center justify-center transition-all',
+                isSelected ? 'bg-primary-600 border-primary-600 opacity-100' : 'border-stone-300 bg-white/90 opacity-0 group-hover:opacity-100'
+              )}
+            >
+              {isSelected && <Check className="w-3 h-3 text-white" strokeWidth={3} aria-hidden />}
+            </button>
+
+            {onItemMenu && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onItemMenu(e, file); }}
+                onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); onContextMenu(e, file); }}
+                aria-label="更多操作"
+                className="absolute top-1.5 right-1.5 z-10 w-7 h-7 rounded-lg flex items-center justify-center text-stone-500 bg-white/80 hover:bg-white hover:text-stone-900 opacity-0 group-hover:opacity-100 transition-all"
+              >
+                <MoreHorizontal className="w-4 h-4" aria-hidden />
+              </button>
+            )}
+
+            <div className="flex items-center justify-center h-28 mb-1.5 rounded-lg overflow-hidden">
               <GridIcon file={file} />
             </div>
             <div

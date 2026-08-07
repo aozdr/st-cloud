@@ -1,4 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ClipboardPaste, FolderPlus, RefreshCw, CheckSquare, Upload, type LucideIcon } from 'lucide-react';
 import { usePermission } from '../../lib/permission';
 
@@ -12,14 +13,26 @@ interface Props {
 
 export default function BlankContextMenu({ x, y, hasClipboard, onAction, onClose }: Props) {
   const { has } = usePermission();
+  const ref = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState<{ left: number; top: number }>({ left: x, top: y });
+
   useEffect(() => {
-    const handler = () => onClose();
-    document.addEventListener('click', handler);
-    return () => document.removeEventListener('click', handler);
+    const clickHandler = () => onClose();
+    document.addEventListener('click', clickHandler);
+    return () => document.removeEventListener('click', clickHandler);
   }, [onClose]);
 
-  const adjustedX = Math.min(x, window.innerWidth - 200);
-  const adjustedY = Math.min(y, window.innerHeight - 290);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    const w = el?.offsetWidth ?? 192;
+    const h = el?.offsetHeight ?? 290;
+    let left = x;
+    let top = y;
+    if (left + w > window.innerWidth) left = window.innerWidth - w - 4;
+    if (top + h > window.innerHeight) top = y - h;
+    if (top < 0) top = 4;
+    setPos({ left, top });
+  }, [x, y]);
 
   const items: Array<{ action: string; label: string; icon: LucideIcon; disabled?: boolean }> = [
     ...(has('file:upload') ? [{ action: 'newFolder', label: '新建文件夹', icon: FolderPlus }] : []),
@@ -29,10 +42,11 @@ export default function BlankContextMenu({ x, y, hasClipboard, onAction, onClose
     { action: 'selectAll', label: '全选', icon: CheckSquare },
   ];
 
-  return (
+  return createPortal(
     <div
-      className="fixed z-50 w-48 bg-white rounded-lg shadow-md border border-stone-200 py-1.5 animate-scale-in"
-      style={{ left: adjustedX, top: adjustedY }}
+      ref={ref}
+      className="fixed z-[100] w-48 bg-white rounded-lg shadow-md border border-stone-200 py-1.5 animate-scale-in"
+      style={{ left: pos.left, top: pos.top }}
       onClick={(e) => e.stopPropagation()}
     >
       {items.map((item, idx) => {
@@ -58,6 +72,7 @@ export default function BlankContextMenu({ x, y, hasClipboard, onAction, onClose
           </button>
         );
       })}
-    </div>
+    </div>,
+    document.body,
   );
 }

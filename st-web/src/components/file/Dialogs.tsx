@@ -150,13 +150,23 @@ export function RenameDialog({ node, onRename, onClose, onSuccess }: {
 export function EmptyState({ onCreateFolder }: { onCreateFolder: () => void }) {
   return (
     <div className="flex flex-col items-center justify-center h-full py-20">
-      <div className="w-24 h-24 bg-stone-50 rounded-2xl flex items-center justify-center mb-4">
-        <FolderOpen className="w-10 h-10 text-stone-300" />
+      <div className="relative mb-5">
+        <svg width="96" height="80" viewBox="0 0 96 80" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+          <ellipse cx="48" cy="72" rx="36" ry="5" fill="#F5F5F4" />
+          <path d="M20 16C20 14.9 20.9 14 22 14H42L50 22H74C75.1 22 76 22.9 76 24V60C76 61.1 75.1 62 74 62H22C20.9 62 20 61.1 20 60V16Z" fill="#FFF7F7" stroke="#FCA5A5" strokeWidth="1.5" />
+          <path d="M20 28H76V58C76 59.1 75.1 60 74 60H22C20.9 60 20 59.1 20 58V28Z" fill="#FEE2E2" />
+          <circle cx="40" cy="42" r="4" fill="#F87171" opacity="0.6" />
+          <path d="M32 52L40 44L48 50L56 42L64 48V54C64 55.1 63.1 56 62 56H34C32.9 56 32 55.1 32 54V52Z" fill="#F87171" opacity="0.5" />
+          <path d="M60 18C60 17.4 60.4 17 61 17H72V28H60V18Z" fill="#FECACA" />
+        </svg>
+        <div className="absolute -top-1 -right-2 w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
+          <FolderPlus className="w-3.5 h-3.5 text-primary-600" aria-hidden />
+        </div>
       </div>
-      <h3 className="text-base font-medium text-stone-900 mb-1">此文件夹为空</h3>
-      <p className="text-sm text-stone-500 mb-4">上传文件或创建文件夹开始管理你的内容</p>
+      <h3 className="text-base font-semibold text-stone-900 mb-1">此文件夹为空</h3>
+      <p className="text-sm text-stone-500 mb-5">上传文件或创建文件夹开始管理你的内容</p>
       <button onClick={onCreateFolder} className="btn-primary">
-        <FolderPlus className="w-4 h-4" />
+        <FolderPlus className="w-4 h-4" aria-hidden />
         <span>新建文件夹</span>
       </button>
     </div>
@@ -173,23 +183,23 @@ export function FileListSkeleton({ view = 'list' }: { view?: 'list' | 'grid' }) 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-3">
         {Array.from({ length: 16 }).map((_, i) => (
           <div key={i} className="flex flex-col rounded-lg p-3">
-            <div className="h-20 mb-2 bg-stone-100 rounded-lg animate-pulse" />
-            <div className="h-3 bg-stone-100 rounded animate-pulse mx-auto" style={{ width: SKELETON_WIDTHS[i % SKELETON_WIDTHS.length] }} />
+            <div className="h-20 mb-2 rounded-lg shimmer" />
+            <div className="h-3 rounded shimmer mx-auto" style={{ width: SKELETON_WIDTHS[i % SKELETON_WIDTHS.length] }} />
           </div>
         ))}
       </div>
     );
   }
   return (
-    <div className="overflow-hidden rounded-xl border border-stone-200/80 bg-white">
+    <div className="overflow-hidden rounded-xl bg-white">
       {Array.from({ length: 10 }).map((_, i) => (
         <div key={i} className="flex items-center gap-3 px-4 py-2.5 border-b border-stone-50 last:border-0">
-          <div className="w-[18px] h-[18px] bg-stone-100 rounded animate-pulse flex-shrink-0" />
-          <div className="w-8 h-8 bg-stone-100 rounded-lg animate-pulse flex-shrink-0" />
-          <div className="flex-1 h-4 bg-stone-100 rounded animate-pulse" style={{ maxWidth: SKELETON_WIDTHS[i % SKELETON_WIDTHS.length] }} />
-          <div className="w-16 h-4 bg-stone-100 rounded animate-pulse flex-shrink-0" />
-          <div className="w-20 h-4 bg-stone-100 rounded animate-pulse flex-shrink-0" />
-          <div className="w-28 h-4 bg-stone-100 rounded animate-pulse flex-shrink-0" />
+          <div className="w-[18px] h-[18px] rounded shimmer flex-shrink-0" />
+          <div className="w-8 h-8 rounded-lg shimmer flex-shrink-0" />
+          <div className="flex-1 h-4 rounded shimmer" style={{ maxWidth: SKELETON_WIDTHS[i % SKELETON_WIDTHS.length] }} />
+          <div className="w-16 h-4 rounded shimmer flex-shrink-0" />
+          <div className="w-20 h-4 rounded shimmer flex-shrink-0" />
+          <div className="w-28 h-4 rounded shimmer flex-shrink-0" />
         </div>
       ))}
     </div>

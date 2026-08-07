@@ -49,10 +49,10 @@ export default function Login() {
   return (
     <div className="flex min-h-screen">
       {/* Left brand panel */}
-      <div className="hidden lg:flex lg:w-[45%] bg-stone-900 flex-col justify-between p-12 relative overflow-hidden">
-        <div className="relative z-10">
+      <div className="hidden lg:flex lg:w-[45%] brand-gradient flex-col justify-between p-12 relative overflow-hidden">
+        <div className="absolute top-20 right-20 w-72 h-72 bg-primary-600/10 rounded-full blur-3xl" aria-hidden />\n        <div className="absolute bottom-20 left-10 w-96 h-96 bg-primary-600/5 rounded-full blur-3xl" aria-hidden />\n        <div className="relative z-10">
           <div className="flex items-center gap-3 text-white">
-            <div className="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-primary">
               <Cloud className="w-6 h-6 text-white" />
             </div>
             <span className="text-xl font-semibold tracking-tight">星云盘</span>
@@ -60,20 +60,20 @@ export default function Login() {
         </div>
 
         <div className="relative z-10 text-white">
-          <h1 className="text-4xl font-bold leading-tight mb-4">
+          <h1 className="text-5xl font-bold leading-tight mb-4 bg-gradient-to-r from-white to-stone-400 bg-clip-text text-transparent">
             安全、高效的<br />企业云盘解决方案
           </h1>
-          <p className="text-stone-400 text-lg leading-relaxed max-w-md">
+          <p className="text-stone-400 text-base leading-relaxed max-w-md mt-6">
             支持大文件分片上传、秒传去重、多格式预览，<br />
             让文件管理像本地操作一样流畅。
           </p>
-          <div className="mt-8 flex gap-6 text-stone-500 text-sm">
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-primary-600" />
+          <div className="mt-10 flex flex-col gap-3 text-stone-400 text-sm">
+            <div className="flex items-center gap-2.5">
+              <div className="w-2 h-2 rounded-full bg-primary-500 shadow-[0_0_8px_rgb(217,39,46,0.6)]" />
               <span>分片上传 · 断点续传</span>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 rounded-full bg-primary-600" />
+            <div className="flex items-center gap-2.5">
+              <div className="w-2 h-2 rounded-full bg-primary-500 shadow-[0_0_8px_rgb(217,39,46,0.6)]" />
               <span>MD5 秒传</span>
             </div>
           </div>
@@ -85,10 +85,10 @@ export default function Login() {
       </div>
 
       {/* Right form panel */}
-      <div className="flex-1 flex items-center justify-center px-6 py-12 bg-stone-50">
+      <div className="flex-1 flex items-center justify-center px-6 py-12 bg-gradient-to-b from-stone-50 to-white">
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center">
+            <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-primary">
               <Cloud className="w-6 h-6 text-white" />
             </div>
             <span className="text-xl font-semibold text-stone-900">星云盘</span>
@@ -104,7 +104,7 @@ export default function Login() {
           </p>
 
           {error && (
-            <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700 animate-slide-up">
+            <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 animate-slide-up shadow-soft">
               {error}
             </div>
           )}

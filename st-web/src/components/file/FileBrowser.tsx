@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { isElectron } from '../../lib/electron';
+import api from '../../lib/api';
 import { useTransferStore } from '../../store/transfer';
-import type { FileNode } from '../../types';
+import type { FileNode, SearchResultVO } from '../../types';
 import type { FileSource } from '../../lib/fileSource';
 import FileTable from './FileTable';
 import FileGrid from './FileGrid';
@@ -17,13 +18,15 @@ import ShareDialog from '../share/ShareDialog';
 import VersionHistoryDialog from './VersionHistoryDialog';
 import { useToast } from '../ui/Toast';
 import { useConfirm } from '../ui/ConfirmDialog';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
 import { useUpload } from '../../hooks/useUpload';
 import { formatSize, cn } from '../../lib/utils';
 import { usePermission } from '../../lib/permission';
 import { useDragSelect } from '../../hooks/useDragSelect';
 import { useFileKeyboard } from '../../hooks/useFileKeyboard';
+import { useFolderFilterStore } from '../../store/folderFilter';
 import { toggleFavorite, isFavorite } from '../../lib/favorites';
-import { List, LayoutGrid, FolderPlus, Download, Trash2, Copy, FolderInput, X, RefreshCw, ArrowDownUp, Home, ChevronRight, MapPin, Upload, ArrowUp, Pencil, Search } from 'lucide-react';
+import { List, LayoutGrid, FolderPlus, Download, Trash2, Copy, FolderInput, X, RefreshCw, ArrowDownUp, Home, ChevronRight, MapPin, Upload, ArrowUp, Pencil } from 'lucide-react';
 
 export interface FileBrowserProps {
   source: FileSource;
@@ -61,7 +64,9 @@ export default function FileBrowser({
   const [view, setView] = useState<'list' | 'grid'>(() => {
     return (localStorage.getItem('fileView') as 'list' | 'grid') || 'list';
   });
-  const [folderSearch, setFolderSearch] = useState('');
+  const folderSearch = useFolderFilterStore((s) => s.keyword);
+  const setFolderSearch = useFolderFilterStore((s) => s.setKeyword);
+  const setFolderPath = useFolderFilterStore((s) => s.setFolderPath);
   const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
@@ -302,6 +307,16 @@ export default function FileBrowser({
       setSelectedIds(new Set([node.id]));
       setLastSelectedId(node.id);
     }
+    setBlankContextMenu(null);
+    setContextMenu({ x: e.clientX, y: e.clientY, node });
+  };
+
+  const handleItemMenu = (e: React.MouseEvent, node: FileNode) => {
+    if (!selectedIds.has(node.id)) {
+      setSelectedIds(new Set([node.id]));
+      setLastSelectedId(node.id);
+    }
+    setBlankContextMenu(null);
     setContextMenu({ x: e.clientX, y: e.clientY, node });
   };
 
@@ -567,11 +582,35 @@ export default function FileBrowser({
   const [detailFile, setDetailFile] = useState<FileNode | null>(null);
 
   const allSelected = files.length > 0 && files.every((f) => selectedIds.has(f.id));
+  const [folderSearchResults, setFolderSearchResults] = useState<FileNode[]>([]);
+
+  useEffect(() => {
+    setFolderPath(currentPath);
+  }, [currentPath, setFolderPath]);
+
+  useEffect(() => {
+    if (!folderSearch.trim()) { setFolderSearchResults([]); return; }
+    let cancelled = false;
+    api.get<SearchResultVO[]>('/search', { params: { keyword: folderSearch, page: 1, size: 200 } })
+      .then((res) => {
+        if (cancelled) return;
+        const prefix = currentPath === '/' ? '/' : currentPath + '/';
+        const filtered = (res || []).filter((r) => {
+          const p = r.path || '';
+          return p === currentPath || p.startsWith(prefix) || (currentPath === '/' && p.startsWith('/'));
+        });
+        setFolderSearchResults(filtered.map((r) => ({
+          id: r.fileId, parentId: '', nodeType: r.nodeType ?? 1, name: r.fileName.replace(/<[^>]*>/g, ''), path: r.path, fileSize: r.fileSize ?? '0', suffix: r.suffix, contentType: r.contentType, status: 0, thumbnailPath: null, createdAt: r.createdAt, updatedAt: r.updatedAt,
+        })));
+      })
+      .catch(() => { if (!cancelled) setFolderSearchResults([]); });
+    return () => { cancelled = true; };
+  }, [folderSearch, currentPath]);
+
   const filteredFiles = useMemo(() => {
     if (!folderSearch.trim()) return sortedFiles;
-    const q = folderSearch.toLowerCase();
-    return sortedFiles.filter((f) => f.name.toLowerCase().includes(q));
-  }, [sortedFiles, folderSearch]);
+    return folderSearchResults;
+  }, [sortedFiles, folderSearch, folderSearchResults]);
 
   return (
     <div
@@ -582,15 +621,15 @@ export default function FileBrowser({
     >
       <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleUploadChange} />
       {isDragging && (
-        <div className="absolute inset-0 bg-primary-50/80 border-2 border-dashed border-primary-400 rounded-lg z-40 flex items-center justify-center pointer-events-none">
+        <div className="absolute inset-0 bg-primary-50/60 backdrop-blur-sm border-2 border-dashed border-primary-400 rounded-xl z-40 flex items-center justify-center pointer-events-none">
           <div className="text-center">
-            <FolderInput className="w-12 h-12 text-primary-600 mx-auto mb-2" aria-hidden />
+            <div className="w-16 h-16 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-3"><FolderInput className="w-8 h-8 text-primary-600" aria-hidden /></div>
             <p className="text-primary-700 font-medium">{'\u677e\u5f00\u9f20\u6807\u4e0a\u4f20\u6587\u4ef6'}</p>
           </div>
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-2 px-5 py-2.5 border-b border-stone-200 bg-white overflow-x-auto">
+      <div className="sticky top-0 z-20 flex items-center justify-between gap-2 px-5 py-2 bg-white/80 backdrop-blur-md border-b border-stone-100/80 overflow-x-auto">
         <div className="flex items-center gap-1.5 flex-shrink-0">
           {has('file:upload') && (
             <button onClick={() => setShowCreateFolder(true)} className="btn-primary flex-shrink-0 whitespace-nowrap">
@@ -606,7 +645,7 @@ export default function FileBrowser({
           )}
           {selectedIds.size > 0 && (
             <>
-              <div className="w-px h-5 bg-stone-200 mx-1 flex-shrink-0" />
+              <div className="w-px h-5 bg-stone-200 mx-1.5 flex-shrink-0" />
               {has('file:download') && (
                 <button onClick={() => handleDownload([...selectedIds])} className="btn-ghost flex-shrink-0 whitespace-nowrap">
                   <Download className="w-4 h-4" aria-hidden />
@@ -636,30 +675,20 @@ export default function FileBrowser({
         </div>
 
         <div className="flex items-center gap-3 flex-shrink-0">
-          {selectedIds.size === 0 && (
-            <div className="relative">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-stone-400" aria-hidden />
-              <input
-                type="text"
-                value={folderSearch}
-                onChange={(e) => setFolderSearch(e.target.value)}
-                placeholder="筛选..."
-                className="w-32 pl-7 pr-2 py-1 text-xs bg-stone-50 border border-stone-200 rounded-md focus:bg-white focus:border-primary-400 focus:outline-none transition-colors"
-              />
-            </div>
-          )}
+
           {selectedIds.size === 0 && (
           <div className="flex items-center gap-1.5">
             <ArrowDownUp className="w-3.5 h-3.5 text-stone-400" aria-hidden />
-            <select
-              value={sortBy}
-              onChange={(e) => { setSortBy(e.target.value as 'name' | 'size' | 'time'); localStorage.setItem('fileSortBy', e.target.value); }}
-              className="text-xs text-stone-600 bg-white border border-stone-200 rounded-md px-2 py-1 cursor-pointer focus:outline-none focus:border-primary-400"
-            >
-              <option value="name">{'\u540d\u79f0'}</option>
-              <option value="size">{'\u5927\u5c0f'}</option>
-              <option value="time">{'\u4fee\u6539\u65f6\u95f4'}</option>
-            </select>
+            <Select value={sortBy} onValueChange={(v) => { setSortBy(v as 'name' | 'size' | 'time'); localStorage.setItem('fileSortBy', v); }}>
+              <SelectTrigger className="h-7 w-auto gap-1 text-xs border-stone-200 px-2.5 py-0.5 font-medium text-stone-600 hover:border-stone-300">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="min-w-[7rem]">
+                <SelectItem value="name">名称</SelectItem>
+                <SelectItem value="size">大小</SelectItem>
+                <SelectItem value="time">修改时间</SelectItem>
+              </SelectContent>
+            </Select>
             <button
               onClick={() => {
                 const next = sortDir === 'asc' ? 'desc' : 'asc';
@@ -766,7 +795,7 @@ export default function FileBrowser({
             <MapPin className="w-4 h-4 text-stone-400 flex-shrink-0" aria-hidden />
             <button
               onClick={(e) => { e.stopPropagation(); navigateToPath('/'); }} aria-label="根目录"
-              className="flex items-center gap-1 px-1.5 py-0.5 rounded hover:bg-stone-100 text-stone-500 hover:text-primary-600 transition-colors flex-shrink-0"
+              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-stone-50 hover:bg-primary-50 text-stone-500 hover:text-primary-600 transition-all duration-150 flex-shrink-0"
             >
               <Home className="w-4 h-4" aria-hidden />
             </button>
@@ -775,12 +804,14 @@ export default function FileBrowser({
             ) : (
               pathSegments.map((seg, idx) => (
                 <div key={seg.path} className="flex items-center gap-0.5 min-w-0">
-                  <ChevronRight className="w-3.5 h-3.5 text-stone-300 flex-shrink-0" aria-hidden />
+                  <ChevronRight className="w-3 h-3 text-stone-300 flex-shrink-0" aria-hidden />
                   <button
                     onClick={(e) => { e.stopPropagation(); navigateToPath(seg.path); }}
                     className={cn(
-                      'px-1.5 py-0.5 rounded hover:bg-stone-100 text-sm transition-colors truncate',
-                      idx === pathSegments.length - 1 ? 'text-stone-800 font-medium' : 'text-stone-500 hover:text-primary-600',
+                      'px-2 py-0.5 rounded-lg text-sm transition-all duration-150 truncate',
+                      idx === pathSegments.length - 1
+                        ? 'bg-primary-50 text-primary-700 font-medium'
+                        : 'text-stone-500 hover:bg-stone-100 hover:text-primary-600',
                     )}
                   >
                     {seg.name}
@@ -828,6 +859,7 @@ export default function FileBrowser({
             onSelect={handleSelect}
             onSelectAll={selectAll}
             onContextMenu={handleContextMenu}
+            onItemMenu={handleItemMenu}
             onNavigate={(node) => { if (node.nodeType === 0) onNavigateFolder(node); }}
             onItemDragStart={handleItemDragStart}
             onFolderDragOver={handleFolderDragOver}
@@ -852,6 +884,7 @@ export default function FileBrowser({
             cutIds={clipboard?.mode === 'cut' ? new Set(clipboard.nodeIds) : null}
             onSelect={handleSelect}
             onContextMenu={handleContextMenu}
+            onItemMenu={handleItemMenu}
             onNavigate={(node) => { if (node.nodeType === 0) onNavigateFolder(node); }}
             onItemDragStart={handleItemDragStart}
             onFolderDragOver={handleFolderDragOver}
