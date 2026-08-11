@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+﻿import { X } from 'lucide-react';
 
 interface Props {
   open: boolean;
@@ -29,24 +29,24 @@ export default function ShortcutHelpDialog({ open, onClose }: Props) {
         className="modal-content w-[420px] max-w-[92vw]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-stone-100">
-          <h3 className="text-base font-semibold text-stone-900">键盘快捷键</h3>
-          <button onClick={onClose} aria-label="关闭" className="text-stone-400 hover:text-stone-600 cursor-pointer">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
+          <h3 className="text-base font-semibold text-fg">键盘快捷键</h3>
+          <button onClick={onClose} aria-label="关闭" className="text-muted hover:text-fg cursor-pointer">
             <X className="w-4 h-4" aria-hidden />
           </button>
         </div>
         <div className="px-5 py-4 space-y-2">
           {SHORTCUTS.map((s) => (
             <div key={s.keys} className="flex items-center justify-between py-1">
-              <span className="text-sm text-stone-600">{s.desc}</span>
-              <kbd className="px-2 py-0.5 text-xs font-medium text-stone-600 bg-stone-100 border border-stone-200 rounded">
+              <span className="text-sm text-muted">{s.desc}</span>
+              <kbd className="px-2 py-0.5 text-xs font-medium text-muted bg-surface-2 border border-border rounded">
                 {s.keys}
               </kbd>
             </div>
           ))}
         </div>
-        <div className="px-5 py-3 border-t border-stone-100 text-center">
-          <span className="text-xs text-stone-400">在文件列表区域使用快捷键</span>
+        <div className="px-5 py-3 border-t border-border text-center">
+          <span className="text-xs text-muted">在文件列表区域使用快捷键</span>
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { type ClassValue, clsx } from "clsx"
+﻿import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
 import {
   File as FileIcon,
@@ -35,15 +35,15 @@ const ARCHIVE_EXTS = ['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz', 'tgz'];
 const TEXT_EXTS  = ['txt', 'md', 'markdown', 'log', 'json', 'xml', 'yaml', 'yml', 'ini', 'conf', 'properties', 'js', 'ts', 'jsx', 'tsx', 'py', 'java', 'c', 'cpp', 'h', 'css', 'scss', 'less', 'html', 'htm', 'go', 'rs', 'rb', 'php', 'sh', 'bat', 'sql', 'vue', 'svelte'];
 
 const FILE_TYPE_MAP: { exts: string[]; config: FileTypeConfig }[] = [
-  { exts: IMAGE_EXTS,   config: { icon: ImageIcon,    color: 'text-green-500',  bgColor: 'bg-green-50',  label: '图片' } },
-  { exts: VIDEO_EXTS,   config: { icon: Video,         color: 'text-purple-500', bgColor: 'bg-purple-50', label: '视频' } },
-  { exts: AUDIO_EXTS,   config: { icon: Music,         color: 'text-pink-500',   bgColor: 'bg-pink-50',   label: '音频' } },
-  { exts: PDF_EXTS,     config: { icon: FileText,      color: 'text-red-500',    bgColor: 'bg-red-50',    label: 'PDF' } },
-  { exts: WORD_EXTS,    config: { icon: FileText,      color: 'text-blue-500',   bgColor: 'bg-blue-50',   label: 'Word' } },
-  { exts: EXCEL_EXTS,   config: { icon: Sheet,         color: 'text-emerald-600', bgColor: 'bg-emerald-50', label: 'Excel' } },
-  { exts: PPT_EXTS,     config: { icon: Presentation,  color: 'text-orange-500',  bgColor: 'bg-orange-50',  label: 'PPT' } },
-  { exts: ARCHIVE_EXTS, config: { icon: Archive,       color: 'text-amber-500',  bgColor: 'bg-amber-50',  label: '压缩包' } },
-  { exts: TEXT_EXTS,    config: { icon: FileText,      color: 'text-stone-500',  bgColor: 'bg-stone-50',  label: '文档' } },
+  { exts: IMAGE_EXTS,   config: { icon: ImageIcon,    color: 'text-green-500',  bgColor: 'bg-green-500/15',  label: '图片' } },
+  { exts: VIDEO_EXTS,   config: { icon: Video,         color: 'text-purple-500', bgColor: 'bg-purple-500/15', label: '视频' } },
+  { exts: AUDIO_EXTS,   config: { icon: Music,         color: 'text-pink-500',   bgColor: 'bg-pink-500/15',   label: '音频' } },
+  { exts: PDF_EXTS,     config: { icon: FileText,      color: 'text-red-500',    bgColor: 'bg-red-500/15',    label: 'PDF' } },
+  { exts: WORD_EXTS,    config: { icon: FileText,      color: 'text-blue-500',   bgColor: 'bg-blue-500/15',   label: 'Word' } },
+  { exts: EXCEL_EXTS,   config: { icon: Sheet,         color: 'text-emerald-600 dark:text-emerald-400', bgColor: 'bg-emerald-500/15', label: 'Excel' } },
+  { exts: PPT_EXTS,     config: { icon: Presentation,  color: 'text-orange-500',  bgColor: 'bg-orange-500/15',  label: 'PPT' } },
+  { exts: ARCHIVE_EXTS, config: { icon: Archive,       color: 'text-amber-500',  bgColor: 'bg-amber-500/15',  label: '压缩包' } },
+  { exts: TEXT_EXTS,    config: { icon: FileText,      color: 'text-muted',  bgColor: 'bg-surface-2',  label: '文档' } },
 ];
 
 // Pre-built O(1) lookup map: extension -> file type config
@@ -54,12 +54,12 @@ for (const entry of FILE_TYPE_MAP) {
 
 export function getFileTypeConfig(nodeType: number, suffix: string | null | undefined): FileTypeConfig {
   if (nodeType === 0) {
-    return { icon: FileIcon, color: 'text-amber-400', bgColor: 'bg-amber-50', label: '文件夹' };
+    return { icon: FileIcon, color: 'text-amber-400', bgColor: 'bg-amber-500/15', label: '文件夹' };
   }
   if (!suffix) {
-    return { icon: FileIcon, color: 'text-stone-400', bgColor: 'bg-stone-50', label: '文件' };
+    return { icon: FileIcon, color: 'text-muted', bgColor: 'bg-surface-2', label: '文件' };
   }
-  return EXT_CONFIG_MAP.get(suffix.toLowerCase()) ?? { icon: FileIcon, color: 'text-stone-400', bgColor: 'bg-stone-50', label: '文件' };
+  return EXT_CONFIG_MAP.get(suffix.toLowerCase()) ?? { icon: FileIcon, color: 'text-muted', bgColor: 'bg-surface-2', label: '文件' };
 }
 
 export function isImage(suffix: string | null | undefined): boolean {
@@ -110,13 +110,17 @@ export function isImageFile(file: { suffix?: string | null } | string | null | u
 
 // ==================== Formatting ====================
 
+// Intl formatters (locale-aware, no grouping to keep sizes compact)
+const sizeBytesFormatter = new Intl.NumberFormat('zh-CN', { maximumFractionDigits: 0, useGrouping: false });
+const sizeUnitFormatter = new Intl.NumberFormat('zh-CN', { minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false });
+
 export function formatSize(bytes: string | number | undefined | null): string {
   const n = typeof bytes === 'string' ? Number(bytes) : bytes;
   if (!n || n <= 0) return '0 B';
-  if (n < 1024) return n + ' B';
-  if (n < 1024 * 1024) return (n / 1024).toFixed(1) + ' KB';
-  if (n < 1024 * 1024 * 1024) return (n / (1024 * 1024)).toFixed(1) + ' MB';
-  return (n / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
+  if (n < 1024) return `${sizeBytesFormatter.format(n)} B`;
+  if (n < 1024 * 1024) return `${sizeUnitFormatter.format(n / 1024)} KB`;
+  if (n < 1024 * 1024 * 1024) return `${sizeUnitFormatter.format(n / (1024 * 1024))} MB`;
+  return `${sizeUnitFormatter.format(n / (1024 * 1024 * 1024))} GB`;
 }
 
 const dateFormatter = new Intl.DateTimeFormat('zh-CN', {

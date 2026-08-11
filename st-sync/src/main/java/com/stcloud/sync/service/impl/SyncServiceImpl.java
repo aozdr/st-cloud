@@ -9,7 +9,13 @@ import com.stcloud.core.entity.FileNode;
 import com.stcloud.core.mapper.FileNodeMapper;
 import com.stcloud.core.service.FileService;
 import com.stcloud.sync.dto.*;
+import com.stcloud.sync.entity.SyncChangeLog;
+import com.stcloud.sync.entity.SyncConflict;
+import com.stcloud.sync.entity.SyncExclusion;
 import com.stcloud.sync.entity.SyncRoot;
+import com.stcloud.sync.mapper.SyncChangeLogMapper;
+import com.stcloud.sync.mapper.SyncConflictMapper;
+import com.stcloud.sync.mapper.SyncExclusionMapper;
 import com.stcloud.sync.mapper.SyncRootMapper;
 import com.stcloud.sync.service.SyncService;
 import lombok.RequiredArgsConstructor;
@@ -18,11 +24,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -31,6 +34,9 @@ import java.util.stream.Collectors;
 public class SyncServiceImpl implements SyncService {
 
     private final SyncRootMapper syncRootMapper;
+    private final SyncChangeLogMapper syncChangeLogMapper;
+    private final SyncExclusionMapper syncExclusionMapper;
+    private final SyncConflictMapper syncConflictMapper;
     private final FileNodeMapper fileNodeMapper;
     private final FileService fileService;
 
@@ -45,13 +51,11 @@ public class SyncServiceImpl implements SyncService {
             throw new BusinessException(ResultCode.UNAUTHORIZED);
         }
 
-        // 校验云端文件夹归属与类型
         FileNode folder = fileService.getNodeByIdAndOwner(request.getCloudFolderNodeId());
         if (!folder.isFolder()) {
             throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "仅支持同步文件夹");
         }
 
-        // 同一文件夹不可重复注册
         Long exists = syncRootMapper.selectCount(
                 new LambdaQueryWrapper<SyncRoot>()
                         .eq(SyncRoot::getUserId, userId)
@@ -65,6 +69,7 @@ public class SyncServiceImpl implements SyncService {
         root.setCloudFolderNodeId(request.getCloudFolderNodeId());
         root.setLocalPathHint(request.getLocalPathHint());
         root.setStatus(0);
+        root.setConflictStrategy("keep_both");
         root.setSyncCursor(0L);
         syncRootMapper.insert(root);
 
@@ -99,6 +104,9 @@ public class SyncServiceImpl implements SyncService {
         Long userId = UserContext.getUserId();
         SyncRoot root = getOwnedRoot(rootId, userId);
         syncRootMapper.deleteById(root.getId());
+        // 同时清理排除路径
+        syncExclusionMapper.delete(
+                new LambdaQueryWrapper<SyncExclusion>().eq(SyncExclusion::getSyncRootId, rootId));
         return Result.success();
     }
 
@@ -117,62 +125,136 @@ public class SyncServiceImpl implements SyncService {
         return Result.success(toVO(root, folder));
     }
 
+    /**
+     * 增量变更查询（基于变更日志游标 + 排除路径过滤）
+     */
     @Override
     public Result<SyncDeltaResponse> delta(Long rootId, Long since, int page) {
         Long userId = UserContext.getUserId();
         SyncRoot root = getOwnedRoot(rootId, userId);
 
-        // 校验根文件夹仍归属当前用户
         FileNode rootFolder = fileService.getNodeByIdAndOwner(root.getCloudFolderNodeId());
         String rootPath = rootFolder.getPath();
 
-        // since -> LocalDateTime（空或0表示全量）
-        LocalDateTime sinceTime = null;
-        if (since != null && since > 0) {
-            sinceTime = LocalDateTime.ofInstant(
-                    java.time.Instant.ofEpochMilli(since), ZoneId.systemDefault());
+        long cursor = since != null && since > 0 ? since : 0L;
+
+        // 查询变更日志：id > since，按 id 升序
+        LambdaQueryWrapper<SyncChangeLog> wrapper = new LambdaQueryWrapper<SyncChangeLog>()
+                .eq(SyncChangeLog::getUserId, userId)
+                .gt(SyncChangeLog::getId, cursor)
+                .orderByAsc(SyncChangeLog::getId)
+                .last("LIMIT " + (PAGE_SIZE + 1));
+
+        List<SyncChangeLog> logs = syncChangeLogMapper.selectList(wrapper);
+        boolean hasMore = logs.size() > PAGE_SIZE;
+        if (hasMore) {
+            logs = logs.subList(0, PAGE_SIZE);
         }
 
-        // 查询根文件夹及其递归子节点中 updated_at > since 的记录
-        LambdaQueryWrapper<FileNode> wrapper = new LambdaQueryWrapper<FileNode>()
-                .eq(FileNode::getOwnerId, userId)
-                .and(w -> w.eq(FileNode::getId, rootFolder.getId())
-                        .or().likeRight(FileNode::getPath, rootPath + PATH_SEP));
-        if (sinceTime != null) {
-            wrapper.gt(FileNode::getUpdatedAt, sinceTime);
-        }
-        wrapper.orderByAsc(FileNode::getUpdatedAt);
-        wrapper.last("LIMIT " + (PAGE_SIZE + 1) + " OFFSET " + (page * PAGE_SIZE));
+        long newCursor = logs.isEmpty() ? cursor : logs.get(logs.size() - 1).getId();
 
-        List<FileNode> nodes = fileNodeMapper.selectList(wrapper);
-        boolean hasMore = nodes.size() > PAGE_SIZE;
-        // 排除回收子树中仍为 NORMAL 的节点，避免把已删除内容同步给客户端
-        if (!nodes.isEmpty()) {
-            List<Long> nodeIds = nodes.stream().map(FileNode::getId).collect(Collectors.toList());
-            Set<Long> inaccessible = new HashSet<>(fileNodeMapper.findIdsWithInaccessibleAncestor(nodeIds));
-            if (!inaccessible.isEmpty()) {
-                nodes = nodes.stream()
-                        .filter(n -> !inaccessible.contains(n.getId()))
-                        .collect(Collectors.toList());
-            }
-        }
-        if (hasMore && nodes.size() > PAGE_SIZE) {
-            nodes = nodes.subList(0, PAGE_SIZE);
-        }
+        // 加载排除路径列表，用于过滤变更
+        List<String> exclusions = getExclusionPaths(rootId);
 
         List<SyncDeltaItem> changes = new ArrayList<>();
-        for (FileNode node : nodes) {
-            changes.add(toDeltaItem(node, rootPath));
+        for (SyncChangeLog logEntry : logs) {
+            SyncDeltaItem item = toDeltaItem(logEntry, rootPath);
+            // 过滤排除路径下的变更
+            if (item.getPath() != null && !isExcluded(item.getPath(), exclusions)) {
+                changes.add(item);
+            }
+            // MOVE/RENAME 的 oldPath 也要检查：如果旧路径被排除，跳过
+            if (item.getOldPath() != null && isExcluded(item.getOldPath(), exclusions) && !changes.contains(item)) {
+                changes.remove(item);
+            }
         }
-
-        // 新游标 = 服务端当前时间
-        long newCursor = System.currentTimeMillis();
 
         SyncDeltaResponse resp = new SyncDeltaResponse();
         resp.setCursor(newCursor);
         resp.setHasMore(hasMore);
         resp.setChanges(changes);
+
+        root.setLastSyncAt(LocalDateTime.now());
+        syncRootMapper.updateById(root);
+
         return Result.success(resp);
+    }
+
+    // ==================== 选择性同步 ====================
+
+    @Override
+    public Result<List<SyncExclusionVO>> listExclusions(Long rootId) {
+        Long userId = UserContext.getUserId();
+        getOwnedRoot(rootId, userId);
+        List<SyncExclusion> exclusions = syncExclusionMapper.selectList(
+                new LambdaQueryWrapper<SyncExclusion>()
+                        .eq(SyncExclusion::getSyncRootId, rootId)
+                        .eq(SyncExclusion::getUserId, userId)
+                        .orderByAsc(SyncExclusion::getRelativePath));
+        List<SyncExclusionVO> voList = exclusions.stream()
+                .map(this::toExclusionVO)
+                .collect(Collectors.toList());
+        return Result.success(voList);
+    }
+
+    @Override
+    @Transactional
+    public Result<SyncExclusionVO> addExclusion(Long rootId, AddExclusionRequest request) {
+        Long userId = UserContext.getUserId();
+        getOwnedRoot(rootId, userId);
+
+        // 规范化路径：确保以 / 开头
+        String relPath = request.getRelativePath();
+        if (!relPath.startsWith(PATH_SEP)) {
+            relPath = PATH_SEP + relPath;
+        }
+
+        // 查重
+        Long exists = syncExclusionMapper.selectCount(
+                new LambdaQueryWrapper<SyncExclusion>()
+                        .eq(SyncExclusion::getSyncRootId, rootId)
+                        .eq(SyncExclusion::getRelativePath, relPath));
+        if (exists > 0) {
+            throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "该排除路径已存在");
+        }
+
+        SyncExclusion exclusion = new SyncExclusion();
+        exclusion.setSyncRootId(rootId);
+        exclusion.setUserId(userId);
+        exclusion.setRelativePath(relPath);
+        syncExclusionMapper.insert(exclusion);
+
+        return Result.success(toExclusionVO(exclusion));
+    }
+
+    @Override
+    @Transactional
+    public Result<Void> removeExclusion(Long rootId, Long exclusionId) {
+        Long userId = UserContext.getUserId();
+        getOwnedRoot(rootId, userId);
+        syncExclusionMapper.delete(
+                new LambdaQueryWrapper<SyncExclusion>()
+                        .eq(SyncExclusion::getId, exclusionId)
+                        .eq(SyncExclusion::getSyncRootId, rootId)
+                        .eq(SyncExclusion::getUserId, userId));
+        return Result.success();
+    }
+
+    // ==================== 冲突策略 ====================
+
+    @Override
+    @Transactional
+    public Result<SyncRootVO> updateConflictStrategy(Long rootId, UpdateConflictStrategyRequest request) {
+        Long userId = UserContext.getUserId();
+        SyncRoot root = getOwnedRoot(rootId, userId);
+        root.setConflictStrategy(request.getConflictStrategy());
+        syncRootMapper.updateById(root);
+
+        FileNode folder = null;
+        try {
+            folder = fileService.getNodeByIdAndOwner(root.getCloudFolderNodeId());
+        } catch (Exception ignored) { }
+        return Result.success(toVO(root, folder));
     }
 
     // ==================== 辅助方法 ====================
@@ -192,35 +274,86 @@ public class SyncServiceImpl implements SyncService {
         vo.setCloudFolderName(folder != null ? folder.getName() : null);
         vo.setLocalPathHint(root.getLocalPathHint());
         vo.setStatus(root.getStatus());
+        vo.setConflictStrategy(root.getConflictStrategy());
         vo.setCursor(root.getSyncCursor());
+        vo.setLastSyncAt(root.getLastSyncAt());
         vo.setCreatedAt(root.getCreatedAt());
         vo.setUpdatedAt(root.getUpdatedAt());
         return vo;
     }
 
-    private SyncDeltaItem toDeltaItem(FileNode node, String rootPath) {
+    private SyncExclusionVO toExclusionVO(SyncExclusion exclusion) {
+        SyncExclusionVO vo = new SyncExclusionVO();
+        vo.setId(String.valueOf(exclusion.getId()));
+        vo.setSyncRootId(String.valueOf(exclusion.getSyncRootId()));
+        vo.setRelativePath(exclusion.getRelativePath());
+        vo.setCreatedAt(exclusion.getCreatedAt());
+        return vo;
+    }
+
+    private SyncDeltaItem toDeltaItem(SyncChangeLog logEntry, String rootPath) {
         SyncDeltaItem item = new SyncDeltaItem();
-        item.setNodeId(String.valueOf(node.getId()));
-        item.setParentId(String.valueOf(node.getParentId()));
-        // 相对路径：去掉根路径前缀，保证以 / 开头
-        String relPath = node.getPath();
-        if (relPath != null && relPath.startsWith(rootPath)) {
+        item.setLogId(String.valueOf(logEntry.getId()));
+        item.setNodeId(String.valueOf(logEntry.getFileNodeId()));
+        item.setChangeType(logEntry.getChangeType());
+        item.setPath(toRelativePath(logEntry.getPath(), rootPath));
+        item.setOldPath(toRelativePath(logEntry.getOldPath(), rootPath));
+        item.setName(logEntry.getName());
+        item.setNodeType(logEntry.getNodeType());
+        item.setSize(logEntry.getFileSize());
+        item.setMd5(logEntry.getFileMd5());
+
+        String name = logEntry.getName();
+        if (name != null && name.contains(".")) {
+            item.setSuffix(name.substring(name.lastIndexOf(".") + 1).toLowerCase());
+        }
+
+        item.setStatus("DELETE".equals(logEntry.getChangeType()) ? 1 : 0);
+        item.setUpdatedAt(logEntry.getCreatedAt());
+        return item;
+    }
+
+    private String toRelativePath(String absPath, String rootPath) {
+        if (absPath == null || absPath.isEmpty()) {
+            return null;
+        }
+        String relPath = absPath;
+        if (relPath.startsWith(rootPath)) {
             relPath = relPath.substring(rootPath.length());
             if (!relPath.startsWith(PATH_SEP)) {
                 relPath = PATH_SEP + relPath;
             }
         }
-        if (relPath == null || relPath.isEmpty()) {
+        if (relPath.isEmpty()) {
             relPath = PATH_SEP;
         }
-        item.setPath(relPath);
-        item.setName(node.getName());
-        item.setNodeType(node.getNodeType());
-        item.setSize(node.getFileSize());
-        item.setMd5(node.getFileMd5());
-        item.setSuffix(node.getSuffix());
-        item.setStatus(node.getStatus());
-        item.setUpdatedAt(node.getUpdatedAt());
-        return item;
+        return relPath;
+    }
+
+    /** 获取同步根的排除路径列表 */
+    private List<String> getExclusionPaths(Long rootId) {
+        List<SyncExclusion> exclusions = syncExclusionMapper.selectList(
+                new LambdaQueryWrapper<SyncExclusion>().eq(SyncExclusion::getSyncRootId, rootId));
+        return exclusions.stream()
+                .map(SyncExclusion::getRelativePath)
+                .collect(Collectors.toList());
+    }
+
+    /** 判断相对路径是否被排除（路径本身或其祖先被排除） */
+    private boolean isExcluded(String relPath, List<String> exclusions) {
+        if (exclusions.isEmpty()) {
+            return false;
+        }
+        // 根路径 "/" 不排除
+        if (PATH_SEP.equals(relPath)) {
+            return false;
+        }
+        for (String excl : exclusions) {
+            // 精确匹配 或 是排除路径的子路径
+            if (relPath.equals(excl) || relPath.startsWith(excl + PATH_SEP)) {
+                return true;
+            }
+        }
+        return false;
     }
 }

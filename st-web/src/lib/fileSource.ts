@@ -1,5 +1,5 @@
 import api from './api';
-import type { FileNode, PageResult, FileTreeNode } from '../types';
+import type { FileNode, PageResult, FileTreeNode, SearchResultVO } from '../types';
 
 /**
  * FileSource abstracts file operations so FileBrowser can be reused
@@ -74,5 +74,61 @@ export function teamFileSource(spaceId: string): FileSource {
     },
     downloadZip: (nodeIds) =>
       api.post('/file/download/zip', { nodeIds }, { responseType: 'blob' }) as unknown as Promise<Blob>,
+  };
+}
+
+/**
+ * Favorite file source - lists favorited files via /favorite/page endpoint.
+ * File operations (delete/rename/download/...) delegate to the personal source.
+ * createFolder/move/copy 在收藏页无意义，保留 base 实现但 UI 不暴露。
+ */
+export function favoriteFileSource(): FileSource {
+  const base = personalFileSource;
+  return {
+    ...base,
+    listFiles: async (_parentId, page, size) => {
+      return api.get('/favorite/page', { params: { page, size } });
+    },
+  };
+}
+
+import type { FileCategory } from './fileTypes';
+
+/**
+ * Category file source - lists files across all folders filtered by type,
+ * via the search API (matchAll keyword + suffixes/nodeType).
+ * File operations (delete/rename/download/...) delegate to the personal source.
+ */
+export function categoryFileSource(category: FileCategory): FileSource {
+  const base = personalFileSource;
+  return {
+    ...base,
+    listFiles: async (_parentId, page, size) => {
+      const params: Record<string, unknown> = { keyword: '*', page, size };
+      if (category.suffixes.length) params.suffixes = category.suffixes.join(',');
+      const res = (await api.get<SearchResultVO[]>('/search', { params })) || [];
+      const records: FileNode[] = res.map((r) => ({
+        id: r.fileId,
+        parentId: '',
+        nodeType: r.nodeType ?? 1,
+        name: r.fileName.replace(/<[^>]*>/g, ''),
+        path: r.path,
+        fileSize: r.fileSize ?? '0',
+        suffix: r.suffix,
+        contentType: r.contentType,
+        status: 0,
+        thumbnailPath: null,
+        createdAt: r.createdAt,
+        updatedAt: r.updatedAt,
+      }));
+      const total = res.length < size ? (page - 1) * size + res.length : (page + 1) * size;
+      return {
+        records,
+        total: String(total),
+        size: String(size),
+        current: String(page),
+        pages: String(Math.ceil(total / size)),
+      };
+    },
   };
 }

@@ -38,18 +38,18 @@ export function CreateFolderDialog({ open, parentId, onCreate, onClose, onSucces
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content w-96" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-stone-100">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
           <div className="flex items-center gap-2">
             <FolderPlus className="w-4 h-4 text-primary-600" />
-            <h3 className="text-base font-semibold text-stone-900">新建文件夹</h3>
+            <h3 className="text-base font-semibold text-fg">新建文件夹</h3>
           </div>
-          <button onClick={onClose} className="text-stone-400 hover:text-stone-900 cursor-pointer">
-            <X className="w-4 h-4" />
+          <button onClick={onClose} aria-label="关闭" className="text-muted hover:text-fg cursor-pointer rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <X className="w-4 h-4" aria-hidden />
           </button>
         </div>
         <div className="px-5 py-4">
           <div className="relative">
-            <FolderOpen className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+            <FolderOpen className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
             <input
               autoFocus
               value={name}
@@ -60,10 +60,10 @@ export function CreateFolderDialog({ open, parentId, onCreate, onClose, onSucces
             />
           </div>
         </div>
-        <div className="flex justify-end gap-2 px-5 py-3 border-t border-stone-100">
+        <div className="flex justify-end gap-2 px-5 py-3 border-t border-border">
           <button onClick={onClose} className="btn-secondary">取消</button>
           <button onClick={handleCreate} disabled={loading || !name.trim()} className="btn-primary">
-            {loading ? '创建中...' : '创建'}
+            {loading ? '创建中…' : '创建'}
           </button>
         </div>
       </div>
@@ -110,13 +110,13 @@ export function RenameDialog({ node, onRename, onClose, onSuccess }: {
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content w-96" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-stone-100">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
           <div className="flex items-center gap-2">
             <Pencil className="w-4 h-4 text-primary-600" />
-            <h3 className="text-base font-semibold text-stone-900">重命名</h3>
+            <h3 className="text-base font-semibold text-fg">重命名</h3>
           </div>
-          <button onClick={onClose} className="text-stone-400 hover:text-stone-900 cursor-pointer">
-            <X className="w-4 h-4" />
+          <button onClick={onClose} aria-label="关闭" className="text-muted hover:text-fg cursor-pointer rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <X className="w-4 h-4" aria-hidden />
           </button>
         </div>
         <div className="px-5 py-4">
@@ -124,7 +124,7 @@ export function RenameDialog({ node, onRename, onClose, onSuccess }: {
             <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center', config.bgColor)}>
               <Icon className={cn('w-4 h-4', config.color)} />
             </div>
-            <span className="text-sm text-stone-500">当前名称: {node.name}</span>
+            <span className="text-sm text-muted">当前名称: {node.name}</span>
           </div>
           <input
             autoFocus
@@ -135,10 +135,10 @@ export function RenameDialog({ node, onRename, onClose, onSuccess }: {
             placeholder="新名称"
           />
         </div>
-        <div className="flex justify-end gap-2 px-5 py-3 border-t border-stone-100">
+        <div className="flex justify-end gap-2 px-5 py-3 border-t border-border">
           <button onClick={onClose} className="btn-secondary">取消</button>
           <button onClick={handleRename} disabled={loading || !name.trim()} className="btn-primary">
-            {loading ? '处理中...' : '确定'}
+            {loading ? '处理中…' : '确定'}
           </button>
         </div>
       </div>
@@ -152,19 +152,19 @@ export function EmptyState({ onCreateFolder }: { onCreateFolder: () => void }) {
     <div className="flex flex-col items-center justify-center h-full py-20">
       <div className="relative mb-5">
         <svg width="96" height="80" viewBox="0 0 96 80" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-          <ellipse cx="48" cy="72" rx="36" ry="5" fill="#F5F5F4" />
-          <path d="M20 16C20 14.9 20.9 14 22 14H42L50 22H74C75.1 22 76 22.9 76 24V60C76 61.1 75.1 62 74 62H22C20.9 62 20 61.1 20 60V16Z" fill="#FFF7F7" stroke="#FCA5A5" strokeWidth="1.5" />
-          <path d="M20 28H76V58C76 59.1 75.1 60 74 60H22C20.9 60 20 59.1 20 58V28Z" fill="#FEE2E2" />
-          <circle cx="40" cy="42" r="4" fill="#F87171" opacity="0.6" />
-          <path d="M32 52L40 44L48 50L56 42L64 48V54C64 55.1 63.1 56 62 56H34C32.9 56 32 55.1 32 54V52Z" fill="#F87171" opacity="0.5" />
-          <path d="M60 18C60 17.4 60.4 17 61 17H72V28H60V18Z" fill="#FECACA" />
+          <ellipse cx="48" cy="72" rx="36" ry="5" fill="rgb(var(--color-primary-50))" />
+          <path d="M20 16C20 14.9 20.9 14 22 14H42L50 22H74C75.1 22 76 22.9 76 24V60C76 61.1 75.1 62 74 62H22C20.9 62 20 61.1 20 60V16Z" fill="rgb(var(--color-primary-50))" stroke="rgb(var(--color-primary-300))" strokeWidth="1.5" />
+          <path d="M20 28H76V58C76 59.1 75.1 60 74 60H22C20.9 60 20 59.1 20 58V28Z" fill="rgb(var(--color-primary-100))" />
+          <circle cx="40" cy="42" r="4" fill="rgb(var(--color-primary-400))" opacity="0.6" />
+          <path d="M32 52L40 44L48 50L56 42L64 48V54C64 55.1 63.1 56 62 56H34C32.9 56 32 55.1 32 54V52Z" fill="rgb(var(--color-primary-400))" opacity="0.5" />
+          <path d="M60 18C60 17.4 60.4 17 61 17H72V28H60V18Z" fill="rgb(var(--color-primary-200))" />
         </svg>
         <div className="absolute -top-1 -right-2 w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center">
           <FolderPlus className="w-3.5 h-3.5 text-primary-600" aria-hidden />
         </div>
       </div>
-      <h3 className="text-base font-semibold text-stone-900 mb-1">此文件夹为空</h3>
-      <p className="text-sm text-stone-500 mb-5">上传文件或创建文件夹开始管理你的内容</p>
+      <h3 className="text-base font-semibold text-fg mb-1">此文件夹为空</h3>
+      <p className="text-sm text-muted mb-5">上传文件或创建文件夹开始管理你的内容</p>
       <button onClick={onCreateFolder} className="btn-primary">
         <FolderPlus className="w-4 h-4" aria-hidden />
         <span>新建文件夹</span>
@@ -177,7 +177,7 @@ export function EmptyState({ onCreateFolder }: { onCreateFolder: () => void }) {
 // ==================== File List Skeleton ====================
 const SKELETON_WIDTHS = ['55%', '70%', '45%', '62%', '50%', '68%', '40%', '58%', '52%', '48%'];
 
-export function FileListSkeleton({ view = 'list' }: { view?: 'list' | 'grid' }) {
+export function FileListSkeleton({ view = 'table' }: { view?: 'table' | 'card' | 'grid' }) {
   if (view === 'grid') {
     return (
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-3">
@@ -191,9 +191,9 @@ export function FileListSkeleton({ view = 'list' }: { view?: 'list' | 'grid' }) 
     );
   }
   return (
-    <div className="overflow-hidden rounded-xl bg-white">
+    <div className="overflow-hidden rounded-xl bg-surface">
       {Array.from({ length: 10 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3 px-4 py-2.5 border-b border-stone-50 last:border-0">
+        <div key={i} className="flex items-center gap-3 px-4 py-2.5 border-b border-border last:border-0">
           <div className="w-[18px] h-[18px] rounded shimmer flex-shrink-0" />
           <div className="w-8 h-8 rounded-lg shimmer flex-shrink-0" />
           <div className="flex-1 h-4 rounded shimmer" style={{ maxWidth: SKELETON_WIDTHS[i % SKELETON_WIDTHS.length] }} />

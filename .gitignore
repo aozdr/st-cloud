@@ -32,6 +32,11 @@ docker/data/
 # Environment
 .env
 .env.*
+.ai
+AGENTS.md
+docs
+skill
+.ulpi
 
 # Frontend
 node_modules/

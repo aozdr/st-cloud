@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { HardDrive, Users, FileText, Edit3 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -58,11 +58,11 @@ export default function StorageManageTab() {
 
   return (
     <div className="space-y-4">
-      <div className="bg-white rounded-lg border border-stone-200 p-5">
+      <div className="bg-surface rounded-lg border border-border p-5">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <HardDrive className="w-4 h-4 text-primary-600" />
-            <span className="text-sm font-medium text-stone-700">云盘总容量</span>
+            <span className="text-sm font-medium text-muted">云盘总容量</span>
           </div>
           <button onClick={() => setCloudCapacityOpen(true)} className="text-xs text-primary-600 hover:underline cursor-pointer">编辑</button>
         </div>
@@ -71,13 +71,13 @@ export default function StorageManageTab() {
           const total = stats?.cloudTotalCapacity;
           const pct = total && total > 0 ? Math.min((used / total) * 100, 100) : 0;
           const low = !!(total && total > 0 && pct > 90);
-          const barClass = "h-full rounded-full transition-all " + (low ? "bg-red-500" : "bg-primary-600");
+          const barClass = "h-full rounded-full transition-[width,background-color] " + (low ? "bg-red-500" : "bg-primary-600");
           return (
             <>
-              <div className="w-full h-2 bg-stone-100 rounded-full overflow-hidden mb-2">
+              <div className="w-full h-2 bg-surface-2 rounded-full overflow-hidden mb-2">
                 <div className={barClass} style={{ width: pct + "%" }} />
               </div>
-              <div className="flex justify-between text-xs text-stone-500">
+              <div className="flex justify-between text-xs text-muted">
                 <span>{formatSize(used)} 已用</span>
                 <span>{total && total > 0 ? formatSize(total) + " 总量" : "不限"}</span>
               </div>
@@ -90,32 +90,32 @@ export default function StorageManageTab() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
+        <div className="bg-surface rounded-lg border border-border p-4">
           <div className="flex items-center gap-2 mb-2">
             <HardDrive className="w-4 h-4 text-primary-600" />
-            <span className="text-xs font-medium text-stone-500">总存储用量</span>
+            <span className="text-xs font-medium text-muted">总存储用量</span>
           </div>
-          <p className="text-2xl font-bold text-stone-900">{formatSize(stats?.totalStorageUsed || 0)}</p>
+          <p className="text-2xl font-bold text-fg">{formatSize(stats?.totalStorageUsed || 0)}</p>
         </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
+        <div className="bg-surface rounded-lg border border-border p-4">
           <div className="flex items-center gap-2 mb-2">
             <Users className="w-4 h-4 text-blue-500" />
-            <span className="text-xs font-medium text-stone-500">用户数</span>
+            <span className="text-xs font-medium text-muted">用户数</span>
           </div>
-          <p className="text-2xl font-bold text-stone-900">{users.length}</p>
+          <p className="text-2xl font-bold text-fg">{users.length}</p>
         </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-4">
+        <div className="bg-surface rounded-lg border border-border p-4">
           <div className="flex items-center gap-2 mb-2">
             <FileText className="w-4 h-4 text-green-500" />
-            <span className="text-xs font-medium text-stone-500">总文件数</span>
+            <span className="text-xs font-medium text-muted">总文件数</span>
           </div>
-          <p className="text-2xl font-bold text-stone-900">{stats?.totalFiles || 0}</p>
+          <p className="text-2xl font-bold text-fg">{stats?.totalFiles || 0}</p>
         </div>
       </div>
 
       <Card>
-        <div className="px-4 py-3 border-b border-stone-100">
-          <h3 className="text-sm font-semibold text-stone-700">用户存储配额管理</h3>
+        <div className="px-4 py-3 border-b border-border">
+          <h3 className="text-sm font-semibold text-muted">用户存储配额管理</h3>
         </div>
         <Table>
           <TableHeader>
@@ -138,24 +138,24 @@ export default function StorageManageTab() {
                 <TableRow key={user.id}>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-full bg-stone-200 flex items-center justify-center text-xs font-medium text-stone-600">
+                      <div className="w-7 h-7 rounded-full bg-surface-2 flex items-center justify-center text-xs font-medium text-muted">
                         {(user.nickname || user.username || '?')[0].toUpperCase()}
                       </div>
                       <div>
-                        <div className="text-sm font-medium text-stone-800">{user.username}</div>
-                        {user.nickname && <div className="text-xs text-stone-400">{user.nickname}</div>}
+                        <div className="text-sm font-medium text-fg">{user.username}</div>
+                        {user.nickname && <div className="text-xs text-muted">{user.nickname}</div>}
                       </div>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="space-y-1">
                       <div className="flex items-center justify-between text-xs">
-                        <span className="text-stone-600 font-medium tabular-nums">{formatSize(used)}</span>
-                        <span className="text-stone-400 tabular-nums">{isUnlimited ? '不限制' : formatSize(quota)}</span>
+                        <span className="text-muted font-medium tabular-nums">{formatSize(used)}</span>
+                        <span className="text-muted tabular-nums">{isUnlimited ? '不限制' : formatSize(quota)}</span>
                       </div>
-                      <div className="w-full h-1.5 bg-stone-100 rounded-full overflow-hidden">
+                      <div className="w-full h-1.5 bg-surface-2 rounded-full overflow-hidden">
                         <div
-                          className={cn('h-full rounded-full transition-all', isHigh ? 'bg-red-500' : isUnlimited ? 'bg-stone-300' : 'bg-primary-500')}
+                          className={cn('h-full rounded-full transition-[width,background-color]', isHigh ? 'bg-red-500' : isUnlimited ? 'bg-muted/50' : 'bg-primary-500')}
                           style={{ width: isUnlimited ? '8%' : pct + '%' }}
                         />
                       </div>
@@ -163,20 +163,20 @@ export default function StorageManageTab() {
                   </TableCell>
                   <TableCell>
                     {isUnlimited ? (
-                      <span className="text-xs text-stone-400">-</span>
+                      <span className="text-xs text-muted">-</span>
                     ) : (
-                      <span className={cn('text-xs font-medium tabular-nums', isHigh ? 'text-red-600' : 'text-stone-600')}>
+                      <span className={cn('text-xs font-medium tabular-nums', isHigh ? 'text-red-600 dark:text-red-400' : 'text-muted')}>
                         {pct.toFixed(1)}%
                       </span>
                     )}
                   </TableCell>
                   <TableCell>
-                    <span className="text-xs text-stone-600 tabular-nums">{isUnlimited ? '不限制' : formatSize(quota)}</span>
+                    <span className="text-xs text-muted tabular-nums">{isUnlimited ? '不限制' : formatSize(quota)}</span>
                   </TableCell>
                   <TableCell className="text-center">
                     <button
                       onClick={() => setQuotaTarget(user)}
-                      className="text-stone-400 hover:text-primary-600 transition-colors cursor-pointer"
+                      className="text-muted hover:text-primary-600 transition-colors cursor-pointer"
                       title="修改配额" aria-label="修改配额"
                     >
                       <Edit3 className="w-4 h-4" aria-hidden />
@@ -188,7 +188,7 @@ export default function StorageManageTab() {
           </TableBody>
         </Table>
         {users.length === 0 && (
-          <div className="py-10 text-center text-sm text-stone-400">暂无用户数据</div>
+          <div className="py-10 text-center text-sm text-muted">暂无用户数据</div>
         )}
       </Card>
 

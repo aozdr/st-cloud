@@ -50,7 +50,7 @@ public interface FileNodeMapper extends BaseMapper<FileNode> {
     /**
      * 递归统计 nodeId 及其祖先链上处于非正常状态（回收/已删除）的节点数。返回 >0 表示不可访问。
      */
-    @Select("WITH RECURSIVE chain AS (" +
+    @Select("WITH RECURSIVE chain(id, parent_id, status, tenant_id) AS (" +
             "SELECT id, parent_id, status, tenant_id FROM file_node WHERE id = #{nodeId} AND deleted = 0 " +
             "UNION ALL " +
             "SELECT p.id, p.parent_id, p.status, p.tenant_id FROM file_node p JOIN chain c ON p.id = c.parent_id AND p.deleted = 0" +
@@ -74,4 +74,44 @@ public interface FileNodeMapper extends BaseMapper<FileNode> {
             "JOIN file_node a ON a.id = c.parent_id AND a.deleted = 0 AND a.status != 0" +
             "</script>")
     List<Long> findIdsWithInaccessibleAncestor(@Param("ids") Collection<Long> ids);
+
+    /**
+     * 按文件后缀分组统计存储占用（仅当前用户的正常状态文件）。
+     */
+    @org.apache.ibatis.annotations.Select("SELECT IFNULL(suffix, 'other') AS type, COALESCE(SUM(file_size), 0) AS size " +
+            "FROM file_node WHERE owner_id = #{userId} AND tenant_id = #{tenantId} " +
+            "AND deleted = 0 AND status = 0 AND node_type = 1 AND upload_status = 2 " +
+            "GROUP BY IFNULL(suffix, 'other')")
+    @org.apache.ibatis.annotations.MapKey("type")
+    List<java.util.Map<String, Object>> storageByType(@org.apache.ibatis.annotations.Param("userId") Long userId,
+                                                      @org.apache.ibatis.annotations.Param("tenantId") Long tenantId);
+
+    /**
+     * 查询当前用户空间内的重复文件（按 MD5 分组，count > 1）。
+     * 返回每组重复文件的 MD5、文件数量、总占用大小。
+     */
+    @org.apache.ibatis.annotations.Select("SELECT file_md5 AS fileMd5, COUNT(*) AS cnt, SUM(file_size) AS totalSize, " +
+            "MIN(name) AS sampleName, MIN(id) AS sampleId " +
+            "FROM file_node WHERE owner_id = #{userId} AND tenant_id = #{tenantId} " +
+            "AND deleted = 0 AND status = 0 AND node_type = 1 AND upload_status = 2 " +
+            "AND file_md5 IS NOT NULL " +
+            "GROUP BY file_md5 HAVING COUNT(*) > 1 " +
+            "ORDER BY totalSize DESC")
+    List<java.util.Map<String, Object>> findDuplicates(@org.apache.ibatis.annotations.Param("userId") Long userId,
+                                                        @org.apache.ibatis.annotations.Param("tenantId") Long tenantId);
+
+    /**
+     * 查询指定 MD5 的所有文件节点（用于重复文件详情展示）。
+     */
+    @org.apache.ibatis.annotations.Select("SELECT * FROM file_node WHERE owner_id = #{userId} AND tenant_id = #{tenantId} " +
+            "AND deleted = 0 AND status = 0 AND node_type = 1 AND file_md5 = #{md5} ORDER BY created_at ASC")
+    List<FileNode> findByMd5(@org.apache.ibatis.annotations.Param("userId") Long userId,
+                             @org.apache.ibatis.annotations.Param("tenantId") Long tenantId,
+                             @org.apache.ibatis.annotations.Param("md5") String md5);
+
+    /**
+     * 检查文件节点是否有历史版本记录
+     */
+    @org.apache.ibatis.annotations.Select("SELECT COUNT(*) FROM file_version WHERE file_node_id = #{nodeId}")
+    int countVersions(@org.apache.ibatis.annotations.Param("nodeId") Long nodeId);
 }

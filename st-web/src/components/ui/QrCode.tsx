@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import * as QRCodeLib from 'qrcode';
 
 interface Props {
@@ -32,7 +32,7 @@ export default function QrCode({ value, size = 200 }: Props) {
     return (
       <div
         style={{ width: size, height: size }}
-        className="bg-stone-100 rounded animate-pulse"
+        className="bg-surface-2 rounded animate-pulse"
       />
     );
   }

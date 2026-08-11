@@ -1,6 +1,6 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+﻿import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Download, Pencil, FolderInput, Copy, Trash2, FolderOpen, Eye, Scissors, ClipboardPaste, Share2, History, Info, Star, type LucideIcon } from 'lucide-react';
+import { Download, Pencil, FolderInput, Copy, Trash2, FolderOpen, Eye, Scissors, ClipboardPaste, Share2, History, Info, Star, EyeOff, type LucideIcon } from 'lucide-react';
 import type { FileNode } from '../../types';
 import { usePermission } from '../../lib/permission';
 
@@ -48,6 +48,7 @@ export default function ContextMenu({ x, y, node, hasClipboard, showShare = true
         : []),
     { action: 'details', label: '详情', icon: Info },
     { action: 'favorite', label: isFav ? '取消收藏' : '收藏', icon: Star },
+    { action: 'hide', label: '隐藏', icon: EyeOff },
     ...(has('file:move') ? [{ action: 'cut', label: '剪切', icon: Scissors }] : []),
     ...(has('file:copy') ? [{ action: 'copy', label: '复制', icon: Copy }] : []),
     ...(hasClipboard && (has('file:copy') || has('file:move')) ? [{ action: 'paste', label: '粘贴', icon: ClipboardPaste }] : []),
@@ -73,13 +74,13 @@ export default function ContextMenu({ x, y, node, hasClipboard, showShare = true
   return createPortal(
     <div
       ref={ref}
-      className="fixed z-[100] w-48 bg-white rounded-lg shadow-md border border-stone-200 py-1.5 animate-scale-in"
+      className="fixed z-[100] w-48 bg-surface rounded-lg shadow-md border border-border py-1.5 animate-scale-in"
       style={{ left: pos.left, top: pos.top }}
       onClick={(e) => e.stopPropagation()}
     >
       {items.map((item, idx) => {
         if (item.type === 'separator') {
-          return <div key={idx} className="my-1 border-t border-stone-100" />;
+          return <div key={idx} className="my-1 border-t border-border" />;
         }
         const Icon = item.icon!;
         return (
@@ -87,7 +88,7 @@ export default function ContextMenu({ x, y, node, hasClipboard, showShare = true
             key={idx}
             onClick={() => onAction(item.action!, node)}
             className={`w-full flex items-center gap-2.5 px-3 py-1.5 text-sm cursor-pointer transition-colors ${
-              item.danger ? 'text-red-600 hover:bg-red-50' : 'text-stone-700 hover:bg-stone-50'
+              item.danger ? 'text-red-500 hover:bg-red-500/10' : 'text-fg hover:bg-surface-2'
             }`}
           >
             <Icon className="w-4 h-4" aria-hidden />

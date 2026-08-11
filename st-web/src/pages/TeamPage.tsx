@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Plus, FolderClosed, X, HardDrive } from 'lucide-react';
+import { Users, Plus, FolderClosed, X, HardDrive, Search, Pin } from 'lucide-react';
 import api from '../lib/api';
 import { useToast } from '../components/ui/Toast';
-import { formatSize } from '../lib/utils';
+import { formatSize, cn } from '../lib/utils';
 import type { TeamSpace, PageResult } from '../types';
 
 export default function TeamPage() {
@@ -13,6 +13,8 @@ export default function TeamPage() {
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ spaceName: '', description: '' });
+  const [keyword, setKeyword] = useState('');
+  const [sortBy, setSortBy] = useState('createdAt');
 
   const fetchSpaces = useCallback(async () => {
     setLoading(true);
@@ -24,7 +26,7 @@ export default function TeamPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [keyword, sortBy]);
 
   useEffect(() => {
     fetchSpaces();
@@ -46,6 +48,11 @@ export default function TeamPage() {
     }
   };
 
+  const handleTogglePin = async (e: React.MouseEvent, spaceId: string) => {
+    e.stopPropagation();
+    try { await api.post(`/team/${spaceId}/pin`); fetchSpaces(); } catch { /* ignore */ }
+  };
+
   const usedPercent = (space: TeamSpace) => {
     const used = Number(space.storageUsed);
     const quota = Number(space.storageQuota);
@@ -55,12 +62,12 @@ export default function TeamPage() {
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200 bg-white">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-surface">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
             <Users className="w-4 h-4 text-white" />
           </div>
-          <h1 className="text-lg font-semibold text-stone-900">团队空间</h1>
+          <h1 className="text-lg font-semibold text-fg">团队空间</h1>
         </div>
         <button
           onClick={() => setShowCreate(true)}
@@ -78,7 +85,7 @@ export default function TeamPage() {
             <div className="w-8 h-8 border-3 border-primary-600 border-t-transparent rounded-full animate-spin" />
           </div>
         ) : spaces.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-stone-400">
+          <div className="flex flex-col items-center justify-center py-20 text-muted">
             <Users className="w-12 h-12 mb-3 opacity-30" />
             <p className="text-sm">暂无团队空间</p>
             <p className="text-xs mt-1">创建团队空间，与团队成员共享文件</p>
@@ -89,24 +96,27 @@ export default function TeamPage() {
               <div
                 key={space.id}
                 onClick={() => navigate(`/team/${space.id}`)}
-                className="bg-white rounded-lg border border-stone-200 p-5 cursor-pointer hover:shadow-sm transition group"
+                className="bg-surface rounded-lg border border-border p-5 cursor-pointer hover:shadow-sm transition group"
               >
                 <div className="flex items-start justify-between mb-4">
-                  <div className="w-12 h-12 bg-primary-50 rounded-lg flex items-center justify-center">
+                  <div className="w-12 h-12 bg-primary-500/10 rounded-lg flex items-center justify-center">
                     <FolderClosed className="w-6 h-6 text-primary-600" />
                   </div>
-                  <span className="text-xs text-stone-400">{space.memberCount} 成员</span>
+                  <span className="text-xs text-muted">{space.memberCount} 成员</span>
+                  <button onClick={(e) => handleTogglePin(e, space.id)} className="ml-1 p-0.5 text-muted hover:text-primary-600 cursor-pointer" aria-label="置顶">
+                    <Pin className={cn('w-3.5 h-3.5', space.isPinned === 1 && 'fill-primary-600 text-primary-600')} />
+                  </button>
                 </div>
-                <h3 className="text-sm font-semibold text-stone-900 mb-1 group-hover:text-primary-600 transition-colors">
+                <h3 className="text-sm font-semibold text-fg mb-1 group-hover:text-primary-600 transition-colors">
                   {space.spaceName}
                 </h3>
-                <p className="text-xs text-stone-500 mb-3 line-clamp-2 min-h-[2rem]">
+                <p className="text-xs text-muted mb-3 line-clamp-2 min-h-[2rem]">
                   {space.description || '暂无描述'}
                 </p>
                 {/* Storage bar */}
-                <div className="flex items-center gap-2 text-xs text-stone-400">
+                <div className="flex items-center gap-2 text-xs text-muted">
                   <HardDrive className="w-3 h-3" />
-                  <div className="flex-1 h-1.5 bg-stone-200 rounded-full overflow-hidden">
+                  <div className="flex-1 h-1.5 bg-surface-2 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-primary-600 rounded-full"
                       style={{ width: `${usedPercent(space)}%` }}
@@ -122,34 +132,34 @@ export default function TeamPage() {
 
       {/* Create space dialog */}
       {showCreate && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-900/40" onClick={() => setShowCreate(false)}>
-          <div className="w-full max-w-md bg-white rounded-xl shadow-lg border border-stone-200 overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-5 py-4 border-b border-stone-100">
-              <h2 className="text-base font-semibold text-stone-900">创建团队空间</h2>
-              <button onClick={() => setShowCreate(false)} className="text-stone-400 hover:text-stone-600 cursor-pointer" aria-label="关闭">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 overscroll-contain" role="presentation" onClick={() => setShowCreate(false)}>
+          <div className="w-full max-w-md bg-surface rounded-xl shadow-lg border border-border overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border">
+              <h2 className="text-base font-semibold text-fg">创建团队空间</h2>
+              <button onClick={() => setShowCreate(false)} className="text-muted hover:text-fg cursor-pointer" aria-label="关闭">
                 <X className="w-5 h-5" aria-hidden />
               </button>
             </div>
             <div className="p-5 space-y-4">
               <div>
-                <label className="text-xs font-medium text-stone-500 mb-1.5 block">空间名称</label>
+                <label className="text-xs font-medium text-muted mb-1.5 block">空间名称</label>
                 <input
                   type="text"
                   value={form.spaceName}
                   onChange={(e) => setForm({ ...form, spaceName: e.target.value })}
                   placeholder="如：产品研发组"
                   autoFocus
-                  className="w-full px-3 py-2 text-sm bg-stone-50 rounded-md border border-stone-200 outline-none focus:border-primary-400 focus:bg-white transition-colors"
+                  className="w-full px-3 py-2 text-sm bg-surface-2 rounded-md border border-border outline-none focus:border-primary-400 focus:bg-surface transition-colors"
                 />
               </div>
               <div>
-                <label className="text-xs font-medium text-stone-500 mb-1.5 block">空间描述</label>
+                <label className="text-xs font-medium text-muted mb-1.5 block">空间描述</label>
                 <textarea
                   value={form.description}
                   onChange={(e) => setForm({ ...form, description: e.target.value })}
                   placeholder="简要描述空间用途"
                   rows={3}
-                  className="w-full px-3 py-2 text-sm bg-stone-50 rounded-md border border-stone-200 outline-none focus:border-primary-400 focus:bg-white transition-colors resize-none"
+                  className="w-full px-3 py-2 text-sm bg-surface-2 rounded-md border border-border outline-none focus:border-primary-400 focus:bg-surface transition-colors resize-none"
                 />
               </div>
               <button

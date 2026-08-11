@@ -46,6 +46,10 @@ public enum ResultCode {
     TEAM_MEMBER_EXISTS(4002, "成员已在团队中"),
     TEAM_MEMBER_NOT_FOUND(4003, "成员不存在"),
     TEAM_PERMISSION_DENIED(4004, "无团队操作权限"),
+    TEAM_INVITE_NOT_FOUND(4005, "邀请链接不存在"),
+    TEAM_INVITE_EXPIRED(4006, "邀请链接已过期"),
+    TEAM_LAST_ADMIN(4007, "空间至少保留一名管理员"),
+    TEAM_TRANSFER_TARGET_INVALID(4008, "移交目标必须是空间管理员"),
 
     // 系统错误 5xxx
     INTERNAL_ERROR(5000, "系统内部错误"),

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { X, Settings2, ArrowUp, ArrowDown, Layers } from 'lucide-react';
 import { useTransferStore } from '../store/transfer';
 
@@ -46,23 +46,23 @@ export default function TransferSettingsDialog({ open, onClose }: TransferSettin
         {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
-            <Settings2 className="w-5 h-5 text-stone-700" />
-            <h2 className="text-lg font-semibold text-stone-900">传输设置</h2>
+            <Settings2 className="w-5 h-5 text-muted" />
+            <h2 className="text-lg font-semibold text-fg">传输设置</h2>
           </div>
           <button
             onClick={onClose}
-            className="p-1 text-stone-400 hover:text-stone-600 rounded-md hover:bg-stone-100 transition-colors cursor-pointer"
+            aria-label="关闭" className="p-1 text-muted hover:text-fg rounded-md hover:bg-surface-2 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" aria-hidden />
           </button>
         </div>
 
         {/* 最大并行任务数 */}
         <div className="mb-6">
           <div className="flex items-center gap-2 mb-3">
-            <Layers className="w-4 h-4 text-stone-500" />
-            <label className="text-sm font-medium text-stone-700">最大并行任务数</label>
-            <span className="text-xs text-stone-400">上传/下载共享</span>
+            <Layers className="w-4 h-4 text-muted" />
+            <label className="text-sm font-medium text-muted">最大并行任务数</label>
+            <span className="text-xs text-muted">上传/下载共享</span>
           </div>
           <div className="flex gap-2">
             {PARALLEL_OPTIONS.map((n) => (
@@ -72,7 +72,7 @@ export default function TransferSettingsDialog({ open, onClose }: TransferSettin
                 className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition duration-150 cursor-pointer ${
                   settings.maxParallelTasks === n
                     ? 'bg-primary-600 text-white shadow-sm'
-                    : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                    : 'bg-surface-2 text-muted hover:bg-surface-2'
                 }`}
               >
                 {n}
@@ -81,7 +81,7 @@ export default function TransferSettingsDialog({ open, onClose }: TransferSettin
           </div>
         </div>
 
-        <div className="border-t border-stone-100" />
+        <div className="border-t border-border" />
 
         {/* 上传限速 */}
         <SpeedSection
@@ -104,7 +104,7 @@ export default function TransferSettingsDialog({ open, onClose }: TransferSettin
           }}
         />
 
-        <div className="border-t border-stone-100" />
+        <div className="border-t border-border" />
 
         {/* 下载限速 */}
         <SpeedSection
@@ -155,7 +155,7 @@ function SpeedSection({ icon, title, unlimited, value, unit, onToggleUnlimited, 
     <div className="py-5">
       <div className="flex items-center gap-2 mb-3">
         {icon}
-        <label className="text-sm font-medium text-stone-700">{title}</label>
+        <label className="text-sm font-medium text-muted">{title}</label>
       </div>
 
       {/* 不限速开关 */}
@@ -163,16 +163,16 @@ function SpeedSection({ icon, title, unlimited, value, unit, onToggleUnlimited, 
         <button
           onClick={() => onToggleUnlimited(!unlimited)}
           className={`relative w-9 h-5 rounded-full transition-colors duration-200 cursor-pointer ${
-            unlimited ? 'bg-stone-300' : 'bg-primary-600'
+            unlimited ? 'bg-muted/50' : 'bg-primary-600'
           }`}
         >
           <span
-            className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${
+            className={`absolute top-0.5 w-4 h-4 bg-surface rounded-full shadow-sm transition-transform duration-200 ${
               unlimited ? 'left-0.5' : 'left-[18px]'
             }`}
           />
         </button>
-        <span className={`text-sm ${unlimited ? 'text-stone-400' : 'text-stone-700'}`}>
+        <span className={`text-sm ${unlimited ? 'text-muted' : 'text-muted'}`}>
           {unlimited ? '不限速' : '自定义限速'}
         </span>
       </label>
@@ -188,14 +188,14 @@ function SpeedSection({ icon, title, unlimited, value, unit, onToggleUnlimited, 
               const v = parseInt(e.target.value, 10);
               onValueChange(isNaN(v) || v < 1 ? 1 : v);
             }}
-            className="flex-1 px-3 py-2 border border-stone-200 rounded-lg text-sm text-stone-900 focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-50 transition"
+            className="flex-1 px-3 py-2 border border-border rounded-lg text-sm text-fg focus:outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-50 transition"
             placeholder="输入数值"
           />
-          <div className="flex rounded-lg overflow-hidden border border-stone-200">
+          <div className="flex rounded-lg overflow-hidden border border-border">
             <button
               onClick={() => onUnitChange('kb')}
               className={`px-3 py-2 text-sm font-medium transition-colors cursor-pointer ${
-                unit === 'kb' ? 'bg-primary-600 text-white' : 'bg-white text-stone-500 hover:bg-stone-50'
+                unit === 'kb' ? 'bg-primary-600 text-white' : 'bg-surface text-muted hover:bg-surface-2'
               }`}
             >
               KB/s
@@ -203,7 +203,7 @@ function SpeedSection({ icon, title, unlimited, value, unit, onToggleUnlimited, 
             <button
               onClick={() => onUnitChange('mb')}
               className={`px-3 py-2 text-sm font-medium transition-colors cursor-pointer ${
-                unit === 'mb' ? 'bg-primary-600 text-white' : 'bg-white text-stone-500 hover:bg-stone-50'
+                unit === 'mb' ? 'bg-primary-600 text-white' : 'bg-surface text-muted hover:bg-surface-2'
               }`}
             >
               MB/s

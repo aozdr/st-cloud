@@ -9,7 +9,7 @@ import java.util.List;
 @Schema(description = "增量变更响应")
 public class SyncDeltaResponse {
 
-    @Schema(description = "新游标（epoch ms，下次请求传入）")
+    @Schema(description = "新游标（sync_change_log.id，下次请求传入）")
     private Long cursor;
 
     @Schema(description = "是否还有更多变更")

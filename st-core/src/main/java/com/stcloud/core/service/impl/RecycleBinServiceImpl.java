@@ -7,6 +7,7 @@ import com.stcloud.common.enums.NodeStatus;
 import com.stcloud.core.dto.RecycleItemVO;
 import com.stcloud.core.entity.FileNode;
 import com.stcloud.core.event.FileIndexEvent;
+import com.stcloud.core.event.SyncChangeEvent;
 import com.stcloud.core.mapper.FileNodeMapper;
 import com.stcloud.core.mapper.UserQuotaMapper;
 import com.stcloud.core.service.FileService;
@@ -112,9 +113,11 @@ public class RecycleBinServiceImpl implements RecycleBinService {
 
             // ES：重新索引恢复节点及正常态子孙（独立回收的子孙保持不可搜）
             eventPublisher.publishEvent(new FileIndexEvent(this, node, FileIndexEvent.ActionType.INDEX));
+            eventPublisher.publishEvent(new SyncChangeEvent(this, node, SyncChangeEvent.ChangeType.CREATE));
             for (FileNode descendant : fileService.collectDescendants(nodeId)) {
                 if (descendant.getStatus() == NodeStatus.NORMAL.getCode()) {
                     eventPublisher.publishEvent(new FileIndexEvent(this, descendant, FileIndexEvent.ActionType.INDEX));
+                    eventPublisher.publishEvent(new SyncChangeEvent(this, descendant, SyncChangeEvent.ChangeType.CREATE));
                 }
             }
         }

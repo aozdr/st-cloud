@@ -1,10 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import {
   ArrowUp, ArrowDown, Pause, Play, X, CheckCircle2, AlertCircle,
   Loader2, FileUp, Clock, FolderOpen, FileText, Trash2,
   RefreshCw, Settings2
 } from 'lucide-react';
 import { isElectron } from '../lib/electron';
+import { isCapacitor } from '../lib/runtime';
+import { useMobile } from '../hooks/useMobile';
 import { formatSize } from '../lib/utils';
 import type { TransferTask, TransferStatus } from '../types';
 import TransferSettingsDialog from '../components/TransferSettingsDialog';
@@ -20,7 +22,7 @@ function formatTime(iso: string): string {
 }
 
 const statusConfig: Record<TransferStatus, { label: string; color: string; icon: typeof CheckCircle2 }> = {
-  pending: { label: '等待中', color: 'text-stone-400', icon: Clock },
+  pending: { label: '等待中', color: 'text-muted', icon: Clock },
   hashing: { label: '计算中', color: 'text-blue-500', icon: Loader2 },
   uploading: { label: '上传中', color: 'text-blue-500', icon: ArrowUp },
   downloading: { label: '下载中', color: 'text-emerald-500', icon: ArrowDown },
@@ -144,24 +146,37 @@ export default function TransferManager() {
     .filter(t => t.type === 'download' && activeStatuses.includes(t.status))
     .reduce((sum, t) => sum + (t.speed || 0), 0);
 
+  const isMobileView = useMobile();
   if (!isElectron()) {
     return (
-      <div className="flex flex-col items-center justify-center h-full py-20">
-        <FileUp className="w-12 h-12 text-stone-300 mb-4" />
-        <p className="text-stone-500 text-sm">传输管理功能仅在桌面客户端中可用</p>
+      <div className="flex flex-col items-center justify-center h-full py-20 px-6 text-center">
+        <FileUp className="w-12 h-12 text-muted mb-4" />
+        {isCapacitor() ? (
+          <>
+            <p className="text-fg text-sm font-medium mb-1">传输管理即将上线</p>
+            <p className="text-muted text-xs">Capacitor 原生传输能力开发中，当前请使用文件页上传</p>
+          </>
+        ) : isMobileView ? (
+          <>
+            <p className="text-fg text-sm font-medium mb-1">浏览器传输模式</p>
+            <p className="text-muted text-xs leading-relaxed">上传任务在浏览器前台运行，请保持页面开启。切换应用或锁屏可能导致传输中断。</p>
+          </>
+        ) : (
+          <p className="text-muted text-sm">传输管理功能仅在桌面客户端中可用</p>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full bg-stone-50/50">
+    <div className="flex flex-col h-full bg-surface-2/50">
       {/* Header */}
-      <div className="px-6 py-3.5 bg-white border-b border-stone-100">
+      <div className="px-6 py-3.5 bg-surface border-b border-border">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <h1 className="text-lg font-semibold text-stone-900">传输管理</h1>
+            <h1 className="text-lg font-semibold text-fg">传输管理</h1>
             {activeCount > 0 && (
-              <span className="px-2 py-0.5 text-xs font-medium text-primary-600 bg-primary-50 rounded-full">
+              <span className="px-2 py-0.5 text-xs font-medium text-primary-600 bg-primary-500/10 rounded-full">
                 {activeCount} 个进行中
               </span>
             )}
@@ -170,27 +185,27 @@ export default function TransferManager() {
           {/* 聚合速度总览 */}
           <div className="flex items-center gap-4">
             {totalUploadSpeed > 0 && (
-              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 rounded-md">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-500/15 rounded-md">
                 <ArrowUp className="w-3.5 h-3.5 text-blue-500" />
                 <span className="text-sm font-bold text-blue-600 tabular-nums">{formatSpeed(totalUploadSpeed)}</span>
               </div>
             )}
             {totalDownloadSpeed > 0 && (
-              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-50 rounded-md">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-500/15 rounded-md">
                 <ArrowDown className="w-3.5 h-3.5 text-emerald-500" />
-                <span className="text-sm font-bold text-emerald-600 tabular-nums">{formatSpeed(totalDownloadSpeed)}</span>
+                <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">{formatSpeed(totalDownloadSpeed)}</span>
               </div>
             )}
             <button
               onClick={() => setTransferSettingsOpen(true)}
-              className="p-1.5 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-md cursor-pointer transition-colors"
+              className="p-1.5 text-muted hover:text-fg hover:bg-surface-2 rounded-md cursor-pointer transition-colors"
               title="传输设置" aria-label="传输设置"
             >
               <Settings2 className="w-4 h-4" aria-hidden />
             </button>
             <button
               onClick={refresh}
-              className="p-1.5 text-stone-400 hover:text-stone-700 hover:bg-stone-100 rounded-md cursor-pointer transition-colors"
+              className="p-1.5 text-muted hover:text-fg hover:bg-surface-2 rounded-md cursor-pointer transition-colors"
               title="刷新" aria-label="刷新"
             >
               <RefreshCw className="w-4 h-4" aria-hidden />
@@ -200,7 +215,7 @@ export default function TransferManager() {
       </div>
 
       {/* Filter tabs */}
-      <div className="flex items-center gap-1.5 px-6 py-2.5 bg-white border-b border-stone-100">
+      <div className="flex items-center gap-1.5 px-6 py-2.5 bg-surface border-b border-border">
         {([
           { key: 'all', label: '全部' },
           { key: 'active', label: '进行中' },
@@ -212,8 +227,8 @@ export default function TransferManager() {
             onClick={() => setFilter(tab.key)}
             className={`px-3 py-1 text-xs rounded-full cursor-pointer transition ${
               filter === tab.key
-                ? 'bg-stone-800 text-white font-medium'
-                : 'text-stone-500 hover:text-stone-800 hover:bg-stone-100'
+                ? 'bg-neutral-800 text-white font-medium'
+                : 'text-muted hover:text-fg hover:bg-surface-2'
             }`}
           >
             {tab.label}
@@ -225,10 +240,10 @@ export default function TransferManager() {
       <div className="flex-1 overflow-y-auto px-4 py-3">
         {filteredTasks.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24">
-            <div className="w-16 h-16 rounded-full bg-stone-100 flex items-center justify-center mb-4">
-              <CheckCircle2 className="w-8 h-8 text-stone-300" />
+            <div className="w-16 h-16 rounded-full bg-surface-2 flex items-center justify-center mb-4">
+              <CheckCircle2 className="w-8 h-8 text-muted" />
             </div>
-            <p className="text-stone-400 text-sm">暂无传输任务</p>
+            <p className="text-muted text-sm">暂无传输任务</p>
           </div>
         ) : (
           filteredTasks.map((task) => {
@@ -241,7 +256,7 @@ export default function TransferManager() {
             return (
               <div
                 key={task.id}
-                className="bg-white rounded-lg border border-stone-100 px-4 py-3 mb-2 hover:border-stone-200 hover:shadow-sm transition animate-fade-in"
+                className="bg-surface rounded-lg border border-border px-4 py-3 mb-2 hover:border-border hover:shadow-sm transition animate-fade-in"
               >
                 <div className="flex items-start gap-3">
                   {/* 左侧：图标 + 文件信息 + 进度 */}
@@ -249,7 +264,7 @@ export default function TransferManager() {
                     {/* 文件名行 */}
                     <div className="flex items-center gap-2 mb-1.5">
                       <div className={`w-6 h-6 rounded flex items-center justify-center flex-shrink-0 ${
-                        isUpload ? 'bg-blue-50' : 'bg-emerald-50'
+                        isUpload ? 'bg-blue-500/15' : 'bg-emerald-500/15'
                       }`}>
                         {isUpload ? (
                           <ArrowUp className="w-3 h-3 text-blue-500" />
@@ -257,7 +272,7 @@ export default function TransferManager() {
                           <ArrowDown className="w-3 h-3 text-emerald-500" />
                         )}
                       </div>
-                      <p className="text-sm font-medium text-stone-800 truncate flex-1 min-w-0" title={task.fileName}>
+                      <p className="text-sm font-medium text-fg truncate flex-1 min-w-0" title={task.fileName}>
                         {task.fileName}
                       </p>
                       {/* 状态标签 - 仅非活跃任务显示 */}
@@ -272,9 +287,9 @@ export default function TransferManager() {
                     {/* 进度条（活跃/暂停） */}
                     {(isActive || isPaused) && (
                       <div className="flex items-center gap-2 ml-8 mb-1">
-                        <div className="flex-1 h-2 bg-stone-100 rounded-full overflow-hidden">
+                        <div className="flex-1 h-2 bg-surface-2 rounded-full overflow-hidden">
                           <div
-                            className={`h-full rounded-full transition-all duration-300 ${
+                            className={`h-full rounded-full transition-[width] duration-300 ${
                               task.status === 'failed' ? 'bg-red-500' :
                               task.status === 'paused' ? 'bg-amber-400' :
                               isUpload ? 'bg-blue-500' : 'bg-emerald-500'
@@ -282,18 +297,18 @@ export default function TransferManager() {
                             style={{ width: `${task.progress}%` }}
                           />
                         </div>
-                        <span className="text-xs font-bold text-stone-700 tabular-nums w-9 text-right">{task.progress}%</span>
+                        <span className="text-xs font-bold text-muted tabular-nums w-9 text-right">{task.progress}%</span>
                       </div>
                     )}
 
                     {/* 底部 meta 信息 */}
-                    <div className="flex items-center gap-2 ml-8 text-xs text-stone-400">
+                    <div className="flex items-center gap-2 ml-8 text-xs text-muted">
                       {(isActive || isPaused) ? (
                         <span className="tabular-nums">{formatSize(task.transferredBytes)} / {formatSize(task.fileSize)}</span>
                       ) : (
                         <>
                           <span className="tabular-nums">{formatSize(task.fileSize)}</span>
-                          <span className="text-stone-300">·</span>
+                          <span className="text-muted">·</span>
                           <span>{formatTime(task.createdAt)}</span>
                         </>
                       )}
@@ -319,7 +334,7 @@ export default function TransferManager() {
                       </div>
                     )}
                     {isPaused && (
-                      <div className="px-2.5 py-1 rounded-md text-sm font-bold text-amber-600 bg-amber-50 border border-amber-200">
+                      <div className="px-2.5 py-1 rounded-md text-sm font-bold text-amber-600 dark:text-amber-400 bg-amber-500/15 border border-amber-200">
                         已暂停
                       </div>
                     )}
@@ -330,14 +345,14 @@ export default function TransferManager() {
                         <>
                           <button
                             onClick={() => handleOpenFile(task.savePath!)}
-                            className="p-1.5 text-stone-400 hover:text-primary-600 hover:bg-primary-50 rounded-md cursor-pointer transition-colors"
+                            className="p-1.5 text-muted hover:text-primary-600 hover:bg-primary-500/10 rounded-md cursor-pointer transition-colors"
                             title="打开文件" aria-label="打开文件"
                           >
                             <FileText className="w-4 h-4" aria-hidden />
                           </button>
                           <button
                             onClick={() => handleShowInFolder(task.savePath!)}
-                            className="p-1.5 text-stone-400 hover:text-primary-600 hover:bg-primary-50 rounded-md cursor-pointer transition-colors"
+                            className="p-1.5 text-muted hover:text-primary-600 hover:bg-primary-500/10 rounded-md cursor-pointer transition-colors"
                             title="打开所在文件夹" aria-label="打开所在文件夹"
                           >
                             <FolderOpen className="w-4 h-4" aria-hidden />
@@ -349,7 +364,7 @@ export default function TransferManager() {
                           {isPaused ? (
                             <button
                               onClick={() => handleResume(task.id, task.type)}
-                              className="p-1.5 text-stone-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md cursor-pointer transition-colors"
+                              className="p-1.5 text-muted hover:text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 rounded-md cursor-pointer transition-colors"
                               title="继续" aria-label="继续"
                             >
                               <Play className="w-4 h-4" aria-hidden />
@@ -357,7 +372,7 @@ export default function TransferManager() {
                           ) : (
                             <button
                               onClick={() => handlePause(task.id, task.type)}
-                              className="p-1.5 text-stone-400 hover:text-amber-600 hover:bg-amber-50 rounded-md cursor-pointer transition-colors"
+                              className="p-1.5 text-muted hover:text-amber-600 dark:text-amber-400 hover:bg-amber-500/10 rounded-md cursor-pointer transition-colors"
                               title="暂停" aria-label="暂停"
                             >
                               <Pause className="w-4 h-4" aria-hidden />
@@ -365,7 +380,7 @@ export default function TransferManager() {
                           )}
                           <button
                             onClick={() => handleCancel(task.id, task.type)}
-                            className="p-1.5 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded-md cursor-pointer transition-colors"
+                            className="p-1.5 text-muted hover:text-red-600 dark:text-red-400 hover:bg-red-500/10 rounded-md cursor-pointer transition-colors"
                             title="取消" aria-label="取消"
                           >
                             <X className="w-4 h-4" aria-hidden />
@@ -375,7 +390,7 @@ export default function TransferManager() {
                       {!isActive && !isPaused && (
                         <button
                           onClick={() => { setDeleteTarget(task); setDeleteSourceFile(false); }}
-                          className="p-1.5 text-stone-400 hover:text-red-600 hover:bg-red-50 rounded-md cursor-pointer transition-colors"
+                          className="p-1.5 text-muted hover:text-red-600 dark:text-red-400 hover:bg-red-500/10 rounded-md cursor-pointer transition-colors"
                           title="删除" aria-label="删除"
                         >
                           <Trash2 className="w-4 h-4" aria-hidden />
@@ -397,16 +412,16 @@ export default function TransferManager() {
           onClick={() => { if (!deleting) setDeleteTarget(null); }}
         >
           <div
-            className="bg-white rounded-xl shadow-xl w-[440px] max-w-[90vw] p-5 animate-scale-in"
+            className="bg-surface rounded-xl shadow-xl w-[440px] max-w-[90vw] p-5 animate-scale-in"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-red-50 flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 rounded-full bg-red-500/15 flex items-center justify-center flex-shrink-0">
                 <Trash2 className="w-5 h-5 text-red-500" />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="text-base font-semibold text-stone-900">删除任务</h3>
-                <p className="text-sm text-stone-500 mt-0.5 break-all line-clamp-2" title={deleteTarget.fileName}>
+                <h3 className="text-base font-semibold text-fg">删除任务</h3>
+                <p className="text-sm text-muted mt-0.5 break-all line-clamp-2" title={deleteTarget.fileName}>
                   {deleteTarget.fileName}
                 </p>
               </div>
@@ -414,7 +429,7 @@ export default function TransferManager() {
 
             {((deleteTarget.type === 'upload' && deleteTarget.filePath) ||
               (deleteTarget.type === 'download' && deleteTarget.savePath)) && (
-              <label className="flex items-start gap-2.5 p-3 bg-stone-50 rounded-lg cursor-pointer mb-4 hover:bg-stone-100 transition-colors">
+              <label className="flex items-start gap-2.5 p-3 bg-surface-2 rounded-lg cursor-pointer mb-4 hover:bg-surface-2 transition-colors">
                 <input
                   type="checkbox"
                   checked={deleteSourceFile}
@@ -422,10 +437,10 @@ export default function TransferManager() {
                   disabled={deleting}
                   className="mt-0.5 w-4 h-4 accent-red-500 flex-shrink-0"
                 />
-                <span className="text-sm text-stone-700 min-w-0">
+                <span className="text-sm text-muted min-w-0">
                   同时删除本地{deleteTarget.type === 'upload' ? '源文件' : '下载文件'}
                   <span
-                    className="block text-xs text-stone-400 break-all line-clamp-2 mt-0.5"
+                    className="block text-xs text-muted break-all line-clamp-2 mt-0.5"
                     title={deleteTarget.type === 'upload' ? deleteTarget.filePath : deleteTarget.savePath}
                   >
                     {deleteTarget.type === 'upload' ? deleteTarget.filePath : deleteTarget.savePath}
@@ -438,7 +453,7 @@ export default function TransferManager() {
               <button
                 onClick={() => { setDeleteTarget(null); setDeleteSourceFile(false); }}
                 disabled={deleting}
-                className="px-4 py-2 text-sm text-stone-600 hover:bg-stone-100 rounded-lg cursor-pointer transition-colors disabled:opacity-50"
+                className="px-4 py-2 text-sm text-muted hover:bg-surface-2 rounded-lg cursor-pointer transition-colors disabled:opacity-50"
               >
                 取消
               </button>
@@ -448,7 +463,7 @@ export default function TransferManager() {
                 className="px-4 py-2 text-sm text-white bg-red-500 hover:bg-red-600 rounded-lg cursor-pointer transition-colors disabled:opacity-50 flex items-center gap-1.5"
               >
                 {deleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" aria-hidden />}
-                {deleting ? '删除中...' : '删除'}
+                {deleting ? '删除中…' : '删除'}
               </button>
             </div>
           </div>

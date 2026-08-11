@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { Plus, Edit, Trash2, X, ArrowUp, ArrowDown } from 'lucide-react';
 import api from '../../lib/api';
 import { useToast } from '../ui/Toast';
@@ -198,7 +198,7 @@ export default function SpeedLimitPanel() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <p className="text-sm text-stone-500">
+        <p className="text-sm text-muted">
           为单个用户或角色配置上传/下载速度上限，用户规则与所属角色规则合并取最严格值，0 表示不限速。
         </p>
         <button
@@ -210,35 +210,35 @@ export default function SpeedLimitPanel() {
         </button>
       </div>
 
-      <div className="bg-white rounded-lg border border-stone-200 overflow-hidden">
+      <div className="bg-surface rounded-lg border border-border overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-stone-200 bg-stone-50">
-              <th className="text-left px-4 py-3 font-medium text-stone-500">规则名称</th>
-              <th className="text-left px-4 py-3 font-medium text-stone-500">限制对象</th>
-              <th className="text-left px-4 py-3 font-medium text-stone-500">上传限速</th>
-              <th className="text-left px-4 py-3 font-medium text-stone-500">下载限速</th>
-              <th className="text-center px-4 py-3 font-medium text-stone-500">状态</th>
-              <th className="text-center px-4 py-3 font-medium text-stone-500">操作</th>
+            <tr className="border-b border-border bg-surface-2">
+              <th className="text-left px-4 py-3 font-medium text-muted">规则名称</th>
+              <th className="text-left px-4 py-3 font-medium text-muted">限制对象</th>
+              <th className="text-left px-4 py-3 font-medium text-muted">上传限速</th>
+              <th className="text-left px-4 py-3 font-medium text-muted">下载限速</th>
+              <th className="text-center px-4 py-3 font-medium text-muted">状态</th>
+              <th className="text-center px-4 py-3 font-medium text-muted">操作</th>
             </tr>
           </thead>
           <tbody>
             {rules.map((r) => (
-              <tr key={r.id} className="border-b border-stone-100 hover:bg-stone-50 transition-colors">
-                <td className="px-4 py-3 text-stone-700">{r.ruleName}</td>
-                <td className="px-4 py-3 text-stone-600">
-                  <span className="text-xs font-medium text-primary-600 bg-primary-50 px-2 py-0.5 rounded mr-2">
+              <tr key={r.id} className="border-b border-border hover:bg-surface-2 transition-colors">
+                <td className="px-4 py-3 text-muted">{r.ruleName}</td>
+                <td className="px-4 py-3 text-muted">
+                  <span className="text-xs font-medium text-primary-600 bg-primary-500/10 px-2 py-0.5 rounded mr-2">
                     {r.scope === 0 ? '用户' : '角色'}
                   </span>
                   {r.targetName || r.targetCode || r.targetId}
                 </td>
-                <td className="px-4 py-3 text-stone-600">{fmtSpeed(r.uploadSpeedLimit)}</td>
-                <td className="px-4 py-3 text-stone-600">{fmtSpeed(r.downloadSpeedLimit)}</td>
+                <td className="px-4 py-3 text-muted">{fmtSpeed(r.uploadSpeedLimit)}</td>
+                <td className="px-4 py-3 text-muted">{fmtSpeed(r.downloadSpeedLimit)}</td>
                 <td className="px-4 py-3 text-center">
                   <button
                     onClick={() => handleToggle(r)}
                     className={`text-xs px-2 py-0.5 rounded cursor-pointer transition-colors ${
-                      r.enabled === 1 ? 'text-green-600 bg-green-50 hover:bg-green-100' : 'text-stone-400 bg-stone-100 hover:bg-stone-200'
+                      r.enabled === 1 ? 'text-green-600 dark:text-green-400 bg-green-500/15 hover:bg-green-100' : 'text-muted bg-surface-2 hover:bg-surface-2'
                     }`}
                   >
                     {r.enabled === 1 ? '启用' : '禁用'}
@@ -246,10 +246,10 @@ export default function SpeedLimitPanel() {
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-center gap-3">
-                    <button onClick={() => openEdit(r)} className="text-stone-400 hover:text-primary-600 transition-colors cursor-pointer" title="编辑">
+                    <button onClick={() => openEdit(r)} className="text-muted hover:text-primary-600 transition-colors cursor-pointer" title="编辑">
                       <Edit className="w-4 h-4" />
                     </button>
-                    <button onClick={() => handleDelete(r)} className="text-stone-400 hover:text-red-500 transition-colors cursor-pointer" title="删除">
+                    <button onClick={() => handleDelete(r)} className="text-muted hover:text-red-500 transition-colors cursor-pointer" title="删除">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -258,49 +258,49 @@ export default function SpeedLimitPanel() {
             ))}
           </tbody>
         </table>
-        {rules.length === 0 && <div className="py-10 text-center text-sm text-stone-400">暂无限速规则，点击「新建规则」创建</div>}
+        {rules.length === 0 && <div className="py-10 text-center text-sm text-muted">暂无限速规则，点击「新建规则」创建</div>}
       </div>
 
       {modalOpen && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => setModalOpen(false)}>
-          <div className="bg-white rounded-lg w-full max-w-lg p-6 max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 overscroll-contain" role="presentation" onClick={() => setModalOpen(false)}>
+          <div className="bg-surface rounded-lg w-full max-w-lg p-6 max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-semibold text-stone-900">{editingId ? '编辑限速规则' : '新建限速规则'}</h2>
-              <button onClick={() => setModalOpen(false)} className="text-stone-400 hover:text-stone-600 transition-colors cursor-pointer">
-                <X className="w-5 h-5" />
+              <h2 className="text-base font-semibold text-fg">{editingId ? '编辑限速规则' : '新建限速规则'}</h2>
+              <button onClick={() => setModalOpen(false)} aria-label="关闭" className="text-muted hover:text-fg transition-colors cursor-pointer rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <X className="w-5 h-5" aria-hidden />
               </button>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-stone-500 mb-1">规则名称</label>
+                <label className="block text-xs font-medium text-muted mb-1">规则名称</label>
                 <input
                   type="text"
                   value={form.ruleName}
                   onChange={(e) => setForm((f) => ({ ...f, ruleName: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm border border-stone-200 rounded-md focus:outline-none focus:border-primary-500"
+                  className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:border-primary-500"
                   placeholder="如：普通用户下载限速"
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-stone-500 mb-1">限制对象</label>
+                  <label className="block text-xs font-medium text-muted mb-1">限制对象</label>
                   <select
                     value={form.scope}
                     onChange={(e) => onScopeChange(Number(e.target.value) as Scope)}
-                    className="w-full px-3 py-2 text-sm border border-stone-200 rounded-md focus:outline-none focus:border-primary-500"
+                    className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:border-primary-500"
                   >
                     <option value={0}>按用户</option>
                     <option value={1}>按角色</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-stone-500 mb-1">{form.scope === 0 ? '选择用户' : '选择角色'}</label>
+                  <label className="block text-xs font-medium text-muted mb-1">{form.scope === 0 ? '选择用户' : '选择角色'}</label>
                   <select
                     value={form.targetId}
                     onChange={(e) => onTargetChange(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-stone-200 rounded-md focus:outline-none focus:border-primary-500"
+                    className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:border-primary-500"
                   >
                     <option value="">请选择</option>
                     {form.scope === 0
@@ -328,7 +328,7 @@ export default function SpeedLimitPanel() {
                 onValue={(v) => setForm((f) => ({ ...f, uploadValue: v }))}
                 onUnit={(u) => setForm((f) => ({ ...f, uploadUnit: u }))}
               />
-              <div className="border-t border-stone-100" />
+              <div className="border-t border-border" />
               <SpeedInput
                 icon={<ArrowDown className="w-4 h-4 text-emerald-500" />}
                 title="下载限速"
@@ -341,12 +341,12 @@ export default function SpeedLimitPanel() {
               />
 
               <div>
-                <label className="block text-xs font-medium text-stone-500 mb-1">描述</label>
+                <label className="block text-xs font-medium text-muted mb-1">描述</label>
                 <input
                   type="text"
                   value={form.description}
                   onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm border border-stone-200 rounded-md focus:outline-none focus:border-primary-500"
+                  className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:border-primary-500"
                   placeholder="可选"
                 />
               </div>
@@ -358,12 +358,12 @@ export default function SpeedLimitPanel() {
                   onChange={(e) => setForm((f) => ({ ...f, enabled: e.target.checked ? 1 : 0 }))}
                   className="w-4 h-4 accent-primary-600"
                 />
-                <span className="text-sm text-stone-600">启用该规则</span>
+                <span className="text-sm text-muted">启用该规则</span>
               </label>
             </div>
 
             <div className="flex justify-end gap-2 mt-6">
-              <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm text-stone-600 bg-stone-100 rounded-md hover:bg-stone-200 transition-colors cursor-pointer">
+              <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm text-muted bg-surface-2 rounded-md hover:bg-surface-2 transition-colors cursor-pointer">
                 取消
               </button>
               <button onClick={handleSubmit} className="px-4 py-2 text-sm text-white bg-primary-600 rounded-md hover:bg-primary-700 transition-colors cursor-pointer">
@@ -393,16 +393,16 @@ function SpeedInput({ icon, title, unlimited, value, unit, onToggle, onValue, on
     <div className="py-3">
       <div className="flex items-center gap-2 mb-2">
         {icon}
-        <label className="text-sm font-medium text-stone-700">{title}</label>
+        <label className="text-sm font-medium text-muted">{title}</label>
       </div>
       <label className="flex items-center gap-2 mb-2 cursor-pointer">
         <button
           onClick={() => onToggle(!unlimited)}
-          className={`relative w-9 h-5 rounded-full transition-colors duration-200 cursor-pointer ${unlimited ? 'bg-stone-300' : 'bg-primary-600'}`}
+          className={`relative w-9 h-5 rounded-full transition-colors duration-200 cursor-pointer ${unlimited ? 'bg-muted/50' : 'bg-primary-600'}`}
         >
-          <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-200 ${unlimited ? 'left-0.5' : 'left-[18px]'}`} />
+          <span className={`absolute top-0.5 w-4 h-4 bg-surface rounded-full shadow-sm transition-transform duration-200 ${unlimited ? 'left-0.5' : 'left-[18px]'}`} />
         </button>
-        <span className={`text-sm ${unlimited ? 'text-stone-400' : 'text-stone-700'}`}>{unlimited ? '不限速' : '自定义限速'}</span>
+        <span className={`text-sm ${unlimited ? 'text-muted' : 'text-muted'}`}>{unlimited ? '不限速' : '自定义限速'}</span>
       </label>
       {!unlimited && (
         <div className="flex items-center gap-2">
@@ -414,14 +414,14 @@ function SpeedInput({ icon, title, unlimited, value, unit, onToggle, onValue, on
               const v = parseInt(e.target.value, 10);
               onValue(isNaN(v) || v < 1 ? 1 : v);
             }}
-            className="flex-1 px-3 py-2 border border-stone-200 rounded-lg text-sm text-stone-900 focus:outline-none focus:border-primary-400"
+            className="flex-1 px-3 py-2 border border-border rounded-lg text-sm text-fg focus:outline-none focus:border-primary-400"
             placeholder="输入数值"
           />
-          <div className="flex rounded-lg overflow-hidden border border-stone-200">
-            <button onClick={() => onUnit('kb')} className={`px-3 py-2 text-sm font-medium transition-colors cursor-pointer ${unit === 'kb' ? 'bg-primary-600 text-white' : 'bg-white text-stone-500 hover:bg-stone-50'}`}>
+          <div className="flex rounded-lg overflow-hidden border border-border">
+            <button onClick={() => onUnit('kb')} className={`px-3 py-2 text-sm font-medium transition-colors cursor-pointer ${unit === 'kb' ? 'bg-primary-600 text-white' : 'bg-surface text-muted hover:bg-surface-2'}`}>
               KB/s
             </button>
-            <button onClick={() => onUnit('mb')} className={`px-3 py-2 text-sm font-medium transition-colors cursor-pointer ${unit === 'mb' ? 'bg-primary-600 text-white' : 'bg-white text-stone-500 hover:bg-stone-50'}`}>
+            <button onClick={() => onUnit('mb')} className={`px-3 py-2 text-sm font-medium transition-colors cursor-pointer ${unit === 'mb' ? 'bg-primary-600 text-white' : 'bg-surface text-muted hover:bg-surface-2'}`}>
               MB/s
             </button>
           </div>

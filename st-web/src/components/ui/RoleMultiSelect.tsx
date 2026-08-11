@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useLayoutEffect } from 'react';
+﻿import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronDown, Search, X, Check } from 'lucide-react';
 import type { RoleVO } from '../../types';
@@ -11,9 +11,9 @@ interface RoleMultiSelectProps {
 }
 
 const DATA_SCOPE_LABELS: Record<number, { label: string; cls: string }> = {
-  1: { label: '本人', cls: 'text-stone-500 bg-stone-100' },
-  2: { label: '租户', cls: 'text-blue-600 bg-blue-50' },
-  3: { label: '全部', cls: 'text-red-600 bg-red-50' },
+  1: { label: '本人', cls: 'text-muted bg-surface-2' },
+  2: { label: '租户', cls: 'text-blue-600 bg-blue-500/15' },
+  3: { label: '全部', cls: 'text-red-600 dark:text-red-400 bg-red-500/15' },
 };
 
 export function RoleMultiSelect({ roles, selectedIds, onChange, placeholder = '选择角色' }: RoleMultiSelectProps) {
@@ -83,11 +83,11 @@ export function RoleMultiSelect({ roles, selectedIds, onChange, placeholder = '�
         onClick={() => setOpen((v) => !v)}
         className="input-field flex items-center flex-wrap gap-1.5 min-h-[42px] cursor-pointer"
       >
-        {selectedRoles.length === 0 && <span className="text-stone-400 text-sm">{placeholder}</span>}
+        {selectedRoles.length === 0 && <span className="text-muted text-sm">{placeholder}</span>}
         {selectedRoles.map((r) => (
           <span
             key={r.id}
-            className="inline-flex items-center gap-1 text-xs bg-primary-50 text-primary-700 px-2 py-0.5 rounded"
+            className="inline-flex items-center gap-1 text-xs bg-primary-500/10 text-primary-600 px-2 py-0.5 rounded"
           >
             {r.roleName}
             <button
@@ -96,37 +96,37 @@ export function RoleMultiSelect({ roles, selectedIds, onChange, placeholder = '�
                 e.stopPropagation();
                 toggle(r.id);
               }}
-              className="hover:text-primary-900 cursor-pointer"
+              aria-label="移除" className="hover:text-primary-900 cursor-pointer rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <X className="w-3 h-3" />
+              <X className="w-3 h-3" aria-hidden />
             </button>
           </span>
         ))}
-        <ChevronDown className="w-4 h-4 text-stone-400 ml-auto flex-shrink-0" />
+        <ChevronDown className="w-4 h-4 text-muted ml-auto flex-shrink-0" />
       </div>
 
       {open && pos && createPortal(
         <div
           ref={dropdownRef}
           style={{ position: 'fixed', top: pos.top, left: pos.left, width: pos.width, zIndex: 9999 }}
-          className="bg-white border border-stone-200 rounded-md shadow-lg max-h-80 overflow-hidden flex flex-col"
+          className="bg-surface border border-border rounded-md shadow-lg max-h-80 overflow-hidden flex flex-col"
         >
-          <div className="p-2 border-b border-stone-100">
+          <div className="p-2 border-b border-border">
             <div className="relative">
-              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400 pointer-events-none" />
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" />
               <input
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="搜索角色名称或编码"
-                className="w-full pl-8 pr-3 py-1.5 text-sm border border-stone-200 rounded-md focus:outline-none focus:border-primary-500"
+                className="w-full pl-8 pr-3 py-1.5 text-sm border border-border rounded-md focus:outline-none focus:border-primary-500"
                 autoFocus
               />
             </div>
           </div>
           <div className="overflow-y-auto flex-1">
             {filtered.length === 0 && (
-              <div className="py-4 text-center text-xs text-stone-400">无匹配角色</div>
+              <div className="py-4 text-center text-xs text-muted">无匹配角色</div>
             )}
             {filtered.map((r) => {
               const ds = DATA_SCOPE_LABELS[r.dataScope] || DATA_SCOPE_LABELS[1];
@@ -135,21 +135,21 @@ export function RoleMultiSelect({ roles, selectedIds, onChange, placeholder = '�
                 <div
                   key={r.id}
                   onClick={() => toggle(r.id)}
-                  className="flex items-center gap-2 px-3 py-2 hover:bg-stone-50 cursor-pointer transition-colors"
+                  className="flex items-center gap-2 px-3 py-2 hover:bg-surface-2 cursor-pointer transition-colors"
                 >
                   <div
                     className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${
-                      checked ? 'bg-primary-600 border-primary-600' : 'border-stone-300'
+                      checked ? 'bg-primary-600 border-primary-600' : 'border-border'
                     }`}
                   >
                     {checked && <Check className="w-3 h-3 text-white" />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5">
-                      <span className="text-sm text-stone-800 truncate">{r.roleName}</span>
+                      <span className="text-sm text-fg truncate">{r.roleName}</span>
                       {r.builtIn && <span className="text-xs text-primary-600">内置</span>}
                     </div>
-                    <span className="text-xs text-stone-400 font-mono">{r.roleCode}</span>
+                    <span className="text-xs text-muted font-mono">{r.roleCode}</span>
                   </div>
                   <span className={`text-xs px-1.5 py-0.5 rounded flex-shrink-0 ${ds.cls}`}>{ds.label}</span>
                 </div>

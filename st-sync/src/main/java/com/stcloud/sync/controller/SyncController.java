@@ -2,9 +2,12 @@ package com.stcloud.sync.controller;
 
 import com.stcloud.common.annotation.Auditable;
 import com.stcloud.common.response.Result;
+import com.stcloud.sync.dto.AddExclusionRequest;
 import com.stcloud.sync.dto.CreateSyncRootRequest;
 import com.stcloud.sync.dto.SyncDeltaResponse;
+import com.stcloud.sync.dto.SyncExclusionVO;
 import com.stcloud.sync.dto.SyncRootVO;
+import com.stcloud.sync.dto.UpdateConflictStrategyRequest;
 import com.stcloud.sync.service.SyncService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -15,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@Tag(name = "文件同步", description = "PC 客户端同步根注册、增量变更查询")
+@Tag(name = "文件同步", description = "PC 客户端同步根注册、增量变更查询、选择性同步、冲突策略")
 @RestController
 @RequestMapping("/api/sync")
 @RequiredArgsConstructor
@@ -58,5 +61,42 @@ public class SyncController {
             @RequestParam(required = false) Long since,
             @RequestParam(defaultValue = "0") int page) {
         return syncService.delta(rootId, since, page);
+    }
+
+    // ==================== 选择性同步 ====================
+
+    @Operation(summary = "列出同步根的排除路径")
+    @GetMapping("/roots/{rootId}/exclusions")
+    public Result<List<SyncExclusionVO>> listExclusions(@PathVariable Long rootId) {
+        return syncService.listExclusions(rootId);
+    }
+
+    @Operation(summary = "添加排除路径")
+    @Auditable(action = "SYNC_EXCLUSION_ADD", targetType = "SYNC_ROOT", targetIdParam = "rootId", detail = "添加同步排除路径")
+    @PostMapping("/roots/{rootId}/exclusions")
+    public Result<SyncExclusionVO> addExclusion(
+            @PathVariable Long rootId,
+            @Valid @RequestBody AddExclusionRequest request) {
+        return syncService.addExclusion(rootId, request);
+    }
+
+    @Operation(summary = "删除排除路径")
+    @Auditable(action = "SYNC_EXCLUSION_DEL", targetType = "SYNC_ROOT", targetIdParam = "rootId", detail = "删除同步排除路径")
+    @DeleteMapping("/roots/{rootId}/exclusions/{exclusionId}")
+    public Result<Void> removeExclusion(
+            @PathVariable Long rootId,
+            @PathVariable Long exclusionId) {
+        return syncService.removeExclusion(rootId, exclusionId);
+    }
+
+    // ==================== 冲突策略 ====================
+
+    @Operation(summary = "更新冲突策略")
+    @Auditable(action = "SYNC_CONFLICT_STRATEGY", targetType = "SYNC_ROOT", targetIdParam = "rootId", detail = "更新冲突策略")
+    @PutMapping("/roots/{rootId}/conflict-strategy")
+    public Result<SyncRootVO> updateConflictStrategy(
+            @PathVariable Long rootId,
+            @Valid @RequestBody UpdateConflictStrategyRequest request) {
+        return syncService.updateConflictStrategy(rootId, request);
     }
 }

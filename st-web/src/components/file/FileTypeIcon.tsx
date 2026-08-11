@@ -2,7 +2,7 @@ import type { FileTypeConfig } from '../../lib/utils';
 
 interface Props {
   config: FileTypeConfig;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'xxl';
   isFolder?: boolean;
   suffix?: string | null;
   className?: string;
@@ -13,6 +13,7 @@ const SIZE_MAP = {
   md: 24,
   lg: 28,
   xl: 48,
+  xxl: 72,
 };
 
 const FOLDER_COLORS = {

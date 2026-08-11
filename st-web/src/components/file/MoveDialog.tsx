@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import type { FileTreeNode } from '../../types';
 import { X, FolderClosed, ChevronRight, FolderOpen } from 'lucide-react';
 import { cn } from '../../lib/utils';
@@ -50,7 +50,7 @@ export default function MoveDialog({ nodeIds, mode, loadTree, onConfirm, onClose
         <div
           className={cn(
             'flex items-center gap-1.5 px-2 py-1.5 rounded-lg cursor-pointer transition-colors text-sm',
-            targetId === node.id ? 'bg-primary-50 text-primary-700 font-medium' : 'hover:bg-stone-50 text-stone-700'
+            targetId === node.id ? 'bg-primary-500/10 text-primary-600 font-medium' : 'hover:bg-surface-2 text-muted'
           )}
           style={{ paddingLeft: `${level * 20 + 8}px` }}
           onClick={() => setTargetId(node.id)}
@@ -58,7 +58,7 @@ export default function MoveDialog({ nodeIds, mode, loadTree, onConfirm, onClose
           {node.children.length > 0 ? (
             <button
               onClick={(e) => { e.stopPropagation(); toggleExpand(node.id); }}
-              className="p-0.5 hover:bg-stone-100 rounded cursor-pointer" aria-label="展开或折叠"
+              className="p-0.5 hover:bg-surface-2 rounded cursor-pointer" aria-label="展开或折叠"
             >
               <ChevronRight className={cn('w-3.5 h-3.5 transition-transform', expanded.has(node.id) && 'rotate-90')} aria-hidden />
             </button>
@@ -80,11 +80,11 @@ export default function MoveDialog({ nodeIds, mode, loadTree, onConfirm, onClose
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content w-96 max-h-[70vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-stone-100">
-          <h3 className="text-base font-semibold text-stone-900">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
+          <h3 className="text-base font-semibold text-fg">
             {mode === 'move' ? '移动到' : '复制到'}
           </h3>
-          <button onClick={onClose} className="text-stone-400 hover:text-stone-900 cursor-pointer" aria-label="关闭">
+          <button onClick={onClose} className="text-muted hover:text-fg cursor-pointer" aria-label="关闭">
             <X className="w-4 h-4" aria-hidden />
           </button>
         </div>
@@ -94,7 +94,7 @@ export default function MoveDialog({ nodeIds, mode, loadTree, onConfirm, onClose
           <div
             className={cn(
               'flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer transition-colors text-sm',
-              targetId === '0' ? 'bg-primary-50 text-primary-700 font-medium' : 'hover:bg-stone-50 text-stone-700'
+              targetId === '0' ? 'bg-primary-500/10 text-primary-600 font-medium' : 'hover:bg-surface-2 text-muted'
             )}
             onClick={() => setTargetId('0')}
           >
@@ -108,10 +108,10 @@ export default function MoveDialog({ nodeIds, mode, loadTree, onConfirm, onClose
           {renderTree(tree, 0)}
         </div>
 
-        <div className="flex justify-end gap-2 px-5 py-3 border-t border-stone-100">
+        <div className="flex justify-end gap-2 px-5 py-3 border-t border-border">
           <button onClick={onClose} className="btn-secondary">取消</button>
           <button onClick={handleConfirm} disabled={loading} className="btn-primary">
-            {loading ? '处理中...' : '确定'}
+            {loading ? '处理中…' : '确定'}
           </button>
         </div>
       </div>

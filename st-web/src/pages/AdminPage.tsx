@@ -1,4 +1,4 @@
-import { useState, lazy, Suspense } from 'react';
+﻿import { useState, lazy, Suspense } from 'react';
 import { Settings } from 'lucide-react';
 import { usePermission } from '../lib/permission';
 import SpeedLimitPanel from '../components/admin/SpeedLimitPanel';
@@ -26,20 +26,20 @@ export default function AdminPage() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200 bg-white">
+      <div className="flex items-center justify-between px-6 py-4 border-b border-border bg-surface">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
             <Settings className="w-4 h-4 text-white" />
           </div>
-          <h1 className="text-lg font-semibold text-stone-900">系统管理</h1>
+          <h1 className="text-lg font-semibold text-fg">系统管理</h1>
         </div>
-        <div className="flex gap-1 bg-stone-100 rounded-lg p-1">
+        <div className="flex gap-1 bg-surface-2 rounded-lg p-1">
           {tabs.filter((t) => t.can).map((t) => (
             <button
               key={t.v}
               onClick={() => setTab(t.v)}
               className={`px-4 py-1.5 text-sm font-medium rounded-md transition cursor-pointer ${
-                tab === t.v ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-500 hover:text-stone-700'
+                tab === t.v ? 'bg-surface text-fg shadow-sm' : 'text-muted hover:text-fg'
               }`}
             >
               {t.label}
@@ -53,7 +53,7 @@ export default function AdminPage() {
         {tab === 'users' && <UserManageTab />}
         {tab === 'storage' && <StorageManageTab />}
         {tab === 'audit' && (
-          <Suspense fallback={<div className="py-10 text-center text-sm text-stone-400">加载中...</div>}>
+          <Suspense fallback={<div className="py-10 text-center text-sm text-muted">加载中…</div>}>
             <AuditLogPanel />
           </Suspense>
         )}

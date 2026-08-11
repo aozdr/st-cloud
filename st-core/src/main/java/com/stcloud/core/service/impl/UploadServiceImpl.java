@@ -16,6 +16,7 @@ import com.stcloud.core.entity.FileNode;
 import com.stcloud.core.entity.FileVersion;
 import com.stcloud.core.enums.UploadStatus;
 import com.stcloud.core.event.FileIndexEvent;
+import com.stcloud.core.event.SyncChangeEvent;
 import com.stcloud.core.mapper.FileChunkMapper;
 import com.stcloud.core.mapper.FileNodeMapper;
 import com.stcloud.core.mapper.UserQuotaMapper;
@@ -113,6 +114,7 @@ public class UploadServiceImpl implements UploadService {
             fileNodeMapper.insert(node);
 
             eventPublisher.publishEvent(new FileIndexEvent(this, node, FileIndexEvent.ActionType.INDEX));
+            eventPublisher.publishEvent(new SyncChangeEvent(this, node, SyncChangeEvent.ChangeType.CREATE));
             fileService.incrementRefCount(request.getFileMd5());
             if (node.getSpaceId() != null && node.getSpaceId() > 0) {
                 teamStorageMapper.updateTeamStorageUsed(node.getSpaceId(), request.getFileSize());
@@ -182,6 +184,7 @@ public class UploadServiceImpl implements UploadService {
         fileNodeMapper.insert(node);
 
         eventPublisher.publishEvent(new FileIndexEvent(this, node, FileIndexEvent.ActionType.INDEX));
+        eventPublisher.publishEvent(new SyncChangeEvent(this, node, SyncChangeEvent.ChangeType.CREATE));
         if (spaceId != null && spaceId > 0) {
             teamStorageMapper.updateTeamStorageUsed(spaceId, fileSize);
         } else {
@@ -403,6 +406,7 @@ public class UploadServiceImpl implements UploadService {
         versionService.snapshotCurrentVersion(node);
 
         eventPublisher.publishEvent(new FileIndexEvent(this, node, FileIndexEvent.ActionType.INDEX));
+        eventPublisher.publishEvent(new SyncChangeEvent(this, node, SyncChangeEvent.ChangeType.UPDATE));
         // 按差值计费：替换上传仅补/退新旧大小差值，新建上传 delta = 全量 fileSize
         long newSize = node.getFileSize() == null ? 0 : node.getFileSize();
         long original = firstChunk.getOriginalSize() == null ? 0 : firstChunk.getOriginalSize();

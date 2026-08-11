@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { Users, HardDrive, FileText, Share2, Activity } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import api from '../../lib/api';
@@ -47,30 +47,30 @@ export default function DashboardTab() {
     <div className="space-y-6">
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {statCards.map((card) => (
-          <div key={card.label} className="bg-white rounded-lg border border-stone-200 p-4">
-            <div className="w-10 h-10 bg-primary-50 rounded-lg flex items-center justify-center mb-3">
+          <div key={card.label} className="bg-surface rounded-lg border border-border p-4">
+            <div className="w-10 h-10 bg-primary-500/10 rounded-lg flex items-center justify-center mb-3">
               <card.icon className="w-5 h-5 text-primary-600" />
             </div>
-            <p className="text-2xl font-bold text-stone-900">{card.value}</p>
-            <p className="text-xs text-stone-500 mt-0.5">{card.label}</p>
+            <p className="text-2xl font-bold text-fg">{card.value}</p>
+            <p className="text-xs text-muted mt-0.5">{card.label}</p>
           </div>
         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-lg border border-stone-200 p-5">
-          <h3 className="text-sm font-semibold text-stone-700 mb-4">存储用量概览</h3>
+        <div className="bg-surface rounded-lg border border-border p-5">
+          <h3 className="text-sm font-semibold text-muted mb-4">存储用量概览</h3>
           <ResponsiveContainer width="100%" height={200}>
             <BarChart data={statCards.slice(0, 3).map(c => ({ name: c.label, value: c.value }))}>
               <XAxis dataKey="name" tick={{ fontSize: 11 }} />
               <YAxis tick={{ fontSize: 11 }} />
               <Tooltip />
-              <Bar dataKey="value" fill="#D9272E" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="value" fill="#306EFF" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
-        <div className="bg-white rounded-lg border border-stone-200 p-5">
-          <h3 className="text-sm font-semibold text-stone-700 mb-4">用户活跃度</h3>
+        <div className="bg-surface rounded-lg border border-border p-5">
+          <h3 className="text-sm font-semibold text-muted mb-4">用户活跃度</h3>
           <ResponsiveContainer width="100%" height={200}>
             <PieChart>
               <Pie

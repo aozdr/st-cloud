@@ -86,6 +86,13 @@ export interface ElectronAPI {
   syncStart: (rootId: string, cloudFolderNodeId: string, localPath: string) => Promise<void>;
   syncStop: (rootId: string) => Promise<void>;
   syncStatus: () => Promise<Record<string, boolean>>;
+  syncListExclusions: (rootId: string) => Promise<{ id: string; syncRootId: string; relativePath: string; createdAt: string }[]>;
+  syncAddExclusion: (rootId: string, relativePath: string) => Promise<unknown>;
+  syncRemoveExclusion: (rootId: string, exclusionId: string) => Promise<void>;
+  syncUpdateConflictStrategy: (rootId: string, strategy: string) => Promise<unknown>;
+  syncWsStatus: () => Promise<boolean>;
+  syncGetHistory: (rootId: string) => Promise<{ id: number; rootId: string; action: string; fileName: string | null; relPath: string | null; status: string; detail: string | null; createdAt: string }[]>;
+  syncGetStats: (rootId: string) => Promise<{ synced: number; error: number; conflict: number; excluded: number }>;
   onSyncEvent: (cb: (event: { event: string; data: unknown }) => void) => () => void;
 }
 

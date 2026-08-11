@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+﻿import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ClipboardPaste, FolderPlus, RefreshCw, CheckSquare, Upload, type LucideIcon } from 'lucide-react';
 import { usePermission } from '../../lib/permission';
@@ -45,7 +45,7 @@ export default function BlankContextMenu({ x, y, hasClipboard, onAction, onClose
   return createPortal(
     <div
       ref={ref}
-      className="fixed z-[100] w-48 bg-white rounded-lg shadow-md border border-stone-200 py-1.5 animate-scale-in"
+      className="fixed z-[100] w-48 bg-surface rounded-lg shadow-md border border-border py-1.5 animate-scale-in"
       style={{ left: pos.left, top: pos.top }}
       onClick={(e) => e.stopPropagation()}
     >
@@ -63,8 +63,8 @@ export default function BlankContextMenu({ x, y, hasClipboard, onAction, onClose
             }}
             className={`w-full flex items-center gap-2.5 px-3 py-1.5 text-sm transition-colors ${
               item.disabled
-                ? 'text-stone-300 cursor-not-allowed'
-                : 'text-stone-700 hover:bg-stone-50 cursor-pointer'
+                ? 'text-muted cursor-not-allowed'
+                : 'text-fg hover:bg-surface-2 cursor-pointer'
             }`}
           >
             <Icon className="w-4 h-4" aria-hidden />

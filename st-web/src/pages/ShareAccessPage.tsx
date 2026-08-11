@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Lock, Download, FolderClosed, ArrowLeft, Cloud, ChevronRight, Folder, Eye } from 'lucide-react';
 import api from '../lib/api';
@@ -105,25 +105,25 @@ export default function ShareAccessPage() {
   const isFolder = fileInfo?.fileType === 0;
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-stone-50">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-surface-2">
       <button
         onClick={() => navigate('/login')}
-        className="absolute top-6 left-6 flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-900 transition-colors cursor-pointer"
+        className="absolute top-6 left-6 flex items-center gap-1.5 text-sm text-muted hover:text-fg transition-colors cursor-pointer"
       >
         <ArrowLeft className="w-4 h-4" aria-hidden />
         返回登录
       </button>
 
       <div className={`w-full ${isFolder ? 'max-w-3xl' : 'max-w-md'}`}>
-        <div className="bg-white rounded-xl shadow-md border border-stone-200 overflow-hidden">
+        <div className="bg-surface rounded-xl shadow-md border border-border overflow-hidden">
           {/* Header */}
-          <div className="flex items-center gap-3 px-6 py-5 border-b border-stone-200">
+          <div className="flex items-center gap-3 px-6 py-5 border-b border-border">
             <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
               <Cloud className="w-5 h-5 text-white" />
             </div>
             <div>
-              <h1 className="text-lg font-semibold text-stone-900">分享文件</h1>
-              <p className="text-xs text-stone-500">星云盘 文件分享</p>
+              <h1 className="text-lg font-semibold text-fg">分享文件</h1>
+              <p className="text-xs text-muted">星云盘 文件分享</p>
             </div>
           </div>
 
@@ -132,16 +132,16 @@ export default function ShareAccessPage() {
               /* Folder browsing view */
               <div className="flex flex-col" style={{ maxHeight: '70vh' }}>
                 {/* Breadcrumb */}
-                <div className="flex items-center gap-1 px-6 py-3 border-b border-stone-100 overflow-x-auto">
+                <div className="flex items-center gap-1 px-6 py-3 border-b border-border overflow-x-auto">
                   {breadcrumbs.map((crumb, i) => (
                     <div key={crumb.id} className="flex items-center gap-1 shrink-0">
-                      {i > 0 && <ChevronRight className="w-3.5 h-3.5 text-stone-400" />}
+                      {i > 0 && <ChevronRight className="w-3.5 h-3.5 text-muted" />}
                       <button
                         onClick={() => handleBreadcrumbClick(i)}
                         className={`text-sm transition-colors cursor-pointer ${
                           i === breadcrumbs.length - 1
-                            ? 'text-stone-900 font-medium'
-                            : 'text-stone-500 hover:text-primary-600'
+                            ? 'text-fg font-medium'
+                            : 'text-muted hover:text-primary-600'
                         }`}
                       >
                         {i === 0 && <Folder className="w-3.5 h-3.5 inline mr-1 -mt-0.5" />}
@@ -153,13 +153,13 @@ export default function ShareAccessPage() {
 
                 {/* Download all button */}
                 {fileInfo.permission >= 1 && (
-                  <div className="px-6 py-2.5 border-b border-stone-100 flex items-center justify-between">
-                    <span className="text-xs text-stone-500">
+                  <div className="px-6 py-2.5 border-b border-border flex items-center justify-between">
+                    <span className="text-xs text-muted">
                       共 {fileList.length} 个项目
                     </span>
                     <button
                       onClick={() => handleDownload()}
-                      className="flex items-center gap-1.5 text-xs text-primary-600 hover:text-primary-700 cursor-pointer"
+                      className="flex items-center gap-1.5 text-xs text-primary-600 hover:text-primary-600 cursor-pointer"
                     >
                       <Download className="w-3.5 h-3.5" aria-hidden />
                       下载整个文件夹
@@ -169,17 +169,17 @@ export default function ShareAccessPage() {
 
                 {/* Error */}
                 {error && (
-                  <p className="text-xs text-red-600 bg-red-50 px-6 py-2">{error}</p>
+                  <p className="text-xs text-red-600 dark:text-red-400 bg-red-500/15 px-6 py-2">{error}</p>
                 )}
 
                 {/* File list */}
                 <div className="flex-1 overflow-y-auto">
                   {listLoading ? (
                     <div className="flex items-center justify-center py-12">
-                      <div className="w-6 h-6 border-2 border-stone-200 border-t-primary-500 rounded-full animate-spin" />
+                      <div className="w-6 h-6 border-2 border-border border-t-primary-500 rounded-full animate-spin" />
                     </div>
                   ) : fileList.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-12 text-stone-400">
+                    <div className="flex flex-col items-center justify-center py-12 text-muted">
                       <FolderClosed className="w-10 h-10 mb-2" />
                       <p className="text-sm">空文件夹</p>
                     </div>
@@ -201,21 +201,21 @@ export default function ShareAccessPage() {
                               handleDownload(file.id);
                             }
                           }}
-                          className={`flex items-center gap-3 px-6 py-2.5 border-b border-stone-50 transition-colors ${
+                          className={`flex items-center gap-3 px-6 py-2.5 border-b border-border transition-colors ${
                             file.nodeType === 0 || previewable || canDownload
-                              ? 'hover:bg-stone-50 cursor-pointer'
+                              ? 'hover:bg-surface-2 cursor-pointer'
                               : ''
                           }`}
                         >
                           <FileTypeIcon config={cfg} size="sm" suffix={file.suffix} />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm text-stone-900 truncate">{file.name}</p>
+                            <p className="text-sm text-fg truncate">{file.name}</p>
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
-                            <span className="text-xs text-stone-400 w-20 text-right">
+                            <span className="text-xs text-muted w-20 text-right">
                               {file.nodeType === 0 ? '-' : formatSize(file.fileSize)}
                             </span>
-                            <span className="text-xs text-stone-400 w-28 text-right hidden sm:block">
+                            <span className="text-xs text-muted w-28 text-right hidden sm:block">
                               {formatDate(file.createdAt)}
                             </span>
                             {previewable && (
@@ -225,7 +225,7 @@ export default function ShareAccessPage() {
                                   const fileIdx = fileList.filter(f => f.nodeType === 1).findIndex(f => f.id === file.id);
                                   setPreviewIndex(fileIdx);
                                 }}
-                                className="p-1 text-stone-400 hover:text-primary-600 cursor-pointer transition-colors"
+                                className="p-1 text-muted hover:text-primary-600 cursor-pointer transition-colors"
                                 title="预览" aria-label="预览"
                               >
                                 <Eye className="w-4 h-4" aria-hidden />
@@ -237,7 +237,7 @@ export default function ShareAccessPage() {
                                   e.stopPropagation();
                                   handleDownload(file.id);
                                 }}
-                                className="p-1 text-stone-400 hover:text-primary-600 cursor-pointer transition-colors"
+                                className="p-1 text-muted hover:text-primary-600 cursor-pointer transition-colors"
                                 title="下载" aria-label="下载"
                               >
                                 <Download className="w-4 h-4" aria-hidden />
@@ -251,14 +251,14 @@ export default function ShareAccessPage() {
                 </div>
 
                 {/* Back button */}
-                <div className="px-6 py-3 border-t border-stone-100">
+                <div className="px-6 py-3 border-t border-border">
                   <button
                     onClick={() => {
                       setFileInfo(null);
                       setFileList([]);
                       setBreadcrumbs([]);
                     }}
-                    className="text-sm text-stone-500 hover:text-stone-900 transition-colors cursor-pointer"
+                    className="text-sm text-muted hover:text-fg transition-colors cursor-pointer"
                   >
                     返回
                   </button>
@@ -267,25 +267,25 @@ export default function ShareAccessPage() {
             ) : (
               /* Single file view */
               <div className="p-6 space-y-5">
-                <div className="flex items-center gap-4 bg-stone-50 rounded-lg p-4">
+                <div className="flex items-center gap-4 bg-surface-2 rounded-lg p-4">
                   {config && <FileTypeIcon config={config} size="lg" suffix={fileInfo.suffix} />}
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-stone-900 truncate">
+                    <p className="text-sm font-medium text-fg truncate">
                       {fileInfo.fileName}
                     </p>
-                    <p className="text-xs text-stone-500 mt-0.5">
+                    <p className="text-xs text-muted mt-0.5">
                       {fileInfo.size ? formatSize(parseInt(fileInfo.size)) : '-'} ·{' '}
                       {fileInfo.suffix || '文件'}
                     </p>
                   </div>
                 </div>
 
-                {error && <p className="text-xs text-red-600 bg-red-50 rounded-md p-2">{error}</p>}
+                {error && <p className="text-xs text-red-600 dark:text-red-400 bg-red-500/15 rounded-md p-2">{error}</p>}
 
                 {isPreviewable(fileInfo.suffix) && (
                   <button
                     onClick={() => setPreviewIndex(0)}
-                    className="w-full flex items-center justify-center gap-2 py-3 bg-stone-800 text-white text-sm font-medium rounded-md hover:bg-stone-900 transition-colors cursor-pointer"
+                    className="w-full flex items-center justify-center gap-2 py-3 bg-neutral-800 text-white text-sm font-medium rounded-md hover:bg-neutral-900 transition-colors cursor-pointer"
                   >
                     <Eye className="w-4 h-4" aria-hidden />
                     预览文件
@@ -303,12 +303,12 @@ export default function ShareAccessPage() {
                 )}
 
                 {fileInfo.permission === 0 && !isPreviewable(fileInfo.suffix) && (
-                  <p className="text-center text-xs text-stone-500">此分享仅支持查看，不可下载</p>
+                  <p className="text-center text-xs text-muted">此分享仅支持查看，不可下载</p>
                 )}
 
                 <button
                   onClick={() => setFileInfo(null)}
-                  className="w-full py-2.5 text-sm text-stone-500 hover:text-stone-900 transition-colors cursor-pointer"
+                  className="w-full py-2.5 text-sm text-muted hover:text-fg transition-colors cursor-pointer"
                 >
                   返回
                 </button>
@@ -318,14 +318,14 @@ export default function ShareAccessPage() {
             /* Password input form */
             <div className="p-6 space-y-5">
               <div className="flex flex-col items-center text-center py-4">
-                <div className="w-12 h-12 rounded-full bg-primary-50 flex items-center justify-center mb-3">
+                <div className="w-12 h-12 rounded-full bg-primary-500/10 flex items-center justify-center mb-3">
                   <Lock className="w-5 h-5 text-primary-600" />
                 </div>
-                <p className="text-sm text-stone-600">请输入提取码以访问分享文件</p>
+                <p className="text-sm text-muted">请输入提取码以访问分享文件</p>
               </div>
 
               {error && (
-                <p className="text-xs text-red-600 bg-red-50 rounded-md p-2.5 text-center">
+                <p className="text-xs text-red-600 dark:text-red-400 bg-red-500/15 rounded-md p-2.5 text-center">
                   {error}
                 </p>
               )}
@@ -337,7 +337,7 @@ export default function ShareAccessPage() {
                 onKeyDown={(e) => e.key === 'Enter' && handleAccess()}
                 placeholder="提取码"
                 autoFocus
-                className="w-full px-4 py-3 text-center text-lg tracking-widest text-stone-900 bg-white border border-stone-200 rounded-md outline-none transition focus:border-primary-400 focus:ring-2 focus:ring-primary-100 placeholder:text-stone-400 placeholder:text-sm placeholder:tracking-normal"
+                className="w-full px-4 py-3 text-center text-lg tracking-widest text-fg bg-surface border border-border rounded-md outline-none transition focus:border-primary-400 focus:ring-2 focus:ring-primary-100 placeholder:text-muted placeholder:text-sm placeholder:tracking-normal"
               />
 
               <button
@@ -345,12 +345,12 @@ export default function ShareAccessPage() {
                 disabled={loading}
                 className="w-full py-3 bg-primary-600 text-white text-sm font-medium rounded-md hover:bg-primary-700 transition-colors cursor-pointer disabled:opacity-50"
               >
-                {loading ? '验证中...' : '访问文件'}
+                {loading ? '验证中…' : '访问文件'}
               </button>
 
               <button
                 onClick={handleAccess}
-                className="w-full text-xs text-stone-500 hover:text-stone-700 transition-colors cursor-pointer"
+                className="w-full text-xs text-muted hover:text-fg transition-colors cursor-pointer"
               >
                 公开分享？直接访问 -&gt;
               </button>
@@ -358,7 +358,7 @@ export default function ShareAccessPage() {
           )}
         </div>
 
-        <p className="text-center text-xs text-stone-400 mt-4">文件由星云盘安全加密分享</p>
+        <p className="text-center text-xs text-muted mt-4">文件由星云盘安全加密分享</p>
       </div>
 
       {previewIndex !== null && fileInfo && (

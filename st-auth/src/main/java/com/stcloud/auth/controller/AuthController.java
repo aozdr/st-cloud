@@ -1,6 +1,7 @@
 package com.stcloud.auth.controller;
 
 import com.stcloud.auth.dto.LoginRequest;
+import com.stcloud.auth.dto.RefreshRequest;
 import com.stcloud.auth.dto.LoginResponse;
 import com.stcloud.auth.dto.RegisterRequest;
 import com.stcloud.auth.service.AuthService;
@@ -40,8 +41,8 @@ public class AuthController {
 
     @Operation(summary = "刷新Token")
     @PostMapping("/refresh")
-    public Result<LoginResponse> refresh(@RequestParam String refreshToken) {
-        return Result.success(authService.refreshToken(refreshToken));
+    public Result<LoginResponse> refresh(@RequestBody RefreshRequest request) {
+        return Result.success(authService.refreshToken(request.getRefreshToken()));
     }
 
     @Operation(summary = "获取当前用户信息")

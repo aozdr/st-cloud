@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+﻿import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { isElectron } from '../../lib/electron';
 import api from '../../lib/api';
@@ -6,8 +6,19 @@ import { useTransferStore } from '../../store/transfer';
 import type { FileNode, SearchResultVO } from '../../types';
 import type { FileSource } from '../../lib/fileSource';
 import FileTable from './FileTable';
+import FileTableView from './FileTableView';
 import FileGrid from './FileGrid';
+import FileToolbar from './FileToolbar';
+import FileBreadcrumb from './FileBreadcrumb';
 import ContextMenu from './ContextMenu';
+import ActionSheet, { type ActionSheetItem } from '../ui/ActionSheet';
+import { useMobile } from '../../hooks/useMobile';
+import { useLongPress } from '../../hooks/useLongPress';
+import { usePullToRefresh } from '../../hooks/usePullToRefresh';
+import { isCapacitor } from '../../lib/runtime';
+import { pickFromGallery } from '../../lib/capacitor';
+import MultiSelectBar from '../ui/MultiSelectBar';
+import { Upload, RefreshCw, AlertCircle } from 'lucide-react';
 import BlankContextMenu from './BlankContextMenu';
 import MoveDialog from './MoveDialog';
 import DownloadDialog from './DownloadDialog';
@@ -16,17 +27,17 @@ import FileDetailPanel from './FileDetailPanel';
 import PreviewModal from '../preview/PreviewModal';
 import ShareDialog from '../share/ShareDialog';
 import VersionHistoryDialog from './VersionHistoryDialog';
+import BatchRenameDialog from './BatchRenameDialog';
+import ArchiveDialog from './ArchiveDialog';
 import { useToast } from '../ui/Toast';
 import { useConfirm } from '../ui/ConfirmDialog';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
 import { useUpload } from '../../hooks/useUpload';
-import { formatSize, cn } from '../../lib/utils';
 import { usePermission } from '../../lib/permission';
 import { useDragSelect } from '../../hooks/useDragSelect';
 import { useFileKeyboard } from '../../hooks/useFileKeyboard';
 import { useFolderFilterStore } from '../../store/folderFilter';
-import { toggleFavorite, isFavorite } from '../../lib/favorites';
-import { List, LayoutGrid, FolderPlus, Download, Trash2, Copy, FolderInput, X, RefreshCw, ArrowDownUp, Home, ChevronRight, MapPin, Upload, ArrowUp, Pencil } from 'lucide-react';
+import { useFavoritesStore } from '../../store/favorites';
+import { FolderInput } from 'lucide-react';
 
 export interface FileBrowserProps {
   source: FileSource;
@@ -37,6 +48,8 @@ export interface FileBrowserProps {
   enableShare?: boolean;
   enableVersions?: boolean;
   syncUrl?: boolean;
+  categoryLabel?: string;
+  focusId?: string | null;
 }
 
 export default function FileBrowser({
@@ -48,6 +61,8 @@ export default function FileBrowser({
   enableShare = true,
   enableVersions = true,
   syncUrl = false,
+  categoryLabel,
+  focusId,
 }: FileBrowserProps) {
 
   /** Returns true if the click landed on a file/folder item (not blank area) */
@@ -61,8 +76,10 @@ export default function FileBrowser({
   const [searchParams, setSearchParams] = useSearchParams();
   const [files, setFiles] = useState<FileNode[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<'list' | 'grid'>(() => {
-    return (localStorage.getItem('fileView') as 'list' | 'grid') || 'list';
+  const [view, setView] = useState<'table' | 'card' | 'grid'>(() => {
+    const saved = localStorage.getItem('fileView');
+    if (saved === 'grid' || saved === 'card') return saved;
+    return 'table';
   });
   const folderSearch = useFolderFilterStore((s) => s.keyword);
   const setFolderSearch = useFolderFilterStore((s) => s.setKeyword);
@@ -72,7 +89,9 @@ export default function FileBrowser({
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [favVersion, setFavVersion] = useState(0);
+  const { toggleFavorite: toggleFav, isFavorite: checkFav } = useFavoritesStore();
+  // 订阅 favoriteIds，收藏状态变化时触发 sortedFiles 重算
+  const favoriteIds = useFavoritesStore((s) => s.favoriteIds);
   const [sortBy, setSortBy] = useState<'name' | 'size' | 'time'>(() => {
     if (syncUrl) {
       const s = searchParams.get('sort');
@@ -86,6 +105,10 @@ export default function FileBrowser({
       if (d === 'asc' || d === 'desc') return d;
     }
     return (localStorage.getItem('fileSortDir') as 'asc' | 'desc') || 'asc';
+  });
+  // 文件夹优先开关（默认开启，对齐 PikPak）
+  const [foldersFirst, setFoldersFirst] = useState<boolean>(() => {
+    return localStorage.getItem('fileFoldersFirst') !== 'false';
   });
 
   useEffect(() => {
@@ -107,11 +130,18 @@ export default function FileBrowser({
   const { showToast } = useToast();
   const { confirm } = useConfirm();
   const { has } = usePermission();
+  const isMobile = useMobile();
+  // 网络错误状态:区分网络异常与空数据,显示重试按钮而非 EmptyState
+  const [networkError, setNetworkError] = useState(false);
+  // 移动端多选模式:长按文件进入,单击切换选中,顶部 MultiSelectBar 操作
+  const [mobileSelectMode, setMobileSelectMode] = useState(false);
 
   const fileListRef = useRef<HTMLDivElement>(null);
   const { dragRect, startDrag } = useDragSelect(fileListRef, setSelectedIds);
 
   const [showCreateFolder, setShowCreateFolder] = useState(false);
+  const [showBatchRename, setShowBatchRename] = useState(false);
+  const [archiveTarget, setArchiveTarget] = useState<FileNode | null>(null);
   const [renameTarget, setRenameTarget] = useState<FileNode | null>(null);
   const [moveTarget, setMoveTarget] = useState<{ nodeIds: string[]; mode: 'move' | 'copy' } | null>(null);
 
@@ -125,6 +155,7 @@ export default function FileBrowser({
 
   const [isDragging, setIsDragging] = useState(false);
   const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
+  const prevParentId = useRef<string | null>(null);
 
   const stateRef = useRef({ selectedIds, files, clipboard, view, parentId, focusedIndex, lastSelectedId });
 
@@ -140,25 +171,43 @@ export default function FileBrowser({
   const { addFiles, addFilePaths, refreshSignal } = useUpload();
 
   const fetchFiles = useCallback(async () => {
-    setLoading(true);
+    // 仅在无已有数据时显示骨架屏，避免切换文件夹时内容跳变
+    if (files.length === 0) setLoading(true);
     try {
       const res = await source.listFiles(parentId, page, 50);
       setFiles(res?.records || []);
+      setNetworkError(false);
       setTotal(Number(res?.total || 0));
     } catch {
       setFiles([]);
+      setNetworkError(true);
     } finally {
       setLoading(false);
     }
   }, [source, parentId, page]);
 
   useEffect(() => {
+    // 换文件夹：保留旧列表不清空，新数据到达后平滑替换，避免抖动
+    const isFolderChange = prevParentId.current !== parentId;
+    prevParentId.current = parentId;
+    
     fetchFiles();
     setSelectedIds(new Set());
     setFocusedIndex(-1);
     setFolderSearch('');
     setDetailFile(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fetchFiles, refreshKey]);
+
+  // External focus request: preselect + scroll to a file (e.g. from homepage "jump to folder")
+  useEffect(() => {
+    if (!focusId || loading || files.length === 0) return;
+    if (!files.some((f) => f.id === focusId)) return;
+    setSelectedIds(new Set([focusId]));
+    const el = fileListRef.current?.querySelector(`[data-file-id="${focusId}"]`);
+    el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [focusId, loading, files]);
 
   useEffect(() => {
     if (!parentId || parentId === '0' || parentId === 'null') {
@@ -184,7 +233,28 @@ export default function FileBrowser({
     localStorage.setItem('fileView', view);
   }, [view]);
 
+  // 移动端:选中清空时自动退出多选模式
+  useEffect(() => {
+    if (isMobile && mobileSelectMode && selectedIds.size === 0) {
+      setMobileSelectMode(false);
+    }
+  }, [isMobile, mobileSelectMode, selectedIds.size]);
+
+  // 移动端下拉刷新
+  const ptr = usePullToRefresh({ onRefresh: async () => { await fetchFiles(); } });
+
   const refresh = () => setRefreshKey((k) => k + 1);
+
+  const handleSortChange = (col: 'name' | 'size' | 'time') => {
+    if (col === sortBy) {
+      const next = sortDir === 'asc' ? 'desc' : 'asc';
+      setSortDir(next);
+      localStorage.setItem('fileSortDir', next);
+    } else {
+      setSortBy(col);
+      localStorage.setItem('fileSortBy', col);
+    }
+  };
 
   const handleDragOver = (e: React.DragEvent) => {
     if (e.dataTransfer.types.includes('application/x-file-ids')) return;
@@ -250,7 +320,22 @@ export default function FileBrowser({
     }
   };
 
-  const handleUploadClick = () => fileInputRef.current?.click();
+  const handleUploadClick = async () => {
+    // Capacitor 壳: 调用原生相册选择,权限拒绝时 toast 引导
+    if (isCapacitor()) {
+      try {
+        const files = await pickFromGallery();
+        if (files && files.length > 0) {
+          addFiles(files, parentId || '0', undefined, uploadSpaceId);
+        }
+      } catch (e) {
+        showToast(e instanceof Error ? e.message : '选择照片失败', 'error');
+      }
+      return;
+    }
+    // Web/Electron: 降级 input file
+    fileInputRef.current?.click();
+  };
   const handleUploadChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selected = Array.from(e.target.files || []);
     e.target.value = '';
@@ -268,6 +353,11 @@ export default function FileBrowser({
   };
 
   const handleSelect = (id: string, e: React.MouseEvent) => {
+    // 移动端多选模式:单击切换选中(复用 toggleSelect 逻辑)
+    if (isMobile && mobileSelectMode) {
+      toggleSelect(id);
+      return;
+    }
     if (e.ctrlKey || e.metaKey) {
       setSelectedIds((prev) => {
         const next = new Set(prev);
@@ -287,8 +377,14 @@ export default function FileBrowser({
         setSelectedIds(new Set([id]));
       }
     } else {
-      setSelectedIds(new Set([id]));
-      setLastSelectedId(id);
+      // 普通点击：若该项已选中且仅选中一项，则取消选中；否则仅选中该项
+      if (selectedIds.has(id) && selectedIds.size === 1) {
+        setSelectedIds(new Set());
+        setLastSelectedId(null);
+      } else {
+        setSelectedIds(new Set([id]));
+        setLastSelectedId(id);
+      }
     }
   };
 
@@ -301,8 +397,46 @@ export default function FileBrowser({
     setLastSelectedId(null);
   };
 
+  /** 复选框点击：切换单项选中状态，不影响其他已选项 */
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+    setLastSelectedId(id);
+  };
+
+  // 移动端长按:进入多选模式 + 选中该文件
+  const handleMobileLongPress = (node: FileNode) => {
+    if (!isMobile) return;
+    setMobileSelectMode(true);
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.add(node.id);
+      return next;
+    });
+    setLastSelectedId(node.id);
+  };
+
+  // 移动端多选模式下单击切换选中;非多选模式单击打开/预览
+  const handleMobileClick = (node: FileNode) => {
+    if (!isMobile || !mobileSelectMode) return;
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(node.id)) next.delete(node.id);
+      else next.add(node.id);
+      return next;
+    });
+  };
   const handleContextMenu = (e: React.MouseEvent, node: FileNode) => {
     e.preventDefault();
+    // 移动端: onContextMenu 由长按触发,进入多选模式而非弹菜单
+    if (isMobile) {
+      handleMobileLongPress(node);
+      return;
+    }
     if (!selectedIds.has(node.id)) {
       setSelectedIds(new Set([node.id]));
       setLastSelectedId(node.id);
@@ -393,6 +527,7 @@ export default function FileBrowser({
       handleDelete: (ids: string[]) => handleDeleteRef.current(ids),
       showToast, hasPermission: has,
     },
+    !isMobile,
   );
 
   const handleDownload = useCallback(async (nodeIds: string[]) => {
@@ -501,7 +636,7 @@ export default function FileBrowser({
     }
   };
 
-  const handleContextAction = (action: string, node: FileNode) => {
+  const handleContextAction = async (action: string, node: FileNode) => {
     setContextMenu(null);
     switch (action) {
       case 'open':
@@ -549,18 +684,35 @@ export default function FileBrowser({
         setDetailFile(node);
         break;
       case 'favorite': {
-        const added = toggleFavorite(node);
+        const added = await toggleFav(node);
         showToast(added ? '已收藏' : '已取消收藏');
-        setFavVersion((v) => v + 1);
+        break;
+      }
+      case 'hide': {
+        await api.put(`/file/${node.id}/hide`);
+        showToast('已隐藏');
+        fetchFiles();
         break;
       }
     }
   };
 
+  /** 切换单个文件/文件夹的收藏状态 */
+  const handleToggleFavorite = async (node: FileNode) => {
+    const added = await toggleFav(node);
+    showToast(added ? '已收藏' : '已取消收藏');
+  };
+
   const sortedFiles = useMemo(() => {
     const arr = [...files];
     arr.sort((a, b) => {
-      if (a.nodeType !== b.nodeType) return a.nodeType === 0 ? -1 : 1;
+      // 文件夹优先于文件（受 foldersFirst 开关控制）
+      if (foldersFirst && a.nodeType !== b.nodeType) return a.nodeType === 0 ? -1 : 1;
+      // 收藏项在同类型内置顶
+      const aFav = checkFav(a.id) ? 1 : 0;
+      const bFav = checkFav(b.id) ? 1 : 0;
+      if (aFav !== bFav) return bFav - aFav;
+      // 按用户选择的排序字段排列
       let cmp = 0;
       if (sortBy === 'name') {
         cmp = a.name.localeCompare(b.name, 'zh-CN');
@@ -572,7 +724,7 @@ export default function FileBrowser({
       return sortDir === 'asc' ? cmp : -cmp;
     });
     return arr;
-  }, [files, sortBy, sortDir]);
+  }, [files, sortBy, sortDir, foldersFirst, favoriteIds]);
 
   const selectedSize = useMemo(
     () => files.reduce((sum, f) => selectedIds.has(f.id) ? sum + Number(f.fileSize || 0) : sum, 0),
@@ -614,221 +766,90 @@ export default function FileBrowser({
 
   return (
     <div
-      className="flex flex-col h-full bg-white"
+      className="flex flex-col h-full bg-surface"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
       <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleUploadChange} />
       {isDragging && (
-        <div className="absolute inset-0 bg-primary-50/60 backdrop-blur-sm border-2 border-dashed border-primary-400 rounded-xl z-40 flex items-center justify-center pointer-events-none">
+        <div className="absolute inset-0 bg-primary-500/10 backdrop-blur-sm border-2 border-dashed border-primary-400 rounded-xl z-40 flex items-center justify-center pointer-events-none">
           <div className="text-center">
-            <div className="w-16 h-16 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-3"><FolderInput className="w-8 h-8 text-primary-600" aria-hidden /></div>
-            <p className="text-primary-700 font-medium">{'\u677e\u5f00\u9f20\u6807\u4e0a\u4f20\u6587\u4ef6'}</p>
+            <div className="w-16 h-16 bg-primary-500/20 rounded-2xl flex items-center justify-center mx-auto mb-3"><FolderInput className="w-8 h-8 text-primary-600" aria-hidden /></div>
+            <p className="text-primary-600 font-medium">{'\u677e\u5f00\u9f20\u6807\u4e0a\u4f20\u6587\u4ef6'}</p>
           </div>
         </div>
       )}
 
-      <div className="sticky top-0 z-20 flex items-center justify-between gap-2 px-5 py-2 bg-white/80 backdrop-blur-md border-b border-stone-100/80 overflow-x-auto">
-        <div className="flex items-center gap-1.5 flex-shrink-0">
-          {has('file:upload') && (
-            <button onClick={() => setShowCreateFolder(true)} className="btn-primary flex-shrink-0 whitespace-nowrap">
-              <FolderPlus className="w-4 h-4" aria-hidden />
-              <span>{'\u65b0\u5efa\u6587\u4ef6\u5939'}</span>
-            </button>
-          )}
-          {has('file:upload') && (
-            <button onClick={handleUploadClick} className="btn-ghost flex-shrink-0 whitespace-nowrap">
-              <Upload className="w-4 h-4" aria-hidden />
-              <span>{'\u4e0a\u4f20\u6587\u4ef6'}</span>
-            </button>
-          )}
-          {selectedIds.size > 0 && (
-            <>
-              <div className="w-px h-5 bg-stone-200 mx-1.5 flex-shrink-0" />
-              {has('file:download') && (
-                <button onClick={() => handleDownload([...selectedIds])} className="btn-ghost flex-shrink-0 whitespace-nowrap">
-                  <Download className="w-4 h-4" aria-hidden />
-                  <span>{'\u4e0b\u8f7d'}</span>
-                </button>
-              )}
-              {has('file:move') && (
-                <button onClick={() => setMoveTarget({ nodeIds: [...selectedIds], mode: 'move' })} className="btn-ghost flex-shrink-0 whitespace-nowrap">
-                  <FolderInput className="w-4 h-4" aria-hidden />
-                  <span>{'\u79fb\u52a8'}</span>
-                </button>
-              )}
-              {has('file:copy') && (
-                <button onClick={() => setMoveTarget({ nodeIds: [...selectedIds], mode: 'copy' })} className="btn-ghost flex-shrink-0 whitespace-nowrap">
-                  <Copy className="w-4 h-4" aria-hidden />
-                  <span>{'\u590d\u5236'}</span>
-                </button>
-              )}
-              {has('file:delete') && (
-                <button onClick={() => handleDeleteRef.current([...selectedIds])} className="btn-ghost text-red-600 hover:bg-red-50 flex-shrink-0 whitespace-nowrap">
-                  <Trash2 className="w-4 h-4" aria-hidden />
-                  <span>{'\u5220\u9664'}</span>
-                </button>
-              )}
-            </>
-          )}
+      <FileToolbar
+        has={has}
+        selectedCount={selectedIds.size}
+        filesCount={files.length}
+        allSelected={allSelected}
+        selectedSize={selectedSize}
+        sortBy={sortBy}
+        onSortChange={(v) => { setSortBy(v); localStorage.setItem('fileSortBy', v); }}
+        sortDir={sortDir}
+        onSortDirToggle={() => { const next = sortDir === 'asc' ? 'desc' : 'asc'; setSortDir(next); localStorage.setItem('fileSortDir', next); }}
+        view={view}
+        onViewChange={setView}
+        onNewFolder={() => setShowCreateFolder(true)}
+        onUploadClick={handleUploadClick}
+        onDownload={() => handleDownload([...selectedIds])}
+        onMove={() => setMoveTarget({ nodeIds: [...selectedIds], mode: 'move' })}
+        onCopy={() => setMoveTarget({ nodeIds: [...selectedIds], mode: 'copy' })}
+        onDelete={() => handleDeleteRef.current([...selectedIds])}
+        onSelectAll={selectAll}
+        onClearSelection={clearSelection}
+        onRefresh={refresh}
+        onBatchRename={() => setShowBatchRename(true)}
+        foldersFirst={foldersFirst}
+        onToggleFoldersFirst={(v) => { setFoldersFirst(v); localStorage.setItem('fileFoldersFirst', String(v)); }}
+      />
+      {isMobile && mobileSelectMode && (
+        <MultiSelectBar
+          selectedCount={selectedIds.size}
+          allSelected={allSelected}
+          onSelectAll={selectAll}
+          onDownload={() => handleDownload([...selectedIds])}
+          onDelete={() => handleDeleteRef.current([...selectedIds])}
+          onShare={() => { if (selectedIds.size === 1) { const n = files.find((f) => selectedIds.has(f.id)); if (n) setShareTarget(n); } }}
+          onCancel={() => { setMobileSelectMode(false); clearSelection(); }}
+          canDownload={has('file:download')}
+          canDelete={has('file:delete')}
+          canShare={enableShare && has('file:share')}
+        />
+      )}
+      {categoryLabel ? (
+        <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-surface">
+          <span className="text-sm font-medium text-fg">{categoryLabel}</span>
+          <span className="text-xs text-muted">{total} 项</span>
         </div>
+      ) : (
+      <FileBreadcrumb
+        currentPath={currentPath}
+        pathEditMode={pathEditMode}
+        setPathEditMode={setPathEditMode}
+        pathInput={pathInput}
+        setPathInput={setPathInput}
+        pathError={pathError}
+        setPathError={setPathError}
+        onPathSubmit={handlePathSubmit}
+        onEnterEditMode={enterPathEditMode}
+        onGoUp={goUp}
+        pathSegments={pathSegments}
+        onNavigateToPath={navigateToPath}
+        pathInputRef={pathInputRef}
+      />
+      )}
 
-        <div className="flex items-center gap-3 flex-shrink-0">
-
-          {selectedIds.size === 0 && (
-          <div className="flex items-center gap-1.5">
-            <ArrowDownUp className="w-3.5 h-3.5 text-stone-400" aria-hidden />
-            <Select value={sortBy} onValueChange={(v) => { setSortBy(v as 'name' | 'size' | 'time'); localStorage.setItem('fileSortBy', v); }}>
-              <SelectTrigger className="h-7 w-auto gap-1 text-xs border-stone-200 px-2.5 py-0.5 font-medium text-stone-600 hover:border-stone-300">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="min-w-[7rem]">
-                <SelectItem value="name">名称</SelectItem>
-                <SelectItem value="size">大小</SelectItem>
-                <SelectItem value="time">修改时间</SelectItem>
-              </SelectContent>
-            </Select>
-            <button
-              onClick={() => {
-                const next = sortDir === 'asc' ? 'desc' : 'asc';
-                setSortDir(next);
-                localStorage.setItem('fileSortDir', next);
-              }}
-              className="text-stone-400 hover:text-stone-600 cursor-pointer px-1 text-sm"
-              title={sortDir === 'asc' ? '\u5347\u5e8f' : '\u964d\u5e8f'}
-            >
-              {sortDir === 'asc' ? '\u2191' : '\u2193'}
-            </button>
-          </div>
-          )}
-          {selectedIds.size > 0 && (
-            <>
-              {!allSelected && files.length > 1 && (
-                <button onClick={selectAll} className="text-xs text-primary-600 hover:text-primary-700 cursor-pointer font-medium whitespace-nowrap">
-                  {'\u5168\u9009'}
-                </button>
-              )}
-              <div className="flex items-center gap-2 px-2.5 py-1 bg-primary-50 rounded-lg text-sm text-primary-700">
-              <span className="font-medium">{'\u5df2\u9009'} {selectedIds.size} {'\u9879'}</span>
-              {selectedSize > 0 && <span className="text-primary-400">{'\u00b7'} {formatSize(selectedSize)}</span>}
-              <button onClick={clearSelection} aria-label="取消选择" className="text-primary-400 hover:text-primary-700 cursor-pointer ml-0.5">
-                <X className="w-3.5 h-3.5" aria-hidden />
-              </button>
-            </div>
-            </>
-          )}
-          <button onClick={refresh} aria-label="刷新" className="btn-ghost" title={'\u5237\u65b0'} >
-            <RefreshCw className="w-4 h-4" aria-hidden />
-          </button>
-          {selectedIds.size === 0 && (
-          <div className="flex items-center bg-stone-100 rounded-lg p-0.5">
-            <button
-              onClick={() => setView('list')} aria-label="列表视图"
-              className={cn('p-1.5 rounded-md cursor-pointer transition', view === 'list' ? 'bg-white text-primary-600 shadow-sm' : 'text-stone-400 hover:text-stone-600')}
-            >
-              <List className="w-4 h-4" aria-hidden />
-            </button>
-            <button
-              onClick={() => setView('grid')} aria-label="网格视图"
-              className={cn('p-1.5 rounded-md cursor-pointer transition', view === 'grid' ? 'bg-white text-primary-600 shadow-sm' : 'text-stone-400 hover:text-stone-600')}
-            >
-              <LayoutGrid className="w-4 h-4" aria-hidden />
-            </button>
-          </div>
-          )}
-        </div>
-      </div>
-
-      {/* Address bar - Windows Explorer style */}
-      <div className="flex items-center gap-2 px-4 py-2.5 border-b border-stone-200 bg-white">
-        <button
-          onClick={goUp} aria-label="返回上一级"
-          disabled={currentPath === '/'}
-          title={'返回上一级'}
-          className="flex items-center justify-center w-8 h-8 rounded-md hover:bg-stone-100 text-stone-500 hover:text-primary-600 transition-colors flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
-        >
-          <ArrowUp className="w-4 h-4" aria-hidden />
-        </button>
-        {pathEditMode ? (
-          <div className={cn('flex items-center gap-2 flex-1 bg-white border rounded-md px-3 py-1.5 ring-2 ring-primary-100', pathError ? 'border-red-400' : 'border-primary-400')}>
-            <MapPin className={cn('w-4 h-4 flex-shrink-0', pathError ? 'text-red-500' : 'text-stone-400')} aria-hidden />
-            <input
-              ref={pathInputRef}
-              value={pathInput}
-              onChange={(e) => { setPathInput(e.target.value); setPathError(false); }}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') { e.preventDefault(); handlePathSubmit(); }
-                else if (e.key === 'Escape') { setPathEditMode(false); setPathError(false); }
-              }}
-              onBlur={() => { if (pathInput === currentPath) setPathEditMode(false); }}
-              className={cn(
-                'flex-1 text-sm bg-transparent px-1 py-1.5 outline-none transition-colors',
-                pathError ? 'text-red-600' : 'text-stone-800',
-              )}
-              placeholder="/folder1/folder2"
-              spellCheck={false}
-            />
-            <button
-              onClick={handlePathSubmit}
-              className="text-xs text-white bg-primary-600 rounded-md px-2 py-1 hover:bg-primary-700 cursor-pointer whitespace-nowrap"
-            >
-              {'转到'}
-            </button>
-            <button
-              onClick={() => { setPathEditMode(false); setPathError(false); }} aria-label="取消"
-              className="text-stone-400 hover:text-stone-600 cursor-pointer p-0.5"
-            >
-              <X className="w-4 h-4" aria-hidden />
-            </button>
-          </div>
-        ) : (
-          <div
-            className="flex items-center gap-1 flex-1 min-w-0 overflow-hidden bg-white border border-stone-300 rounded-md px-3 py-2 hover:border-primary-400 hover:ring-2 hover:ring-primary-50 transition cursor-text group"
-            role="button"
-            tabIndex={0}
-            aria-label="编辑路径"
-            onClick={enterPathEditMode}
-            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); enterPathEditMode(); } }}
-            title={'点击编辑路径'}
-          >
-            <MapPin className="w-4 h-4 text-stone-400 flex-shrink-0" aria-hidden />
-            <button
-              onClick={(e) => { e.stopPropagation(); navigateToPath('/'); }} aria-label="根目录"
-              className="flex items-center gap-1 px-2 py-1 rounded-lg bg-stone-50 hover:bg-primary-50 text-stone-500 hover:text-primary-600 transition-all duration-150 flex-shrink-0"
-            >
-              <Home className="w-4 h-4" aria-hidden />
-            </button>
-            {pathSegments.length === 0 ? (
-              <span className="text-sm text-stone-400 px-1.5">{'根目录'}</span>
-            ) : (
-              pathSegments.map((seg, idx) => (
-                <div key={seg.path} className="flex items-center gap-0.5 min-w-0">
-                  <ChevronRight className="w-3 h-3 text-stone-300 flex-shrink-0" aria-hidden />
-                  <button
-                    onClick={(e) => { e.stopPropagation(); navigateToPath(seg.path); }}
-                    className={cn(
-                      'px-2 py-0.5 rounded-lg text-sm transition-all duration-150 truncate',
-                      idx === pathSegments.length - 1
-                        ? 'bg-primary-50 text-primary-700 font-medium'
-                        : 'text-stone-500 hover:bg-stone-100 hover:text-primary-600',
-                    )}
-                  >
-                    {seg.name}
-                  </button>
-                </div>
-              ))
-            )}
-            <div className="flex-1" />
-            <Pencil className="w-3.5 h-3.5 text-stone-300 group-hover:text-primary-500 transition-colors flex-shrink-0" aria-hidden />
-          </div>
-        )}
-      </div>
-
-      <div className="flex-1 flex overflow-hidden">
+      <div className="flex-1 min-h-0 flex overflow-hidden">
       <div
         ref={fileListRef}
-        className="flex-1 overflow-auto px-5 py-4 relative"
+        className="flex-1 min-h-0 overflow-auto px-5 py-4 relative"
+        onTouchStart={isMobile ? ptr.onTouchStart : undefined}
+        onTouchMove={isMobile ? ptr.onTouchMove : undefined}
+        onTouchEnd={isMobile ? ptr.onTouchEnd : undefined}
         onMouseDown={(e) => {
           if (e.button === 0 && !isFileItemClick(e)) {
             e.preventDefault();
@@ -846,21 +867,66 @@ export default function FileBrowser({
           }
         }}
       >
-        {loading ? (
-          <FileListSkeleton view={view} />
+          {/* 移动端下拉刷新指示器 */}
+          {isMobile && (ptr.pullDistance > 0 || ptr.refreshing) && (
+            <div
+              className="flex items-center justify-center text-muted"
+              style={{ height: ptr.pullDistance, opacity: ptr.pullDistance > 10 ? 1 : 0 }}
+            >
+              <RefreshCw
+                className={"w-5 h-5 " + (ptr.refreshing || ptr.pullDistance >= 70 ? "animate-spin" : "")}
+                aria-hidden
+              />
+            </div>
+          )}
+          {loading ? (
+            <FileListSkeleton view={view} />
         ) : files.length === 0 ? (
           <EmptyState onCreateFolder={() => setShowCreateFolder(true)} />
-        ) : view === 'list' ? (
+        ) : view === 'table' ? (
+          <FileTableView
+            files={filteredFiles}
+            selectedIds={selectedIds}
+            focusedId={focusedId}
+            cutIds={clipboard?.mode === 'cut' ? new Set(clipboard.nodeIds) : null}
+            sortBy={sortBy}
+            sortDir={sortDir}
+            onSortChange={handleSortChange}
+            onSelect={handleSelect}
+            onToggleSelect={toggleSelect}
+            isFavorite={checkFav}
+            onToggleFavorite={handleToggleFavorite}
+            onSelectAll={selectAll}
+            onContextMenu={handleContextMenu}
+            onNavigate={(node) => { if (isMobile && mobileSelectMode) { handleMobileClick(node); return; } if (node.nodeType === 0) onNavigateFolder(node); }}
+            onItemDragStart={handleItemDragStart}
+            onFolderDragOver={handleFolderDragOver}
+            onFolderDragLeave={handleFolderDragLeave}
+            onFolderDrop={handleFolderDrop}
+            dragOverFolderId={dragOverFolderId}
+            onDoubleClick={(node) => {
+              if (node.nodeType === 0) {
+                onNavigateFolder(node);
+              } else if (has('file:preview')) {
+                const fileFiles = files.filter((f) => f.nodeType === 1);
+                const idx = fileFiles.findIndex((f) => f.id === node.id);
+                setPreview({ files: fileFiles, index: idx >= 0 ? idx : 0 });
+              }
+            }}
+          />
+        ) : view === 'card' ? (
           <FileTable
             files={filteredFiles}
             selectedIds={selectedIds}
             focusedId={focusedId}
             cutIds={clipboard?.mode === 'cut' ? new Set(clipboard.nodeIds) : null}
             onSelect={handleSelect}
+            onToggleSelect={toggleSelect}
+            isFavorite={checkFav}
+            onToggleFavorite={handleToggleFavorite}
             onSelectAll={selectAll}
             onContextMenu={handleContextMenu}
-            onItemMenu={handleItemMenu}
-            onNavigate={(node) => { if (node.nodeType === 0) onNavigateFolder(node); }}
+            onNavigate={(node) => { if (isMobile && mobileSelectMode) { handleMobileClick(node); return; } if (node.nodeType === 0) onNavigateFolder(node); }}
             onItemDragStart={handleItemDragStart}
             onFolderDragOver={handleFolderDragOver}
             onFolderDragLeave={handleFolderDragLeave}
@@ -883,9 +949,11 @@ export default function FileBrowser({
             focusedId={focusedId}
             cutIds={clipboard?.mode === 'cut' ? new Set(clipboard.nodeIds) : null}
             onSelect={handleSelect}
+            onToggleSelect={toggleSelect}
+            isFavorite={checkFav}
+            onToggleFavorite={handleToggleFavorite}
             onContextMenu={handleContextMenu}
-            onItemMenu={handleItemMenu}
-            onNavigate={(node) => { if (node.nodeType === 0) onNavigateFolder(node); }}
+            onNavigate={(node) => { if (isMobile && mobileSelectMode) { handleMobileClick(node); return; } if (node.nodeType === 0) onNavigateFolder(node); }}
             onItemDragStart={handleItemDragStart}
             onFolderDragOver={handleFolderDragOver}
             onFolderDragLeave={handleFolderDragLeave}
@@ -909,7 +977,7 @@ export default function FileBrowser({
       </div>
 
       {total > 50 && (
-        <div className="flex items-center justify-between px-4 py-3 border-t border-stone-200 bg-white">
+        <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-surface">
           <span className="text-sm text-stone-500">{'\u5171'} {total} {'\u9879'}</span>
           <div className="flex items-center gap-2">
             <button
@@ -939,7 +1007,7 @@ export default function FileBrowser({
           hasClipboard={!!clipboard}
           showShare={enableShare}
           showVersions={enableVersions}
-          isFav={favVersion >= 0 && isFavorite(contextMenu.node.id)}
+          isFav={checkFav(contextMenu.node.id)}
           onAction={handleContextAction}
           onClose={() => setContextMenu(null)}
         />
@@ -963,6 +1031,20 @@ export default function FileBrowser({
         />
       )}
 
+      {archiveTarget && (
+        <ArchiveDialog
+          file={archiveTarget}
+          onClose={() => setArchiveTarget(null)}
+          onExtracted={() => fetchFiles()}
+        />
+      )}
+      {showBatchRename && (
+        <BatchRenameDialog
+          files={filteredFiles.filter((f) => selectedIds.has(f.id))}
+          onClose={() => setShowBatchRename(false)}
+          onSuccess={() => { fetchFiles(); }}
+        />
+      )}
       <CreateFolderDialog
         open={showCreateFolder}
         parentId={parentId || '0'}

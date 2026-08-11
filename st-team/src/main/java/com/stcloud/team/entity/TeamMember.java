@@ -17,4 +17,7 @@ public class TeamMember extends BaseEntity {
     private Integer role; // 0-管理员 1-编辑者 2-查看者
     private LocalDateTime joinedAt;
     private LocalDateTime lastActiveAt;
+    private Integer isPinned; // 是否置顶：0-否 1-是
+    private Integer memberType; // 0-内部 1-外部
+    private LocalDateTime expireAt; // 外部协作者有效期
 }

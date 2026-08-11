@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { Search, Calendar as CalendarIcon, ChevronDown, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '../ui/button';
@@ -99,34 +99,34 @@ function formatFileSize(bytes: number | undefined): string {
 }
 
 function ExpandedAuditDetail({ detail }: { detail: AuditLogDetail | null }) {
-  if (!detail) return <div className="text-xs text-stone-400">无详情</div>;
+  if (!detail) return <div className="text-xs text-muted">无详情</div>;
 
   return (
     <div className="space-y-2 text-xs">
       {/* 文件列表 */}
       {detail.files && detail.files.length > 0 && (
         <div>
-          <div className="text-stone-500 font-medium mb-1">
-            涉及文件（{detail.files.length} 个）{detail.targetFolder && <span className="ml-2 text-stone-400">→ 目标文件夹: {detail.targetFolder}</span>}
+          <div className="text-muted font-medium mb-1">
+            涉及文件（{detail.files.length} 个）{detail.targetFolder && <span className="ml-2 text-muted">→ 目标文件夹: {detail.targetFolder}</span>}
           </div>
-          <div className="bg-white rounded border border-stone-200 max-h-48 overflow-y-auto">
+          <div className="bg-surface rounded border border-border max-h-48 overflow-y-auto">
             <table className="w-full text-xs">
-              <thead className="sticky top-0 bg-stone-50">
-                <tr className="border-b border-stone-200">
-                  <th className="text-left px-3 py-1.5 font-medium text-stone-400">文件名</th>
-                  <th className="text-left px-3 py-1.5 font-medium text-stone-400">路径</th>
-                  <th className="text-right px-3 py-1.5 font-medium text-stone-400">大小</th>
-                  <th className="text-center px-3 py-1.5 font-medium text-stone-400">类型</th>
+              <thead className="sticky top-0 bg-surface-2">
+                <tr className="border-b border-border">
+                  <th className="text-left px-3 py-1.5 font-medium text-muted">文件名</th>
+                  <th className="text-left px-3 py-1.5 font-medium text-muted">路径</th>
+                  <th className="text-right px-3 py-1.5 font-medium text-muted">大小</th>
+                  <th className="text-center px-3 py-1.5 font-medium text-muted">类型</th>
                 </tr>
               </thead>
               <tbody>
                 {detail.files.map((f: AuditLogFileDetail, i: number) => (
-                  <tr key={i} className="border-b border-stone-50">
-                    <td className="px-3 py-1.5 text-stone-700">{f.name}</td>
-                    <td className="px-3 py-1.5 text-stone-400 max-w-[300px] truncate" title={f.path}>{f.path}</td>
-                    <td className="px-3 py-1.5 text-right text-stone-500 whitespace-nowrap">{formatFileSize(f.size)}</td>
+                  <tr key={i} className="border-b border-border">
+                    <td className="px-3 py-1.5 text-muted">{f.name}</td>
+                    <td className="px-3 py-1.5 text-muted max-w-[300px] truncate" title={f.path}>{f.path}</td>
+                    <td className="px-3 py-1.5 text-right text-muted whitespace-nowrap">{formatFileSize(f.size)}</td>
                     <td className="px-3 py-1.5 text-center">
-                      <span className={f.type === 'folder' ? 'text-blue-500' : 'text-stone-500'}>
+                      <span className={f.type === 'folder' ? 'text-blue-500' : 'text-muted'}>
                         {f.type === 'folder' ? '文件夹' : f.suffix || '文件'}
                       </span>
                     </td>
@@ -141,47 +141,47 @@ function ExpandedAuditDetail({ detail }: { detail: AuditLogDetail | null }) {
       {/* 单文件信息 */}
       {detail.fileName && !detail.files && (
         <div className="flex flex-wrap gap-x-6 gap-y-1">
-          <span className="text-stone-500">文件名: <span className="text-stone-700">{detail.fileName}</span></span>
-          <span className="text-stone-500">大小: <span className="text-stone-700">{formatFileSize(detail.fileSize)}</span></span>
-          {detail.contentType && <span className="text-stone-500">类型: <span className="text-stone-700">{detail.contentType}</span></span>}
-          {detail.path && <span className="text-stone-500">路径: <span className="text-stone-700">{detail.path}</span></span>}
+          <span className="text-muted">文件名: <span className="text-muted">{detail.fileName}</span></span>
+          <span className="text-muted">大小: <span className="text-muted">{formatFileSize(detail.fileSize)}</span></span>
+          {detail.contentType && <span className="text-muted">类型: <span className="text-muted">{detail.contentType}</span></span>}
+          {detail.path && <span className="text-muted">路径: <span className="text-muted">{detail.path}</span></span>}
         </div>
       )}
 
       {/* 重命名信息 */}
       {detail.oldName && detail.newName && (
-        <div className="text-stone-500">
-          原文件名: <span className="text-stone-700">{detail.oldName}</span>
-          <span className="mx-2 text-stone-300">→</span>
-          新文件名: <span className="text-stone-700">{detail.newName}</span>
-          {detail.path && <span className="ml-4 text-stone-400">路径: {detail.path}</span>}
+        <div className="text-muted">
+          原文件名: <span className="text-muted">{detail.oldName}</span>
+          <span className="mx-2 text-muted">→</span>
+          新文件名: <span className="text-muted">{detail.newName}</span>
+          {detail.path && <span className="ml-4 text-muted">路径: {detail.path}</span>}
         </div>
       )}
 
       {/* 创建文件夹信息 */}
       {detail.folderName && (
-        <div className="text-stone-500">
-          文件夹名: <span className="text-stone-700">{detail.folderName}</span>
-          {detail.parentFolder && <span className="ml-4">所在目录: <span className="text-stone-700">{detail.parentFolder}</span></span>}
-          {detail.parentPath && <span className="ml-4 text-stone-400">目录路径: {detail.parentPath}</span>}
+        <div className="text-muted">
+          文件夹名: <span className="text-muted">{detail.folderName}</span>
+          {detail.parentFolder && <span className="ml-4">所在目录: <span className="text-muted">{detail.parentFolder}</span></span>}
+          {detail.parentPath && <span className="ml-4 text-muted">目录路径: {detail.parentPath}</span>}
         </div>
       )}
 
       {/* 目标路径信息 */}
       {detail.targetPath && !detail.files && (
-        <div className="text-stone-500">目标路径: <span className="text-stone-700">{detail.targetPath}</span></div>
+        <div className="text-muted">目标路径: <span className="text-muted">{detail.targetPath}</span></div>
       )}
 
       {/* 错误信息 */}
       {detail.error && (
-        <div className="text-red-500 bg-red-50 rounded px-3 py-1.5">
+        <div className="text-red-500 bg-red-500/15 rounded px-3 py-1.5">
           错误: {detail.error}
         </div>
       )}
 
       {/* 原始JSON（折叠态，方便调试） */}
       {!detail.files && !detail.fileName && !detail.oldName && !detail.folderName && !detail.targetPath && (
-        <pre className="text-xs text-stone-400 bg-stone-100 rounded p-2 overflow-x-auto">{JSON.stringify(detail, null, 2)}</pre>
+        <pre className="text-xs text-muted bg-surface-2 rounded p-2 overflow-x-auto">{JSON.stringify(detail, null, 2)}</pre>
       )}
     </div>
   );
@@ -219,11 +219,11 @@ function DateTimeRangePanel({
   }
 
   return (
-    <div className="bg-white rounded-lg flex flex-col" style={{ width: 720 }}>
+    <div className="bg-surface rounded-lg flex flex-col" style={{ width: 720 }}>
       {/* main: calendar left + time right */}
       <div className="flex">
         {/* left: calendar */}
-        <div className="p-3 border-r border-stone-100">
+        <div className="p-3 border-r border-border">
           <Calendar
             mode="range"
             selected={localRange}
@@ -244,47 +244,47 @@ function DateTimeRangePanel({
             <div className="flex flex-col h-full justify-center gap-4">
               {/* start time */}
               <div className="flex flex-col items-center">
-                <div className="text-xs font-medium text-stone-500 mb-1 flex items-center gap-1">
+                <div className="text-xs font-medium text-muted mb-1 flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-primary-500" />
                   开始时间
                 </div>
-                <div className="text-xs text-stone-400 mb-1">{format(localRange!.from!, 'yyyy-MM-dd')}</div>
+                <div className="text-xs text-muted mb-1">{format(localRange!.from!, 'yyyy-MM-dd')}</div>
                 <TimeWheelPicker value={localStart} onChange={setLocalStart} />
               </div>
 
               <div className="flex items-center justify-center">
-                <span className="text-stone-300 text-sm">{'↓'}</span>
+                <span className="text-muted text-sm">{'↓'}</span>
               </div>
 
               {/* end time */}
               <div className="flex flex-col items-center">
-                <div className="text-xs font-medium text-stone-500 mb-1 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 rounded-full bg-stone-400" />
+                <div className="text-xs font-medium text-muted mb-1 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-muted" />
                   结束时间
                 </div>
-                <div className="text-xs text-stone-400 mb-1">{format(localRange!.to!, 'yyyy-MM-dd')}</div>
+                <div className="text-xs text-muted mb-1">{format(localRange!.to!, 'yyyy-MM-dd')}</div>
                 <TimeWheelPicker value={localEnd} onChange={setLocalEnd} />
               </div>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center h-full text-center py-8">
-              <CalendarIcon className="w-8 h-8 text-stone-200 mb-2" />
-              <p className="text-xs text-stone-400">请在左侧日历中选择</p>
-              <p className="text-xs text-stone-400">开始和结束日期</p>
+              <CalendarIcon className="w-8 h-8 text-muted/40 mb-2" />
+              <p className="text-xs text-muted">请在左侧日历中选择</p>
+              <p className="text-xs text-muted">开始和结束日期</p>
             </div>
           )}
         </div>
       </div>
 
       {/* footer */}
-      <div className="flex items-center justify-between border-t border-stone-100 px-4 py-2.5">
+      <div className="flex items-center justify-between border-t border-border px-4 py-2.5">
         <button
           onClick={() => {
             setLocalRange(undefined);
             setLocalStart('00:00:00');
             setLocalEnd('23:59:59');
           }}
-          className="text-xs text-stone-400 hover:text-stone-600 cursor-pointer transition-colors"
+          className="text-xs text-muted hover:text-fg cursor-pointer transition-colors"
         >
           清除
         </button>
@@ -294,7 +294,7 @@ function DateTimeRangePanel({
               const now = new Date();
               applyQuick(now, now);
             }}
-            className="text-xs text-primary-500 hover:text-primary-600 cursor-pointer px-2 py-1 rounded hover:bg-primary-50 transition-colors"
+            className="text-xs text-primary-500 hover:text-primary-600 cursor-pointer px-2 py-1 rounded hover:bg-primary-500/10 transition-colors"
           >
             今天
           </button>
@@ -305,7 +305,7 @@ function DateTimeRangePanel({
               start.setDate(start.getDate() - 6);
               applyQuick(start, end);
             }}
-            className="text-xs text-primary-500 hover:text-primary-600 cursor-pointer px-2 py-1 rounded hover:bg-primary-50 transition-colors"
+            className="text-xs text-primary-500 hover:text-primary-600 cursor-pointer px-2 py-1 rounded hover:bg-primary-500/10 transition-colors"
           >
             近7天
           </button>
@@ -316,11 +316,11 @@ function DateTimeRangePanel({
               start.setDate(start.getDate() - 29);
               applyQuick(start, end);
             }}
-            className="text-xs text-primary-500 hover:text-primary-600 cursor-pointer px-2 py-1 rounded hover:bg-primary-50 transition-colors"
+            className="text-xs text-primary-500 hover:text-primary-600 cursor-pointer px-2 py-1 rounded hover:bg-primary-500/10 transition-colors"
           >
             近30天
           </button>
-          <div className="w-px h-4 bg-stone-200 mx-1" />
+          <div className="w-px h-4 bg-surface-2 mx-1" />
           <Button
             variant="outline"
             size="sm"
@@ -359,30 +359,30 @@ function AuditTableRow({ log }: { log: AuditLog }) {
       <TableRow>
         <TableCell className="w-8 text-center">
           {hasFileDetails && (
-            <button onClick={() => setIsExpanded(!isExpanded)} className="text-stone-400 hover:text-stone-600 cursor-pointer">
+            <button onClick={() => setIsExpanded(!isExpanded)} className="text-muted hover:text-fg cursor-pointer">
               {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
             </button>
           )}
         </TableCell>
-        <TableCell className="text-xs text-stone-500 whitespace-nowrap">{log.createdAt}</TableCell>
-        <TableCell className="text-stone-700 whitespace-nowrap">{log.username || '-'}</TableCell>
+        <TableCell className="text-xs text-muted whitespace-nowrap">{log.createdAt}</TableCell>
+        <TableCell className="text-muted whitespace-nowrap">{log.username || '-'}</TableCell>
         <TableCell>
           <Badge variant={BADGE_VARIANT[cat] || 'gray'}>{ACTION_LABELS[log.action] || log.action}</Badge>
         </TableCell>
-        <TableCell className="text-xs text-stone-600 whitespace-nowrap max-w-[160px] truncate" title={log.targetName || ''}>
+        <TableCell className="text-xs text-muted whitespace-nowrap max-w-[160px] truncate" title={log.targetName || ''}>
           {log.targetName || '-'}
         </TableCell>
-        <TableCell className="text-xs text-stone-600 max-w-[280px] truncate" title={detail?.summary || ''}>
+        <TableCell className="text-xs text-muted max-w-[280px] truncate" title={detail?.summary || ''}>
           {detail?.summary || log.detail || '-'}
         </TableCell>
-        <TableCell className="text-xs text-stone-400 whitespace-nowrap">{log.ipAddress || '-'}</TableCell>
+        <TableCell className="text-xs text-muted whitespace-nowrap">{log.ipAddress || '-'}</TableCell>
         <TableCell className="text-center">
           <Badge variant={log.status === 1 ? 'green' : 'red'}>{log.status === 1 ? '成功' : '失败'}</Badge>
         </TableCell>
       </TableRow>
       {isExpanded && (
         <TableRow>
-          <TableCell colSpan={8} className="bg-stone-50/50">
+          <TableCell colSpan={8} className="bg-surface-2/50">
             <ExpandedAuditDetail detail={detail} />
           </TableCell>
         </TableRow>
@@ -441,7 +441,7 @@ export default function AuditLogPanel() {
               <div className="flex flex-wrap items-center gap-3">
                 {/* 操作类型 */}
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-stone-500 whitespace-nowrap">操作类型</span>
+                  <span className="text-xs text-muted whitespace-nowrap">操作类型</span>
                   <Select value={auditAction || 'all'} onValueChange={(v) => setAuditAction(v === 'all' ? '' : v)}>
                     <SelectTrigger className="w-[160px] h-8"><SelectValue placeholder="全部" /></SelectTrigger>
                     <SelectContent>
@@ -455,7 +455,7 @@ export default function AuditLogPanel() {
 
                 {/* 状态 */}
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-stone-500 whitespace-nowrap">状态</span>
+                  <span className="text-xs text-muted whitespace-nowrap">状态</span>
                   <Select value={auditStatus !== '' ? auditStatus : 'all'} onValueChange={(v) => setAuditStatus(v === 'all' ? '' : v)}>
                     <SelectTrigger className="w-[100px] h-8"><SelectValue placeholder="全部" /></SelectTrigger>
                     <SelectContent>
@@ -468,7 +468,7 @@ export default function AuditLogPanel() {
 
                 {/* 排序 */}
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-stone-500 whitespace-nowrap">排序</span>
+                  <span className="text-xs text-muted whitespace-nowrap">排序</span>
                   <Select value={auditSort} onValueChange={(v) => { setAuditSort(v); setAuditPage(1); }}>
                     <SelectTrigger className="w-[140px] h-8 text-xs overflow-hidden"><SelectValue /></SelectTrigger>
                     <SelectContent>
@@ -480,7 +480,7 @@ export default function AuditLogPanel() {
 
                 {/* 用户 */}
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-stone-500 whitespace-nowrap">用户</span>
+                  <span className="text-xs text-muted whitespace-nowrap">用户</span>
                   <Input
                     value={auditUser}
                     onChange={(e) => setAuditUser(e.target.value)}
@@ -492,7 +492,7 @@ export default function AuditLogPanel() {
 
                 {/* IP */}
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-stone-500 whitespace-nowrap">IP</span>
+                  <span className="text-xs text-muted whitespace-nowrap">IP</span>
                   <Input
                     value={auditIp}
                     onChange={(e) => setAuditIp(e.target.value)}
@@ -504,7 +504,7 @@ export default function AuditLogPanel() {
 
                 {/* 目标名称 */}
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-stone-500 whitespace-nowrap">目标名称</span>
+                  <span className="text-xs text-muted whitespace-nowrap">目标名称</span>
                   <Input
                     value={auditTargetName}
                     onChange={(e) => setAuditTargetName(e.target.value)}
@@ -516,7 +516,7 @@ export default function AuditLogPanel() {
 
                 {/* 关键词 */}
                 <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-                  <span className="text-xs text-stone-500 whitespace-nowrap">关键词</span>
+                  <span className="text-xs text-muted whitespace-nowrap">关键词</span>
                   <Input
                     value={auditKeyword}
                     onChange={(e) => setAuditKeyword(e.target.value)}
@@ -528,27 +528,27 @@ export default function AuditLogPanel() {
 
                 {/* 时间范围 - Calendar + TimeWheelPicker */}
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-stone-500 whitespace-nowrap">时间</span>
+                  <span className="text-xs text-muted whitespace-nowrap">时间</span>
                   <Popover open={auditPopoverOpen} onOpenChange={setAuditPopoverOpen}>
                     <PopoverTrigger asChild>
                       <Button variant="outline" size="sm" className="h-8 w-[340px] justify-start text-left font-normal">
-                        <CalendarIcon className="mr-2 h-4 w-4 text-stone-400" />
+                        <CalendarIcon className="mr-2 h-4 w-4 text-muted" />
                         {auditDateRange?.from ? (
                           auditDateRange.to ? (
                             <span className="truncate">
                               {format(auditDateRange.from, 'MM/dd')} {auditStartTime}
-                              <span className="mx-1 text-stone-300">→</span>
+                              <span className="mx-1 text-muted">→</span>
                               {format(auditDateRange.to, 'MM/dd')} {auditEndTime}
                             </span>
                           ) : (
                             <span className="truncate">
                               {format(auditDateRange.from, 'MM/dd')} {auditStartTime}
-                              <span className="mx-1 text-stone-300">→</span>
-                              <span className="text-stone-400">待选</span>
+                              <span className="mx-1 text-muted">→</span>
+                              <span className="text-muted">待选</span>
                             </span>
                           )
                         ) : (
-                          <span className="text-stone-400">选择日期时间范围</span>
+                          <span className="text-muted">选择日期时间范围</span>
                         )}
                       </Button>
                     </PopoverTrigger>
@@ -606,14 +606,14 @@ export default function AuditLogPanel() {
                 </TableBody>
               </Table>
               {auditLogs.length === 0 && (
-                <div className="py-10 text-center text-sm text-stone-400">暂无符合条件的审计日志</div>
+                <div className="py-10 text-center text-sm text-muted">暂无符合条件的审计日志</div>
               )}
               {auditTotal > 20 && (
-                <div className="flex items-center justify-between px-4 py-3 border-t border-stone-100">
-                  <span className="text-xs text-stone-400">共 {auditTotal} 条</span>
+                <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+                  <span className="text-xs text-muted">共 {auditTotal} 条</span>
                   <div className="flex gap-2">
                     <Button variant="outline" size="sm" disabled={auditPage === 1} onClick={() => setAuditPage(p => Math.max(1, p - 1))}>上一页</Button>
-                    <span className="px-3 py-1 text-xs text-stone-500">{auditPage}</span>
+                    <span className="px-3 py-1 text-xs text-muted">{auditPage}</span>
                     <Button variant="outline" size="sm" disabled={auditLogs.length < 20} onClick={() => setAuditPage(p => p + 1)}>下一页</Button>
                   </div>
                 </div>

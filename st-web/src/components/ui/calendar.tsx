@@ -1,4 +1,4 @@
-import * as React from "react"
+﻿import * as React from "react"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { DayPicker } from "react-day-picker"
 import { zhCN } from "date-fns/locale"
@@ -35,7 +35,7 @@ function Calendar({
         ),
         month_grid: "w-full border-collapse space-y-1",
         weekdays: "flex",
-        weekday: "text-stone-400 rounded-md w-9 font-normal text-[0.8rem]",
+        weekday: "text-muted rounded-md w-9 font-normal text-[0.8rem]",
         week: "flex w-full mt-2",
         day: "p-0",
         day_button: cn(
@@ -43,10 +43,10 @@ function Calendar({
           "h-9 w-9 p-0 font-normal aria-selected:opacity-100"
         ),
         selected: "bg-primary-600 text-white hover:bg-primary-600 hover:text-white focus:bg-primary-600 focus:text-white",
-        today: "bg-primary-50 text-primary-600",
-        outside: "text-stone-300 opacity-60",
-        disabled: "text-stone-300 opacity-50",
-        range_middle: "bg-primary-50 text-primary-600 rounded-none",
+        today: "bg-primary-500/10 text-primary-600",
+        outside: "text-muted opacity-60",
+        disabled: "text-muted opacity-50",
+        range_middle: "bg-primary-500/10 text-primary-600 rounded-none",
         hidden: "invisible",
         ...classNames,
       }}

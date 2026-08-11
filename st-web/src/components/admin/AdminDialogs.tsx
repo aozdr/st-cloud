@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Dialog } from '../ui/Dialog';
 import { RoleMultiSelect } from '../ui/RoleMultiSelect';
 import { formatSize } from '../../lib/utils';
@@ -72,7 +72,7 @@ export function QuotaEditDialog({ user, onClose, onSave }: {
       }
     >
 
-        <label className="block text-sm font-medium text-stone-700 mb-2">配额大小</label>
+        <label className="block text-sm font-medium text-muted mb-2">配额大小</label>
         <div className="flex items-center gap-2 mb-3">
           <input
             type="number"
@@ -95,12 +95,12 @@ export function QuotaEditDialog({ user, onClose, onSave }: {
         </div>
 
         {value && parseFloat(value) > 0 && (
-          <p className="text-xs text-stone-400 mb-2">
+          <p className="text-xs text-muted mb-2">
             = {formatSize(quotaBytes)}{unit === 'TB' ? ' (' + value + ' ' + unit + ')' : ''}
           </p>
         )}
         {!value && (
-          <p className="text-xs text-amber-600 mb-2">不填写或填0表示不限制</p>
+          <p className="text-xs text-amber-600 dark:text-amber-400 mb-2">不填写或填0表示不限制</p>
         )}
 
         <div className="flex flex-wrap gap-1.5">
@@ -122,7 +122,7 @@ export function QuotaEditDialog({ user, onClose, onSave }: {
                   setUnit('GB');
                 }
               }}
-              className="px-3 py-1.5 text-xs text-stone-600 bg-stone-50 border border-stone-200 hover:bg-primary-50 hover:text-primary-600 hover:border-primary-300 rounded-md cursor-pointer transition-colors"
+              className="px-3 py-1.5 text-xs text-muted bg-surface-2 border border-border hover:bg-primary-500/10 hover:text-primary-600 hover:border-primary-300 rounded-md cursor-pointer transition-colors"
             >
               {preset.label}
             </button>
@@ -169,7 +169,7 @@ export function CloudCapacityEditDialog({ currentCapacity, used, onClose, onSave
         </>
       }
     >
-        <label className="block text-sm font-medium text-stone-700 mb-2">总容量</label>
+        <label className="block text-sm font-medium text-muted mb-2">总容量</label>
         <div className="flex items-center gap-2 mb-3">
           <input
             type="number"
@@ -188,10 +188,10 @@ export function CloudCapacityEditDialog({ currentCapacity, used, onClose, onSave
         </div>
 
         {value && parseFloat(value) > 0 && (
-          <p className="text-xs text-stone-400 mb-2">= {formatSize(capacityBytes)}</p>
+          <p className="text-xs text-muted mb-2">= {formatSize(capacityBytes)}</p>
         )}
         {!value && (
-          <p className="text-xs text-amber-600 mb-2">不填写或填0表示不限制</p>
+          <p className="text-xs text-amber-600 dark:text-amber-400 mb-2">不填写或填0表示不限制</p>
         )}
 
         <div className="flex flex-wrap gap-1.5">
@@ -213,7 +213,7 @@ export function CloudCapacityEditDialog({ currentCapacity, used, onClose, onSave
                   setUnit("GB");
                 }
               }}
-              className="px-3 py-1.5 text-xs text-stone-600 bg-stone-50 border border-stone-200 hover:bg-primary-50 hover:text-primary-600 hover:border-primary-300 rounded-md cursor-pointer transition-colors"
+              className="px-3 py-1.5 text-xs text-muted bg-surface-2 border border-border hover:bg-primary-500/10 hover:text-primary-600 hover:border-primary-300 rounded-md cursor-pointer transition-colors"
             >
               {preset.label}
             </button>
@@ -256,29 +256,29 @@ export function CreateUserDialog({ roles, onClose, onSave }: {
     >
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-stone-700 mb-1.5">用户名</label>
+          <label className="block text-sm font-medium text-muted mb-1.5">用户名</label>
           <input type="text" value={form.username} onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))} className="input-field" placeholder="登录用户名" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-stone-700 mb-1.5">密码</label>
+          <label className="block text-sm font-medium text-muted mb-1.5">密码</label>
           <input type="password" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} className="input-field" placeholder="初始密码" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-stone-700 mb-1.5">昵称</label>
+          <label className="block text-sm font-medium text-muted mb-1.5">昵称</label>
           <input type="text" value={form.nickname} onChange={(e) => setForm((f) => ({ ...f, nickname: e.target.value }))} className="input-field" placeholder="可选" />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-1.5">邮箱</label>
+            <label className="block text-sm font-medium text-muted mb-1.5">邮箱</label>
             <input type="text" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} className="input-field" placeholder="可选" />
           </div>
           <div>
-            <label className="block text-sm font-medium text-stone-700 mb-1.5">手机号</label>
+            <label className="block text-sm font-medium text-muted mb-1.5">手机号</label>
             <input type="text" value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} className="input-field" placeholder="可选" />
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-stone-700 mb-1.5">角色</label>
+          <label className="block text-sm font-medium text-muted mb-1.5">角色</label>
           <RoleMultiSelect
             roles={roles}
             selectedIds={roleIds}

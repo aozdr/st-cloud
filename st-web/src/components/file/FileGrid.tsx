@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import api from '../../lib/api';
-import { getFileTypeConfig, cn } from '../../lib/utils';
+import { getFileTypeConfig, cn, formatSize, formatDate } from '../../lib/utils';
 import type { FileNode } from '../../types';
 import FileTypeIcon from './FileTypeIcon';
-import { Check, MoreHorizontal } from 'lucide-react';
+import { Check, Star, Play } from 'lucide-react';
 
 interface Props {
   files: FileNode[];
@@ -19,10 +19,13 @@ interface Props {
   onFolderDragLeave?: (e: React.DragEvent, folder: FileNode) => void;
   onFolderDrop?: (e: React.DragEvent, folder: FileNode) => void;
   dragOverFolderId?: string | null;
-  onItemMenu?: (e: React.MouseEvent, node: FileNode) => void;
+  onToggleSelect: (id: string) => void;
+  isFavorite: (id: string) => boolean;
+  onToggleFavorite: (node: FileNode) => void;
 }
 
 const IMAGE_SUFFIXES = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'];
+const VIDEO_SUFFIXES = ['mp4', 'mkv', 'avi', 'mov', 'wmv', 'flv', 'webm', 'm4v', 'mpg', 'mpeg', '3gp'];
 
 function isImage(file: FileNode): boolean {
   if (file.nodeType === 0) return false;
@@ -30,13 +33,24 @@ function isImage(file: FileNode): boolean {
   return IMAGE_SUFFIXES.includes(suffix);
 }
 
-function GridIcon({ file }: { file: FileNode }) {
+function isVideo(file: FileNode): boolean {
+  if (file.nodeType === 0) return false;
+  const suffix = (file.suffix || '').toLowerCase();
+  return VIDEO_SUFFIXES.includes(suffix);
+}
+
+
+function GridThumbnail({ file }: { file: FileNode }) {
   const [url, setUrl] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
   const config = getFileTypeConfig(file.nodeType, file.suffix);
+  const img = isImage(file);
+  const video = isVideo(file);
 
   useEffect(() => {
-    if (!isImage(file)) return;
+    if (!img) return;
     let cancelled = false;
+    setLoaded(false);
     api
       .get<string>(`/preview/${file.id}/thumbnail`, { params: { size: 'sm' } })
       .then((u) => {
@@ -51,19 +65,54 @@ function GridIcon({ file }: { file: FileNode }) {
     return () => {
       cancelled = true;
     };
-  }, [file.id]);
+  }, [file.id, img]);
 
-  if (isImage(file) && url) {
-    return <img src={url} alt={file.name} className="w-full h-full object-cover" loading="lazy" draggable={false} />;
-  }
-
-  return <FileTypeIcon config={config} size="xl" isFolder={file.nodeType === 0} suffix={file.suffix} />;
+  return (
+    <div className="absolute inset-0">
+      {/* 模糊背景层：图片文件用同图 blur 填充，消除 letterbox 留白 */}
+      {img && url && (
+        <img
+          src={url}
+          alt=""
+          aria-hidden
+          className="absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-60"
+        />
+      )}
+      {/* 占位图标 */}
+      <div className={cn('absolute inset-0 flex items-center justify-center transition-opacity duration-300', loaded ? 'opacity-0' : 'opacity-100')}>
+        <FileTypeIcon config={config} size="xl" isFolder={file.nodeType === 0} suffix={file.suffix} />
+      </div>
+      {/* 前景图：contain 居中展示原始比例 */}
+      {img && url && (
+        <img
+          src={url}
+          alt={file.name}
+          className={cn('absolute inset-0 w-full h-full object-contain transition-opacity duration-300', loaded ? 'opacity-100' : 'opacity-0')}
+          loading="lazy"
+          draggable={false}
+          onLoad={() => setLoaded(true)}
+        />
+      )}
+      {/* 视频播放按钮：半透明圆形 + 白色三角（点击进入预览播放器） */}
+      {video && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="w-12 h-12 rounded-full bg-black/50 flex items-center justify-center backdrop-blur-sm">
+            <Play className="w-5 h-5 text-white ml-0.5" fill="currentColor" aria-hidden />
+          </span>
+        </div>
+      )}
+    </div>
+  );
 }
 
-export default function FileGrid({ files, selectedIds, focusedId, cutIds, onSelect, onContextMenu, onDoubleClick, onItemDragStart, onFolderDragOver, onFolderDragLeave, onFolderDrop, dragOverFolderId, onItemMenu }: Props) {
+export default function FileGrid({
+  files, selectedIds, focusedId, cutIds, onSelect, onContextMenu, onDoubleClick,
+  onItemDragStart, onFolderDragOver, onFolderDragLeave, onFolderDrop, dragOverFolderId,
+  onToggleSelect, isFavorite, onToggleFavorite,
+}: Props) {
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 gap-3">
-      {files.map((file, index) => {
+    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-4">
+      {files.map((file) => {
         const isSelected = selectedIds.has(file.id);
 
         return (
@@ -78,52 +127,66 @@ export default function FileGrid({ files, selectedIds, focusedId, cutIds, onSele
             onClick={(e) => onSelect(file.id, e)}
             onDoubleClick={() => onDoubleClick(file)}
             onContextMenu={(e) => onContextMenu(e, file)}
-            style={{ animationDelay: `${Math.min(index, 24) * 24}ms` }}
+            style={{ contentVisibility: 'auto', containIntrinsicSize: '160px' }}
             className={cn(
-              'group relative flex flex-col rounded-xl p-2.5 cursor-pointer select-none transition-all duration-200 animate-file-enter',
+              'group relative flex flex-col rounded-2xl p-2 cursor-pointer select-none transition-[background-color,box-shadow] duration-200',
               isSelected
-                ? 'bg-primary-50/70'
+                ? 'bg-primary-500/15 ring-2 ring-primary-400'
                 : dragOverFolderId === file.id
-                  ? 'bg-primary-50 ring-2 ring-primary-400'
+                  ? 'bg-primary-500/10 ring-2 ring-primary-400'
                   : focusedId === file.id
-                    ? 'bg-stone-100/80'
-                    : 'hover:bg-stone-50',
-              cutIds?.has(file.id) && 'opacity-50'
+                    ? 'bg-surface-2/80'
+                    : 'hover:bg-surface-2',
+              cutIds?.has(file.id) && 'opacity-50',
             )}
           >
             <button
-              onClick={(e) => { e.stopPropagation(); onSelect(file.id, e); }}
+              onClick={(e) => { e.stopPropagation(); onToggleSelect(file.id); }}
               aria-label="选择"
               className={cn(
-                'absolute top-1.5 left-1.5 z-10 w-[18px] h-[18px] rounded-[5px] border flex items-center justify-center transition-all',
-                isSelected ? 'bg-primary-600 border-primary-600 opacity-100' : 'border-stone-300 bg-white/90 opacity-0 group-hover:opacity-100'
+                'absolute top-2 left-2 z-10 w-[18px] h-[18px] rounded-[5px] border flex items-center justify-center transition-[background-color,border-color,opacity]',
+                isSelected ? 'bg-primary-600 border-primary-600 opacity-100' : 'border-border bg-surface/90 opacity-0 group-hover:opacity-100',
               )}
             >
               {isSelected && <Check className="w-3 h-3 text-white" strokeWidth={3} aria-hidden />}
             </button>
 
-            {onItemMenu && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onItemMenu(e, file); }}
-                onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); onContextMenu(e, file); }}
-                aria-label="更多操作"
-                className="absolute top-1.5 right-1.5 z-10 w-7 h-7 rounded-lg flex items-center justify-center text-stone-500 bg-white/80 hover:bg-white hover:text-stone-900 opacity-0 group-hover:opacity-100 transition-all"
-              >
-                <MoreHorizontal className="w-4 h-4" aria-hidden />
-              </button>
-            )}
-
-            <div className="flex items-center justify-center h-28 mb-1.5 rounded-lg overflow-hidden">
-              <GridIcon file={file} />
-            </div>
-            <div
+            {/* 收藏星星图标：已收藏时常驻显示，未收藏时悬停显示 */}
+            <button
+              onClick={(e) => { e.stopPropagation(); onToggleFavorite(file); }}
+              aria-label={isFavorite(file.id) ? '取消收藏' : '收藏'}
+              title={isFavorite(file.id) ? '取消收藏' : '收藏'}
               className={cn(
-                'text-xs leading-tight text-center max-w-full truncate px-1',
-                isSelected ? 'text-primary-700 font-medium' : 'text-stone-600'
+                'absolute top-2 right-2 z-10 w-7 h-7 rounded-lg flex items-center justify-center bg-black/30 hover:bg-black/50 backdrop-blur-sm transition-opacity',
+                isFavorite(file.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
               )}
-              title={file.name}
             >
-              {file.name}
+              <Star
+                className={cn('w-3.5 h-3.5', isFavorite(file.id) ? 'text-yellow-400' : 'text-white')}
+                fill={isFavorite(file.id) ? 'currentColor' : 'none'}
+                aria-hidden
+              />
+            </button>
+
+            <div className="relative aspect-video w-full rounded-2xl overflow-hidden mb-2 bg-surface-2">
+              <GridThumbnail file={file} />
+
+            </div>
+
+            <div className="px-1">
+              <div
+                className={cn(
+                  'text-xs leading-tight truncate',
+                  isSelected ? 'text-primary-600 font-medium' : 'text-fg',
+                )}
+                title={file.name}
+              >
+                {file.name}
+              </div>
+              <div className="text-[11px] text-muted truncate flex items-center gap-1.5">
+                {file.nodeType === 1 && <span className="flex-shrink-0">{formatSize(file.fileSize)}</span>}
+                <span className="truncate">{formatDate(file.updatedAt)}</span>
+              </div>
             </div>
           </div>
         );

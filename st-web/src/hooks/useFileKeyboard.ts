@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+﻿import { useEffect, useRef } from 'react';
 import { isElectron } from '../lib/electron';
 import type { FileNode } from '../types';
 
@@ -7,7 +7,7 @@ export interface FileKeyboardState {
   files: FileNode[];
   selectedIds: Set<string>;
   clipboard: { nodeIds: string[]; mode: 'copy' | 'cut' } | null;
-  view: 'list' | 'grid';
+  view: 'table' | 'card' | 'grid';
   parentId: string | null;
   focusedIndex: number;
   lastSelectedId: string | null;
@@ -44,6 +44,7 @@ export interface FileKeyboardActions {
 export function useFileKeyboard(
   getState: () => FileKeyboardState,
   actions: FileKeyboardActions,
+  enabled: boolean = true,
 ) {
   const actionsRef = useRef(actions);
   actionsRef.current = actions;
@@ -52,6 +53,8 @@ export function useFileKeyboard(
   const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    // 移动端禁用键盘快捷键(无物理键盘,避免误触)
+    if (!enabled) return;
     const handler = (e: KeyboardEvent) => {
       const a = actionsRef.current;
       const st = getState();
@@ -130,6 +133,18 @@ export function useFileKeyboard(
             a.refresh();
           }
           return;
+        case ' ':
+          // 空格键快速预览选中的文件
+          if (st.selectedIds.size >= 1) {
+            const node = st.files.find((f) => st.selectedIds.has(f.id));
+            if (node && node.nodeType === 1 && a.hasPermission('file:preview')) {
+              e.preventDefault();
+              const fileFiles = st.files.filter((f) => f.nodeType === 1);
+              const idx = fileFiles.findIndex((f) => f.id === node.id);
+              a.setPreview({ files: fileFiles, index: idx >= 0 ? idx : 0 });
+            }
+          }
+          return;
         case 'Enter':
           if (st.selectedIds.size === 1) {
             const node = st.files.find((f) => st.selectedIds.has(f.id));
@@ -205,5 +220,5 @@ export function useFileKeyboard(
 
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [getState]);
+  }, [getState, enabled]);
 }

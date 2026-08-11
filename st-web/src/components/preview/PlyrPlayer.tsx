@@ -14,14 +14,24 @@ export default function PlyrPlayer({ src }: { src: string }) {
     video.src = src;
     video.controls = true;
     video.playsInline = true;
+    video.crossOrigin = 'anonymous';
     video.style.maxWidth = '100%';
     video.style.maxHeight = '80vh';
+    // 尝试加载同名字幕文件（.vtt/.srt）
+    const baseName = src.replace(/\.[^/.]+$/, '');
+    const track = document.createElement('track');
+    track.kind = 'subtitles';
+    track.label = '字幕';
+    track.srclang = 'zh';
+    track.src = baseName + '.vtt';
+    track.default = true;
+    video.appendChild(track);
     container.appendChild(video);
 
     playerRef.current = new Plyr(video, {
       autoplay: true,
       controls: ['play-large', 'play', 'progress', 'current-time', 'duration', 'mute', 'volume', 'settings', 'pip', 'airplay', 'fullscreen'],
-      settings: ['speed'],
+      settings: ['speed', 'captions'],
       speed: { selected: 1, options: [0.5, 0.75, 1, 1.25, 1.5, 2] },
       keyboard: { focused: true, global: true },
       tooltips: { controls: true, seek: true },
@@ -38,7 +48,7 @@ export default function PlyrPlayer({ src }: { src: string }) {
   return (
     <div
       ref={containerRef}
-      style={{ width: '80vw', maxWidth: '1280px', '--plyr-color-main': '#D9272E', '--plyr-video-background': '#000' } as CSSProperties}
+      style={{ width: '80vw', maxWidth: '1280px', '--plyr-color-main': 'rgb(var(--color-primary-600))', '--plyr-video-background': '#000' } as CSSProperties}
       className="rounded-lg bg-black"
     />
   );

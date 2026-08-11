@@ -23,6 +23,7 @@ import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 import java.util.ArrayList;
 import java.util.Map;
 
@@ -223,5 +224,55 @@ public class FileController {
                 user.getRoles(), new ArrayList<>(user.getPermissions()), user.getDataScope(),
                 nodeId);
         return Result.success(Map.of("token", token));
+    }
+
+    @Operation(summary = "存储空间按类型统计")
+    @GetMapping("/storage/by-type")
+    public Result<List<Map<String, Object>>> storageByType() {
+        return Result.success(fileService.storageByType());
+    }
+
+    @Operation(summary = "重复文件检测")
+    @GetMapping("/duplicates")
+    public Result<List<Map<String, Object>>> findDuplicates() {
+        return Result.success(fileService.findDuplicates());
+    }
+
+    @Operation(summary = "隐藏文件/文件夹")
+    @PutMapping("/{nodeId}/hide")
+    public Result<Void> hideFile(@PathVariable Long nodeId) {
+        fileService.setHidden(nodeId, true);
+        return Result.success(null);
+    }
+
+    @Operation(summary = "取消隐藏")
+    @PutMapping("/{nodeId}/unhide")
+    public Result<Void> unhideFile(@PathVariable Long nodeId) {
+        fileService.setHidden(nodeId, false);
+        return Result.success(null);
+    }
+
+    @Operation(summary = "隐藏文件列表")
+    @GetMapping("/hidden")
+    public Result<List<FileNodeVO>> listHidden() {
+        return Result.success(fileService.listHidden());
+    }
+
+    @Operation(summary = "重复文件详情列表（同 MD5 的文件）")
+    @GetMapping("/duplicates/detail")
+    public Result<List<FileNodeVO>> duplicateDetail(@RequestParam String md5) {
+        return Result.success(fileService.findDuplicateDetail(md5));
+    }
+
+    @Operation(summary = "文件历史版本数量")
+    @GetMapping("/{nodeId}/versions/count")
+    public Result<Integer> versionCount(@PathVariable Long nodeId) {
+        return Result.success(fileService.versionCount(nodeId));
+    }
+
+    @Operation(summary = "清理重复文件（保留最早创建的，其余移入回收站）")
+    @PostMapping("/duplicates/cleanup")
+    public Result<Map<String, Object>> cleanupDuplicates(@RequestParam String md5) {
+        return Result.success(fileService.cleanupDuplicates(md5));
     }
 }

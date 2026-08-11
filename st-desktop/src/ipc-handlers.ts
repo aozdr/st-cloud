@@ -1,7 +1,7 @@
 import { ipcMain, dialog, app, BrowserWindow, shell } from 'electron';
 import { setAuth, setBaseUrl } from './api-client';
 import { getServerUrl, saveServerUrl } from './server-config';
-import { getAllTasks, deleteTask } from './database';
+import { getAllTasks, deleteTask, getSyncHistory, getSyncStats } from './database';
 import { setTransferSettings as applyTransferSettings, type TransferSettings } from './transfer-settings';
 import {
   startUpload,
@@ -17,7 +17,9 @@ import {
 } from './download-manager';
 import {
   startSync, stopSync, registerSyncRoot, listSyncRoots, deleteSyncRoot, getSyncStatus,
-  stopAllSync, resumeSyncEngines,
+  stopAllSync, resumeSyncEngines, refreshExclusions, addExclusion as syncAddExclusion,
+  removeExclusion as syncRemoveExclusion, setConflictStrategy as syncSetConflictStrategy,
+  isWsConnected,
 } from './sync-manager';
 
 export function registerIpcHandlers(): void {
@@ -152,6 +154,35 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('sync:status', () => {
     return getSyncStatus();
+  });
+
+  // Exclusions
+  ipcMain.handle('sync:listExclusions', async (_event, rootId: string) => {
+    return refreshExclusions(rootId);
+  });
+  ipcMain.handle('sync:addExclusion', async (_event, rootId: string, relativePath: string) => {
+    return syncAddExclusion(rootId, relativePath);
+  });
+  ipcMain.handle('sync:removeExclusion', async (_event, rootId: string, exclusionId: string) => {
+    return syncRemoveExclusion(rootId, exclusionId);
+  });
+
+  // Conflict strategy
+  ipcMain.handle('sync:updateConflictStrategy', async (_event, rootId: string, strategy: string) => {
+    return syncSetConflictStrategy(rootId, strategy);
+  });
+
+  // WS status
+  ipcMain.handle('sync:wsStatus', () => {
+    return isWsConnected();
+  });
+
+  // Sync history + stats
+  ipcMain.handle('sync:getHistory', async (_event, rootId: string) => {
+    return getSyncHistory(rootId);
+  });
+  ipcMain.handle('sync:getStats', async (_event, rootId: string) => {
+    return getSyncStats(rootId);
   });
 }
 

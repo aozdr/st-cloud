@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.stcloud.common.context.TenantContext;
 import com.stcloud.common.context.UserContext;
 import com.stcloud.common.enums.NodeStatus;
 import com.stcloud.common.enums.NodeType;
@@ -15,6 +16,7 @@ import com.stcloud.core.dto.StorageInfoVO;
 import com.stcloud.core.entity.FileNode;
 import com.stcloud.core.enums.UploadStatus;
 import com.stcloud.core.event.FileIndexEvent;
+import com.stcloud.core.event.SyncChangeEvent;
 import com.stcloud.core.mapper.FileNodeMapper;
 import com.stcloud.core.mapper.UserQuotaMapper;
 import com.stcloud.core.service.FileService;
@@ -83,6 +85,7 @@ public class FileServiceImpl implements FileService {
         folder.setVersion(0);
         fileNodeMapper.insert(folder);
         eventPublisher.publishEvent(new FileIndexEvent(this, folder, FileIndexEvent.ActionType.INDEX));
+        eventPublisher.publishEvent(new SyncChangeEvent(this, folder, SyncChangeEvent.ChangeType.CREATE));
         return toVO(folder);
     }
 
@@ -96,6 +99,7 @@ public class FileServiceImpl implements FileService {
         LambdaQueryWrapper<FileNode> wrapper = new LambdaQueryWrapper<FileNode>()
                 .eq(FileNode::getParentId, parentId)
                 .eq(FileNode::getStatus, NodeStatus.NORMAL.getCode())
+                .eq(FileNode::getHidden, 0)
                 .eq(!UserContext.canAccessTenant(), FileNode::getOwnerId, userId)
                 .and(w -> w.eq(FileNode::getNodeType, NodeType.FOLDER.getCode())
                         .or().eq(FileNode::getUploadStatus, UploadStatus.COMPLETED.getCode()))
@@ -110,6 +114,7 @@ public class FileServiceImpl implements FileService {
         LambdaQueryWrapper<FileNode> wrapper = new LambdaQueryWrapper<FileNode>()
                 .eq(!UserContext.canAccessTenant(), FileNode::getOwnerId, userId)
                 .eq(FileNode::getStatus, NodeStatus.NORMAL.getCode())
+                .eq(FileNode::getHidden, 0)
                 .like(FileNode::getName, keyword)
                 .orderByDesc(FileNode::getNodeType)
                 .orderByDesc(FileNode::getUpdatedAt)
@@ -145,6 +150,7 @@ public class FileServiceImpl implements FileService {
             fileNodeMapper.updateChildrenPath(oldPath, newPath);
         }
         publishMetaUpdate(node, newPath);
+        eventPublisher.publishEvent(new SyncChangeEvent(this, node, SyncChangeEvent.ChangeType.RENAME, oldPath));
         return toVO(node);
     }
 
@@ -176,6 +182,7 @@ public class FileServiceImpl implements FileService {
                 fileNodeMapper.updateChildrenPath(oldPath, newPath);
             }
             publishMetaUpdate(node, newPath);
+            eventPublisher.publishEvent(new SyncChangeEvent(this, node, SyncChangeEvent.ChangeType.MOVE, oldPath));
         }
     }
 
@@ -222,8 +229,10 @@ public class FileServiceImpl implements FileService {
                 userQuotaMapper.updateStorageUsed(userId, size);
             }
             eventPublisher.publishEvent(new FileIndexEvent(this, copy, FileIndexEvent.ActionType.INDEX));
+            eventPublisher.publishEvent(new SyncChangeEvent(this, copy, SyncChangeEvent.ChangeType.CREATE));
         } else if (source.isFolder()) {
             eventPublisher.publishEvent(new FileIndexEvent(this, copy, FileIndexEvent.ActionType.INDEX));
+            eventPublisher.publishEvent(new SyncChangeEvent(this, copy, SyncChangeEvent.ChangeType.CREATE));
             LambdaQueryWrapper<FileNode> wrapper = new LambdaQueryWrapper<FileNode>()
                     .eq(FileNode::getParentId, source.getId())
                     .eq(FileNode::getStatus, NodeStatus.NORMAL.getCode());
@@ -259,8 +268,10 @@ public class FileServiceImpl implements FileService {
             fileNodeMapper.updateById(node);
             // ES：从索引移除被删节点及其子孙（子孙 status 虽未变，但需不可搜）
             eventPublisher.publishEvent(new FileIndexEvent(this, node, FileIndexEvent.ActionType.DELETE));
+            eventPublisher.publishEvent(new SyncChangeEvent(this, node, SyncChangeEvent.ChangeType.DELETE));
             for (FileNode descendant : collectDescendants(nodeId)) {
                 eventPublisher.publishEvent(new FileIndexEvent(this, descendant, FileIndexEvent.ActionType.DELETE));
+                eventPublisher.publishEvent(new SyncChangeEvent(this, descendant, SyncChangeEvent.ChangeType.DELETE));
             }
         }
     }
@@ -546,6 +557,7 @@ public class FileServiceImpl implements FileService {
         folder.setVersion(0);
         fileNodeMapper.insert(folder);
         eventPublisher.publishEvent(new FileIndexEvent(this, folder, FileIndexEvent.ActionType.INDEX));
+        eventPublisher.publishEvent(new SyncChangeEvent(this, folder, SyncChangeEvent.ChangeType.CREATE));
         return toVO(folder);
     }
 
@@ -590,6 +602,7 @@ public class FileServiceImpl implements FileService {
             fileNodeMapper.updateChildrenPath(oldPath, newPath);
         }
         publishMetaUpdate(node, newPath);
+        eventPublisher.publishEvent(new SyncChangeEvent(this, node, SyncChangeEvent.ChangeType.RENAME, oldPath));
         return toVO(node);
     }
 
@@ -608,8 +621,10 @@ public class FileServiceImpl implements FileService {
             fileNodeMapper.updateById(node);
             // ES：从索引移除被删节点及其子孙（子孙 status 虽未变，但需不可搜）
             eventPublisher.publishEvent(new FileIndexEvent(this, node, FileIndexEvent.ActionType.DELETE));
+            eventPublisher.publishEvent(new SyncChangeEvent(this, node, SyncChangeEvent.ChangeType.DELETE));
             for (FileNode descendant : collectDescendants(nodeId)) {
                 eventPublisher.publishEvent(new FileIndexEvent(this, descendant, FileIndexEvent.ActionType.DELETE));
+                eventPublisher.publishEvent(new SyncChangeEvent(this, descendant, SyncChangeEvent.ChangeType.DELETE));
             }
         }
     }
@@ -642,6 +657,7 @@ public class FileServiceImpl implements FileService {
                 fileNodeMapper.updateChildrenPath(oldPath, newPath);
             }
             publishMetaUpdate(node, newPath);
+            eventPublisher.publishEvent(new SyncChangeEvent(this, node, SyncChangeEvent.ChangeType.MOVE, oldPath));
         }
     }
 
@@ -786,8 +802,10 @@ public class FileServiceImpl implements FileService {
                 teamStorageMapper.updateTeamStorageUsed(source.getSpaceId(), size);
             }
             eventPublisher.publishEvent(new FileIndexEvent(this, copy, FileIndexEvent.ActionType.INDEX));
+            eventPublisher.publishEvent(new SyncChangeEvent(this, copy, SyncChangeEvent.ChangeType.CREATE));
         } else if (source.isFolder()) {
             eventPublisher.publishEvent(new FileIndexEvent(this, copy, FileIndexEvent.ActionType.INDEX));
+            eventPublisher.publishEvent(new SyncChangeEvent(this, copy, SyncChangeEvent.ChangeType.CREATE));
             LambdaQueryWrapper<FileNode> wrapper = new LambdaQueryWrapper<FileNode>()
                     .eq(FileNode::getParentId, source.getId())
                     .eq(FileNode::getStatus, NodeStatus.NORMAL.getCode());
@@ -798,4 +816,143 @@ public class FileServiceImpl implements FileService {
         }
     }
 
+
+    @Override
+    public List<Map<String, Object>> storageByType() {
+        Long userId = UserContext.getUserId();
+        Long tenantId = TenantContext.getTenantId();
+        List<Map<String, Object>> raw = fileNodeMapper.storageByType(userId, tenantId);
+        // 将 suffix 映射为文件类型分类
+        List<Map<String, Object>> result = new java.util.ArrayList<>();
+        for (Map<String, Object> row : raw) {
+            String suffix = String.valueOf(row.get("type")).toLowerCase();
+            String type = classifyFileType(suffix);
+            // 合并相同类型的统计
+            boolean found = false;
+            for (Map<String, Object> r : result) {
+                if (r.get("type").equals(type)) {
+                    r.put("size", ((Number) r.get("size")).longValue() + ((Number) row.get("size")).longValue());
+                    found = true;
+                    break;
+                }
+            }
+            if (!found) {
+                Map<String, Object> r = new java.util.HashMap<>();
+                r.put("type", type);
+                r.put("size", ((Number) row.get("size")).longValue());
+                result.add(r);
+            }
+        }
+        return result;
+    }
+
+    /** 将文件后缀归类为大类：image/video/document/audio/archive/other */
+    private String classifyFileType(String suffix) {
+        if (suffix == null || suffix.equals("null")) return "other";
+        return switch (suffix) {
+            case "jpg", "jpeg", "png", "gif", "webp", "svg", "bmp", "ico" -> "image";
+            case "mp4", "avi", "mkv", "mov", "wmv", "flv", "rmvb" -> "video";
+            case "doc", "docx", "pdf", "txt", "xls", "xlsx", "ppt", "pptx", "md" -> "document";
+            case "mp3", "wav", "flac", "aac", "ogg", "m4a" -> "audio";
+            case "zip", "rar", "7z", "tar", "gz", "bz2" -> "archive";
+            default -> "other";
+        };
+    }
+
+    @Override
+    public List<Map<String, Object>> findDuplicates() {
+        Long userId = UserContext.getUserId();
+        Long tenantId = TenantContext.getTenantId();
+        return fileNodeMapper.findDuplicates(userId, tenantId);
+    }
+
+    @Override
+    public List<FileNodeVO> findDuplicateDetail(String md5) {
+        Long userId = UserContext.getUserId();
+        Long tenantId = TenantContext.getTenantId();
+        List<FileNode> nodes = fileNodeMapper.findByMd5(userId, tenantId, md5);
+        return nodes.stream().map(this::toVO).collect(java.util.stream.Collectors.toList());
+    }
+
+    @Override
+    public int versionCount(Long nodeId) {
+        return fileNodeMapper.countVersions(nodeId);
+    }
+
+    @Override
+    @Transactional
+    public Map<String, Object> cleanupDuplicates(String md5) {
+        Long userId = UserContext.getUserId();
+        Long tenantId = TenantContext.getTenantId();
+
+        // 查询同 MD5 的所有文件节点（按 created_at ASC，最早的在前）
+        List<FileNode> nodes = fileNodeMapper.findByMd5(userId, tenantId, md5);
+        Map<String, Object> result = new java.util.LinkedHashMap<>();
+        result.put("total", nodes.size());
+
+        if (nodes.size() <= 1) {
+            result.put("deletedCount", 0);
+            result.put("skippedCount", 0);
+            return result;
+        }
+
+        int deletedCount = 0;
+        int skippedCount = 0;
+        boolean kept = false;
+
+        for (FileNode node : nodes) {
+            // 有历史版本的文件跳过，不删除也不作为保留项
+            if (fileNodeMapper.countVersions(node.getId()) > 0) {
+                skippedCount++;
+                continue;
+            }
+            if (!kept) {
+                // 第一个无历史版本的文件保留（created_at 最早的）
+                kept = true;
+                result.put("keptId", node.getId());
+                result.put("keptName", node.getName());
+                continue;
+            }
+            // 其余无历史版本的文件移入回收站
+            node.setStatus(NodeStatus.RECYCLED.getCode());
+            node.setUpdatedAt(java.time.LocalDateTime.now());
+            fileNodeMapper.updateById(node);
+            // 从搜索索引移除
+            eventPublisher.publishEvent(new FileIndexEvent(this, node, FileIndexEvent.ActionType.DELETE));
+            deletedCount++;
+        }
+
+        result.put("deletedCount", deletedCount);
+        result.put("skippedCount", skippedCount);
+        return result;
+    }
+
+    @Override
+    @Transactional
+    public void setHidden(Long nodeId, boolean hidden) {
+        FileNode node = fileNodeMapper.selectById(nodeId);
+        if (node == null || !node.isNormal()) {
+            throw new BusinessException(ResultCode.FILE_NOT_FOUND);
+        }
+        // 权限校验
+        Long userId = UserContext.getUserId();
+        if (!node.getOwnerId().equals(userId) && !UserContext.canAccessTenant()) {
+            throw new BusinessException(ResultCode.FORBIDDEN);
+        }
+        node.setHidden(hidden ? 1 : 0);
+        fileNodeMapper.updateById(node);
+    }
+
+    @Override
+    public List<FileNodeVO> listHidden() {
+        Long userId = UserContext.getUserId();
+        Long tenantId = TenantContext.getTenantId();
+        LambdaQueryWrapper<FileNode> wrapper = new LambdaQueryWrapper<FileNode>()
+                .eq(FileNode::getOwnerId, userId)
+                .eq(FileNode::getTenantId, tenantId)
+                .eq(FileNode::getStatus, NodeStatus.NORMAL.getCode())
+                .eq(FileNode::getHidden, 1)
+                .orderByDesc(FileNode::getUpdatedAt);
+        return fileNodeMapper.selectList(wrapper).stream().map(this::toVO).collect(java.util.stream.Collectors.toList());
+    }
 }

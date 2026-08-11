@@ -10,14 +10,23 @@ import java.time.LocalDateTime;
 @Schema(description = "同步变更项")
 public class SyncDeltaItem {
 
+    @Schema(description = "日志ID（游标）")
+    private String logId;
+
     @Schema(description = "节点ID")
     private String nodeId;
 
     @Schema(description = "父节点ID")
     private String parentId;
 
+    @Schema(description = "变更类型：CREATE/UPDATE/MOVE/RENAME/DELETE")
+    private String changeType;
+
     @Schema(description = "相对同步根的路径")
     private String path;
+
+    @Schema(description = "变更前相对路径（MOVE/RENAME）")
+    private String oldPath;
 
     @Schema(description = "名称")
     private String name;

@@ -242,7 +242,9 @@ export interface TeamSpace {
   memberCount: number;
   status: number;
   createdAt: string;
+  isPinned?: number;
 }
+  // isPinned comes from team_member, added by backend listSpaces (TODO: add to VO)
 
 export interface TeamMember {
   id: string;
@@ -304,6 +306,7 @@ export interface AuditLog {
   status: number;
   createdAt: string;
 }
+  // isPinned comes from team_member, added by backend listSpaces (TODO: add to VO)
 
 /** 结构化审计日志详情（JSON解析后） */
 export interface AuditLogDetail {
@@ -428,6 +431,13 @@ trashItem: (filePath: string) => Promise<void>;
   syncStart: (rootId: string, cloudFolderNodeId: string, localPath: string) => Promise<void>;
   syncStop: (rootId: string) => Promise<void>;
   syncStatus: () => Promise<Record<string, boolean>>;
+  syncListExclusions: (rootId: string) => Promise<SyncExclusionVO[]>;
+  syncAddExclusion: (rootId: string, relativePath: string) => Promise<unknown>;
+  syncRemoveExclusion: (rootId: string, exclusionId: string) => Promise<void>;
+  syncUpdateConflictStrategy: (rootId: string, strategy: string) => Promise<SyncRootVO>;
+  syncWsStatus: () => Promise<boolean>;
+  syncGetHistory: (rootId: string) => Promise<SyncHistoryEntry[]>;
+  syncGetStats: (rootId: string) => Promise<SyncStats>;
   onSyncEvent: (cb: (event: { event: string; data: unknown }) => void) => () => void;
 }
 
@@ -487,13 +497,104 @@ export interface SyncRootVO {
   cloudFolderName: string | null;
   localPathHint: string | null;
   status: number;
+  conflictStrategy: string;
   cursor: number;
+  lastSyncAt: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface SyncExclusionVO {
+  id: string;
+  syncRootId: string;
+  relativePath: string;
+  createdAt: string;
+}
+
+export interface SyncHistoryEntry {
+  id: number;
+  rootId: string;
+  action: string;
+  fileName: string | null;
+  relPath: string | null;
+  status: string;
+  detail: string | null;
+  createdAt: string;
+}
+
+export interface SyncStats {
+  synced: number;
+  error: number;
+  conflict: number;
+  excluded: number;
 }
 
 declare global {
   interface Window {
     electronAPI?: ElectronAPI;
   }
+}
+
+// ==================== P0: Team Invite & Activity Types ====================
+export interface TeamInvite {
+  id: string;
+  spaceId: string;
+  inviteCode: string;
+  role: number;
+  createdBy: string;
+  createdByName: string;
+  expireAt: string | null;
+  status: number; // 0-已撤销 1-有效
+  createdAt: string;
+}
+
+export interface TeamActivity {
+  id: string;
+  userId: string;
+  username: string;
+  nickname: string;
+  action: string;
+  targetType: string | null;
+  targetId: string | null;
+  targetName: string | null;
+  detail: string | null;
+  createdAt: string;
+}
+export interface UserSearch {
+  userId: string;
+  username: string;
+  nickname: string;
+  avatar: string | null;
+}
+// ==================== P1: Notification, Comment, FolderPermission ====================
+export interface NotificationItem {
+  id: string; type: string; title: string; content: string | null;
+  refType: string | null; refId: string | null;
+  read: number; createdAt: string;
+}
+
+export interface TeamCommentItem {
+  id: string; spaceId: string; nodeId: string;
+  userId: string; username: string; nickname: string; avatar: string | null;
+  content: string; parentId: string | null;
+  mentions: string | null; createdAt: string;
+  replies?: TeamCommentItem[];
+}
+
+export interface FolderPermissionItem {
+  id: string; spaceId: string; folderNodeId: string;
+  subjectType: string; subjectId: string; subjectName: string;
+  permission: number; createdAt: string;
+}
+// ==================== P2: Role, Stats, Lock ====================
+export interface TeamRoleInfo {
+  id: string; spaceId: string; name: string;
+  permissions: string; status: number; isPreset: boolean; createdAt: string;
+}
+
+export interface TeamStats {
+  storageUsed: string; storageQuota: string; fileCount: string;
+  fileTypeDistribution: { type: string; count: number }[];
+  memberActivity: { userId: string; nickname: string; lastActiveAt: string | null }[];
+  operationStats: { action: string; count: number }[];
 }

@@ -1,4 +1,4 @@
-import {
+﻿import {
   createContext,
   useContext,
   useState,
@@ -66,16 +66,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
           return (
             <div
               key={toast.id}
-              className={`flex items-center gap-3 bg-white rounded-lg border-l-4 ${accent.border} shadow-md pointer-events-auto animate-toast-slide-down min-w-[280px] px-4 py-3`}
+              className={`flex items-center gap-3 bg-surface rounded-lg border-l-4 ${accent.border} shadow-md pointer-events-auto animate-toast-slide-down w-[280px] max-w-[calc(100vw-1.5rem)] px-4 py-3`}
             >
               <Icon className={`w-4 h-4 flex-shrink-0 ${accent.icon}`} strokeWidth={2} aria-hidden />
 
-              <span className="text-sm font-medium text-stone-800 flex-1">{toast.message}</span>
+              <span className="text-sm font-medium text-fg flex-1">{toast.message}</span>
 
               <button
                 onClick={() => removeToast(toast.id)}
                 aria-label="关闭"
-                className="text-stone-300 hover:text-stone-500 transition-colors flex-shrink-0 cursor-pointer"
+                className="text-muted hover:text-fg transition-colors flex-shrink-0 cursor-pointer"
               >
                 <X className="w-4 h-4" aria-hidden />
               </button>

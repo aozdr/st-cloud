@@ -25,8 +25,15 @@ public class SyncRootVO {
     @Schema(description = "状态：0-启用 1-暂停")
     private Integer status;
 
-    @Schema(description = "上次同步游标（epoch ms）")
+    @Schema(description = "冲突策略：keep_both / latest_wins / server_wins / local_wins")
+    private String conflictStrategy;
+
+    @Schema(description = "上次同步游标（sync_change_log.id）")
     private Long cursor;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Schema(description = "最后同步时间")
+    private LocalDateTime lastSyncAt;
 
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @Schema(description = "创建时间")

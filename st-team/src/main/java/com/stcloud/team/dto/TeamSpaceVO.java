@@ -37,6 +37,9 @@ public class TeamSpaceVO {
     @Schema(description = "成员数")
     private Integer memberCount;
 
+    @io.swagger.v3.oas.annotations.media.Schema(description = "当前用户是否置顶")
+    private Integer isPinned;
+
     @Schema(description = "状态")
     private Integer status;
 

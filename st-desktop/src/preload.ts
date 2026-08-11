@@ -114,6 +114,27 @@ const api: ElectronAPI = {
   syncStatus: () => {
     return ipcRenderer.invoke('sync:status');
   },
+  syncListExclusions: (rootId: string) => {
+    return ipcRenderer.invoke('sync:listExclusions', rootId);
+  },
+  syncAddExclusion: (rootId: string, relativePath: string) => {
+    return ipcRenderer.invoke('sync:addExclusion', rootId, relativePath);
+  },
+  syncRemoveExclusion: (rootId: string, exclusionId: string) => {
+    return ipcRenderer.invoke('sync:removeExclusion', rootId, exclusionId);
+  },
+  syncUpdateConflictStrategy: (rootId: string, strategy: string) => {
+    return ipcRenderer.invoke('sync:updateConflictStrategy', rootId, strategy);
+  },
+  syncWsStatus: () => {
+    return ipcRenderer.invoke('sync:wsStatus');
+  },
+  syncGetHistory: (rootId: string) => {
+    return ipcRenderer.invoke('sync:getHistory', rootId);
+  },
+  syncGetStats: (rootId: string) => {
+    return ipcRenderer.invoke('sync:getStats', rootId);
+  },
   onSyncEvent: (cb: (event: { event: string; data: unknown }) => void) => {
     const handler = (_event: unknown, payload: { event: string; data: unknown }) => cb(payload);
     ipcRenderer.on('sync:event', handler);

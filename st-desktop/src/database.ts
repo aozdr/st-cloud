@@ -84,6 +84,23 @@ export async function initDatabase(): Promise<void> {
   `);
   // 迁移：为已有数据库补充 user_id 列
   try { db.run('ALTER TABLE sync_config ADD COLUMN user_id TEXT'); } catch { /* 列已存在 */ }
+
+  // 同步历史记录表（持久化已完成的上传/下载/删除/冲突操作）
+  db.run(`
+    CREATE TABLE IF NOT EXISTS sync_history (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      root_id     TEXT NOT NULL,
+      action      TEXT NOT NULL,
+      file_name   TEXT,
+      rel_path    TEXT,
+      status      TEXT NOT NULL,
+      detail      TEXT,
+      created_at  TEXT NOT NULL
+    )
+  `);
+  // 迁移：为已有 sync_history 补充索引
+  try { db.run('CREATE INDEX IF NOT EXISTS idx_sync_history_root ON sync_history(root_id, created_at DESC)'); } catch { /* ignore */ }
+
   persist();
 }
 
@@ -253,6 +270,73 @@ export function getPendingTasks(): TransferTask[] {
 }
 
 // ==================== 同步状态（SyncState）====================
+
+export interface SyncHistoryRow {
+  id: number;
+  rootId: string;
+  action: string;
+  fileName: string | null;
+  relPath: string | null;
+  status: string;
+  detail: string | null;
+  createdAt: string;
+}
+
+export interface SyncHistoryInput {
+  rootId: string;
+  action: string;
+  fileName?: string | null;
+  relPath?: string | null;
+  status: string;
+  detail?: string | null;
+}
+
+export function insertSyncHistory(row: SyncHistoryInput): void {
+  const now = new Date().toISOString();
+  db.run(
+    `INSERT INTO sync_history (root_id, action, file_name, rel_path, status, detail, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
+    [row.rootId, row.action, row.fileName ?? null, row.relPath ?? null, row.status, row.detail ?? null, now],
+  );
+  persist();
+}
+
+export function getSyncHistory(rootId: string, limit = 100): SyncHistoryRow[] {
+  const stmt = db.prepare('SELECT * FROM sync_history WHERE root_id = ? ORDER BY created_at DESC LIMIT ?');
+  stmt.bind([rootId, limit]);
+  const results: SyncHistoryRow[] = [];
+  while (stmt.step()) {
+    const row = stmt.getAsObject() as Record<string, unknown>;
+    results.push({
+      id: row.id as number,
+      rootId: row.root_id as string,
+      action: row.action as string,
+      fileName: (row.file_name as string | null) ?? null,
+      relPath: (row.rel_path as string | null) ?? null,
+      status: row.status as string,
+      detail: (row.detail as string | null) ?? null,
+      createdAt: row.created_at as string,
+    });
+  }
+  stmt.free();
+  return results;
+}
+
+export function getSyncStats(rootId: string): { synced: number; error: number; conflict: number; excluded: number } {
+  const stmt = db.prepare(`SELECT status, COUNT(*) as cnt FROM sync_state WHERE status IS NOT NULL GROUP BY status`);
+  const stats = { synced: 0, error: 0, conflict: 0, excluded: 0 };
+  while (stmt.step()) {
+    const row = stmt.getAsObject() as Record<string, unknown>;
+    const status = row.status as string;
+    const cnt = row.cnt as number;
+    if (status === 'synced') stats.synced += cnt;
+    else if (status === 'error') stats.error += cnt;
+    else if (status === 'conflict') stats.conflict += cnt;
+    else if (status === 'excluded') stats.excluded += cnt;
+  }
+  stmt.free();
+  return stats;
+}
 
 export interface SyncStateRow {
   localPath: string;

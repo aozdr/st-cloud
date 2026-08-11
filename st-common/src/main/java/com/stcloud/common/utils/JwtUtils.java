@@ -53,7 +53,7 @@ public class JwtUtils {
     @Value("${stcloud.jwt.master-key:}")
     private String masterKey;
 
-    @Value("${stcloud.jwt.expiration:7200000}")
+    @Value("${stcloud.jwt.expiration:604800000}")
     private long expiration;
 
     @Value("${stcloud.jwt.refresh-expiration:2592000000}")

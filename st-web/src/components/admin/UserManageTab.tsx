@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { Ban, Key, Edit3, Shield, UserPlus } from 'lucide-react';
 import api from '../../lib/api';
 import { useToast } from '../ui/Toast';
@@ -116,7 +116,7 @@ export default function UserManageTab() {
   return (
     <>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-base font-semibold text-stone-900">用户管理</h2>
+        <h2 className="text-base font-semibold text-fg">用户管理</h2>
         <button
           onClick={() => openCreateUser()}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md transition-colors cursor-pointer"
@@ -124,68 +124,68 @@ export default function UserManageTab() {
           <UserPlus className="w-4 h-4" /> 新建用户
         </button>
       </div>
-      <div className="bg-white rounded-lg border border-stone-200 overflow-hidden">
+      <div className="bg-surface rounded-lg border border-border overflow-hidden">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-stone-200 bg-stone-50">
-              <th className="text-left px-4 py-3 font-medium text-stone-500">用户名</th>
-              <th className="text-left px-4 py-3 font-medium text-stone-500">昵称</th>
-              <th className="text-left px-4 py-3 font-medium text-stone-500">存储用量</th>
-              <th className="text-center px-4 py-3 font-medium text-stone-500">角色</th>
-              <th className="text-center px-4 py-3 font-medium text-stone-500">状态</th>
-              <th className="text-center px-4 py-3 font-medium text-stone-500">操作</th>
+            <tr className="border-b border-border bg-surface-2">
+              <th className="text-left px-4 py-3 font-medium text-muted">用户名</th>
+              <th className="text-left px-4 py-3 font-medium text-muted">昵称</th>
+              <th className="text-left px-4 py-3 font-medium text-muted">存储用量</th>
+              <th className="text-center px-4 py-3 font-medium text-muted">角色</th>
+              <th className="text-center px-4 py-3 font-medium text-muted">状态</th>
+              <th className="text-center px-4 py-3 font-medium text-muted">操作</th>
             </tr>
           </thead>
           <tbody>
             {users.map((user) => (
-              <tr key={user.id} className="border-b border-stone-100 hover:bg-stone-50 transition-colors">
-                <td className="px-4 py-3 text-stone-800 font-medium">{user.username}</td>
-                <td className="px-4 py-3 text-stone-600">{user.nickname || '-'}</td>
-                <td className="px-4 py-3 text-stone-500 text-xs tabular-nums">
+              <tr key={user.id} className="border-b border-border hover:bg-surface-2 transition-colors">
+                <td className="px-4 py-3 text-fg font-medium">{user.username}</td>
+                <td className="px-4 py-3 text-muted">{user.nickname || '-'}</td>
+                <td className="px-4 py-3 text-muted text-xs tabular-nums">
                   {formatSize(Number(user.storageUsed))} / {formatSize(Number(user.storageQuota))}
                 </td>
                 <td className="px-4 py-3 text-center">
                   {user.roles?.some((r) => r.roleCode === 'admin') ? (
-                    <span className="inline-flex items-center gap-1 text-xs text-primary-700 bg-primary-50 px-2 py-0.5 rounded-md">
+                    <span className="inline-flex items-center gap-1 text-xs text-primary-600 bg-primary-500/10 px-2 py-0.5 rounded-md">
                       <Shield className="w-3 h-3" aria-hidden /> 管理员
                     </span>
                   ) : (
-                    <span className="text-xs text-stone-400">普通用户</span>
+                    <span className="text-xs text-muted">普通用户</span>
                   )}
                 </td>
                 <td className="px-4 py-3 text-center">
                   {user.status === 1 ? (
-                    <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-md">正常</span>
+                    <span className="text-xs text-green-600 dark:text-green-400 bg-green-500/15 px-2 py-0.5 rounded-md">正常</span>
                   ) : (
-                    <span className="text-xs text-red-600 bg-red-50 px-2 py-0.5 rounded-md">禁用</span>
+                    <span className="text-xs text-red-600 dark:text-red-400 bg-red-500/15 px-2 py-0.5 rounded-md">禁用</span>
                   )}
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-center gap-2">
                     <button
                       onClick={() => handleToggleStatus(user.id, user.status)}
-                      className="text-stone-400 hover:text-amber-600 transition-colors cursor-pointer"
+                      className="text-muted hover:text-amber-600 dark:text-amber-400 transition-colors cursor-pointer"
                       title={user.status === 1 ? '禁用' : '启用'} aria-label={user.status === 1 ? '禁用' : '启用'}
                     >
                       <Ban className="w-4 h-4" aria-hidden />
                     </button>
                     <button
                       onClick={() => handleResetPassword(user.id)}
-                      className="text-stone-400 hover:text-primary-600 transition-colors cursor-pointer"
+                      className="text-muted hover:text-primary-600 transition-colors cursor-pointer"
                       title="重置密码" aria-label="重置密码"
                     >
                       <Key className="w-4 h-4" aria-hidden />
                     </button>
                     <button
                       onClick={() => setQuotaTarget(user)}
-                      className="text-stone-400 hover:text-primary-600 transition-colors cursor-pointer"
+                      className="text-muted hover:text-primary-600 transition-colors cursor-pointer"
                       title="修改配额" aria-label="修改配额"
                     >
                       <Edit3 className="w-4 h-4" aria-hidden />
                     </button>
                     <button
                       onClick={() => handleOpenRoleDialog(user)}
-                      className="text-stone-400 hover:text-primary-600 transition-colors cursor-pointer"
+                      className="text-muted hover:text-primary-600 transition-colors cursor-pointer"
                       title="分配角色" aria-label="分配角色"
                     >
                       <Shield className="w-4 h-4" aria-hidden />
@@ -197,21 +197,21 @@ export default function UserManageTab() {
           </tbody>
         </table>
         {userTotal > 20 && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-stone-100">
-            <span className="text-xs text-stone-400">共 {userTotal} 条</span>
+          <div className="flex items-center justify-between px-4 py-3 border-t border-border">
+            <span className="text-xs text-muted">共 {userTotal} 条</span>
             <div className="flex gap-2">
               <button
                 onClick={() => setUserPage((p) => Math.max(1, p - 1))}
                 disabled={userPage <= 1}
-                className="px-3 py-1 text-xs text-stone-600 bg-white border border-stone-200 rounded hover:bg-stone-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                className="px-3 py-1 text-xs text-muted bg-surface border border-border rounded hover:bg-surface-2 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
               >
                 上一页
               </button>
-              <span className="px-3 py-1 text-xs text-stone-500 tabular-nums">第 {userPage} 页</span>
+              <span className="px-3 py-1 text-xs text-muted tabular-nums">第 {userPage} 页</span>
               <button
                 onClick={() => setUserPage((p) => p + 1)}
                 disabled={userPage * 20 >= userTotal}
-                className="px-3 py-1 text-xs text-stone-600 bg-white border border-stone-200 rounded hover:bg-stone-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
+                className="px-3 py-1 text-xs text-muted bg-surface border border-border rounded hover:bg-surface-2 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
               >
                 下一页
               </button>

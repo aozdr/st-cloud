@@ -31,6 +31,11 @@ public class FileNode extends BaseEntity {
     @Version
     private Integer version;
     private String thumbnailPath;
+    private Integer hidden;
+    // P2: 文件锁定
+    private Long lockedBy;
+    private java.time.LocalDateTime lockedAt;
+    private java.time.LocalDateTime lockExpireAt;  // 0-正常 1-隐藏
 
     public boolean isFolder() {
         return nodeType != null && nodeType == NodeType.FOLDER.getCode();

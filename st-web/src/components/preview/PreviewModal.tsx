@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect, useRef, useState } from 'react';
-import { X, Download, ChevronLeft, ChevronRight, Table, ChevronDown } from 'lucide-react';
+import { X, Download, ChevronLeft, ChevronRight, Table, ChevronDown, RotateCw, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import api from '../../lib/api';
 import type { FileNode, PreviewResult } from '../../types';
 import { addRecentFile } from '../../lib/recentFiles';
@@ -18,6 +18,17 @@ async function renderDocx(blob: Blob, container: HTMLElement) {
     ignoreHeight: false,
     breakPages: true,
     experimental: true,
+  });
+  // 拦截文档内超链接，防止点击后跳转离开网盘：改为新标签页打开
+  container.querySelectorAll('a[href]').forEach((el) => {
+    const link = el as HTMLAnchorElement;
+    link.target = '_blank';
+    link.rel = 'noopener noreferrer';
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      window.open(link.href, '_blank', 'noopener,noreferrer');
+    });
   });
 }
 
@@ -46,6 +57,9 @@ interface Props {
 
 export default function PreviewModal({ files, currentIndex, onClose, shareContext, onDownload }: Props) {
   const [index, setIndex] = useState(currentIndex);
+  // 图片缩放/旋转状态
+  const [imgScale, setImgScale] = useState(1);
+  const [imgRotate, setImgRotate] = useState(0);
   const [url, setUrl] = useState<string | null>(null);
   const [textContent, setTextContent] = useState<string | null>(null);
   const [excelHtml, setExcelHtml] = useState<string | null>(null);
@@ -72,6 +86,12 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
     if (file && file.nodeType === 1) addRecentFile(file);
   }, [file]);
 
+  // 切换文件时重置图片变换状态
+  useEffect(() => {
+    setImgScale(1);
+    setImgRotate(0);
+  }, [index]);
+
   useEffect(() => {
     if (!file || file.nodeType !== 1) return;
     setLoading(true);
@@ -94,7 +114,7 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
         fetch(streamUrl)
           .then((res) => res.text())
           .then((text) => {
-            setTextContent(text.length > 500000 ? text.slice(0, 500000) + '\n\n... (内容过长，已截断)' : text);
+            setTextContent(text.length > 500000 ? text.slice(0, 500000) + '\n\n… (内容过长，已截断)' : text);
             setLoading(false);
           })
           .catch(() => setLoading(false));
@@ -130,7 +150,7 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
         fetch(streamUrl, { headers })
           .then((res) => res.text())
           .then((text) => {
-            setTextContent(text.length > 500000 ? text.slice(0, 500000) + '\n\n... (内容过长，已截断)' : text);
+            setTextContent(text.length > 500000 ? text.slice(0, 500000) + '\n\n… (内容过长，已截断)' : text);
             setLoading(false);
           })
           .catch(() => setLoading(false));
@@ -219,9 +239,9 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-stone-900/95 animate-fade-in">
+    <div className="fixed inset-0 z-50 flex flex-col bg-neutral-950/95 overscroll-contain animate-fade-in">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-3 bg-stone-900/80">
+      <div className="flex items-center justify-between px-5 py-3 bg-neutral-950/80">
         <div className="flex items-center gap-3 min-w-0">
           <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0', config.bgColor)}>
             <config.icon className={cn('w-4 h-4', config.color)} aria-hidden />
@@ -239,14 +259,14 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
                 <ChevronDown className="w-3 h-3" aria-hidden />
               </button>
               {sheetDropdownOpen && (
-                <div className="absolute top-full left-0 mt-1 bg-white rounded-lg shadow-md border border-stone-200 py-1 min-w-[120px] z-20">
+                <div className="absolute top-full left-0 mt-1 bg-surface rounded-lg shadow-md border border-border py-1 min-w-[120px] z-20">
                   {excelSheets.map((name, idx) => (
                     <button
                       key={idx}
                       onClick={() => switchSheet(idx)}
                       className={cn(
                         'w-full text-left px-3 py-1.5 text-xs cursor-pointer transition-colors',
-                        idx === excelSheetIdx ? 'bg-primary-50 text-primary-700' : 'text-stone-700 hover:bg-stone-50'
+                        idx === excelSheetIdx ? 'bg-primary-500/10 text-primary-600' : 'text-muted hover:bg-surface-2'
                       )}
                     >
                       {name}
@@ -325,7 +345,64 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
               ) : null}
             </div>
           ) : isImage(file.suffix) && url ? (
-            <img src={url} alt={file.name} className="max-w-full max-h-full object-contain rounded-lg" />
+            <div className="relative flex flex-col items-center">
+              <img
+                src={url}
+                alt={file.name}
+                width={800}
+                height={600}
+                loading="lazy"
+                draggable={false}
+                className="max-w-full max-h-[80vh] object-contain rounded-lg transition-transform duration-200 select-none"
+                style={{ transform: `scale(${imgScale}) rotate(${imgRotate}deg)` }}
+                onWheel={(e) => {
+                  // 滚轮缩放：上滚放大，下滚缩小
+                  e.preventDefault();
+                  setImgScale((s) => Math.max(0.25, Math.min(5, s + (e.deltaY < 0 ? 0.15 : -0.15))));
+                }}
+              />
+              {/* 图片工具栏：缩放/旋转/重置 */}
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-1 bg-black/60 backdrop-blur-sm rounded-lg px-2 py-1.5">
+                <button
+                  onClick={() => setImgScale((s) => Math.max(0.25, s - 0.25))}
+                  className="w-8 h-8 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 rounded cursor-pointer"
+                  aria-label="缩小"
+                >
+                  <ZoomOut className="w-4 h-4" />
+                </button>
+                <span className="text-white/60 text-xs tabular-nums w-12 text-center">{Math.round(imgScale * 100)}%</span>
+                <button
+                  onClick={() => setImgScale((s) => Math.min(5, s + 0.25))}
+                  className="w-8 h-8 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 rounded cursor-pointer"
+                  aria-label="放大"
+                >
+                  <ZoomIn className="w-4 h-4" />
+                </button>
+                <div className="w-px h-5 bg-white/20 mx-1" />
+                <button
+                  onClick={() => setImgRotate((r) => r - 90)}
+                  className="w-8 h-8 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 rounded cursor-pointer"
+                  aria-label="左旋转"
+                >
+                  <RotateCw className="w-4 h-4 scale-x-[-1]" />
+                </button>
+                <button
+                  onClick={() => setImgRotate((r) => r + 90)}
+                  className="w-8 h-8 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 rounded cursor-pointer"
+                  aria-label="右旋转"
+                >
+                  <RotateCw className="w-4 h-4" />
+                </button>
+                <div className="w-px h-5 bg-white/20 mx-1" />
+                <button
+                  onClick={() => { setImgScale(1); setImgRotate(0); }}
+                  className="w-8 h-8 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 rounded cursor-pointer"
+                  aria-label="重置"
+                >
+                  <Maximize2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
           ) : isVideo(file.suffix) && url ? (
             <Suspense fallback={<div className="w-10 h-10 border-3 border-white/30 border-t-white rounded-full animate-spin" />}>
               <PlyrPlayer src={url} />
@@ -338,23 +415,23 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
               <audio src={url} controls autoPlay className="w-96" />
             </div>
           ) : isPdf(file.suffix) && url ? (
-            <iframe src={url} className="w-[80vw] h-[80vh] bg-white rounded-lg" title={file.name} />
+            <iframe src={url} className="w-[80vw] h-[80vh] bg-surface rounded-lg" title={file.name} />
           ) : isText(file.suffix) && textContent !== null ? (
-            <div className="w-[80vw] h-[80vh] bg-white rounded-lg overflow-auto">
-              <pre className="p-6 text-sm text-stone-800 font-mono whitespace-pre-wrap break-all leading-relaxed">
+            <div className="w-[80vw] h-[80vh] bg-surface rounded-lg overflow-auto">
+              <pre className="p-6 text-sm text-fg font-mono whitespace-pre-wrap break-all leading-relaxed">
                 {textContent}
               </pre>
             </div>
           ) : isWord(file.suffix) ? (
-            <div className="w-[80vw] h-[80vh] bg-white rounded-lg overflow-auto shadow-lg">
+            <div className="w-[80vw] h-[80vh] bg-surface rounded-lg overflow-auto shadow-lg">
               <div ref={docxContainerRef} className="docx-container" />
             </div>
           ) : isExcel(file.suffix) && excelHtml ? (
-            <div className="w-[80vw] h-[80vh] bg-white rounded-lg overflow-hidden shadow-lg">
+            <div className="w-[80vw] h-[80vh] bg-surface rounded-lg overflow-auto shadow-lg">
               <style>{`
-                .xlsx-table { border-collapse: collapse; width: 100%; font-size: 13px; }
-                .xlsx-table td, .xlsx-table th { border: 1px solid #e7e5e4; padding: 4px 8px; text-align: left; white-space: nowrap; }
-                .xlsx-table tr:first-child td { background: #f5f5f4; font-weight: 600; }
+                .xlsx-table { border-collapse: collapse; width: max-content; min-width: 100%; font-size: 13px; color: rgb(var(--fg)); }
+                .xlsx-table td, .xlsx-table th { border: 1px solid rgb(var(--border)); padding: 4px 8px; text-align: left; white-space: nowrap; }
+                .xlsx-table tr:first-child td { background: rgb(var(--surface-2)); font-weight: 600; position: sticky; top: 0; z-index: 1; }
               `}</style>
               <table className="xlsx-table" dangerouslySetInnerHTML={{ __html: excelHtml }} />
             </div>

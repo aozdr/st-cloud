@@ -7,21 +7,14 @@ import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popove
 import api from '../lib/api';
 import type { SearchResultVO, FileNode } from '../types';
 import { getFileTypeConfig, formatSize, formatDate, cn } from '../lib/utils';
+import { type FileTypeFilter, FILTER_SUFFIXES } from '../lib/fileTypes';
 import FileTypeIcon from '../components/file/FileTypeIcon';
 import PreviewModal from '../components/preview/PreviewModal';
 
-type FileTypeFilter = 'all' | 'folder' | 'image' | 'video' | 'audio' | 'document' | 'archive';
 type SortOption = 'relevance' | 'name' | 'size_desc' | 'size_asc' | 'date_desc' | 'date_asc';
 type SizeFilter = 'all' | 'small' | 'medium' | 'large';
 type DateRange = { from: Date; to: Date };
 
-const FILTER_SUFFIXES: Record<Exclude<FileTypeFilter, 'all' | 'folder'>, string[]> = {
-  image: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg', 'ico', 'tiff', 'tif'],
-  video: ['mp4', 'mkv', 'avi', 'mov', 'wmv', 'flv', 'webm', 'm4v', 'mpg', 'mpeg', '3gp'],
-  audio: ['mp3', 'wav', 'flac', 'aac', 'ogg', 'wma', 'm4a', 'opus'],
-  document: ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'csv', 'ppt', 'pptx', 'txt', 'md', 'markdown'],
-  archive: ['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz', 'tgz'],
-};
 
 const FILE_TYPE_TABS: { value: FileTypeFilter; label: string; icon: typeof FileText }[] = [
   { value: 'all', label: '全部', icon: Search },
@@ -91,13 +84,13 @@ function FilterDropdown({ icon: Icon, label, options, value, onChange }: {
 
   return (
     <div ref={ref} className="relative">
-      <button onClick={() => setOpen(!open)} className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer border', active ? 'bg-primary-50 text-primary-700 border-primary-200' : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50 hover:border-stone-300')}>
+      <button onClick={() => setOpen(!open)} className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer border', active ? 'bg-primary-500/10 text-primary-600 border-primary-200' : 'bg-surface text-muted border-border hover:bg-surface-2 hover:border-border')}>
         <Icon className="w-3.5 h-3.5" aria-hidden /><span>{selectedLabel}</span>
       </button>
       {open && (
-        <div className="absolute top-full left-0 mt-1 w-44 bg-white rounded-lg border border-stone-200 shadow-lg py-1 z-50 animate-scale-in">
+        <div className="absolute top-full left-0 mt-1 w-44 bg-surface rounded-lg border border-border shadow-lg py-1 z-50 animate-scale-in">
           {options.map((opt) => (
-            <button key={opt.value} onClick={() => { onChange(opt.value); setOpen(false); }} className={cn('w-full text-left px-3 py-1.5 text-xs transition-colors cursor-pointer', opt.value === value ? 'text-primary-700 bg-primary-50 font-medium' : 'text-stone-600 hover:bg-stone-50')}>{opt.label}</button>
+            <button key={opt.value} onClick={() => { onChange(opt.value); setOpen(false); }} className={cn('w-full text-left px-3 py-1.5 text-xs transition-colors cursor-pointer', opt.value === value ? 'text-primary-600 bg-primary-500/10 font-medium' : 'text-muted hover:bg-surface-2')}>{opt.label}</button>
           ))}
         </div>
       )}
@@ -125,7 +118,7 @@ function DateRangeFilter({ value, onChange }: { value: DateRange | undefined; on
     <div className="flex items-center gap-0.5">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <button className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer border', active ? 'bg-primary-50 text-primary-700 border-primary-200' : 'bg-white text-stone-600 border-stone-200 hover:bg-stone-50 hover:border-stone-300')}>
+          <button className={cn('flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors cursor-pointer border', active ? 'bg-primary-500/10 text-primary-600 border-primary-200' : 'bg-surface text-muted border-border hover:bg-surface-2 hover:border-border')}>
             <Calendar className="w-3.5 h-3.5" aria-hidden />
             <span>{label}</span>
           </button>
@@ -134,15 +127,15 @@ function DateRangeFilter({ value, onChange }: { value: DateRange | undefined; on
           <div className="p-3">
             <div className="flex items-center gap-1.5 mb-3 flex-wrap">
               {QUICK_PRESETS.map((p) => (
-                <button key={p.label} onClick={() => setLocal(p.getRange())} className="px-2 py-1 text-xs text-primary-600 hover:text-primary-700 bg-primary-50 hover:bg-primary-100 rounded-md cursor-pointer transition-colors">{p.label}</button>
+                <button key={p.label} onClick={() => setLocal(p.getRange())} className="px-2 py-1 text-xs text-primary-600 hover:text-primary-600 bg-primary-500/10 hover:bg-primary-100 rounded-md cursor-pointer transition-colors">{p.label}</button>
               ))}
-              <button onClick={() => setLocal(undefined)} className="px-2 py-1 text-xs text-stone-500 hover:text-stone-700 bg-stone-50 hover:bg-stone-100 rounded-md cursor-pointer transition-colors">全部</button>
+              <button onClick={() => setLocal(undefined)} className="px-2 py-1 text-xs text-muted hover:text-fg bg-surface-2 hover:bg-surface-2 rounded-md cursor-pointer transition-colors">全部</button>
             </div>
             <CalendarPicker mode="range" selected={local ? { from: local.from, to: local.to } : undefined} onSelect={(range: { from?: Date; to?: Date } | undefined) => { if (range?.from) setLocal({ from: range.from, to: range.to || range.from }); else setLocal(undefined); }} numberOfMonths={1} />
-            <div className="flex items-center justify-between mt-2 pt-2 border-t border-stone-100">
-              <span className="text-xs text-stone-400">{local?.from ? `${format(local.from, 'yyyy-MM-dd')}${local?.to && local.to.getTime() !== local.from.getTime() ? ` ~ ${format(local.to, 'yyyy-MM-dd')}` : ''}` : '请选择日期范围'}</span>
+            <div className="flex items-center justify-between mt-2 pt-2 border-t border-border">
+              <span className="text-xs text-muted">{local?.from ? `${format(local.from, 'yyyy-MM-dd')}${local?.to && local.to.getTime() !== local.from.getTime() ? ` ~ ${format(local.to, 'yyyy-MM-dd')}` : ''}` : '请选择日期范围'}</span>
               <div className="flex items-center gap-2">
-                <button onClick={() => { setLocal(undefined); onChange(undefined); setOpen(false); }} className="px-2.5 py-1 text-xs text-stone-500 hover:text-stone-700 cursor-pointer transition-colors">清除</button>
+                <button onClick={() => { setLocal(undefined); onChange(undefined); setOpen(false); }} className="px-2.5 py-1 text-xs text-muted hover:text-fg cursor-pointer transition-colors">清除</button>
                 <button onClick={apply} className="px-3 py-1 text-xs font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md cursor-pointer transition-colors">确定</button>
               </div>
             </div>
@@ -150,7 +143,7 @@ function DateRangeFilter({ value, onChange }: { value: DateRange | undefined; on
         </PopoverContent>
       </Popover>
       {active && (
-        <button onClick={() => onChange(undefined)} className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-stone-200 text-stone-400 hover:text-stone-600 transition-colors cursor-pointer" aria-label="清除时间筛选">
+        <button onClick={() => onChange(undefined)} className="w-5 h-5 flex items-center justify-center rounded-full hover:bg-surface-2 text-muted hover:text-fg transition-colors cursor-pointer" aria-label="清除时间筛选">
           <X className="w-3 h-3" aria-hidden />
         </button>
       )}
@@ -160,11 +153,11 @@ function DateRangeFilter({ value, onChange }: { value: DateRange | undefined; on
 function SkeletonCard() {
   return (
     <div className="flex items-start gap-3.5 py-3 px-4">
-      <div className="w-7 h-7 rounded-lg bg-stone-200 shimmer flex-shrink-0 mt-0.5" />
+      <div className="w-7 h-7 rounded-lg bg-surface-2 shimmer flex-shrink-0 mt-0.5" />
       <div className="flex-1 min-w-0 space-y-2">
-        <div className="h-4 bg-stone-200 rounded shimmer w-2/3" />
-        <div className="h-3 bg-stone-100 rounded shimmer w-1/3" />
-        <div className="h-3 bg-stone-100 rounded shimmer w-1/2" />
+        <div className="h-4 bg-surface-2 rounded shimmer w-2/3" />
+        <div className="h-3 bg-surface-2 rounded shimmer w-1/3" />
+        <div className="h-3 bg-surface-2 rounded shimmer w-1/2" />
       </div>
     </div>
   );
@@ -267,25 +260,25 @@ export default function SearchPage() {
   const getParentPath = (path: string): string => { if (!path) return ''; const idx = path.lastIndexOf('/'); return idx > 0 ? path.substring(0, idx) : ''; };
 
   return (
-    <div className="flex flex-col h-full bg-stone-50">
+    <div className="flex flex-col h-full bg-surface-2">
       {/* Search header */}
-      <div className="px-6 py-4 border-b border-stone-200 bg-white flex-shrink-0">
+      <div className="px-6 py-4 border-b border-border bg-surface flex-shrink-0">
         <div className="max-w-4xl mx-auto">
           <div className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-400 group-focus-within:text-primary-600 transition-colors" aria-hidden />
-            <input type="text" value={keyword} onChange={(e) => setKeyword(e.target.value)} onKeyDown={handleSearchSubmit} placeholder="搜索文件名或文档内容..." autoFocus className="w-full pl-12 pr-24 py-2.5 bg-stone-50 border border-stone-200 rounded-xl text-base text-stone-900 placeholder-stone-400 outline-none transition focus:bg-white focus:border-primary-400 focus:ring-2 focus:ring-primary-100" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted group-focus-within:text-primary-600 transition-colors" aria-hidden />
+            <input type="text" value={keyword} onChange={(e) => setKeyword(e.target.value)} onKeyDown={handleSearchSubmit} placeholder="搜索文件名或文档内容..." autoFocus className="w-full pl-12 pr-24 py-2.5 bg-surface-2 border border-border rounded-xl text-base text-fg placeholder-muted outline-none transition focus:bg-surface focus:border-primary-400 focus:ring-2 focus:ring-primary-100" />
             <button onClick={() => triggerSearch(keyword)} className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 active:bg-primary-800 cursor-pointer transition-colors">搜索</button>
           </div>
           {(searched || urlKeyword) && (
             <div className="flex items-center gap-2 mt-2.5 text-sm">
-              <span className="text-stone-500">搜索</span>
-              <span className="font-medium text-stone-900">{urlKeyword === '*' ? '\u5168\u90e8\u6587\u4ef6' : '\u201c' + urlKeyword + '\u201d'}</span>
+              <span className="text-muted">搜索</span>
+              <span className="font-medium text-fg">{urlKeyword === '*' ? '\u5168\u90e8\u6587\u4ef6' : '\u201c' + urlKeyword + '\u201d'}</span>
               {!loading && (
                 <>
-                  <span className="text-stone-300">&middot;</span>
-                  <span className="text-stone-400">{dateFiltered.length} 个结果{dateRange && results.length !== dateFiltered.length && ` (共 ${results.length} 条)`}{searchTime > 0 && `\u00b7 \u8017\u65f6 ${searchTime}ms`}</span>
+                  <span className="text-muted/60">&middot;</span>
+                  <span className="text-muted">{dateFiltered.length} 个结果{dateRange && results.length !== dateFiltered.length && ` (共 ${results.length} 条)`}{searchTime > 0 && `\u00b7 \u8017\u65f6 ${searchTime}ms`}</span>
                   {hasActiveFilters && (
-                    <button onClick={clearFilters} className="ml-2 flex items-center gap-1 text-xs text-primary-600 hover:text-primary-700 cursor-pointer"><RotateCcw className="w-3 h-3" aria-hidden /><span>清除筛选</span></button>
+                    <button onClick={clearFilters} className="ml-2 flex items-center gap-1 text-xs text-primary-600 hover:text-primary-600 cursor-pointer"><RotateCcw className="w-3 h-3" aria-hidden /><span>清除筛选</span></button>
                   )}
                 </>
               )}
@@ -296,16 +289,16 @@ export default function SearchPage() {
 
       {/* Filter bar */}
       {searched && (
-        <div className="px-6 py-2.5 border-b border-stone-200 bg-white flex-shrink-0 relative z-20 overflow-visible">
+        <div className="px-6 py-2.5 border-b border-border bg-surface flex-shrink-0 relative z-20 overflow-visible">
           <div className="max-w-4xl mx-auto flex items-center gap-2 flex-wrap">
-            <div className="flex items-center gap-1 bg-stone-100 rounded-lg p-0.5">
+            <div className="flex items-center gap-1 bg-surface-2 rounded-lg p-0.5">
               {FILE_TYPE_TABS.map((tab) => (
-                <button key={tab.value} onClick={() => setFileType(tab.value)} className={cn('flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer', fileType === tab.value ? 'bg-white text-primary-700 shadow-sm' : 'text-stone-500 hover:text-stone-700')}>
+                <button key={tab.value} onClick={() => setFileType(tab.value)} className={cn('flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer', fileType === tab.value ? 'bg-surface text-primary-600 shadow-sm' : 'text-muted hover:text-fg')}>
                   <tab.icon className="w-3.5 h-3.5" aria-hidden /><span>{tab.label}</span>
                 </button>
               ))}
             </div>
-            <div className="w-px h-5 bg-stone-200" />
+            <div className="w-px h-5 bg-surface-2" />
             <FilterDropdown icon={ArrowDownUp} label="排序" options={SORT_OPTIONS} value={sortBy} onChange={(v) => setSortBy(v as SortOption)} />
             <FilterDropdown icon={HardDrive} label="大小" options={SIZE_OPTIONS} value={sizeFilter} onChange={(v) => setSizeFilter(v as SizeFilter)} />
             <DateRangeFilter value={dateRange} onChange={setDateRange} />
@@ -317,50 +310,50 @@ export default function SearchPage() {
       <div className="flex-1 overflow-auto">
         <div className="max-w-4xl mx-auto px-6 py-4">
           {loading ? (
-            <div className="space-y-1 rounded-xl bg-white overflow-hidden divide-y divide-stone-50">{Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}</div>
+            <div className="space-y-1 rounded-xl bg-surface overflow-hidden divide-y divide-stone-50">{Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}</div>
           ) : !searched ? (
-            <div className="flex flex-col items-center justify-center py-20 text-stone-400">
-              <div className="w-16 h-16 rounded-2xl bg-stone-100 flex items-center justify-center mb-4"><Search className="w-8 h-8 text-stone-300" strokeWidth={1.2} aria-hidden /></div>
-              <p className="text-base font-medium text-stone-600">开始你的搜索</p>
-              <p className="text-sm mt-2 text-stone-400">在上方搜索框输入关键词，支持文件名和文档内容搜索</p>
+            <div className="flex flex-col items-center justify-center py-20 text-muted">
+              <div className="w-16 h-16 rounded-2xl bg-surface-2 flex items-center justify-center mb-4"><Search className="w-8 h-8 text-muted/60" strokeWidth={1.2} aria-hidden /></div>
+              <p className="text-base font-medium text-muted">开始你的搜索</p>
+              <p className="text-sm mt-2 text-muted">在上方搜索框输入关键词，支持文件名和文档内容搜索</p>
               <div className="flex items-center gap-2 mt-6">
                 {FILE_TYPE_TABS.slice(1).map((tab) => (
-                  <div key={tab.value} className="flex items-center gap-1 px-2.5 py-1 bg-white border border-stone-200 rounded-lg text-xs text-stone-500"><tab.icon className="w-3 h-3" aria-hidden /><span>{tab.label}</span></div>
+                  <div key={tab.value} className="flex items-center gap-1 px-2.5 py-1 bg-surface border border-border rounded-lg text-xs text-muted"><tab.icon className="w-3 h-3" aria-hidden /><span>{tab.label}</span></div>
                 ))}
               </div>
             </div>
           ) : sortedResults.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-stone-400">
-              <div className="w-16 h-16 rounded-2xl bg-stone-100 flex items-center justify-center mb-4"><SlidersHorizontal className="w-8 h-8 text-stone-300" strokeWidth={1.2} aria-hidden /></div>
-              <p className="text-base font-medium text-stone-600">{hasActiveFilters ? '没有符合条件的文件' : '未找到相关文件'}</p>
-              <p className="text-sm mt-2 text-stone-400">{hasActiveFilters ? '试试调整筛选条件或清除筛选' : '换个关键词试试吧'}</p>
-              {hasActiveFilters && (<button onClick={clearFilters} className="mt-4 px-4 py-2 bg-white border border-stone-200 rounded-lg text-sm text-stone-600 hover:bg-stone-50 hover:border-stone-300 transition-colors cursor-pointer">清除所有筛选</button>)}
+            <div className="flex flex-col items-center justify-center py-20 text-muted">
+              <div className="w-16 h-16 rounded-2xl bg-surface-2 flex items-center justify-center mb-4"><SlidersHorizontal className="w-8 h-8 text-muted/60" strokeWidth={1.2} aria-hidden /></div>
+              <p className="text-base font-medium text-muted">{hasActiveFilters ? '没有符合条件的文件' : '未找到相关文件'}</p>
+              <p className="text-sm mt-2 text-muted">{hasActiveFilters ? '试试调整筛选条件或清除筛选' : '换个关键词试试吧'}</p>
+              {hasActiveFilters && (<button onClick={clearFilters} className="mt-4 px-4 py-2 bg-surface border border-border rounded-lg text-sm text-muted hover:bg-surface-2 hover:border-border transition-colors cursor-pointer">清除所有筛选</button>)}
             </div>
           ) : (
-            <div className="rounded-xl bg-white overflow-hidden divide-y divide-stone-50">
+            <div className="rounded-xl bg-surface overflow-hidden divide-y divide-stone-50">
               {sortedResults.map((item) => {
                 const isFolder = item.nodeType === 0 || (item.nodeType == null && !item.suffix);
                 const config = getFileTypeConfig(isFolder ? 0 : 1, item.suffix);
                 const parentPath = getParentPath(item.path);
                 return (
-                  <div key={item.fileId} onClick={() => {
+                  <div key={item.fileId} role="button" tabIndex={0} aria-label={`打开 ${item.fileName.replace(/<[^>]*>/g, "")}`} onClick={() => {
                     if (isFolder) { navigate(`/files/${item.fileId}`); return; }
                     const fileNodes: FileNode[] = sortedResults.filter(r => !(r.nodeType === 0 || (r.nodeType == null && !r.suffix))).map(r => ({ id: r.fileId, parentId: '', nodeType: 1, name: r.fileName.replace(/<[^>]*>/g, ''), path: r.path, fileSize: r.fileSize, suffix: r.suffix, contentType: r.contentType, status: 0, thumbnailPath: null, createdAt: r.createdAt, updatedAt: r.updatedAt }));
                     const idx = fileNodes.findIndex(f => f.id === item.fileId);
                     setPreview({ files: fileNodes, index: idx >= 0 ? idx : 0 });
-                  }} className="group flex items-start gap-3.5 py-3 px-4 hover:bg-stone-50/70 rounded-none cursor-pointer transition-colors duration-150 animate-file-enter">
+                  }} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }} className="group flex items-start gap-3.5 py-3 px-4 hover:bg-surface-2/70 rounded-none cursor-pointer transition-colors duration-150 animate-file-enter focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                     <div className="flex-shrink-0 mt-0.5"><FileTypeIcon config={config} size="lg" isFolder={isFolder} suffix={item.suffix} /></div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-medium text-stone-900 truncate group-hover:text-primary-600 transition-colors"><span className="search-highlight" dangerouslySetInnerHTML={{ __html: item.fileName }} /></h3>
-                      {item.path && (<div className="flex items-center gap-1 mt-0.5 text-xs text-stone-400"><FolderOpen className="w-3 h-3 flex-shrink-0" aria-hidden /><span className="truncate max-w-[400px]" title={item.path}>{parentPath || '/'}</span></div>)}
-                      {item.highlight && (<div className="search-highlight mt-1.5 text-sm text-stone-500 leading-relaxed line-clamp-2" dangerouslySetInnerHTML={{ __html: item.highlight }} />)}
-                      <div className="flex items-center gap-2 mt-1.5 text-xs text-stone-400">
-                        <span className={cn('inline-flex items-center px-1.5 py-0.5 rounded font-medium tabular-nums', isFolder ? 'bg-amber-50 text-amber-600' : 'bg-stone-100 text-stone-500')}>{config.label}</span>
+                      <h3 className="text-sm font-medium text-fg truncate group-hover:text-primary-600 transition-colors"><span className="search-highlight" dangerouslySetInnerHTML={{ __html: item.fileName }} /></h3>
+                      {item.path && (<div className="flex items-center gap-1 mt-0.5 text-xs text-muted"><FolderOpen className="w-3 h-3 flex-shrink-0" aria-hidden /><span className="truncate max-w-[400px]" title={item.path}>{parentPath || '/'}</span></div>)}
+                      {item.highlight && (<div className="search-highlight mt-1.5 text-sm text-muted leading-relaxed line-clamp-2" dangerouslySetInnerHTML={{ __html: item.highlight }} />)}
+                      <div className="flex items-center gap-2 mt-1.5 text-xs text-muted">
+                        <span className={cn('inline-flex items-center px-1.5 py-0.5 rounded font-medium tabular-nums', isFolder ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' : 'bg-surface-2 text-muted')}>{config.label}</span>
                         {item.fileSize && Number(item.fileSize) > 0 && (<span className="tabular-nums">{formatSize(item.fileSize)}</span>)}
-                        {item.updatedAt && (<><span className="text-stone-300">&middot;</span><span className="tabular-nums">{formatDate(item.updatedAt)}</span></>)}
+                        {item.updatedAt && (<><span className="text-muted/60">&middot;</span><span className="tabular-nums">{formatDate(item.updatedAt)}</span></>)}
                       </div>
                     </div>
-                    <ChevronRight className="w-5 h-5 text-stone-300 flex-shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150" aria-hidden />
+                    <ChevronRight className="w-5 h-5 text-muted/60 flex-shrink-0 mt-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150" aria-hidden />
                   </div>
                 );
               })}

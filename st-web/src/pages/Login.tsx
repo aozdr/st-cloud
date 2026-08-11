@@ -51,7 +51,7 @@ export default function Login() {
       {/* Left brand panel */}
       <div className="hidden lg:flex lg:w-[45%] brand-gradient flex-col justify-between p-12 relative overflow-hidden">
         <div className="absolute top-20 right-20 w-72 h-72 bg-primary-600/10 rounded-full blur-3xl" aria-hidden />\n        <div className="absolute bottom-20 left-10 w-96 h-96 bg-primary-600/5 rounded-full blur-3xl" aria-hidden />\n        <div className="relative z-10">
-          <div className="flex items-center gap-3 text-white">
+          <div className="flex items-center gap-3 text-fg">
             <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-primary">
               <Cloud className="w-6 h-6 text-white" />
             </div>
@@ -59,61 +59,61 @@ export default function Login() {
           </div>
         </div>
 
-        <div className="relative z-10 text-white">
-          <h1 className="text-5xl font-bold leading-tight mb-4 bg-gradient-to-r from-white to-stone-400 bg-clip-text text-transparent">
+        <div className="relative z-10 text-fg">
+          <h1 className="text-5xl font-bold leading-tight mb-4 bg-gradient-to-r from-fg to-muted bg-clip-text text-transparent">
             安全、高效的<br />企业云盘解决方案
           </h1>
-          <p className="text-stone-400 text-base leading-relaxed max-w-md mt-6">
+          <p className="text-muted text-base leading-relaxed max-w-md mt-6">
             支持大文件分片上传、秒传去重、多格式预览，<br />
             让文件管理像本地操作一样流畅。
           </p>
-          <div className="mt-10 flex flex-col gap-3 text-stone-400 text-sm">
+          <div className="mt-10 flex flex-col gap-3 text-muted text-sm">
             <div className="flex items-center gap-2.5">
-              <div className="w-2 h-2 rounded-full bg-primary-500 shadow-[0_0_8px_rgb(217,39,46,0.6)]" />
+              <div className="w-2 h-2 rounded-full bg-primary-500 shadow-[0_0_8px_rgb(var(--color-primary-500)/0.6)]" />
               <span>分片上传 · 断点续传</span>
             </div>
             <div className="flex items-center gap-2.5">
-              <div className="w-2 h-2 rounded-full bg-primary-500 shadow-[0_0_8px_rgb(217,39,46,0.6)]" />
+              <div className="w-2 h-2 rounded-full bg-primary-500 shadow-[0_0_8px_rgb(var(--color-primary-500)/0.6)]" />
               <span>MD5 秒传</span>
             </div>
           </div>
         </div>
 
-        <div className="relative z-10 text-stone-600 text-sm">
+        <div className="relative z-10 text-muted text-sm">
           © 2026 星云盘. All rights reserved.
         </div>
       </div>
 
       {/* Right form panel */}
-      <div className="flex-1 flex items-center justify-center px-6 py-12 bg-gradient-to-b from-stone-50 to-white">
+      <div className="flex-1 flex items-center justify-center px-6 py-12 bg-bg">
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center gap-3 mb-8">
             <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-primary">
               <Cloud className="w-6 h-6 text-white" />
             </div>
-            <span className="text-xl font-semibold text-stone-900">星云盘</span>
+            <span className="text-xl font-semibold text-fg">星云盘</span>
           </div>
 
-          <h2 className="text-2xl font-semibold text-stone-900 mb-2">
+          <h2 className="text-2xl font-semibold text-fg mb-2">
             {mode === 'login' ? '欢迎回来' : '创建账户'}
           </h2>
-          <p className="text-stone-500 text-sm mb-8">
+          <p className="text-muted text-sm mb-8">
             {mode === 'login'
               ? '登录你的云盘账户继续使用'
               : '注册新账户，开始管理你的文件'}
           </p>
 
           {error && (
-            <div className="mb-4 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700 animate-slide-up shadow-soft">
+            <div className="mb-4 px-4 py-3 bg-red-500/15 border border-red-200 rounded-xl text-sm text-red-700 animate-slide-up shadow-soft">
               {error}
             </div>
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="login-username" className="block text-sm font-medium text-stone-700 mb-1.5">用户名</label>
+              <label htmlFor="login-username" className="block text-sm font-medium text-muted mb-1.5">用户名</label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" aria-hidden />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" aria-hidden />
                 <input
                   id="login-username"
                   name="username"
@@ -130,9 +130,9 @@ export default function Login() {
             </div>
 
             <div>
-              <label htmlFor="login-password" className="block text-sm font-medium text-stone-700 mb-1.5">密码</label>
+              <label htmlFor="login-password" className="block text-sm font-medium text-muted mb-1.5">密码</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" aria-hidden />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" aria-hidden />
                 <input
                   id="login-password"
                   name="password"
@@ -151,9 +151,9 @@ export default function Login() {
             {mode === 'register' && (
               <>
                 <div className="animate-slide-up">
-                  <label htmlFor="login-email" className="block text-sm font-medium text-stone-700 mb-1.5">邮箱（选填）</label>
+                  <label htmlFor="login-email" className="block text-sm font-medium text-muted mb-1.5">邮箱（选填）</label>
                   <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" aria-hidden />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" aria-hidden />
                     <input
                       id="login-email"
                       name="email"
@@ -168,9 +168,9 @@ export default function Login() {
                   </div>
                 </div>
                 <div className="animate-slide-up">
-                  <label htmlFor="login-tenant" className="block text-sm font-medium text-stone-700 mb-1.5">组织名称（选填）</label>
+                  <label htmlFor="login-tenant" className="block text-sm font-medium text-muted mb-1.5">组织名称（选填）</label>
                   <div className="relative">
-                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" aria-hidden />
+                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" aria-hidden />
                     <input
                       id="login-tenant"
                       name="tenantName"
@@ -202,14 +202,14 @@ export default function Login() {
             </button>
           </form>
 
-          <div className="mt-6 text-center text-sm text-stone-500">
+          <div className="mt-6 text-center text-sm text-muted">
             {mode === 'login' ? '还没有账户？' : '已有账户？'}
             <button
               onClick={() => {
                 setMode(mode === 'login' ? 'register' : 'login');
                 setError('');
               }}
-              className="ml-1 text-primary-600 hover:text-primary-700 font-medium cursor-pointer"
+              className="ml-1 text-primary-600 hover:text-primary-600 font-medium cursor-pointer"
             >
               {mode === 'login' ? '立即注册' : '返回登录'}
             </button>
@@ -217,7 +217,7 @@ export default function Login() {
 
           {isElectron() && (
             <div className="mt-4 text-center">
-              <Link to="/server-config" className="text-xs text-stone-400 hover:text-primary-600 cursor-pointer">
+              <Link to="/server-config" className="text-xs text-muted hover:text-primary-600 cursor-pointer">
                 服务器设置
               </Link>
             </div>

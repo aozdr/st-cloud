@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+﻿import { useState, useEffect, useRef } from 'react';
 import { X, History, RotateCcw, Loader2, ShieldCheck, Upload } from 'lucide-react';
 import api from '../../lib/api';
 import { useToast } from '../ui/Toast';
@@ -82,34 +82,34 @@ export default function VersionHistoryDialog({ node, onClose, onRestored }: Prop
         <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect} />
 
         <div className="flex items-center justify-between mb-1">
-          <h2 className="text-lg font-semibold text-stone-900 flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-fg flex items-center gap-2">
             <History className="w-5 h-5 text-primary-600" />
             历史版本
           </h2>
           <div className="flex items-center gap-2">
             <button
               onClick={handleUploadNewVersion}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-stone-700 bg-white border border-stone-200 rounded-md hover:bg-stone-50 hover:border-stone-300 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-muted bg-surface border border-border rounded-md hover:bg-surface-2 hover:border-border transition-colors cursor-pointer"
             >
               <Upload className="w-3.5 h-3.5" />
               上传新版本
             </button>
             <button
               onClick={onClose}
-              className="p-1 text-stone-400 hover:text-stone-600 rounded-md hover:bg-stone-100 transition-colors cursor-pointer" aria-label="关闭"
+              aria-label="关闭" className="p-1 text-muted hover:text-fg rounded-md hover:bg-surface-2 transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <X className="w-5 h-5" aria-hidden />
             </button>
           </div>
         </div>
-        <p className="text-sm text-stone-500 mb-4 truncate">{node.name}</p>
+        <p className="text-sm text-muted mb-4 truncate">{node.name}</p>
 
         {loading ? (
-          <div className="flex items-center justify-center py-12 text-stone-400">
+          <div className="flex items-center justify-center py-12 text-muted">
             <Loader2 className="w-6 h-6 animate-spin" />
           </div>
         ) : versions.length === 0 ? (
-          <div className="text-center py-12 text-stone-400 text-sm">暂无历史版本</div>
+          <div className="text-center py-12 text-muted text-sm">暂无历史版本</div>
         ) : (
           <div className="space-y-2 max-h-[50vh] overflow-y-auto -mr-2 pr-2">
             {versions.map((v) => {
@@ -119,20 +119,20 @@ export default function VersionHistoryDialog({ node, onClose, onRestored }: Prop
                 <div
                   key={v.id}
                   className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
-                    isCurrent ? 'border-primary-200 bg-primary-50/50' : 'border-stone-200 hover:bg-stone-50'
+                    isCurrent ? 'border-primary-200 bg-primary-50/50' : 'border-border hover:bg-surface-2'
                   }`}
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm font-medium text-stone-900">V{v.versionNum}</span>
+                      <span className="text-sm font-medium text-fg">V{v.versionNum}</span>
                       {isCurrent && (
-                        <span className="inline-flex items-center gap-1 text-xs text-primary-700 bg-primary-100 px-1.5 py-0.5 rounded">
+                        <span className="inline-flex items-center gap-1 text-xs text-primary-600 bg-primary-100 px-1.5 py-0.5 rounded">
                           <ShieldCheck className="w-3 h-3" />
                           当前版本
                         </span>
                       )}
                     </div>
-                    <div className="text-xs text-stone-500 flex items-center gap-3 flex-wrap">
+                    <div className="text-xs text-muted flex items-center gap-3 flex-wrap">
                       <span>{formatSize(v.fileSize)}</span>
                       <span>{v.modifierName || '未知'}</span>
                       <span>{formatDate(v.createdAt)}</span>
@@ -141,7 +141,7 @@ export default function VersionHistoryDialog({ node, onClose, onRestored }: Prop
                   <button
                     onClick={() => handleRestore(v.id)}
                     disabled={isCurrent || isRestoring}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-stone-700 bg-white border border-stone-200 rounded-md hover:bg-stone-50 hover:border-stone-300 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-muted bg-surface border border-border rounded-md hover:bg-surface-2 hover:border-border transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0"
                   >
                     {isRestoring ? (
                       <Loader2 className="w-3.5 h-3.5 animate-spin" />

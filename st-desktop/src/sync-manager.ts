@@ -1,5 +1,7 @@
+import { BrowserWindow } from 'electron';
 import { apiClient, getUserId } from './api-client';
 import { SyncEngine, type SyncRootInfo } from './sync-engine';
+import { SyncWsClient } from './ws-client';
 import { getAllSyncConfigs, deleteSyncConfig, upsertSyncConfig, claimLegacySyncConfigs } from './database';
 
 interface CloudSyncRootVO {
@@ -12,6 +14,40 @@ interface CloudSyncRootVO {
 }
 
 const engines = new Map<string, SyncEngine>();
+let wsClient: SyncWsClient | null = null;
+
+/** 向渲染进程广播 WS 连接状态 */
+function emitWsStatus(connected: boolean): void {
+  for (const win of BrowserWindow.getAllWindows()) {
+    win.webContents.send('sync:event', { event: 'ws_status', data: { connected } });
+  }
+}
+
+/** 确保 WebSocket 客户端已启动（变更推送 -> 触发所有引擎即时同步） */
+function ensureWsClient(): void {
+  if (wsClient) return;
+  wsClient = new SyncWsClient();
+  wsClient.onChange(() => {
+    // 收到云端变更通知，触发所有运行中的引擎即时同步
+    for (const engine of engines.values()) {
+      engine.syncOnce().catch((err) => {
+        console.error('[sync] WS-triggered syncOnce failed:', err);
+      });
+    }
+  });
+  wsClient.onStatus(emitWsStatus);
+  wsClient.start();
+  console.log('[sync] WebSocket 客户端已启动');
+}
+
+/** 当所有引擎停止后关闭 WebSocket 客户端 */
+function maybeStopWsClient(): void {
+  if (engines.size === 0 && wsClient) {
+    wsClient.stop();
+    wsClient = null;
+    console.log('[sync] WebSocket 客户端已停止（无活跃引擎）');
+  }
+}
 
 /**
  * 启动一个同步根的同步引擎
@@ -29,6 +65,9 @@ export async function startSync(rootId: string, cloudFolderNodeId: string, local
   engines.set(rootId, engine);
   try {
     await engine.start();
+    ensureWsClient();
+    // Fetch and apply exclusions + conflict strategy
+    refreshExclusions(rootId).catch(() => {});
   } catch (err) {
     engines.delete(rootId);
     throw err;
@@ -41,12 +80,17 @@ export async function stopSync(rootId: string): Promise<void> {
     await engine.stop();
     engines.delete(rootId);
   }
+  maybeStopWsClient();
 }
 
 export async function stopAllSync(): Promise<void> {
   for (const [id, engine] of engines) {
     await engine.stop();
     engines.delete(id);
+  }
+  if (wsClient) {
+    wsClient.stop();
+    wsClient = null;
   }
 }
 
@@ -61,6 +105,11 @@ export function getSyncStatus(): Record<string, boolean> {
     result[id] = engine.isRunning();
   }
   return result;
+}
+
+/** 当前 WebSocket 是否已连接 */
+export function isWsConnected(): boolean {
+  return wsClient?.isConnected() ?? false;
 }
 
 /**
@@ -89,6 +138,49 @@ export async function deleteSyncRoot(rootId: string): Promise<void> {
   await stopSync(rootId);
   await apiClient.delete(`/sync/roots/${rootId}`);
   deleteSyncConfig(rootId);
+}
+
+/** Fetch exclusions from server and apply to engine */
+export async function refreshExclusions(rootId: string): Promise<{ id: string; syncRootId: string; relativePath: string; createdAt: string }[]> {
+  try {
+    const res = await apiClient.get(`/sync/roots/${rootId}/exclusions`);
+    const body = res.data;
+    const exclusions = body?.data ?? body ?? [];
+    const paths = exclusions.map((e: { relativePath: string }) => e.relativePath);
+    const engine = engines.get(rootId);
+    if (engine) {
+      engine.setExclusions(paths);
+    }
+    return exclusions;
+  } catch (err) {
+    console.error('[sync] fetch exclusions failed:', err);
+    return [];
+  }
+}
+
+/** Add exclusion path */
+export async function addExclusion(rootId: string, relativePath: string): Promise<unknown> {
+  const res = await apiClient.post(`/sync/roots/${rootId}/exclusions`, { relativePath });
+  await refreshExclusions(rootId);
+  return res.data?.data ?? res.data;
+}
+
+/** Remove exclusion path */
+export async function removeExclusion(rootId: string, exclusionId: string): Promise<void> {
+  await apiClient.delete(`/sync/roots/${rootId}/exclusions/${exclusionId}`);
+  await refreshExclusions(rootId);
+}
+
+/** Update conflict strategy */
+export async function setConflictStrategy(rootId: string, strategy: string): Promise<unknown> {
+  const res = await apiClient.put(`/sync/roots/${rootId}/conflict-strategy`, { conflictStrategy: strategy });
+  const body = res.data;
+  const root = body?.data ?? body;
+  const engine = engines.get(rootId);
+  if (engine) {
+    engine.setConflictStrategy(strategy);
+  }
+  return root;
 }
 
 /**
@@ -139,7 +231,6 @@ export async function resumeSyncEngines(): Promise<void> {
     const orphaned = roots.filter(cr => !localConfigs.some(lc => String(lc.rootId) === String(cr.id)));
 
     for (const cloudRoot of orphaned) {
-      // Only auto-relink if the cloud root has a localPathHint we can use
       const localPath = cloudRoot.localPathHint || '';
       if (!localPath) {
         console.info('[sync] cloud root', cloudRoot.id, 'has no localPathHint, skipping auto-relink');

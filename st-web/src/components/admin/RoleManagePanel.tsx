@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+﻿import { useState, useEffect, useCallback } from 'react';
 import { Plus, Edit, Trash2, X, Shield, ChevronRight, ChevronDown } from 'lucide-react';
 import api from '../../lib/api';
 import { useToast } from '../ui/Toast';
@@ -22,9 +22,9 @@ const emptyForm: RoleFormState = {
 };
 
 const DATA_SCOPE_LABELS: Record<number, { label: string; cls: string }> = {
-  1: { label: '本人', cls: 'text-stone-500 bg-stone-100' },
-  2: { label: '租户', cls: 'text-blue-600 bg-blue-50' },
-  3: { label: '全部', cls: 'text-red-600 bg-red-50' },
+  1: { label: '本人', cls: 'text-muted bg-surface-2' },
+  2: { label: '租户', cls: 'text-blue-600 bg-blue-500/15' },
+  3: { label: '全部', cls: 'text-red-600 dark:text-red-400 bg-red-500/15' },
 };
 
 const MODULE_LABELS: Record<string, string> = {
@@ -174,8 +174,8 @@ export default function RoleManagePanel() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-base font-semibold text-stone-900">角色管理</h2>
-          <p className="text-xs text-stone-400 mt-0.5">管理角色、数据范围与操作权限。数据范围决定可访问的数据边界，权限决定可执行的操作与可见的菜单。</p>
+          <h2 className="text-base font-semibold text-fg">角色管理</h2>
+          <p className="text-xs text-muted mt-0.5">管理角色、数据范围与操作权限。数据范围决定可访问的数据边界，权限决定可执行的操作与可见的菜单。</p>
         </div>
         <button
           onClick={openCreate}
@@ -185,53 +185,53 @@ export default function RoleManagePanel() {
         </button>
       </div>
 
-      <div className="bg-white rounded-lg border border-stone-200 overflow-hidden">
+      <div className="bg-surface rounded-lg border border-border overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-stone-50 border-b border-stone-200">
+          <thead className="bg-surface-2 border-b border-border">
             <tr>
-              <th className="text-left px-4 py-3 font-medium text-stone-500">角色编码</th>
-              <th className="text-left px-4 py-3 font-medium text-stone-500">角色名称</th>
-              <th className="text-center px-4 py-3 font-medium text-stone-500">数据范围</th>
-              <th className="text-center px-4 py-3 font-medium text-stone-500">权限</th>
-              <th className="text-center px-4 py-3 font-medium text-stone-500">状态</th>
-              <th className="text-center px-4 py-3 font-medium text-stone-500">类型</th>
-              <th className="text-center px-4 py-3 font-medium text-stone-500">操作</th>
+              <th className="text-left px-4 py-3 font-medium text-muted">角色编码</th>
+              <th className="text-left px-4 py-3 font-medium text-muted">角色名称</th>
+              <th className="text-center px-4 py-3 font-medium text-muted">数据范围</th>
+              <th className="text-center px-4 py-3 font-medium text-muted">权限</th>
+              <th className="text-center px-4 py-3 font-medium text-muted">状态</th>
+              <th className="text-center px-4 py-3 font-medium text-muted">类型</th>
+              <th className="text-center px-4 py-3 font-medium text-muted">操作</th>
             </tr>
           </thead>
           <tbody>
             {roles.map((r) => {
               const ds = DATA_SCOPE_LABELS[r.dataScope] || DATA_SCOPE_LABELS[1];
               return (
-                <tr key={r.id} className="border-b border-stone-100 last:border-0 hover:bg-stone-50/50">
-                  <td className="px-4 py-3 text-stone-700 font-mono text-xs">{r.roleCode}</td>
-                  <td className="px-4 py-3 text-stone-800">{r.roleName}</td>
+                <tr key={r.id} className="border-b border-border last:border-0 hover:bg-surface-2/50">
+                  <td className="px-4 py-3 text-muted font-mono text-xs">{r.roleCode}</td>
+                  <td className="px-4 py-3 text-fg">{r.roleName}</td>
                   <td className="px-4 py-3 text-center">
                     <span className={`text-xs font-medium px-2 py-0.5 rounded ${ds.cls}`}>{ds.label}</span>
                   </td>
-                  <td className="px-4 py-3 text-center text-xs text-stone-500">{r.permissions?.length ?? 0} 项</td>
+                  <td className="px-4 py-3 text-center text-xs text-muted">{r.permissions?.length ?? 0} 项</td>
                   <td className="px-4 py-3 text-center">
-                    <span className={`text-xs px-2 py-0.5 rounded ${r.status === 1 ? 'text-green-600 bg-green-50' : 'text-stone-400 bg-stone-100'}`}>
+                    <span className={`text-xs px-2 py-0.5 rounded ${r.status === 1 ? 'text-green-600 dark:text-green-400 bg-green-500/15' : 'text-muted bg-surface-2'}`}>
                       {r.status === 1 ? '启用' : '禁用'}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-center">
                     {r.builtIn ? (
-                      <span className="inline-flex items-center gap-1 text-xs text-primary-600 bg-primary-50 px-2 py-0.5 rounded">
+                      <span className="inline-flex items-center gap-1 text-xs text-primary-600 bg-primary-500/10 px-2 py-0.5 rounded">
                         <Shield className="w-3 h-3" />内置
                       </span>
                     ) : (
-                      <span className="text-xs text-stone-400">自定义</span>
+                      <span className="text-xs text-muted">自定义</span>
                     )}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center justify-center gap-3">
-                      <button onClick={() => openEdit(r)} className="text-stone-400 hover:text-primary-600 transition-colors cursor-pointer" title="编辑">
+                      <button onClick={() => openEdit(r)} className="text-muted hover:text-primary-600 transition-colors cursor-pointer" title="编辑">
                         <Edit className="w-4 h-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(r)}
                         disabled={r.builtIn}
-                        className="text-stone-400 hover:text-red-500 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                        className="text-muted hover:text-red-500 transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
                         title="删除"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -243,71 +243,71 @@ export default function RoleManagePanel() {
             })}
           </tbody>
         </table>
-        {roles.length === 0 && <div className="py-10 text-center text-sm text-stone-400">暂无角色，点击「新建角色」创建</div>}
+        {roles.length === 0 && <div className="py-10 text-center text-sm text-muted">暂无角色，点击「新建角色」创建</div>}
       </div>
 
       {modalOpen && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50" onClick={() => setModalOpen(false)}>
-          <div className="bg-white rounded-lg w-full max-w-2xl p-6 max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 overscroll-contain" role="presentation" onClick={() => setModalOpen(false)}>
+          <div className="bg-surface rounded-lg w-full max-w-2xl p-6 max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-semibold text-stone-900">{editingId ? '编辑角色' : '新建角色'}</h2>
-              <button onClick={() => setModalOpen(false)} className="text-stone-400 hover:text-stone-600 transition-colors cursor-pointer">
-                <X className="w-5 h-5" />
+              <h2 className="text-base font-semibold text-fg">{editingId ? '编辑角色' : '新建角色'}</h2>
+              <button onClick={() => setModalOpen(false)} aria-label="关闭" className="text-muted hover:text-fg transition-colors cursor-pointer rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                <X className="w-5 h-5" aria-hidden />
               </button>
             </div>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-stone-500 mb-1">角色编码</label>
+                <label className="block text-xs font-medium text-muted mb-1">角色编码</label>
                 <input
                   type="text"
                   value={form.roleCode}
                   disabled={!!editingId}
                   onChange={(e) => setForm((f) => ({ ...f, roleCode: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm border border-stone-200 rounded-md focus:outline-none focus:border-primary-500 disabled:bg-stone-50 disabled:text-stone-400"
+                  className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:border-primary-500 disabled:bg-surface-2 disabled:text-muted"
                   placeholder="如：auditor"
                 />
-                {editingId && <p className="text-xs text-stone-400 mt-1">角色编码创建后不可修改</p>}
+                {editingId && <p className="text-xs text-muted mt-1">角色编码创建后不可修改</p>}
               </div>
               <div>
-                <label className="block text-xs font-medium text-stone-500 mb-1">角色名称</label>
+                <label className="block text-xs font-medium text-muted mb-1">角色名称</label>
                 <input
                   type="text"
                   value={form.roleName}
                   onChange={(e) => setForm((f) => ({ ...f, roleName: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm border border-stone-200 rounded-md focus:outline-none focus:border-primary-500"
+                  className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:border-primary-500"
                   placeholder="如：审计员"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-stone-500 mb-1">数据范围</label>
+                <label className="block text-xs font-medium text-muted mb-1">数据范围</label>
                 <select
                   value={form.dataScope}
                   onChange={(e) => setForm((f) => ({ ...f, dataScope: Number(e.target.value) }))}
-                  className="w-full px-3 py-2 text-sm border border-stone-200 rounded-md focus:outline-none focus:border-primary-500"
+                  className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:border-primary-500"
                 >
                   <option value={1}>本人（仅访问自有资源）</option>
                   <option value={2}>租户（访问本租户资源）</option>
                   <option value={3}>全部（跨租户/跨所有者）</option>
                 </select>
-                <p className="text-xs text-stone-400 mt-1">数据范围 ≥ 3 的角色可越过所有权校验访问任意文件（替代原 isAdmin 旁路）。</p>
+                <p className="text-xs text-muted mt-1">数据范围 ≥ 3 的角色可越过所有权校验访问任意文件（替代原 isAdmin 旁路）。</p>
               </div>
               <div>
-                <label className="block text-xs font-medium text-stone-500 mb-1">权限分配</label>
-                <div className="space-y-3 max-h-60 overflow-auto border border-stone-200 rounded-md p-3 bg-stone-50/50">
+                <label className="block text-xs font-medium text-muted mb-1">权限分配</label>
+                <div className="space-y-3 max-h-60 overflow-auto border border-border rounded-md p-3 bg-surface-2/50">
                   {Object.keys(permGroups).length === 0 && (
-                    <div className="text-xs text-stone-400 text-center py-4">暂无权限定义</div>
+                    <div className="text-xs text-muted text-center py-4">暂无权限定义</div>
                   )}
                   {Object.entries(permGroups).map(([mod, perms]) => {
                     const expanded = expandedModules.has(mod);
                     const allSelected = perms.length > 0 && perms.every((p) => selectedPermIds.has(p.id));
                     return (
-                    <div key={mod} className="rounded-md bg-white border border-stone-100">
+                    <div key={mod} className="rounded-md bg-surface border border-border">
                       <div
-                        className="flex items-center gap-2 px-2 py-1.5 cursor-pointer hover:bg-stone-50 select-none"
+                        className="flex items-center gap-2 px-2 py-1.5 cursor-pointer hover:bg-surface-2 select-none"
                         onClick={() => toggleModuleExpand(mod)}
                       >
-                        <span className="text-stone-400 flex-shrink-0">
+                        <span className="text-muted flex-shrink-0">
                           {expanded ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
                         </span>
                         <input
@@ -317,14 +317,14 @@ export default function RoleManagePanel() {
                           onClick={(e) => e.stopPropagation()}
                           className="w-4 h-4"
                         />
-                        <span className="text-xs font-semibold text-stone-700">{MODULE_LABELS[mod] || mod}</span>
-                        <span className="text-xs text-stone-400">({perms.length})</span>
+                        <span className="text-xs font-semibold text-muted">{MODULE_LABELS[mod] || mod}</span>
+                        <span className="text-xs text-muted">({perms.length})</span>
                         {allSelected && <span className="text-xs text-primary-600 ml-auto">全选</span>}
                       </div>
                       {expanded && (
                         <div className="ml-6 grid grid-cols-2 gap-1.5 pb-2 pr-2">
                           {perms.map((p) => (
-                            <label key={p.id} className="flex items-center gap-1.5 text-xs text-stone-600 cursor-pointer hover:text-stone-900">
+                            <label key={p.id} className="flex items-center gap-1.5 text-xs text-muted cursor-pointer hover:text-fg">
                               <input type="checkbox" checked={selectedPermIds.has(p.id)} onChange={() => togglePerm(p.id)} className="w-3.5 h-3.5" />
                               <span title={p.permissionCode}>{p.permissionName}</span>
                             </label>
@@ -337,30 +337,30 @@ export default function RoleManagePanel() {
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-medium text-stone-500 mb-1">状态</label>
+                <label className="block text-xs font-medium text-muted mb-1">状态</label>
                 <select
                   value={form.status}
                   onChange={(e) => setForm((f) => ({ ...f, status: Number(e.target.value) }))}
-                  className="w-full px-3 py-2 text-sm border border-stone-200 rounded-md focus:outline-none focus:border-primary-500"
+                  className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:border-primary-500"
                 >
                   <option value={1}>启用</option>
                   <option value={0}>禁用</option>
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-stone-500 mb-1">描述</label>
+                <label className="block text-xs font-medium text-muted mb-1">描述</label>
                 <input
                   type="text"
                   value={form.description}
                   onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                  className="w-full px-3 py-2 text-sm border border-stone-200 rounded-md focus:outline-none focus:border-primary-500"
+                  className="w-full px-3 py-2 text-sm border border-border rounded-md focus:outline-none focus:border-primary-500"
                   placeholder="可选"
                 />
               </div>
             </div>
 
             <div className="flex justify-end gap-3 mt-6">
-              <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm font-medium text-stone-600 bg-stone-100 hover:bg-stone-200 rounded-md cursor-pointer transition-colors">
+              <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm font-medium text-muted bg-surface-2 hover:bg-surface-2 rounded-md cursor-pointer transition-colors">
                 取消
               </button>
               <button onClick={handleSubmit} className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md cursor-pointer transition-colors">

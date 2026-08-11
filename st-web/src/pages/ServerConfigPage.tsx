@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+﻿import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Cloud, Server, ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react';
 import { getServerUrl, setServerUrl, normalize } from '../lib/server-config';
@@ -51,33 +51,33 @@ export default function ServerConfigPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-stone-100">
+      <div className="flex items-center justify-center h-screen bg-surface-2">
         <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-stone-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-surface-2 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         {/* Brand */}
         <div className="flex items-center gap-2.5 mb-8 justify-center">
           <div className="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center">
             <Cloud className="w-6 h-6 text-white" />
           </div>
-          <span className="text-xl font-semibold text-stone-900">星云盘</span>
+          <span className="text-xl font-semibold text-fg">星云盘</span>
         </div>
 
-        <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6">
+        <div className="bg-surface rounded-xl border border-border shadow-sm p-6">
           <div className="flex items-center gap-2 mb-1">
             <Server className="w-5 h-5 text-primary-600" />
-            <h1 className="text-lg font-semibold text-stone-900">服务器设置</h1>
+            <h1 className="text-lg font-semibold text-fg">服务器设置</h1>
           </div>
-          <p className="text-sm text-stone-500 mb-5">配置星云盘服务端地址</p>
+          <p className="text-sm text-muted mb-5">配置星云盘服务端地址</p>
 
           <form onSubmit={handleSave} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-stone-700 mb-1.5">服务器地址</label>
+              <label className="block text-sm font-medium text-muted mb-1.5">服务器地址</label>
               <input
                 type="text"
                 value={url}
@@ -89,12 +89,12 @@ export default function ServerConfigPage() {
                 className="input-field"
                 autoFocus
               />
-              <p className="mt-1.5 text-xs text-stone-400">输入服务端 IP 和端口，如 http://192.168.1.100:8080</p>
+              <p className="mt-1.5 text-xs text-muted">输入服务端 IP 和端口，如 http://192.168.1.100:8080</p>
             </div>
 
             {testResult && (
               <div
-                className={'flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm ' + (testResult.ok ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-red-50 text-red-700 border border-red-200')}
+                className={'flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm ' + (testResult.ok ? 'bg-green-500/15 text-green-700 border border-green-200' : 'bg-red-500/15 text-red-700 border border-red-200')}
               >
                 {testResult.ok ? (
                   <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
@@ -113,7 +113,7 @@ export default function ServerConfigPage() {
                 className="btn-secondary flex-1 flex items-center justify-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {testing ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                {testing ? '测试中...' : '测试连接'}
+                {testing ? '测试中…' : '测试连接'}
               </button>
               <button type="submit" className="btn-primary flex-1">
                 保存
@@ -123,7 +123,7 @@ export default function ServerConfigPage() {
 
           <button
             onClick={() => navigate('/login')}
-            className="mt-5 flex items-center gap-1.5 text-sm text-stone-500 hover:text-stone-700 cursor-pointer"
+            className="mt-5 flex items-center gap-1.5 text-sm text-muted hover:text-fg cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
             返回登录

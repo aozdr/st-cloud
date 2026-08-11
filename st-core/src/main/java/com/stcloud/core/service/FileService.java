@@ -7,6 +7,7 @@ import com.stcloud.core.dto.StorageInfoVO;
 import com.stcloud.core.entity.FileNode;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 文件/目录管理服务
@@ -112,4 +113,25 @@ public interface FileService {
 
     /** 递归收集指定节点的全部子孙（按 parentId，不依赖 path 前缀）。 */
     List<FileNode> collectDescendants(Long nodeId);
+
+    /** 按文件类型统计存储占用 */
+    java.util.List<java.util.Map<String, Object>> storageByType();
+
+    /** 检测当前用户的重复文件 */
+    java.util.List<java.util.Map<String, Object>> findDuplicates();
+
+    /** 设置文件隐藏状态 */
+    void setHidden(Long nodeId, boolean hidden);
+
+    /** 查询当前用户的隐藏文件列表 */
+    List<FileNodeVO> listHidden();
+
+    /** 查询同 MD5 的重复文件详情列表 */
+    List<FileNodeVO> findDuplicateDetail(String md5);
+
+    /** 查询文件节点的历史版本数量 */
+    int versionCount(Long nodeId);
+
+    /** 清理重复文件：保留创建时间最早的，其余移入回收站（跳过有历史版本的文件） */
+    Map<String, Object> cleanupDuplicates(String md5);
 }
