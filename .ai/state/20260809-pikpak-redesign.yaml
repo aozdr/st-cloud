@@ -1,0 +1,119 @@
+﻿taskId: "20260809-pikpak-redesign"
+goal:
+  objective: "PikPak 风格全站 UI/UX 重做：以 pikpak-discovery-report.md HTML 实证为依据，重做星云盘前端视觉与交互，向 PikPak 媒体云盘体验靠拢"
+  scope: "全站前端视觉系统 + 文件呈现范式 + 侧边栏/顶栏布局 + 交互模式，保留全部文件管理功能逻辑"
+  completionCriteria:
+    - "默认浅色 + 蓝色主题，视觉接近 PikPak"
+    - "文件网格采用 16:9 缩略图 + 模糊背景填充"
+    - "侧边栏浅色化 + 淡蓝选中态"
+    - "分层圆角体系"
+    - "编译通过，文件管理功能不受影响"
+    - "全站视觉一致性"
+
+scale: large
+exitCriteria:
+  - id: REQ_ANALYSIS
+    desc: "需求已分析 + UI/UX 设计文档已产出"
+    status: done
+    dependsOn: []
+  - id: IMPACT_ANALYSIS
+    desc: "影响范围已分析"
+    status: done
+    dependsOn: [REQ_ANALYSIS]
+  - id: EXP_DESIGN
+    desc: "体验评审完成"
+    status: done
+    dependsOn: [IMPACT_ANALYSIS]
+  - id: TECH_DESIGN
+    desc: "技术设计已产出"
+    status: done
+    dependsOn: [IMPACT_ANALYSIS, EXP_DESIGN]
+  - id: TESTCASES
+    desc: "测试用例已编写"
+    status: done
+    dependsOn: [TECH_DESIGN]
+  - id: IMPLEMENTED
+    desc: "代码已实现"
+    status: done
+    dependsOn: [TECH_DESIGN, TESTCASES]
+  - id: CODE_REVIEW
+    desc: "Code Review 通过"
+    status: done
+    dependsOn: [IMPLEMENTED]
+  - id: SECURITY_REVIEW
+    desc: "安全审查（条件项跳过）"
+    status: done
+    dependsOn: [IMPLEMENTED]
+    skipReason: "纯前端视觉变更，不涉及权限/文件操作/分享/配额等安全敏感逻辑"
+  - id: EXP_ACCEPT
+    desc: "体验验收通过"
+    status: done
+    dependsOn: [CODE_REVIEW, SECURITY_REVIEW]
+  - id: TEST_PASS
+    desc: "测试执行通过"
+    status: done
+    dependsOn: [CODE_REVIEW, SECURITY_REVIEW]
+  - id: QUALITY_GATE
+    desc: "最终交付门禁通过"
+    status: done
+    dependsOn: [EXP_ACCEPT, TEST_PASS]
+  - id: KNOWLEDGE
+    desc: "知识库已回顾"
+    status: done
+    dependsOn: [QUALITY_GATE]
+
+artifacts:
+  prd:        { status: done, ref: ".ai/docs/20260809-pikpak-redesign-requirement.md", owner: "product-manager" }
+  uiSpec:     { status: done, ref: ".ai/docs/20260809-pikpak-redesign-uispec.md", owner: "ui-designer" }
+  impact:     { status: done, ref: ".ai/docs/20260809-pikpak-redesign-impact.md", owner: "impact-analyzer" }
+  expReview:  { status: done, ref: ".ai/docs/20260809-pikpak-redesign-exp-review.md", owner: "ui-reviewer" }
+  design:     { status: done, ref: ".ai/docs/20260809-pikpak-redesign-design.md", owner: "frontend-engineer" }
+  testcases:  { status: done, ref: ".ai/docs/20260809-pikpak-redesign-testcases.md", owner: "tester" }
+  code:       { status: done, ref: "st-web/src (9 files)", owner: "frontend-engineer" }
+  review:     { status: done, ref: ".ai/docs/20260809-pikpak-redesign-codereview.md", owner: "reviewer" }
+  security:   { status: done, ref: "skipReason: 纯前端视觉", owner: "security-reviewer" }
+  testReport: { status: done, ref: ".ai/docs/20260809-pikpak-redesign-testreport.md", owner: "tester" }
+  knowledge:  { status: done, ref: ".ai/knowledge/ui-design-system.md (updated)", owner: "knowledge-manager" }
+
+blockers: []
+
+history:
+  - iter: 0
+    phase: "init"
+    agent: "workflow-manager"
+    action: "初始化大型任务 Loop State（12 项）"
+    delta: "创建 Goal + State"
+    result: "输入：pikpak-discovery-report.md"
+  - iter: 1
+    phase: "req-analysis"
+    agent: "product-manager + ui-designer"
+    action: "PM Grill Me + UI 协作产出 PRD + uiSpec，多方评审定版"
+    delta: "prd done, uiSpec done"
+    result: "REQ_ANALYSIS done"
+  - iter: 2
+    phase: "design"
+    agent: "impact-analyzer + ui-reviewer + frontend-engineer + tester"
+    action: "影响分析 + 体验评审 + 技术设计 + 测试用例"
+    delta: "impact/expReview/design/testcases done"
+    result: "4 项 done"
+  - iter: 3
+    phase: "implement"
+    agent: "frontend-engineer"
+    action: "编码实现 9 文件（themes/theme/index.css/Sidebar/TopBar/FileGrid/FileToolbar/FileBrowser/switch）"
+    delta: "code done，build 通过"
+    result: "IMPLEMENTED done"
+  - iter: 4
+    phase: "review+test"
+    agent: "reviewer + security-reviewer + ui-reviewer + tester"
+    action: "Code Review + 安全审查(跳过) + 体验验收 + 测试执行"
+    delta: "review/security/expAccept/testPass done，20 用例全通过"
+    result: "QUALITY_GATE done"
+  - iter: 5
+    phase: "knowledge"
+    agent: "knowledge-manager"
+    action: "更新 ui-design-system.md 知识库"
+    delta: "knowledge done"
+    result: "KNOWLEDGE done，全部 12 项 exitCriteria 满足"
+
+iteration: 5
+status: done

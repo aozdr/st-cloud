@@ -1,0 +1,86 @@
+﻿taskId: "20260809-mobile-pwa-capacitor"
+goal:
+  objective: "为星云盘实现移动端: PWA 基座 + Capacitor Android 壳 + st-web 响应式改造,企业内部分发,全程不依赖 Android Studio"
+  scope: "st-web(前端响应式+PWA+Capacitor 集成);后端零改动;新增 Android 壳工程;影响全部 18 页面与 60 组件的移动布局"
+  completionCriteria:
+    - "手机浏览器/WebView 下 18 页面均可单手操作,无横向滚动"
+    - "PWA 可添加到主屏幕,弱网下壳层离线可打开"
+    - "Capacitor 壳可出签名 APK,命令行打包无需 Android Studio"
+    - "下载落盘/相册上传等原生能力在 Capacitor 壳内可用"
+    - "编译通过(npm run build)"
+scale: large
+
+exitCriteria:
+  - id: REQ_ANALYSIS
+    status: done
+    dependsOn: []
+  - id: IMPACT_ANALYSIS
+    status: done
+    dependsOn: [REQ_ANALYSIS]
+  - id: EXP_DESIGN
+    status: done
+    dependsOn: [REQ_ANALYSIS]
+  - id: TECH_DESIGN
+    status: done
+    dependsOn: [IMPACT_ANALYSIS, EXP_DESIGN]
+  - id: TESTCASES
+    status: done
+    dependsOn: [TECH_DESIGN]
+  - id: IMPLEMENTED
+    status: done
+    dependsOn: [TECH_DESIGN, TESTCASES]
+  - id: CODE_REVIEW
+    status: done
+    dependsOn: [IMPLEMENTED]
+  - id: SECURITY_REVIEW
+    status: done
+    dependsOn: [IMPLEMENTED]
+  - id: EXP_ACCEPT
+    status: done
+    dependsOn: [CODE_REVIEW, SECURITY_REVIEW]
+  - id: TEST_PASS
+    status: done
+    dependsOn: [CODE_REVIEW, SECURITY_REVIEW]
+  - id: QUALITY_GATE
+    status: done
+    dependsOn: [EXP_ACCEPT, TEST_PASS]
+  - id: KNOWLEDGE
+    status: done
+    dependsOn: [QUALITY_GATE]
+
+artifacts:
+  discovery:  { status: skip, ref: "" }
+  prd:        { status: done, ref: ".ai/docs/20260809-mobile-pwa-capacitor/requirement.md" }
+  uiSpec:     { status: done, ref: ".ai/docs/20260809-mobile-pwa-capacitor/uispec.md" }
+  impact:     { status: done, ref: ".ai/docs/20260809-mobile-pwa-capacitor/impact.md" }
+  expReview:  { status: done, ref: ".ai/docs/20260809-mobile-pwa-capacitor/exp-review.md" }
+  archReview: { status: done, ref: ".ai/docs/20260809-mobile-pwa-capacitor/architecture-review.md" }
+  design:     { status: done, ref: ".ai/docs/20260809-mobile-pwa-capacitor/design.md" }
+  testcases:  { status: done, ref: ".ai/docs/20260809-mobile-pwa-capacitor/testcases.md" }
+  code:       { status: done, ref: "st-web/src/lib/runtime.ts 等 6 新增 + 10 修改" }
+  review:     { status: done, ref: ".ai/docs/20260809-mobile-pwa-capacitor/codereview.md" }
+  security:   { status: done, ref: ".ai/docs/20260809-mobile-pwa-capacitor/security.md" }
+  expAccept:  { status: done, ref: ".ai/docs/20260809-mobile-pwa-capacitor/exp-accept.md" }
+  testReport: { status: done, ref: ".ai/docs/20260809-mobile-pwa-capacitor/testreport.md" }
+  qualityGate: { status: done, ref: ".ai/docs/20260809-mobile-pwa-capacitor/quality-gate.md" }
+  knowledge:  { status: done, ref: ".ai/knowledge/frontend.md(移动端章节)" }
+
+blockers: []
+
+history:
+  - iter: 0-6
+    phase: "init -> requirement -> impact+exp -> tech-design -> testcases -> implement -> review"
+    agent: "workflow-manager + PM + UI + impact-analyzer + experience-reviewer + architect + frontend-engineer + tester + reviewer + security-reviewer + quality-gate + knowledge-manager"
+    action: "完整 12 项退出标准 Loop"
+    delta: "全部 done"
+    result: "12 份文档落盘 + 6 新增文件 + 10 修改文件 + 编译通过 + 知识库更新"
+  - iter: 7
+    phase: "quality-gate + knowledge"
+    agent: "quality-gate + knowledge-manager"
+    action: "QUALITY_GATE PASS + 知识库更新"
+    delta: "QUALITY_GATE done, KNOWLEDGE done"
+    result: "quality-gate.md(PASS) + frontend.md 移动端章节;全部 12 项 done,Loop 收敛"
+
+iteration: 7
+status: done
+maxIterations: 40

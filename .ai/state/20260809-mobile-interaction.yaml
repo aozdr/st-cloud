@@ -1,0 +1,50 @@
+﻿taskId: "20260809-mobile-interaction"
+goal:
+  objective: "补完移动端交互: 长按 touch(D2/UX5) + 多选模式(D1) + 快捷键禁用(D3) + 上传 FAB(UX2) + 下拉刷新(UX4)"
+  scope: "st-web 移动端文件交互组件簇"
+  completionCriteria:
+    - "移动端长按触发多选,touchmove 取消不误触"
+    - "移动端多选模式可用(长按进入,批量操作)"
+    - "键盘快捷键移动端不绑定"
+    - "文件页有上传 FAB 入口"
+    - "下拉刷新可用"
+    - "编译通过(npm run build)"
+scale: small
+exitCriteria:
+  - id: IMPLEMENTED
+    desc: "改动已实现"
+    status: done
+    dependsOn: []
+  - id: VERIFIED
+    desc: "编译/测试通过"
+    status: done
+    dependsOn: [IMPLEMENTED]
+  - id: KNOWLEDGE
+    desc: "轻量知识库检查"
+    status: done
+    dependsOn: [VERIFIED]
+artifacts:
+  code: { status: done, ref: "useLongPress/usePullToRefresh/MultiSelectBar + FileBrowser 接入" }
+blockers: []
+history:
+  - iter: 0
+    phase: "init"
+    agent: "workflow-manager"
+    action: "已有文档后续编码,小型直接执行 Loop"
+    delta: "创建 State"
+    result: "scale=small"
+  - iter: 1
+    phase: "implement"
+    agent: "frontend-engineer"
+    action: "实现 D1/D2/D3/UX2/UX4/UX5"
+    delta: "新增 useLongPress/usePullToRefresh/MultiSelectBar;改造 useFileKeyboard/FileBrowser"
+    result: "长按多选+MultiSelectBar+快捷键禁用+上传FAB+下拉刷新;ESLint+build 通过"
+  - iter: 2
+    phase: "verify + knowledge"
+    agent: "workflow-manager"
+    action: "编译验证 + 知识库检查"
+    delta: "VERIFIED done, KNOWLEDGE done(frontend.md 已含移动端章节,无需更新)"
+    result: "全部 3 项 done,Loop 收敛"
+iteration: 2
+status: done
+maxIterations: 5

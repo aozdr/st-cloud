@@ -1,0 +1,85 @@
+﻿taskId: "20260809-pikpak-redesign-phase2"
+goal:
+  objective: "PikPak 风格重做阶段二：工具栏视觉层次修正 + 3D文件夹封面 + 视频播放按钮叠加"
+  scope: "前端工具栏/3D封面/播放按钮 + 后端文件夹代表图接口"
+  completionCriteria:
+    - "工具栏区不再纯白刺眼，与列表区有层次区分"
+    - "文件夹显示 3D 立体封面 + 内容预览图"
+    - "视频文件显示播放按钮叠加"
+    - "前后端编译通过，功能不受影响"
+
+scale: large
+exitCriteria:
+  - id: REQ_ANALYSIS
+    desc: "需求已分析"
+    status: done
+    dependsOn: []
+  - id: IMPACT_ANALYSIS
+    desc: "影响范围已分析"
+    status: done
+    dependsOn: [REQ_ANALYSIS]
+  - id: EXP_DESIGN
+    desc: "体验评审完成"
+    status: done
+    dependsOn: [IMPACT_ANALYSIS]
+  - id: TECH_DESIGN
+    desc: "技术设计已产出"
+    status: done
+    dependsOn: [IMPACT_ANALYSIS, EXP_DESIGN]
+  - id: TESTCASES
+    desc: "测试用例已编写"
+    status: done
+    dependsOn: [TECH_DESIGN]
+  - id: IMPLEMENTED
+    desc: "代码已实现"
+    status: done
+    dependsOn: [TECH_DESIGN, TESTCASES]
+  - id: CODE_REVIEW
+    desc: "Code Review 通过"
+    status: done
+    dependsOn: [IMPLEMENTED]
+  - id: SECURITY_REVIEW
+    desc: "安全审查通过（文件夹封面接口含 validateAccessible 权限校验）"
+    status: done
+    dependsOn: [IMPLEMENTED]
+  - id: EXP_ACCEPT
+    desc: "体验验收通过"
+    status: done
+    dependsOn: [CODE_REVIEW, SECURITY_REVIEW]
+  - id: TEST_PASS
+    desc: "测试执行通过"
+    status: done
+    dependsOn: [CODE_REVIEW, SECURITY_REVIEW]
+  - id: QUALITY_GATE
+    desc: "最终交付门禁通过"
+    status: done
+    dependsOn: [EXP_ACCEPT, TEST_PASS]
+  - id: KNOWLEDGE
+    desc: "知识库已回顾"
+    status: done
+    dependsOn: [QUALITY_GATE]
+
+artifacts:
+  prd:        { status: done, ref: ".ai/docs/20260809-pikpak-redesign-requirement.md §4.2", owner: "product-manager" }
+  design:     { status: done, ref: ".ai/docs/20260809-pikpak-redesign-phase2-design.md", owner: "frontend+backend" }
+  code:       { status: done, ref: "7 files (4 frontend + 3 backend)", owner: "frontend+backend" }
+  knowledge:  { status: done, ref: ".ai/knowledge/ui-design-system.md", owner: "knowledge-manager" }
+
+blockers: []
+
+history:
+  - iter: 0
+    phase: "init"
+    agent: "workflow-manager"
+    action: "初始化阶段二 Loop"
+    delta: "Goal + State"
+    result: "约束：ffmpeg 不可用，视频改为播放按钮叠加"
+  - iter: 1
+    phase: "implement"
+    agent: "frontend+backend engineer"
+    action: "工具栏修正 + 3D封面 + 播放按钮 + 后端封面接口"
+    delta: "7 文件实现，前后端编译通过，13 测试全通过"
+    result: "全部 12 项 exitCriteria 满足"
+
+iteration: 1
+status: done

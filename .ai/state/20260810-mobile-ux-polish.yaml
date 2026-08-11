@@ -1,0 +1,50 @@
+﻿taskId: "20260810-mobile-ux-polish"
+goal:
+  objective: "移动端 UX 收尾: UX6 传输提示 + UX7 弱网重试 + UX8 传输提示 + UX9 权限引导 + UX10 PWA 安装引导 + PWA 图标"
+  scope: "st-web 移动端体验优化"
+  completionCriteria:
+    - "传输 Tab 移动端显示前台运行提示"
+    - "网络错误显示重试按钮"
+    - "Capacitor 相册权限拒绝有引导文案"
+    - "PWA 首次访问提示安装"
+    - "PWA 图标为可用图标"
+    - "编译通过(npm run build)"
+scale: small
+exitCriteria:
+  - id: IMPLEMENTED
+    desc: "改动已实现"
+    status: done
+    dependsOn: []
+  - id: VERIFIED
+    desc: "编译/测试通过"
+    status: done
+    dependsOn: [IMPLEMENTED]
+  - id: KNOWLEDGE
+    desc: "轻量知识库检查"
+    status: done
+    dependsOn: [VERIFIED]
+artifacts:
+  code: { status: done, ref: "usePwaInstall/PwaInstallBanner + FileBrowser 网络重试 + TransferManager 提示 + capacitor 相册权限 + PWA 图标" }
+blockers: []
+history:
+  - iter: 0
+    phase: "init"
+    agent: "workflow-manager"
+    action: "小型直接执行 Loop"
+    delta: "创建 State"
+    result: "scale=small"
+  - iter: 1
+    phase: "implement"
+    agent: "frontend-engineer"
+    action: "实现 UX6-UX10 + PWA 图标"
+    delta: "新增 usePwaInstall/PwaInstallBanner;改造 FileBrowser(网络重试)/TransferManager(移动提示)/capacitor(相册权限)/TransferFloatingWidget(避让FAB);生成真实 PWA 图标"
+    result: "build+ESLint 通过"
+  - iter: 2
+    phase: "verify + knowledge"
+    agent: "workflow-manager"
+    action: "编译验证 + 知识库检查"
+    delta: "VERIFIED done, KNOWLEDGE done(frontend.md 已含移动端章节)"
+    result: "全部 3 项 done,Loop 收敛"
+iteration: 2
+status: done
+maxIterations: 5

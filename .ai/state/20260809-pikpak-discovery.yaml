@@ -1,0 +1,33 @@
+﻿taskId: "20260809-pikpak-discovery"
+goal:
+  objective: "需求发现 Agent 调研 PikPak 网盘 UI/UX 设计，基于 docs/PikPak.html 实际 DOM/CSS 提取设计 DNA，产出需求发现报告交 PM 评估立项"
+  scope: "PikPak Web 端 UI/UX 实地调研（布局/信息架构/交互流程/组件模式/状态设计/视觉系统），对照星云盘前端现状"
+  completionCriteria:
+    - "产出基于 HTML 实证的需求发现报告，落盘 .ai/docs/"
+    - "覆盖布局/IA/交互/组件/状态/视觉六维度，非仅颜色"
+    - "所有结论可追溯到 PikPak.html 实际 DOM/CSS，标注来源"
+    - "对照本项目现状给出差距清单与优先级建议"
+
+scale: discovery
+exitCriteria: []
+artifacts:
+  discovery:
+    status: done
+    ref: ".ai/docs/pikpak-discovery-report.md"
+    owner: "requirement-discovery"
+blockers: []
+history:
+  - iter: 0
+    phase: "init"
+    agent: "workflow-manager"
+    action: "初始化需求发现任务，判定为可选上游（Loop 之外）"
+    delta: "创建 Goal + State"
+    result: "用户约束：禁用看图功能、禁止臆测、禁止只搬颜色、基于 PikPak.html 实证"
+  - iter: 1
+    phase: "discovery"
+    agent: "requirement-discovery"
+    action: "解析 PikPak.html DOM/CSS，对照 st-web 前端现状"
+    delta: "产出 pikpak-discovery-report.md，27 条差距 D1-D27，5 项借鉴建议，优先级 P0-P3"
+    result: "修正既有文档 4 处错误：侧边栏选中态/圆角/深色优先/紫蓝主题。报告落盘 .ai/docs/"
+iteration: 1
+status: done
