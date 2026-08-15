@@ -39,7 +39,9 @@
 
 - Elasticsearch 文件名 + 内容全文搜索（IK 中文分词，ingest-attachment 文档解析）
 - 高级筛选：文件类型 / 时间 / 大小
-- 文档预览：Office / PDF / 图片 / 音视频
+- 文档预览：Office（docx/xlsx/pptx）与 PDF 通过 OnlyOffice 只读查看（全屏页 + 返回按钮，
+  排版/图片与 Office 一致）；分享场景本地渲染（docx-preview / pdf.js 兜底）；图片/音视频内嵌预览
+- 格式转换：Word（doc/docx）↔ PDF 一键互转（右键菜单，转换名可编辑，重名自动按云盘规则处理）
 - OnlyOffice 在线编辑 Word / Excel / PPT：编辑锁（Redis）、回调验签、SSRF 防护
 
 ### 系统管理
@@ -108,16 +110,19 @@ docker-compose up -d
 
 | 服务 | 端口 | 说明 |
 |------|------|------|
-| mysql | 3306 | MySQL 8.0，首次启动自动执行 `mysql/init/` 下全部脚本 |
+| mysql | 3306 | MySQL 8.0，首次启动自动执行 `mysql/init/` 下全部脚本（脚本首行 `SET NAMES utf8mb4;`） |
 | redis | 6379 | Redis 7（缓存/会话/编辑锁/限速） |
 | rustfs | 9000 / 9001 | S3 兼容对象存储 |
 | rocketmq-namesrv | 9876 | RocketMQ NameServer |
 | rocketmq-broker | 10909-10912 | RocketMQ Broker（自动创建 topic） |
 | rocketmq-dashboard | 9080 | RocketMQ 控制台（可选） |
 | elasticsearch | 9200 | ES 8.12，自定义镜像内置 ingest-attachment + IK 插件 |
-| onlyoffice | 8081 | OnlyOffice Document Server（在线编辑） |
+| onlyoffice | 8081 | OnlyOffice Document Server（在线编辑 / 只读预览 / 格式转换） |
 
 > Elasticsearch 镜像首次构建需要联网下载插件（Elastic 官方源 + infinilabs IK 源）；网络受限环境请提前配置代理或预构建镜像。
+
+> OnlyOffice 容器只读挂载宿主机 `C:/Windows/Fonts`（Windows 下 docx 中文字体按宋体/微软雅黑等原字体渲染；
+> Linux 生产部署需自行安装对应字体，见 `.ai/knowledge/business-domain.md`）。
 
 也可以跳过 Docker，使用本地安装的 MySQL / Redis / S3，并修改 `st-api/src/main/resources/application-dev.yml`。
 

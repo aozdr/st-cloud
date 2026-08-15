@@ -27,6 +27,7 @@
     "date-fns": "^4.4.0",
     "docx-preview": "^0.4.0",
     "lucide-react": "^1.27.0",
+    "pdfjs-dist": "^4.10.38",
     "plyr": "^3.8.4",
     "qrcode": "^1.5.4",
     "react": "^18.3.1",

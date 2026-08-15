@@ -1,3 +1,4 @@
+SET NAMES utf8mb4;
 -- ============================================================
 -- file_share 增加 allow_download（下载/流式统一开关）  TASK-FIX-SEC-DOWNLOAD-FLAG
 -- S-02 加固：permission 保留用于前端展示/兼容，下载控制以 allow_download 为权威

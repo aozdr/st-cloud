@@ -118,6 +118,8 @@ services:
       - onlyoffice_logs:/var/log/onlyoffice
       - onlyoffice_cache:/var/lib/onlyoffice
       - onlyoffice_db:/var/lib/postgresql
+      # 挂载 Windows 中文字体（宋体/微软雅黑/黑体/楷体/仿宋等），docx 预览字体与 Word 一致
+      - C:/Windows/Fonts:/usr/share/fonts/winfonts:ro
       # 禁用 OnlyOffice Service Worker（浏览器 SW fetch 异常导致编辑器白屏，20260815 实测）
       - ./onlyoffice/nginx/disable-sw.conf:/etc/nginx/includes/ds-disable-sw.conf:ro
 

@@ -86,7 +86,7 @@ st-cloud (Maven 多模块, groupId: com.stcloud, version: 1.0.0-SNAPSHOT)
 ├── st-search      全文搜索：ES索引/监听/重建
 │      └── st-common, st-core
 │
-├── st-preview     文档预览：Office/PDF/图片/音视频
+├── st-preview     文档预览：PDF（pdf.js）/图片/音视频/文本；Office（docx/xlsx/pptx）预览走 OnlyOffice 只读查看
 │      └── st-common, st-core
 │
 ├── st-admin       系统管理：用户/角色/权限/审计/统计/限速/容量

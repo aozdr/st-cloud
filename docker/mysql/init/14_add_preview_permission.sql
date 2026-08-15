@@ -1,3 +1,4 @@
+SET NAMES utf8mb4;
 -- 14_add_preview_permission.sql
 -- 新增权限码 file:preview（文件预览），用于控制在线预览文件的可见性。
 -- 预览与下载分离：仅有 file:preview 的用户可在线查看，但不能下载。

@@ -1,3 +1,4 @@
+SET NAMES utf8mb4;
 -- ============================================================
 -- sync_change_log 增加 event_log_id（MQ 消费者幂等去重键）  TASK-004
 -- 幂等加固（20260813-code-review-fix）：重复执行不报错（information_schema 存在性守卫）

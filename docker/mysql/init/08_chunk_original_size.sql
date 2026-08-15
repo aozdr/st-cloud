@@ -1,3 +1,4 @@
+SET NAMES utf8mb4;
 -- 替换上传按差值计费：file_chunk 记录原文件大小
 -- 幂等加固（20260814-fix-m2m3）：重复执行不报错（information_schema 存在性守卫）
 USE stcloud;

@@ -6,6 +6,7 @@ import com.stcloud.common.response.Result;
 import com.stcloud.common.context.UserContext;
 import com.stcloud.common.utils.JwtUtils;
 import com.stcloud.core.dto.*;
+import com.stcloud.core.convert.FileConvertService;
 import com.stcloud.core.service.DownloadService;
 import com.stcloud.core.service.FileService;
 import com.stcloud.core.service.UploadService;
@@ -40,8 +41,18 @@ public class FileController {
     private final UploadService uploadService;
     private final DownloadService downloadService;
     private final JwtUtils jwtUtils;
+    private final FileConvertService fileConvertService;
 
     // ==================== 目录管理 ====================
+
+    @Operation(summary = "文件格式转换（Word<->PDF）")
+    @Auditable(action = "CONVERT_FILE", targetType = "FILE")
+    @PreAuthorize("hasAuthority('file:upload') or hasRole('ADMIN')")
+    @PostMapping("/{nodeId}/convert")
+    public Result<FileNodeVO> convertFile(@PathVariable Long nodeId,
+                                          @Valid @RequestBody ConvertFileRequest request) {
+        return Result.success(fileConvertService.convert(nodeId, request.getFileName()));
+    }
 
     @Operation(summary = "创建文件夹")
     @Auditable(action = "CREATE_FOLDER", targetType = "FOLDER")

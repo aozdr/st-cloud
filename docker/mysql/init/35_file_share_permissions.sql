@@ -1,3 +1,4 @@
+SET NAMES utf8mb4;
 -- ============================================================
 -- file_share 增加 permissions（分享权限点 JSON）  TASK-PERM-DB
 -- 权限模型重设计：permission 单值保留用于兼容，分享权限以 permissions JSON 为权威

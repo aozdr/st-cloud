@@ -69,6 +69,8 @@ public class EditorConfigServiceImpl implements EditorConfigService {
             throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "文件尚未上传完成");
         }
         editorPermissionService.assertSupported(node);
+        // PDF 仅允许只读查看（OnlyOffice PDF 查看器），不允许编辑
+        canEdit = canEdit && !"pdf".equalsIgnoreCase(node.getSuffix());
 
         String secret = editorProperties.getJwtSecret();
         if (!StringUtils.hasText(secret) || secret.getBytes(StandardCharsets.UTF_8).length < 32) {
@@ -148,11 +150,12 @@ public class EditorConfigServiceImpl implements EditorConfigService {
                 List.of(), permissions, 1, node.getId());
     }
 
-    /** 文档类型映射：docx-&gt;word / xlsx-&gt;cell / pptx-&gt;slide */
+    /** 文档类型映射：docx-&gt;word / xlsx-&gt;cell / pptx-&gt;slide / pdf-&gt;pdf */
     private String documentType(String suffix) {
         return switch (suffix.toLowerCase()) {
             case "xlsx" -> "cell";
             case "pptx" -> "slide";
+            case "pdf" -> "pdf";
             default -> "word";
         };
     }

@@ -1,3 +1,4 @@
+SET NAMES utf8mb4;
 -- 09: JWT 签名密钥表（AES-GCM 加密存储）
 -- 密钥明文从不落盘：运行时由主密钥（STCLOUD_MASTER_KEY）解密后缓存于内存
 CREATE TABLE IF NOT EXISTS sys_jwt_secret (

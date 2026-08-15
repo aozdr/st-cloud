@@ -1,3 +1,4 @@
+SET NAMES utf8mb4;
 -- 13_remove_ratelimit_orphan.sql
 -- 清理历史遗留的孤儿权限码 admin:ratelimit:manage。
 -- 该码原由 05_rate_limit_tables.sql 种入，但 SpeedLimitController 实际使用

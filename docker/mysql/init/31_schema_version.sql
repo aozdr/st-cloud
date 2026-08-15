@@ -1,3 +1,4 @@
+SET NAMES utf8mb4;
 -- ============================================================
 -- Schema 版本管理表  -- 每次迭代更新版本号，记录本次执行的 SQL 文件清单
 -- ============================================================
@@ -26,3 +27,10 @@ VALUES ('20260812.1', '审查遗留建议跟进 + Schema 一致性修复',
         '26_sync_change_log.sql,27_sync_exclusion_conflict.sql,28_file_object.sql,29_event_log.sql,30_sync_change_log_event_log_id.sql,31_schema_version.sql',
         'codex-agent',
         '补执行遗漏的迁移 26~30（sync_change_log/file_object/event_log/唯一索引）；修复 27 号唯一键超 3072 字节；新增 schema_version 版本表');
+
+-- 2026-08-15：MySQL 容器与数据卷重建，修复 init 脚本中文双重编码（02~36 全部脚本首行加 SET NAMES utf8mb4）
+INSERT INTO schema_version (version_tag, iteration_name, applied_sql_files, applied_by, notes)
+VALUES ('20260815.1', 'MySQL 重建：修复 init 脚本中文双重编码',
+        '02~36 全部 init 脚本（首行统一加 SET NAMES utf8mb4），docker_mysql_data 数据卷重建',
+        'codex',
+        '容器内 mysql 客户端默认 latin1 导致 init 中文被双重编码为乱码；业务数据已恢复（临时备份已清理）');

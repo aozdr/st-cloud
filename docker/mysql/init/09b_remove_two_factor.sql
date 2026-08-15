@@ -1,3 +1,4 @@
+SET NAMES utf8mb4;
 -- 09b_remove_two_factor.sql
 -- 移除两步验证(TOTP)相关字段（功能已下线）
 -- 关联文档：docs/PRD-云盘系统-v2.0.md Epic 8（安全与访问控制）；2FA 非需求范围，予以移除。

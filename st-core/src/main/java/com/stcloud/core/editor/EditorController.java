@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
@@ -38,12 +39,15 @@ public class EditorController {
     private final EditorConfigService editorConfigService;
     private final EditorCallbackService editorCallbackService;
 
-    @Operation(summary = "获取在线编辑配置（个人文件）")
+    @Operation(summary = "获取在线编辑/查看配置（个人文件）")
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/{nodeId}/editor/config")
-    public Result<EditorConfigResponse> editorConfig(@PathVariable Long nodeId) {
+    public Result<EditorConfigResponse> editorConfig(@PathVariable Long nodeId,
+                                                     @RequestParam(defaultValue = "edit") String mode) {
         EditorPermissionService.EditorAccess access = editorPermissionService.resolvePersonal(nodeId);
-        return Result.success(editorConfigService.generateConfig(nodeId, access.isCanEdit(), true, true));
+        // mode=view：强制只读查看（仅读权限），用于 Office 文件预览；不占编辑位
+        boolean canEdit = access.isCanEdit() && !"view".equalsIgnoreCase(mode);
+        return Result.success(editorConfigService.generateConfig(nodeId, canEdit, true, true));
     }
 
     @Operation(summary = "OnlyOffice 保存/关闭回调")

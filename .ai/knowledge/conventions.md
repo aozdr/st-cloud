@@ -135,6 +135,8 @@ public Result<FileNodeVO> getNode(@PathVariable Long nodeId) {
 - 脚本目录：`docker/mysql/init/`
 - 命名规则：两位数字前缀 + 下划线描述，如 `15_add_new_feature.sql`
 - 编号严格递增，不可复用已存在的编号
+- **所有脚本首行必须为 `SET NAMES utf8mb4;`**：容器内 mysql 客户端默认按 latin1 连接
+  （服务器为 utf8mb4），缺失该行时脚本中的中文会被双重编码成乱码（2026-08-15 实测）
 - 所有 DDL 使用 `IF NOT EXISTS` / `IF EXISTS` 保证幂等
 - 新增字段使用 `ALTER TABLE ... ADD COLUMN ...`
 - 逻辑删除统一使用 `deleted` 字段（TINYINT，0/1），由 MyBatis-Plus `@TableLogic` 管理

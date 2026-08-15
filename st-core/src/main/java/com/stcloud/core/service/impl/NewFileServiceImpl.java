@@ -79,41 +79,45 @@ public class NewFileServiceImpl implements NewFileService {
     public FileNodeVO createBlankFile(String type, Long parentId, Long spaceId, String fileName) {
         // 1. 类型白名单校验：非法类型直接拒绝（TC-09）
         String normalized = normalizeType(type);
+        byte[] content = loadTemplate(normalized);
+        String baseName = normalizeFileName(fileName, normalized);
+        // 2~9. 公共落库流程（归属/重名/配额/去重/建节点/事件/扣配额）
+        return createCompletedFile(baseName, normalized, content, parentId, spaceId);
+    }
+
+    @Override
+    @Transactional
+    public FileNodeVO createCompletedFile(String fileName, String suffix, byte[] content,
+                                          Long parentId, Long spaceId) {
+        // 1. 上下文与归属校验：团队路径校验父目录属于该空间；个人路径校验父目录 owner 为当前用户（TC-05/06）
         Long userId = UserContext.getUserId();
         Long tenantId = UserContext.getTenantId();
         Long effectiveParentId = parentId == null ? 0L : parentId;
-
-        // 2. 归属校验：团队路径校验父目录属于该空间；个人路径校验父目录 owner 为当前用户（TC-05/06）
         if (spaceId != null && spaceId > 0) {
             fileService.validateTeamNode(spaceId, effectiveParentId);
         } else {
             checkPersonalOwner(effectiveParentId, userId);
         }
 
-        // 3. 父目录路径 + 重名自动序号（复用 FileService.resolveNameConflict，TC-04）
+        // 2. 父目录路径 + 重名自动序号（复用 FileService.resolveNameConflict，TC-04）
         String parentPath = fileService.validateAndGetParentPath(effectiveParentId);
-        // 3.1 文件名：用户输入为空用默认名；有输入则校验合法性并补全类型后缀（如输入「周报」→「周报.docx」）
-        String baseName = normalizeFileName(fileName, normalized);
-        String resolvedName = fileService.resolveNameConflict(effectiveParentId, baseName);
-        String nodeName = resolvedName;
+        String baseName = normalizeFileName(fileName, suffix);
+        String nodeName = fileService.resolveNameConflict(effectiveParentId, baseName);
 
-        // 4. 模板字节：txt 为空 UTF-8；docx/xlsx/pptx 读取 classpath 标准 OOXML 空白模板
-        byte[] content = loadTemplate(normalized);
-
-        // 5. 配额预检 + 云盘总容量校验（TC-07）：并发安全由第 9 步原子扣减兜底
+        // 3. 配额预检 + 云盘总容量校验（TC-07）：并发安全由第 7 步原子扣减兜底
         checkQuota(userId, spaceId, content.length);
         cloudStorageService.checkCapacity(content.length);
 
-        // 6. S3 落盘 + file_object 去重（同租户同 md5 复用对象，不重复上传）
+        // 4. S3 落盘 + file_object 去重（同租户同 md5 复用对象，不重复上传）
         String md5 = DigestUtil.md5Hex(new ByteArrayInputStream(content));
         FileObject object = fileObjectService.acquire(tenantId, md5, content.length, () -> {
             String key = tenantId + "/" + md5;
             storageService.uploadObject(key, new ByteArrayInputStream(content), content.length,
-                    fileService.guessContentType(fileName));
+                    fileService.guessContentType(nodeName));
             return key;
         });
 
-        // 7. 创建 file_node：新建即完成（status=NORMAL、uploadStatus=COMPLETED），owner/space 归属（TC-10）
+        // 5. 创建 file_node：新建即完成（status=NORMAL、uploadStatus=COMPLETED），owner/space 归属（TC-10）
         FileNode node = new FileNode();
         node.setParentId(effectiveParentId);
         node.setNodeType(NodeType.FILE.getCode());
@@ -134,11 +138,11 @@ public class NewFileServiceImpl implements NewFileService {
         node.setVersion(0);
         fileNodeMapper.insert(node);
 
-        // 8. 事件链路：发布 FileIndexEvent(INDEX) + SyncChangeEvent(CREATE)（TC-08）
+        // 6. 事件链路：发布 FileIndexEvent(INDEX) + SyncChangeEvent(CREATE)（TC-08）
         reliableEventPublisher.publishFileIndex(node, FileIndexEvent.ActionType.INDEX);
         reliableEventPublisher.publishSyncChange(node, SyncChangeEvent.ChangeType.CREATE);
 
-        // 9. 原子扣减配额：并发超配额时 update 返回 0，抛异常回滚本次新建，不产生半成品节点
+        // 7. 原子扣减配额：并发超配额时 update 返回 0，抛异常回滚本次新建，不产生半成品节点
         consumeQuota(userId, spaceId, content.length);
 
         return fileService.toVO(node);
@@ -155,7 +159,7 @@ public class NewFileServiceImpl implements NewFileService {
     /** 规范化用户输入的文件名：空用默认名；有输入则校验非法字符；无后缀自动补对应类型后缀 */
     private String normalizeFileName(String fileName, String type) {
         if (fileName == null || fileName.isBlank()) {
-            return DEFAULT_NAMES.get(type);
+            return DEFAULT_NAMES.getOrDefault(type, "新建文件." + type);
         }
         String name = fileName.trim();
         // Windows 非法字符：\ / : * ? " < > |

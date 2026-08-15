@@ -1,3 +1,4 @@
+SET NAMES utf8mb4;
 -- ============================================================
 -- team_folder_permission 增加 permissions（权限点 JSON）  TASK-PERM-DB
 -- 权限模型重设计：单值 permission 保留用于迁移/兼容，权限计算以 permissions JSON 为权威

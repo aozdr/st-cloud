@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AlertCircle, ArrowLeft, FileText } from 'lucide-react';
 import { Dialog } from '../components/ui/Dialog';
 import { getEditorConfig, loadOnlyOfficeApi } from '../lib/editor';
@@ -39,6 +39,7 @@ export default function EditorPage() {
   const { nodeId } = useParams<{ nodeId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<{ destroyEditor?: () => void } | null>(null);
   const [phase, setPhase] = useState<EditorPhase>('loading');
@@ -64,8 +65,14 @@ export default function EditorPage() {
     };
   }, []);
 
-  // 来源路径：从文件列表「在线编辑」进入时记录，关闭/回退后返回原目录
-  const fromPath = (location.state as { from?: string } | null)?.from ?? '/files';
+  // 打开模式：?mode=view 为 OnlyOffice 只读查看（Office 文件预览），默认编辑
+  const mode: 'edit' | 'view' = searchParams.get('mode') === 'view' ? 'view' : 'edit';
+
+  // 来源路径：从文件列表「在线编辑/预览」进入时记录，关闭/回退后返回原目录
+  const fromPath =
+    (location.state as { from?: string } | null)?.from ??
+    searchParams.get('from') ??
+    '/files';
 
   const goBack = useCallback(() => {
     navigate(fromPath);
@@ -89,7 +96,7 @@ export default function EditorPage() {
     (async () => {
       try {
         // 1) 获取后端下发的编辑器配置（含权限判定与 JWT token）
-        const res = await getEditorConfig(nodeId);
+        const res = await getEditorConfig(nodeId, mode);
         if (cancelled || !containerRef.current) return;
         lastConfigRef.current = { editorUrl: res.editorUrl, token: res.config?.token ?? '' };
         setFileName(res.config?.document?.title ?? '');
@@ -149,7 +156,7 @@ export default function EditorPage() {
       }
       editorRef.current = null;
     };
-  }, [nodeId, goBack]);
+  }, [nodeId, goBack, mode]);
 
   // OnlyOffice 9.x 高度塌缩修复：DocEditor 生成的 iframe 在百分比高度下只渲染工具栏高度（实测 150px），
   // 需按容器实际像素高度强制校正（固定像素生效，百分比不生效）。
@@ -190,7 +197,9 @@ export default function EditorPage() {
           <FileText className="w-4 h-4 text-muted flex-shrink-0" aria-hidden />
           <span className="text-sm font-medium text-fg truncate">{fileName || '在线文档编辑'}</span>
         </div>
-        <span className="ml-auto text-xs text-muted flex-shrink-0">在线编辑</span>
+        <span className="ml-auto text-xs text-muted flex-shrink-0">
+          {mode === 'view' ? '只读预览' : '在线编辑'}
+        </span>
       </div>
 
       {/* 编辑器主体：占满剩余空间，OnlyOffice iframe 由 api.js 注入 */}

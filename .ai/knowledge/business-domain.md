@@ -191,10 +191,23 @@
 - 安全：回调 JWT 验签（STCLOUD_ONLYOFFICE_SECRET）+ key/status 一致性 + 文件归属复核；
   回调下载主机白名单 + 大小上限，防 SSRF 与投毒
 - 部署：docker-compose 内置 onlyoffice 容器；生产配置 `stcloud.onlyoffice.public-base-url` 为后端可达地址
+- 字体：compose 只读挂载宿主机 `C:/Windows/Fonts` 到容器 `/usr/share/fonts/winfonts`，
+  docx 中文按宋体/微软雅黑/黑体/楷体/仿宋/等线原字体渲染（与 Word 一致）；
+  生产 Linux 主机需自行安装对应字体（可复制到 `docker/onlyoffice/fonts` 挂载或装 Noto CJK）
+- 格式转换：`POST /api/file/{nodeId}/convert`（Word doc/docx <-> PDF），调 OnlyOffice
+  `ConvertService.ashx`（XML 响应，EndConvert 轮询），转换结果走 `NewFileService.createCompletedFile`
+  落库（重名自动序号/配额/去重/事件与新建一致）；前端右键菜单「转换为 PDF/Word」+ 文件名可编辑
+  对话框（默认「原文件名-转换.目标后缀」）
 
 ### 9. 文件预览
 
-- 支持格式：Office 文档（docx-preview）、PDF、图片、视频（Plyr）、音频
+- 支持格式：
+  - Office（docx/xlsx/pptx）：**OnlyOffice 只读查看**（`/file/{nodeId}/editor?mode=view`，
+    全屏页 + 顶部返回按钮，排版/图片与 Word 一致）；分享场景无编辑器配置，回退 docx-preview
+  - PDF：pdf.js（连续滚动 + 左侧缩略图 + 适应宽度 + 缩放，worker 独立资源打包）
+  - 图片 / 视频（Plyr）/ 音频 / 文本
+- OnlyOffice 查看模式：后端 `/api/file/{nodeId}/editor/config?mode=view` 强制 `canEdit=false`，
+  以 `mode=view` 打开（只读不占编辑位）；编辑入口仍走默认 edit 模式
 - 预览流程：`PreviewController` -> `PreviewService` -> 生成/获取预览缓存（preview-bucket）
 - 缩略图：`FileNode.thumbnailPath` 存储缩略图 S3 路径
 

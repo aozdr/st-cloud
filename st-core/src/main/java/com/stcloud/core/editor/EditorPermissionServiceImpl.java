@@ -23,8 +23,11 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class EditorPermissionServiceImpl implements EditorPermissionService {
 
-    /** 在线编辑支持后缀（OnlyOffice 社区版可编辑格式） */
-    private static final Set<String> EDITABLE_SUFFIXES = Set.of("docx", "xlsx", "pptx");
+    /**
+     * OnlyOffice 支持后缀：docx/xlsx/pptx 可编辑；pdf 仅用于查看模式（前端不提供 PDF 编辑入口，
+     * 后端在生成配置时对 pdf 强制 canEdit=false）
+     */
+    private static final Set<String> EDITABLE_SUFFIXES = Set.of("docx", "xlsx", "pptx", "pdf");
 
     private final FileNodeMapper fileNodeMapper;
 
@@ -37,7 +40,7 @@ public class EditorPermissionServiceImpl implements EditorPermissionService {
     public void assertSupported(FileNode node) {
         if (!isEditableSuffix(node.getSuffix())) {
             throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(),
-                    "该文件类型暂不支持在线编辑（仅支持 docx/xlsx/pptx）");
+                    "该文件类型暂不支持在线编辑/查看（仅支持 docx/xlsx/pptx/pdf）");
         }
     }
 

@@ -434,6 +434,10 @@ public class AuditAspect {
                 summary = "用户登录";
                 detailMap.put("summary", summary);
                 break;
+            case "CONVERT_FILE":
+                summary = "文件格式转换";
+                detailMap.put("summary", summary);
+                break;
             case "LOGOUT":
                 summary = "用户退出登录";
                 detailMap.put("summary", summary);

@@ -1,3 +1,4 @@
+SET NAMES utf8mb4;
 -- 10_drop_is_admin.sql
 -- 移除 sys_user.is_admin 魔法值列：管理员身份统一由 RBAC admin 角色表达。
 -- 关联文档：docs/PRD-用户权限系统.md US1

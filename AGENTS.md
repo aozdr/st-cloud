@@ -373,6 +373,9 @@ Goal 必须包含：
 涉及数据库变更的迭代，必须按以下顺序执行：
 
 1.  **新建迁移脚本**：在 `docker/mysql/init/` 下新增编号递增的 `.sql` 文件
+    - 脚本第一行必须为 `SET NAMES utf8mb4;`：容器内 mysql 客户端默认按 latin1
+      连接（服务器为 utf8mb4），缺少该行时脚本中的中文会被双重编码成乱码
+      （2026-08-15 实测：`管理员` 变 `ç®¡ç†å‘˜`）。
 2.  **同步 H2 schema**：在 `st-core/src/test/resources/schema.sql` 中补齐对应表/列
 3.  **运行 H2 测试**：`mvn test` 全绿（含 `SchemaConsistencyTest` 三层校验）
 4.  **对比正式数据库**：H2 测试通过后，运行 `.ai/scripts/compare-schema.ps1` 对比 MySQL 实际 schema，确认无列差异

@@ -14,9 +14,12 @@ export function isEditableOfficeSuffix(suffix: string | null | undefined): boole
  * 获取编辑器配置：{editorUrl, config}。
  * config 已含后端签发的 JWT token，直接传给 DocsAPI.DocEditor；
  * 编辑/只读权限以后端判定为准，前端仅做入口展示。
+ * @param mode edit=编辑模式（默认）；view=只读查看模式（Office 文件预览）
  */
-export function getEditorConfig(nodeId: string): Promise<EditorConfigResponse> {
-  return api.get<EditorConfigResponse>(`/file/${nodeId}/editor/config`);
+export function getEditorConfig(nodeId: string, mode: 'edit' | 'view' = 'edit'): Promise<EditorConfigResponse> {
+  return api.get<EditorConfigResponse>(`/file/${nodeId}/editor/config`, {
+    params: mode === 'view' ? { mode: 'view' } : undefined,
+  });
 }
 
 declare global {

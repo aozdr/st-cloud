@@ -1,3 +1,4 @@
+SET NAMES utf8mb4;
 -- 12_add_permissions.sql
 -- 新增权限码 file:copy、admin:storage:manage，并分配给对应角色。
 -- file:copy -> admin + user 角色；admin:storage:manage -> 仅 admin 角色。

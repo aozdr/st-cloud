@@ -1,3 +1,4 @@
+SET NAMES utf8mb4;
 -- 11_role_data_scope.sql
 -- 为 sys_role 增加 data_scope（数据范围）字段，替代散落的 ownerId 越权旁路。
 -- 数据范围：1-本人（仅自有资源） 2-租户（本租户资源） 3-全部（跨租户/跨所有者）

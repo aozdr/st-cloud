@@ -29,6 +29,7 @@ import ShareDialog from '../share/ShareDialog';
 import VersionHistoryDialog from './VersionHistoryDialog';
 import BatchRenameDialog from './BatchRenameDialog';
 import ArchiveDialog from './ArchiveDialog';
+import ConvertDialog from './ConvertDialog';
 import { useToast } from '../ui/Toast';
 import { useConfirm } from '../ui/ConfirmDialog';
 import { useUpload } from '../../hooks/useUpload';
@@ -162,6 +163,7 @@ export default function FileBrowser({
   const [showBatchRename, setShowBatchRename] = useState(false);
   const [archiveTarget, setArchiveTarget] = useState<FileNode | null>(null);
   const [renameTarget, setRenameTarget] = useState<FileNode | null>(null);
+  const [convertTarget, setConvertTarget] = useState<FileNode | null>(null);
   const [moveTarget, setMoveTarget] = useState<{ nodeIds: string[]; mode: 'move' | 'copy' } | null>(null);
 
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; node: FileNode } | null>(null);
@@ -723,6 +725,9 @@ export default function FileBrowser({
       case 'edit':
         handleEdit(node);
         break;
+      case 'convert':
+        setConvertTarget(node);
+        break;
       case 'cut':
         setClipboard({ nodeIds: [...selectedIds], mode: 'cut' });
         showToast(`\u5df2\u526a\u5207 ${selectedIds.size} \u9879`);
@@ -1117,6 +1122,7 @@ export default function FileBrowser({
           lockable={!!onToggleLock}
           locked={isNodeLocked(contextMenu.node)}
           showEdit={canEditNode(contextMenu.node)}
+          showConvert
           onAction={handleContextAction}
           onClose={() => setContextMenu(null)}
         />
@@ -1173,6 +1179,11 @@ export default function FileBrowser({
         onRename={(id, name) => source.rename(id, name)}
         onClose={() => setRenameTarget(null)}
         onSuccess={() => { setRenameTarget(null); fetchFiles(); }}
+      />
+      <ConvertDialog
+        node={convertTarget}
+        onClose={() => setConvertTarget(null)}
+        onConverted={fetchFiles}
       />
       {moveTarget && (
         <MoveDialog

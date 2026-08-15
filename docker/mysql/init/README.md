@@ -14,9 +14,15 @@
 
 ```bash
 for f in docker/mysql/init/[0-9]*.sql; do
-  mysql -uroot -p stcloud < "$f"
+  mysql -uroot -p --default-character-set=utf8mb4 stcloud < "$f"
 done
 ```
+
+> 注意：所有脚本第一行均为 `SET NAMES utf8mb4;`，且手工执行必须加
+> `--default-character-set=utf8mb4`。若客户端按 latin1/GBK 连接，脚本中的 UTF-8
+> 中文会被双重编码成乱码（如 `管理员` 变 `ç®¡ç†å‘˜`），2026-08-15 实测踩坑。
+> **新增迁移脚本必须同样以 `SET NAMES utf8mb4;` 开头**（容器内 mysql 客户端默认
+> 按 latin1 连接，不设则新脚本的中文同样会乱码）。
 
 或仅对已有数据库执行增量脚本（09 及以后大多为 `ALTER TABLE`，均已做幂等守卫，可重复执行）。执行后按「数据库版本管理」向 `schema_version` 表登记版本。
 
