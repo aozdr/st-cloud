@@ -10,6 +10,7 @@ import com.stcloud.core.convert.FileConvertService;
 import com.stcloud.core.service.DownloadService;
 import com.stcloud.core.service.FileService;
 import com.stcloud.core.service.UploadService;
+import com.stcloud.core.text.TextFileService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
@@ -42,6 +43,7 @@ public class FileController {
     private final DownloadService downloadService;
     private final JwtUtils jwtUtils;
     private final FileConvertService fileConvertService;
+    private final TextFileService textFileService;
 
     // ==================== 目录管理 ====================
 
@@ -52,6 +54,18 @@ public class FileController {
     public Result<FileNodeVO> convertFile(@PathVariable Long nodeId,
                                           @Valid @RequestBody ConvertFileRequest request) {
         return Result.success(fileConvertService.convert(nodeId, request.getFileName()));
+    }
+
+    @Operation(summary = "保存文本文件内容（个人）")
+    @Auditable(action = "EDIT_TEXT_FILE", targetType = "FILE")
+    @PreAuthorize("hasAuthority('file:upload') or hasRole('ADMIN')")
+    @PutMapping("/{nodeId}/text-content")
+    public Result<Void> saveTextContent(@PathVariable Long nodeId,
+                                        @Valid @RequestBody TextContentRequest request) {
+        // 个人文件：owner 校验（管理员直通）；团队文件走团队接口
+        fileService.getNodeByIdAndOwner(nodeId);
+        textFileService.overwriteContent(nodeId, request.getContent().getBytes(StandardCharsets.UTF_8));
+        return Result.success();
     }
 
     @Operation(summary = "创建文件夹")

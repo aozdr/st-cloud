@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.stcloud.common.annotation.Auditable;
 import com.stcloud.common.response.Result;
 import com.stcloud.core.editor.EditorConfigService;
+import com.stcloud.core.text.TextFileService;
+import com.stcloud.core.dto.TextContentRequest;
 import com.stcloud.core.editor.dto.EditorConfigResponse;
 import com.stcloud.core.dto.FileNodeVO;
 import com.stcloud.core.dto.FileTreeNodeVO;
@@ -47,6 +49,7 @@ public class TeamController {
     private final TeamActivityHelper activityHelper;
     private final ActiveTracker activeTracker;
     private final EditorConfigService editorConfigService;
+    private final TextFileService textFileService;
 
     // ==================== 空间管理 ====================
 
@@ -264,18 +267,31 @@ public class TeamController {
         return Result.success(fileService.listTeamFiles(spaceId, parentId, page, size));
     }
 
-    @Operation(summary = "团队文件在线编辑配置（upload 可编辑，仅 view 只读）")
+    @Operation(summary = "团队文件在线编辑配置（edit 权限点可编辑，仅 view 只读）")
     @GetMapping("/{spaceId}/files/{nodeId}/editor/config")
     public Result<EditorConfigResponse> editorConfig(@PathVariable Long spaceId, @PathVariable Long nodeId) {
         // 访问前提：view 权限点（成员校验 + 权限集校验，管理员直通）
         teamService.requirePermissions(spaceId, nodeId, com.stcloud.team.service.FolderPermissionService.PERM_VIEW);
         // 归属校验：节点必须属于该空间
         fileService.getTeamNodeById(spaceId, nodeId);
-        // 编辑判定：有效权限集含 upload（与上传能力对齐，TC-03/04）；下载/打印按 download 权限
+        // 编辑判定：有效权限集含 edit（新增权限点，2026-08-15）；旧数据兼容 upload；下载/打印按 download 权限
         Set<String> perms = teamService.resolveMyPermissions(spaceId, nodeId);
-        boolean canEdit = perms != null && perms.contains(com.stcloud.team.service.FolderPermissionService.PERM_UPLOAD);
+        boolean canEdit = perms != null && (perms.contains(com.stcloud.team.service.FolderPermissionService.PERM_EDIT)
+                || perms.contains(com.stcloud.team.service.FolderPermissionService.PERM_UPLOAD));
         boolean canDownload = perms != null && perms.contains(com.stcloud.team.service.FolderPermissionService.PERM_DOWNLOAD);
         return Result.success(editorConfigService.generateConfig(nodeId, canEdit, canDownload, canDownload));
+    }
+
+    @Operation(summary = "保存文本文件内容（团队，edit 权限点）")
+    @PreAuthorize("hasAuthority('file:upload') or hasRole('ADMIN')")
+    @PutMapping("/{spaceId}/files/{nodeId}/text-content")
+    public Result<Void> saveTeamTextContent(@PathVariable Long spaceId, @PathVariable Long nodeId,
+                                            @Valid @RequestBody TextContentRequest request) {
+        // 编辑文档需 edit 权限点（2026-08-15 新增）；归属校验由 getTeamNodeById 完成
+        teamService.requirePermissions(spaceId, nodeId, com.stcloud.team.service.FolderPermissionService.PERM_EDIT);
+        fileService.getTeamNodeById(spaceId, nodeId);
+        textFileService.overwriteContent(nodeId, request.getContent().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        return Result.success();
     }
 
     @Operation(summary = "根据路径解析空间文件夹")

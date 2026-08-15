@@ -231,6 +231,7 @@ export interface ShareAccessVO {
   suffix: string | null;
   size: string | null;
   permission: number;
+  permissions?: string; // 分享权限点 JSON（权威字段，如 {"view":true,"edit":true}）
   fileNodeId: string;
   shareType: number;
 }

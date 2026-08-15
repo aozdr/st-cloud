@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../../lib/api';
 import type { FileNode, PreviewResult } from '../../types';
 import { addRecentFile } from '../../lib/recentFiles';
-import { isImage, isVideo, isPdf, isAudio, isText, isWord, isExcel, getFileTypeConfig, cn } from '../../lib/utils';
+import { isImage, isVideo, isPdf, isAudio, isText, isWord, isExcel, isPpt, getFileTypeConfig, cn } from '../../lib/utils';
 import type { WorkBook } from 'xlsx';
 import { isEditableOfficeSuffix } from '../../lib/editor';
 
@@ -295,7 +295,7 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
   if (!file) return null;
 
   const config = getFileTypeConfig(file.nodeType, file.suffix);
-  const canPreview = isImage(file.suffix) || isVideo(file.suffix) || isPdf(file.suffix) || isAudio(file.suffix) || isText(file.suffix) || isWord(file.suffix) || isExcel(file.suffix);
+  const canPreview = isImage(file.suffix) || isVideo(file.suffix) || isPdf(file.suffix) || isAudio(file.suffix) || isText(file.suffix) || isWord(file.suffix) || isExcel(file.suffix) || isPpt(file.suffix);
 
   const goPrev = () => setIndex((i) => Math.max(0, i - 1));
   const goNext = () => setIndex((i) => Math.min(files.length - 1, i + 1));

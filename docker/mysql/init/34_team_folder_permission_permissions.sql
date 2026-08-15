@@ -21,11 +21,11 @@ DEALLOCATE PREPARE stmt_col;
 -- permission=-1（无权限）：仅标注，规则语义为增强，-1 不再生效
 UPDATE team_folder_permission SET permissions = '{"view":false}'
 WHERE permission = -1 AND permissions IS NULL;
--- permission=0（管理）：全部 9 个权限点 true
-UPDATE team_folder_permission SET permissions = '{"view":true,"upload":true,"download":true,"delete":true,"rename":true,"move":true,"share":true,"manage_members":true,"manage_settings":true}'
+-- permission=0（管理）：全部 10 个权限点 true（含 edit 编辑文档）
+UPDATE team_folder_permission SET permissions = '{"view":true,"upload":true,"download":true,"delete":true,"rename":true,"move":true,"share":true,"edit":true,"manage_members":true,"manage_settings":true}'
 WHERE permission = 0 AND permissions IS NULL;
--- permission=1（编辑）：内容操作权限点 true，空间管理权限点 false
-UPDATE team_folder_permission SET permissions = '{"view":true,"upload":true,"download":true,"delete":true,"rename":true,"move":true,"share":true,"manage_members":false,"manage_settings":false}'
+-- permission=1（编辑）：内容操作权限点 true（含 edit 编辑文档），空间管理权限点 false
+UPDATE team_folder_permission SET permissions = '{"view":true,"upload":true,"download":true,"delete":true,"rename":true,"move":true,"share":true,"edit":true,"manage_members":false,"manage_settings":false}'
 WHERE permission = 1 AND permissions IS NULL;
 -- permission=2（查看）：仅可查看
 UPDATE team_folder_permission SET permissions = '{"view":true}'

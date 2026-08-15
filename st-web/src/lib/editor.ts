@@ -22,6 +22,17 @@ export function getEditorConfig(nodeId: string, mode: 'edit' | 'view' = 'edit'):
   });
 }
 
+/** 获取分享文件 OnlyOffice 配置（匿名分享访问，编辑/只读由分享权限集决定） */
+export function getShareEditorConfig(
+  shareCode: string,
+  nodeId: string,
+  password?: string,
+): Promise<EditorConfigResponse> {
+  return api.get<EditorConfigResponse>(`/share/access/editor-config/${shareCode}`, {
+    params: { nodeId, password: password || undefined },
+  });
+}
+
 declare global {
   interface Window {
     DocsAPI?: {

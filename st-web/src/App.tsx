@@ -25,6 +25,7 @@ const CategoryPage = lazy(() => import('./pages/CategoryPage'));
 const TransferManager = lazy(() => import('./pages/TransferManager'));
 const SyncPage = lazy(() => import('./pages/SyncPage'));
 const EditorPage = lazy(() => import('./pages/EditorPage'));
+const TextEditorPage = lazy(() => import('./pages/TextEditorPage'));
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -43,6 +44,8 @@ export default function App() {
         <Route path="/login" element={<Login />} />
         {/* 公开分享访问页 - 无需登录 */}
         <Route path="/share/:shareCode" element={<ShareAccessPage />} />
+        {/* 分享文件 OnlyOffice 查看/编辑页 - 无需登录（分享权限集决定只读/可编辑） */}
+        <Route path="/share/:shareCode/editor" element={<EditorPage />} />
         <Route path="/server-config" element={<ServerConfigPage />} />
         {/* 在线文档编辑：全屏页面，位于 AppLayout 之外 */}
         <Route
@@ -50,6 +53,14 @@ export default function App() {
           element={
             <ProtectedRoute>
               <EditorPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/file/:nodeId/text-editor"
+          element={
+            <ProtectedRoute>
+              <TextEditorPage />
             </ProtectedRoute>
           }
         />

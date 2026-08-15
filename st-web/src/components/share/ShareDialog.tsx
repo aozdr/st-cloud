@@ -127,9 +127,9 @@ export default function ShareDialog({ fileNodeId, fileName, onClose }: Props) {
   const togglePerm = (key: string) => {
     setSharePerms(prev => {
       const next = { ...prev, [key]: !prev[key] };
-      // 勾选 upload/download 自动补 view；view 被依赖时不可取消（与后端隐含规则一致）
-      if ((key === 'upload' || key === 'download') && next[key]) next.view = true;
-      if (key === 'view' && !next.view && (next.upload || next.download)) next.view = true;
+      // 勾选 upload/download/edit 自动补 view；view 被依赖时不可取消（与后端隐含规则一致）
+      if ((key === 'upload' || key === 'download' || key === 'edit') && next[key]) next.view = true;
+      if (key === 'view' && !next.view && (next.upload || next.download || next.edit)) next.view = true;
       return next;
     });
   };

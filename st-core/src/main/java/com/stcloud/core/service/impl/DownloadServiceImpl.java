@@ -123,7 +123,8 @@ public class DownloadServiceImpl implements DownloadService {
             }
         }
         boolean inline = "1".equals(request.getParameter("inline"));
-        long contentLength = end - start + 1;
+        // 空文件（0 字节）：响应体长度为 0；否则按 range 计算
+        long contentLength = fileSize == 0 ? 0 : end - start + 1;
         try {
             response.setContentType(node.getContentType() != null ? node.getContentType() : "application/octet-stream");
             String fileName = URLEncoder.encode(node.getName(), StandardCharsets.UTF_8).replace("+", "%20");
@@ -135,6 +136,12 @@ public class DownloadServiceImpl implements DownloadService {
                 response.setHeader("Content-Range", "bytes " + start + "-" + end + "/" + fileSize);
             }
             response.setContentLengthLong(contentLength);
+            // 空文件：不访问对象存储，直接返回空响应
+            // （S3 空对象 GET 可能挂起，且声明长度与实际不一致会导致客户端无限等待）
+            if (fileSize == 0) {
+                response.flushBuffer();
+                return;
+            }
             long rateBytes = SpeedLimitService.capRate(speedLimitService.resolve().getDownloadSpeedLimit(), parseClientLimit(request.getParameter("clientLimit"))) * 1024L;
             try (InputStream is = ranged ? storageService.downloadObjectRange(node.getStoragePath(), start, end)
                                          : storageService.downloadObject(node.getStoragePath());

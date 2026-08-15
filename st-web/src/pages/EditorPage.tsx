@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AlertCircle, ArrowLeft, FileText } from 'lucide-react';
 import { Dialog } from '../components/ui/Dialog';
-import { getEditorConfig, loadOnlyOfficeApi } from '../lib/editor';
+import { getEditorConfig, getShareEditorConfig, loadOnlyOfficeApi } from '../lib/editor';
 import type { OnlyOfficeConfig } from '../types';
 
 type EditorPhase = 'loading' | 'ready' | 'error';
@@ -36,13 +36,14 @@ function EditorLoadingSkeleton() {
  * config 失败时：错误弹窗 + 「以预览打开」回退（返回文件列表并打开既有预览）。
  */
 export default function EditorPage() {
-  const { nodeId } = useParams<{ nodeId: string }>();
+  const { nodeId, shareCode } = useParams<{ nodeId?: string; shareCode?: string }>();
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<{ destroyEditor?: () => void } | null>(null);
   const [phase, setPhase] = useState<EditorPhase>('loading');
+  const [resolvedMode, setResolvedMode] = useState<'edit' | 'view'>('edit');
   const [errorMessage, setErrorMessage] = useState('');
   const [fileName, setFileName] = useState('');
   const [diagnostics, setDiagnostics] = useState<EditorDiagnostics | null>(null);
@@ -67,6 +68,8 @@ export default function EditorPage() {
 
   // 打开模式：?mode=view 为 OnlyOffice 只读查看（Office 文件预览），默认编辑
   const mode: 'edit' | 'view' = searchParams.get('mode') === 'view' ? 'view' : 'edit';
+  // 分享场景：文件节点 ID 由查询参数提供（路由为 /share/:shareCode/editor）
+  const effectiveNodeId = nodeId ?? searchParams.get('nodeId') ?? undefined;
 
   // 来源路径：从文件列表「在线编辑/预览」进入时记录，关闭/回退后返回原目录
   const fromPath =
@@ -84,7 +87,7 @@ export default function EditorPage() {
   }, [navigate, fromPath, nodeId]);
 
   useEffect(() => {
-    if (!nodeId) {
+    if (!effectiveNodeId) {
       setErrorMessage('缺少文件标识，无法打开编辑器');
       setPhase('error');
       return;
@@ -96,10 +99,13 @@ export default function EditorPage() {
     (async () => {
       try {
         // 1) 获取后端下发的编辑器配置（含权限判定与 JWT token）
-        const res = await getEditorConfig(nodeId, mode);
+        const res = shareCode
+          ? await getShareEditorConfig(shareCode, effectiveNodeId, searchParams.get('password') ?? undefined)
+          : await getEditorConfig(effectiveNodeId, mode);
         if (cancelled || !containerRef.current) return;
         lastConfigRef.current = { editorUrl: res.editorUrl, token: res.config?.token ?? '' };
         setFileName(res.config?.document?.title ?? '');
+        setResolvedMode(res.config?.editorConfig?.mode === 'view' ? 'view' : 'edit');
 
         // 2) 从 editorUrl 动态加载 OnlyOffice api.js
         await loadOnlyOfficeApi(res.editorUrl);
@@ -156,7 +162,7 @@ export default function EditorPage() {
       }
       editorRef.current = null;
     };
-  }, [nodeId, goBack, mode]);
+  }, [effectiveNodeId, goBack, mode, shareCode]);
 
   // OnlyOffice 9.x 高度塌缩修复：DocEditor 生成的 iframe 在百分比高度下只渲染工具栏高度（实测 150px），
   // 需按容器实际像素高度强制校正（固定像素生效，百分比不生效）。
@@ -198,7 +204,7 @@ export default function EditorPage() {
           <span className="text-sm font-medium text-fg truncate">{fileName || '在线文档编辑'}</span>
         </div>
         <span className="ml-auto text-xs text-muted flex-shrink-0">
-          {mode === 'view' ? '只读预览' : '在线编辑'}
+          {resolvedMode === 'view' ? '只读预览' : '在线编辑'}
         </span>
       </div>
 

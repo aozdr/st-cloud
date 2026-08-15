@@ -65,6 +65,7 @@ done
 | 34 | `34_team_folder_permission_permissions.sql` | `team_folder_permission.permissions` 权限点 JSON |
 | 35 | `35_file_share_permissions.sql` | `file_share.permissions` 权限点 JSON |
 | 36 | `36_editor_version_source.sql` | `file_version.source` 版本来源（0 上传覆盖 / 1 在线编辑器保存） |
+| 37 | `37_add_edit_permission.sql` | 新增 `edit` 编辑文档权限点（团队文件夹/分享 JSON 补全，幂等） |
 
 ## 默认数据
 

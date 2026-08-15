@@ -1,8 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Download, Pencil, FolderInput, Copy, Trash2, FolderOpen, Eye, Edit3, Scissors, ClipboardPaste, Share2, History, Info, Star, EyeOff, Lock, Unlock, FileInput, FileOutput, type LucideIcon } from 'lucide-react';
+import { Download, Pencil, FolderInput, Copy, Trash2, FolderOpen, Eye, Edit3, Scissors, ClipboardPaste, Share2, History, Info, Star, EyeOff, Lock, Unlock, FileInput, FileOutput, FileText, type LucideIcon } from 'lucide-react';
 import type { FileNode } from '../../types';
 import { usePermission } from '../../lib/permission';
+import { isText } from '../../lib/utils';
 
 interface Props {
   x: number;
@@ -15,6 +16,8 @@ interface Props {
   showEdit?: boolean;
   /** 显示「转换为 PDF/Word」入口（Word/PDF 文件且有上传权限，由 FileBrowser 传入） */
   showConvert?: boolean;
+  /** 显示「编辑」入口（文本类文件且有上传权限，由 FileBrowser 传入） */
+  showTextEdit?: boolean;
   isFav?: boolean;
   /** 团队空间：启用右键锁定/解锁入口（按节点锁定状态展示「锁定/解锁」其一） */
   lockable?: boolean;
@@ -24,7 +27,7 @@ interface Props {
   onClose: () => void;
 }
 
-export default function ContextMenu({ x, y, node, hasClipboard, showShare = true, showVersions = true, showEdit = false, showConvert = false, isFav = false, lockable = false, locked = false, onAction, onClose }: Props) {
+export default function ContextMenu({ x, y, node, hasClipboard, showShare = true, showVersions = true, showEdit = false, showConvert = false, showTextEdit = false, isFav = false, lockable = false, locked = false, onAction, onClose }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const { has } = usePermission();
   const [pos, setPos] = useState<{ left: number; top: number }>({ left: x, top: y });
@@ -38,6 +41,11 @@ export default function ContextMenu({ x, y, node, hasClipboard, showShare = true
         : suffix === 'doc' || suffix === 'docx'
           ? [{ action: 'convert', label: '转换为 PDF', icon: FileOutput }]
           : []
+      : [];
+  // 文本类文件（txt/md/代码等）提供应用内编辑入口
+  const textEditItem: Array<{ action: string; label: string; icon: LucideIcon }> =
+    showTextEdit && node.nodeType === 1 && isText(node.suffix) && has('file:upload')
+      ? [{ action: 'textEdit', label: '编辑', icon: FileText }]
       : [];
 
   useEffect(() => {
@@ -67,6 +75,7 @@ export default function ContextMenu({ x, y, node, hasClipboard, showShare = true
         : []),
     ...(node.nodeType === 1 && showEdit ? [{ action: 'edit', label: '在线编辑', icon: Edit3 }] : []),
     ...convertItem,
+    ...textEditItem,
     { action: 'details', label: '详情', icon: Info },
     { action: 'favorite', label: isFav ? '取消收藏' : '收藏', icon: Star },
     { action: 'hide', label: '隐藏', icon: EyeOff },

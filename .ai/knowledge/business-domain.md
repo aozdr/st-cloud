@@ -198,6 +198,10 @@
   `ConvertService.ashx`（XML 响应，EndConvert 轮询），转换结果走 `NewFileService.createCompletedFile`
   落库（重名自动序号/配额/去重/事件与新建一致）；前端右键菜单「转换为 PDF/Word」+ 文件名可编辑
   对话框（默认「原文件名-转换.目标后缀」）
+- 分享预览/编辑：分享页 Office（docx/xlsx/pptx）与 PDF 预览走 OnlyOffice
+  （`/share/:shareCode/editor` 匿名可访问，编辑/只读由分享权限集决定）；分享权限点新增 `edit`
+  （编辑文档，全云盘统一：团队文件夹权限/自定义角色/分享均可配置；OnlyOffice 编辑判定 edit 优先，
+  upload 兼容旧数据）
 
 ### 9. 文件预览
 

@@ -92,13 +92,18 @@ export function isExcel(suffix: string | null | undefined): boolean {
   return EXCEL_EXTS.includes(suffix.toLowerCase());
 }
 
+export function isPpt(suffix: string | null | undefined): boolean {
+  if (!suffix) return false;
+  return PPT_EXTS.includes(suffix.toLowerCase());
+}
+
 export function isText(suffix: string | null | undefined): boolean {
   if (!suffix) return false;
   return TEXT_EXTS.includes(suffix.toLowerCase());
 }
 
 export function isPreviewable(suffix: string | null | undefined): boolean {
-  return isImage(suffix) || isVideo(suffix) || isAudio(suffix) || isPdf(suffix) || isWord(suffix) || isExcel(suffix) || isText(suffix);
+  return isImage(suffix) || isVideo(suffix) || isAudio(suffix) || isPdf(suffix) || isWord(suffix) || isExcel(suffix) || isPpt(suffix) || isText(suffix);
 }
 
 // Also support isImage(file) where file has a suffix property

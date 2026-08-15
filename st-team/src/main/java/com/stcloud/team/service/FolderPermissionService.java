@@ -48,21 +48,23 @@ public class FolderPermissionService {
     public static final String PERM_RENAME = "rename";
     public static final String PERM_MOVE = "move";
     public static final String PERM_SHARE = "share";
+    /** 在线编辑文档（OnlyOffice 编辑权限，2026-08-15 新增；独立于上传） */
+    public static final String PERM_EDIT = "edit";
     public static final String PERM_MANAGE_MEMBERS = "manage_members";
     public static final String PERM_MANAGE_SETTINGS = "manage_settings";
 
     /** 权限点固定顺序（JSON 序列化/展示使用） */
     private static final List<String> PERM_ORDER = List.of(
             PERM_VIEW, PERM_UPLOAD, PERM_DOWNLOAD, PERM_DELETE, PERM_RENAME,
-            PERM_MOVE, PERM_SHARE, PERM_MANAGE_MEMBERS, PERM_MANAGE_SETTINGS);
+            PERM_MOVE, PERM_SHARE, PERM_EDIT, PERM_MANAGE_MEMBERS, PERM_MANAGE_SETTINGS);
 
-    /** 全部 9 个权限点 */
+    /** 全部 10 个权限点 */
     public static final Set<String> ALL_PERMISSIONS = Set.copyOf(PERM_ORDER);
 
     /** 内置编辑者权限集（无空间级管理权限） */
     public static final Set<String> EDITOR_PERMISSIONS = Set.of(
             PERM_VIEW, PERM_UPLOAD, PERM_DOWNLOAD, PERM_DELETE, PERM_RENAME,
-            PERM_MOVE, PERM_SHARE);
+            PERM_MOVE, PERM_SHARE, PERM_EDIT);
 
     /** 内置查看者权限集：仅在线查看，download=false（对抗下载后续处理） */
     public static final Set<String> VIEWER_PERMISSIONS = Set.of(PERM_VIEW);

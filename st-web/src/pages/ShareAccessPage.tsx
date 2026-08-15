@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { Lock, Download, FolderClosed, ArrowLeft, Cloud, ChevronRight, Folder, Eye } from 'lucide-react';
+import { Lock, Download, FolderClosed, ArrowLeft, Cloud, ChevronRight, Folder, Eye, Edit3 } from 'lucide-react';
 import api from '../lib/api';
-import { formatSize, getFileTypeConfig, formatDate, isPreviewable } from '../lib/utils';
+import { formatSize, getFileTypeConfig, formatDate, isPreviewable, isPdf } from '../lib/utils';
+import { isEditableOfficeSuffix } from '../lib/editor';
 import FileTypeIcon from '../components/file/FileTypeIcon';
 import PreviewModal from '../components/preview/PreviewModal';
 import type { ShareAccessVO, ShareFileItem, FileNode } from '../types';
@@ -22,6 +23,8 @@ export default function ShareAccessPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [fileInfo, setFileInfo] = useState<ShareAccessVO | null>(null);
+  // 是否需要提取码：自动访问失败（私密分享无码/错误码）才显示提取码表单
+  const [needsPassword, setNeedsPassword] = useState(false);
 
   // folder browsing state
   const [fileList, setFileList] = useState<ShareFileItem[]>([]);
@@ -46,6 +49,7 @@ export default function ShareAccessPage() {
         }
       } catch (e) {
         setError((e instanceof Error ? e.message : '') || '访问失败');
+        setNeedsPassword(true);
       } finally {
         setLoading(false);
       }
@@ -53,13 +57,14 @@ export default function ShareAccessPage() {
     [shareCode],
   );
 
-  // Auto-access if password is in URL
+  // 进入页面自动访问：公开分享无需提取码直接进入；私密分享带 pwd 参数也直接尝试；
+  // 仅当访问被拒（需提取码）时才显示提取码表单
   useEffect(() => {
-    if (urlPwd && !fileInfo) {
-      accessShare(urlPwd);
+    if (!fileInfo && !needsPassword) {
+      accessShare(urlPwd || '');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [fileInfo]);
 
   const loadFiles = async (parentId: string, pwd?: string) => {
     setListLoading(true);
@@ -87,6 +92,33 @@ export default function ShareAccessPage() {
       setError((e instanceof Error ? e.message : '') || '下载失败');
     }
   };
+
+  /** 是否走 OnlyOffice 查看/编辑（Office 可编辑格式 + PDF） */
+  const isOnlyOfficePreview = (suffix: string | null | undefined) =>
+    isEditableOfficeSuffix(suffix) || isPdf(suffix);
+
+  /** 打开分享 OnlyOffice 查看/编辑页（全屏 + 返回按钮；编辑/只读由分享权限集决定） */
+  const openEditorPreview = (nodeId: string) => {
+    const pwd = password || urlPwd;
+    const params = new URLSearchParams({
+      nodeId,
+      from: `/share/${shareCode}${pwd ? `?pwd=${encodeURIComponent(pwd)}` : ''}`,
+    });
+    if (pwd) params.set('password', pwd);
+    navigate(`/share/${shareCode}/editor?${params.toString()}`);
+  };
+
+  /** 分享权限集（JSON 权威；旧数据无 JSON 时回退单值 permission） */
+  const sharePerms = useMemo(() => {
+    if (!fileInfo?.permissions) return null;
+    try {
+      return JSON.parse(fileInfo.permissions) as Record<string, boolean>;
+    } catch {
+      return null;
+    }
+  }, [fileInfo]);
+  const canDownloadShare = sharePerms ? Boolean(sharePerms.download) : (fileInfo?.permission ?? 0) >= 1;
+  const canEditShare = Boolean(sharePerms?.edit) || (fileInfo?.permission ?? 0) >= 3;
 
   const handleFolderClick = (folder: ShareFileItem) => {
     setBreadcrumbs((prev) => [...prev, { id: folder.id, name: folder.name }]);
@@ -187,7 +219,7 @@ export default function ShareAccessPage() {
                     fileList.map((file) => {
                       const cfg = getFileTypeConfig(file.nodeType, file.suffix);
                       const previewable = file.nodeType === 1 && isPreviewable(file.suffix);
-                      const canDownload = file.nodeType === 1 && fileInfo.permission >= 1;
+                      const canDownload = file.nodeType === 1 && canDownloadShare;
                       return (
                         <div
                           key={file.id}
@@ -195,6 +227,10 @@ export default function ShareAccessPage() {
                             if (file.nodeType === 0) {
                               handleFolderClick(file);
                             } else if (previewable) {
+                              if (isOnlyOfficePreview(file.suffix)) {
+                                openEditorPreview(file.id);
+                                return;
+                              }
                               const fileIdx = fileList.filter(f => f.nodeType === 1).findIndex(f => f.id === file.id);
                               setPreviewIndex(fileIdx);
                             } else if (canDownload) {
@@ -222,6 +258,10 @@ export default function ShareAccessPage() {
                               <button
                                 onClick={(e) => {
                                   e.stopPropagation();
+                                  if (isOnlyOfficePreview(file.suffix)) {
+                                    openEditorPreview(file.id);
+                                    return;
+                                  }
                                   const fileIdx = fileList.filter(f => f.nodeType === 1).findIndex(f => f.id === file.id);
                                   setPreviewIndex(fileIdx);
                                 }}
@@ -241,6 +281,18 @@ export default function ShareAccessPage() {
                                 title="下载" aria-label="下载"
                               >
                                 <Download className="w-4 h-4" aria-hidden />
+                              </button>
+                            )}
+                            {isEditableOfficeSuffix(file.suffix) && canEditShare && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openEditorPreview(file.id);
+                                }}
+                                className="p-1 text-muted hover:text-primary-600 cursor-pointer transition-colors"
+                                title="在线编辑" aria-label="在线编辑"
+                              >
+                                <Edit3 className="w-4 h-4" aria-hidden />
                               </button>
                             )}
                           </div>
@@ -284,7 +336,11 @@ export default function ShareAccessPage() {
 
                 {isPreviewable(fileInfo.suffix) && (
                   <button
-                    onClick={() => setPreviewIndex(0)}
+                    onClick={() =>
+                      isOnlyOfficePreview(fileInfo.suffix)
+                        ? openEditorPreview(String(fileInfo.fileNodeId))
+                        : setPreviewIndex(0)
+                    }
                     className="w-full flex items-center justify-center gap-2 py-3 bg-neutral-800 text-white text-sm font-medium rounded-md hover:bg-neutral-900 transition-colors cursor-pointer"
                   >
                     <Eye className="w-4 h-4" aria-hidden />
@@ -292,7 +348,17 @@ export default function ShareAccessPage() {
                   </button>
                 )}
 
-                {fileInfo.permission >= 1 && (
+                {isEditableOfficeSuffix(fileInfo.suffix) && canEditShare && (
+                  <button
+                    onClick={() => openEditorPreview(String(fileInfo.fileNodeId))}
+                    className="w-full flex items-center justify-center gap-2 py-3 bg-neutral-800 text-white text-sm font-medium rounded-md hover:bg-neutral-900 transition-colors cursor-pointer"
+                  >
+                    <Edit3 className="w-4 h-4" aria-hidden />
+                    在线编辑
+                  </button>
+                )}
+
+                {canDownloadShare && (
                   <button
                     onClick={() => handleDownload()}
                     className="w-full flex items-center justify-center gap-2 py-3 bg-primary-600 text-white text-sm font-medium rounded-md hover:bg-primary-700 transition-colors cursor-pointer"
@@ -302,7 +368,7 @@ export default function ShareAccessPage() {
                   </button>
                 )}
 
-                {fileInfo.permission === 0 && !isPreviewable(fileInfo.suffix) && (
+                {!canDownloadShare && !isPreviewable(fileInfo.suffix) && (
                   <p className="text-center text-xs text-muted">此分享仅支持查看，不可下载</p>
                 )}
 
@@ -314,8 +380,8 @@ export default function ShareAccessPage() {
                 </button>
               </div>
             )
-          ) : (
-            /* Password input form */
+          ) : needsPassword ? (
+            /* Password input form：仅私密分享（自动访问被拒）时显示 */
             <div className="p-6 space-y-5">
               <div className="flex flex-col items-center text-center py-4">
                 <div className="w-12 h-12 rounded-full bg-primary-500/10 flex items-center justify-center mb-3">
@@ -354,6 +420,12 @@ export default function ShareAccessPage() {
               >
                 公开分享？直接访问 -&gt;
               </button>
+            </div>
+          ) : (
+            /* 自动访问中：公开分享/带码私密分享不应出现提取码界面 */
+            <div className="p-6 flex flex-col items-center justify-center gap-3 py-12">
+              <div className="w-8 h-8 border-2 border-border border-t-primary-500 rounded-full animate-spin" />
+              <p className="text-sm text-muted">正在访问分享…</p>
             </div>
           )}
         </div>

@@ -6,7 +6,7 @@
  * 避免权限点新增或调整时多文件重复维护导致漂移。
  */
 
-/** 9 个权限点定义（key 与后端一致，label 为界面展示名） */
+/** 10 个权限点定义（key 与后端一致，label 为界面展示名；edit=OnlyOffice 编辑文档，2026-08-15 新增） */
 export const PERMISSION_KEYS = [
   { key: 'view', label: '查看文件' },
   { key: 'upload', label: '上传文件' },
@@ -15,6 +15,7 @@ export const PERMISSION_KEYS = [
   { key: 'rename', label: '重命名' },
   { key: 'move', label: '移动' },
   { key: 'share', label: '分享' },
+  { key: 'edit', label: '编辑文档' },
   { key: 'manage_members', label: '管理成员' },
   { key: 'manage_settings', label: '管理设置' },
 ] as const;
@@ -23,7 +24,7 @@ export const PERMISSION_KEYS = [
 export function legacyPermissionFromPerms(perms: Record<string, boolean>): number {
   if (perms.download) return 1;
   if (perms.upload) return 2;
-  if (perms.delete || perms.rename || perms.move) return 3;
+  if (perms.delete || perms.rename || perms.move || perms.edit) return 3;
   return 0;
 }
 
@@ -35,7 +36,7 @@ export function legacyToPermissions(permission: number): Record<string, boolean>
     return all;
   }
   if (permission === 1) {
-    return { view: true, upload: true, download: true, delete: true, rename: true, move: true, share: true, manage_members: false, manage_settings: false };
+    return { view: true, upload: true, download: true, delete: true, rename: true, move: true, share: true, edit: true, manage_members: false, manage_settings: false };
   }
   if (permission === 2) return { view: true };
   return { view: false };

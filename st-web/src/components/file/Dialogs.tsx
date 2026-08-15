@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { BlankFileType, FileNode } from '../../types';
 import { X, FolderPlus, FolderOpen, Pencil, FilePlus } from 'lucide-react';
 import { getFileTypeConfig, cn } from '../../lib/utils';
@@ -29,11 +29,28 @@ export function CreateFileDialog({ open, type, onCreate, onClose }: {
 }) {
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  // 打开后待全选标记：默认文件名提交后执行一次全选，便于用户直接输入覆盖
+  const selectPendingRef = useRef(false);
   const { showToast } = useToast();
 
   useEffect(() => {
-    if (open && type) setName(DEFAULT_FILE_NAMES[type]);
+    if (open && type) {
+      setName(DEFAULT_FILE_NAMES[type]);
+      selectPendingRef.current = true;
+    }
   }, [open, type]);
+
+  useEffect(() => {
+    if (selectPendingRef.current && inputRef.current) {
+      const input = inputRef.current;
+      // 只选中主文件名，保留 .后缀 不被选中（便于直接输入新文件名）
+      const dot = name.lastIndexOf('.');
+      const end = dot > 0 ? dot : name.length;
+      input.setSelectionRange(0, end);
+      selectPendingRef.current = false;
+    }
+  }, [name]);
 
   if (!open || !type) return null;
 
@@ -63,6 +80,7 @@ export function CreateFileDialog({ open, type, onCreate, onClose }: {
         </div>
         <div className="px-5 py-4">
           <input
+            ref={inputRef}
             autoFocus
             value={name}
             onChange={(e) => setName(e.target.value)}

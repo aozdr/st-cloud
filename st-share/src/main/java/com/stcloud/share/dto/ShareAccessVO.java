@@ -22,6 +22,9 @@ public class ShareAccessVO {
     @Schema(description = "权限：0-查看 1-下载 2-上传 3-编辑")
     private Integer permission;
 
+    @Schema(description = "分享权限点 JSON（权威字段，如 {\"view\":true,\"edit\":true}；旧数据可能为 null）")
+    private String permissions;
+
     @Schema(description = "分享文件节点ID")
     private Long fileNodeId;
 

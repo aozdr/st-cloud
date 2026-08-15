@@ -725,6 +725,11 @@ export default function FileBrowser({
       case 'edit':
         handleEdit(node);
         break;
+      case 'textEdit':
+        navigate(`/file/${node.id}/text-editor`, {
+          state: { from: location.pathname + location.search, name: node.name, spaceId: uploadSpaceId ?? undefined },
+        });
+        break;
       case 'convert':
         setConvertTarget(node);
         break;
@@ -1123,6 +1128,7 @@ export default function FileBrowser({
           locked={isNodeLocked(contextMenu.node)}
           showEdit={canEditNode(contextMenu.node)}
           showConvert
+          showTextEdit
           onAction={handleContextAction}
           onClose={() => setContextMenu(null)}
         />

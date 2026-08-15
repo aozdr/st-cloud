@@ -219,12 +219,12 @@ public class ShareServiceImpl implements ShareService {
                 throw new BusinessException(ResultCode.SHARE_ACCESS_DENIED, "无权访问该文件");
             }
         }
-        // 编辑判定：分享权限集含 upload（TC-05）；下载/打印按 download 权限
+        // 编辑判定：分享权限集含 edit（新增权限点，2026-08-15）；旧数据兼容 upload；下载/打印按 download 权限
         Set<String> perms = parsePermissions(share.getPermissions());
         if (perms.isEmpty()) {
             perms = legacyPermissionSet(share.getPermission());
         }
-        boolean canEdit = perms.contains("upload");
+        boolean canEdit = perms.contains("edit") || perms.contains("upload");
         boolean canDownload = perms.contains("download");
         // 分享访客无登录态：使用分享码生成编辑器用户标识（关闭回调据此移除编辑标记）
         String guestId = "share:" + share.getShareCode();
@@ -352,6 +352,7 @@ public class ShareServiceImpl implements ShareService {
         vo.setSuffix(node.getSuffix());
         vo.setSize(node.getFileSize());
         vo.setPermission(share.getPermission());
+        vo.setPermissions(share.getPermissions());
         vo.setFileNodeId(share.getFileNodeId());
         vo.setShareType(share.getShareType());
         return Result.success(vo);
@@ -631,9 +632,9 @@ public class ShareServiceImpl implements ShareService {
     private static final Set<String> PERSONAL_DEFAULT_SHARE_PERMS =
             Collections.unmodifiableSet(new HashSet<>(Arrays.asList("view", "download")));
 
-    /** 个人文件拥有者对该文件的有效权限：view + download（分享权限点选择上限，与设计一致） */
+    /** 个人文件拥有者对该文件的有效权限：view + download + edit（edit 用于分享在线编辑文档，2026-08-15 新增） */
     private static final Set<String> PERSONAL_EFFECTIVE_PERMS =
-            Collections.unmodifiableSet(new HashSet<>(Arrays.asList("view", "download")));
+            Collections.unmodifiableSet(new HashSet<>(Arrays.asList("view", "download", "edit")));
 
     /** 分享权限 JSON 序列化（简单键值对象，无需 Spring 注入，便于单元测试） */
     private static final ObjectMapper PERMISSION_OBJECT_MAPPER = new ObjectMapper();
@@ -666,7 +667,7 @@ public class ShareServiceImpl implements ShareService {
                     }
                 }
             }
-            if (perms.contains("upload") || perms.contains("download")) {
+            if (perms.contains("upload") || perms.contains("download") || perms.contains("edit")) {
                 perms.add("view");
             }
             return perms;
@@ -696,7 +697,7 @@ public class ShareServiceImpl implements ShareService {
             case 2:
                 return new LinkedHashSet<>(Arrays.asList("view", "upload"));
             case 3:
-                return new LinkedHashSet<>(Arrays.asList("view", "upload", "download", "delete", "rename", "move"));
+                return new LinkedHashSet<>(Arrays.asList("view", "upload", "download", "delete", "rename", "move", "edit"));
             default:
                 return new LinkedHashSet<>(Collections.singletonList("view"));
         }
