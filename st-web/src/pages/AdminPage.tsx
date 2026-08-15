@@ -1,4 +1,4 @@
-﻿import { useState, lazy, Suspense } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { Settings } from 'lucide-react';
 import { usePermission } from '../lib/permission';
 import SpeedLimitPanel from '../components/admin/SpeedLimitPanel';

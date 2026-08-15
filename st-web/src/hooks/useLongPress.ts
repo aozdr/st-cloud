@@ -1,4 +1,4 @@
-﻿import { useRef, useCallback } from 'react';
+import { useRef, useCallback } from 'react';
 
 interface LongPressOptions {
   /** 长按触发时长(ms),默认 500 */

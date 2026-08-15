@@ -11,6 +11,7 @@ import com.stcloud.admin.service.UserManageService;
 import com.stcloud.auth.service.AuthService;
 import com.stcloud.auth.entity.SysRole;
 import com.stcloud.auth.entity.SysUser;
+import com.stcloud.auth.enums.UserStatus;
 import com.stcloud.auth.mapper.SysRoleMapper;
 import com.stcloud.auth.mapper.SysUserMapper;
 import com.stcloud.common.context.UserContext;
@@ -81,7 +82,8 @@ public class UserManageServiceImpl implements UserManageService {
         }
         if (request.getStatus() != null) {
             user.setStatus(request.getStatus());
-            if (request.getStatus() == 0) {
+            // 禁用用户时吊销其 refresh token，禁止刷新会话
+            if (request.getStatus() == UserStatus.DISABLED.getCode()) {
                 revoke = true;
             }
         }
@@ -132,7 +134,8 @@ public class UserManageServiceImpl implements UserManageService {
         user.setNickname(nickname);
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
-        user.setStatus(1);
+        // 新建用户默认正常
+        user.setStatus(UserStatus.NORMAL.getCode());
         user.setStorageUsed(0L);
         user.setStorageQuota(DEFAULT_QUOTA);
         sysUserMapper.insert(user);

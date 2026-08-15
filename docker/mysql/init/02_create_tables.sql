@@ -65,7 +65,7 @@ CREATE TABLE IF NOT EXISTS file_node (
     suffix          VARCHAR(20)     DEFAULT NULL             COMMENT '文件后缀',
     storage_path    VARCHAR(500)    DEFAULT NULL             COMMENT '对象存储路径',
     status          TINYINT         NOT NULL DEFAULT 0       COMMENT '状态：0-正常 1-回收站 2-已删除',
-    upload_status   TINYINT         NOT NULL DEFAULT 0       COMMENT '上传状态：0-待上传 1-上传中 2-已完成 3-失败',
+    upload_status   TINYINT         NOT NULL DEFAULT 0       COMMENT '上传状态机：0-INIT 1-上传中 2-已完成(STORED) 3-失败 4-合并中 5-已删除',
     uploader_id     BIGINT          NOT NULL                 COMMENT '上传者ID',
     owner_id        BIGINT          NOT NULL                 COMMENT '所有者ID',
     space_id        BIGINT          DEFAULT NULL             COMMENT '团队空间ID，NULL=个人文件',

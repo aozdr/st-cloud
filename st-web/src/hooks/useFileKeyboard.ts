@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { isElectron } from '../lib/electron';
 import type { FileNode } from '../types';
 

@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Columns2, Square } from 'lucide-react';
 import FileBrowser from '../components/file/FileBrowser';
@@ -33,7 +33,7 @@ export default function FileManager() {
       </div>
 
       <div className={`flex-1 min-h-0 flex ${dualPanel ? 'gap-px bg-border' : ''} overflow-hidden`}>
-        <div className="flex-1 min-h-0 overflow-hidden">
+        <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
           <FileBrowser
             key={parentId}
             source={personalFileSource}
@@ -47,7 +47,7 @@ export default function FileManager() {
           />
         </div>
         {dualPanel && (
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 min-w-0 overflow-hidden">
             <FileBrowser
               key={`right-${rightParentId}`}
               source={personalFileSource}

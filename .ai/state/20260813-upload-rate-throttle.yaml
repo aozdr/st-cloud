@@ -1,0 +1,50 @@
+taskId: "20260813-upload-rate-throttle"
+goal:
+  objective: "实现上传限速低于分片下限场景的服务端中转限速：当有效限速值低于分片大小(5MB)时上传改走服务端中转路径，服务端逐块节流接收并缓冲，攒够 multipart 分片下限后写入 S3，实现瞬时速率限速而非分片粒度突发"
+  scope: "st-common 限速器 + st-core 上传服务/控制器 + st-web 上传 hook + st-desktop 上传管理器"
+  completionCriteria:
+    - "低速率(rate<5MB)上传走服务端中转，瞬时速率不超限速值"
+    - "正常速率(rate>=5MB 或不限速)保持 presigned 直传，行为不变"
+    - "客户端自限速场景同样实现真实节流"
+    - "临时文件缓冲生命周期完整管理，无泄漏"
+    - "H2 测试全绿 + 后端编译 + 前端构建通过"
+scale: large
+exitCriteria:
+  - { id: REQ_ANALYSIS, desc: "需求已分析(PRD+uiSpec)", status: in_progress, dependsOn: [] }
+  - { id: IMPACT_ANALYSIS, desc: "影响范围已分析", status: pending, dependsOn: [REQ_ANALYSIS] }
+  - { id: EXP_DESIGN, desc: "体验评审", status: pending, dependsOn: [REQ_ANALYSIS] }
+  - { id: TECH_DESIGN, desc: "技术设计(架构评审+design.md)", status: pending, dependsOn: [IMPACT_ANALYSIS, EXP_DESIGN] }
+  - { id: TESTCASES, desc: "测试用例已编写", status: pending, dependsOn: [TECH_DESIGN] }
+  - { id: IMPLEMENTED, desc: "代码已实现", status: pending, dependsOn: [TECH_DESIGN, TESTCASES] }
+  - { id: CODE_REVIEW, desc: "Code Review 通过", status: pending, dependsOn: [IMPLEMENTED] }
+  - { id: SECURITY_REVIEW, desc: "Security Review 通过", status: pending, dependsOn: [IMPLEMENTED] }
+  - { id: EXP_ACCEPT, desc: "体验验收通过", status: pending, dependsOn: [IMPLEMENTED] }
+  - { id: TEST_PASS, desc: "测试执行通过", status: pending, dependsOn: [CODE_REVIEW, SECURITY_REVIEW] }
+  - { id: QUALITY_GATE, desc: "Quality Gate 通过", status: pending, dependsOn: [TEST_PASS, SECURITY_REVIEW, EXP_ACCEPT] }
+  - { id: KNOWLEDGE, desc: "知识库已更新", status: pending, dependsOn: [QUALITY_GATE] }
+artifacts:
+  prd: { status: in_progress, ref: ".ai/docs/20260813-upload-rate-throttle/requirement.md", owner: "product-manager" }
+  uiSpec: { status: pending, ref: ".ai/docs/20260813-upload-rate-throttle/uispec.md", owner: "ui-designer" }
+  impact: { status: pending, ref: ".ai/docs/20260813-upload-rate-throttle/impact.md", owner: "impact-analyzer" }
+  expReview: { status: pending, ref: ".ai/docs/20260813-upload-rate-throttle/exp-review.md", owner: "experience-reviewer" }
+  archReview: { status: pending, ref: ".ai/docs/20260813-upload-rate-throttle/architecture-review.md", owner: "architect" }
+  design: { status: pending, ref: ".ai/docs/20260813-upload-rate-throttle/design.md", owner: "backend-engineer+frontend-engineer" }
+  testcases: { status: pending, ref: ".ai/docs/20260813-upload-rate-throttle/testcases.md", owner: "tester" }
+  task: { status: pending, ref: "", owner: "workflow-manager" }
+  code: { status: pending, ref: "", owner: "backend-engineer+frontend-engineer" }
+  review: { status: pending, ref: ".ai/docs/20260813-upload-rate-throttle/codereview.md", owner: "reviewer" }
+  security: { status: pending, ref: ".ai/docs/20260813-upload-rate-throttle/security.md", owner: "security-reviewer" }
+  testReport: { status: pending, ref: ".ai/docs/20260813-upload-rate-throttle/testreport.md", owner: "tester" }
+  changereport: { status: pending, ref: ".ai/docs/20260813-upload-rate-throttle/changereport.md", owner: "backend-engineer+frontend-engineer" }
+  knowledge: { status: pending, ref: "", owner: "knowledge-manager" }
+blockers: []
+history:
+  - iter: 0
+    phase: "init"
+    agent: "workflow-manager"
+    action: "初始化 State，判定大型任务，加载 12 项退出标准"
+    delta: "task-id=20260813-upload-rate-throttle;docs 文件夹创建"
+    result: "State 落盘，进入 REQ_ANALYSIS"
+iteration: 0
+status: running
+maxIterations: 40

@@ -1,0 +1,70 @@
+taskId: "20260811-workflow-optimization"
+goal:
+  objective: "对齐 AI-Agent-Development-Workflow-Optimization.md，补齐 5 项差距：Task 驱动开发、开发者固定执行流程+Change Report、ADR、AGENTS.md 工程约束 7 条、流程↔技能映射文档"
+  scope: ".ai 配置（AGENTS.md / agents / knowledge / templates / scripts / tasks / decisions），不触碰业务代码"
+  completionCriteria:
+    - "存在 .ai/tasks/ 与 task-template.md，Workflow Manager 负责 Task 规划"
+    - "前端/后端工程师规则含 Task 驱动 + 固定执行流程 + Change Report"
+    - "存在 .ai/decisions/ADR/ 与 adr-template.md"
+    - "AGENTS.md 含代码修改强制约束（7 条）与文档类型补充"
+    - "存在 skill-mapping.md（不新建 skill 文件）"
+    - "loop-state-model 含 task/changereport artifacts，verify-loop.ps1 扩展校验并通过"
+scale: medium
+exitCriteria:
+  - id: DESIGN
+    desc: "设计已定（本方案）"
+    status: done
+    dependsOn: []
+  - id: TESTCASES
+    desc: "验收用例已编写并执行（verify-loop PASS + 交叉引用 + 走查）"
+    status: done
+    dependsOn: [DESIGN]
+  - id: IMPLEMENTED
+    desc: "配置改动实现完成"
+    status: done
+    dependsOn: [DESIGN, TESTCASES]
+  - id: CODE_REVIEW
+    desc: "Code Review 通过（verify-loop 全 PASS + 走查确认链路一致）"
+    status: done
+    dependsOn: [IMPLEMENTED]
+  - id: SECURITY_REVIEW
+    desc: "安全审查（条件项）"
+    status: done
+    dependsOn: [IMPLEMENTED]
+    skipReason: "纯配置改动，不涉及权限/文件操作等云盘安全敏感逻辑"
+  - id: TEST_PASS
+    desc: "测试通过（verify-loop.ps1 退出码 0）"
+    status: done
+    dependsOn: [CODE_REVIEW, SECURITY_REVIEW]
+  - id: KNOWLEDGE
+    desc: "知识库已回顾（skill-mapping 新增，document-management/loop-state-model 已同步）"
+    status: done
+    dependsOn: [TEST_PASS]
+artifacts:
+  design: { status: done, ref: ".ai/docs/20260811-workflow-optimization/design.md", owner: "workflow-manager" }
+  testcases: { status: done, ref: ".ai/docs/20260811-workflow-optimization/testcases.md", owner: "tester" }
+  code: { status: done, ref: "配置改动（AGENTS/agents/knowledge/templates/scripts/新目录）", owner: "workflow-manager" }
+  task: { status: done, ref: "本次为配置型任务，Task 规划见 design.md", owner: "workflow-manager" }
+blockers: []
+history:
+  - iter: 0
+    phase: "init"
+    agent: "workflow-manager"
+    action: "初始化 State"
+    delta: "scale=medium，按计划实施"
+    result: "8 步骤执行"
+  - iter: 1
+    phase: "implement"
+    agent: "workflow-manager"
+    action: "新建 tasks/decisions/模板/技能映射，修改 AGENTS/agents/knowledge/verify-loop"
+    delta: "7 文件修改 + 6 新增；verify-loop.ps1 增加第 6 项校验"
+    result: "走查确认链路一致"
+  - iter: 2
+    phase: "verify + review"
+    agent: "workflow-manager"
+    action: "运行 verify-loop.ps1 + 交叉引用 + git 核对"
+    delta: "全部 PASS（退出码 0），无业务代码改动"
+    result: "Loop 收敛，status=done"
+iteration: 2
+status: done
+maxIterations: 15

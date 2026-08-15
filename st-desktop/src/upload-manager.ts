@@ -102,6 +102,7 @@ async function doUpload(taskId: string): Promise<void> {
 
     // 3. 初始化分片上传
     const totalChunks = getTotalChunks(task.fileSize);
+    const clientUploadLimit = getTransferSettings().uploadSpeedLimit;
     const initRes = await apiClient.post('/file/upload/init', {
       fileMd5: md5,
       fileName: task.fileName,
@@ -110,10 +111,16 @@ async function doUpload(taskId: string): Promise<void> {
       totalChunks,
       chunkSize: CHUNK_SIZE,
       ...(replaceFileId ? { replaceFileId: replaceFileId } : {}),
+      ...(clientUploadLimit > 0 ? { clientLimit: clientUploadLimit } : {}),
     });
     const initData: UploadInitResponse = initRes.data?.data;
+    if (!initData) {
+      // 后端业务失败（如替换文件 ID 不存在）时 data 为空，这里给出明确报错而不是 TypeError
+      throw new Error('上传初始化失败: ' + (initRes.data?.message || '未知错误'));
+    }
     uploadMeta.delete(taskId);
 
+    const transferMode = initData.transferMode || 'direct';
     updateTask(taskId, {
       status: 'uploading',
       uploadId: initData.uploadId,
@@ -121,9 +128,32 @@ async function doUpload(taskId: string): Promise<void> {
       fileId: initData.fileId,
       totalChunks,
       uploadedChunks: [],
+      transferMode,
+      relayLimitKb: initData.relayRateKb ?? clientUploadLimit,
     });
     emitTaskUpdate(getTask(taskId)!);
 
+    if (transferMode === 'relay' && initData.relayChunkSize) {
+      // 中转模式：限速 < 分片下限时走服务端中转，小块顺序 POST + pacing 节流
+      updateTask(taskId, { status: 'uploading', transferredBytes: 0, speed: 0 });
+      emitTaskUpdate(getTask(taskId)!);
+      await relayUploadChunks(taskId, task.filePath!, initData.uploadId, initData.s3UploadId,
+        initData.relayChunkSize, task.fileSize, state);
+      if (state.cancelled) return;
+      if (state.paused) return;
+      // 中转完成：调用 relay-finalize
+      updateTask(taskId, { status: 'merging', speed: 0 });
+      emitTaskUpdate(getTask(taskId)!);
+      const finalizeRes = await apiClient.post('/file/upload/relay-finalize', null, {
+        params: { uploadId: initData.uploadId, s3UploadId: initData.s3UploadId },
+      });
+      if (finalizeRes.data?.code === 200 || finalizeRes.data?.code === 0) {
+        updateTask(taskId, { status: 'completed', progress: 100, speed: 0 });
+        emitTaskUpdate(getTask(taskId)!);
+      } else {
+        throw new Error(finalizeRes.data?.message || '合并失败');
+      }
+    } else {
     // 4. 分片上传（逐片向服务端申请URL，服务端门控限速）
     let uploadedChunks: number[] = [];
 
@@ -149,8 +179,69 @@ async function doUpload(taskId: string): Promise<void> {
     } else {
       throw new Error(mergeRes.data?.message || '合并失败');
     }
+    } // end else (direct mode)
   } finally {
     activeUploads.delete(taskId);
+  }
+}
+
+// 中转模式上传：按 relayChunkSize 切小块顺序 POST 到服务端，服务端 pacing 节流接收
+async function relayUploadChunks(
+  taskId: string,
+  filePath: string,
+  uploadId: string,
+  s3UploadId: string,
+  relayChunkSize: number,
+  fileSize: number,
+  state: { paused: boolean; cancelled: boolean }
+): Promise<void> {
+  const totalRelayChunks = Math.ceil(fileSize / relayChunkSize);
+  let lastUpdate = Date.now();
+  let lastBytes = 0;
+
+  for (let seq = 1; seq <= totalRelayChunks; seq++) {
+    if (state.cancelled) return;
+    if (state.paused) return;
+
+    const start = (seq - 1) * relayChunkSize;
+    const end = Math.min(start + relayChunkSize, fileSize);
+    const chunkSize = end - start;
+    const chunkData = readChunk(filePath, seq, relayChunkSize);
+
+    const MAX_RETRIES = 3;
+    let uploadError: Error | null = null;
+    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      if (state.cancelled) return;
+      try {
+        await apiClient.post('/file/upload/relay-chunk', chunkData, {
+          params: { uploadId, s3UploadId, seq },
+          headers: { 'Content-Type': 'application/octet-stream' },
+          timeout: 300000,
+        });
+        uploadError = null;
+        break;
+      } catch (err) {
+        uploadError = err as Error;
+        if (attempt < MAX_RETRIES) {
+          const backoff = Math.min(1000 * Math.pow(2, attempt - 1), 8000);
+          await new Promise((r) => setTimeout(r, backoff));
+        }
+      }
+    }
+    if (uploadError) throw uploadError;
+
+    const transferred = Math.min(seq * relayChunkSize, fileSize);
+    const progress = Math.min(100, Math.round((transferred / fileSize) * 100));
+    const now = Date.now();
+    if (now - lastUpdate >= 1000) {
+      const speed = Math.round(((transferred - lastBytes) / (now - lastUpdate)) * 1000);
+      updateTask(taskId, { transferredBytes: transferred, progress, speed });
+      lastUpdate = now;
+      lastBytes = transferred;
+    } else {
+      updateTask(taskId, { transferredBytes: transferred, progress });
+    }
+    emitTaskUpdate(getTask(taskId)!);
   }
 }
 

@@ -14,24 +14,35 @@ public interface CloudCapacityMapper {
     /**
      * 读取当前租户的云盘总容量（NULL 表示不限）
      */
+    // SQL 状态含义：cloud_total_capacity NULL = 不限；deleted = 0 未删除
     @Select("SELECT cloud_total_capacity FROM sys_tenant WHERE id = #{tenantId} AND deleted = 0")
     Long getCloudTotalCapacity(@Param("tenantId") Long tenantId);
+    /**
+     * 行锁读取云盘总容量（TASK-003）：仅在云盘总容量已配置(>0)时用于容量检查，
+     * 使并发上传的总容量校验串行化（锁持有至事务提交，随后配额扣减在同一事务内完成）。
+     */
+    // SQL 状态含义：同 getCloudTotalCapacity，附加 FOR UPDATE 行锁串行化容量校验
+    @Select("SELECT cloud_total_capacity FROM sys_tenant WHERE id = #{tenantId} AND deleted = 0 FOR UPDATE")
+    Long getCloudTotalCapacityForUpdate(@Param("tenantId") Long tenantId);
 
     /**
      * 设置当前租户的云盘总容量
      */
+    // SQL 状态含义：deleted = 0 未删除
     @Update("UPDATE sys_tenant SET cloud_total_capacity = #{capacity} WHERE id = #{tenantId} AND deleted = 0")
     int setCloudTotalCapacity(@Param("tenantId") Long tenantId, @Param("capacity") Long capacity);
 
     /**
      * 统计所有用户已分配配额之和（storage_quota 非空部分）
      */
+    // SQL 状态含义：仅统计未删除用户（storage_quota 非空部分）
     @Select("SELECT COALESCE(SUM(storage_quota), 0) FROM sys_user WHERE deleted = 0 AND tenant_id = #{tenantId}")
     Long sumUserQuota(@Param("tenantId") Long tenantId);
 
     /**
      * 统计所有团队空间已分配配额之和（storage_quota 非空部分）
      */
+    // SQL 状态含义：仅统计未删除团队空间（storage_quota 非空部分）
     @Select("SELECT COALESCE(SUM(storage_quota), 0) FROM team_space WHERE deleted = 0 AND tenant_id = #{tenantId}")
     Long sumTeamQuota(@Param("tenantId") Long tenantId);
 
@@ -39,6 +50,7 @@ public interface CloudCapacityMapper {
      * 统计云盘已用容量 = 全部用户 storage_used + 全部团队空间 storage_used
      * 与上传/复制/删除的增量记账点保持一致
      */
+    // SQL 状态含义：已用容量 = 全部未删除用户 + 全部未删除团队空间 storage_used 之和
     @Select("SELECT (SELECT COALESCE(SUM(storage_used), 0) FROM sys_user WHERE deleted = 0 AND tenant_id = #{tenantId}) + (SELECT COALESCE(SUM(storage_used), 0) FROM team_space WHERE deleted = 0 AND tenant_id = #{tenantId})")
     Long sumCloudStorageUsed(@Param("tenantId") Long tenantId);
 }

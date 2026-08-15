@@ -3,10 +3,14 @@ package com.stcloud.team.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.stcloud.common.annotation.Auditable;
 import com.stcloud.common.response.Result;
+import com.stcloud.core.editor.EditorConfigService;
+import com.stcloud.core.editor.dto.EditorConfigResponse;
 import com.stcloud.core.dto.FileNodeVO;
 import com.stcloud.core.dto.FileTreeNodeVO;
 import com.stcloud.core.dto.MoveRequest;
+import com.stcloud.core.dto.NewFileRequest;
 import com.stcloud.core.service.FileService;
+import com.stcloud.core.service.NewFileService;
 import com.stcloud.team.dto.*;
 import com.stcloud.team.dto.FolderPermissionRequest;
 import com.stcloud.team.dto.FolderPermissionVO;
@@ -28,6 +32,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Set;
 
 @Tag(name = "团队协作", description = "团队空间管理、成员管理、空间文件操作")
 @RestController
@@ -38,8 +43,10 @@ public class TeamController {
 
     private final TeamService teamService;
     private final FileService fileService;
+    private final NewFileService newFileService;
     private final TeamActivityHelper activityHelper;
     private final ActiveTracker activeTracker;
+    private final EditorConfigService editorConfigService;
 
     // ==================== 空间管理 ====================
 
@@ -251,9 +258,24 @@ public class TeamController {
             @RequestParam(required = false) Long parentId,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "50") int size) {
-        teamService.checkPermission(spaceId, parentId, 2);
+        // 空间文件列表：view 权限点
+        teamService.requirePermissions(spaceId, parentId, "view");
         activeTracker.touchActive(spaceId, com.stcloud.common.context.UserContext.getUserId());
         return Result.success(fileService.listTeamFiles(spaceId, parentId, page, size));
+    }
+
+    @Operation(summary = "团队文件在线编辑配置（upload 可编辑，仅 view 只读）")
+    @GetMapping("/{spaceId}/files/{nodeId}/editor/config")
+    public Result<EditorConfigResponse> editorConfig(@PathVariable Long spaceId, @PathVariable Long nodeId) {
+        // 访问前提：view 权限点（成员校验 + 权限集校验，管理员直通）
+        teamService.requirePermissions(spaceId, nodeId, com.stcloud.team.service.FolderPermissionService.PERM_VIEW);
+        // 归属校验：节点必须属于该空间
+        fileService.getTeamNodeById(spaceId, nodeId);
+        // 编辑判定：有效权限集含 upload（与上传能力对齐，TC-03/04）；下载/打印按 download 权限
+        Set<String> perms = teamService.resolveMyPermissions(spaceId, nodeId);
+        boolean canEdit = perms != null && perms.contains(com.stcloud.team.service.FolderPermissionService.PERM_UPLOAD);
+        boolean canDownload = perms != null && perms.contains(com.stcloud.team.service.FolderPermissionService.PERM_DOWNLOAD);
+        return Result.success(editorConfigService.generateConfig(nodeId, canEdit, canDownload, canDownload));
     }
 
     @Operation(summary = "根据路径解析空间文件夹")
@@ -266,7 +288,8 @@ public class TeamController {
     @Operation(summary = "获取空间文件/文件夹详情")
     @GetMapping("/{spaceId}/files/{nodeId}")
     public Result<FileNodeVO> getNodeById(@PathVariable Long spaceId, @PathVariable Long nodeId) {
-        teamService.checkPermission(spaceId, nodeId, 2);
+        // 获取节点详情：view 权限点
+        teamService.requirePermissions(spaceId, nodeId, "view");
         return Result.success(fileService.getTeamNodeById(spaceId, nodeId));
     }
 
@@ -285,11 +308,29 @@ public class TeamController {
             @PathVariable Long spaceId,
             @RequestParam(required = false) Long parentId,
             @RequestParam String folderName) {
-        teamService.checkPermission(spaceId, parentId, 1);
+        // 创建文件夹：upload 权限点
+        teamService.requirePermissions(spaceId, parentId, "upload");
         teamService.checkNotLocked(parentId);
         FileNodeVO node = fileService.createTeamFolder(spaceId, parentId, folderName);
         // 记录创建文件夹活动日志
         activityHelper.log(spaceId, "FOLDER_CREATE", "FOLDER", node.getId(), folderName);
+        return Result.success(node);
+    }
+
+    @Operation(summary = "在空间中新建空白文件（upload 权限）")
+    @Auditable(action = "TEAM_CREATE_FILE", targetType = "FILE")
+    @PreAuthorize("hasAuthority('file:upload') or hasRole('ADMIN')")
+    @PostMapping("/{spaceId}/files/new")
+    public Result<FileNodeVO> createBlankFile(
+            @PathVariable Long spaceId,
+            @Valid @RequestBody NewFileRequest request) {
+        // 新建文件：upload 权限点（查看者无 upload 权限将被拒绝，TC-06）
+        teamService.requirePermissions(spaceId, request.getParentId(), "upload");
+        teamService.checkNotLocked(request.getParentId());
+        FileNodeVO node = newFileService.createBlankFile(
+                request.getType(), request.getParentId(), spaceId, request.getFileName());
+        // 记录新建文件活动日志
+        activityHelper.log(spaceId, "FILE_CREATE", "FILE", node.getId(), node.getName());
         return Result.success(node);
     }
 
@@ -299,7 +340,8 @@ public class TeamController {
     @PostMapping("/{spaceId}/files/delete")
     public Result<Void> deleteFiles(@PathVariable Long spaceId, @RequestBody List<Long> nodeIds) {
         // 逐个校验节点级权限
-        for (Long nodeId : nodeIds) { teamService.checkPermission(spaceId, nodeId, 1); teamService.checkNotLocked(nodeId); }
+        // 删除：delete 权限点
+        for (Long nodeId : nodeIds) { teamService.requirePermissions(spaceId, nodeId, "delete"); teamService.checkNotLocked(nodeId); }
         fileService.deleteTeamFiles(spaceId, nodeIds);
         // 记录删除活动日志
         for (Long nodeId : nodeIds) {
@@ -313,7 +355,8 @@ public class TeamController {
     @PreAuthorize("hasAuthority('file:rename') or hasRole('ADMIN')")
     @PutMapping("/{spaceId}/files/{nodeId}/rename")
     public Result<Void> renameFile(@PathVariable Long spaceId, @PathVariable Long nodeId, @RequestParam String newName) {
-        teamService.checkPermission(spaceId, nodeId, 1);
+        // 重命名：rename 权限点
+        teamService.requirePermissions(spaceId, nodeId, "rename");
         teamService.checkNotLocked(nodeId);
         fileService.renameTeamFile(spaceId, nodeId, newName);
         // 记录重命名活动日志
@@ -327,8 +370,9 @@ public class TeamController {
     @PostMapping("/{spaceId}/files/move")
     public Result<Void> moveFiles(@PathVariable Long spaceId, @RequestBody MoveRequest request) {
         // 校验源节点编辑权限 + 目标文件夹编辑权限
-        for (Long nodeId : request.getNodeIds()) { teamService.checkPermission(spaceId, nodeId, 1); teamService.checkNotLocked(nodeId); }
-        teamService.checkPermission(spaceId, request.getTargetParentId(), 1);
+        // 移动：源节点与目标父节点均需 move 权限点
+        for (Long nodeId : request.getNodeIds()) { teamService.requirePermissions(spaceId, nodeId, "move"); teamService.checkNotLocked(nodeId); }
+        teamService.requirePermissions(spaceId, request.getTargetParentId(), "move");
         teamService.checkNotLocked(request.getTargetParentId());
         fileService.moveTeamFiles(spaceId, request.getNodeIds(), request.getTargetParentId());
         // 记录移动活动日志
@@ -343,8 +387,9 @@ public class TeamController {
     @PreAuthorize("hasAuthority('file:copy') or hasRole('ADMIN')")
     @PostMapping("/{spaceId}/files/copy")
     public Result<Void> copyFiles(@PathVariable Long spaceId, @RequestBody MoveRequest request) {
-        for (Long nodeId : request.getNodeIds()) { teamService.checkPermission(spaceId, nodeId, 2); }
-        teamService.checkPermission(spaceId, request.getTargetParentId(), 2);
+        // 复制：源与目标均需 view 权限点
+        for (Long nodeId : request.getNodeIds()) { teamService.requirePermissions(spaceId, nodeId, "view"); }
+        teamService.requirePermissions(spaceId, request.getTargetParentId(), "view");
         fileService.copyTeamFiles(spaceId, request.getNodeIds(), request.getTargetParentId());
         // 记录复制活动日志
         for (Long nodeId : request.getNodeIds()) {
@@ -369,5 +414,44 @@ public class TeamController {
     public Result<Void> unlockFile(@PathVariable Long spaceId, @PathVariable Long nodeId) {
         // 解锁仅允许锁定人或管理员，服务层校验并记录活动日志
         return teamService.unlockFile(spaceId, nodeId);
+    }
+
+    // ==================== P2 新增：自定义角色 ====================
+
+    @Operation(summary = "角色列表")
+    @GetMapping("/{spaceId}/roles")
+    public Result<List<TeamRoleVO>> listRoles(@PathVariable Long spaceId) {
+        return teamService.listRoles(spaceId);
+    }
+
+    @Operation(summary = "创建角色")
+    @Auditable(action = "TEAM_ROLE_CREATE", targetType = "TEAM")
+    @PostMapping("/{spaceId}/role")
+    public Result<TeamRoleVO> createRole(@PathVariable Long spaceId, @Valid @RequestBody TeamRoleRequest request) {
+        return teamService.createRole(spaceId, request);
+    }
+
+    @Operation(summary = "编辑角色")
+    @Auditable(action = "TEAM_ROLE_UPDATE", targetType = "TEAM", targetIdParam = "roleId")
+    @PutMapping("/{spaceId}/role/{roleId}")
+    public Result<Void> updateRole(@PathVariable Long spaceId, @PathVariable Long roleId, @Valid @RequestBody TeamRoleRequest request) {
+        return teamService.updateRole(spaceId, roleId, request);
+    }
+
+    @Operation(summary = "删除角色")
+    @Auditable(action = "TEAM_ROLE_DELETE", targetType = "TEAM", targetIdParam = "roleId")
+    @DeleteMapping("/{spaceId}/role/{roleId}")
+    public Result<Void> deleteRole(@PathVariable Long spaceId, @PathVariable Long roleId) {
+        return teamService.deleteRole(spaceId, roleId);
+    }
+
+    // ==================== P2 新增：空间统计 ====================
+
+    @Operation(summary = "空间统计")
+    @GetMapping("/{spaceId}/stats")
+    public Result<TeamStatsVO> getStats(
+            @PathVariable Long spaceId,
+            @RequestParam(defaultValue = "30") int days) {
+        return teamService.getStats(spaceId, days);
     }
 }

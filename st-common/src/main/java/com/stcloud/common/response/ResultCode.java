@@ -34,6 +34,8 @@ public enum ResultCode {
     STORAGE_QUOTA_EXCEEDED(2007, "存储空间不足"),
     FILE_IN_RECYCLE(2008, "文件在回收站中"),
     CLOUD_CAPACITY_EXCEEDED(2009, "云盘总容量已达上限"),
+    FILE_EDITING(2010, "文件正在编辑中，请关闭编辑器后重试"),
+    EDITOR_SERVICE_ERROR(2011, "文档编辑服务暂不可用"),
 
     // 分享相关 3xxx
     SHARE_NOT_FOUND(3001, "分享不存在"),

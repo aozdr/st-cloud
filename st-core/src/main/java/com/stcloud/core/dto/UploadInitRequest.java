@@ -37,4 +37,7 @@ public class UploadInitRequest {
 
     @Schema(description = "团队空间ID（可选，团队空间上传时传入）")
     private Long spaceId;
+
+    @Schema(description = "客户端自设上传限速 KB/s（可选，0=不限速）。与服务端限速取最严格值")
+    private Integer clientLimit;
 }

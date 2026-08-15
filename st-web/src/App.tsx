@@ -24,6 +24,7 @@ const TeamSpacePage = lazy(() => import('./pages/TeamSpacePage'));
 const CategoryPage = lazy(() => import('./pages/CategoryPage'));
 const TransferManager = lazy(() => import('./pages/TransferManager'));
 const SyncPage = lazy(() => import('./pages/SyncPage'));
+const EditorPage = lazy(() => import('./pages/EditorPage'));
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -43,6 +44,15 @@ export default function App() {
         {/* 公开分享访问页 - 无需登录 */}
         <Route path="/share/:shareCode" element={<ShareAccessPage />} />
         <Route path="/server-config" element={<ServerConfigPage />} />
+        {/* 在线文档编辑：全屏页面，位于 AppLayout 之外 */}
+        <Route
+          path="/file/:nodeId/editor"
+          element={
+            <ProtectedRoute>
+              <EditorPage />
+            </ProtectedRoute>
+          }
+        />
         <Route
           path="/"
           element={

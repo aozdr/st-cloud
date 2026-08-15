@@ -1,4 +1,4 @@
-﻿import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { X, CheckCircle2, AlertCircle, Loader2, Zap, FileUp, Pause, ListChecks } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatSize } from '../../lib/utils';
@@ -11,6 +11,16 @@ function formatEta(seconds: number): string {
   const m = Math.floor(seconds / 60);
   const s = Math.ceil(seconds % 60);
   return m + 'm ' + s + 's';
+}
+
+/** 限速模式预估剩余时间：Xh Ym，超过 24h 显示 >24h（uispec 要求） */
+function formatRelayEta(seconds: number): string {
+  if (seconds <= 0 || !isFinite(seconds)) return '';
+  const totalMinutes = Math.ceil(seconds / 60);
+  if (totalMinutes >= 24 * 60) return '>24h';
+  const h = Math.floor(totalMinutes / 60);
+  const m = totalMinutes % 60;
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
 }
 
 function UploadTaskItem({ task, onRemove }: { task: UploadTask; onRemove: () => void }) {
@@ -64,7 +74,12 @@ function UploadTaskItem({ task, onRemove }: { task: UploadTask; onRemove: () => 
         <div className="flex items-center gap-1 text-xs text-muted flex-shrink-0 w-20 justify-end">
           {task.status === 'hashing' && <><Loader2 className="w-3 h-3 animate-spin" aria-hidden />计算中</>}
           {task.status === 'pending' && <span>等待中</span>}
-          {task.status === 'uploading' && <>{task.progress}%</>}
+          {task.status === 'uploading' && task.transferMode === 'relay' && (
+            <span className="text-amber-600 dark:text-amber-400 flex items-center gap-1">
+              <Loader2 className="w-3 h-3 animate-spin" aria-hidden />限速中转上传中
+            </span>
+          )}
+          {task.status === 'uploading' && task.transferMode !== 'relay' && <>{task.progress}%</>}
           {task.status === 'merging' && <><Loader2 className="w-3 h-3 animate-spin" aria-hidden />合并中</>}
           {task.status === 'completed' && <><CheckCircle2 className="w-3 h-3 text-green-500" aria-hidden />完成</>}
           {task.status === 'instant' && <><Zap className="w-3 h-3 text-yellow-500" aria-hidden />秒传</>}
@@ -74,7 +89,18 @@ function UploadTaskItem({ task, onRemove }: { task: UploadTask; onRemove: () => 
       </div>
       <div className="text-xs text-muted mt-1 flex items-center gap-1.5">
         <span>{formatSize(task.fileSize)}</span>
-        {speed > 0 && task.status === 'uploading' && (
+        {task.status === 'uploading' && task.transferMode === 'relay' && (task.relayLimitKb || 0) > 0 && (
+          <>
+            <span className="px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[11px] font-medium">
+              限速 {task.relayLimitKb} KB/s
+            </span>
+            <span className="text-muted">·</span>
+            <span className="tabular-nums">
+              {formatRelayEta((((100 - task.progress) / 100) * task.fileSize) / ((task.relayLimitKb || 0) * 1024))}
+            </span>
+          </>
+        )}
+        {speed > 0 && task.status === 'uploading' && task.transferMode !== 'relay' && (
           <>
             <span className="text-muted">·</span>
             <span className="tabular-nums">{formatSize(speed)}/s</span>

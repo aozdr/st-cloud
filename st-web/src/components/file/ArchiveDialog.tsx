@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { X, File, Folder, Download, Archive } from 'lucide-react';
 import api from '../../lib/api';
 import { useToast } from '../ui/Toast';

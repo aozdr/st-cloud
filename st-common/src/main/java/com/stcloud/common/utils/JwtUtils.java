@@ -21,11 +21,14 @@ import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -139,6 +142,35 @@ public class JwtUtils {
         claims.put("permissions", permissions);
         claims.put("dataScope", dataScope);
         claims.put("type", "download");
+        claims.put("nodeId", nodeId);
+        return Jwts.builder()
+                .claims(claims)
+                .id(UUID.randomUUID().toString())
+                .subject(username)
+                .issuedAt(new Date())
+                .expiration(new Date(System.currentTimeMillis() + downloadExpiration))
+                .signWith(signingKey)
+                .compact();
+    }
+
+    /**
+     * 生成在线编辑器下载令牌（type=editor，绑定 nodeId，5 分钟有效，不单次消费）。
+     * 仅允许访问 /api/file/{nodeId}/stream（端点收敛 + nodeId 绑定由 JwtAuthenticationFilter 执行）；
+     * 自动补齐 file:preview 权限以满足 stream 端点鉴权（TC-21/22/23）。
+     */
+    public String generateEditorToken(Long userId, Long tenantId, String username,
+                                      List<String> roles, List<String> permissions, int dataScope,
+                                      Long nodeId) {
+        Set<String> permSet = new LinkedHashSet<>(permissions == null ? List.of() : permissions);
+        permSet.add("file:preview");
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("userId", userId);
+        claims.put("tenantId", tenantId);
+        claims.put("username", username);
+        claims.put("roles", roles == null ? List.of() : roles);
+        claims.put("permissions", new ArrayList<>(permSet));
+        claims.put("dataScope", dataScope);
+        claims.put("type", "editor");
         claims.put("nodeId", nodeId);
         return Jwts.builder()
                 .claims(claims)

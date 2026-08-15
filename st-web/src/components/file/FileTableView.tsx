@@ -1,11 +1,13 @@
-﻿import { formatSize, formatDate, cn } from '../../lib/utils';
+import { formatSize, formatDate, cn } from '../../lib/utils';
 import type { FileNode } from '../../types';
 import type { SortBy, SortDir } from './FileToolbar';
-import { Check, MoreHorizontal, ArrowUp, ArrowDown, Star } from 'lucide-react';
+import { Check, MoreHorizontal, ArrowUp, ArrowDown, Star, Lock } from 'lucide-react';
 import FileThumbnail from './FileThumbnail';
 
 interface Props {
   files: FileNode[];
+  /** 已锁定节点 ID 集合（团队空间传入；用于列表行显示锁图标） */
+  lockedIds?: Set<string>;
   selectedIds: Set<string>;
   focusedId: string | null;
   cutIds: Set<string> | null;
@@ -29,7 +31,7 @@ interface Props {
 }
 
 export default function FileTableView({
-  files, selectedIds, focusedId, cutIds, sortBy, sortDir, onSortChange,
+  files, lockedIds, selectedIds, focusedId, cutIds, sortBy, sortDir, onSortChange,
   onSelect, onSelectAll, onContextMenu, onDoubleClick,
   onItemDragStart, onFolderDragOver, onFolderDragLeave, onFolderDrop, dragOverFolderId, onItemMenu,
   onToggleSelect, isFavorite, onToggleFavorite,
@@ -135,8 +137,9 @@ export default function FileTableView({
                 <td className="px-3 py-0 align-middle">
                   <div className="flex items-center gap-3 min-w-0">
                     <FileThumbnail file={file} size="lg" />
-                    <div className={cn('text-sm truncate', isSelected ? 'text-primary-600 font-medium' : 'text-fg')}>
-                      {file.name}
+                    <div className={cn('flex items-center gap-1 min-w-0 text-sm', isSelected ? 'text-primary-600 font-medium' : 'text-fg')}>
+                      <span className="min-w-0 truncate">{file.name}</span>
+                      {lockedIds?.has(file.id) && <Lock className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" aria-hidden />}
                     </div>
                   </div>
                 </td>

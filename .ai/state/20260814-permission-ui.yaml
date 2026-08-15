@@ -1,0 +1,65 @@
+taskId: "20260814-permission-ui"
+goal:
+  objective: "前端权限 UI 对齐新权限模型：文件夹权限配置（all/member/role + 9 权限点勾选）、分享权限点选择（禁用超权项）、角色管理校验，后端补充'当前用户对文件有效权限'接口"
+  scope: "st-web 团队/分享相关组件 + types；st-share/st-team 后端小接口"
+  completionCriteria:
+    - "FolderPermissionDialog 支持 all/成员/角色主体 + 9 权限点勾选，保存 permissions JSON"
+    - "ShareDialog 展示可分享权限点并禁用超出自身权限项；allowDownload 联动"
+    - "RoleManageDialog 9 权限点完整对齐"
+    - "后端提供当前用户对文件有效权限接口"
+    - "tsc/npm build 通过；Loop 验收（ACCEPT）通过"
+scale: medium
+exitCriteria:
+  - id: DESIGN
+    desc: "前端权限 UI 设计已定"
+    status: done
+  - id: TESTCASES
+    desc: "前端验收点已列"
+    status: done
+  - id: IMPLEMENTED
+    desc: "前端组件 + 后端接口实现完成"
+    status: done
+  - id: CODE_REVIEW
+    desc: "Code Review 通过"
+    status: done
+  - id: SECURITY_REVIEW
+    desc: "安全审查通过（权限相关，条件项启用）"
+    status: done
+  - id: TEST_PASS
+    desc: "tsc/build 通过 + 前端验证点核对"
+    status: done
+  - id: KNOWLEDGE
+    desc: "知识库/文档同步"
+    status: done
+  - id: ACCEPT
+    desc: "验收通过（对照完成标准逐项核对）"
+    status: done
+artifacts:
+  requirement: { status: done, ref: ".ai/docs/20260814-skill-test-requirement/requirement.md", owner: "executor" }
+  design: { status: pending, ref: ".ai/docs/20260814-permission-ui/design.md", owner: "executor" }
+  codeFE: { status: pending, ref: "st-web/src/components/team/FolderPermissionDialog.tsx 等", owner: "executor" }
+  codeBE: { status: pending, ref: "分享有效权限接口", owner: "executor" }
+blockers: []
+history:
+  - iter: 0
+    phase: "plan"
+    agent: "workflow-manager"
+    action: "勘察后端契约与前端现状，初始化 Loop State"
+    delta: "前端权限 UI 部分已存在（FolderPermissionDialog/RoleManageDialog），需对齐新模型；分享权限点选择缺失"
+  - iter: 1
+    phase: "implement"
+    agent: "executor（3 个并行：FolderPermissionDialog / RoleManageDialog / ShareDialog+后端接口）"
+    action: "前端权限 UI 对齐 + 后端 effective-permissions 接口；验证自动技能发现（子代理补读 java-spring-boot）"
+    delta: "DESIGN/TESTCASES/IMPLEMENTED done；tsc + mvn compile 主线程验证通过"
+  - iter: 2
+    phase: "review"
+    agent: "reviewer + executor（Major 修复）"
+    action: "两轴 Code Review（PASS，3 项 Major：S1 类型断言/S2 权限点常量/SP1 个人分享口径）+ 修复"
+    delta: "CODE_REVIEW done；tsc + st-share 测试（含 personalFileOverPermissionRejected 回归）通过"
+  - iter: 3
+    phase: "security + test + accept"
+    agent: "reviewer/security + tester + reviewer/accept"
+    action: "安全复检（BLOCK：P1 跨空间 ACL/P2 all 越权）→ 修复 + 3 集成测试；TEST_PASS 全绿（169 用例 + tsc/build）；accept 复验 BLOCK 依据补齐"
+    delta: "SECURITY_REVIEW/TEST_PASS/KNOWLEDGE/ACCEPT 全部 done；P1/P2 修复经 mvn -pl st-team -am test 验证"
+iteration: 3
+status: done

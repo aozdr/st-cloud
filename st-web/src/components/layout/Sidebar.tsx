@@ -1,5 +1,5 @@
-﻿import { NavLink, useNavigate } from 'react-router-dom';
-import { Cloud, FolderClosed, Trash2, Share2, Users, Settings, ArrowUpDown, Palette, FolderSync, Home, Upload, ChevronRight, PanelLeftClose, PanelLeftOpen, X, Image as ImageIcon, Video, FileText, Music, Archive, Star, Copy, EyeOff } from 'lucide-react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { Cloud, FolderClosed, Trash2, Share2, Users, Settings, ArrowUpDown, Palette, FolderSync, Home, Upload, ChevronRight, PanelLeftClose, PanelLeftOpen, X, Star, Copy, EyeOff } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { formatSize, cn } from '../../lib/utils';
 import { isElectron } from '../../lib/electron';
@@ -41,14 +41,6 @@ export default function Sidebar({ mobileOpen, onClose }: SidebarProps) {
     { to: '/favorites', icon: Star, label: '我的收藏', end: false },
     { to: '/shares', icon: Share2, label: '我的分享', end: false },
     { to: '/team', icon: Users, label: '团队空间', end: false },
-  ];
-
-  const categoryNav: { to: string; icon: typeof Home; label: string }[] = [
-    { to: '/files/category/image', icon: ImageIcon, label: '图片' },
-    { to: '/files/category/video', icon: Video, label: '视频' },
-    { to: '/files/category/document', icon: FileText, label: '文档' },
-    { to: '/files/category/audio', icon: Music, label: '音乐' },
-    { to: '/files/category/archive', icon: Archive, label: '压缩包' },
   ];
 
   const toolNav: { to: string; icon: typeof Trash2; label: string; end: boolean }[] = [
@@ -157,27 +149,6 @@ export default function Sidebar({ mobileOpen, onClose }: SidebarProps) {
               key={item.to}
               to={item.to}
               end={item.end}
-              aria-current="page"
-              className={({ isActive }) => navItemClass(isActive)}
-              onClick={onClose}
-              title={collapsed ? item.label : undefined}
-            >
-              {({ isActive }) => (
-                <>
-                  {isActive && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] bg-primary-500 rounded-r-full" />}
-                  <item.icon className={cn('w-[18px] h-[18px] flex-shrink-0 transition-colors', isActive ? 'text-primary-600' : 'text-muted group-hover:text-fg')} aria-hidden />
-                  {!collapsed && <span className="hidden lg:inline">{item.label}</span>}
-                  <span className="lg:hidden">{item.label}</span>
-                </>
-              )}
-            </NavLink>
-          ))}
-
-          {!collapsed && <div className="px-3 py-2 mt-3 text-[10px] font-semibold uppercase tracking-wider text-muted/70 hidden lg:block">文件分类</div>}
-          {categoryNav.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
               aria-current="page"
               className={({ isActive }) => navItemClass(isActive)}
               onClick={onClose}

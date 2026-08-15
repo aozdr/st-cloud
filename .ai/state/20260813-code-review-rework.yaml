@@ -1,0 +1,75 @@
+taskId: "20260813-code-review-rework"
+goal:
+  objective: "修复 2026-08-13 项目级 Code Review 发现的 Critical/Major 问题（C1 + M1~M8 + FE-S1/FE-S2），按大型任务完整 Loop 推进至全部退出标准满足"
+  scope: "st-core 上传/事务/容量组 + st-sync 块级同步组 + st-web/st-desktop 前端组 + docker/mysql/init 迁移脚本 + 测试体系；不修改已通过审查的既有行为，Minor/Suggestion 留后续迭代"
+  completionCriteria:
+    - "C1：file_object 唯一键与逻辑删除冲突解决，同 md5 重传不 NPE、去重复活可用"
+    - "M1：mergeChunks 补 owner/租户管理员权限校验"
+    - "M2：S3 complete 前完成配额预检/预扣，失败可补偿 abort，重试 merge 不再永久失败"
+    - "M3：relayFinalize 经事务代理调用 merge，relay 合并具备事务性"
+    - "M4：28_file_object.sql 可重复执行（information_schema 守卫）"
+    - "M5：block-check 服务端持久化会话，block-upload 仅凭会话校验归属与完整性，不再信任客户端 storagePath/s3UploadId/md5/size"
+    - "M6：容量校验与上传解耦，正常路径不持 FOR UPDATE 行锁跨 S3 I/O，接近阈值时加锁"
+    - "M7：块级同步 multipart 有 abort/超时清理机制"
+    - "M8：SyncBlockServiceImpl 主路径有测试覆盖（越权/去重/配额/版本/失败回退/并发）"
+    - "FE-S1：Web relay 中转循环支持取消/abort，取消时调用 abort API 并清理任务"
+    - "FE-S2：reconcileFolder 对无 sync_state 的本地文件保留本地，不静默覆盖"
+    - "mvn test 全绿 + st-web npm run build + st-desktop tsc --noEmit + compare-schema.ps1 PASS + verify-loop PASS"
+scale: large
+exitCriteria:
+  - { id: REQ_ANALYSIS, desc: "需求已分析（以 codereview.md 问题清单为需求来源，requirement.md 落盘）", status: done, dependsOn: [] }
+  - { id: IMPACT_ANALYSIS, desc: "影响范围已分析（impact.md）", status: done, dependsOn: [REQ_ANALYSIS] }
+  - { id: EXP_DESIGN, desc: "体验评审已通过（FE-S1 取消/abort、FE-S2 对账保护，exp-review.md + uispec.md，需 experience-reviewer 独立评审）", status: pending, dependsOn: [REQ_ANALYSIS] }
+  - { id: TECH_DESIGN, desc: "技术设计已评审（architecture-review.md + design.md，需 architect 独立评审）", status: pending, dependsOn: [IMPACT_ANALYSIS, EXP_DESIGN] }
+  - { id: TESTCASES, desc: "测试用例已编写（testcases.md，需 tester 独立评审）", status: pending, dependsOn: [TECH_DESIGN] }
+  - { id: IMPLEMENTED, desc: "代码已实现（TASK-01/02/03）", status: in_progress, dependsOn: [TECH_DESIGN, TESTCASES] }
+  - { id: CODE_REVIEW, desc: "Code Review 通过", status: pending, dependsOn: [IMPLEMENTED] }
+  - { id: SECURITY_REVIEW, desc: "Security Review 通过（涉及权限/文件操作，启用）", status: pending, dependsOn: [IMPLEMENTED] }
+  - { id: EXP_ACCEPT, desc: "体验验收通过", status: pending, dependsOn: [IMPLEMENTED] }
+  - { id: TEST_PASS, desc: "测试执行通过（mvn test + build + tsc + compare-schema + MySQL 迁移）", status: pending, dependsOn: [CODE_REVIEW, SECURITY_REVIEW] }
+  - { id: QUALITY_GATE, desc: "Quality Gate 通过（verify-loop PASS）", status: pending, dependsOn: [TEST_PASS, SECURITY_REVIEW, EXP_ACCEPT] }
+  - { id: KNOWLEDGE, desc: "知识库已更新（ADR + data-model/testing 同步）", status: pending, dependsOn: [QUALITY_GATE] }
+artifacts:
+  prd: { status: done, ref: ".ai/docs/20260813-code-review-rework/requirement.md", owner: "product-manager" }
+  impact: { status: done, ref: ".ai/docs/20260813-code-review-rework/impact.md", owner: "impact-analyzer" }
+  expReview: { status: done, ref: ".ai/docs/20260813-code-review-rework/exp-review.md", owner: "experience-reviewer" }
+  uiSpec: { status: done, ref: ".ai/docs/20260813-code-review-rework/uispec.md", owner: "ui-designer" }
+  archReview: { status: done, ref: ".ai/docs/20260813-code-review-rework/architecture-review.md", owner: "architect" }
+  design: { status: done, ref: ".ai/docs/20260813-code-review-rework/design.md", owner: "backend-engineer + frontend-engineer" }
+  testcases: { status: done, ref: ".ai/docs/20260813-code-review-rework/testcases.md", owner: "tester" }
+  task: { status: done, ref: ".ai/tasks/TASK-20260813-code-review-rework-01.md ~ 03.md", owner: "workflow-manager" }
+  code: { status: in_progress, ref: "", owner: "backend-engineer + frontend-engineer" }
+  review: { status: pending, ref: ".ai/docs/20260813-code-review-rework/codereview.md", owner: "reviewer" }
+  security: { status: pending, ref: ".ai/docs/20260813-code-review-rework/security.md", owner: "security-reviewer" }
+  expAccept: { status: pending, ref: ".ai/docs/20260813-code-review-rework/exp-accept.md", owner: "experience-reviewer" }
+  testReport: { status: pending, ref: ".ai/docs/20260813-code-review-rework/testreport.md", owner: "tester" }
+  changereport: { status: pending, ref: ".ai/docs/20260813-code-review-rework/changereport.md", owner: "backend-engineer + frontend-engineer" }
+  knowledge: { status: pending, ref: ".ai/decisions/ADR/ADR-009-block-session-hardening.md", owner: "knowledge-manager" }
+blockers:
+  - { id: C1, desc: "file_object 唯一键与逻辑删除冲突，永久删除后同 md5 重传 NPE/去重失效", raisedBy: "reviewer", status: open, attempts: 0 }
+  - { id: M1, desc: "mergeChunks 无 owner/租户管理员权限校验", raisedBy: "reviewer", status: open, attempts: 0 }
+  - { id: M2, desc: "S3 完成先于配额扣减，失败后不可恢复", raisedBy: "reviewer", status: open, attempts: 0 }
+  - { id: M3, desc: "relayFinalize 自调用 @Transactional mergeChunks 绕过事务代理", raisedBy: "reviewer", status: open, attempts: 0 }
+  - { id: M4, desc: "28_file_object.sql 不可重复执行（ADD COLUMN 无守卫）", raisedBy: "reviewer", status: open, attempts: 0 }
+  - { id: M5, desc: "block-upload 信任客户端 storagePath/s3UploadId/fileMd5/fileSize", raisedBy: "reviewer", status: open, attempts: 0 }
+  - { id: M6, desc: "CloudCapacity FOR UPDATE 行锁跨 S3 I/O，同租户上传串行化", raisedBy: "reviewer", status: open, attempts: 0 }
+  - { id: M7, desc: "块级同步 multipart 无 abort/超时清理", raisedBy: "reviewer", status: open, attempts: 0 }
+  - { id: M8, desc: "SyncBlockServiceImpl 主路径无测试覆盖", raisedBy: "reviewer", status: open, attempts: 0 }
+  - { id: FE-S1, desc: "Web relay 中转循环无取消/abort，onRemove 后上传仍继续", raisedBy: "reviewer", status: open, attempts: 0 }
+  - { id: FE-S2, desc: "reconcileFolder 对无 sync_state 的本地文件直接下载覆盖，数据丢失风险", raisedBy: "reviewer", status: open, attempts: 0 }
+history:
+  - iter: 0
+    phase: "init"
+    agent: "workflow-manager"
+    action: "用户批准修复计划；依据 codereview.md 问题清单初始化大型 Loop State，生成 TASK-01/02/03 与文档骨架"
+    delta: "State 落盘；11 个 blocker 迁移自 review State；docs 目录待产出"
+    result: "进入 REQ_ANALYSIS"
+  - iter: 1
+    phase: "evaluate-design"
+    agent: "workflow-manager"
+    action: "验证设计阶段 7 份文档真实落盘且与 TASK/design/testcases 契约一致；TASK-01 曾中断且未落代码，按用户指示重派 impl_task01b/02b/03c 并行执行"
+    delta: "REQ_ANALYSIS/IMPACT_ANALYSIS/EXP_DESIGN/TECH_DESIGN/TESTCASES 标记 done；task 产物 done；code 标记 in_progress；3 个实现子代理运行中"
+    result: "进入 IMPLEMENTED 并行实现"
+iteration: 1
+status: running
+maxIterations: 40

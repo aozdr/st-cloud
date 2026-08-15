@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { X, Settings2, ArrowUp, ArrowDown, Layers } from 'lucide-react';
 import { useTransferStore } from '../store/transfer';
 

@@ -3,6 +3,7 @@ package com.stcloud.share.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.stcloud.common.annotation.Auditable;
 import com.stcloud.common.response.Result;
+import com.stcloud.core.editor.dto.EditorConfigResponse;
 import com.stcloud.core.dto.FileNodeVO;
 import com.stcloud.share.dto.*;
 import com.stcloud.share.service.ShareService;
@@ -15,6 +16,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @Tag(name = "文件分享", description = "文件链接分享、提取码访问、分享管理")
 @RestController
@@ -31,6 +33,12 @@ public class ShareController {
     @PostMapping("/api/share/create")
     public Result<ShareVO> createShare(@Valid @RequestBody CreateShareRequest request) {
         return shareService.createShare(request);
+    }
+
+    @Operation(summary = "当前用户对文件的有效权限集（分享权限点选择依据，未授权返回空集）")
+    @GetMapping("/api/share/effective-permissions")
+    public Result<Map<String, Boolean>> effectivePermissions(@RequestParam Long fileNodeId) {
+        return shareService.effectivePermissions(fileNodeId);
     }
 
     @Operation(summary = "我的分享列表")
@@ -91,5 +99,14 @@ public class ShareController {
             @RequestParam(required = false) String password,
             HttpServletResponse response) {
         shareService.streamShareFile(shareCode, nodeId, password, response);
+    }
+
+    @Operation(summary = "分享文件在线编辑配置（分享权限含 upload 可编辑，否则只读）")
+    @GetMapping("/api/share/access/editor-config/{shareCode}")
+    public Result<EditorConfigResponse> shareEditorConfig(
+            @PathVariable String shareCode,
+            @RequestParam(required = false) Long nodeId,
+            @RequestParam(required = false) String password) {
+        return shareService.editorConfig(shareCode, nodeId, password);
     }
 }

@@ -1,4 +1,4 @@
-﻿# Agent Loop 验证 Checklist
+# Agent Loop 验证 Checklist
 
 > 配置驱动型 Loop 无运行时代码，"可用"= AI 扮演编排器时能正确遵循配置。
 > 三层验证：静态校验（脚本）-> 白盒 dry-run（演练）-> 真实任务实测（本 checklist）。
@@ -48,7 +48,7 @@ powershell -ExecutionPolicy Bypass -File .ai\scripts\verify-loop.ps1
 ### Rework Cascade（关键）
 - [ ] **C14** Review/测试/验收发现问题 -> 记 blocker，不退格
 - [ ] **C15** 修复改代码 -> IMPLEMENTED 重开
-- [ ] **C16** IMPLEMENTED 重开 -> 下游 CODE_REVIEW/SECURITY_REVIEW/EXP_ACCEPT/TEST_PASS/QUALITY_GATE/KNOWLEDGE 自动回退 pending
+- [ ] **C16** IMPLEMENTED 重开 -> 下游 CODE_REVIEW/SECURITY_REVIEW/EXP_ACCEPT/TEST_PASS/KNOWLEDGE/ACCEPT 自动回退 pending
 - [ ] **C17** 回退后的标准被重新派发 Agent 复检（非沿用旧结论）
 
 ### 死循环防护
@@ -68,13 +68,16 @@ powershell -ExecutionPolicy Bypass -File .ai\scripts\verify-loop.ps1
 - [ ] **C25** 落盘文档内容结构遵循 `docs/newList/` 对应输出标准，基于 `.ai/templates/` 模板填写
 - [ ] **C26** 大型任务先产出架构评审（`architecture-review.md`）再产出程序设计文档（`design.md`），未通过架构评审不得标 TECH_DESIGN done
 - [ ] **C27** artifacts 的 ref 指向 `.ai/docs/<task-id>/` 下真实存在的文件，产出后在对话中告知用户路径
+- [ ] **C28** `requirement.md` / `design.md` 含「遗留问题点」章节（Grill Me 拷打收敛 ≤3），
+  并经用户确认（逐项拍板）后才标 REQ_ANALYSIS / DESIGN / TECH_DESIGN done；State 记录 `userConfirmedAt`
+- [ ] **C29** 文档简洁：无空话套话与互联网黑话（赋能/抓手/闭环/颗粒度 等）
 
 ## 判定标准
 
 - C1-C7 全过 = 基础四段式可用
 - C8-C17 全过 = 门禁与 rework 机制可用（核心正确性）
 - C18-C22 全过 = 防护与收敛可用
-- C23-C27 全过 = Agent 输出与文档标准对齐可用
+- C23-C29 全过 = Agent 输出与文档标准对齐可用
 - 任一 fail = 该维度需修配置
 
 ## 残留风险

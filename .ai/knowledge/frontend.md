@@ -1,4 +1,4 @@
-﻿# 前端与桌面端架构
+# 前端与桌面端架构
 
 > 本文档描述 st-web（React Web 端）与 st-desktop（Electron 桌面端）的架构。
 
@@ -19,8 +19,11 @@ st-web/src/
 ├── components/          可复用组件
 │   ├── layout/          布局（AppLayout / Sidebar / TopBar）
 │   ├── file/            文件管理（FileBrowser / FileGrid / FileTable / ContextMenu / Dialogs / UploadPanel 等）
+│   │                    （另有 FileToolbar / FileBreadcrumb / FileThumbnail / FileTableView / FileDetailPanel /
+│   │                      BatchRenameDialog / DownloadDialog / MoveDialog / ArchiveDialog / VersionHistoryDialog / BlankContextMenu）
 │   ├── share/           分享（ShareDialog）
 │   ├── preview/         预览（PreviewModal / PlyrPlayer - 支持字幕/倍速/图片缩放旋转）
+│   ├── team/            团队（FolderPermissionDialog / RoleManageDialog / CommentPanel / NotificationBell / StatsPanel）
 │   ├── ui/              基础 UI 组件（button / input / dialog / toast / table 等）
 │   ├── EmptyState.tsx    通用空状态组件（SVG 插图）
 │   ├── StorageAnalysis.tsx 存储空间分析（按类型饼图）
@@ -33,6 +36,8 @@ st-web/src/
 └── assets/              静态资源
 ```
 
+> **命名豁免（W5）**：`components/ui/` 下 shadcn 风格基础组件（`badge.tsx` / `button.tsx` / `calendar.tsx` / `card.tsx` / `input.tsx` / `popover.tsx` / `select.tsx` / `switch.tsx` / `table.tsx` / `time-wheel-picker.tsx` 等）使用小驼峰/连字符小写文件名，属社区惯例豁免；业务组件仍按大驼峰 `.tsx` 命名。`ErrorBoundary.tsx` 因 React 错误边界必须使用类组件实现，属合理例外。
+
 ### 页面路由
 
 | 路由 | 页面组件 | 说明 | 认证 |
@@ -43,6 +48,7 @@ st-web/src/
 | `/` | HomePage | 首页（仪表盘） | 受保护 |
 | `/files` | FileManager | 文件管理（根目录） | 受保护 |
 | `/files/:parentId` | FileManager | 文件管理（指定目录） | 受保护 |
+| `/file/:nodeId/editor` | EditorPage | OnlyOffice 在线编辑（全屏，AppLayout 之外） | 受保护 |
 | `/files/category/:type` | CategoryPage | 分类浏览 | 受保护 |
 | `/search` | SearchPage | 全文搜索 | 受保护 |
 | `/recycle` | RecycleBin | 回收站 | 受保护 |
@@ -50,6 +56,7 @@ st-web/src/
 | `/admin` | AdminPage | 系统管理 | 受保护 |
 | `/team` | TeamPage | 团队空间列表 | 受保护 |
 | `/team/:spaceId` | TeamSpacePage | 团队空间详情 | 受保护 |
+| `/team/invite/:code` | TeamInvitePage | 通过邀请码加入空间 | 受保护 |
 | `/transfers` | TransferManager | 传输管理 | 受保护 |
 | `/sync` | SyncPage | 文件同步 | 受保护 |
 | `/favorites` | FavoritesPage | 我的收藏 | 受保护 |
@@ -60,6 +67,14 @@ st-web/src/
 - 所有受保护路由嵌套在 `AppLayout` 下（含 Sidebar + TopBar）
 - 页面组件均使用 `React.lazy` 懒加载，配合 `Suspense` 加载态
 - 全局 Provider：`ToastProvider` > `ConfirmProvider` > `PromptDialog`
+
+> **已知待改进项（W8）**：`DuplicateFilesPage.tsx` / `TeamInvitePage.tsx` / `TeamSpacePage.tsx` 中仍有少量 `any` 类型，属 TS 严格性待改进项；`src/types/index.ts` 的 TODO（isPinned 需后端加入 VO）为待办标记。
+
+### 在线编辑（OnlyOffice）
+
+- `pages/EditorPage.tsx` + `lib/editor.ts`：config → 动态加载 api.js → `new DocsAPI.DocEditor`；
+  加载骨架、错误弹窗 + 「以预览打开」回退；返回列表自动刷新
+- 入口：文件列表右键菜单 + 工具栏「在线编辑」（docx/xlsx/pptx 且有编辑权限）；双击保持预览
 
 ### 状态管理（Zustand）
 
@@ -72,6 +87,7 @@ st-web/src/
 | transfer | `transfer.ts` | 传输任务状态（上传/下载进度） |
 | theme | `theme.ts` | 主题（亮/暗模式） |
 | folderFilter | `folderFilter.ts` | 文件列表筛选状态 |
+| favorites | `favorites.ts` | 收藏管理（对接 /favorite/* API） |
 
 ### API 层
 
@@ -83,7 +99,8 @@ st-web/src/
 | `electron.ts` | Electron IPC 通信封装，认证状态同步到桌面端 |
 | `server-config.ts` | 服务器地址配置（localStorage / Electron） |
 | `permission.ts` | 前端权限判断工具 |
-| `store/favorites.ts` | 收藏功能（Zustand store，对接 /favorite/* API） |
+| `permissions.ts` | 权限点/权限矩阵解析（文件夹权限、分享权限 JSON） |
+| `runtime.ts` | 三端运行环境检测（capacitor/electron/web） |
 | `recentFiles.ts` | 最近访问文件 |
 | `fileSource.ts` | 文件数据源 |
 | `fileTypes.ts` | 文件类型判断与图标映射 |
@@ -100,9 +117,13 @@ st-web/src/
 
 | Hook | 文件 | 职责 |
 |------|------|------|
-| useUpload | `useUpload.tsx` | 文件上传逻辑（MD5 计算、分片、断点续传） |
+| useUpload | `useUpload.tsx` | 文件上传逻辑（MD5 计算、分片、断点续传）；含 JSX 渲染逻辑故使用 .tsx 扩展名（其余 Hook 为 .ts，属合理例外） |
 | useDragSelect | `useDragSelect.ts` | 文件拖拽多选 |
 | useFileKeyboard | `useFileKeyboard.ts` | 文件键盘操作（快捷键） |
+| useLongPress | `useLongPress.ts` | 长按手势（移动端 ActionSheet） |
+| useMobile | `useMobile.ts` | md 断点响应式判断 |
+| usePullToRefresh | `usePullToRefresh.ts` | 移动端下拉刷新 |
+| usePwaInstall | `usePwaInstall.ts` | PWA 安装引导 |
 
 ## 桌面端（st-desktop）
 
@@ -127,8 +148,13 @@ st-desktop/src/
 ├── task-scheduler.ts    任务调度器
 ├── transfer-settings.ts 传输设置
 ├── database.ts          本地 SQLite 数据库（sql.js）
+├── db-migrate.ts        本地库迁移（sync_config 版本门控 / sync_state 复合主键）
+├── sync-utils.ts        同步工具（事件过滤、路径归一化等纯函数）
+├── sync-retry.ts        同步重试与退避策略
+├── ws-client.ts         同步 WebSocket 客户端（/api/sync/ws，变更推送）
 ├── types.ts             类型定义
 └── utils/
+    ├── block-hash.ts    块哈希计算（块级增量同步）
     ├── file-utils.ts    文件工具
     └── md5.ts           MD5 计算
 ```

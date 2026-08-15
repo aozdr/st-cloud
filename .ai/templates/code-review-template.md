@@ -1,4 +1,4 @@
-﻿# 代码 Review 记录
+# 代码 Review 记录
 
 > 输出标准：`docs/newList/ai-code-review-standard.md`
 > 所有开发任务完成后必须执行代码 Review。不能只检查语法，必须检查业务风险与架构一致性。

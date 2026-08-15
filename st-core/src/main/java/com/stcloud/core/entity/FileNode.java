@@ -22,8 +22,9 @@ public class FileNode extends BaseEntity {
     private String contentType;
     private String suffix;
     private String storagePath;
+    private Long objectId;   // 文件对象ID（去重引用，TASK-001；文件夹/未完成上传为 null）
     private Integer status;         // 0-正常 1-回收站 2-已删除
-    private Integer uploadStatus;   // 0-待上传 1-上传中 2-已完成 3-失败
+    private Integer uploadStatus;   // 0-待上传 1-上传中 2-已完成 3-失败 4-合并中 5-已删除
     private Long uploaderId;
     private Long ownerId;
     private Long spaceId;
@@ -35,7 +36,7 @@ public class FileNode extends BaseEntity {
     // P2: 文件锁定
     private Long lockedBy;
     private java.time.LocalDateTime lockedAt;
-    private java.time.LocalDateTime lockExpireAt;  // 0-正常 1-隐藏
+    private java.time.LocalDateTime lockExpireAt;  // 锁过期时间（P2 文件锁定）
 
     public boolean isFolder() {
         return nodeType != null && nodeType == NodeType.FOLDER.getCode();

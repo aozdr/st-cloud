@@ -34,14 +34,14 @@ Write-Host "Agent Loop 静态校验" -ForegroundColor Cyan
 Write-Host "根目录: $Root`n"
 
 # ---------- 1. 依赖图校验 ----------
-Write-Host "[1/5] 依赖图（无环 / 终点仅 KNOWLEDGE / 起点唯一）"
+Write-Host "[1/6] 依赖图（无环 / 终点仅 KNOWLEDGE / 起点唯一）"
 $stateModel = Join-Path $Root 'knowledge\loop-state-model.md'
 if (-not (Test-Path $stateModel)) { Write-Fail "找不到 $stateModel"; exit 1 }
 $content = Get-Content $stateModel -Encoding UTF8 -Raw
 
 $depMap = @{}
 $capture = $false
-$rowRegex = '^\|\s*(REQ_ANALYSIS|IMPACT_ANALYSIS|EXP_DESIGN|TECH_DESIGN|TESTCASES|IMPLEMENTED|CODE_REVIEW|SECURITY_REVIEW|EXP_ACCEPT|TEST_PASS|QUALITY_GATE|KNOWLEDGE)\s*\|[^|]*\|\s*([^|]+?)\s*\|\s*$'
+$rowRegex = '^\|\s*(REQ_ANALYSIS|IMPACT_ANALYSIS|EXP_DESIGN|TECH_DESIGN|TESTCASES|IMPLEMENTED|CODE_REVIEW|SECURITY_REVIEW|EXP_ACCEPT|TEST_PASS|KNOWLEDGE|ACCEPT)\s*\|[^|]*\|\s*([^|]+?)\s*\|\s*$'
 foreach ($line in ($content -split "`r?`n")) {
   if ($line -match '^### 大型任务') { $capture = $true; continue }
   if ($capture -and $line -match '^### ') { $capture = $false }
@@ -66,10 +66,10 @@ foreach ($id in $depMap.Keys) {
 
 $allDeps = @($depMap.Values | ForEach-Object { $_ } | Sort-Object -Unique)
 $leaves = @($depMap.Keys | Where-Object { $allDeps -notcontains $_ })
-if ($leaves.Count -eq 1 -and $leaves[0] -eq 'KNOWLEDGE') {
-  Write-Pass "终点仅 KNOWLEDGE"
+if ($leaves.Count -eq 1 -and $leaves[0] -eq 'ACCEPT') {
+  Write-Pass "终点仅 ACCEPT（验收为最终收敛点）"
 } else {
-  Write-Fail "终点应为 [KNOWLEDGE]，实际为 [$($leaves -join ', ')]"
+  Write-Fail "终点应为 [ACCEPT]，实际为 [$($leaves -join ', ')]"
 }
 
 $roots = @($depMap.Keys | Where-Object { $depMap[$_].Count -eq 0 })
@@ -97,7 +97,7 @@ if ($processed -eq $depMap.Count) { Write-Pass "依赖图无环（拓扑处理 $
 else { Write-Fail "依赖图存在环，仅处理 $($processed)/$($depMap.Count) 节点" }
 
 # ---------- 2. Agent 归属校验 ----------
-Write-Host "`n[2/5] exitCriteria 的 Agent 归属"
+Write-Host "`n[2/6] exitCriteria 的 Agent 归属"
 $agentsDir = Join-Path $Root 'agents'
 $agentFiles = Get-ChildItem $agentsDir -Filter *.md
 foreach ($id in $depMap.Keys) {
@@ -109,14 +109,15 @@ foreach ($id in $depMap.Keys) {
 }
 
 # ---------- 3. 关键门禁 dependsOn 映射 ----------
-Write-Host "`n[3/5] 关键门禁 dependsOn 映射（等价旧版 5 条禁止项）"
+Write-Host "`n[3/6] 关键门禁 dependsOn 映射（等价旧版 5 条禁止项）"
 $expected = @(
   @{ Rule='TECH_DESIGN 依赖 IMPACT_ANALYSIS+EXP_DESIGN'; Id='TECH_DESIGN'; Need=@('IMPACT_ANALYSIS','EXP_DESIGN') },
   @{ Rule='IMPLEMENTED 依赖 TECH_DESIGN+TESTCASES'; Id='IMPLEMENTED'; Need=@('TECH_DESIGN','TESTCASES') },
   @{ Rule='CODE_REVIEW 依赖 IMPLEMENTED'; Id='CODE_REVIEW'; Need=@('IMPLEMENTED') },
   @{ Rule='SECURITY_REVIEW 依赖 IMPLEMENTED'; Id='SECURITY_REVIEW'; Need=@('IMPLEMENTED') },
   @{ Rule='TEST_PASS 依赖 CODE_REVIEW+SECURITY_REVIEW'; Id='TEST_PASS'; Need=@('CODE_REVIEW','SECURITY_REVIEW') },
-  @{ Rule='QUALITY_GATE 依赖 TEST_PASS+SECURITY_REVIEW+EXP_ACCEPT'; Id='QUALITY_GATE'; Need=@('TEST_PASS','SECURITY_REVIEW','EXP_ACCEPT') }
+  @{ Rule='KNOWLEDGE 依赖 TEST_PASS+SECURITY_REVIEW+EXP_ACCEPT'; Id='KNOWLEDGE'; Need=@('TEST_PASS','SECURITY_REVIEW','EXP_ACCEPT') },
+  @{ Rule='ACCEPT 依赖 KNOWLEDGE（验收为最终收敛点）'; Id='ACCEPT'; Need=@('KNOWLEDGE') }
 )
 foreach ($e in $expected) {
   $ok = $true
@@ -125,8 +126,14 @@ foreach ($e in $expected) {
 }
 
 # ---------- 4. cross-ref 路径存在 ----------
-Write-Host "`n[4/5] cross-ref 路径存在"
-$allMd = Get-ChildItem $Root -Recurse -Filter *.md
+Write-Host "`n[4/6] cross-ref 路径存在"
+$allMd = @(
+  Get-ChildItem (Join-Path $Root 'agents') -Recurse -Filter *.md -ErrorAction SilentlyContinue
+  Get-ChildItem (Join-Path $Root 'knowledge') -Recurse -Filter *.md -ErrorAction SilentlyContinue
+  Get-ChildItem (Join-Path $Root 'templates') -Recurse -Filter *.md -ErrorAction SilentlyContinue
+  Get-ChildItem (Join-Path $Root 'workflows') -Recurse -Filter *.md -ErrorAction SilentlyContinue
+  Get-ChildItem (Join-Path $Root 'tasks') -Recurse -Filter *.md -ErrorAction SilentlyContinue
+)
 $refPattern = '\.ai/[A-Za-z0-9_./-]+\.(?:md|ps1|py)'
 $missing = 0; $checked = 0
 foreach ($f in $allMd) {
@@ -142,7 +149,7 @@ foreach ($f in $allMd) {
 if ($missing -eq 0) { Write-Pass "checked=$checked 悬空引用=0" }
 
 # ---------- 5. 残留线性表述（WARN）----------
-Write-Host "`n[5/5] 残留权威线性表述（WARN 供人工确认）"
+Write-Host "`n[5/6] 残留权威线性表述（WARN 供人工确认）"
 $keywords = @('退回上一阶段', '阶段间单向传递', '线性 15 步流水线', '退一格')
 $authoritative = @('knowledge\loop-state-model.md', 'agents\workflow-manager.md', 'workflows\feature-development.md')
 foreach ($a in $authoritative) {
@@ -158,6 +165,31 @@ foreach ($a in $authoritative) {
   }
 }
 if ($script:WarnCount -eq 0) { Write-Pass "无线性关键词命中" }
+
+# ---------- 6. Task / ADR / Change Report 配置一致性 ----------
+Write-Host "`n[6/6] Task / ADR / Change Report 配置一致性"
+$taskTpl = Join-Path $Root 'templates\task-template.md'
+if (Test-Path $taskTpl) { Write-Pass "task-template.md 存在" } else { Write-Fail "缺少 .ai/templates/task-template.md" }
+$tasksDir = Join-Path $Root 'tasks'
+if (Test-Path $tasksDir) { Write-Pass ".ai/tasks/ 目录存在" } else { Write-Fail "缺少 .ai/tasks/ 目录" }
+$adrDir = Join-Path $Root 'decisions\ADR'
+$adrTpl = Join-Path $Root 'templates\adr-template.md'
+if (Test-Path $adrDir) { Write-Pass ".ai/decisions/ADR/ 目录存在" } else { Write-Fail "缺少 .ai/decisions/ADR/ 目录" }
+if (Test-Path $adrTpl) { Write-Pass "adr-template.md 存在" } else { Write-Fail "缺少 .ai/templates/adr-template.md" }
+$skillMap = Join-Path $Root 'knowledge\skill-mapping.md'
+if (Test-Path $skillMap) { Write-Pass "skill-mapping.md 存在" } else { Write-Fail "缺少 .ai/knowledge/skill-mapping.md" }
+$agentsMd = Join-Path $Root '..\AGENTS.md'
+if ((Test-Path $agentsMd) -and ((Get-Content $agentsMd -Encoding UTF8 -Raw) -match '代码修改强制约束')) { Write-Pass "AGENTS.md 含工程约束（7 条）" } else { Write-Fail "AGENTS.md 未发现工程约束章节" }
+$engFiles = @('knowledge\role-context.md', 'agents\workflow-manager.md')
+foreach ($e in $engFiles) {
+  $p = Join-Path $Root $e
+  if ((Test-Path $p) -and ((Get-Content $p -Encoding UTF8 -Raw) -match 'TASK')) { Write-Pass "$e 含 Task 驱动规则" } else { Write-Fail "$e 未发现 Task 驱动规则" }
+}
+$lsmPath = Join-Path $Root 'knowledge\loop-state-model.md'
+if (Test-Path $lsmPath) {
+  $sm = Get-Content $lsmPath -Encoding UTF8 -Raw
+  if ($sm -match 'task:' -and $sm -match 'changereport:') { Write-Pass "loop-state-model 含 task/changereport artifacts" } else { Write-Fail "loop-state-model 缺 task/changereport artifacts" }
+} else { Write-Fail "缺少 loop-state-model.md" }
 
 # ---------- 汇总 ----------
 Write-Host "`n========== 汇总 ==========" -ForegroundColor Cyan

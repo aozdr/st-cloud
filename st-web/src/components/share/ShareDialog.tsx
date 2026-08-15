@@ -1,8 +1,9 @@
-﻿import { useState, useEffect } from 'react';
-import { X, Link2, Lock, Globe, Copy, Download, Shield, RefreshCw } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Link2, Lock, Globe, Copy, Download, RefreshCw } from 'lucide-react';
 import api from '../../lib/api';
 import { useToast } from '../ui/Toast';
 import type { FileShare, CreateShareRequest } from '../../types';
+import { PERMISSION_KEYS, legacyPermissionFromPerms } from '../../lib/permissions';
 import QRCode from 'qrcode';
 
 interface Props {
@@ -16,7 +17,11 @@ export default function ShareDialog({ fileNodeId, fileName, onClose }: Props) {
   const [shareType, setShareType] = useState(0);
   const [password, setPassword] = useState(() => generateShareCode());
   const [expirePreset, setExpirePreset] = useState(2); // 默认7天
-  const [permission, setPermission] = useState(0);
+  // 当前用户对该文件的有效权限集（后端 effective-permissions 接口，用于禁用超权项）
+  const [effectivePerms, setEffectivePerms] = useState<Record<string, boolean>>({});
+  // 本次分享勾选的权限点（默认 view+download；勾选 download → allowDownload=1）
+  const [sharePerms, setSharePerms] = useState<Record<string, boolean>>({ view: true, download: true });
+  const [permLoading, setPermLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [createdShare, setCreatedShare] = useState<FileShare | null>(null);
   const [qrUrl, setQrUrl] = useState('');
@@ -40,12 +45,18 @@ export default function ShareDialog({ fileNodeId, fileName, onClose }: Props) {
     if (days === 0) return undefined;
     const d = new Date();
     d.setDate(d.getDate() + days);
-    return d.toISOString();
+    // 提交本地时间（无时区后缀），与后端 LocalDateTime(Asia/Shanghai) 语义保持一致
+    const pad = (n: number) => (n < 10 ? `0${n}` : `${n}`);
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
   };
 
   const handleCreate = async () => {
     if (shareType === 1 && !password) {
       showToast('私密分享请设置提取码', 'warning');
+      return;
+    }
+    if (!Object.values(sharePerms).some(Boolean)) {
+      showToast('请至少勾选一项分享权限', 'warning');
       return;
     }
     setLoading(true);
@@ -55,7 +66,11 @@ export default function ShareDialog({ fileNodeId, fileName, onClose }: Props) {
         shareType,
         password: shareType === 1 ? password : undefined,
         expireAt: computeExpireAt(expirePreset),
-        permission,
+        // 权限点勾选结果写入 permissions（后端契约 String JSON，与角色管理提交格式一致）；
+        // download 勾选 → allowDownload=1，与后端联动一致
+        permissions: JSON.stringify(sharePerms),
+        permission: legacyPermissionFromPerms(sharePerms),
+        allowDownload: sharePerms.download ? 1 : 0,
       };
       const data: FileShare = await api.post('/share/create', req);
       setCreatedShare(data);
@@ -87,6 +102,37 @@ export default function ShareDialog({ fileNodeId, fileName, onClose }: Props) {
       setQrUrl('');
     }
   }, [shareLink]);
+
+  // 创建分享前加载当前用户对文件的有效权限集：不在集合内的权限点禁用（后端超权校验兜底）
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setPermLoading(true);
+      try {
+        const perms = await api.get<Record<string, boolean>>('/share/effective-permissions', { params: { fileNodeId } });
+        if (cancelled) return;
+        const effective = perms || {};
+        setEffectivePerms(effective);
+        // 默认勾选：view/download（仅当在有效权限集内），与后端默认分享权限一致
+        setSharePerms(prev => ({ ...prev, view: Boolean(effective.view), download: Boolean(effective.download) }));
+      } catch {
+        if (!cancelled) setEffectivePerms({});
+      } finally {
+        if (!cancelled) setPermLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [fileNodeId]);
+
+  const togglePerm = (key: string) => {
+    setSharePerms(prev => {
+      const next = { ...prev, [key]: !prev[key] };
+      // 勾选 upload/download 自动补 view；view 被依赖时不可取消（与后端隐含规则一致）
+      if ((key === 'upload' || key === 'download') && next[key]) next.view = true;
+      if (key === 'view' && !next.view && (next.upload || next.download)) next.view = true;
+      return next;
+    });
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 overscroll-contain" role="presentation" onClick={onClose}>
@@ -141,6 +187,10 @@ export default function ShareDialog({ fileNodeId, fileName, onClose }: Props) {
             )}
             <div className="flex items-center gap-2 text-xs text-muted">
               {createdShare.expireAt && <span>有效期至 {createdShare.expireAt}</span>}
+              <span className="inline-flex items-center gap-1">
+                <Download className="w-3.5 h-3.5" aria-hidden />
+                {createdShare.allowDownload === 1 ? '允许下载' : '仅查看'}
+              </span>
             </div>
             <button
               onClick={onClose}
@@ -206,28 +256,30 @@ export default function ShareDialog({ fileNodeId, fileName, onClose }: Props) {
               </div>
             )}
 
-            {/* Permission */}
+            {/* 分享权限点：展示可分享权限点，不在当前用户有效权限集内的项禁用（后端超权校验兜底） */}
             <div>
-              <label className="text-xs font-medium text-muted mb-1.5 block">权限</label>
-              <div className="flex gap-2">
-                {[
-                  { v: 0, label: '仅查看', icon: Shield },
-                  { v: 1, label: '可下载', icon: Download },
-                ].map((opt) => (
-                  <button
-                    key={opt.v}
-                    onClick={() => setPermission(opt.v)}
-                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-xs font-medium transition cursor-pointer ${
-                      permission === opt.v
-                        ? 'bg-primary-500/10 text-primary-600 ring-1 ring-primary-200'
-                        : 'bg-surface-2 text-muted hover:bg-surface-2'
-                    }`}
-                  >
-                    <opt.icon className="w-3.5 h-3.5" aria-hidden />
-                    {opt.label}
-                  </button>
-                ))}
+              <label className="text-xs font-medium text-muted mb-2 block">分享权限</label>
+              <div className="grid grid-cols-2 gap-2">
+                {PERMISSION_KEYS.map(p => {
+                  const enabled = Boolean(effectivePerms[p.key]);
+                  return (
+                    <label
+                      key={p.key}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm cursor-pointer ${enabled ? 'bg-surface-2' : 'bg-surface-2/60 opacity-60 cursor-not-allowed'}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={Boolean(sharePerms[p.key])}
+                        disabled={!enabled || permLoading}
+                        onChange={() => togglePerm(p.key)}
+                        className="cursor-pointer disabled:cursor-not-allowed"
+                      />
+                      <span className={enabled ? 'text-fg' : 'text-muted'}>{p.label}</span>
+                    </label>
+                  );
+                })}
               </div>
+              <p className="text-xs text-muted mt-1.5">勾选「上传文件」或「下载文件」自动包含「查看文件」；勾选「下载文件」时允许下载/流式（与后端联动）</p>
             </div>
 
             {/* Expiry */}

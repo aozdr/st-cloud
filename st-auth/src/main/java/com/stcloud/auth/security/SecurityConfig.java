@@ -47,6 +47,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/refresh", "/api/auth/ping").permitAll()
                         .requestMatchers("/api/share/access/**").permitAll()
                         .requestMatchers("/api/sync/ws").permitAll()
+                        // OnlyOffice 保存回调：匿名可达，验签由 EditorCallbackService 完成（伪造回调被拒）
+                        .requestMatchers("/api/file/*/editor/callback").permitAll()
                         // Swagger/Knife4j
                         .requestMatchers("/doc.html", "/webjars/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-resources/**").permitAll()
                         // 健康检查

@@ -1,4 +1,4 @@
-﻿import { X, Check, Sun, Moon, Monitor } from 'lucide-react';
+import { X, Check, Sun, Moon, Monitor } from 'lucide-react';
 import { THEMES } from '../themes';
 import { useThemeStore, type ThemeMode } from '../store/theme';
 

@@ -1,4 +1,4 @@
-﻿# Agent Loop 状态模型（Loop State Model）
+# Agent Loop 状态模型（Loop State Model）
 
 > 本文件定义星云盘 Agent Loop 的核心数据结构：**Loop State**。编排器（Workflow Manager）与所有 Agent 围绕同一份 State 协作，取代旧的"阶段间单向传递文档"模式。本文件是 Loop 架构的事实源，AGENTS.md、workflow-manager.md、feature-development.md 均引用此处定义。
 
@@ -22,31 +22,33 @@ scale: large | medium | small   # 任务规模，决定 exitCriteria 集
 
 exitCriteria:                    # 质量门禁清单，编排器在 Evaluate 段勾选
   - id: REQ_ANALYSIS
-    desc: "需求已分析 + UI/UX 设计文档已产出（PM + UI 协作，经多方评审定版）"
-    status: pending | done
+    desc: "需求已分析 + UI/UX 设计文档已产出（executor 的 requirement+ui-design 协作），经 Grill Me 拷打收敛（遗留问题点 ≤3 写入文档）并经用户确认"
+    status: pending | in_progress | done | blocked | stale
     dependsOn: []                # 依赖哪些其他标准先满足
   - id: IMPACT_ANALYSIS
     desc: "影响范围已分析"
-    status: pending | done
+    status: pending | in_progress | done | blocked | stale
     dependsOn: [REQ_ANALYSIS]
 
 artifacts:                       # 产出物，Agent 写入
-  discovery:  { status: pending, ref: ".ai/docs/<task-id>/discovery.md", owner: "requirement-discovery" }  # 可选上游需求发现报告
-  prd:        { status: pending|in_progress|done, ref: ".ai/docs/<task-id>/requirement.md", owner: "product-manager" }  # ref 必须为已落盘真实路径
-  uiSpec:     { status: pending, ref: ".ai/docs/<task-id>/uispec.md", owner: "ui-designer" }  # UI/UX 设计文档，REQ_ANALYSIS 阶段与 PM 协作产出
-  design:     { status: pending, ref: ".ai/docs/<task-id>/design.md", owner: "frontend-engineer + backend-engineer" }  # 前后端合用同一份，分章节
-  archReview: { status: pending, ref: ".ai/docs/<task-id>/architecture-review.md", owner: "architect" }  # 架构设计评审，大型任务 TECH_DESIGN 前置（先于 design）
+  discovery:  { status: pending, ref: ".ai/docs/<task-id>/discovery.md", owner: "executor" }  # 可选上游需求发现报告（taskType=discovery）
+  prd:        { status: pending|in_progress|done, ref: ".ai/docs/<task-id>/requirement.md", owner: "executor" }  # ref 必须为已落盘真实路径（taskType=requirement）
+  uiSpec:     { status: pending, ref: ".ai/docs/<task-id>/uispec.md", owner: "executor" }  # UI/UX 设计文档，REQ_ANALYSIS 阶段与 requirement 协作产出（taskType=ui-design）
+  design:     { status: pending, ref: ".ai/docs/<task-id>/design.md", owner: "executor" }  # 前后端合用同一份，分章节（taskType=design）
+  archReview: { status: pending, ref: ".ai/docs/<task-id>/architecture-review.md", owner: "executor" }  # 架构设计评审，大型任务 TECH_DESIGN 前置（先于 design，taskType=architecture）
   testcases:  { status: pending, ref: ".ai/docs/<task-id>/testcases.md", owner: "tester" }
-  code:       { status: pending, ref: "", owner: "frontend-engineer + backend-engineer" }
+  code:       { status: pending, ref: "", owner: "executor" }
   review:     { status: pending, ref: ".ai/docs/<task-id>/codereview.md", owner: "reviewer" }
-  security:   { status: pending, ref: ".ai/docs/<task-id>/security.md", owner: "security-reviewer" }
+  security:   { status: pending, ref: ".ai/docs/<task-id>/security.md", owner: "reviewer" }
   testReport: { status: pending, ref: ".ai/docs/<task-id>/testreport.md", owner: "tester" }
   knowledge:  { status: pending, ref: "", owner: "" }
+  task:       { status: pending, ref: ".ai/tasks/TASK-xxx.md", owner: "workflow-manager" }  # 开发前置产物：中型以上 IMPLEMENTED 前必须落盘（xxx 为任务内序号）
+  changereport: { status: pending, ref: ".ai/docs/<task-id>/changereport.md", owner: "executor" }  # 编码完成后的变更汇总（taskType=implement）
 
 blockers:                        # 活跃阻塞
   - id: B1
     desc: "鉴权缺失"
-    raisedBy: "security-reviewer"
+    raisedBy: "reviewer"
     raisedAt: 6                  # 第几轮触发
     status: open | resolved | escalated
     attempts: 1                  # 修复重试次数：创建时为 0，每次派发修复后仍 open 则 +1，>=3 升级（示例 1=已失败一次）
@@ -54,7 +56,7 @@ blockers:                        # 活跃阻塞
 history:                         # 滚动审计链（保留近 N 轮 + 更早摘要）
   - iter: 6
     phase: "review"
-    agent: "security-reviewer"
+    agent: "reviewer"
     action: "审查后端鉴权"
     delta: "新增 blocker B1"
     result: "发现 /share 接口缺权限校验"
@@ -62,6 +64,21 @@ history:                         # 滚动审计链（保留近 N 轮 + 更早摘
 iteration: 6                     # 当前轮次
 status: running | blocked_escalation | done
 ```
+
+### 用户确认状态（需求/设计门禁）
+
+`requirement.md` 与 `design.md` 属确认型 artifact，State 中记录确认状态：
+
+```yaml
+artifacts:
+  prd:     { status: pending, ref: ".../requirement.md", owner: "executor",
+             grillPoints: ["P1:...", "P2:..."], userConfirmedAt: null }
+  design:  { status: pending, ref: ".../design.md", owner: "executor",
+             grillPoints: ["P1:..."], userConfirmedAt: null }
+```
+
+- `grillPoints`：Grill Me 拷打后遗留问题点（≤3 个），与文档「遗留问题点」章节一致
+- `userConfirmedAt`：用户确认时间；为 null 时对应 exitCriteria 不得标 done
 
 ## State 持久化与加载
 
@@ -116,32 +133,33 @@ status: running
 
 | id | 标准 | 依赖 dependsOn |
 |----|------|----------------|
-| REQ_ANALYSIS | 需求已分析 + UI/UX 设计文档已产出（PM + UI 协作，多方评审定版） | - |
+| REQ_ANALYSIS | 需求已分析 + UI/UX 设计文档已产出（executor 的 requirement+ui-design 协作），经 Grill Me 拷打收敛（遗留问题点 ≤3 写入文档）并经用户确认 | - |
 | IMPACT_ANALYSIS | 影响范围已分析 | REQ_ANALYSIS |
 | EXP_DESIGN | 体验评审已通过 | REQ_ANALYSIS |
-| TECH_DESIGN | 技术设计已评审 | IMPACT_ANALYSIS, EXP_DESIGN |
+| TECH_DESIGN | 技术设计已评审；design.md 经 Grill Me 拷打收敛（遗留问题点 ≤3 写入文档）并经用户确认 | IMPACT_ANALYSIS, EXP_DESIGN |
 | TESTCASES | 测试用例已编写 | TECH_DESIGN |
-| IMPLEMENTED | 代码已实现 | TECH_DESIGN, TESTCASES |
+| IMPLEMENTED | 实现阶段已完成 | TECH_DESIGN, TESTCASES |
 | CODE_REVIEW | Code Review 通过 | IMPLEMENTED |
 | SECURITY_REVIEW | Security Review 通过 | IMPLEMENTED |
 | EXP_ACCEPT | 体验验收通过 | IMPLEMENTED |
 | TEST_PASS | 测试执行通过 | CODE_REVIEW, SECURITY_REVIEW |
-| QUALITY_GATE | Quality Gate 通过 | TEST_PASS, SECURITY_REVIEW, EXP_ACCEPT |
-| KNOWLEDGE | 知识库已更新 | QUALITY_GATE |
+| KNOWLEDGE | 知识库已更新 | TEST_PASS, SECURITY_REVIEW, EXP_ACCEPT |
+| ACCEPT | 验收通过（对照 goal.completionCriteria 逐项核对；未达标 → 打回 IMPLEMENTED 继续实现，级联回退下游） | KNOWLEDGE |
 
-> `status: done` 仅当该规模下**所有 exitCriteria 均 done**。
+> `status: done` 仅当该规模下**所有 exitCriteria 均 done**（ACCEPT 为最后一项，是最终收敛点）。
 
 ### 中型任务（精简门禁，6 项 + 1 条件项）
 
 | id | 标准 | 依赖 dependsOn |
 |----|------|----------------|
-| DESIGN | 设计已定 | - |
+| DESIGN | 设计已定；design.md 经 Grill Me 拷打收敛（遗留问题点 ≤3 写入文档）并经用户确认 | - |
 | TESTCASES | 验收用例已编写（轻量：不要求完整测试设计文档，至少列出验收点） | DESIGN |
 | IMPLEMENTED | 代码已实现 | DESIGN, TESTCASES |
 | CODE_REVIEW | Code Review 通过 | IMPLEMENTED |
 | SECURITY_REVIEW | 安全审查通过（条件项） | IMPLEMENTED |
 | TEST_PASS | 测试通过 | CODE_REVIEW, SECURITY_REVIEW |
 | KNOWLEDGE | 知识库已回顾 | TEST_PASS |
+| ACCEPT | 验收通过（对照完成标准逐项核对；未达标 → 打回实现） | KNOWLEDGE |
 
 > **SECURITY_REVIEW 为条件项**：仅当本次变更涉及权限校验、分享访问控制、文件操作、配额计算等云盘安全敏感逻辑时启用。编排器在初始化 State 时根据变更范围判断是否激活；不涉及安全敏感逻辑的纯展示/排序类中型任务可跳过此标准（在 State 中标注 `skipReason`）。
 
@@ -152,18 +170,24 @@ status: running
 | IMPLEMENTED | 改动已实现 | - |
 | VERIFIED | 编译/测试通过 | IMPLEMENTED |
 | KNOWLEDGE | 轻量知识库检查 | VERIFIED |
+| ACCEPT | 验收通过（对照完成标准逐项核对） | KNOWLEDGE |
 
 ## 门禁依赖规则（不可降级）
 
 Evaluate 段必须强制检查 dependsOn：
 
 - 依赖未满足的标准不得标记 done（例：CODE_REVIEW 依赖 IMPLEMENTED，代码没实现完不能算 Review 通过）
-- REQ_ANALYSIS 要求 PRD 与 UI/UX 设计文档（uiSpec）**均产出且落盘到 `.ai/docs/<task-id>/`**（ref 指向真实文件）并经多方评审定版，缺一不可（PM 与 UI 协作，前端实现以此为唯一依据）
+- REQ_ANALYSIS 要求 PRD 与 UI/UX 设计文档（uiSpec）**均产出且落盘到 `.ai/docs/<task-id>/`**（ref 指向真实文件）、
+  经 Grill Me 拷打收敛（遗留问题点 ≤3 写入文档）并**经用户确认**，缺一不可（executor 的 requirement+ui-design 协作，实现以此为唯一依据）
+- **需求/设计确认门禁（20260815 起）**：`requirement.md`（大型 REQ_ANALYSIS）与 `design.md`
+  （大型 TECH_DESIGN / 中型 DESIGN）必须经用户确认才能标 done；未确认不得推进任何下游标准，
+  编排器在 State 中记录 `userConfirmedAt`
 - TECH_DESIGN 依赖 IMPACT_ANALYSIS 与 EXP_DESIGN（体验评审必须先于技术设计，V3 原顺序保留）
-- 大型任务 TECH_DESIGN 分两步：先产出架构设计评审（`architecture-review.md`，Architect 主笔，输出标准 `docs/newList/ai-architecture-review-standard.md`），评审通过后再产出程序设计文档（`design.md`）；架构评审为程序设计前置条件
+- 大型任务 TECH_DESIGN 分两步：先产出架构设计评审（`architecture-review.md`，executor 主笔，taskType=architecture，输出标准 `docs/newList/ai-architecture-review-standard.md`），评审通过后再产出程序设计文档（`design.md`）；架构评审为程序设计前置条件
 - IMPLEMENTED 依赖 TECH_DESIGN 与 TESTCASES（大型任务未编写测试用例不得进入开发）
+- 中型以上任务 IMPLEMENTED 前必须存在对应 Task 文件（`artifacts.task.ref` 指向 `.ai/tasks/` 真实路径），未落盘不得标 IMPLEMENTED done（小型直接执行除外）
 - TEST_PASS 依赖 CODE_REVIEW 与 SECURITY_REVIEW（安全审查须先于测试，安全修复改代码后测试才有意义）
-- QUALITY_GATE 是最终收敛点，未通过不得 `status: done`
+- ACCEPT 是最终收敛点，未通过不得 `status: done`
 
 这些规则取代旧版"未完成 X 进入 Y"的线性禁止项，但约束力等价。
 
@@ -179,7 +203,7 @@ IMPLEMENTED 重开
   -> SECURITY_REVIEW -> pending  （旧安全审查针对旧代码，失效）
   -> EXP_ACCEPT      -> pending  （旧验收针对旧页面，失效）
      -> TEST_PASS    -> pending  （旧测试针对旧代码，失效）
-        -> QUALITY_GATE -> pending
+        -> ACCEPT -> pending
            -> KNOWLEDGE -> pending
 ```
 
@@ -228,3 +252,78 @@ IMPLEMENTED 重开
 - 保留最近 8 轮完整记录
 - 更早的轮次压缩为一行摘要（如 `iter 1-5: 需求->设计->测试用例->编码`）
 - 避免上下文膨胀，同时保留审计可追溯性
+
+
+## V5 Dispatch Runtime State
+
+建议在 State 中增加：
+
+```yaml
+dispatch:
+  current:
+    dispatchId: "DISPATCH-..."
+    role: "executor"
+    taskRef: ".ai/tasks/TASK-..."
+    stateRef: ".ai/state/<task-id>.yaml"
+    status: queued | dispatched | running | returned | invalid | failed
+  history:
+    - dispatchId: "..."
+      role: "..."
+      status: "returned"
+      iteration: 3
+```
+
+### Dispatch failure 不属于业务 blocker
+
+`DISPATCH_INVALID` / “没有收到具体任务”表示调度协议失败：
+
+- 不增加业务 blocker attempts；
+- 不污染业务 exitCriteria；
+- Workflow Manager 修复 Dispatch 后重新发送。
+
+### Stale 与 Pending 的区别
+
+- `pending`：从未完成；
+- `stale`：曾经完成，但输入代码/设计发生变化，旧结论失效；
+- `blocked`：当前因 blocker 无法继续。
+
+代码变更后优先使用 `stale`，保留 `staleReason` 与 history。
+
+
+## Task Isolation State
+
+State 不应被整份复制给子 Agent。Workflow Manager 应在 Dispatch 时生成 `stateSnapshot`，仅包含当前 TASK 所需的：
+
+- iteration
+- relevant exitCriterion
+- relevant dependencies
+- relevant blockers
+
+完整 State 仍只由 Workflow Manager 负责读取、合并和持久化。
+
+
+## 实现阶段与并行派发
+
+`IMPLEMENTED` 必须区分 `in_progress` 与 `done`：
+
+- `in_progress`：已满足 TECH_DESIGN/TESTCASES，已进入编码阶段，TASK 已落盘并正在执行。
+- `done`：所有实现 TASK 均已完成，且 Workflow Manager Evaluate 通过。
+
+前后端并行时，State 中必须能对应到独立的 TASK / dispatch：
+
+```yaml
+implementationBatch:
+  batchId: BATCH-xxx
+  status: running
+  tasks:
+    - taskId: TASK-FE-001
+      dispatchId: DISPATCH-FE-001
+      owner: executor
+      status: running
+    - taskId: TASK-BE-001
+      dispatchId: DISPATCH-BE-001
+      owner: executor
+      status: running
+```
+
+Workflow Manager 只能在两个 TASK 都 Evaluate 通过后将 `IMPLEMENTED` 标记为 `done`。

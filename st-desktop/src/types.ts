@@ -9,7 +9,8 @@ export type TransferStatus =
   | 'paused'
   | 'merging'
   | 'completed'
-  | 'failed';
+  | 'failed'
+  | 'cancelled';
 
 export interface TransferTask {
   id: string;
@@ -31,6 +32,8 @@ export interface TransferTask {
   fileId?: string;
   totalChunks?: number;
   uploadedChunks?: number[];
+  transferMode?: 'direct' | 'relay';
+  relayLimitKb?: number; // 中转模式实际生效限速(KB/s)，用于限速徽标
   // 下载专属
   nodeId?: string;
   savePath?: string;
@@ -108,6 +111,9 @@ export interface UploadInitResponse {
   s3UploadId: string;
   fileId: string;
   presignedUrls: string[];
+  transferMode?: 'direct' | 'relay';
+  relayChunkSize?: number;
+  relayRateKb?: number;
 }
 
 export interface UploadStatusResponse {

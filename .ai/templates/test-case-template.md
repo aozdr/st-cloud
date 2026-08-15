@@ -1,4 +1,4 @@
-﻿# 测试用例
+# 测试用例
 
 > 输出标准：`docs/newList/ai-test-case-standard.md`
 > 关联需求文档：<!-- 链接到对应的 requirement 文档 -->

@@ -37,5 +37,8 @@ public class SyncChangeLog {
     private Integer nodeType;
     private String fileMd5;
     private Long fileSize;
+
+    /** MQ 事件日志ID（Outbox 幂等键，本地兜底为 null） */
+    private Long eventLogId;
     private LocalDateTime createdAt;
 }

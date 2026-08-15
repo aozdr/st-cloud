@@ -1,8 +1,8 @@
-﻿# 架构设计评审
+# 架构设计评审
 
 > 输出标准：`docs/newList/ai-architecture-review-standard.md`
 > 所有大型功能、核心模块改造、系统能力升级，进入开发前必须输出本文档。评审通过后进入程序设计阶段。
-> 归属 TECH_DESIGN（大型任务），由 Architect 主笔，开发工程师参与。不直接编码。
+> 归属 TECH_DESIGN（大型任务），由 executor 主笔（taskType=architecture），不直接编码。
 > 落盘路径：`.ai/docs/<task-id>/architecture-review.md`（命名与留存见 `.ai/knowledge/document-management.md`）
 
 # 一、架构评审基本信息

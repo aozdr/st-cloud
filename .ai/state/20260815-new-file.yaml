@@ -1,0 +1,72 @@
+taskId: "20260815-new-file"
+goal:
+  objective: "为星云盘新增「新建文件」能力：支持新建空白文本/Word/Excel/PPT，新建后可直接用 OnlyOffice 编辑，补齐网盘标配能力"
+  scope: "st-core（空白模板生成/创建接口）+ st-web（新建入口与交互）；复用现有权限/文件模型，无数据库变更"
+  completionCriteria:
+    - "支持新建 txt/docx/xlsx/pptx 空白文件（命名默认+重名自动序号）"
+    - "新建文件落盘为正常文件（可预览/下载/分享/编辑），docx/xlsx/pptx 新建后可进入 OnlyOffice 编辑"
+    - "入口：文件列表工具栏「新建」下拉 + 右键菜单；个人目录与有 upload 权限的团队目录可用"
+    - "构建测试通过：mvn test + npm run build"
+scale: medium
+tasks: []
+exitCriteria:
+  - { id: REQ_ANALYSIS, desc: "需求已分析 + requirement.md 产出（Grill Me 收敛 ≤3 问题点写入文档）并经用户确认", status: done, dependsOn: [] }
+  - { id: DESIGN, desc: "设计已定；design.md 经 Grill Me 收敛并经用户确认", status: done, dependsOn: [REQ_ANALYSIS] }
+  - { id: TESTCASES, desc: "测试用例已编写", status: done, dependsOn: [DESIGN] }
+  - { id: IMPLEMENTED, desc: "代码已实现", status: done, dependsOn: [DESIGN, TESTCASES] }
+  - { id: CODE_REVIEW, desc: "Code Review 通过", status: done, dependsOn: [IMPLEMENTED] }
+  - { id: SECURITY_REVIEW, desc: "安全审查通过（条件项：涉及文件创建与权限）", status: done, dependsOn: [IMPLEMENTED] }
+  - { id: TEST_PASS, desc: "测试通过", status: done, dependsOn: [CODE_REVIEW, SECURITY_REVIEW] }
+  - { id: KNOWLEDGE, desc: "知识库已更新", status: done, dependsOn: [TEST_PASS] }
+  - { id: ACCEPT, desc: "验收通过（最终收敛点）", status: done, dependsOn: [KNOWLEDGE] }
+artifacts:
+  prd: { status: done, ref: ".ai/docs/20260815-new-file/requirement.md", owner: "executor", grillPoints: ["P1: 模板来源", "P2: 是否触发同步", "P3: 新建后是否自动打开编辑"], userConfirmedAt: "2026-08-15" }
+  design: { status: done, ref: ".ai/docs/20260815-new-file/design.md", owner: "executor", grillPoints: ["D1: 默认文件名", "D2: 新建菜单形态", "D3: 团队权限粒度"], userConfirmedAt: "2026-08-15" }
+  testcases: { status: done, ref: ".ai/docs/20260815-new-file/testcases.md", owner: "tester" }
+  task: { status: done, ref: ".ai/tasks/TASK-20260815-new-file-01.md + TASK-20260815-new-file-02.md", owner: "workflow-manager" }
+  code: { status: done, ref: "st-core NewFileService + 模板 + st-team 端点 + st-web 新建菜单", owner: "executor" }
+  review: { status: done, ref: ".ai/docs/20260815-new-file/codereview.md", owner: "reviewer" }
+  security: { status: done, ref: ".ai/docs/20260815-new-file/security.md", owner: "reviewer" }
+  testReport: { status: done, ref: ".ai/docs/20260815-new-file/testreport.md", owner: "tester" }
+  knowledge: { status: done, ref: "api-reference/business-domain 已更新", owner: "knowledge-manager" }
+  changereport: { status: done, ref: ".ai/docs/20260815-new-file/changereport.md", owner: "executor" }
+blockers: []
+dispatch:
+  current: null
+  batch:
+    - { dispatchId: "DISPATCH-NF-BE-01", taskCode: "NF-BE-01", role: "executor", taskType: "implement", status: "queued" }
+    - { dispatchId: "DISPATCH-NF-FE-01", taskCode: "NF-FE-01", role: "executor", taskType: "implement", status: "queued" }
+history:
+  - iter: 0
+    phase: "init"
+    agent: "workflow-manager"
+    action: "用户指出项目缺少「新建文件」功能；确认现状仅支持新建文件夹"
+    delta: "scale=medium；9 项退出标准初始化；REQ_ANALYSIS 开始"
+    result: "State 初始化完成"
+  - iter: 1
+    phase: "req_confirm"
+    agent: "workflow-manager"
+    action: "需求产出，用户确认 P1-P3 全部按建议"
+    delta: "REQ_ANALYSIS done"
+    result: "进入设计"
+  - iter: 2
+    phase: "design_confirm"
+    agent: "workflow-manager"
+    action: "设计产出，用户确认 D1-D3 全部按建议"
+    delta: "DESIGN done；TESTCASES 产出"
+    result: "进入实现"
+  - iter: 3
+    phase: "implement"
+    agent: "workflow-manager"
+    action: "前后端并行派发（NF-BE-01 / NF-FE-01）；BE 违规写测试已删除由主线程接管"
+    delta: "实现完成；主线程补测试并修复 EditorCallback 旧 key；全量 mvn test + npm build 通过"
+    result: "IMPLEMENTED done"
+  - iter: 4
+    phase: "review_test_accept"
+    agent: "workflow-manager"
+    action: "Code Review PASS / Security PASS / 测试全绿 / 知识库更新；对照验收标准逐项核对"
+    delta: "CODE_REVIEW/SECURITY_REVIEW/TEST_PASS/KNOWLEDGE/ACCEPT 全部 done"
+    result: "任务收敛"
+iteration: 4
+status: done
+maxIterations: 15

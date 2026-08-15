@@ -7,6 +7,8 @@ import com.stcloud.auth.dto.LoginRequest;
 import com.stcloud.auth.dto.LoginResponse;
 import com.stcloud.auth.dto.RegisterRequest;
 import com.stcloud.auth.entity.*;
+import com.stcloud.auth.enums.TenantStatus;
+import com.stcloud.auth.enums.UserStatus;
 import com.stcloud.auth.mapper.*;
 import com.stcloud.common.context.TenantContext;
 import com.stcloud.common.context.UserContext;
@@ -63,7 +65,8 @@ public class AuthService {
             tenant = new SysTenant();
             tenant.setTenantName("默认租户");
             tenant.setTenantCode("default");
-            tenant.setStatus(1);
+            // 新建默认租户状态正常
+            tenant.setStatus(TenantStatus.NORMAL.getCode());
             tenant.setDefaultQuota(DEFAULT_QUOTA);
             tenantMapper.insert(tenant);
         }
@@ -76,7 +79,8 @@ public class AuthService {
         user.setNickname(StringUtils.hasText(request.getNickname()) ? request.getNickname() : request.getUsername());
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
-        user.setStatus(1);
+        // 新注册用户默认正常
+        user.setStatus(UserStatus.NORMAL.getCode());
         user.setStorageUsed(0L);
         user.setStorageQuota(DEFAULT_QUOTA);
         userMapper.insert(user);
@@ -114,12 +118,12 @@ public class AuthService {
             throw new BusinessException(ResultCode.PASSWORD_INCORRECT);
         }
 
-        if (user.getStatus() != 1) {
+        if (user.getStatus() != UserStatus.NORMAL.getCode()) {
             throw new BusinessException(ResultCode.BUSINESS_ERROR, "账号已被禁用");
         }
 
         SysTenant tenant = tenantMapper.selectById(user.getTenantId());
-        if (tenant == null || tenant.getStatus() != 1) {
+        if (tenant == null || tenant.getStatus() != TenantStatus.NORMAL.getCode()) {
             throw new BusinessException(ResultCode.BUSINESS_ERROR, "租户不可用");
         }
 
@@ -160,7 +164,7 @@ public class AuthService {
         }
 
         SysUser user = userMapper.selectById(userId);
-        if (user == null || user.getStatus() != 1) {
+        if (user == null || user.getStatus() != UserStatus.NORMAL.getCode()) {
             throw new BusinessException(ResultCode.USER_NOT_FOUND);
         }
 

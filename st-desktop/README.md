@@ -109,4 +109,4 @@ npm run build
 
 ## 许可证
 
-私有项目，未开源。
+MIT License，见根目录 [LICENSE](../LICENSE)。

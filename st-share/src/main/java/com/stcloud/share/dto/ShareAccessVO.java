@@ -22,9 +22,6 @@ public class ShareAccessVO {
     @Schema(description = "权限：0-查看 1-下载 2-上传 3-编辑")
     private Integer permission;
 
-    @Schema(description = "是否已过期")
-    private Boolean isExpired;
-
     @Schema(description = "分享文件节点ID")
     private Long fileNodeId;
 

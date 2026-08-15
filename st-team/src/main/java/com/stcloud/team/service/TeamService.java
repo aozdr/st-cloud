@@ -40,6 +40,21 @@ public interface TeamService {
      */
     Integer checkPermission(Long spaceId, Integer minRole);
 
+    // ==================== 权限模型重设计：权限点校验（TASK-PERM-BE1） ====================
+
+    /**
+     * 校验当前用户对节点的权限点（并集语义，管理员直通）：
+     * 成员校验（非成员拒绝）→ 管理员直通（roleId==0 或权限集含 manage_settings）→
+     * resolvePermissions 并集 → 校验包含全部 perms，否则 TEAM_PERMISSION_DENIED。
+     * 团队文件操作按权限点校验：下载→download、上传→upload、删除→delete、重命名→rename、移动→move。
+     */
+    void requirePermissions(Long spaceId, Long nodeId, String... perms);
+
+    /**
+     * 当前用户对该节点有效权限点集合（st-share 分享上限校验用，管理员返回全部权限点）。
+     */
+    java.util.Set<String> resolveMyPermissions(Long spaceId, Long nodeId);
+
     // ==================== P0 新增：邀请链接 ====================
 
     /** 生成邀请链接 */

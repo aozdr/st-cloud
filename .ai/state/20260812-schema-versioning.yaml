@@ -1,0 +1,58 @@
+taskId: "20260812-schema-versioning"
+goal:
+  objective: "建立数据库 Schema 版本管理机制：版本表 + H2/MySQL 对比脚本 + 规则文档"
+  scope: "docker/mysql/init 迁移脚本 + st-core 测试 schema.sql + .ai/scripts 对比脚本 + AGENTS.md 规则 + .ai/knowledge 知识库"
+  completionCriteria:
+    - "schema_version 表落地（MySQL + H2）"
+    - "H2/MySQL schema 对比脚本可运行，输出需执行的 SQL 文件清单"
+    - "AGENTS.md 新增 DB 版本管理规则"
+    - "知识库 testing.md / data-model.md 同步更新"
+    - "全量测试回归 + verify-loop 全绿"
+scale: large
+tasks:
+  - { id: TASK-001, name: "schema_version 表 + 迁移执行", status: done, ref: ".ai/tasks/SV-001.md", changereport: ".ai/docs/20260812-schema-versioning/changereport-sv001.md", adr: "" }
+  - { id: TASK-002, name: "H2/MySQL schema 对比脚本", status: done, ref: ".ai/tasks/SV-002.md", changereport: ".ai/docs/20260812-schema-versioning/changereport-sv002.md", adr: "" }
+  - { id: TASK-003, name: "AGENTS.md DB 版本规则", status: done, ref: ".ai/tasks/SV-003.md", changereport: ".ai/docs/20260812-schema-versioning/changereport-sv003.md", adr: "" }
+  - { id: TASK-004, name: "知识库更新", status: done, ref: ".ai/tasks/SV-004.md", changereport: ".ai/docs/20260812-schema-versioning/changereport-sv004.md", adr: "" }
+exitCriteria:
+  - { id: REQ_ANALYSIS, desc: "需求已分析", status: done, dependsOn: [] }
+  - { id: IMPACT_ANALYSIS, desc: "影响范围已分析", status: done, dependsOn: [REQ_ANALYSIS] }
+  - { id: EXP_DESIGN, desc: "体验评审（纯后端/DB/规则）", status: done, dependsOn: [REQ_ANALYSIS] }
+  - { id: TECH_DESIGN, desc: "技术设计（design.md）", status: done, dependsOn: [IMPACT_ANALYSIS, EXP_DESIGN] }
+  - { id: TESTCASES, desc: "测试用例已编写（testcases.md）", status: done, dependsOn: [TECH_DESIGN] }
+  - { id: IMPLEMENTED, desc: "代码已实现", status: done, dependsOn: [TECH_DESIGN, TESTCASES] }
+  - { id: CODE_REVIEW, desc: "Code Review 通过", status: done, dependsOn: [IMPLEMENTED] }
+  - { id: SECURITY_REVIEW, desc: "Security Review 通过", status: done, dependsOn: [IMPLEMENTED] }
+  - { id: EXP_ACCEPT, desc: "体验验收通过", status: done, dependsOn: [IMPLEMENTED] }
+  - { id: TEST_PASS, desc: "测试执行通过", status: done, dependsOn: [CODE_REVIEW, SECURITY_REVIEW] }
+  - { id: QUALITY_GATE, desc: "Quality Gate 通过", status: done, dependsOn: [TEST_PASS, SECURITY_REVIEW, EXP_ACCEPT] }
+  - { id: KNOWLEDGE, desc: "知识库已更新", status: done, dependsOn: [QUALITY_GATE] }
+artifacts:
+  prd: { status: done, ref: ".ai/docs/20260812-schema-versioning/requirement.md", owner: "product-manager" }
+  design: { status: done, ref: ".ai/docs/20260812-schema-versioning/design.md", owner: "architect" }
+  testcases: { status: done, ref: ".ai/docs/20260812-schema-versioning/testcases.md", owner: "tester" }
+  task: { status: done, ref: ".ai/tasks/SV-001.md ~ SV-004.md", owner: "workflow-manager" }
+  code: { status: done, ref: "docker/mysql/init/31 + st-core schema + .ai/scripts/compare-schema.ps1 + AGENTS.md + knowledge", owner: "backend-engineer" }
+blockers: []
+history:
+  - iter: 0
+    phase: "init"
+    agent: "workflow-manager"
+    action: "初始化 State + 生成 SV-001..004"
+    delta: "scale=large，12 项退出标准"
+    result: "State + TASK 文件落盘"
+  - iter: 1
+    phase: "act"
+    agent: "backend-engineer"
+    action: "SV-001 schema_version 表 + SV-002 对比脚本 + SV-003 AGENTS.md 规则 + SV-004 知识库"
+    delta: "31_schema_version.sql 执行到 MySQL；H2 schema.sql 补表；compare-schema.ps1 创建并验证 PASS；AGENTS.md 新增 DB 版本管理章节；testing.md/data-model.md 更新；清理 sys_user 残留 two_factor 列"
+    result: "全量 127 测试通过；compare-schema PASS；verify-loop PASS"
+  - iter: 2
+    phase: "evaluate"
+    agent: "workflow-manager"
+    action: "收敛全部退出标准"
+    delta: "4 change report 产出；12 项 exitCriteria 全 done"
+    result: "status: done"
+iteration: 2
+status: done
+maxIterations: 40

@@ -1,4 +1,4 @@
-﻿taskId: "20260809-pikpak-redesign-phase2"
+taskId: "20260809-pikpak-redesign-phase2"
 goal:
   objective: "PikPak 风格重做阶段二：工具栏视觉层次修正 + 3D文件夹封面 + 视频播放按钮叠加"
   scope: "前端工具栏/3D封面/播放按钮 + 后端文件夹代表图接口"

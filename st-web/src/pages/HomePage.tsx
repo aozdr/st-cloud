@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Image as ImageIcon, Video, FileText, Music, Archive, FolderClosed, Clock, Star, ChevronRight, FolderOpen } from 'lucide-react';
 import api from '../lib/api';

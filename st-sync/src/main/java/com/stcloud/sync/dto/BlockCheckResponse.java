@@ -6,24 +6,39 @@ import lombok.Data;
 import java.util.List;
 
 /**
- * 块级复用查询响应
+ * 块级同步检查响应（迭代 5）
+ * <p>
+ * 服务端初始化新版本 multipart 上传，返回可复用块（服务端 UploadPartCopy）与缺失块（客户端上传预签名URL）。
  */
 @Data
-@Schema(description = "块级复用查询响应")
+@Schema(description = "块级同步检查响应")
 public class BlockCheckResponse {
 
-    @Schema(description = "云端文件是否存在（false 表示需全量上传）")
-    private Boolean cloudExists;
+    @Schema(description = "S3 multipart uploadId（用于后续 block-upload）")
+    private String s3UploadId;
 
-    @Schema(description = "云端文件MD5（若与本地一致则无需块级同步）")
-    private String cloudMd5;
+    @Schema(description = "新版本对象存储路径")
+    private String storagePath;
 
-    @Schema(description = "可复用块索引列表（云端已有且哈希一致的块）")
-    private List<Integer> reusableBlocks;
+    @Schema(description = "可复用块列表（服务端从旧版本对象复制）")
+    private List<ReusableBlock> reusableBlocks;
 
-    @Schema(description = "需上传块索引列表（云端缺失或哈希不一致的块）")
-    private List<Integer> missingBlocks;
+    @Schema(description = "缺失块预签名URL列表（客户端直传S3）")
+    private List<PresignedBlock> missingBlocks;
 
-    @Schema(description = "块大小（字节）")
-    private Long blockSize;
+    @Data
+    @Schema(description = "可复用块")
+    public static class ReusableBlock {
+        private Integer blockIndex;
+        private String sourceKey;
+        private Long rangeStart;
+        private Long rangeEnd;
+    }
+
+    @Data
+    @Schema(description = "缺失块预签名信息")
+    public static class PresignedBlock {
+        private Integer blockIndex;
+        private String presignedUrl;
+    }
 }

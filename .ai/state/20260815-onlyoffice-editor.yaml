@@ -1,0 +1,97 @@
+taskId: "20260815-onlyoffice-editor"
+goal:
+  objective: "基于 OnlyOffice 社区版为星云盘新增在线文档编辑（docx/xlsx/pptx 编辑 + 只读预览），复用现有权限、版本、事件体系，不引入付费组件"
+  scope: "st-core（编辑器配置/回调端点）+ st-web（编辑器页面/路由）+ docker-compose（OnlyOffice 容器）+ st-api 配置；禁止改动分享/团队权限模型表结构"
+  completionCriteria:
+    - "支持 docx/xlsx/pptx 在线编辑与保存，保存后生成 file_version 并可回滚"
+    - "权限映射正确：具备上传/编辑能力的用户可编辑，其余只读；回调经安全校验，杜绝越权覆盖文件"
+    - "编辑期间禁止删除/移动/重命名该文件；多人协同编辑不丢数据"
+    - "docker-compose 一键部署 OnlyOffice 社区版容器，支持外部实例地址配置"
+    - "构建测试通过：mvn test + npm run build"
+scale: large
+tasks: []
+exitCriteria:
+  - { id: REQ_ANALYSIS, desc: "需求已分析 + requirement.md 产出（Grill Me 收敛 ≤3 问题点写入文档）并经用户确认", status: done, dependsOn: [] }
+  - { id: IMPACT_ANALYSIS, desc: "影响范围已分析", status: done, dependsOn: [REQ_ANALYSIS] }
+  - { id: EXP_DESIGN, desc: "体验评审已通过", status: done, dependsOn: [REQ_ANALYSIS] }
+  - { id: TECH_DESIGN, desc: "技术设计已评审；design.md 经 Grill Me 收敛并经用户确认", status: done, dependsOn: [IMPACT_ANALYSIS, EXP_DESIGN] }
+  - { id: TESTCASES, desc: "测试用例已编写", status: done, dependsOn: [TECH_DESIGN] }
+  - { id: IMPLEMENTED, desc: "实现阶段已完成", status: done, dependsOn: [TECH_DESIGN, TESTCASES] }
+  - { id: CODE_REVIEW, desc: "Code Review 通过", status: done, dependsOn: [IMPLEMENTED] }
+  - { id: SECURITY_REVIEW, desc: "Security Review 通过（涉及回调校验/越权/文件写入，必开）", status: done, dependsOn: [IMPLEMENTED] }
+  - { id: EXP_ACCEPT, desc: "体验验收通过", status: done, dependsOn: [IMPLEMENTED] }
+  - { id: TEST_PASS, desc: "测试执行通过", status: done, dependsOn: [CODE_REVIEW, SECURITY_REVIEW] }
+  - { id: KNOWLEDGE, desc: "知识库已更新", status: done, dependsOn: [TEST_PASS, SECURITY_REVIEW, EXP_ACCEPT] }
+  - { id: ACCEPT, desc: "验收通过（最终收敛点）", status: done, dependsOn: [KNOWLEDGE] }
+artifacts:
+  prd: { status: done, ref: ".ai/docs/20260815-onlyoffice-editor/requirement.md", owner: "executor", grillPoints: ["P1: 保存版本策略", "P2: 多人协同与文件锁", "P3: 部署形态与资源"], userConfirmedAt: "2026-08-15" }
+  impact: { status: done, ref: ".ai/docs/20260815-onlyoffice-editor/impact.md", owner: "executor" }
+  expReview: { status: done, ref: ".ai/docs/20260815-onlyoffice-editor/exp-review.md", owner: "reviewer" }
+  archReview: { status: done, ref: ".ai/docs/20260815-onlyoffice-editor/architecture-review.md", owner: "executor" }
+  design: { status: done, ref: ".ai/docs/20260815-onlyoffice-editor/design.md", owner: "executor", grillPoints: ["D1: 版本上限范围", "D2: 只读预览是否统一迁移", "D3: 编辑中覆盖上传/版本恢复拦截"], userConfirmedAt: "2026-08-15" }
+  testcases: { status: done, ref: ".ai/docs/20260815-onlyoffice-editor/testcases.md", owner: "tester" }
+  task: { status: done, ref: ".ai/tasks/TASK-20260815-onlyoffice-editor-01.md", owner: "workflow-manager" }
+  code: { status: done, ref: "st-core editor 包 + st-web EditorPage + docker/配置", owner: "executor" }
+  review: { status: done, ref: ".ai/docs/20260815-onlyoffice-editor/codereview.md", owner: "reviewer" }
+  security: { status: done, ref: ".ai/docs/20260815-onlyoffice-editor/security.md", owner: "reviewer" }
+  testReport: { status: done, ref: ".ai/docs/20260815-onlyoffice-editor/testreport.md", owner: "tester" }
+  knowledge: { status: done, ref: "architecture/api-reference/frontend/business-domain/project-overview", owner: "knowledge-manager" }
+  changereport: { status: done, ref: ".ai/docs/20260815-onlyoffice-editor/changereport.md", owner: "executor" }
+blockers: []
+dispatch:
+  current: null
+  batch:
+    - { dispatchId: "DISPATCH-BE-ONLYOFFICE-01", taskCode: "BE-OO-01", role: "executor", taskType: "implement", status: "queued" }
+    - { dispatchId: "DISPATCH-FE-ONLYOFFICE-01", taskCode: "FE-OO-01", role: "executor", taskType: "implement", status: "queued" }
+history:
+  - iter: 0
+    phase: "init"
+    agent: "workflow-manager"
+    action: "用户立项：基于 OnlyOffice 社区版做在线文档编辑，明确不接入付费中间件，要求走 Loop 流程"
+    delta: "scale=large；12 项退出标准初始化；REQ_ANALYSIS 开始"
+    result: "State 初始化完成"
+  - iter: 1
+    phase: "req_analysis"
+    agent: "workflow-manager"
+    action: "Grill Me 拷打需求（目标/边界/权限映射/保存/并发/部署），收敛为 3 个遗留问题点 P1-P3 写入 requirement.md"
+    delta: "requirement.md 落盘；REQ_ANALYSIS 待用户确认（userConfirmedAt=null）；禁止进入下游"
+    result: "文档产出完成，等待用户逐项拍板"
+  - iter: 2
+    phase: "req_confirm"
+    agent: "workflow-manager"
+    action: "用户确认：P1 按建议 / P2 按建议 / P3 只内置（不做外部实例配置）；裁决写回 requirement.md"
+    delta: "REQ_ANALYSIS=done；userConfirmedAt=2026-08-15；进入 IMPACT_ANALYSIS + EXP_DESIGN"
+    result: "需求定版，进入下一环"
+  - iter: 3
+    phase: "impact_exp_design"
+    agent: "workflow-manager"
+    action: "产出 impact.md（影响范围）/ exp-review.md（体验评审，PASS+E1-E3 约束）/ architecture-review.md（架构评审通过）"
+    delta: "IMPACT_ANALYSIS=done；EXP_DESIGN=done；TECH_DESIGN 前置完成，design.md 进入 Grill Me 收敛"
+    result: "技术设计产出完成，等待用户对 D1-D3 拍板"
+  - iter: 4
+    phase: "design_confirm"
+    agent: "workflow-manager"
+    action: "用户确认 D1/D2/D3 全部按建议；裁决写回 design.md；testcases.md 落盘；TASK-01 落盘"
+    delta: "TECH_DESIGN=done（userConfirmedAt=2026-08-15）；TESTCASES=done；IMPLEMENTED=in_progress；开始实现"
+    result: "进入实现阶段"
+  - iter: 5
+    phase: "implement"
+    agent: "workflow-manager"
+    action: "前后端并行派发（BE-OO-01 / FE-OO-01，收件箱认领 + ACK 后并发）；BE 违规写测试已纠正删除，测试由主线程按 tester 职责补齐"
+    delta: "BE/FE 实现完成；修复 EditorCallbackServiceImpl 未处理异常与 st-share 测试装配；全量 mvn test + npm run build 通过"
+    result: "IMPLEMENTED done"
+  - iter: 6
+    phase: "review_test_knowledge"
+    agent: "workflow-manager"
+    action: "Code Review（PASS）/ Security Review（PASS）/ 体验验收（E1-E3 已实现）/ 测试执行（26 例新测试 + 全量回归）/ 知识库更新"
+    delta: "CODE_REVIEW/SECURITY_REVIEW/EXP_ACCEPT/TEST_PASS/KNOWLEDGE 全部 done"
+    result: "进入 ACCEPT"
+  - iter: 7
+    phase: "accept"
+    agent: "workflow-manager"
+    action: "对照 goal.completionCriteria 逐项核对：编辑/保存/版本回滚 ✅；权限映射+回调安全 ✅；编辑中保护+协同不丢数据 ✅；docker-compose 内置 ✅；构建测试全绿 ✅"
+    delta: "ACCEPT=done；status=done；任务收敛"
+    result: "验收通过"
+iteration: 7
+status: done
+maxIterations: 40

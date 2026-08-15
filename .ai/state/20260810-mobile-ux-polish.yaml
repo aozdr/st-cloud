@@ -1,4 +1,4 @@
-﻿taskId: "20260810-mobile-ux-polish"
+taskId: "20260810-mobile-ux-polish"
 goal:
   objective: "移动端 UX 收尾: UX6 传输提示 + UX7 弱网重试 + UX8 传输提示 + UX9 权限引导 + UX10 PWA 安装引导 + PWA 图标"
   scope: "st-web 移动端体验优化"

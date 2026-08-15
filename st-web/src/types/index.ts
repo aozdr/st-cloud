@@ -49,6 +49,10 @@ export interface FileNode {
   thumbnailPath: string | null;
   createdAt: string;
   updatedAt: string;
+  // 文件锁定字段（团队空间，以后端下发为准；null=未锁定）
+  lockedBy?: number | null; // 锁定人ID
+  lockedAt?: string | null; // 锁定时间
+  lockExpireAt?: string | null; // 锁过期时间，null=永久锁定
 }
 
 export interface PageResult<T> {
@@ -99,6 +103,8 @@ export interface UploadInitResponse {
   s3UploadId: string;
   fileId: string;
   presignedUrls: string[];
+  transferMode?: 'direct' | 'relay';
+  relayChunkSize?: number;
 }
 
 export interface UploadStatusResponse {
@@ -142,6 +148,17 @@ export interface CreateFolderRequest {
   folderName: string;
 }
 
+/** 可新建的空白文件类型（服务端白名单：txt/docx/xlsx/pptx） */
+export type BlankFileType = 'txt' | 'docx' | 'xlsx' | 'pptx';
+
+/** 新建空白文件请求：POST /api/file/new 或 POST /api/team/{spaceId}/files/new */
+export interface CreateBlankFileRequest {
+  parentId: string;
+  type: BlankFileType;
+  /** 文件名（可选，空则后端用默认名；无后缀自动补对应类型后缀） */
+  fileName?: string;
+}
+
 export interface RenameRequest {
   newName: string;
 }
@@ -175,6 +192,8 @@ export interface UploadTask {
   uploadedChunks?: number[];
   error?: string;
   electronTaskId?: string; // Electron 模式下关联的传输任务ID
+  transferMode?: 'direct' | 'relay';
+  relayLimitKb?: number; // 中转模式实际生效限速(KB/s)，用于限速徽标与预估剩余时间
 }
 
 // ==================== Share Types ====================
@@ -187,6 +206,7 @@ export interface FileShare {
   password?: string | null; // 提取码(仅私密分享)
   expireAt: string | null;
   permission: number; // 0-查看 1-下载 2-上传 3-编辑
+  allowDownload: number; // 0-禁止下载/流式 1-允许（下载URL与流式统一开关）
   downloadLimit: number | null;
   downloadCount: number;
   viewCount: number;
@@ -200,6 +220,8 @@ export interface CreateShareRequest {
   password?: string;
   expireAt?: string | null;
   permission?: number;
+  permissions?: string; // 分享权限点 JSON 字符串（如 {"view":true,"download":true}，后端 String JSON 契约）
+  allowDownload?: number; // 0-禁止下载/流式 1-允许（不传时后端与 permission 联动）
   downloadLimit?: number | null;
 }
 
@@ -209,7 +231,6 @@ export interface ShareAccessVO {
   suffix: string | null;
   size: string | null;
   permission: number;
-  isExpired: boolean;
   fileNodeId: string;
   shareType: number;
 }
@@ -393,6 +414,8 @@ export interface TransferTask {
   uploadedChunks?: number[];
   nodeId?: string;
   savePath?: string;
+  transferMode?: 'direct' | 'relay';
+  relayLimitKb?: number;
 }
 
 export interface TransferSettings {
@@ -583,8 +606,11 @@ export interface TeamCommentItem {
 
 export interface FolderPermissionItem {
   id: string; spaceId: string; folderNodeId: string;
-  subjectType: string; subjectId: string; subjectName: string;
-  permission: number; createdAt: string;
+  subjectType: 'all' | 'member' | 'role'; // all=全体(管理员除外)
+  subjectId: string; subjectName: string;
+  permission: number;
+  permissions?: Record<string, boolean>; // 权限点集合（优先）
+  createdAt: string;
 }
 // ==================== P2: Role, Stats, Lock ====================
 export interface TeamRoleInfo {
@@ -597,4 +623,61 @@ export interface TeamStats {
   fileTypeDistribution: { type: string; count: number }[];
   memberActivity: { userId: string; nickname: string; lastActiveAt: string | null }[];
   operationStats: { action: string; count: number }[];
+}
+
+// ==================== OnlyOffice Editor Types ====================
+/** 在线文档编辑：GET /api/file/{nodeId}/editor/config 返回体 */
+export interface EditorConfigResponse {
+  editorUrl: string;
+  config: OnlyOfficeConfig;
+}
+
+/** OnlyOffice 文档权限（后端按权限判定下发，前端不自行放宽） */
+export interface OnlyOfficePermissions {
+  edit?: boolean;
+  download?: boolean;
+  print?: boolean;
+  comment?: boolean;
+  copy?: boolean;
+  review?: boolean;
+}
+
+/** OnlyOffice document 节点：url 为可访问的文件流地址 */
+export interface OnlyOfficeDocument {
+  fileType?: string;
+  key: string;
+  title: string;
+  url: string;
+  permissions?: OnlyOfficePermissions;
+}
+
+/** OnlyOffice 编辑器用户信息 */
+export interface OnlyOfficeUser {
+  id: string;
+  name: string;
+}
+
+/** OnlyOffice editorConfig（后端生成；goback/events 由前端本地注入，不参与签名） */
+export interface OnlyOfficeEditorConfig {
+  mode?: 'edit' | 'view';
+  callbackUrl?: string;
+  user?: OnlyOfficeUser;
+  lang?: string;
+  customization?: {
+    goback?: { url?: string; text?: string } | boolean;
+    toolbarHideFileName?: boolean;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
+/** OnlyOffice DocEditor 初始化配置（含后端签发的 token） */
+export interface OnlyOfficeConfig {
+  documentType?: string;
+  document: OnlyOfficeDocument;
+  editorConfig: OnlyOfficeEditorConfig;
+  type?: string;
+  token?: string;
+  /** 前端本地注册的事件回调（onRequestClose / onError 等），不参与后端签名 */
+  events?: Record<string, (...args: unknown[]) => void>;
 }

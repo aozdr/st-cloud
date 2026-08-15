@@ -7,15 +7,16 @@ import com.stcloud.common.enums.NodeStatus;
 import com.stcloud.core.dto.RecycleItemVO;
 import com.stcloud.core.entity.FileNode;
 import com.stcloud.core.event.FileIndexEvent;
+import com.stcloud.core.event.ReliableEventPublisher;
 import com.stcloud.core.event.SyncChangeEvent;
 import com.stcloud.core.mapper.FileNodeMapper;
 import com.stcloud.core.mapper.UserQuotaMapper;
+import com.stcloud.core.service.FileObjectService;
 import com.stcloud.core.service.FileService;
 import com.stcloud.core.service.RecycleBinService;
 import com.stcloud.core.service.StorageService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -39,7 +40,9 @@ public class RecycleBinServiceImpl implements RecycleBinService {
     @Resource
     private StorageService storageService;
     @Resource
-    private ApplicationEventPublisher eventPublisher;
+    private FileObjectService fileObjectService;
+    @Resource
+    private ReliableEventPublisher reliableEventPublisher;
 
     private static final int RETENTION_DAYS = 30;
 
@@ -105,6 +108,8 @@ public class RecycleBinServiceImpl implements RecycleBinService {
             node.setStatus(NodeStatus.NORMAL.getCode());
             node.setUpdatedAt(LocalDateTime.now());
             fileNodeMapper.updateById(node);
+            // 恢复后重新可访问：失效可访问性缓存，避免残留的不可访问判定
+            fileService.invalidateAccessible(nodeId);
 
             // 路径变更时同步子孙 path（状态判定已改为祖先链校验）
             if (!oldPath.equals(targetPath) && node.isFolder()) {
@@ -112,12 +117,14 @@ public class RecycleBinServiceImpl implements RecycleBinService {
             }
 
             // ES：重新索引恢复节点及正常态子孙（独立回收的子孙保持不可搜）
-            eventPublisher.publishEvent(new FileIndexEvent(this, node, FileIndexEvent.ActionType.INDEX));
-            eventPublisher.publishEvent(new SyncChangeEvent(this, node, SyncChangeEvent.ChangeType.CREATE));
+            reliableEventPublisher.publishFileIndex(node, FileIndexEvent.ActionType.INDEX);
+            reliableEventPublisher.publishSyncChange(node, SyncChangeEvent.ChangeType.CREATE);
+            // 恢复后子孙可能残留「不可访问」缓存（回收期间被访问过）：级联失效，恢复访问正确性
             for (FileNode descendant : fileService.collectDescendants(nodeId)) {
+                fileService.invalidateAccessible(descendant.getId());
                 if (descendant.getStatus() == NodeStatus.NORMAL.getCode()) {
-                    eventPublisher.publishEvent(new FileIndexEvent(this, descendant, FileIndexEvent.ActionType.INDEX));
-                    eventPublisher.publishEvent(new SyncChangeEvent(this, descendant, SyncChangeEvent.ChangeType.CREATE));
+                    reliableEventPublisher.publishFileIndex(descendant, FileIndexEvent.ActionType.INDEX);
+                    reliableEventPublisher.publishSyncChange(descendant, SyncChangeEvent.ChangeType.CREATE);
                 }
             }
         }
@@ -141,8 +148,13 @@ public class RecycleBinServiceImpl implements RecycleBinService {
                 permanentDeleteNodeAndChildren(child);
             }
         } else {
-            // 仅当没有其他节点引用同一 S3 物理对象时，才真正删除底层存储
-            if (node.getStoragePath() != null
+            // 删除引用：对象引用归零才真正删除 S3 物理对象；旧数据（无 object_id）回退按 storage_path 判重
+            if (node.getObjectId() != null) {
+                int remaining = fileObjectService.release(node.getObjectId());
+                if (remaining <= 0) {
+                    fileObjectService.deletePhysical(node.getObjectId());
+                }
+            } else if (node.getStoragePath() != null
                     && fileNodeMapper.countOtherRefsByStoragePath(node.getStoragePath(), node.getId()) == 0) {
                 storageService.deleteObject(node.getStoragePath());
             }
@@ -156,8 +168,10 @@ public class RecycleBinServiceImpl implements RecycleBinService {
             }
         }
         // 删除 ES 索引
-        eventPublisher.publishEvent(new FileIndexEvent(this, node, FileIndexEvent.ActionType.DELETE));
+        reliableEventPublisher.publishFileIndex(node, FileIndexEvent.ActionType.DELETE);
         fileNodeMapper.deleteById(node.getId());
+        // 物理删除后节点不可再访问：失效可访问性缓存
+        fileService.invalidateAccessible(node.getId());
         // 同步剩余同 MD5 节点的引用计数，保持 ref_count 与实际引用数一致
         if (node.isFile() && node.getFileMd5() != null) {
             fileNodeMapper.syncRefCountByMd5(node.getFileMd5());
@@ -200,5 +214,17 @@ public class RecycleBinServiceImpl implements RecycleBinService {
             return;
         }
         permanentDeleteNodeAndChildren(node);
+    }
+
+    @Override
+    @Transactional
+    public void permanentDeleteAdmin(List<Long> nodeIds) {
+        for (Long nodeId : nodeIds) {
+            FileNode node = fileNodeMapper.selectById(nodeId);
+            if (node == null) {
+                continue;
+            }
+            permanentDeleteNodeAndChildren(node);
+        }
     }
 }

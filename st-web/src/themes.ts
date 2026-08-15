@@ -1,4 +1,4 @@
-﻿export type ThemeKey = 'red' | 'blue' | 'emerald' | 'violet' | 'orange' | 'teal';
+export type ThemeKey = 'red' | 'blue' | 'emerald' | 'violet' | 'orange' | 'teal';
 
 export interface ThemePalette {
   key: ThemeKey;

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   ArrowUp, ArrowDown, Pause, Play, X, CheckCircle2, AlertCircle,
   Loader2, FileUp, Clock, FolderOpen, FileText, Trash2,
@@ -315,10 +315,17 @@ export default function TransferManager() {
                     </div>
 
                     {/* 错误信息 */}
-                    {task.error && (
+                  {task.error && (
                       <div className="ml-8 mt-1 text-xs text-red-400 truncate flex items-center gap-1">
                         <AlertCircle className="w-3 h-3 flex-shrink-0" />
                         {task.error}
+                      </div>
+                    )}
+                    {/* 中转模式状态与限速徽标（uispec：限速中转上传中 · 限速 X KB/s） */}
+                    {task.type === 'upload' && task.transferMode === 'relay' && isActive && (
+                      <div className="ml-8 mt-1 text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                        <Loader2 className="w-3 h-3 animate-spin" aria-hidden />
+                        限速中转上传中 · 限速 {task.relayLimitKb || '?'} KB/s
                       </div>
                     )}
                   </div>

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X, History, RotateCcw, Loader2, ShieldCheck, Upload } from 'lucide-react';
 import api from '../../lib/api';
 import { useToast } from '../ui/Toast';

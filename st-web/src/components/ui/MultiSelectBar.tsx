@@ -1,4 +1,4 @@
-﻿import { CheckSquare, Download, Trash2, X, Share2 } from 'lucide-react';
+import { CheckSquare, Download, Trash2, X, Share2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 interface MultiSelectBarProps {

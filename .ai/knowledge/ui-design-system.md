@@ -53,7 +53,9 @@
 ### 设计方向
 
 - **浅色优先**：默认 light 模式（PikPak `color-scheme: light`），保留 dark 切换
-- **主色**：蓝色 #306eff（PikPak `--color-primary`），构建 50-950 完整色阶
+- **主色**：天蓝系（`--color-primary-500: 6 167 255` ≈ #06a7ff，
+  `--color-primary-600: 0 147 224` ≈ #0093e0），构建 50-950 完整色阶
+  （PikPak 蓝 #306eff 为历史方案，2026-08 视觉迭代后已替换为当前 token，UI 一律使用 token 不写死旧值）
 - **侧边栏**：浅灰底 `bg-surface-2` + 深色文字，选中态淡蓝底 `--nav-active-bg` (#e5ebff 浅色 / primary 深色)
 - **缩略图**：强制 16:9（`aspect-video`）+ 16px 圆角（`rounded-2xl`）+ 模糊背景填充（同图 `blur-xl`）
 - **圆角体系**：分层--缩略图/弹窗 16px (`rounded-2xl`) / 控件 6px (`rounded-md`) / popover 8px (`rounded-lg`)

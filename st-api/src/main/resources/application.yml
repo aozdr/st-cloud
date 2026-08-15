@@ -19,6 +19,7 @@ spring:
 
 # MyBatis-Plus
 mybatis-plus:
+  # Mapper XML 位置：保留兼容配置；当前 SQL 以注解式为主（含 <script> 动态 SQL），全库暂无 XML Mapper
   mapper-locations: classpath*:mapper/**/*.xml
   type-aliases-package: com.stcloud.**.entity
   global-config:
@@ -50,8 +51,8 @@ stcloud:
   # 对象存储 (RustFS)
   storage:
     endpoint: http://127.0.0.1:9000
-    access-key: stcloud
-    secret-key: stcloud123
+    access-key: ${STCLOUD_S3_ACCESS_KEY:stcloud}
+    secret-key: ${STCLOUD_S3_SECRET_KEY:stcloud123}
     region: us-east-1
     bucket: stcloud
     chunk-bucket: stcloud-chunks
@@ -61,6 +62,20 @@ stcloud:
     uris: http://127.0.0.1:9200
     connect-timeout: 5000
     socket-timeout: 30000
+  # OnlyOffice 在线编辑（TASK-20260815-onlyoffice-editor-01）
+  onlyoffice:
+    # 前端 iframe 加载地址（浏览器可达；docker 网络内后端访问 onlyoffice 服务名）
+    url: http://localhost:8081
+    # 后端对外可达地址（OnlyOffice 容器内用 host.docker.internal 访问宿主；生产改为公网可达地址）
+    public-base-url: http://host.docker.internal:8080
+    # 签名密钥：HS256 至少 32 字节；开发默认值便于开箱即用，生产必须用环境变量 STCLOUD_ONLYOFFICE_SECRET 覆盖
+    jwt-secret: ${STCLOUD_ONLYOFFICE_SECRET:stcloud-onlyoffice-dev-secret-0123456789}
+    # 回调下载内容大小上限（字节，默认 200MB），防超大文件投毒
+    max-save-size: 209715200
+    # 回调 url 下载主机白名单（SSRF 防护）：docker 部署时 onlyoffice 容器以服务名可达
+    allowed-callback-hosts: localhost,127.0.0.1,onlyoffice
+    # 编辑标记/保存锁后端：redis（默认，多实例一致）/ memory（单实例）
+    lock-backend: redis
 
 
 # Knife4j

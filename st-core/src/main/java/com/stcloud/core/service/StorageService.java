@@ -72,6 +72,17 @@ public interface StorageService {
     String presignUploadPart(String key, String s3UploadId, int partNumber, Duration expiry);
 
     /**
+     * 分片上传：服务端直接写入一个 part（中转模式使用，非预签名直传）
+     *
+     * @param key         对象key
+     * @param s3UploadId  S3 multipart uploadId
+     * @param partNumber  分片序号（从1开始）
+     * @param inputStream 分片数据流
+     * @param size        分片大小(字节)
+     */
+    void uploadPart(String key, String s3UploadId, int partNumber, InputStream inputStream, long size);
+
+    /**
      * 分片上传：合并所有分片（内部通过ListParts获取ETag）
      *
      * @param key         对象key
@@ -95,4 +106,17 @@ public interface StorageService {
      * @return 已上传分片序号列表（从1开始）
      */
     List<Integer> listUploadedParts(String key, String s3UploadId);
+
+    /**
+     * 分块复制：从源对象按字节范围复制到目标 multipart 的指定 partNumber（UploadPartCopy，块级同步使用）
+     *
+     * @param sourceKey   源对象 key（旧版本整文件对象）
+     * @param rangeStart  复制起始字节（含）
+     * @param rangeEnd    复制结束字节（含）
+     * @param destKey     目标对象 key（新版本整文件对象）
+     * @param s3UploadId  目标 multipart uploadId
+     * @param partNumber  目标分片序号（从 1 开始）
+     */
+    void uploadPartCopy(String sourceKey, long rangeStart, long rangeEnd,
+                        String destKey, String s3UploadId, int partNumber);
 }

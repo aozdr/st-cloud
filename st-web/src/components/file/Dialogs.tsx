@@ -1,8 +1,87 @@
 import { useState, useEffect } from 'react';
-import type { FileNode } from '../../types';
-import { X, FolderPlus, FolderOpen, Pencil } from 'lucide-react';
+import type { BlankFileType, FileNode } from '../../types';
+import { X, FolderPlus, FolderOpen, Pencil, FilePlus } from 'lucide-react';
 import { getFileTypeConfig, cn } from '../../lib/utils';
 import { useToast } from '../ui/Toast';
+
+/** 各类型默认文件名（与后端 DEFAULT_NAMES 一致；用户可修改） */
+const DEFAULT_FILE_NAMES: Record<BlankFileType, string> = {
+  txt: '新建文本文档.txt',
+  docx: '新建文档.docx',
+  xlsx: '新建表格.xlsx',
+  pptx: '新建演示.pptx',
+};
+
+const FILE_TYPE_LABELS: Record<BlankFileType, string> = {
+  txt: '文本文档',
+  docx: 'Word 文档',
+  xlsx: 'Excel 表格',
+  pptx: 'PPT 演示',
+};
+
+// ==================== Create File Dialog ====================
+/** 新建空白文件：弹出文件名输入框（预填默认名），确认后创建 */
+export function CreateFileDialog({ open, type, onCreate, onClose }: {
+  open: boolean;
+  type: BlankFileType | null;
+  onCreate: (type: BlankFileType, name: string) => Promise<void>;
+  onClose: () => void;
+}) {
+  const [name, setName] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { showToast } = useToast();
+
+  useEffect(() => {
+    if (open && type) setName(DEFAULT_FILE_NAMES[type]);
+  }, [open, type]);
+
+  if (!open || !type) return null;
+
+  const handleCreate = async () => {
+    if (!name.trim()) return;
+    setLoading(true);
+    try {
+      await onCreate(type, name.trim());
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : '新建文件失败', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-content w-96" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
+          <div className="flex items-center gap-2">
+            <FilePlus className="w-4 h-4 text-primary-600" />
+            <h3 className="text-base font-semibold text-fg">新建{FILE_TYPE_LABELS[type]}</h3>
+          </div>
+          <button onClick={onClose} aria-label="关闭" className="text-muted hover:text-fg cursor-pointer rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <X className="w-4 h-4" aria-hidden />
+          </button>
+        </div>
+        <div className="px-5 py-4">
+          <input
+            autoFocus
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+            className="input-field"
+            placeholder={`输入${FILE_TYPE_LABELS[type]}名称`}
+          />
+          <p className="mt-2 text-xs text-muted">留空或去掉后缀将自动使用默认名/补充后缀</p>
+        </div>
+        <div className="flex justify-end gap-2 px-5 py-3.5 border-t border-border">
+          <button onClick={onClose} className="btn-secondary">取消</button>
+          <button onClick={handleCreate} disabled={loading || !name.trim()} className="btn-primary">
+            {loading ? '创建中…' : '创建'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 // ==================== Create Folder Dialog ====================
 export function CreateFolderDialog({ open, parentId, onCreate, onClose, onSuccess }: {

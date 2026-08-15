@@ -1,7 +1,10 @@
-﻿import { FolderPlus, Upload, Download, Trash2, Copy, FolderInput, X, RefreshCw, ArrowDownUp, Table2, Rows3, LayoutGrid, Edit3 } from 'lucide-react';
+import { useState } from 'react';
+import { FolderPlus, Upload, Download, Trash2, Copy, FolderInput, X, RefreshCw, ArrowDownUp, Table2, Rows3, LayoutGrid, Edit3, Plus, ChevronDown, FileType, FileText, FileSpreadsheet, Presentation } from 'lucide-react';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
+import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
 import { cn, formatSize } from '../../lib/utils';
 import { Switch } from '../ui/switch';
+import type { BlankFileType } from '../../types';
 
 export type SortBy = 'name' | 'size' | 'time';
 export type SortDir = 'asc' | 'desc';
@@ -13,6 +16,9 @@ interface FileToolbarProps {
   filesCount: number;
   allSelected: boolean;
   selectedSize: number;
+  /** 当前选中单个可在线编辑文件（docx/xlsx/pptx 且有编辑权限）时可用 */
+  canEditSelected: boolean;
+  onEdit: () => void;
   sortBy: SortBy;
   onSortChange: (v: SortBy) => void;
   sortDir: SortDir;
@@ -20,6 +26,8 @@ interface FileToolbarProps {
   view: ViewMode;
   onViewChange: (v: ViewMode) => void;
   onNewFolder: () => void;
+  /** 新建空白文件：txt/docx/xlsx/pptx（成功后 Office 类型由 FileBrowser 决定跳转编辑） */
+  onNewFile: (type: BlankFileType) => void;
   onUploadClick: () => void;
   onDownload: () => void;
   onMove: () => void;
@@ -34,23 +42,69 @@ interface FileToolbarProps {
 }
 
 export default function FileToolbar({
-  has, selectedCount, filesCount, allSelected, selectedSize,
+  has, selectedCount, filesCount, allSelected, selectedSize, canEditSelected, onEdit,
   sortBy, onSortChange, sortDir, onSortDirToggle,
   view, onViewChange,
-  onNewFolder, onUploadClick, onDownload, onMove, onCopy, onDelete,
+  onNewFolder, onNewFile, onUploadClick, onDownload, onMove, onCopy, onDelete,
   onSelectAll, onClearSelection, onRefresh, onBatchRename,
   foldersFirst, onToggleFoldersFirst,
 }: FileToolbarProps) {
   const hasSelection = selectedCount > 0;
+  const [newMenuOpen, setNewMenuOpen] = useState(false);
 
   return (
     <div className="sticky top-0 z-20 flex items-center justify-between gap-2 px-5 py-2 bg-bg border-b border-border/60 overflow-x-auto">
       <div className="flex items-center gap-1.5 flex-shrink-0">
         {has('file:upload') && (
-          <button onClick={onNewFolder} className="btn-primary flex-shrink-0 whitespace-nowrap">
-            <FolderPlus className="w-4 h-4" aria-hidden />
-            <span>新建文件夹</span>
-          </button>
+          <Popover open={newMenuOpen} onOpenChange={setNewMenuOpen}>
+            <PopoverTrigger asChild>
+              <button className="btn-primary flex-shrink-0 whitespace-nowrap">
+                <Plus className="w-4 h-4" aria-hidden />
+                <span>新建</span>
+                <ChevronDown className="w-3.5 h-3.5" aria-hidden />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-44 p-1" align="start" sideOffset={4}>
+              {/* 新建文件夹：保留原入口 */}
+              <button
+                onClick={() => { setNewMenuOpen(false); onNewFolder(); }}
+                className="w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-fg hover:bg-surface-2 rounded-md cursor-pointer transition-colors"
+              >
+                <FolderPlus className="w-4 h-4" aria-hidden />
+                <span>新建文件夹</span>
+              </button>
+              <div className="my-1 border-t border-border" />
+              {/* 新建空白文件：txt 留在列表；docx/xlsx/pptx 由 FileBrowser 跳转在线编辑（P3） */}
+              <button
+                onClick={() => { setNewMenuOpen(false); onNewFile('txt'); }}
+                className="w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-fg hover:bg-surface-2 rounded-md cursor-pointer transition-colors"
+              >
+                <FileType className="w-4 h-4" aria-hidden />
+                <span>文本文档</span>
+              </button>
+              <button
+                onClick={() => { setNewMenuOpen(false); onNewFile('docx'); }}
+                className="w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-fg hover:bg-surface-2 rounded-md cursor-pointer transition-colors"
+              >
+                <FileText className="w-4 h-4" aria-hidden />
+                <span>Word 文档</span>
+              </button>
+              <button
+                onClick={() => { setNewMenuOpen(false); onNewFile('xlsx'); }}
+                className="w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-fg hover:bg-surface-2 rounded-md cursor-pointer transition-colors"
+              >
+                <FileSpreadsheet className="w-4 h-4" aria-hidden />
+                <span>Excel 表格</span>
+              </button>
+              <button
+                onClick={() => { setNewMenuOpen(false); onNewFile('pptx'); }}
+                className="w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-fg hover:bg-surface-2 rounded-md cursor-pointer transition-colors"
+              >
+                <Presentation className="w-4 h-4" aria-hidden />
+                <span>PPT 演示</span>
+              </button>
+            </PopoverContent>
+          </Popover>
         )}
         {has('file:upload') && (
           <button onClick={onUploadClick} className="btn-ghost flex-shrink-0 whitespace-nowrap">
@@ -61,6 +115,12 @@ export default function FileToolbar({
         {hasSelection && (
           <>
             <div className="w-px h-5 bg-surface-2 mx-1.5 flex-shrink-0" />
+            {canEditSelected && (
+              <button onClick={onEdit} className="btn-ghost flex-shrink-0 whitespace-nowrap">
+                <Edit3 className="w-4 h-4" aria-hidden />
+                <span>在线编辑</span>
+              </button>
+            )}
             {has('file:download') && (
               <button onClick={onDownload} className="btn-ghost flex-shrink-0 whitespace-nowrap">
                 <Download className="w-4 h-4" aria-hidden />

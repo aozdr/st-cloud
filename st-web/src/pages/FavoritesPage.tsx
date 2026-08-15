@@ -1,4 +1,4 @@
-﻿import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import FileBrowser from '../components/file/FileBrowser';
 import { favoriteFileSource } from '../lib/fileSource';
 import type { FileNode } from '../types';

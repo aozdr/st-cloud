@@ -4,6 +4,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.stcloud.common.cache.Cache;
+import com.stcloud.common.cache.CacheFactory;
+import com.stcloud.common.cache.TtlCache;
 import com.stcloud.common.context.TenantContext;
 import com.stcloud.common.context.UserContext;
 import com.stcloud.common.enums.NodeStatus;
@@ -13,16 +16,21 @@ import com.stcloud.common.response.ResultCode;
 import com.stcloud.core.dto.FileNodeVO;
 import com.stcloud.core.dto.FileTreeNodeVO;
 import com.stcloud.core.dto.StorageInfoVO;
+import com.stcloud.core.editor.EditorLockService;
 import com.stcloud.core.entity.FileNode;
+import com.stcloud.core.entity.FileObject;
 import com.stcloud.core.enums.UploadStatus;
 import com.stcloud.core.event.FileIndexEvent;
+import com.stcloud.core.event.ReliableEventPublisher;
 import com.stcloud.core.event.SyncChangeEvent;
 import com.stcloud.core.mapper.FileNodeMapper;
 import com.stcloud.core.mapper.UserQuotaMapper;
+import com.stcloud.core.service.FileObjectService;
 import com.stcloud.core.service.FileService;
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.Resource;
+import org.springframework.beans.factory.annotation.Autowired;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,10 +53,30 @@ public class FileServiceImpl implements FileService {
     @Resource
     private com.stcloud.core.service.CloudStorageService cloudStorageService;
     @Resource
-    private ApplicationEventPublisher eventPublisher;
+    private ReliableEventPublisher reliableEventPublisher;
+    @Resource
+    private FileObjectService fileObjectService;
+    /** 编辑保护锁服务：生产必有；测试上下文手工装配时缺失，保护检查跳过（保持既有测试兼容） */
+    @Autowired(required = false)
+    private EditorLockService editorLockService;
+
+    /** 可访问性缓存（TASK-005）：key=acc:nodeId → 是否可访问；节点结构变更时显式失效；
+     * 默认内存实现，开启 stcloud.cache.redis.enabled 后由 CacheFactory 切换为 Redis（TASK-003） */
+    private Cache accessibleCache = new TtlCache(ACCESSIBLE_CACHE_TTL_MS);
+
+    /** 缓存后端工厂（可选）：Redis 启用时切换缓存实现（TASK-003） */
+    @Autowired(required = false)
+    private CacheFactory cacheFactory;
+    /** 可访问性缓存 TTL：30 秒，作为多实例/遗漏失效场景的最终一致性兜底 */
+    private static final long ACCESSIBLE_CACHE_TTL_MS = 30_000;
+    private static final String ACCESSIBLE_KEY_PREFIX = "acc:";
 
     private static final String INVALID_CHARS_REGEX = "[/\\\\:*?\"<>|]";
     private static final int MAX_NAME_LENGTH = 255;
+    /** 引用计数：文件夹不引用任何物理对象 */
+    private static final int REF_COUNT_NONE = 0;
+    /** 引用计数：复制文件时对源 file_object 的初始引用 */
+    private static final int REF_COUNT_INITIAL = 1;
     private static final int MAX_FOLDER_DEPTH = 20;
 
     // ==================== 目录管理 ====================
@@ -81,11 +109,11 @@ public class FileServiceImpl implements FileService {
         folder.setUploadStatus(UploadStatus.COMPLETED.getCode());
         folder.setOwnerId(userId);
         folder.setUploaderId(userId);
-        folder.setRefCount(0);
+        folder.setRefCount(REF_COUNT_NONE);
         folder.setVersion(0);
         fileNodeMapper.insert(folder);
-        eventPublisher.publishEvent(new FileIndexEvent(this, folder, FileIndexEvent.ActionType.INDEX));
-        eventPublisher.publishEvent(new SyncChangeEvent(this, folder, SyncChangeEvent.ChangeType.CREATE));
+        reliableEventPublisher.publishFileIndex(folder, FileIndexEvent.ActionType.INDEX);
+        reliableEventPublisher.publishSyncChange(folder, SyncChangeEvent.ChangeType.CREATE);
         return toVO(folder);
     }
 
@@ -129,6 +157,12 @@ public class FileServiceImpl implements FileService {
     public FileNodeVO rename(Long nodeId, String newName) {
         validateFileName(newName);
         FileNode node = getNodeByIdAndOwner(nodeId);
+        // 编辑保护：文件正在编辑时禁止重命名（TC-18）
+        assertNotEditing(node);
+        // 同名重命名：无实际变更，不发布 RENAME 同步日志（避免 old==new 脏日志导致客户端自擦状态）
+        if (node.getName().equals(newName)) {
+            return toVO(node);
+        }
         String oldPath = node.getPath();
         String parentPath = oldPath.substring(0, oldPath.lastIndexOf("/"));
 
@@ -150,7 +184,7 @@ public class FileServiceImpl implements FileService {
             fileNodeMapper.updateChildrenPath(oldPath, newPath);
         }
         publishMetaUpdate(node, newPath);
-        eventPublisher.publishEvent(new SyncChangeEvent(this, node, SyncChangeEvent.ChangeType.RENAME, oldPath));
+        reliableEventPublisher.publishSyncChange(node, SyncChangeEvent.ChangeType.RENAME, oldPath);
         return toVO(node);
     }
 
@@ -160,8 +194,14 @@ public class FileServiceImpl implements FileService {
         String targetPath = validateAndGetParentPath(targetParentId);
         for (Long nodeId : nodeIds) {
             FileNode node = getNodeByIdAndOwner(nodeId);
+            // 编辑保护：文件正在编辑时禁止移动（TC-18）
+            assertNotEditing(node);
             if (nodeId.equals(targetParentId)) {
                 throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "不能将文件移动到自身");
+            }
+            // 同目录移动：无实际变更，跳过（避免 old==new 的 MOVE 脏日志）
+            if (targetParentId != null && targetParentId.equals(node.getParentId())) {
+                continue;
             }
             if (targetParentId != 0) {
                 FileNode target = getNodeByIdAndOwner(targetParentId);
@@ -178,11 +218,13 @@ public class FileServiceImpl implements FileService {
             node.setParentId(targetParentId);
             node.setPath(newPath);
             fileNodeMapper.updateById(node);
+            // 移动后祖先链变化：失效该节点可访问性缓存（子孙由 TTL 兜底）
+            invalidateAccessible(nodeId);
             if (node.isFolder()) {
                 fileNodeMapper.updateChildrenPath(oldPath, newPath);
             }
             publishMetaUpdate(node, newPath);
-            eventPublisher.publishEvent(new SyncChangeEvent(this, node, SyncChangeEvent.ChangeType.MOVE, oldPath));
+            reliableEventPublisher.publishSyncChange(node, SyncChangeEvent.ChangeType.MOVE, oldPath);
         }
     }
 
@@ -215,24 +257,39 @@ public class FileServiceImpl implements FileService {
         copy.setUploadStatus(UploadStatus.COMPLETED.getCode());
         copy.setOwnerId(userId);
         copy.setUploaderId(userId);
-        copy.setRefCount(0);
+        copy.setRefCount(REF_COUNT_INITIAL);
         copy.setVersion(0);
         copy.setThumbnailPath(source.getThumbnailPath());
+        // 文件复制：归属到源对象并 +1 引用（去重）；旧数据无 object_id 时回退 md5 重算
+        if (source.isFile() && source.getFileMd5() != null && source.getObjectId() != null) {
+            Long tenantId = source.getTenantId() != null ? source.getTenantId() : UserContext.getTenantId();
+            long size = source.getFileSize() == null ? 0 : source.getFileSize();
+            FileObject object = fileObjectService.acquire(tenantId, source.getFileMd5(), size,
+                    () -> source.getStoragePath());
+            if (object != null) {
+                copy.setObjectId(object.getId());
+                copy.setStoragePath(object.getStoragePath());
+            }
+        }
         fileNodeMapper.insert(copy);
 
         if (source.isFile() && source.getFileMd5() != null) {
             long size = source.getFileSize() == null ? 0 : source.getFileSize();
             checkUserQuota(userId, size);
             cloudStorageService.checkCapacity(size);
-            incrementRefCount(source.getFileMd5());
-            if (size > 0) {
-                userQuotaMapper.updateStorageUsed(userId, size);
+            // 旧数据（无 object_id）回退按 md5 重算引用
+            if (copy.getObjectId() == null) {
+                incrementRefCount(source.getFileMd5());
             }
-            eventPublisher.publishEvent(new FileIndexEvent(this, copy, FileIndexEvent.ActionType.INDEX));
-            eventPublisher.publishEvent(new SyncChangeEvent(this, copy, SyncChangeEvent.ChangeType.CREATE));
+            // 原子扣减：并发超配额时 update 返回 0，抛异常回滚本次复制（TASK-003）
+            if (size > 0 && userQuotaMapper.updateStorageUsed(userId, size) <= 0) {
+                throw new BusinessException(ResultCode.STORAGE_QUOTA_EXCEEDED);
+            }
+            reliableEventPublisher.publishFileIndex(copy, FileIndexEvent.ActionType.INDEX);
+            reliableEventPublisher.publishSyncChange(copy, SyncChangeEvent.ChangeType.CREATE);
         } else if (source.isFolder()) {
-            eventPublisher.publishEvent(new FileIndexEvent(this, copy, FileIndexEvent.ActionType.INDEX));
-            eventPublisher.publishEvent(new SyncChangeEvent(this, copy, SyncChangeEvent.ChangeType.CREATE));
+            reliableEventPublisher.publishFileIndex(copy, FileIndexEvent.ActionType.INDEX);
+            reliableEventPublisher.publishSyncChange(copy, SyncChangeEvent.ChangeType.CREATE);
             LambdaQueryWrapper<FileNode> wrapper = new LambdaQueryWrapper<FileNode>()
                     .eq(FileNode::getParentId, source.getId())
                     .eq(FileNode::getStatus, NodeStatus.NORMAL.getCode());
@@ -249,7 +306,7 @@ public class FileServiceImpl implements FileService {
                         .or().likeRight(FileNode::getPath, newPath + "/"));
         List<FileNode> affectedFiles = fileNodeMapper.selectList(fileQuery);
         for (FileNode file : affectedFiles) {
-            eventPublisher.publishEvent(new FileIndexEvent(this, file, FileIndexEvent.ActionType.UPDATE_META));
+            reliableEventPublisher.publishFileIndex(file, FileIndexEvent.ActionType.UPDATE_META);
         }
     }
 
@@ -258,6 +315,8 @@ public class FileServiceImpl implements FileService {
     public void deleteToRecycleBin(List<Long> nodeIds) {
         for (Long nodeId : nodeIds) {
             FileNode node = getNodeByIdAndOwner(nodeId);
+            // 编辑保护：文件正在编辑时禁止删除（TC-18）
+            assertNotEditing(node);
             if (node.getStatus() != NodeStatus.NORMAL.getCode()) {
                 continue;
             }
@@ -266,12 +325,16 @@ public class FileServiceImpl implements FileService {
             node.setStatus(NodeStatus.RECYCLED.getCode());
             node.setUpdatedAt(LocalDateTime.now());
             fileNodeMapper.updateById(node);
+            // 回收后该节点立即不可访问：失效可访问性缓存
+            invalidateAccessible(nodeId);
             // ES：从索引移除被删节点及其子孙（子孙 status 虽未变，但需不可搜）
-            eventPublisher.publishEvent(new FileIndexEvent(this, node, FileIndexEvent.ActionType.DELETE));
-            eventPublisher.publishEvent(new SyncChangeEvent(this, node, SyncChangeEvent.ChangeType.DELETE));
+            reliableEventPublisher.publishFileIndex(node, FileIndexEvent.ActionType.DELETE);
+            reliableEventPublisher.publishSyncChange(node, SyncChangeEvent.ChangeType.DELETE);
             for (FileNode descendant : collectDescendants(nodeId)) {
-                eventPublisher.publishEvent(new FileIndexEvent(this, descendant, FileIndexEvent.ActionType.DELETE));
-                eventPublisher.publishEvent(new SyncChangeEvent(this, descendant, SyncChangeEvent.ChangeType.DELETE));
+                // 祖先回收后子孙即不可访问：级联失效可访问性缓存，避免 TTL 窗口内泄漏
+                invalidateAccessible(descendant.getId());
+                reliableEventPublisher.publishFileIndex(descendant, FileIndexEvent.ActionType.DELETE);
+                reliableEventPublisher.publishSyncChange(descendant, SyncChangeEvent.ChangeType.DELETE);
             }
         }
     }
@@ -372,6 +435,24 @@ public class FileServiceImpl implements FileService {
 
     // ==================== 辅助方法 ====================
 
+    /**
+     * 编辑保护：节点（文件）或文件夹子孙中存在编辑标记时抛出 FILE_EDITING。
+     * 覆盖删除/移动/重命名（含团队路径），与版本恢复、覆盖上传拦截口径一致（TC-18/19）。
+     */
+    private void assertNotEditing(FileNode node) {
+        if (editorLockService == null) {
+            return;
+        }
+        List<Long> ids = new ArrayList<>();
+        ids.add(node.getId());
+        if (node.isFolder()) {
+            for (FileNode descendant : collectDescendants(node.getId())) {
+                ids.add(descendant.getId());
+            }
+        }
+        editorLockService.assertNotEditing(ids);
+    }
+
     void validateFileName(String name) {
         if (name == null || name.trim().isEmpty()) {
             throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "名称不能为空");
@@ -416,11 +497,42 @@ public class FileServiceImpl implements FileService {
         return node;
     }
 
+    @PostConstruct
+    void initAccessibleCache() {
+        // 仅当存在缓存工厂（Spring 容器）时按配置切换后端；单元测试直 new 时保持默认内存缓存
+        if (cacheFactory != null) {
+            accessibleCache = cacheFactory.create(ACCESSIBLE_CACHE_TTL_MS);
+        }
+    }
+
     @Override
     public void validateAccessible(Long nodeId) {
-        if (fileNodeMapper.countInaccessibleAncestors(nodeId) > 0) {
+        if (nodeId == null) {
+            return;
+        }
+        // 命中缓存直接判定，避免重复执行祖先链递归 SQL（分享/下载/收藏等高频访问路径复用）
+        String key = ACCESSIBLE_KEY_PREFIX + nodeId;
+        Boolean cached = (Boolean) accessibleCache.get(key);
+        if (cached != null) {
+            if (!cached) {
+                throw new BusinessException(ResultCode.FORBIDDEN);
+            }
+            return;
+        }
+        boolean accessible = fileNodeMapper.countInaccessibleAncestors(nodeId) == 0;
+        accessibleCache.put(key, accessible);
+        if (!accessible) {
             throw new BusinessException(ResultCode.FORBIDDEN);
         }
+    }
+
+    @Override
+    public void invalidateAccessible(Long nodeId) {
+        if (nodeId == null) {
+            return;
+        }
+        // 结构变更后清除该节点可访问性缓存，下次访问重新按祖先链计算
+        accessibleCache.removeByPrefix(ACCESSIBLE_KEY_PREFIX + nodeId);
     }
 
     @Override
@@ -501,10 +613,15 @@ public class FileServiceImpl implements FileService {
         vo.setFileSize(node.getFileSize());
         vo.setSuffix(node.getSuffix());
         vo.setContentType(node.getContentType());
+        vo.setFileMd5(node.getFileMd5());
         vo.setStatus(node.getStatus());
         vo.setThumbnailPath(node.getThumbnailPath());
         vo.setCreatedAt(node.getCreatedAt());
         vo.setUpdatedAt(node.getUpdatedAt());
+        // 锁定信息（P2 文件锁定）：直接透传实体锁定字段，个人/团队列表均走本方法
+        vo.setLockedBy(node.getLockedBy());
+        vo.setLockedAt(node.getLockedAt());
+        vo.setLockExpireAt(node.getLockExpireAt());
         return vo;
     }
 
@@ -553,11 +670,11 @@ public class FileServiceImpl implements FileService {
         folder.setOwnerId(userId);
         folder.setUploaderId(userId);
         folder.setSpaceId(spaceId);
-        folder.setRefCount(0);
+        folder.setRefCount(REF_COUNT_NONE);
         folder.setVersion(0);
         fileNodeMapper.insert(folder);
-        eventPublisher.publishEvent(new FileIndexEvent(this, folder, FileIndexEvent.ActionType.INDEX));
-        eventPublisher.publishEvent(new SyncChangeEvent(this, folder, SyncChangeEvent.ChangeType.CREATE));
+        reliableEventPublisher.publishFileIndex(folder, FileIndexEvent.ActionType.INDEX);
+        reliableEventPublisher.publishSyncChange(folder, SyncChangeEvent.ChangeType.CREATE);
         return toVO(folder);
     }
 
@@ -582,6 +699,8 @@ public class FileServiceImpl implements FileService {
         if (node == null) {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
         }
+        // 编辑保护：团队文件正在编辑时禁止重命名（TC-18）
+        assertNotEditing(node);
         String oldPath = node.getPath();
         String parentPath = oldPath.substring(0, oldPath.lastIndexOf("/"));
 
@@ -602,7 +721,7 @@ public class FileServiceImpl implements FileService {
             fileNodeMapper.updateChildrenPath(oldPath, newPath);
         }
         publishMetaUpdate(node, newPath);
-        eventPublisher.publishEvent(new SyncChangeEvent(this, node, SyncChangeEvent.ChangeType.RENAME, oldPath));
+        reliableEventPublisher.publishSyncChange(node, SyncChangeEvent.ChangeType.RENAME, oldPath);
         return toVO(node);
     }
 
@@ -615,16 +734,22 @@ public class FileServiceImpl implements FileService {
             if (node == null || node.getStatus() != NodeStatus.NORMAL.getCode()) {
                 continue;
             }
+            // 编辑保护：团队文件正在编辑时禁止删除（TC-18）
+            assertNotEditing(node);
             // 只置被删节点自身为回收态；子孙 status 不动，访问时由祖先链校验拦截
             node.setStatus(NodeStatus.RECYCLED.getCode());
             node.setUpdatedAt(LocalDateTime.now());
             fileNodeMapper.updateById(node);
+            // 回收后该节点立即不可访问：失效可访问性缓存
+            invalidateAccessible(nodeId);
             // ES：从索引移除被删节点及其子孙（子孙 status 虽未变，但需不可搜）
-            eventPublisher.publishEvent(new FileIndexEvent(this, node, FileIndexEvent.ActionType.DELETE));
-            eventPublisher.publishEvent(new SyncChangeEvent(this, node, SyncChangeEvent.ChangeType.DELETE));
+            reliableEventPublisher.publishFileIndex(node, FileIndexEvent.ActionType.DELETE);
+            reliableEventPublisher.publishSyncChange(node, SyncChangeEvent.ChangeType.DELETE);
             for (FileNode descendant : collectDescendants(nodeId)) {
-                eventPublisher.publishEvent(new FileIndexEvent(this, descendant, FileIndexEvent.ActionType.DELETE));
-                eventPublisher.publishEvent(new SyncChangeEvent(this, descendant, SyncChangeEvent.ChangeType.DELETE));
+                // 祖先回收后子孙即不可访问：级联失效可访问性缓存，避免 TTL 窗口内泄漏
+                invalidateAccessible(descendant.getId());
+                reliableEventPublisher.publishFileIndex(descendant, FileIndexEvent.ActionType.DELETE);
+                reliableEventPublisher.publishSyncChange(descendant, SyncChangeEvent.ChangeType.DELETE);
             }
         }
     }
@@ -641,6 +766,8 @@ public class FileServiceImpl implements FileService {
             validateTeamNode(spaceId, nodeId);
             FileNode node = fileNodeMapper.selectById(nodeId);
             if (node == null) continue;
+            // 编辑保护：团队文件正在编辑时禁止移动（TC-18）
+            assertNotEditing(node);
             if (nodeId.equals(targetParentId)) {
                 throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "不能将文件移动到自身");
             }
@@ -653,11 +780,13 @@ public class FileServiceImpl implements FileService {
             node.setParentId(targetParentId);
             node.setPath(newPath);
             fileNodeMapper.updateById(node);
+            // 移动后祖先链变化：失效该节点可访问性缓存（子孙由 TTL 兜底）
+            invalidateAccessible(nodeId);
             if (node.isFolder()) {
                 fileNodeMapper.updateChildrenPath(oldPath, newPath);
             }
             publishMetaUpdate(node, newPath);
-            eventPublisher.publishEvent(new SyncChangeEvent(this, node, SyncChangeEvent.ChangeType.MOVE, oldPath));
+            reliableEventPublisher.publishSyncChange(node, SyncChangeEvent.ChangeType.MOVE, oldPath);
         }
     }
 
@@ -788,24 +917,39 @@ public class FileServiceImpl implements FileService {
         copy.setOwnerId(userId);
         copy.setUploaderId(userId);
         copy.setSpaceId(source.getSpaceId());
-        copy.setRefCount(0);
+        copy.setRefCount(REF_COUNT_INITIAL);
         copy.setVersion(0);
         copy.setThumbnailPath(source.getThumbnailPath());
+        // 文件复制：归属到源对象并 +1 引用（去重）；旧数据无 object_id 时回退 md5 重算
+        if (source.isFile() && source.getFileMd5() != null && source.getObjectId() != null) {
+            Long tenantId = source.getTenantId() != null ? source.getTenantId() : UserContext.getTenantId();
+            long size = source.getFileSize() == null ? 0 : source.getFileSize();
+            FileObject object = fileObjectService.acquire(tenantId, source.getFileMd5(), size,
+                    () -> source.getStoragePath());
+            if (object != null) {
+                copy.setObjectId(object.getId());
+                copy.setStoragePath(object.getStoragePath());
+            }
+        }
         fileNodeMapper.insert(copy);
 
         if (source.isFile() && source.getFileMd5() != null) {
             long size = source.getFileSize() == null ? 0 : source.getFileSize();
             checkTeamQuota(source.getSpaceId(), size);
             cloudStorageService.checkCapacity(size);
-            incrementRefCount(source.getFileMd5());
-            if (size > 0) {
-                teamStorageMapper.updateTeamStorageUsed(source.getSpaceId(), size);
+            // 旧数据（无 object_id）回退按 md5 重算引用
+            if (copy.getObjectId() == null) {
+                incrementRefCount(source.getFileMd5());
             }
-            eventPublisher.publishEvent(new FileIndexEvent(this, copy, FileIndexEvent.ActionType.INDEX));
-            eventPublisher.publishEvent(new SyncChangeEvent(this, copy, SyncChangeEvent.ChangeType.CREATE));
+            // 原子扣减：并发超配额时 update 返回 0，抛异常回滚本次复制（TASK-003）
+            if (size > 0 && teamStorageMapper.updateTeamStorageUsed(source.getSpaceId(), size) <= 0) {
+                throw new BusinessException(ResultCode.STORAGE_QUOTA_EXCEEDED);
+            }
+            reliableEventPublisher.publishFileIndex(copy, FileIndexEvent.ActionType.INDEX);
+            reliableEventPublisher.publishSyncChange(copy, SyncChangeEvent.ChangeType.CREATE);
         } else if (source.isFolder()) {
-            eventPublisher.publishEvent(new FileIndexEvent(this, copy, FileIndexEvent.ActionType.INDEX));
-            eventPublisher.publishEvent(new SyncChangeEvent(this, copy, SyncChangeEvent.ChangeType.CREATE));
+            reliableEventPublisher.publishFileIndex(copy, FileIndexEvent.ActionType.INDEX);
+            reliableEventPublisher.publishSyncChange(copy, SyncChangeEvent.ChangeType.CREATE);
             LambdaQueryWrapper<FileNode> wrapper = new LambdaQueryWrapper<FileNode>()
                     .eq(FileNode::getParentId, source.getId())
                     .eq(FileNode::getStatus, NodeStatus.NORMAL.getCode());
@@ -917,8 +1061,10 @@ public class FileServiceImpl implements FileService {
             node.setStatus(NodeStatus.RECYCLED.getCode());
             node.setUpdatedAt(java.time.LocalDateTime.now());
             fileNodeMapper.updateById(node);
+            // 回收后立即不可访问：失效可访问性缓存
+            invalidateAccessible(node.getId());
             // 从搜索索引移除
-            eventPublisher.publishEvent(new FileIndexEvent(this, node, FileIndexEvent.ActionType.DELETE));
+            reliableEventPublisher.publishFileIndex(node, FileIndexEvent.ActionType.DELETE);
             deletedCount++;
         }
 

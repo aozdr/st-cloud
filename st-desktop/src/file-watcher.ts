@@ -1,5 +1,6 @@
 import chokidar, { type FSWatcher } from 'chokidar';
 import path from 'path';
+import { isIgnoredLocalPath } from './sync-utils';
 
 export interface FileChangeEvent {
   relativePath: string;
@@ -28,7 +29,8 @@ export class FileWatcher {
   async start(): Promise<void> {
     this.watcher = chokidar.watch(this.rootPath, {
       ignoreInitial: false,
-      ignored: (fp) => /(^|[/\\])\.(git|DS_Store|Trash)/.test(fp),
+      // 忽略本地临时/系统文件（~$ Office 锁文件、.DS_Store、*.tmp 等），防止同步到云端
+      ignored: (fp) => isIgnoredLocalPath(path.relative(this.rootPath, fp).split(path.sep).join('/')),
       persistent: true,
       awaitWriteFinish: { stabilityThreshold: 300, pollInterval: 100 },
       ignorePermissionErrors: true,

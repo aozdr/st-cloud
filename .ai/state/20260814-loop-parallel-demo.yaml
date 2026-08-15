@@ -1,0 +1,44 @@
+taskId: "20260814-loop-parallel-demo"
+goal:
+  objective: "在隔离区 .ai/lab/loop-demo/ 实现简单文件工具库（FileSizeFormatter + FileNameSanitizer），验证 Loop 内子任务可并行运行且不影响正式项目"
+  scope: "仅 .ai/lab/loop-demo/（gitignored 隔离区）；禁止触碰 st-* 业务代码"
+  completionCriteria:
+    - "两个独立模块并行开发完成"
+    - "两模块均 javac 编译通过且冒烟输出正确标记"
+    - "子任务执行时间有重叠（并行证据）"
+    - "正式项目零改动"
+scale: small
+exitCriteria:
+  - id: IMPLEMENTED
+    desc: "两个模块已实现（executor 并行编写）"
+    status: done
+  - id: TEST_PASS
+    desc: "编译 + 冒烟 + 隔离校验通过"
+    status: done
+  - id: KNOWLEDGE
+    desc: "验证结果已记录（testreport 追加）"
+    status: done
+artifacts:
+  requirement: { status: done, ref: ".ai/docs/20260814-loop-parallel-demo/requirement.md", owner: "executor" }
+  codeA: { status: done, ref: ".ai/lab/loop-demo/file-size/FileSizeFormatter.java", owner: "executor" }
+  codeB: { status: done, ref: ".ai/lab/loop-demo/file-name/FileNameSanitizer.java", owner: "executor" }
+  changereport: { status: done, ref: ".ai/docs/20260814-loop-parallel-demo/changereport.md", owner: "executor" }
+blockers: []
+history:
+  - iter: 0
+    phase: "plan"
+    agent: "workflow-manager"
+    action: "初始化 Loop State，拆分为两个无依赖并行子任务"
+    delta: "goal/scale=small/exitCriteria 已定义"
+  - iter: 1
+    phase: "implement"
+    agent: "executor（A/B 并行）"
+    action: "并行编写 FileSizeFormatter + FileNameSanitizer 并各自编译冒烟"
+    delta: "codeA/codeB done；IMPLEMENTED/TEST_PASS 通过；重叠约 58s"
+  - iter: 2
+    phase: "knowledge"
+    agent: "workflow-manager"
+    action: "落盘 changereport 并更新 State"
+    delta: "KNOWLEDGE done；Loop 收敛"
+iteration: 2
+status: done

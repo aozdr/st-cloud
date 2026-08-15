@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS sync_exclusion (
     updated_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     deleted         TINYINT      NOT NULL DEFAULT 0       COMMENT '逻辑删除',
     PRIMARY KEY (id),
-    UNIQUE KEY uk_root_path (sync_root_id, relative_path, deleted),
+    UNIQUE KEY uk_root_path (sync_root_id, relative_path(765), deleted),
     KEY idx_root (sync_root_id, deleted),
     KEY idx_user (user_id, deleted)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='同步排除路径表';

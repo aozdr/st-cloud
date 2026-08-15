@@ -1,5 +1,5 @@
 import api from './api';
-import type { FileNode, PageResult, FileTreeNode, SearchResultVO } from '../types';
+import type { BlankFileType, FileNode, PageResult, FileTreeNode, SearchResultVO } from '../types';
 
 /**
  * FileSource abstracts file operations so FileBrowser can be reused
@@ -8,6 +8,8 @@ import type { FileNode, PageResult, FileTreeNode, SearchResultVO } from '../type
 export interface FileSource {
   listFiles(parentId: string | null, page: number, size: number): Promise<PageResult<FileNode>>;
   createFolder(parentId: string | null, name: string): Promise<void>;
+  /** 新建空白文件（txt/docx/xlsx/pptx），返回新节点；Office 类型由调用方决定是否跳转编辑 */
+  createBlankFile(parentId: string | null, type: BlankFileType, fileName?: string): Promise<FileNode>;
   rename(nodeId: string, newName: string): Promise<void>;
   delete(nodeIds: string[]): Promise<void>;
   move(nodeIds: string[], targetParentId: string): Promise<void>;
@@ -25,6 +27,8 @@ export const personalFileSource: FileSource = {
     api.get('/file/list', { params: { parentId: parentId || '0', page, size } }),
   createFolder: (parentId, name) =>
     api.post('/file/folder', { parentId: parentId || '0', folderName: name }),
+  createBlankFile: (parentId, type, fileName) =>
+    api.post<FileNode>('/file/new', { parentId: parentId || '0', type, fileName }),
   rename: (nodeId, newName) =>
     api.put(`/file/${nodeId}/rename`, { newName }),
   delete: (nodeIds) =>
@@ -54,6 +58,8 @@ export function teamFileSource(spaceId: string): FileSource {
       api.get(`/team/${spaceId}/files`, { params: { parentId: parentId || undefined, page, size } }),
     createFolder: (parentId, name) =>
       api.post(`/team/${spaceId}/folder`, null, { params: { parentId: parentId || undefined, folderName: name } }),
+    createBlankFile: (parentId, type, fileName) =>
+      api.post<FileNode>(`/team/${spaceId}/files/new`, { parentId: parentId || undefined, type, fileName }),
     rename: (nodeId, newName) =>
       api.put(`/team/${spaceId}/files/${nodeId}/rename`, null, { params: { newName } }),
     delete: (nodeIds) =>

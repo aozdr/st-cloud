@@ -1,0 +1,85 @@
+taskId: "20260811-codex-tasks-execution"
+goal:
+  objective: "按《st-cloud-full-code-review.md》+《st-cloud-Codex-execution-tasks.md》执行 6 项优化：TASK-001 文件对象模型 / TASK-002 上传状态机 / TASK-003 容量并发 / TASK-004 事件可靠性 / TASK-005 权限性能 / TASK-006 测试体系"
+  scope: "st-cloud 后端（st-core/st-api/st-team/st-sync/st-search）+ 数据库（docker/mysql/init），前端 st-web 接口契约保持兼容"
+  completionCriteria:
+    - "file_object 模型落地且迁移兼容"
+    - "上传状态机与幂等落地"
+    - "容量并发控制原子化"
+    - "事件 Outbox + MQ 落地"
+    - "权限快照/缓存落地"
+    - "测试体系补充，verify 全绿"
+scale: large
+tasks:                      # 子任务进度（全局 12 项门禁待全部子任务完成后勾选）
+  - { id: TASK-001, name: "文件对象模型优化", status: done, ref: ".ai/tasks/TASK-001.md", changereport: ".ai/docs/20260811-codex-tasks-execution/changereport-t001.md", adr: ".ai/decisions/ADR/ADR-001-file-object-model.md" }
+  - { id: TASK-002, name: "上传状态机", status: done, ref: ".ai/tasks/TASK-002.md", changereport: ".ai/docs/20260811-codex-tasks-execution/changereport-t002.md", adr: ".ai/decisions/ADR/ADR-002-upload-state-machine.md" }
+  - { id: TASK-003, name: "容量并发原子化", status: done, ref: ".ai/tasks/TASK-003.md", changereport: ".ai/docs/20260811-codex-tasks-execution/changereport-t003.md", adr: ".ai/decisions/ADR/ADR-003-capacity-concurrency.md" }
+  - { id: TASK-004, name: "事件 Outbox + MQ", status: done, ref: ".ai/tasks/TASK-004.md", changereport: ".ai/docs/20260811-codex-tasks-execution/changereport-t004.md", adr: ".ai/decisions/ADR/ADR-004-event-outbox-mq.md" }
+  - { id: TASK-005, name: "权限性能优化", status: done, ref: ".ai/tasks/TASK-005.md", changereport: ".ai/docs/20260811-codex-tasks-execution/changereport-t005.md", adr: ".ai/decisions/ADR/ADR-005-permission-cache.md" }
+  - { id: TASK-006, name: "测试体系补充", status: done, ref: ".ai/tasks/TASK-006.md", changereport: ".ai/docs/20260811-codex-tasks-execution/changereport-t006.md", adr: "" }
+exitCriteria:
+  - { id: REQ_ANALYSIS, desc: "需求已分析（review+tasks 文档）", status: done, dependsOn: [] }
+  - { id: IMPACT_ANALYSIS, desc: "影响范围已分析（本方案）", status: done, dependsOn: [REQ_ANALYSIS] }
+  - { id: EXP_DESIGN, desc: "体验评审（接口兼容，前端契约不变）", status: done, dependsOn: [REQ_ANALYSIS] }
+  - { id: TECH_DESIGN, desc: "技术设计（architecture-review + design）", status: done, dependsOn: [IMPACT_ANALYSIS, EXP_DESIGN] }
+  - { id: TESTCASES, desc: "测试用例已编写", status: done, dependsOn: [TECH_DESIGN] }
+  - { id: IMPLEMENTED, desc: "代码已实现（按 TASK-001..006）", status: done, dependsOn: [TECH_DESIGN, TESTCASES] }
+  - { id: CODE_REVIEW, desc: "Code Review 通过", status: done, dependsOn: [IMPLEMENTED] }
+  - { id: SECURITY_REVIEW, desc: "Security Review 通过", status: done, dependsOn: [IMPLEMENTED] }
+  - { id: EXP_ACCEPT, desc: "体验验收通过", status: done, dependsOn: [IMPLEMENTED] }
+  - { id: TEST_PASS, desc: "测试执行通过", status: done, dependsOn: [CODE_REVIEW, SECURITY_REVIEW] }
+  - { id: QUALITY_GATE, desc: "Quality Gate 通过", status: done, dependsOn: [TEST_PASS, SECURITY_REVIEW, EXP_ACCEPT] }
+  - { id: KNOWLEDGE, desc: "知识库已更新", status: done, dependsOn: [QUALITY_GATE] }
+artifacts:
+  prd: { status: done, ref: ".ai/docs/20260811-codex-tasks-execution/requirement.md", owner: "product-manager" }
+  design: { status: done, ref: ".ai/docs/20260811-codex-tasks-execution/design.md", owner: "architect + engineers" }
+  testcases: { status: done, ref: ".ai/docs/20260811-codex-tasks-execution/testcases.md", owner: "tester" }
+  task: { status: done, ref: ".ai/tasks/TASK-001.md ~ TASK-006.md（6/6）", owner: "workflow-manager" }
+  code: { status: done, ref: "st-core/st-sync/st-search + docker/mysql/init（TASK-001..006 全部落地，6/6）", owner: "frontend-engineer + backend-engineer" }
+blockers: []
+history:
+  - iter: 0
+    phase: "init"
+    agent: "workflow-manager"
+    action: "初始化 State + 生成 TASK-001..006"
+    delta: "scale=large，12 项退出标准"
+    result: "TASK 文件落盘 .ai/tasks/"
+  - iter: 1
+    phase: "implement"
+    agent: "backend-engineer"
+    action: "实现 TASK-001 文件对象模型"
+    delta: "新增 file_object 表/实体/Mapper/Service + 上传/复制/删除/版本引用改造 + 迁移脚本 + 集成测试 5 用例；artifacts.code in_progress(1/6)"
+    result: "mvn test -pl st-core -am 全绿（15 用例）；changereport-t001.md 与 ADR-001 已落盘"
+  - iter: 2
+    phase: "implement"
+    agent: "backend-engineer"
+    action: "实现 TASK-002 上传状态机"
+    delta: "UploadStatus 扩展(INIT/MERGING/DELETED)；抽取 UploadManager/ChunkManager/StorageManager/EventPublisher；UploadServiceImpl 降为门面；claimMerging 幂等守卫、confirm 分片落库、abort 守卫、失败可恢复；artifacts.code in_progress(2/6)"
+    result: "mvn test -pl st-core -am 全绿（21 用例）；changereport-t002.md 与 ADR-002 已落盘；verify-loop PASS"
+  - iter: 3
+    phase: "implement"
+    agent: "backend-engineer"
+    action: "实现 TASK-003 容量并发原子化"
+    delta: "配额扣减合并为原子条件 UPDATE（quota+非负双守卫）；UploadManager.consumeQuota 0 行抛超限；复制/版本恢复同步原子化；云盘总容量行锁；新增并发测试；artifacts.code in_progress(3/6)"
+    result: "mvn test -pl st-core -am 全绿（22 用例，含 10 线程并发竞争）；changereport-t003.md 与 ADR-003 已落盘；verify-loop PASS"
+  - iter: 4
+    phase: "implement"
+    agent: "backend-engineer"
+    action: "实现 TASK-004 事件可靠性（Outbox + RocketMQ）"
+    delta: "新增 ReliableEventPublisher/EventRelay/EventRetryTask/EventMessage + event_log 表与 event_log_id 幂等键；30 处发布点改造；st-search/st-sync 新增 MQ 消费者；event_log 加入租户忽略表；artifacts.code in_progress(4/6)"
+    result: "mvn test -pl st-core -am 全绿（28 用例，含 Outbox 6 用例）；全模块 compile 通过；verify-loop PASS；changereport-t004.md 与 ADR-004 已落盘"
+  - iter: 5
+    phase: "implement"
+    agent: "backend-engineer"
+    action: "实现 TASK-005 权限性能优化"
+    delta: "新增 TtlCache（进程内 TTL）；FolderPermissionService.resolvePermission 加缓存（key=spaceId:nodeId:userId:spaceRole，TTL 60s）+ invalidateSpace 全空间失效（TeamServiceImpl 9 处成员/角色变更点接入，setPermissions 自失效）；FileServiceImpl.validateAccessible 加缓存（key=acc:nodeId，TTL 30s）+ 结构变更失效（move/回收含子孙级联/恢复/物理删除/去重）；分享路径复用缓存；新增 TtlCache/AccessibleCache/FolderPermissionService 缓存单测 12 用例；artifacts.code in_progress(5/6)"
+    result: "mvn test -pl st-core -am 全绿（36 用例，含 TASK-001..004 回归）；st-team FolderPermissionServiceTest 4 用例通过；全模块 compile 通过；verify-loop PASS（FAIL=0）；changereport-t005.md 与 ADR-005 已落盘"
+  - iter: 6
+    phase: "implement + gate"
+    agent: "tester + code-reviewer + security-reviewer + workflow-manager"
+    action: "实现 TASK-006 测试体系补充 + 收尾门禁"
+    delta: "新增文件流程/权限/并发三类测试（FileServiceFlow 5 / FileServicePermission 3 / Concurrent 2 / 断点续传 1 / 团队权限规则 5）；修复 TASK-005 恢复场景子孙级联失效缺陷；全 12 项退出标准勾选；artifacts.code done(6/6)"
+    result: "st-core 47 用例 + st-team 9 用例全绿；全模块 compile 通过；verify-loop PASS（FAIL=0）；changereport-t006.md、test-report.md、code-and-security-review.md 落盘；status=done"
+iteration: 6
+status: done
+maxIterations: 40

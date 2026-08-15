@@ -18,4 +18,5 @@ public class TeamFolderPermission extends BaseEntity {
     private String subjectType;  // role/member
     private Long subjectId;      // 角色值或用户ID
     private Integer permission;  // -1-无权限 0-管理 1-编辑 2-查看
+    private String permissions;  // 权限点JSON：{"view":true,"upload":true,...}，优先于单值 permission
 }

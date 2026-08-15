@@ -34,6 +34,8 @@ public class ArchiveServiceImpl implements ArchiveService {
     private StorageService storageService;
 
     private static final String ZIP_SUFFIX = "zip";
+    /** 引用计数：解压产物未关联 file_object 去重对象（直接存储路径），无引用 */
+    private static final int REF_COUNT_NONE = 0;
 
     @Override
     public List<Map<String, Object>> listArchiveContents(Long nodeId) {
@@ -174,7 +176,8 @@ public class ArchiveServiceImpl implements ArchiveService {
         folder.setStatus(NodeStatus.NORMAL.getCode());
         folder.setOwnerId(userId);
         folder.setUploaderId(userId);
-        folder.setRefCount(0);
+        // 解压创建的文件夹不引用任何物理对象
+        folder.setRefCount(REF_COUNT_NONE);
         folder.setVersion(0);
         fileNodeMapper.insert(folder);
         return folder.getId();
@@ -196,7 +199,8 @@ public class ArchiveServiceImpl implements ArchiveService {
         file.setUploadStatus(UploadStatus.COMPLETED.getCode());
         file.setOwnerId(userId);
         file.setUploaderId(userId);
-        file.setRefCount(0);
+        // 解压创建的文件直接落 S3，未走 file_object 去重，引用计数为 0
+        file.setRefCount(REF_COUNT_NONE);
         file.setVersion(0);
         fileNodeMapper.insert(file);
     }

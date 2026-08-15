@@ -2,7 +2,7 @@
 
 > 本文件是 Agent Loop 的**白盒 dry-run 记录**。用真实历史任务（收藏功能增强）逐轮模拟编排器（Workflow Manager）的 Observe -> Plan -> Act -> Evaluate 决策链，验证四段式循环、门禁依赖、并行派发、rework cascade、收敛退出等核心机制的行为正确性。
 >
-> 演练基于真实项目产物文档：`.ai/docs/favorites-enhancement-requirement.md`、`-design.md`、`-testcases.md`。迭代序列为合理推演（配置驱动型 Loop 无运行时，dry-run 即人工模拟编排器决策），非实际运行日志。
+> 演练基于真实项目产物文档：`.ai/docs/20260814-favorites-archive/favorites-enhancement-requirement.md`、`-design.md`、`-testcases.md`。迭代序列为合理推演（配置驱动型 Loop 无运行时，dry-run 即人工模拟编排器决策），非实际运行日志。
 >
 > 状态模型定义见 `.ai/knowledge/loop-state-model.md`；验证 checklist 见 `.ai/knowledge/loop-verification-checklist.md`。
 
@@ -85,11 +85,11 @@ status: running
 - `ui-designer`：与 PM 同步工作，产出 UI/UX 设计文档（收藏页布局、交互流程、状态设计、组件选型、视觉规范）。
 - 两份文档经需求评审多方会议（PM + UI + 前端 + 后端 + 测试）定版。
 
-**Evaluate**：应用 Delta -> REQ_ANALYSIS=done（prd 与 uiSpec 均已产出并定版）；artifacts.prd=done（ref: `.ai/docs/favorites-enhancement-requirement.md`）；artifacts.uiSpec=done。依赖检查通过。iteration=2。
+**Evaluate**：应用 Delta -> REQ_ANALYSIS=done（prd 与 uiSpec 均已产出并定版）；artifacts.prd=done（ref: `.ai/docs/20260814-favorites-archive/favorites-enhancement-requirement.md`）；artifacts.uiSpec=done。依赖检查通过。iteration=2。
 
 **State Delta**：
 - exitCriteria: `REQ_ANALYSIS` -> done
-- artifacts: `prd` -> done（ref: `.ai/docs/favorites-enhancement-requirement.md`），`uiSpec` -> done
+- artifacts: `prd` -> done（ref: `.ai/docs/20260814-favorites-archive/favorites-enhancement-requirement.md`），`uiSpec` -> done
 
 **State 快照**：`REQ_ANALYSIS=done`，其余 11 项 pending，blockers=[]
 
@@ -126,11 +126,11 @@ status: running
 
 **Act**：architect 产出设计文档--后端分页接口 `GET /favorite/page`、Mapper 分页 SQL、`toggleFavorite` 权限校验方案（B3，计划调用 `validateAccessible`/`countInaccessibleAncestors`）、前端 FavoritesPage/favoriteFileSource/侧边栏/排序/清理遗留代码。
 
-**Evaluate**：应用 Delta -> TECH_DESIGN=done；artifacts.design=done（ref: `.ai/docs/favorites-enhancement-design.md`）。依赖检查：IMPACT_ANALYSIS + EXP_DESIGN 均 done，通过。iteration=4。
+**Evaluate**：应用 Delta -> TECH_DESIGN=done；artifacts.design=done（ref: `.ai/docs/20260814-favorites-archive/favorites-enhancement-design.md`）。依赖检查：IMPACT_ANALYSIS + EXP_DESIGN 均 done，通过。iteration=4。
 
 **State Delta**：
 - exitCriteria: `TECH_DESIGN` -> done
-- artifacts: `design` -> done（ref: `.ai/docs/favorites-enhancement-design.md`）
+- artifacts: `design` -> done（ref: `.ai/docs/20260814-favorites-archive/favorites-enhancement-design.md`）
 
 **State 快照**：前 4 项 done，其余 8 项 pending
 
@@ -150,7 +150,7 @@ status: running
 
 **State Delta**：
 - exitCriteria: `TESTCASES` -> done
-- artifacts: `testcases` -> done（ref: `.ai/docs/favorites-enhancement-testcases.md`）
+- artifacts: `testcases` -> done（ref: `.ai/docs/20260814-favorites-archive/favorites-enhancement-testcases.md`）
 
 **State 快照**：前 5 项 done，其余 7 项 pending
 

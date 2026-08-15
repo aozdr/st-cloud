@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Ban, Key, Edit3, Shield, UserPlus } from 'lucide-react';
 import api from '../../lib/api';
 import { useToast } from '../ui/Toast';

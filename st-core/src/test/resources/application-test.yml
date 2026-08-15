@@ -26,3 +26,10 @@ mybatis-plus:
 stcloud:
   tenant:
     mode: SAAS
+  onlyoffice:
+    # 测试环境使用内存锁后端，避免依赖 Redis；生产默认 redis
+    lock-backend: memory
+    jwt-secret: test-onlyoffice-secret-0123456789abcdef
+    url: http://localhost:8081
+    public-base-url: http://localhost:8080
+    allowed-callback-hosts: localhost,127.0.0.1

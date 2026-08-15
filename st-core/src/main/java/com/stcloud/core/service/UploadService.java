@@ -46,5 +46,16 @@ public interface UploadService {
     /**
      * 中止分片上传，清理已上传分片
      */
+    /**
+     * 中转模式接收一个小块（pacing 节流接收 + 缓冲，累积≥5MB 触发 uploadPart）
+     */
+    RelayChunkResponse relayChunk(String uploadId, String s3UploadId, int seq,
+                                  java.io.InputStream inputStream, long chunkBytes);
+
+    /**
+     * 中转模式完成上传（末片 uploadPart + 合并）
+     */
+    FileNodeVO relayFinalize(String uploadId, String s3UploadId);
+
     void abortUpload(String uploadId, String s3UploadId, Long fileId);
 }

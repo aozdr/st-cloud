@@ -12,6 +12,8 @@ public interface UserQuotaMapper {
     @Select("SELECT storage_used AS used, storage_quota AS quota FROM sys_user WHERE id = #{userId} AND deleted = 0")
     StorageInfoVO getUserQuota(@Param("userId") Long userId);
 
-    @Update("UPDATE sys_user SET storage_used = storage_used + #{delta} WHERE id = #{userId} AND storage_used + #{delta} >= 0")
+    @Update("UPDATE sys_user SET storage_used = storage_used + #{delta} " +
+            "WHERE id = #{userId} AND deleted = 0 AND storage_used + #{delta} >= 0 " +
+            "AND (storage_quota IS NULL OR storage_used + #{delta} <= storage_quota)")
     int updateStorageUsed(@Param("userId") Long userId, @Param("delta") Long delta);
 }

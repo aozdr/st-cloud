@@ -1,12 +1,14 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import api from '../../lib/api';
 import { getFileTypeConfig, cn, formatSize, formatDate } from '../../lib/utils';
 import type { FileNode } from '../../types';
 import FileTypeIcon from './FileTypeIcon';
-import { Check, Star, Play } from 'lucide-react';
+import { Check, Star, Play, Lock } from 'lucide-react';
 
 interface Props {
   files: FileNode[];
+  /** 已锁定节点 ID 集合（团队空间传入；用于列表行显示锁图标） */
+  lockedIds?: Set<string>;
   selectedIds: Set<string>;
   focusedId: string | null;
   cutIds: Set<string> | null;
@@ -106,7 +108,7 @@ function GridThumbnail({ file }: { file: FileNode }) {
 }
 
 export default function FileGrid({
-  files, selectedIds, focusedId, cutIds, onSelect, onContextMenu, onDoubleClick,
+  files, lockedIds, selectedIds, focusedId, cutIds, onSelect, onContextMenu, onDoubleClick,
   onItemDragStart, onFolderDragOver, onFolderDragLeave, onFolderDrop, dragOverFolderId,
   onToggleSelect, isFavorite, onToggleFavorite,
 }: Props) {
@@ -176,12 +178,13 @@ export default function FileGrid({
             <div className="px-1">
               <div
                 className={cn(
-                  'text-xs leading-tight truncate',
+                  'flex items-center gap-1 text-xs leading-tight truncate',
                   isSelected ? 'text-primary-600 font-medium' : 'text-fg',
                 )}
                 title={file.name}
               >
-                {file.name}
+                <span className="min-w-0 truncate">{file.name}</span>
+                {lockedIds?.has(file.id) && <Lock className="w-3 h-3 text-amber-500 flex-shrink-0" aria-hidden />}
               </div>
               <div className="text-[11px] text-muted truncate flex items-center gap-1.5">
                 {file.nodeType === 1 && <span className="flex-shrink-0">{formatSize(file.fileSize)}</span>}

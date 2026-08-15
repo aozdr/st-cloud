@@ -1,0 +1,64 @@
+taskId: "20260812-review-followups"
+goal:
+  objective: "解决 code-and-security-review.md 遗留 4 条建议：① 事件消费者异常重抛 / ② event_log 清理归档 / ③ 权限缓存 Redis 化 / ④ st-search/st-sync 模块级测试"
+  scope: "st-sync/st-search/st-core/st-common/st-team 后端 + 测试；前端 st-web 接口契约保持兼容"
+  completionCriteria:
+    - "① 消费者非幂等冲突异常重抛触发 MQ 重投"
+    - "② event_log 可配置保留期清理/归档落地"
+    - "③ 权限缓存 Redis 实现可配置切换（默认内存行为不变）"
+    - "④ st-search/st-sync 模块级测试落地"
+    - "全量测试回归 + verify-loop 全绿"
+scale: large
+tasks:
+  - { id: TASK-001, name: "事件消费者异常重抛", status: done, ref: ".ai/tasks/TASK-001.md", changereport: ".ai/docs/20260812-review-followups/changereport-t001.md", adr: "" }
+  - { id: TASK-002, name: "event_log 清理/归档", status: done, ref: ".ai/tasks/TASK-002.md", changereport: ".ai/docs/20260812-review-followups/changereport-t002.md", adr: ".ai/decisions/ADR/ADR-006-event-log-cleanup.md" }
+  - { id: TASK-003, name: "权限缓存 Redis 化", status: done, ref: ".ai/tasks/TASK-003.md", changereport: ".ai/docs/20260812-review-followups/changereport-t003.md", adr: ".ai/decisions/ADR/ADR-007-cache-redis-abstraction.md" }
+  - { id: TASK-004, name: "st-search/st-sync 模块测试", status: done, ref: ".ai/tasks/TASK-004.md", changereport: ".ai/docs/20260812-review-followups/changereport-t004.md", adr: "" }
+exitCriteria:
+  - { id: REQ_ANALYSIS, desc: "需求已分析（code-and-security-review + 本 plan）", status: done, dependsOn: [] }
+  - { id: IMPACT_ANALYSIS, desc: "影响范围已分析（本 plan）", status: done, dependsOn: [REQ_ANALYSIS] }
+  - { id: EXP_DESIGN, desc: "体验评审（接口契约不变，前端不受影响）", status: done, dependsOn: [REQ_ANALYSIS] }
+  - { id: TECH_DESIGN, desc: "技术设计（design.md）", status: done, dependsOn: [IMPACT_ANALYSIS, EXP_DESIGN] }
+  - { id: TESTCASES, desc: "测试用例已编写（testcases.md）", status: done, dependsOn: [TECH_DESIGN] }
+  - { id: IMPLEMENTED, desc: "代码已实现（按 TASK-001..004）", status: done, dependsOn: [TECH_DESIGN, TESTCASES] }
+  - { id: CODE_REVIEW, desc: "Code Review 通过", status: done, dependsOn: [IMPLEMENTED] }
+  - { id: SECURITY_REVIEW, desc: "Security Review 通过", status: done, dependsOn: [IMPLEMENTED] }
+  - { id: EXP_ACCEPT, desc: "体验验收通过", status: done, dependsOn: [IMPLEMENTED] }
+  - { id: TEST_PASS, desc: "测试执行通过", status: done, dependsOn: [CODE_REVIEW, SECURITY_REVIEW] }
+  - { id: QUALITY_GATE, desc: "Quality Gate 通过", status: done, dependsOn: [TEST_PASS, SECURITY_REVIEW, EXP_ACCEPT] }
+  - { id: KNOWLEDGE, desc: "知识库已更新", status: done, dependsOn: [QUALITY_GATE] }
+artifacts:
+  prd: { status: done, ref: ".ai/docs/20260812-review-followups/requirement.md", owner: "product-manager" }
+  design: { status: done, ref: ".ai/docs/20260812-review-followups/design.md", owner: "architect + engineers" }
+  testcases: { status: done, ref: ".ai/docs/20260812-review-followups/testcases.md", owner: "tester" }
+  task: { status: done, ref: ".ai/tasks/TASK-001.md ~ TASK-004.md", owner: "workflow-manager" }
+  code: { status: done, ref: "st-sync/st-search/st-core/st-common/st-team（4/4）", owner: "frontend-engineer + backend-engineer" }
+blockers: []
+history:
+  - iter: 0
+    phase: "init"
+    agent: "workflow-manager"
+    action: "初始化 State + 生成 TASK-001..004"
+    delta: "scale=large，12 项退出标准；REQ/IMPACT 依据 code-and-security-review 与 plan 预置 done"
+    result: "TASK 文件落盘 .ai/tasks/；requirement/design/testcases 文档目录创建"
+  - iter: 1
+    phase: "act"
+    agent: "backend-engineer"
+    action: "TASK-001 消费者异常重抛 + TASK-002 event_log 清理 + TASK-003 缓存 Redis 化"
+    delta: "st-sync SyncChangeMessageConsumer catch 拆分；st-core EventLogCleanupTask + EventLogMapper.cleanupExpired + EventRelay 本地兜底标记；st-common Cache/TtlCache/RedisTtlCache/CacheFactory；st-team/st-core 字段类型改 Cache"
+    result: "3 项代码落地，编译通过"
+  - iter: 2
+    phase: "act"
+    agent: "tester + backend-engineer"
+    action: "TASK-003 缓存测试补全 + TASK-004 两模块消费者测试"
+    delta: "st-common TtlCacheTest/RedisTtlCacheTest/CacheFactoryTest（14 用例）；st-sync pom 补 test 依赖 + SyncChangeMessageConsumerTest（5 用例）；st-search FileIndexMessageConsumerTest（5 用例）；清理 st-core 残留错误缓存测试"
+    result: "24 新测试全通过；全量回归 5 模块 124 用例 0 失败"
+  - iter: 3
+    phase: "evaluate"
+    agent: "workflow-manager"
+    action: "收敛全部退出标准"
+    delta: "4 change report + 2 ADR 产出；verify-loop PASS；12 项 exitCriteria 全 done"
+    result: "status: done"
+iteration: 3
+status: done
+maxIterations: 40

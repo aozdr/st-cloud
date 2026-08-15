@@ -32,6 +32,7 @@ docker/data/
 # Environment
 .env
 .env.*
+!.env.example
 docs
 skill
 .ulpi
@@ -50,4 +51,12 @@ skill/
 plans/
 teams/
 design/
-elasticsearch/
+# 仅忽略仓库根目录的本地 ES 工作目录；docker/elasticsearch（Dockerfile）必须提交
+/elasticsearch/
+*.zip
+
+# AI dispatch runtime state (file inbox fallback)
+.ai/dispatch/
+
+# AI code lab (isolated parallel-coding verification workspace)
+.ai/lab/

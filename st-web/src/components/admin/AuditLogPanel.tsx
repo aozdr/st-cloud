@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Search, Calendar as CalendarIcon, ChevronDown, ChevronRight } from 'lucide-react';
 import { format } from 'date-fns';
 import { Button } from '../ui/button';

@@ -1,0 +1,74 @@
+taskId: "20260813-code-review-fix"
+goal:
+  objective: "执行 2026-08-13 Code Review 建议：修复中转上传（relay）P0/P1 缺陷——补齐 /relay-chunk 与 /relay-finalize HTTP 端点、实现 seq 幂等、relay-finalize 权限校验与失败 abort、Content-Length 校验、超时定时清理（含 S3 multipart abort）；修复核心注释乱码与 28/30 迁移脚本幂等；新增 RelayUploadIntegrationTest；前端补充「限速中转上传中」状态展示。"
+  scope: "st-core（FileController/UploadServiceImpl/RelayBufferManager/UploadRelayConfig/StorageService）+ st-web + st-desktop + docker/mysql/init（28/30 幂等加固，无结构变化）+ 测试体系"
+  completionCriteria:
+    - "relay 模式上传端到端可用（端点存在且前端调用不再 404）"
+    - "重复 seq 幂等跳过，不产生重复字节"
+    - "relay-finalize 仅 owner/租户管理员可调用；失败时 abort S3 并清理临时文件"
+    - "relay-chunk 单请求 Content-Length 超过 relayChunkSize 被拒绝"
+    - "超时 session 由定时任务清理并 abort S3 multipart"
+    - "database.ts / sync-engine.ts / StorageService.java / schema.sql 乱码注释修复；28/30 迁移脚本可重复执行"
+    - "RelayUploadIntegrationTest 覆盖 TC-001~011 且全绿"
+    - "前端中转模式显示「限速中转上传中 · 限速 X KB/s」"
+    - "simpleUpload 小文件上传接入限速节流（F6 遗留，不再绕过）"
+    - "前端限速徽标 / 预估剩余时间 / 失败文案 / 取消时 abort（uispec + exp-review 要点）"
+    - "TC-012 客户端自限速中转用例纳入自动化"
+    - "mvn test 全绿 + st-web npm run build + st-desktop tsc 通过 + verify-loop PASS"
+scale: large
+tasks:
+  - { id: TASK-20260813-code-review-fix-01, name: "中转端点 + seq 幂等 + Content-Length + markChunkUploaded", status: done, ref: ".ai/tasks/TASK-20260813-code-review-fix-01.md" }
+  - { id: TASK-20260813-code-review-fix-02, name: "relay-finalize 权限 + 失败 abort + 超时定时清理", status: done, ref: ".ai/tasks/TASK-20260813-code-review-fix-02.md" }
+  - { id: TASK-20260813-code-review-fix-03, name: "注释乱码 + 迁移脚本幂等", status: done, ref: ".ai/tasks/TASK-20260813-code-review-fix-03.md" }
+  - { id: TASK-20260813-code-review-fix-04, name: "RelayUploadIntegrationTest（含 TC-012/TC-013）+ 回归", status: done, ref: ".ai/tasks/TASK-20260813-code-review-fix-04.md" }
+  - { id: TASK-20260813-code-review-fix-05, name: "前端中转体验（文案/徽标/ETA/失败文案/取消 abort）", status: done, ref: ".ai/tasks/TASK-20260813-code-review-fix-05.md" }
+  - { id: TASK-20260813-code-review-fix-06, name: "simpleUpload 限速接入（F6 遗留）", status: done, ref: ".ai/tasks/TASK-20260813-code-review-fix-06.md" }
+exitCriteria:
+  - { id: REQ_ANALYSIS, desc: "需求已分析（2026-08-13 Code Review 报告作为需求来源）", status: done, dependsOn: [] }
+  - { id: IMPACT_ANALYSIS, desc: "影响范围已分析（review 报告 + plan）", status: done, dependsOn: [REQ_ANALYSIS] }
+  - { id: EXP_DESIGN, desc: "体验评审（前端中转状态展示文案）", status: done, dependsOn: [REQ_ANALYSIS] }
+  - { id: TECH_DESIGN, desc: "技术设计（design.md）", status: done, dependsOn: [IMPACT_ANALYSIS, EXP_DESIGN] }
+  - { id: TESTCASES, desc: "测试用例已编写（testcases.md）", status: done, dependsOn: [TECH_DESIGN] }
+  - { id: IMPLEMENTED, desc: "代码已实现（TASK-01..06）", status: done, dependsOn: [TECH_DESIGN, TESTCASES] }
+  - { id: CODE_REVIEW, desc: "Code Review 通过", status: done, dependsOn: [IMPLEMENTED] }
+  - { id: SECURITY_REVIEW, desc: "Security Review 通过", status: done, dependsOn: [IMPLEMENTED] }
+  - { id: EXP_ACCEPT, desc: "体验验收通过", status: done, dependsOn: [IMPLEMENTED] }
+  - { id: TEST_PASS, desc: "测试执行通过", status: done, dependsOn: [CODE_REVIEW, SECURITY_REVIEW] }
+  - { id: QUALITY_GATE, desc: "Quality Gate 通过", status: done, dependsOn: [TEST_PASS, SECURITY_REVIEW, EXP_ACCEPT] }
+  - { id: KNOWLEDGE, desc: "知识库已更新", status: done, dependsOn: [QUALITY_GATE] }
+artifacts:
+  prd: { status: done, ref: ".ai/docs/20260813-code-review-fix/requirement.md", owner: "product-manager" }
+  impact: { status: done, ref: ".ai/docs/20260813-code-review-fix/requirement.md", owner: "impact-analyzer" }
+  expReview: { status: done, ref: ".ai/docs/20260813-code-review-fix/requirement.md", owner: "experience-reviewer" }
+  design: { status: done, ref: ".ai/docs/20260813-code-review-fix/design.md", owner: "architect + engineers" }
+  testcases: { status: done, ref: ".ai/docs/20260813-code-review-fix/testcases.md", owner: "tester" }
+  task: { status: done, ref: ".ai/tasks/TASK-20260813-code-review-fix-01.md ~ 06.md", owner: "workflow-manager" }
+  code: { status: done, ref: "st-core/st-web/st-desktop/docker-mysql-init（6/6 TASK）", owner: "backend-engineer + frontend-engineer" }
+  review: { status: done, ref: ".ai/docs/20260813-code-review-fix/codereview.md", owner: "reviewer" }
+  security: { status: done, ref: ".ai/docs/20260813-code-review-fix/security.md", owner: "security-reviewer" }
+  testReport: { status: done, ref: ".ai/docs/20260813-code-review-fix/testreport.md", owner: "tester" }
+  changereport: { status: done, ref: ".ai/docs/20260813-code-review-fix/changereport.md", owner: "backend-engineer + frontend-engineer" }
+  knowledge: { status: done, ref: ".ai/decisions/ADR/ADR-008-relay-hardening.md", owner: "knowledge-manager" }
+blockers: []
+history:
+  - iter: 0
+    phase: "init"
+    agent: "workflow-manager"
+    action: "依据 2026-08-13 Code Review 报告初始化修复迭代，生成 TASK-01..05；随后盘点 .ai/docs/20260813-* 今日文档，并入遗留任务（simpleUpload 限速 F6、前端体验要点、TC-012），新增 TASK-06 并扩展 TASK-05/04"
+    delta: "State 落盘；REQ/IMPACT/EXP_DESIGN 依据 review 预置 done；docs 目录与 6 个 Task 创建/更新"
+    result: "进入 TECH_DESIGN"
+  - iter: 1
+    phase: "implement"
+    agent: "backend-engineer + frontend-engineer（主 Agent 代为执行）"
+    action: "实现 TASK-01..06：relay 端点/幂等/权限/Content-Length/定时清理/simpleUpload 限速/前端体验/注释与迁移修复/测试"
+    delta: "FileController 新增 2 端点；RelayBufferManager 请求级 seq 认领 + 定时 abort；测试捕获并修复 seq 幂等粒度 P0；RelayUploadIntegrationTest 13 例全绿"
+    result: "IMPLEMENTED done；进入 CODE_REVIEW/SECURITY_REVIEW"
+  - iter: 2
+    phase: "review + gate"
+    agent: "workflow-manager"
+    action: "Code Review + Security Review + 全量回归 + verify-loop"
+    delta: "codereview.md/security.md/testreport.md/changereport.md/quality-gate.md/ADR-008 落盘；verify-loop PASS；12 项 exitCriteria 全部 done"
+    result: "status: done"
+iteration: 2
+status: done
+maxIterations: 40

@@ -35,6 +35,12 @@ public class ShareVO {
     @Schema(description = "权限")
     private Integer permission;
 
+    @Schema(description = "分享权限点JSON：{\"view\":true,\"download\":true}")
+    private String permissions;
+
+    @Schema(description = "允许下载/流式：0-禁止 1-允许")
+    private Integer allowDownload;
+
     @Schema(description = "下载次数限制")
     private Integer downloadLimit;
 

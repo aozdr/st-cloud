@@ -1,4 +1,4 @@
-﻿# 需求发现报告
+# 需求发现报告
 
 > 输出标准：`docs/newList/ai-requirement-discovery-agent-standard.md`
 > 将用户提出的模糊需求转换为明确的软件需求；确认需求后进入程序设计阶段。

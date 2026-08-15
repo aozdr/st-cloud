@@ -21,6 +21,7 @@ public class UserTransferLimiter {
 
     private final ConcurrentMap<Long, UploadGate> uploadGates = new ConcurrentHashMap<>();
     private final ConcurrentMap<Long, DownloadBucket> downloadBuckets = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Long, UploadPaceBucket> uploadPaceBuckets = new ConcurrentHashMap<>();
 
     /** 上传窗口：每个用户最多同时持有的未确认分片URL数量（1=逐片，杜绝囤积URL后突发） */
     private static final int UPLOAD_WINDOW = 1;
@@ -59,6 +60,19 @@ public class UserTransferLimiter {
             return;
         }
         downloadBuckets.computeIfAbsent(userId, k -> new DownloadBucket()).acquire(bytes, rateBytesPerSec);
+    }
+
+    /**
+     * 上传中转按字节阻塞 pacing（服务端中转接收时节流，保证接收速率≤限速）。
+     * 与 presigned 门控(UploadGate)独立桶，互不干扰。
+     *
+     * @param rateBytesPerSec 速率上限(字节/秒)，<=0表示不限速
+     */
+    public void acquireUploadPace(Long userId, long bytes, long rateBytesPerSec) {
+        if (rateBytesPerSec <= 0 || bytes <= 0) {
+            return;
+        }
+        uploadPaceBuckets.computeIfAbsent(userId, k -> new UploadPaceBucket()).acquire(bytes, rateBytesPerSec);
     }
 
     /** 上传门控结果 */
@@ -140,36 +154,21 @@ public class UserTransferLimiter {
         }
     }
 
-    /** 下载字节令牌桶：阻塞式按字节限速，并发下载共享 */
-    static final class DownloadBucket {
-        private double tokens;
-        private long lastRefillNs;
+    /** 上传中转字节令牌桶：阻塞式按字节 pacing，中转接收时节流（复用公共 TokenBucket） */
+    static final class UploadPaceBucket {
+        private final TokenBucket bucket = new TokenBucket();
 
-        synchronized void acquire(long bytes, long rateBytesPerSec) {
-            long capacity = Math.max(8192L, rateBytesPerSec);
-            long nowNs = System.nanoTime();
-            if (lastRefillNs == 0L) {
-                tokens = capacity;
-                lastRefillNs = nowNs;
-            }
-            while (true) {
-                double elapsedSec = (nowNs - lastRefillNs) / 1_000_000_000.0;
-                tokens = Math.min(capacity, tokens + elapsedSec * rateBytesPerSec);
-                lastRefillNs = nowNs;
-                if (tokens >= bytes) {
-                    tokens -= bytes;
-                    return;
-                }
-                double deficit = bytes - tokens;
-                long waitMs = (long) (deficit / rateBytesPerSec * 1000.0) + 1L;
-                try {
-                    Thread.sleep(Math.min(waitMs, 1000L));
-                } catch (InterruptedException e) {
-                    Thread.currentThread().interrupt();
-                    return;
-                }
-                nowNs = System.nanoTime();
-            }
+        void acquire(long bytes, long rateBytesPerSec) {
+            bucket.acquire(bytes, rateBytesPerSec);
+        }
+    }
+
+    /** 下载字节令牌桶：阻塞式按字节限速，并发下载共享（复用公共 TokenBucket） */
+    static final class DownloadBucket {
+        private final TokenBucket bucket = new TokenBucket();
+
+        void acquire(long bytes, long rateBytesPerSec) {
+            bucket.acquire(bytes, rateBytesPerSec);
         }
     }
 }

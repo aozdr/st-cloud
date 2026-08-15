@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS sync_change_log (
     node_type       TINYINT      NOT NULL                 COMMENT '0-文件夹 1-文件',
     file_md5        VARCHAR(64)  DEFAULT NULL             COMMENT '文件MD5',
     file_size       BIGINT       DEFAULT 0                COMMENT '文件大小（字节）',
+    event_log_id    BIGINT       DEFAULT NULL             COMMENT '事件Outbox日志ID（MQ 幂等键，本地兜底为 NULL）',
     created_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '日志创建时间',
     PRIMARY KEY (id),
     KEY idx_user_id (user_id, id),

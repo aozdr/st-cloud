@@ -1,4 +1,4 @@
-﻿import { useRef, useCallback, useState } from 'react';
+import { useRef, useCallback, useState } from 'react';
 
 interface PullToRefreshOptions {
   /** 触发刷新的下拉距离(px),默认 70 */

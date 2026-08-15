@@ -1,6 +1,7 @@
 package com.stcloud.team.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.stcloud.auth.entity.SysUser;
@@ -16,10 +17,14 @@ import com.stcloud.team.entity.TeamActivity;
 import com.stcloud.team.entity.TeamInvite;
 import com.stcloud.team.entity.TeamMember;
 import com.stcloud.team.entity.TeamSpace;
+import com.stcloud.team.enums.InviteStatus;
+import com.stcloud.team.enums.RoleStatus;
+import com.stcloud.team.enums.TeamSpaceStatus;
 import com.stcloud.team.mapper.TeamActivityMapper;
 import com.stcloud.team.mapper.TeamInviteMapper;
 import com.stcloud.team.mapper.TeamMemberMapper;
 import com.stcloud.team.mapper.TeamSpaceMapper;
+import com.stcloud.team.service.FolderPermissionService;
 import com.stcloud.team.service.TeamService;
 import com.stcloud.team.util.ActiveTracker;
 import com.stcloud.team.util.TeamActivityHelper;
@@ -30,8 +35,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -82,7 +89,8 @@ public class TeamServiceImpl implements TeamService {
         space.setStorageUsed(0L);
         space.setStorageQuota(request.getStorageQuota() != null ? request.getStorageQuota() : 10L * 1024 * 1024 * 1024);
         cloudStorageService.validateQuotaAssignment(0L, space.getStorageQuota());
-        space.setStatus(1);
+        // 新建空间默认正常
+        space.setStatus(TeamSpaceStatus.NORMAL.getCode());
         teamSpaceMapper.insert(space);
 
         // 创建者自动成为管理员
@@ -172,6 +180,8 @@ public class TeamServiceImpl implements TeamService {
         }
         teamSpaceMapper.deleteById(spaceId);
         teamMemberMapper.delete(new LambdaQueryWrapper<TeamMember>().eq(TeamMember::getSpaceId, spaceId));
+        // 空间与成员删除：权限缓存失效
+        folderPermissionService.invalidateSpace(spaceId);
         return Result.success();
     }
 
@@ -195,6 +205,8 @@ public class TeamServiceImpl implements TeamService {
         member.setRole(request.getRole() != null ? request.getRole() : 2);
         member.setJoinedAt(LocalDateTime.now());
         teamMemberMapper.insert(member);
+        // 成员变更：权限缓存失效，新成员权限下次访问重新计算
+        folderPermissionService.invalidateSpace(spaceId);
 
         // 记录邀请活动日志
         activityHelper.log(spaceId, "MEMBER_INVITE", "MEMBER", user.getId(), user.getNickname());
@@ -268,6 +280,8 @@ public class TeamServiceImpl implements TeamService {
         }
         member.setRole(role);
         teamMemberMapper.updateById(member);
+        // 角色变更：权限缓存失效，重新按新角色计算
+        folderPermissionService.invalidateSpace(spaceId);
         // 记录角色变更活动日志
         SysUser user = sysUserMapper.selectById(member.getUserId());
         activityHelper.log(spaceId, "MEMBER_ROLE_CHANGE", "MEMBER", member.getUserId(),
@@ -287,6 +301,8 @@ public class TeamServiceImpl implements TeamService {
             throw new BusinessException(ResultCode.BAD_REQUEST, "不能移除自己，请使用退出空间");
         }
         teamMemberMapper.deleteById(memberId);
+        // 成员移除：权限缓存失效
+        folderPermissionService.invalidateSpace(spaceId);
         // 记录移除活动日志
         SysUser user = sysUserMapper.selectById(member.getUserId());
         activityHelper.log(spaceId, "MEMBER_REMOVE", "MEMBER", member.getUserId(),
@@ -305,10 +321,12 @@ public class TeamServiceImpl implements TeamService {
         if (member == null) {
             throw new BusinessException(ResultCode.TEAM_PERMISSION_DENIED, "您不是该空间的成员");
         }
-        if (member.getRole() > minRole) {
+        // 权限模型重设计：按权限点推导旧角色等级（含自定义角色），管理员（roleId==0 或 manage_settings）直通
+        int level = legacyRoleLevel(member);
+        if (minRole != null && level > minRole) {
             throw new BusinessException(ResultCode.TEAM_PERMISSION_DENIED, "权限不足");
         }
-        return member.getRole();
+        return level;
     }
 
     // ==================== P0 新增：邀请链接 ====================
@@ -325,7 +343,8 @@ public class TeamServiceImpl implements TeamService {
         invite.setRole(request.getRole() != null ? request.getRole() : 2);
         invite.setCreatedBy(UserContext.getUserId());
         invite.setExpireAt(request.getExpireAt());
-        invite.setStatus(1);
+        // 新建邀请链接默认有效
+        invite.setStatus(InviteStatus.ACTIVE.getCode());
         teamInviteMapper.insert(invite);
         // 记录活动日志
         activityHelper.log(spaceId, "INVITE_CREATE", "INVITE", invite.getId(), "邀请链接");
@@ -352,7 +371,8 @@ public class TeamServiceImpl implements TeamService {
         if (invite == null || !invite.getSpaceId().equals(spaceId)) {
             throw new BusinessException(ResultCode.TEAM_INVITE_NOT_FOUND);
         }
-        invite.setStatus(0);
+        // 撤销邀请链接
+        invite.setStatus(InviteStatus.REVOKED.getCode());
         teamInviteMapper.updateById(invite);
         // 记录活动日志
         activityHelper.log(spaceId, "INVITE_REVOKE", "INVITE", inviteId, "邀请链接");
@@ -365,7 +385,7 @@ public class TeamServiceImpl implements TeamService {
         // 查询邀请码（无需空间权限，已认证即可）
         TeamInvite invite = teamInviteMapper.selectOne(new LambdaQueryWrapper<TeamInvite>()
                 .eq(TeamInvite::getInviteCode, inviteCode));
-        if (invite == null || invite.getStatus() == 0) {
+        if (invite == null || invite.getStatus() == InviteStatus.REVOKED.getCode()) {
             throw new BusinessException(ResultCode.TEAM_INVITE_NOT_FOUND);
         }
         // 校验是否过期
@@ -374,7 +394,7 @@ public class TeamServiceImpl implements TeamService {
         }
         // 校验空间是否存在且正常
         TeamSpace space = teamSpaceMapper.selectById(invite.getSpaceId());
-        if (space == null || space.getStatus() != 1) {
+        if (space == null || space.getStatus() != TeamSpaceStatus.NORMAL.getCode()) {
             throw new BusinessException(ResultCode.TEAM_NOT_FOUND);
         }
         Long userId = UserContext.getUserId();
@@ -393,6 +413,8 @@ public class TeamServiceImpl implements TeamService {
         member.setRole(invite.getRole());
         member.setJoinedAt(LocalDateTime.now());
         teamMemberMapper.insert(member);
+        // 成员变更：权限缓存失效
+        folderPermissionService.invalidateSpace(invite.getSpaceId());
         // 记录加入活动日志
         SysUser user = sysUserMapper.selectById(userId);
         activityHelper.log(invite.getSpaceId(), "MEMBER_JOIN", "MEMBER", userId,
@@ -494,39 +516,134 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     public Integer checkPermission(Long spaceId, Long nodeId, Integer minPermission) {
+        // 权限模型重设计：兼容旧单值校验，内部按权限点并集推导旧等级（-1 不再产生，规则只增强）
+        int effectiveLevel = FolderPermissionService.legacyLevelOf(resolveMyPermissions(spaceId, nodeId));
+        if (minPermission != null && effectiveLevel > minPermission) {
+            throw new BusinessException(ResultCode.TEAM_PERMISSION_DENIED, "权限不足");
+        }
+        return effectiveLevel;
+    }
+
+    // ==================== 权限模型重设计：权限点校验（TASK-PERM-BE1） ====================
+
+    @Override
+    public void requirePermissions(Long spaceId, Long nodeId, String... perms) {
+        if (perms == null || perms.length == 0) {
+            return;
+        }
+        Set<String> effective = resolveMyPermissions(spaceId, nodeId);
+        for (String perm : perms) {
+            if (!effective.contains(perm)) {
+                throw new BusinessException(ResultCode.TEAM_PERMISSION_DENIED, "权限不足：" + perm);
+            }
+        }
+    }
+
+    @Override
+    public Set<String> resolveMyPermissions(Long spaceId, Long nodeId) {
         Long userId = UserContext.getUserId();
-        // 1. 空间级成员校验
+        // 1. 成员校验（非成员拒绝）
         TeamMember member = teamMemberMapper.selectOne(new LambdaQueryWrapper<TeamMember>()
                 .eq(TeamMember::getSpaceId, spaceId).eq(TeamMember::getUserId, userId));
         if (member == null) {
             throw new BusinessException(ResultCode.TEAM_PERMISSION_DENIED, "您不是该空间的成员");
         }
-        int spaceRole = member.getRole();
+        // 2. 角色权限集解析
+        Set<String> rolePerms = resolveRolePermissions(member);
+        // 3. 管理员直通：roleId==0 或权限集含 manage_settings → 全部权限点
+        if (member.getRole() != null && (member.getRole() == 0
+                || rolePerms.contains(FolderPermissionService.PERM_MANAGE_SETTINGS))) {
+            return new LinkedHashSet<>(FolderPermissionService.ALL_PERMISSIONS);
+        }
+        // 4. 并集：角色权限 ∪ 沿父链收集的文件夹规则权限
+        return folderPermissionService.resolvePermissions(spaceId, nodeId, userId, rolePerms);
+    }
 
-        // 2. nodeId 为空，直接用空间级角色
-        if (nodeId == null) {
-            if (spaceRole > minPermission) {
-                throw new BusinessException(ResultCode.TEAM_PERMISSION_DENIED, "权限不足");
+    /**
+     * 成员角色 → 权限点集合：
+     * role 0/1/2 用 presetPerms（查看者(2) 为 view=true、download=false）；
+     * 自定义角色（>=100，兼容 3~99）从 team_role.permissions JSON 读取，角色缺失/停用回退查看者。
+     */
+    private Set<String> resolveRolePermissions(TeamMember member) {
+        if (member == null || member.getRole() == null) {
+            return FolderPermissionService.VIEWER_PERMISSIONS;
+        }
+        int role = member.getRole();
+        if (role >= 0 && role <= 2) {
+            return FolderPermissionService.presetPermissions(role);
+        }
+        com.stcloud.team.entity.TeamRole teamRole = teamRoleMapper.selectById((long) role);
+        if (teamRole != null && teamRole.getStatus() != null
+                && teamRole.getStatus() == RoleStatus.ENABLED.getCode()) {
+            return FolderPermissionService.parsePermissions(teamRole.getPermissions());
+        }
+        // 角色不存在或已停用：回退查看者
+        return FolderPermissionService.VIEWER_PERMISSIONS;
+    }
+
+    /**
+     * 成员旧角色等级（兼容空间级 checkPermission）：含 manage_settings/roleId==0 → 0；
+     * 含任一内容操作权限 → 1；仅 view → 2。
+     */
+    private int legacyRoleLevel(TeamMember member) {
+        if (member == null || member.getRole() == null) {
+            return 2;
+        }
+        Set<String> perms = resolveRolePermissions(member);
+        if (member.getRole() == 0 || perms.contains(FolderPermissionService.PERM_MANAGE_SETTINGS)) {
+            return 0;
+        }
+        return FolderPermissionService.legacyLevelOf(perms);
+    }
+
+    /**
+     * 校验文件夹节点归属（P1 安全修复）：节点必须存在、状态正常且属于指定空间。
+     * 防止任意空间管理员跨空间读取/写入其他团队文件夹的权限规则（跨空间 ACL 注入）。
+     */
+    private FileNode requireFolderNodeInSpace(Long spaceId, Long folderNodeId) {
+        FileNode node = fileNodeMapper.selectById(folderNodeId);
+        if (node == null || !node.isNormal() || !spaceId.equals(node.getSpaceId())) {
+            throw new BusinessException(ResultCode.TEAM_PERMISSION_DENIED, "节点不属于该空间");
+        }
+        return node;
+    }
+
+    /**
+     * 权限规则服务端校验（P2 安全修复）：
+     * <ol>
+     *   <li>subjectType 白名单 {all, member, role}，非法值直接拒绝，防止污染数据；</li>
+     *   <li>all 主体权限集禁止包含空间级管理权限点 manage_members / manage_settings
+     *       （permissions JSON 为空时按旧单值 permission 回退映射，同限），防止越权下放。</li>
+     * </ol>
+     */
+    private void validatePermissionRules(List<FolderPermissionRequest.PermissionRule> rules) {
+        if (rules == null) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "权限规则不能为空");
+        }
+        Set<String> validSubjectTypes = Set.of("all", "member", "role");
+        for (FolderPermissionRequest.PermissionRule rule : rules) {
+            if (rule == null || rule.getSubjectType() == null
+                    || !validSubjectTypes.contains(rule.getSubjectType())) {
+                throw new BusinessException(ResultCode.BAD_REQUEST, "subjectType 必须为 all/member/role");
             }
-            return spaceRole;
+            if (!"all".equals(rule.getSubjectType())) {
+                continue;
+            }
+            // all 主体：permissions JSON 为空时按旧单值 permission 回退映射，权限上限同限
+            Set<String> perms = rule.getPermissions() == null || rule.getPermissions().isBlank()
+                    ? FolderPermissionService.legacyPermissionSet(rule.getPermission())
+                    : FolderPermissionService.parsePermissions(rule.getPermissions());
+            if (perms.contains(FolderPermissionService.PERM_MANAGE_MEMBERS)
+                    || perms.contains(FolderPermissionService.PERM_MANAGE_SETTINGS)) {
+                throw new BusinessException(ResultCode.BAD_REQUEST, "全体成员规则不能包含空间管理权限");
+            }
         }
-
-        // 3. 权限链计算：从当前节点向上遍历至空间根
-        int effectivePermission = folderPermissionService.resolvePermission(spaceId, nodeId, userId, spaceRole);
-
-        // 4. 校验有效权限
-        if (effectivePermission == -1) {
-            throw new BusinessException(ResultCode.TEAM_PERMISSION_DENIED, "无访问权限");
-        }
-        if (effectivePermission > minPermission) {
-            throw new BusinessException(ResultCode.TEAM_PERMISSION_DENIED, "权限不足");
-        }
-        return effectivePermission;
     }
 
     @Override
     public Result<List<FolderPermissionVO>> getFolderPermissions(Long spaceId, Long folderNodeId) {
         checkPermission(spaceId, 0);
+        requireFolderNodeInSpace(spaceId, folderNodeId);
         List<com.stcloud.team.entity.TeamFolderPermission> perms = folderPermissionService.listPermissions(folderNodeId);
         List<FolderPermissionVO> voList = perms.stream().map(p -> {
             FolderPermissionVO vo = new FolderPermissionVO();
@@ -536,10 +653,13 @@ public class TeamServiceImpl implements TeamService {
             vo.setSubjectType(p.getSubjectType());
             vo.setSubjectId(p.getSubjectId());
             vo.setPermission(p.getPermission());
+            vo.setPermissions(p.getPermissions());
             // 填充对象名称
             if ("member".equals(p.getSubjectType())) {
                 SysUser user = sysUserMapper.selectById(p.getSubjectId());
                 vo.setSubjectName(user != null ? user.getNickname() : "未知");
+            } else if ("all".equals(p.getSubjectType())) {
+                vo.setSubjectName("全体成员");
             } else {
                 vo.setSubjectName(p.getSubjectId() == 0 ? "管理员" : p.getSubjectId() == 1 ? "编辑者" : "查看者");
             }
@@ -553,11 +673,16 @@ public class TeamServiceImpl implements TeamService {
     @Transactional
     public Result<Void> setFolderPermissions(Long spaceId, Long folderNodeId, FolderPermissionRequest request) {
         checkPermission(spaceId, 0);
+        requireFolderNodeInSpace(spaceId, folderNodeId);
+        validatePermissionRules(request.getRules());
         List<com.stcloud.team.entity.TeamFolderPermission> rules = request.getRules().stream().map(r -> {
             com.stcloud.team.entity.TeamFolderPermission perm = new com.stcloud.team.entity.TeamFolderPermission();
             perm.setSubjectType(r.getSubjectType());
             perm.setSubjectId(r.getSubjectId());
-            perm.setPermission(r.getPermission());
+            // 兼容 permission NOT NULL：未传单值时由权限点 JSON 推导旧等级
+            perm.setPermission(r.getPermission() != null ? r.getPermission()
+                    : FolderPermissionService.legacyLevelOf(FolderPermissionService.parsePermissions(r.getPermissions())));
+            perm.setPermissions(r.getPermissions());
             return perm;
         }).toList();
         folderPermissionService.setPermissions(spaceId, folderNodeId, rules);
@@ -711,7 +836,8 @@ public class TeamServiceImpl implements TeamService {
     @Override
     @Transactional
     public Result<Void> lockFile(Long spaceId, Long nodeId, Integer hours) {
-        checkPermission(spaceId, nodeId, 1);
+        // 锁定=内容修改操作，按 rename 权限点校验（与控制器 @PreAuthorize file:rename 一致）
+        requirePermissions(spaceId, nodeId, FolderPermissionService.PERM_RENAME);
         FileNode node = fileNodeMapper.selectById(nodeId);
         if (node == null) throw new BusinessException(ResultCode.FILE_NOT_FOUND);
         if (node.getLockedBy() != null) {
@@ -719,10 +845,15 @@ public class TeamServiceImpl implements TeamService {
                 throw new BusinessException(ResultCode.BAD_REQUEST, "文件已被锁定");
             }
         }
-        node.setLockedBy(UserContext.getUserId());
-        node.setLockedAt(LocalDateTime.now());
-        node.setLockExpireAt(hours != null && hours > 0 ? LocalDateTime.now().plusHours(hours) : null);
-        fileNodeMapper.updateById(node);
+        // 显式 set 三列：hours=0（永久锁）时 lockExpireAt 必须写 NULL，
+        // 避免覆盖旧的过期时间导致"永久锁仍残留过期时间"
+        LocalDateTime now = LocalDateTime.now();
+        fileNodeMapper.update(null, new LambdaUpdateWrapper<FileNode>()
+                .eq(FileNode::getId, nodeId)
+                .set(FileNode::getLockedBy, UserContext.getUserId())
+                .set(FileNode::getLockedAt, now)
+                .set(FileNode::getLockExpireAt,
+                        hours != null && hours > 0 ? now.plusHours(hours) : null));
         activityHelper.log(spaceId, "FILE_LOCK", "FILE", nodeId, node.getName());
         return Result.success();
     }
@@ -730,7 +861,7 @@ public class TeamServiceImpl implements TeamService {
     @Override
     @Transactional
     public Result<Void> unlockFile(Long spaceId, Long nodeId) {
-        checkPermission(spaceId, nodeId, 2);
+        requirePermissions(spaceId, nodeId, FolderPermissionService.PERM_VIEW);
         FileNode node = fileNodeMapper.selectById(nodeId);
         if (node == null) throw new BusinessException(ResultCode.FILE_NOT_FOUND);
         if (node.getLockedBy() == null) return Result.success();
@@ -740,8 +871,12 @@ public class TeamServiceImpl implements TeamService {
         if (!isLocker && !isAdmin) {
             throw new BusinessException(ResultCode.TEAM_PERMISSION_DENIED, "仅锁定人或管理员可解锁");
         }
-        node.setLockedBy(null); node.setLockedAt(null); node.setLockExpireAt(null);
-        fileNodeMapper.updateById(node);
+        // updateById 默认不更新 NULL 字段，必须显式 set NULL 才能清空锁定列
+        fileNodeMapper.update(null, new LambdaUpdateWrapper<FileNode>()
+                .eq(FileNode::getId, nodeId)
+                .set(FileNode::getLockedBy, null)
+                .set(FileNode::getLockedAt, null)
+                .set(FileNode::getLockExpireAt, null));
         activityHelper.log(spaceId, "FILE_UNLOCK", "FILE", nodeId, node.getName());
         return Result.success();
     }
@@ -750,9 +885,10 @@ public class TeamServiceImpl implements TeamService {
     public Result<List<TeamRoleVO>> listRoles(Long spaceId) {
         checkPermission(spaceId, 0);
         List<TeamRoleVO> result = new java.util.ArrayList<>();
-        result.add(toRoleVO(0L, spaceId, "管理员", presetPerms(0), 1, true));
-        result.add(toRoleVO(1L, spaceId, "编辑者", presetPerms(1), 1, true));
-        result.add(toRoleVO(2L, spaceId, "查看者", presetPerms(2), 1, true));
+        // 预设角色均为启用状态
+        result.add(toRoleVO(0L, spaceId, "管理员", presetPerms(0), RoleStatus.ENABLED.getCode(), true));
+        result.add(toRoleVO(1L, spaceId, "编辑者", presetPerms(1), RoleStatus.ENABLED.getCode(), true));
+        result.add(toRoleVO(2L, spaceId, "查看者", presetPerms(2), RoleStatus.ENABLED.getCode(), true));
         List<com.stcloud.team.entity.TeamRole> roles = teamRoleMapper.selectList(
                 new LambdaQueryWrapper<com.stcloud.team.entity.TeamRole>().eq(com.stcloud.team.entity.TeamRole::getSpaceId, spaceId));
         roles.forEach(r -> result.add(toRoleVO(r.getId(), spaceId, r.getName(), r.getPermissions(), r.getStatus(), false)));
@@ -765,9 +901,14 @@ public class TeamServiceImpl implements TeamService {
         checkPermission(spaceId, 0);
         com.stcloud.team.entity.TeamRole role = new com.stcloud.team.entity.TeamRole();
         role.setSpaceId(spaceId); role.setName(request.getName());
-        role.setPermissions(request.getPermissions()); role.setStatus(1);
+        role.setPermissions(request.getPermissions());
+        // 新建自定义角色默认启用
+        role.setStatus(RoleStatus.ENABLED.getCode());
         teamRoleMapper.insert(role);
-        return Result.success(toRoleVO(role.getId(), spaceId, role.getName(), role.getPermissions(), 1, false));
+        // 角色变更：权限缓存失效（角色规则影响权限链）
+        folderPermissionService.invalidateSpace(spaceId);
+        return Result.success(toRoleVO(role.getId(), spaceId, role.getName(), role.getPermissions(),
+                RoleStatus.ENABLED.getCode(), false));
     }
 
     @Override
@@ -778,6 +919,8 @@ public class TeamServiceImpl implements TeamService {
         if (role == null || !role.getSpaceId().equals(spaceId)) throw new BusinessException(ResultCode.BAD_REQUEST, "角色不存在");
         role.setName(request.getName()); role.setPermissions(request.getPermissions());
         teamRoleMapper.updateById(role);
+        // 角色变更：权限缓存失效
+        folderPermissionService.invalidateSpace(spaceId);
         return Result.success();
     }
 
@@ -788,6 +931,8 @@ public class TeamServiceImpl implements TeamService {
         Long count = teamMemberMapper.selectCount(new LambdaQueryWrapper<TeamMember>().eq(TeamMember::getSpaceId, spaceId).eq(TeamMember::getRole, roleId));
         if (count > 0) throw new BusinessException(ResultCode.BAD_REQUEST, "角色正在使用中，无法删除");
         teamRoleMapper.deleteById(roleId);
+        // 角色变更：权限缓存失效
+        folderPermissionService.invalidateSpace(spaceId);
         return Result.success();
     }
 
@@ -800,6 +945,8 @@ public class TeamServiceImpl implements TeamService {
         member.setMemberType(request.getMemberType() != null ? request.getMemberType() : 0);
         member.setExpireAt(request.getExpireAt());
         teamMemberMapper.updateById(member);
+        // 成员属性变更：权限缓存失效
+        folderPermissionService.invalidateSpace(spaceId);
         return Result.success();
     }
 
@@ -854,11 +1001,8 @@ public class TeamServiceImpl implements TeamService {
     }
 
     private String presetPerms(int role) {
-        return switch (role) {
-            case 0 -> "{\"view\":true,\"upload\":true,\"download\":true,\"delete\":true,\"rename\":true,\"move\":true,\"share\":true,\"manage_members\":true,\"manage_settings\":true}";
-            case 1 -> "{\"view\":true,\"upload\":true,\"download\":true,\"delete\":true,\"rename\":true,\"move\":true,\"share\":true,\"manage_members\":false,\"manage_settings\":false}";
-            default -> "{\"view\":true,\"upload\":false,\"download\":true,\"delete\":false,\"rename\":false,\"move\":false,\"share\":false,\"manage_members\":false,\"manage_settings\":false}";
-        };
+        // 查看者(2)：仅 view=true，download=false（权限模型重设计已确认）
+        return FolderPermissionService.permissionsToJson(FolderPermissionService.presetPermissions(role));
     }
 
     private TeamRoleVO toRoleVO(Long id, Long spaceId, String name, String permissions, int status, boolean isPreset) {

@@ -1,4 +1,4 @@
-﻿taskId: "20260809-mobile-interaction"
+taskId: "20260809-mobile-interaction"
 goal:
   objective: "补完移动端交互: 长按 touch(D2/UX5) + 多选模式(D1) + 快捷键禁用(D3) + 上传 FAB(UX2) + 下拉刷新(UX4)"
   scope: "st-web 移动端文件交互组件簇"

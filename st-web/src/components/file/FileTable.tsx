@@ -1,10 +1,12 @@
-﻿import { getFileTypeConfig, formatSize, formatDate, cn } from '../../lib/utils';
+import { getFileTypeConfig, formatSize, formatDate, cn } from '../../lib/utils';
 import type { FileNode } from '../../types';
-import { Check, MoreHorizontal, Star } from 'lucide-react';
+import { Check, MoreHorizontal, Star, Lock } from 'lucide-react';
 import FileThumbnail from './FileThumbnail';
 
 interface Props {
   files: FileNode[];
+  /** 已锁定节点 ID 集合（团队空间传入；用于列表行显示锁图标） */
+  lockedIds?: Set<string>;
   selectedIds: Set<string>;
   focusedId: string | null;
   cutIds: Set<string> | null;
@@ -24,7 +26,7 @@ interface Props {
   onToggleFavorite: (node: FileNode) => void;
 }
 
-export default function FileTable({ files, selectedIds, focusedId, cutIds, onSelect, onSelectAll, onContextMenu, onDoubleClick, onItemDragStart, onFolderDragOver, onFolderDragLeave, onFolderDrop, dragOverFolderId, onItemMenu, onToggleSelect, isFavorite, onToggleFavorite }: Props) {
+export default function FileTable({ files, lockedIds, selectedIds, focusedId, cutIds, onSelect, onSelectAll, onContextMenu, onDoubleClick, onItemDragStart, onFolderDragOver, onFolderDragLeave, onFolderDrop, dragOverFolderId, onItemMenu, onToggleSelect, isFavorite, onToggleFavorite }: Props) {
   const allSelected = files.length > 0 && files.every((f) => selectedIds.has(f.id));
   const someSelected = files.some((f) => selectedIds.has(f.id));
   const selectedCount = files.filter((f) => selectedIds.has(f.id)).length;
@@ -97,8 +99,9 @@ export default function FileTable({ files, selectedIds, focusedId, cutIds, onSel
               <FileThumbnail file={file} size="lg" />
 
               <div className="flex-1 min-w-0">
-                <div className={cn('text-sm truncate', isSelected ? 'text-primary-600 font-medium' : 'text-fg')}>
-                  {file.name}
+                <div className={cn('flex items-center gap-1 min-w-0 text-sm', isSelected ? 'text-primary-600 font-medium' : 'text-fg')}>
+                  <span className="min-w-0 truncate">{file.name}</span>
+                  {lockedIds?.has(file.id) && <Lock className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" aria-hidden />}
                 </div>
                 <div className="text-xs text-muted truncate flex items-center gap-1.5">
                   <span>{file.nodeType === 0 ? '文件夹' : config.label}</span>

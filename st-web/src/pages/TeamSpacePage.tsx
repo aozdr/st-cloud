@@ -3,18 +3,20 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Users, X, UserPlus, Crown, Pencil, Eye, Upload, Settings, HardDrive, Link2, Copy, Trash2, Activity, LogOut, Send } from 'lucide-react';
 import api from '../lib/api';
 import FileBrowser from '../components/file/FileBrowser';
+import FileDetailPanel from '../components/file/FileDetailPanel';
+import FileThumbnail from '../components/file/FileThumbnail';
 import { teamFileSource } from '../lib/fileSource';
 import { useToast } from '../components/ui/Toast';
 import { useUpload } from '../hooks/useUpload';
 import { formatSize, cn } from '../lib/utils';
 import { usePermission } from '../lib/permission';
+import { useAuthStore } from '../store/auth';
 import type { TeamSpace, TeamMember, TeamInvite, TeamActivity, FileNode, PageResult, UserSearch } from '../types';
-import CommentPanel from '../components/team/CommentPanel';
 import FolderPermissionDialog from '../components/team/FolderPermissionDialog';
 import RoleManageDialog from '../components/team/RoleManageDialog';
 import StatsPanel from '../components/team/StatsPanel';
-import { Lock, Unlock, BarChart3, UserCog } from 'lucide-react';
-import { MessageSquare, Shield } from 'lucide-react';
+import { BarChart3, UserCog } from 'lucide-react';
+import { Shield } from 'lucide-react';
 
 const EMOJI_ICONS = ['📁','📂','🚀','💡','🎨','⚙️','🏢','📊','🔥','⭐','🎯','🔧','📦','🎉','🔬','📚','💼','🖥️','🗂️','📌','🏷️','💬','🏗️','🌐'];
 
@@ -61,6 +63,7 @@ export default function TeamSpacePage() {
   const { showToast } = useToast();
   const { addFiles } = useUpload();
   const { has } = usePermission();
+  const currentUserId = useAuthStore((s) => s.user?.userId);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const source = useMemo(() => teamFileSource(spaceId!), [spaceId]);
 
@@ -88,12 +91,12 @@ export default function TeamSpacePage() {
   const [activityPage, setActivityPage] = useState(1);
   const [activityHasMore, setActivityHasMore] = useState(true);
   const [showTransfer, setShowTransfer] = useState(false);
-  const [commentNode, setCommentNode] = useState<FileNode | null>(null);
   const [permissionNode, setPermissionNode] = useState<FileNode | null>(null);
+  // 页面级详情视图：detailFile 非空时右侧渲染 w-80 全高侧边栏；detailTab 控制「详情/权限」两个 tab
+  const [detailFile, setDetailFile] = useState<FileNode | null>(null);
+  const [detailTab, setDetailTab] = useState<'info' | 'permission'>('info');
   const [showRoleManage, setShowRoleManage] = useState(false);
   const [showStats, setShowStats] = useState(false);
-  const [showLockDialog, setShowLockDialog] = useState(false);
-  const [lockHours, setLockHours] = useState(24);
   const [statsDays] = useState(7);
   const [transferTarget, setTransferTarget] = useState<string | null>(null);
 
@@ -113,7 +116,8 @@ export default function TeamSpacePage() {
     try { const res = await api.get<PageResult<TeamActivity>>(`/team/${spaceId}/activities`, { params: { filter: activityFilter, page, size: 20 } }); const records = res?.records || []; if (append) { setActivities(prev => [...prev, ...records]); } else { setActivities(records); } setActivityHasMore(records.length >= 20); } catch { /* ignore */ }
   }, [spaceId, activityFilter]);
 
-  useEffect(() => { fetchSpace(); }, [fetchSpace]);
+  // 挂载即拉取成员列表：用于判断当前用户是否为管理员（权限入口可见性，后端 checkPermission(spaceId,0) 为最终闸门）
+  useEffect(() => { fetchSpace(); fetchMembers(); }, [fetchSpace, fetchMembers]);
   useEffect(() => { if (showMembers) fetchMembers(); }, [sortBy]);
   useEffect(() => { if (activeTab === 'activity') { setActivityPage(1); fetchActivities(1, false); } }, [activeTab, fetchActivities]);
 
@@ -200,10 +204,17 @@ export default function TeamSpacePage() {
   };
 
   const navigateToFolder = (node: FileNode) => { if (!node.id || node.id === '0') { setBreadcrumbs([]); setParentId(null); return; } setBreadcrumbs((prev) => [...prev, { id: node.id, name: node.name }]); setParentId(node.id); };
+  // 打开页面级详情：始终从「详情」tab 开始
+  const handleOpenDetail = (node: FileNode) => { setDetailFile(node); setDetailTab('info'); };
   const navigateToCrumb = (idx: number) => { if (idx === -1) { setBreadcrumbs([]); setParentId(null); } else { setBreadcrumbs(breadcrumbs.slice(0, idx + 1)); setParentId(breadcrumbs[idx].id); } };
   const handleBack = () => { if (breadcrumbs.length > 0) navigateToCrumb(breadcrumbs.length - 2); else navigate('/team'); };
   const loadMoreActivities = () => { const next = activityPage + 1; setActivityPage(next); fetchActivities(next, true); };
   const usedPercent = space ? (Number(space.storageQuota) > 0 ? Math.min(100, (Number(space.storageUsed) / Number(space.storageQuota)) * 100) : 0) : 0;
+  // 权限入口可见性：空间拥有者或管理员（role===0）；后端 checkPermission(spaceId,0) 为最终闸门
+  const currentFolderName = breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].name : '';
+  const isSpaceOwner = !!space && space.ownerId === currentUserId;
+  const isSpaceAdmin = isSpaceOwner || members.some((m) => m.userId === currentUserId && m.role === 0);
+  const permissionButtonText = parentId ? '当前文件夹权限' : '空间根目录权限';
 
   return (
     <div className="flex flex-col h-full">
@@ -214,25 +225,53 @@ export default function TeamSpacePage() {
           <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center flex-shrink-0 text-sm">{space?.icon || <Users className="w-4 h-4 text-white" />}</div>
           <div className="min-w-0"><h1 className="text-lg font-semibold text-fg truncate">{space?.spaceName || '加载中…'}</h1>{space?.description && <p className="text-xs text-muted truncate">{space.description}</p>}</div>
         </div>
-        <div className="flex items-center gap-2 flex-shrink-0">
+        <div className="flex items-center gap-2 flex-wrap justify-end flex-shrink-0">
           <button onClick={() => { setShowMembers(true); fetchMembers(); fetchInvites(); }} className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted bg-surface-2 rounded-md hover:bg-surface-2 transition-colors cursor-pointer"><Users className="w-4 h-4" /><span className="hidden sm:inline">成员</span>{space?.memberCount !== undefined && <span className="text-xs text-muted">{space.memberCount}</span>}</button>
           <button onClick={openSettings} className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted bg-surface-2 rounded-md hover:bg-surface-2 transition-colors cursor-pointer" title="空间设置"><Settings className="w-4 h-4" /><span className="hidden sm:inline">设置</span></button>
-          <button onClick={() => setCommentNode({ id: parentId || '0', name: space?.spaceName || '空间' } as FileNode)} className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted bg-surface-2 rounded-md hover:bg-surface-2 transition-colors cursor-pointer" title="评论"><MessageSquare className="w-4 h-4" /></button>
-          {space?.ownerId && <button onClick={() => setPermissionNode({ id: parentId || '0', name: '空间根目录' } as FileNode)} className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted bg-surface-2 rounded-md hover:bg-surface-2 transition-colors cursor-pointer" title="文件夹权限"><Shield className="w-4 h-4" /></button>}
+          {isSpaceAdmin && <button onClick={() => setPermissionNode({ id: parentId || '0', name: parentId ? (currentFolderName || '当前文件夹') : (space?.spaceName || '空间根目录') } as FileNode)} className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted bg-surface-2 rounded-md hover:bg-surface-2 transition-colors cursor-pointer" title={permissionButtonText}><Shield className="w-4 h-4" /><span className="hidden sm:inline">{permissionButtonText}</span></button>}
           <button onClick={() => setShowRoleManage(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted bg-surface-2 rounded-md hover:bg-surface-2 transition-colors cursor-pointer" title="角色管理"><UserCog className="w-4 h-4" /></button>
           <button onClick={() => setShowStats(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted bg-surface-2 rounded-md hover:bg-surface-2 transition-colors cursor-pointer" title="空间统计"><BarChart3 className="w-4 h-4" /></button>
-          <button onClick={() => setShowLockDialog(true)} className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted bg-surface-2 rounded-md hover:bg-surface-2 transition-colors cursor-pointer" title="锁定当前文件夹"><Lock className="w-4 h-4" /></button>
-          <button onClick={() => handleUnlock(parentId || '0')} className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted bg-surface-2 rounded-md hover:bg-surface-2 transition-colors cursor-pointer" title="解锁当前文件夹"><Unlock className="w-4 h-4" /></button>
+          {/* 「文件/活动」双 tab 改为单切换按钮（置于原锁定按钮位置）：在文件视图与活动视图间切换 */}
+          <button onClick={() => setActiveTab(activeTab === 'files' ? 'activity' : 'files')} className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted bg-surface-2 rounded-md hover:bg-surface-2 transition-colors cursor-pointer" title={activeTab === 'files' ? '切换到活动视图' : '切换到文件视图'}>{activeTab === 'files' ? <Activity className="w-4 h-4" /> : <HardDrive className="w-4 h-4" />}<span className="hidden sm:inline">{activeTab === 'files' ? '活动' : '文件'}</span></button>
           {has('file:upload') && <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-primary-600 rounded-md hover:bg-primary-700 transition-colors cursor-pointer"><Upload className="w-4 h-4" /><span className="hidden sm:inline">上传</span></button>}
         </div>
       </div>
       {space && <div className="flex items-center gap-2 px-6 py-1.5 border-b border-border bg-surface-2/50 text-xs text-muted cursor-pointer hover:bg-surface-2/50 transition-colors" onClick={openSettings} title="点击管理存储配额"><HardDrive className="w-3.5 h-3.5" /><span className="flex-1">存储: {formatSize(Number(space.storageUsed))} / {Number(space.storageQuota) > 0 ? formatSize(Number(space.storageQuota)) : '不限制'}</span><div className="w-32 h-1.5 bg-surface-2 rounded-full overflow-hidden"><div className={cn('h-full rounded-full transition-[width,background-color]', usedPercent > 90 ? 'bg-red-500' : usedPercent > 70 ? 'bg-amber-500' : 'bg-primary-500')} style={{ width: `${usedPercent}%` }} /></div><span className="text-muted">{usedPercent > 0 ? `${Math.round(usedPercent)}%` : ''}</span></div>}
-      <div className="flex items-center gap-1 px-6 py-2 border-b border-border bg-surface">
-        <button onClick={() => setActiveTab('files')} className={cn('flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md transition-colors cursor-pointer', activeTab === 'files' ? 'text-primary-600 bg-primary-500/10' : 'text-muted hover:text-fg')}><HardDrive className="w-4 h-4" /> 文件</button>
-        <button onClick={() => setActiveTab('activity')} className={cn('flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md transition-colors cursor-pointer', activeTab === 'activity' ? 'text-primary-600 bg-primary-500/10' : 'text-muted hover:text-fg')}><Activity className="w-4 h-4" /> 动态</button>
-      </div>
       <div className={cn('flex-1 min-h-0 overflow-hidden', activeTab !== 'files' && 'hidden')}>
-        <FileBrowser key={parentId || "root"} source={source} parentId={parentId} onNavigateFolder={navigateToFolder} onBack={handleBack} uploadSpaceId={spaceId} enableShare={false} enableVersions={false} />
+        <div className="h-full flex">
+          {/* 文件列表：始终渲染在左侧 flex-1，与右侧详情侧边栏并存，不受详情打开影响 */}
+          <div className="flex-1 min-h-0 min-w-0">
+            <FileBrowser key={parentId || "root"} source={source} parentId={parentId} onNavigateFolder={navigateToFolder} onBack={handleBack} uploadSpaceId={spaceId} enableShare={false} enableVersions={false} onOpenDetail={handleOpenDetail} onToggleLock={(action, node) => action === 'lock' ? handleLock(node.id, 24) : handleUnlock(node.id)} />
+          </div>
+          {/* 右侧详情侧边栏：w-80 全高（父级 flex-col h-full 链保证延伸到页面内容区底部），保留详情/权限双 tab */}
+          {detailFile && (
+            <div className="h-full w-80 flex-shrink-0 border-l border-border overflow-hidden flex flex-col">
+              <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-border bg-surface flex-shrink-0">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <div className="w-8 h-8 rounded-lg bg-surface-2 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    <FileThumbnail file={detailFile} size="sm" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-fg truncate">{detailFile.name}</p>
+                    <p className="text-xs text-muted">{detailFile.nodeType === 0 ? '文件夹' : '文件'}详情</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <button onClick={() => setDetailTab('info')} className={cn('flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-md transition-colors cursor-pointer', detailTab === 'info' ? 'text-primary-600 bg-primary-500/10' : 'text-muted hover:text-fg')}>详情</button>
+                  <button onClick={() => setDetailTab('permission')} className={cn('flex items-center gap-1.5 px-2.5 py-1.5 text-sm rounded-md transition-colors cursor-pointer', detailTab === 'permission' ? 'text-primary-600 bg-primary-500/10' : 'text-muted hover:text-fg')}>权限</button>
+                  <button onClick={() => setDetailFile(null)} aria-label="关闭详情" className="p-1.5 text-muted hover:text-fg rounded-md hover:bg-surface-2 cursor-pointer"><X className="w-4 h-4" aria-hidden /></button>
+                </div>
+              </div>
+              <div className="flex-1 min-h-0 overflow-hidden">
+                {detailTab === 'info' ? (
+                  <FileDetailPanel file={detailFile} onClose={() => setDetailFile(null)} variant="sidebar" />
+                ) : spaceId ? (
+                  <FolderPermissionDialog spaceId={spaceId} node={detailFile} onClose={() => setDetailFile(null)} variant="panel" />
+                ) : null}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
       {activeTab === 'activity' && (
         <div className="flex-1 overflow-auto p-6">
@@ -303,22 +342,18 @@ export default function TeamSpacePage() {
         </div>
       )}
 
-      {showLockDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 overscroll-contain" role="presentation" onClick={() => setShowLockDialog(false)}>
-          <div className="w-full max-w-sm bg-surface rounded-xl shadow-lg border border-border overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-5 py-4 border-b border-border"><h2 className="text-base font-semibold text-fg">锁定当前文件夹</h2><button onClick={() => setShowLockDialog(false)} className="text-muted hover:text-fg cursor-pointer" aria-label="关闭"><X className="w-5 h-5" aria-hidden /></button></div>
-            <div className="p-5 space-y-3">
-              <p className="text-sm text-muted">锁定后其他成员将无法编辑该文件夹下的内容。选择锁定时长：</p>
-              <div className="space-y-2">
-                {[{ label: '1 小时', value: 1 }, { label: '6 小时', value: 6 }, { label: '24 小时', value: 24 }, { label: '永久', value: 0 }].map(opt => (
-                  <label key={opt.value} className={cn('flex items-center gap-3 px-3 py-2.5 rounded-md cursor-pointer transition-colors', lockHours === opt.value ? 'bg-primary-500/10 ring-1 ring-primary-400' : 'bg-surface-2 hover:bg-surface-2')}>
-                    <input type="radio" name="lockHours" checked={lockHours === opt.value} onChange={() => setLockHours(opt.value)} className="cursor-pointer" />
-                    <span className="text-sm text-fg">{opt.label}</span>
-                  </label>
-                ))}
-              </div>
-            </div>
-            <div className="flex justify-end gap-2 px-5 py-3 border-t border-border"><button onClick={() => setShowLockDialog(false)} className="btn-secondary">取消</button><button onClick={() => { handleLock(parentId || '0', lockHours); setShowLockDialog(false); }} className="btn-primary">确认锁定</button></div>
+      {/* 3 个功能组件挂载：权限/角色/统计（评论功能已移除） */}
+      {spaceId && permissionNode && (
+        <FolderPermissionDialog spaceId={spaceId} node={permissionNode} onClose={() => setPermissionNode(null)} />
+      )}
+      {spaceId && showRoleManage && (
+        <RoleManageDialog spaceId={spaceId} onClose={() => setShowRoleManage(false)} />
+      )}
+      {spaceId && showStats && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 overscroll-contain" role="presentation" onClick={() => setShowStats(false)}>
+          <div className="w-full max-w-2xl bg-surface rounded-xl shadow-lg border border-border overflow-hidden max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border sticky top-0 bg-surface z-10"><h2 className="text-base font-semibold text-fg">空间统计</h2><button onClick={() => setShowStats(false)} className="text-muted hover:text-fg cursor-pointer" aria-label="关闭"><X className="w-5 h-5" aria-hidden /></button></div>
+            <StatsPanel spaceId={spaceId} />
           </div>
         </div>
       )}

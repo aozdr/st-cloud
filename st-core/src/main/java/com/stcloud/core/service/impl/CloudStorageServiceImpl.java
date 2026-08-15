@@ -26,7 +26,8 @@ public class CloudStorageServiceImpl implements CloudStorageService {
         if (tenantId == null) {
             return;
         }
-        Long total = cloudCapacityMapper.getCloudTotalCapacity(tenantId);
+        // 行锁读取：云盘总容量已配置时，并发上传的总容量校验串行化（TASK-003）
+        Long total = cloudCapacityMapper.getCloudTotalCapacityForUpdate(tenantId);
         // 总容量为空表示不限
         if (total == null || total <= 0) {
             return;
@@ -49,7 +50,8 @@ public class CloudStorageServiceImpl implements CloudStorageService {
         if (tenantId == null) {
             return;
         }
-        Long total = cloudCapacityMapper.getCloudTotalCapacity(tenantId);
+        // 行锁读取：云盘总容量已配置时，并发上传的总容量校验串行化（TASK-003）
+        Long total = cloudCapacityMapper.getCloudTotalCapacityForUpdate(tenantId);
         if (total == null || total <= 0) {
             // 云盘总容量不限
             return;

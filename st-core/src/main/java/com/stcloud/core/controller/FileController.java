@@ -15,11 +15,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.OutputStream;
+import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -186,6 +188,29 @@ public class FileController {
         return Result.success();
     }
 
+    @Operation(summary = "中转上传：接收一个小块（限速 pacing）")
+    @PreAuthorize("hasAuthority('file:upload') or hasRole('ADMIN')")
+    @PostMapping("/upload/relay-chunk")
+    public Result<RelayChunkResponse> relayChunk(
+            @RequestParam String uploadId,
+            @RequestParam String s3UploadId,
+            @RequestParam int seq,
+            HttpServletRequest request) throws IOException {
+        // Content-Length 由服务层按会话 relayChunkSize 校验，防超大请求
+        long contentLength = request.getContentLengthLong();
+        return Result.success(uploadService.relayChunk(uploadId, s3UploadId, seq,
+                request.getInputStream(), contentLength));
+    }
+
+    @Operation(summary = "中转上传：完成末片并合并")
+    @PreAuthorize("hasAuthority('file:upload') or hasRole('ADMIN')")
+    @PostMapping("/upload/relay-finalize")
+    public Result<FileNodeVO> relayFinalize(
+            @RequestParam String uploadId,
+            @RequestParam String s3UploadId) {
+        return Result.success(uploadService.relayFinalize(uploadId, s3UploadId));
+    }
+
     // ==================== 文件下载 ====================
 
     @Operation(summary = "流式下载单文件（服务端限速、支持断点续传）")
@@ -210,7 +235,7 @@ public class FileController {
             downloadService.downloadAsZip(request.getNodeIds(), os);
             os.flush();
         } catch (Exception e) {
-            response.setStatus(500);
+            response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
         }
     }
 

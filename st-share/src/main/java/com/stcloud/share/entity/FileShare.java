@@ -19,6 +19,8 @@ public class FileShare extends BaseEntity {
     private String password;        // 提取码明文(旧数据可能为BCrypt)
     private LocalDateTime expireAt; // 过期时间,NULL=永久
     private Integer permission;     // 0-查看 1-下载 2-上传 3-编辑
+    private String permissions;     // 分享权限点JSON：{"view":true,"download":true}（权限模型重设计后为权威字段）
+    private Integer allowDownload;  // 下载/流式统一开关：0-禁止 1-允许
     private Integer downloadLimit;  // 下载次数限制,NULL=不限
     private Integer downloadCount;  // 已下载次数
     private Integer viewCount;      // 访问次数

@@ -1,0 +1,62 @@
+taskId: "20260815-sync-refactor"
+goal:
+  objective: "重构同步引擎，消除同步死循环与冲突文件自生成；建立版本号+最后同步时间门控的全量同步；清理已产生的机器格式垃圾副本（含 S3 物理对象）"
+  scope: "st-desktop（sync-engine/database/db-migrate/sync-utils/file-watcher 相关）+ st-sync/st-core（服务端守卫与清理接口）+ 清理脚本 + 文档与知识库"
+  completionCriteria:
+    - "打开应用不再无条件全量对账；版本不一致或 last_sync_at 为空才全量重建一次，且全量成功才固化版本"
+    - "keep_both 冲突只产生两份副本并一次登记，不回流上传/删除；连续多轮日志无新增操作"
+    - "sync_state 局部更新不再擦除 local_mtime（合并语义）"
+    - "服务端不再产生 old==new 的 MOVE/RENAME 脏日志（源头守卫 + delta 兜底过滤）"
+    - "构建测试通过：tsc/npm test/build:main 全绿；mvn -pl st-sync -am compile 通过"
+    - "异常数据清理接口与脚本可用（数据库 + S3 物理对象，dry-run/apply）"
+scale: medium
+tasks:
+  - { id: TASK-20260815-sync-refactor-01, name: "同步引擎 V2 重构（桌面端+服务端+清理脚本）", status: done, ref: ".ai/tasks/TASK-20260815-sync-refactor-01.md", changereport: ".ai/docs/20260815-sync-refactor/changereport.md", adr: ".ai/decisions/ADR/ADR-009-sync-engine-v2.md" }
+exitCriteria:
+  - { id: DESIGN, desc: "设计已定（design.md 按模板落盘，经多轮 grill 收紧）", status: done, dependsOn: [] }
+  - { id: TESTCASES, desc: "验收用例已编写（testcases.md + 纯函数单测 16 例）", status: done, dependsOn: [DESIGN] }
+  - { id: IMPLEMENTED, desc: "代码已实现（TASK 文件前置；桌面端/服务端/脚本落地）", status: done, dependsOn: [DESIGN, TESTCASES] }
+  - { id: CODE_REVIEW, desc: "Code Review 通过（codereview.md；多 Agent 禁用，由主线程自查并记录）", status: done, dependsOn: [IMPLEMENTED] }
+  - { id: SECURITY_REVIEW, desc: "安全审查通过（security.md；条件项启用：涉及文件删除/S3/管理员接口）", status: done, dependsOn: [IMPLEMENTED] }
+  - { id: TEST_PASS, desc: "测试通过（桌面端 npm test 16/16 + tsc + build:main；服务端 mvn compile；服务端全量 mvn test 留待部署环境补跑，见 testreport.md）", status: done, dependsOn: [CODE_REVIEW, SECURITY_REVIEW] }
+  - { id: KNOWLEDGE, desc: "知识库已更新（architecture/data-model/api-reference + ADR-009 + sync-engine-v2.md）", status: done, dependsOn: [TEST_PASS] }
+  - { id: ACCEPT, desc: "验收通过（对照 goal.completionCriteria 逐项核对，见 changereport.md）", status: done, dependsOn: [KNOWLEDGE] }
+artifacts:
+  design: { status: done, ref: ".ai/docs/20260815-sync-refactor/design.md", owner: "executor" }
+  testcases: { status: done, ref: ".ai/docs/20260815-sync-refactor/testcases.md", owner: "tester" }
+  task: { status: done, ref: ".ai/tasks/TASK-20260815-sync-refactor-01.md", owner: "workflow-manager" }
+  code: { status: done, ref: "st-desktop/src/sync-engine.ts + database.ts + sync-utils.ts + st-core/FileServiceImpl + st-sync/SyncServiceImpl + SyncAdminController + scripts/cleanup-sync-junk.ps1", owner: "executor" }
+  review: { status: done, ref: ".ai/docs/20260815-sync-refactor/codereview.md", owner: "reviewer" }
+  security: { status: done, ref: ".ai/docs/20260815-sync-refactor/security.md", owner: "reviewer" }
+  testReport: { status: done, ref: ".ai/docs/20260815-sync-refactor/testreport.md", owner: "tester" }
+  knowledge: { status: done, ref: ".ai/knowledge/sync-engine-v2.md + architecture/data-model/api-reference + ADR-009", owner: "knowledge-manager" }
+  changereport: { status: done, ref: ".ai/docs/20260815-sync-refactor/changereport.md", owner: "executor" }
+blockers: []
+history:
+  - iter: 0
+    phase: "init"
+    agent: "workflow-manager"
+    action: "用户报告同步死循环；初始化 Goal/Scale，提出重构方案"
+    delta: "scale=medium；问题点经三轮 grill 收敛到 3 个并全部拍板（快照保护范围/异常数据 S3 删除/全量重置）"
+    result: "方案定稿"
+  - iter: 1
+    phase: "act"
+    agent: "executor"
+    action: "实施 A+B+C：版本门控、事件不丢、自激过滤、冲突重建、服务端守卫、清理接口与脚本"
+    delta: "桌面端 tsc/npm test(16)/build:main 全绿；服务端 mvn compile 通过；文档与知识库落盘"
+    result: "实现完成"
+  - iter: 2
+    phase: "evaluate"
+    agent: "workflow-manager"
+    action: "补齐 formal loop 记录：State/TASK/模板化文档/Code Review/安全/测试报告/知识库一致性/ADR"
+    delta: "8 项 exitCriteria 全部 done；补充说明：多 Agent 禁用故评审为主线程自查；服务端全量 mvn test 待部署环境补跑"
+    result: "status: done"
+  - iter: 3
+    phase: "rework"
+    agent: "workflow-manager"
+    action: "用户实测仍乱同步并指出 sync_state 以路径为主键的疑点；确认根因后修复"
+    delta: "sync_state 改为 (root_id, local_path) 复合主键并重建表；删除同步根清理该 root 状态；服务端 delta 按同步根文件夹过滤；SYNC_ENGINE_VERSION 升到 3 强制全量重建；tsc/npm test(16)/build:main/mvn compile 复验全绿"
+    result: "修复完成，状态机隔离；测试用例补 TC-009"
+iteration: 3
+status: done
+maxIterations: 15

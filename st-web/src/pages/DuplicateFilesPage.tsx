@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Copy, ChevronDown, ChevronRight, AlertTriangle, Trash2, History, RefreshCw, FileText } from 'lucide-react';
 import api from '../lib/api';
 import EmptyState from '../components/EmptyState';

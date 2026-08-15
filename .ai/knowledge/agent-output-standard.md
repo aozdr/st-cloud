@@ -46,3 +46,4 @@
 | 程序设计文档 | `docs/newList/ai-design-document-standard.md` | `.ai/templates/design-template.md` |
 | 测试用例 | `docs/newList/ai-test-case-standard.md` | `.ai/templates/test-case-template.md` |
 | Code Review 记录 | `docs/newList/ai-code-review-standard.md` | `.ai/templates/code-review-template.md` |
+| Change Report | 无独立输出标准（汇总记录，见 document-management.md） | 无 |

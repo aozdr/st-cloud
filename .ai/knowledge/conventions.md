@@ -65,8 +65,7 @@ public Result<FileNodeVO> getNode(@PathVariable Long nodeId) {
 
 #### Mapper
 
-- 继承 `BaseMapper<T>`，基本 CRUD 无需写 SQL
-- 复杂查询使用 XML Mapper（`classpath*:mapper/**/*.xml`）
+- 复杂查询以注解式 SQL 为主（含 `<script>` 动态 SQL）；XML Mapper 为可选（`mapper-locations: classpath*:mapper/**/*.xml` 配置保留兼容）
 - 驼峰映射：`map-underscore-to-camel-case: true`（数据库下划线 <-> Java 驼峰）
 
 #### 依赖注入
@@ -102,10 +101,10 @@ public Result<FileNodeVO> getNode(@PathVariable Long nodeId) {
 
 | 对象 | 约定 | 示例 |
 |------|------|------|
-| 组件文件 | 大驼峰 .tsx | `FileManager.tsx` |
+| 组件文件 | 大驼峰 .tsx；`components/ui/` 基础组件允许小驼峰/连字符（shadcn 风格，如 `button.tsx`、`time-wheel-picker.tsx`） | `FileManager.tsx` |
 | 工具文件 | 小驼峰 .ts | `server-config.ts` |
 | Store 文件 | 小驼峰 .ts | `auth.ts` |
-| Hook | use 前缀 | `useUpload.tsx` |
+| Hook | use 前缀；默认 .ts，含 JSX 的 Hook 允许 .tsx | `useUpload.tsx` |
 | CSS 类 | Tailwind 实用类 | `flex items-center` |
 
 ## 配置管理
@@ -171,34 +170,35 @@ public Result<FileNodeVO> getNode(@PathVariable Long nodeId) {
 
 详见 .ai/agents/workflow-manager.md 和 .ai/workflows/feature-development.md。
 
-### 开发流程（AGENTS.md）
+### 开发流程（AGENTS.md，Agent Loop V4）
 
-遵循星云盘 AI 研发总规则，完整流程 9 个阶段：
+遵循星云盘 AI 研发总规则，采用 **Loop 编排 + 退出标准**，按任务规模选择标准集：
 
-1. 需求分析 - 产品经理使用 Grill Me 拷打，输出需求初稿
-2. 需求评审 - 多方评审（PM+UI+前端+后端+测试），定版 PRD + UI/UX 设计文档
-3. 程序设计 - 前后端工程师各自技术设计
-4. 程序设计评审 - 多方评审（PM+UI+前端+后端+测试），输出最终设计文档
-5. 测试用例编写 - 测试编写用例（开发前完成）
-6. 编码实现 - 前后端并行编码，核心逻辑加中文注释
-7. Code Review - Reviewer 审查（前端/后端子任务并行）
-8. 测试执行 - 测试逐项验证，全部通过则迭代完成
-9. 知识库回顾 - 回顾是否需更新知识库
+- **小型任务**：实现 → 验证 → 知识库检查 → 验收（ACCEPT）
+- **中型任务**：设计 → 测试用例 → 实现 → Code Review → 安全审查（条件项）→ 测试 → 知识库 → 验收
+- **大型任务**（12 项）：需求分析 → 影响分析 → 体验评审 → 技术设计 → 测试用例 → 实现 →
+  Code Review → Security Review → 体验验收 → 测试执行 → 知识库 → 验收
 
-所有中大型功能必须先完成需求和设计文档。小型任务可直接执行。
+门禁依赖（不可降级）：
+
+- 体验评审先于技术设计；未完成技术设计不得进入开发
+- 大型任务未编写测试用例不得开发
+- 未通过 Code Review 与 Security Review 不得测试
+- 未通过验收（ACCEPT）不得标记 done；验收不通过打回 IMPLEMENTED 级联重跑
+
+每轮 Loop 四段：Observe（读 State）→ Plan（最高价值动作）→ Act（派发 Agent）→ Evaluate（应用 Delta + 门禁检查）。
+详见 `.ai/knowledge/loop-state-model.md`。
 
 ### AI Agent 角色（.ai/agents/）
 
 | Agent | 职责 | 是否必须 |
 |-------|------|---------|
 | Workflow Manager | 统一入口，任务分类与调度 | 必须（入口） |
-| Product Manager | 需求分析（Grill Me 拷打），输出需求文档 | 完整流程必须 |
-| Frontend Engineer | 前端技术设计与编码，核心逻辑加中文注释 | 涉及前端时必须 |
-| Backend Engineer | 后端技术设计与编码，核心逻辑加中文注释 | 涉及后端时必须 |
-| Tester | 测试用例编写与测试执行，全部通过才算迭代完成 | 完整/精简流程必须 |
-| Reviewer | Code Review（子任务并行），检查质量与规范，通过后才测试 | 完整/精简流程必须 |
-| Architect | 可选架构顾问，协助复杂架构设计 | 可选 |
-| Requirement Discovery | 可选上游，竞品分析与功能借鉴 | 可选 |
+| executor（执行者） | 需求/需求发现/影响分析/架构/设计/UI设计/编码实现/知识库（按 taskType 切换，核心逻辑加中文注释） | 涉及对应职责时必须 |
+| reviewer（审查者） | 代码评审/安全审查/UI评审/体验评审/质量门禁（按 taskType 切换） | 完整/精简流程必须 |
+| tester（测试者） | 测试用例编写与测试执行，全部通过才算迭代完成 | 完整/精简流程必须 |
+
+> 职责要点见 `.ai/knowledge/role-context.md`。
 
 ### 文档维护
 
@@ -210,3 +210,9 @@ public Result<FileNodeVO> getNode(@PathVariable Long nodeId) {
 - 文档命名、存放、可见性、留存细则见 `.ai/knowledge/document-management.md`
 - 开发流程参考 .ai/workflows/feature-development.md
 - 测试分层规范参考 .ai/knowledge/testing.md
+
+## 文件编码规范
+
+- 所有文本文件统一使用 **UTF-8（无 BOM）** 编码；含非 ASCII 内容的 `.ps1` 脚本使用 **UTF-8 with BOM** 以兼容 Windows PowerShell 5.1
+- 禁止 GBK/GB2312 编码的文档或代码文件入库；发现混用编码时需转码为 UTF-8 后再提交
+- 文档/模板/State/任务文件的产出与修改统一遵循 `.ai/knowledge/document-management.md` 的编码规范

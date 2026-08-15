@@ -1,0 +1,82 @@
+taskId: "20260813-share-expiry"
+
+goal:
+  objective: "为 st-cloud 文件分享增加可选的过期时间，并完成测试验证"
+  scope: "st-share 后端（实体/DTO/Service）、st-web 前端（分享弹窗/分享管理页）、H2 测试 schema、测试代码；数据库无需新增列（expire_at 已存在）"
+  completionCriteria:
+    - "创建/更新分享时可设置可选过期时间，NULL=永久"
+    - "过期分享的访问/下载/列表/预览均被拒绝并返回 SHARE_EXPIRED"
+    - "过期时间入参校验（不能为过去时间）；更新接口支持清除过期（恢复永久）"
+    - "分享管理列表能区分显示已过期状态"
+    - "st-share 具备覆盖过期时间完整链路的自动化测试，mvn test 与前端构建通过"
+    - "产出需求/设计/测试用例/变更报告等文档并归档至 .ai/docs/"
+
+scale: medium
+exitCriteria:
+  - id: DESIGN
+    desc: "设计已定（含现状核实结论、改造点、接口契约）"
+    status: done
+    dependsOn: []
+  - id: TESTCASES
+    desc: "验收用例已编写（过期时间创建/更新/访问/清除/展示）"
+    status: done
+    dependsOn: [DESIGN]
+  - id: IMPLEMENTED
+    desc: "代码已实现（后端校验+清除过期、前端过期状态展示、H2 schema、测试代码）"
+    status: in_progress
+    dependsOn: [DESIGN, TESTCASES]
+  - id: CODE_REVIEW
+    desc: "Code Review 通过"
+    status: pending
+    dependsOn: [IMPLEMENTED]
+  - id: SECURITY_REVIEW
+    desc: "安全审查通过（涉及分享访问控制，条件项启用）"
+    status: pending
+    dependsOn: [IMPLEMENTED]
+  - id: TEST_PASS
+    desc: "mvn test + 前端构建通过"
+    status: pending
+    dependsOn: [CODE_REVIEW, SECURITY_REVIEW]
+  - id: KNOWLEDGE
+    desc: "知识库回顾（data-model/api-reference 等与代码一致）"
+    status: pending
+    dependsOn: [TEST_PASS]
+
+artifacts:
+  prd:        { status: done, ref: ".ai/docs/20260813-share-expiry/requirement.md", owner: "product-manager" }
+  design:     { status: done, ref: ".ai/docs/20260813-share-expiry/design.md", owner: "frontend-engineer + backend-engineer" }
+  testcases:  { status: done, ref: ".ai/docs/20260813-share-expiry/testcases.md", owner: "tester" }
+  task:       { status: done, ref: ".ai/tasks/TASK-20260813-share-expiry-01.md", owner: "workflow-manager" }
+  code:       { status: pending, ref: "", owner: "frontend-engineer + backend-engineer" }
+  review:     { status: pending, ref: ".ai/docs/20260813-share-expiry/codereview.md", owner: "reviewer" }
+  security:   { status: pending, ref: ".ai/docs/20260813-share-expiry/security.md", owner: "security-reviewer" }
+  testReport: { status: pending, ref: ".ai/docs/20260813-share-expiry/testreport.md", owner: "tester" }
+  changereport: { status: pending, ref: ".ai/docs/20260813-share-expiry/changereport.md", owner: "frontend-engineer + backend-engineer" }
+  knowledge:  { status: pending, ref: "", owner: "knowledge-manager" }
+
+blockers: []
+
+history:
+  - iter: 0
+    phase: "observe"
+    agent: "workflow-manager"
+    action: "勘察现状"
+    delta: "确认过期时间功能已基本实现（DB 列/实体/接口/前端弹窗/过期校验均在），主要缺口为：无任何测试、无未来时间校验、更新接口无法清除过期、管理页不显示已过期、H2 schema 缺 file_share"
+    result: "任务规模判定 medium，SECURITY_REVIEW 启用"
+  - iter: 1
+    phase: "plan"
+    agent: "workflow-manager"
+    action: "定版设计并产出文档/TASK"
+    delta: "用户确认方案；落盘 requirement.md/design.md/testcases.md 与 TASK-01(后端)/TASK-02(前端)"
+    result: "DESIGN/TESTCASES done，进入 IMPLEMENTED，并行派发前后端"
+
+iteration: 1
+status: running
+
+dispatch:
+  current:
+    dispatchId: "DISPATCH-20260813-SHARE-EXPIRY-BE-01"
+    role: "backend-engineer"
+    taskRef: ".ai/tasks/TASK-20260813-share-expiry-01.md"
+    stateRef: ".ai/state/20260813-share-expiry.yaml"
+    status: dispatched

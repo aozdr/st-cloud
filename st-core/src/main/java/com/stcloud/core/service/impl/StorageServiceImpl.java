@@ -147,6 +147,23 @@ public class StorageServiceImpl implements StorageService {
         }
     }
 
+        @Override
+    public void uploadPart(String key, String s3UploadId, int partNumber, InputStream inputStream, long size) {
+        try {
+            UploadPartRequest request = UploadPartRequest.builder()
+                    .bucket(bucket())
+                    .key(key)
+                    .uploadId(s3UploadId)
+                    .partNumber(partNumber)
+                    .build();
+            s3Client.uploadPart(request, RequestBody.fromInputStream(inputStream, size));
+            log.debug("S3服务端分片写入成功: key={}, part={}, size={}", key, partNumber, size);
+        } catch (S3Exception e) {
+            log.error("S3服务端分片写入失败: key={}, part={}, error={}", key, partNumber, e.getMessage());
+            throw new BusinessException(ResultCode.FILE_UPLOAD_FAILED);
+        }
+    }
+
     @Override
     public void completeMultipartUpload(String key, String s3UploadId) {
         try {
@@ -218,6 +235,29 @@ public class StorageServiceImpl implements StorageService {
         } catch (S3Exception e) {
             log.error("S3查询已上传分片失败: key={}, uploadId={}, error={}", key, s3UploadId, e.getMessage());
             throw new BusinessException(ResultCode.STORAGE_SERVICE_ERROR, "查询上传状态失败");
+        }
+    }
+
+    @Override
+    public void uploadPartCopy(String sourceKey, long rangeStart, long rangeEnd,
+                               String destKey, String s3UploadId, int partNumber) {
+        try {
+            UploadPartCopyRequest request = UploadPartCopyRequest.builder()
+                    .sourceBucket(bucket())
+                    .sourceKey(sourceKey)
+                    .destinationBucket(bucket())
+                    .destinationKey(destKey)
+                    .uploadId(s3UploadId)
+                    .partNumber(partNumber)
+                    .copySourceRange("bytes=" + rangeStart + "-" + rangeEnd)
+                    .build();
+            s3Client.uploadPartCopy(request);
+            log.debug("S3块复制成功: source={}, dest={}, part={}, range={}-{}",
+                    sourceKey, destKey, partNumber, rangeStart, rangeEnd);
+        } catch (S3Exception e) {
+            log.error("S3块复制失败: source={}, dest={}, part={}, error={}",
+                    sourceKey, destKey, partNumber, e.getMessage());
+            throw new BusinessException(ResultCode.FILE_UPLOAD_FAILED);
         }
     }
 

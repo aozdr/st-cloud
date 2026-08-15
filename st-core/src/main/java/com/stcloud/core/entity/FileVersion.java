@@ -21,5 +21,7 @@ public class FileVersion {
     private String storagePath;
     private Long modifierId;
     private String modifierName;
+    /** 版本来源：0-上传覆盖 / 1-在线编辑器保存（36 号脚本新增，D1 版本裁剪按此区分） */
+    private Integer source;
     private LocalDateTime createdAt;
 }

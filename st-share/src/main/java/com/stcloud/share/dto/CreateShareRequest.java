@@ -23,8 +23,14 @@ public class CreateShareRequest {
     @Schema(description = "过期时间，NULL=永久")
     private LocalDateTime expireAt;
 
-    @Schema(description = "权限：0-查看 1-下载 2-上传 3-编辑")
-    private Integer permission = 0;
+    @Schema(description = "权限：0-查看 1-下载 2-上传 3-编辑（兼容旧值，不传时按 permissions/默认权限解析）")
+    private Integer permission;
+
+    @Schema(description = "分享权限点JSON：{\"view\":true,\"download\":true}，不传时默认=用户有效权限（个人文件默认view+download）")
+    private String permissions;
+
+    @Schema(description = "允许下载/流式：0-禁止 1-允许（不传时与 permission 联动：仅查看默认禁止下载）")
+    private Integer allowDownload = 1;
 
     @Schema(description = "下载次数限制，NULL=不限")
     private Integer downloadLimit;

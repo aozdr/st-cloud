@@ -10,7 +10,9 @@ import org.apache.ibatis.annotations.Update;
 @Mapper
 public interface TeamStorageMapper {
 
-    @Update("UPDATE team_space SET storage_used = storage_used + #{delta} WHERE id = #{spaceId} AND storage_used + #{delta} >= 0")
+    @Update("UPDATE team_space SET storage_used = storage_used + #{delta} " +
+            "WHERE id = #{spaceId} AND deleted = 0 AND storage_used + #{delta} >= 0 " +
+            "AND (storage_quota IS NULL OR storage_used + #{delta} <= storage_quota)")
     int updateTeamStorageUsed(@Param("spaceId") Long spaceId, @Param("delta") Long delta);
 
     @org.apache.ibatis.annotations.Select("SELECT storage_used AS used, storage_quota AS quota FROM team_space WHERE id = #{spaceId} AND deleted = 0")

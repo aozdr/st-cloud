@@ -1,4 +1,4 @@
-﻿taskId: "20260809-mobile-pwa-capacitor"
+taskId: "20260809-mobile-pwa-capacitor"
 goal:
   objective: "为星云盘实现移动端: PWA 基座 + Capacitor Android 壳 + st-web 响应式改造,企业内部分发,全程不依赖 Android Studio"
   scope: "st-web(前端响应式+PWA+Capacitor 集成);后端零改动;新增 Android 壳工程;影响全部 18 页面与 60 组件的移动布局"

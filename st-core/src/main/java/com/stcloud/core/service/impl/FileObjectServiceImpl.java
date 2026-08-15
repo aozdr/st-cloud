@@ -1,0 +1,94 @@
+package com.stcloud.core.service.impl;
+
+import com.stcloud.core.entity.FileObject;
+import com.stcloud.core.enums.FileObjectStatus;
+import com.stcloud.core.mapper.FileObjectMapper;
+import com.stcloud.core.service.FileObjectService;
+import com.stcloud.core.service.StorageService;
+import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.util.function.Supplier;
+
+/**
+ * 文件对象服务实现（去重/引用计数，TASK-001）。
+ */
+@Slf4j
+@Service
+public class FileObjectServiceImpl implements FileObjectService {
+
+    @Resource
+    private FileObjectMapper fileObjectMapper;
+
+    @Resource
+    private StorageService storageService;
+
+    @Override
+    public FileObject acquire(Long tenantId, String md5, long size, Supplier<String> storagePathSupplier) {
+        if (md5 == null || md5.isEmpty()) {
+            return null;
+        }
+        // 去重命中：直接复用已有对象并 +1 引用，不重复上传
+        FileObject existing = fileObjectMapper.selectByTenantAndMd5(tenantId, md5);
+        if (existing != null) {
+            fileObjectMapper.incrementRefCount(existing.getId());
+            return existing;
+        }
+        // 未命中：上传新物理对象并创建对象记录
+        String storagePath = storagePathSupplier.get();
+        FileObject created = new FileObject();
+        created.setTenantId(tenantId);
+        created.setMd5(md5);
+        created.setSize(size);
+        created.setStoragePath(storagePath);
+        created.setRefCount(1);
+        // 新建文件对象状态正常
+        created.setStatus(FileObjectStatus.NORMAL.getCode());
+        int inserted = fileObjectMapper.insertIgnore(created);
+        if (inserted == 0) {
+            // 并发首个上传竞争：另一事务已插入同 md5 对象，复用之（可能产生一次冗余上传，属可接受竞态）
+            FileObject winner = fileObjectMapper.selectByTenantAndMd5(tenantId, md5);
+            if (winner != null) {
+                fileObjectMapper.incrementRefCount(winner.getId());
+                return winner;
+            }
+        }
+        // 返回权威行（含数据库生成 id）
+        return fileObjectMapper.selectByTenantAndMd5(tenantId, md5);
+    }
+
+    @Override
+    public FileObject findByTenantAndMd5(Long tenantId, String md5) {
+        if (md5 == null || md5.isEmpty()) {
+            return null;
+        }
+        return fileObjectMapper.selectByTenantAndMd5(tenantId, md5);
+    }
+
+    @Override
+    public int release(Long objectId) {
+        if (objectId == null) {
+            return 0;
+        }
+        fileObjectMapper.decrementRefCount(objectId);
+        Integer remaining = fileObjectMapper.getRefCount(objectId);
+        return remaining == null ? 0 : remaining;
+    }
+
+    @Override
+    public void deletePhysical(Long objectId) {
+        if (objectId == null) {
+            return;
+        }
+        FileObject object = fileObjectMapper.selectById(objectId);
+        if (object == null || object.getStoragePath() == null) {
+            return;
+        }
+        try {
+            storageService.deleteObject(object.getStoragePath());
+        } finally {
+            fileObjectMapper.markDeleted(objectId);
+        }
+    }
+}

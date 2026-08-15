@@ -94,6 +94,22 @@
 - `listFavoriteIds`：验证轻量查询 SQL
 - 租户隔离：租户 A 的收藏，租户 B 查不到（验证 `TenantLineInnerInterceptor` 生效）
 
+### 其他模块集成测试（同范式扩展）
+
+| 模块 | 代表性测试 | 覆盖重点 |
+|------|-----------|---------|
+| st-core | `UploadStateMachineIntegrationTest` / `RelayUploadIntegrationTest` | 上传状态机、中转上传、断点续传 |
+| st-core | `ConcurrentUploadIntegrationTest` / `QuotaConcurrencyIntegrationTest` | 并发上传、配额并发一致性 |
+| st-core | `FileObjectIntegrationTest` / `EventOutboxIntegrationTest` | 去重引用计数、事务 Outbox（回滚即无事件） |
+| st-core | `FileServicePermissionIntegrationTest` / `AccessibleCacheTest` | 权限过滤与权限缓存 |
+| st-auth | `AuthServiceIntegrationTest` | 注册/登录/刷新、Token 生命周期 |
+| st-share | `ShareServiceImplSecurityIntegrationTest` / `ShareServiceImplExpiryIntegrationTest` / `ShareServiceImplPermissionLimitIntegrationTest` | 分享越权、过期、下载限制 |
+| st-team | `TeamServiceIntegrationTest` / `TeamServicePermissionIntegrationTest` / `FolderPermissionServiceRuleTest` | 团队成员/邀请/移交、文件夹权限规则 |
+| st-admin | `AuditLogIntegrationTest` / `SpeedLimitManageIntegrationTest` | 审计查询、限速规则管理 |
+| st-search | `NgramSearchIntegrationTest` | ES 检索与过滤 |
+| st-preview | `PreviewServiceIntegrationTest` | 预览缓存与格式分支 |
+| st-sync | `SyncChangeMessageConsumerTest` | MQ 幂等消费 |
+
 ## 运行集成测试
 
 ```bash
@@ -106,45 +122,43 @@ mvn test -pl st-core -Dsurefire.failIfNoSpecifiedTests=false
 
 > `-Dsurefire.failIfNoSpecifiedTests=false`：当使用 `-am`（also make）构建依赖模块时，避免因依赖模块无匹配测试而报错。
 
-## 数据库迁移验证（测试前置必做）
+## 数据库迁移验证（自动化门禁）
 
 > H2 集成测试通过 ≠ MySQL 运行环境正常。H2 的 `schema.sql` 是手动维护的，可能与生产 MySQL schema 不一致。
 
-### 问题场景
+### 自动化校验工具
 
-1. 开发者在实体类新增字段（如 `FileNode.hidden`）
-2. 在 `schema.sql` 中添加了对应列 -> H2 集成测试通过
-3. 创建了迁移脚本 `16_add_file_hidden.sql` 但**未执行到运行中的 MySQL**
-4. 生产环境启动后，LambdaQueryWrapper 生成 `WHERE hidden = 0` -> MySQL 报 `Unknown column 'hidden'`
+项目提供两个自动化工具防止 schema 漂移：
 
-### 强制检查项
+1. **`SchemaConsistencyTest`**（`mvn test` 自动运行）：三层校验实体字段 ↔ schema.sql ↔ MySQL init SQL 的列覆盖
+2. **`compare-schema.ps1`**（`.ai/scripts/compare-schema.ps1`）：对比 H2 schema.sql 与运行中 MySQL 的实际列集差异
 
-每次迭代涉及数据库变更时，测试执行前必须：
+### 每次迭代强制流程
 
-1. **对比迁移脚本与 MySQL 实际 schema**：
-   ```bash
-   # 检查新增字段是否存在
-   mysql -uroot -p stcloud -e "SHOW COLUMNS FROM file_node LIKE 'hidden';"
-   ```
+按 AGENTS.md「数据库版本管理」章节执行（H2 测试通过后必须运行 `compare-schema.ps1`）：
 
-2. **实体字段与 MySQL 列对照**：
-   - 遍历本次迭代修改的实体类，逐个确认每个新增字段在 MySQL 中有对应列
-   - 特别注意 LambdaQueryWrapper / @Select SQL 中引用的字段
+```
+1. 新建迁移脚本 (docker/mysql/init/NN_xxx.sql)
+2. 同步 H2 schema (st-core/src/test/resources/schema.sql)
+3. mvn test 全绿（含 SchemaConsistencyTest）
+4. .ai/scripts/compare-schema.ps1  ← 对比 MySQL，确认无差异
+5. 执行迁移到 MySQL
+6. INSERT schema_version 记录（版本号 + SQL 文件清单）
+7. 再次 compare-schema.ps1 确认 PASS
+```
 
-3. **迁移脚本执行确认**：
-   - `docker/mysql/init/` 下新增的 `.sql` 文件必须手动执行到开发环境 MySQL
-   - Docker 初次启动会自动执行 init 脚本，但已运行的容器不会重复执行
-   - 执行后验证：`SELECT * FROM information_schema.columns WHERE table_name = 'file_node' AND column_name = 'hidden';`
+### compare-schema.ps1 输出说明
 
-### 集成测试改进方向
+- `[PASS] [table] aligned`：共有表列集一致
+- `[DIFF] [table] H2 only: xxx`：H2 有 MySQL 缺的列（需补迁移到 MySQL）
+- `[DIFF] [table] MySQL only: xxx`：MySQL 有 H2 缺的列（需补 schema.sql 或清理 MySQL 残留列）
+- `Pending SQL files`：`schema_version` 表中未记录的新 SQL 文件
+- 退出码 0 = PASS，1 = 有差异待处理
 
-当前 H2 集成测试使用独立 `schema.sql`，与生产 MySQL schema 存在脱节风险。未来可考虑：
-- 集成测试启动时自动执行 `docker/mysql/init/` 下的迁移脚本（而非手动维护 `schema.sql`）
-- 或增加 schema 一致性校验测试，对比实体字段与数据库列
+### 版本表 schema_version
 
-## 注意事项
-
-- H2 `MODE=MySQL` 兼容 `AUTO_INCREMENT`/`ON UPDATE CURRENT_TIMESTAMP`/`JOIN`/`UNIQUE KEY` 等语法；`ENGINE=`/`CHARSET=` 子句会被忽略不报错
-- 若个别生产 SQL 在 H2 下不兼容，在 `schema.sql` 中做 H2 适配（不改生产 SQL）
-- `@TableField(select = false)` + `@TableLogic` 的字段（如 `deleted`）不会出现在 SELECT 结果中，代码中不可直接 `getDeleted()` 判断，应使用业务状态字段（如 `isNormal()`）
-- 集成测试的 `schema.sql` 仅含被测功能所需表，不必包含全部生产表
+每次迭代执行迁移后，向 `schema_version` 表 INSERT 记录：
+```sql
+INSERT INTO schema_version (version_tag, iteration_name, applied_sql_files, applied_by, notes)
+VALUES ('YYYYMMDD.N', '迭代名称', 'NN_xxx.sql,NN_yyy.sql', 'agent/user', '变更摘要');
+```

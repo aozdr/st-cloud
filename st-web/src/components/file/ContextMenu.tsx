@@ -1,6 +1,6 @@
-﻿import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Download, Pencil, FolderInput, Copy, Trash2, FolderOpen, Eye, Scissors, ClipboardPaste, Share2, History, Info, Star, EyeOff, type LucideIcon } from 'lucide-react';
+import { Download, Pencil, FolderInput, Copy, Trash2, FolderOpen, Eye, Edit3, Scissors, ClipboardPaste, Share2, History, Info, Star, EyeOff, Lock, Unlock, type LucideIcon } from 'lucide-react';
 import type { FileNode } from '../../types';
 import { usePermission } from '../../lib/permission';
 
@@ -11,12 +11,18 @@ interface Props {
   hasClipboard: boolean;
   showShare?: boolean;
   showVersions?: boolean;
+  /** 显示「在线编辑」入口：docx/xlsx/pptx 且有编辑权限（由 FileBrowser 计算） */
+  showEdit?: boolean;
   isFav?: boolean;
+  /** 团队空间：启用右键锁定/解锁入口（按节点锁定状态展示「锁定/解锁」其一） */
+  lockable?: boolean;
+  /** 节点当前锁定状态（仅 lockable 时生效；由 FileBrowser 按节点后端锁定字段计算） */
+  locked?: boolean;
   onAction: (action: string, node: FileNode) => void;
   onClose: () => void;
 }
 
-export default function ContextMenu({ x, y, node, hasClipboard, showShare = true, showVersions = true, isFav = false, onAction, onClose }: Props) {
+export default function ContextMenu({ x, y, node, hasClipboard, showShare = true, showVersions = true, showEdit = false, isFav = false, lockable = false, locked = false, onAction, onClose }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const { has } = usePermission();
   const [pos, setPos] = useState<{ left: number; top: number }>({ left: x, top: y });
@@ -46,9 +52,11 @@ export default function ContextMenu({ x, y, node, hasClipboard, showShare = true
       : has('file:preview')
         ? [{ action: 'preview', label: '预览', icon: Eye }]
         : []),
+    ...(node.nodeType === 1 && showEdit ? [{ action: 'edit', label: '在线编辑', icon: Edit3 }] : []),
     { action: 'details', label: '详情', icon: Info },
     { action: 'favorite', label: isFav ? '取消收藏' : '收藏', icon: Star },
     { action: 'hide', label: '隐藏', icon: EyeOff },
+    ...(lockable ? [{ action: locked ? 'unlock' : 'lock', label: locked ? '解锁' : '锁定', icon: locked ? Unlock : Lock }] : []),
     ...(has('file:move') ? [{ action: 'cut', label: '剪切', icon: Scissors }] : []),
     ...(has('file:copy') ? [{ action: 'copy', label: '复制', icon: Copy }] : []),
     ...(hasClipboard && (has('file:copy') || has('file:move')) ? [{ action: 'paste', label: '粘贴', icon: ClipboardPaste }] : []),

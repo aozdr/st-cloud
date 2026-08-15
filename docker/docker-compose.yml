@@ -94,8 +94,39 @@ services:
     volumes:
       - es_data:/usr/share/elasticsearch/data
 
+  # OnlyOffice Document Server（在线文档编辑，社区版，2 核 2GB 起）
+  onlyoffice:
+    image: onlyoffice/documentserver:latest
+    container_name: stcloud-onlyoffice
+    restart: unless-stopped
+    # 持久化修复：首次启动/空 Data 卷时先创建 certs 目录，避免启动脚本 find 报
+    # "find: '/var/www/onlyoffice/Data/certs': No such file or directory"（20260815 实测）
+    entrypoint: ["/bin/bash", "-c", "mkdir -p /var/www/onlyoffice/Data/certs && exec /app/ds/run-document-server.sh"]
+    environment:
+      JWT_ENABLED: "true"
+      # 与后端 STCLOUD_ONLYOFFICE_SECRET 保持一致（HS256 至少 32 字节）；开发默认值便于开箱即用，生产用环境变量覆盖
+      JWT_SECRET: ${STCLOUD_ONLYOFFICE_SECRET:-stcloud-onlyoffice-dev-secret-0123456789}
+      # 回调签名令牌同时放入请求体 token 字段，后端据此验签
+      JWT_IN_BODY: "true"
+      JWT_HEADER: "Authorization"
+    ports:
+      - "8081:80"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - onlyoffice_data:/var/www/onlyoffice/Data
+      - onlyoffice_logs:/var/log/onlyoffice
+      - onlyoffice_cache:/var/lib/onlyoffice
+      - onlyoffice_db:/var/lib/postgresql
+      # 禁用 OnlyOffice Service Worker（浏览器 SW fetch 异常导致编辑器白屏，20260815 实测）
+      - ./onlyoffice/nginx/disable-sw.conf:/etc/nginx/includes/ds-disable-sw.conf:ro
+
 volumes:
   mysql_data:
   redis_data:
   rustfs_data:
   es_data:
+  onlyoffice_data:
+  onlyoffice_logs:
+  onlyoffice_cache:
+  onlyoffice_db:

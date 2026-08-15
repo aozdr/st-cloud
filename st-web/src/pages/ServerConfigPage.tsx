@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Cloud, Server, ArrowLeft, CheckCircle2, Loader2 } from 'lucide-react';
 import { getServerUrl, setServerUrl, normalize } from '../lib/server-config';

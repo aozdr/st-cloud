@@ -1,4 +1,4 @@
-﻿taskId: "20260809-pikpak-discovery"
+taskId: "20260809-pikpak-discovery"
 goal:
   objective: "需求发现 Agent 调研 PikPak 网盘 UI/UX 设计，基于 docs/PikPak.html 实际 DOM/CSS 提取设计 DNA，产出需求发现报告交 PM 评估立项"
   scope: "PikPak Web 端 UI/UX 实地调研（布局/信息架构/交互流程/组件模式/状态设计/视觉系统），对照星云盘前端现状"

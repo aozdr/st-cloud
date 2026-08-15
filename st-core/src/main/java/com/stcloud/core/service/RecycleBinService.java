@@ -38,4 +38,10 @@ public interface RecycleBinService {
      * 永久清理单个回收站节点（不依赖用户上下文，供定时任务调用）。
      */
     void purgeNode(Long nodeId);
+
+    /**
+     * 管理员强制永久删除正常态节点（同步异常数据清理用）：
+     * 不校验归属，复用同一套 S3 物理对象/引用计数/配额/ES 索引清理逻辑。
+     */
+    void permanentDeleteAdmin(List<Long> nodeIds);
 }

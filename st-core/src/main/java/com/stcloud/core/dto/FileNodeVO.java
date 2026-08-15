@@ -34,6 +34,9 @@ public class FileNodeVO {
     @Schema(description = "MIME类型")
     private String contentType;
 
+    @Schema(description = "文件MD5")
+    private String fileMd5;
+
     @Schema(description = "状态：0-正常 1-回收站")
     private Integer status;
 
@@ -47,4 +50,15 @@ public class FileNodeVO {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     @Schema(description = "更新时间")
     private LocalDateTime updatedAt;
+
+    @Schema(description = "锁定人ID（null=未锁定）")
+    private Long lockedBy;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Schema(description = "锁定时间")
+    private LocalDateTime lockedAt;
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    @Schema(description = "锁过期时间（null=永久锁）")
+    private LocalDateTime lockExpireAt;
 }

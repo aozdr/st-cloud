@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { Lock, Download, FolderClosed, ArrowLeft, Cloud, ChevronRight, Folder, Eye } from 'lucide-react';
 import api from '../lib/api';

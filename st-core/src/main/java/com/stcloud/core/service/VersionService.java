@@ -27,6 +27,16 @@ public interface VersionService {
     void snapshotCurrentVersion(FileNode node);
 
     /**
+     * 将文件节点当前内容快照为一个新的历史版本（指定来源：0-上传覆盖 / 1-编辑器保存）
+     */
+    void snapshotCurrentVersion(FileNode node, Integer source);
+
+    /**
+     * 裁剪编辑器保存版本：仅 source=1 参与，超过 limit 时删除最旧记录（D1 决策：上传覆盖版本不受影响）
+     */
+    void pruneEditorVersions(Long fileNodeId, int limit);
+
+    /**
      * 获取文件最近的历史版本（用于替换上传中止时回退）
      */
     FileVersion getLatestVersion(Long fileNodeId);

@@ -111,6 +111,9 @@ public interface FileService {
     /** 校验节点可访问：自身及所有祖先必须处于正常态，否则抛 FORBIDDEN。 */
     void validateAccessible(Long nodeId);
 
+    /** 失效指定节点的可访问性缓存（节点移动/回收/删除/恢复等结构变更后调用）。 */
+    void invalidateAccessible(Long nodeId);
+
     /** 递归收集指定节点的全部子孙（按 parentId，不依赖 path 前缀）。 */
     List<FileNode> collectDescendants(Long nodeId);
 

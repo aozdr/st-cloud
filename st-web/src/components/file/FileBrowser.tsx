@@ -1,9 +1,9 @@
-﻿import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { isElectron } from '../../lib/electron';
 import api from '../../lib/api';
 import { useTransferStore } from '../../store/transfer';
-import type { FileNode, SearchResultVO } from '../../types';
+import type { BlankFileType, FileNode, SearchResultVO } from '../../types';
 import type { FileSource } from '../../lib/fileSource';
 import FileTable from './FileTable';
 import FileTableView from './FileTableView';
@@ -22,7 +22,7 @@ import { Upload, RefreshCw, AlertCircle } from 'lucide-react';
 import BlankContextMenu from './BlankContextMenu';
 import MoveDialog from './MoveDialog';
 import DownloadDialog from './DownloadDialog';
-import { CreateFolderDialog, RenameDialog, EmptyState, FileListSkeleton } from './Dialogs';
+import { CreateFolderDialog, CreateFileDialog, RenameDialog, EmptyState, FileListSkeleton } from './Dialogs';
 import FileDetailPanel from './FileDetailPanel';
 import PreviewModal from '../preview/PreviewModal';
 import ShareDialog from '../share/ShareDialog';
@@ -38,6 +38,7 @@ import { useFileKeyboard } from '../../hooks/useFileKeyboard';
 import { useFolderFilterStore } from '../../store/folderFilter';
 import { useFavoritesStore } from '../../store/favorites';
 import { FolderInput } from 'lucide-react';
+import { isEditableOfficeSuffix } from '../../lib/editor';
 
 export interface FileBrowserProps {
   source: FileSource;
@@ -50,6 +51,16 @@ export interface FileBrowserProps {
   syncUrl?: boolean;
   categoryLabel?: string;
   focusId?: string | null;
+  /** 页面级详情回调：由页面统一管理详情视图（TeamSpacePage）；未提供时回退到内部右侧边栏（兼容其它页面） */
+  onOpenDetail?: (node: FileNode) => void;
+  /** 团队空间右键锁定/解锁回调（仅团队空间传入；执行 POST /team/{spaceId}/files/{nodeId}/lock|unlock） */
+  onToggleLock?: (action: 'lock' | 'unlock', node: FileNode) => void;
+}
+
+/** 节点是否已锁定：以后端锁定字段为准（lockedBy 非空且未过期即视为锁定） */
+function isNodeLocked(node: FileNode): boolean {
+  if (node.lockedBy == null) return false;
+  return node.lockExpireAt == null || new Date(node.lockExpireAt).getTime() > Date.now();
 }
 
 export default function FileBrowser({
@@ -63,6 +74,8 @@ export default function FileBrowser({
   syncUrl = false,
   categoryLabel,
   focusId,
+  onOpenDetail,
+  onToggleLock,
 }: FileBrowserProps) {
 
   /** Returns true if the click landed on a file/folder item (not blank area) */
@@ -73,6 +86,7 @@ export default function FileBrowser({
 
 
   const navigate = useNavigate();
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const [files, setFiles] = useState<FileNode[]>([]);
   const [loading, setLoading] = useState(true);
@@ -131,6 +145,10 @@ export default function FileBrowser({
   const { confirm } = useConfirm();
   const { has } = usePermission();
   const isMobile = useMobile();
+
+  /** 是否可在线编辑：docx/xlsx/pptx 且当前用户具备编辑（上传）权限；最终权限以后端 config 接口为准 */
+  const canEditNode = (node: FileNode) =>
+    node.nodeType === 1 && isEditableOfficeSuffix(node.suffix) && has('file:upload');
   // 网络错误状态:区分网络异常与空数据,显示重试按钮而非 EmptyState
   const [networkError, setNetworkError] = useState(false);
   // 移动端多选模式:长按文件进入,单击切换选中,顶部 MultiSelectBar 操作
@@ -140,6 +158,7 @@ export default function FileBrowser({
   const { dragRect, startDrag } = useDragSelect(fileListRef, setSelectedIds);
 
   const [showCreateFolder, setShowCreateFolder] = useState(false);
+  const [newFileType, setNewFileType] = useState<BlankFileType | null>(null);
   const [showBatchRename, setShowBatchRename] = useState(false);
   const [archiveTarget, setArchiveTarget] = useState<FileNode | null>(null);
   const [renameTarget, setRenameTarget] = useState<FileNode | null>(null);
@@ -147,6 +166,19 @@ export default function FileBrowser({
 
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; node: FileNode } | null>(null);
   const [blankContextMenu, setBlankContextMenu] = useState<{ x: number; y: number } | null>(null);
+
+  // 从编辑器「以预览打开」回退：接收路由 state.openPreview，在目录加载完成后自动打开预览
+  const pendingPreviewIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    const st = (location.state ?? null) as { openPreview?: string } | null;
+    if (st?.openPreview) {
+      pendingPreviewIdRef.current = st.openPreview;
+      // 消费一次后清除路由状态，避免刷新/重复进入再次弹预览
+      navigate(location.pathname + location.search, { replace: true, state: null });
+    }
+    // 仅在挂载时读取一次（来源导航 state），不随路由变化重复触发
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const [preview, setPreview] = useState<{ files: FileNode[]; index: number } | null>(null);
   const [shareTarget, setShareTarget] = useState<FileNode | null>(null);
@@ -175,9 +207,18 @@ export default function FileBrowser({
     if (files.length === 0) setLoading(true);
     try {
       const res = await source.listFiles(parentId, page, 50);
-      setFiles(res?.records || []);
+      const records = res?.records || [];
+      setFiles(records);
       setNetworkError(false);
       setTotal(Number(res?.total || 0));
+      // 编辑器「以预览打开」回退：当前目录存在该文件时自动打开预览
+      const pendingId = pendingPreviewIdRef.current;
+      if (pendingId) {
+        pendingPreviewIdRef.current = null;
+        const fileFiles = records.filter((f) => f.nodeType === 1);
+        const idx = fileFiles.findIndex((f) => f.id === pendingId);
+        if (idx >= 0) setPreview({ files: fileFiles, index: idx });
+      }
     } catch {
       setFiles([]);
       setNetworkError(true);
@@ -350,6 +391,32 @@ export default function FileBrowser({
       }
     }
     addFiles(selected, parentId || '0', undefined, uploadSpaceId);
+  };
+
+  /**
+   * 新建空白文件（txt/docx/xlsx/pptx）：
+   * - 调接口成功 → 刷新列表；Office 类型（docx/xlsx/pptx）自动跳转在线编辑并携带来源路径（P3），txt 留在列表
+   * - 失败（配额/权限等）→ toast 提示后端错误信息，不跳转编辑
+   */
+  const handleNewFile = async (type: BlankFileType) => {
+    // 弹出文件名输入框（预填默认名），用户确认后创建
+    setNewFileType(type);
+  };
+
+  const handleCreateFile = async (type: BlankFileType, fileName: string) => {
+    try {
+      const node = await source.createBlankFile(parentId, type, fileName);
+      showToast('新建成功');
+      fetchFiles();
+      if (node && node.nodeType === 1 && isEditableOfficeSuffix(node.suffix)) {
+        navigate(`/file/${node.id}/editor`, { state: { from: location.pathname + location.search } });
+      }
+    } catch (err) {
+      console.error('Create blank file failed:', err);
+      showToast(err instanceof Error ? err.message : '新建失败', 'error');
+    } finally {
+      setNewFileType(null);
+    }
   };
 
   const handleSelect = (id: string, e: React.MouseEvent) => {
@@ -636,6 +703,11 @@ export default function FileBrowser({
     }
   };
 
+  /** 打开在线编辑器：记录来源路径，关闭/回退后返回当前目录（FileBrowser 重挂载即刷新列表） */
+  const handleEdit = (node: FileNode) => {
+    navigate(`/file/${node.id}/editor`, { state: { from: location.pathname + location.search } });
+  };
+
   const handleContextAction = async (action: string, node: FileNode) => {
     setContextMenu(null);
     switch (action) {
@@ -648,6 +720,9 @@ export default function FileBrowser({
         if (idx >= 0) setPreview({ files: fileFiles, index: idx });
         break;
       }
+      case 'edit':
+        handleEdit(node);
+        break;
       case 'cut':
         setClipboard({ nodeIds: [...selectedIds], mode: 'cut' });
         showToast(`\u5df2\u526a\u5207 ${selectedIds.size} \u9879`);
@@ -681,7 +756,9 @@ export default function FileBrowser({
         setVersionTarget(node);
         break;
       case 'details':
-        setDetailFile(node);
+        // 详情由页面统一管理（onOpenDetail）；未提供时回退到内部边栏，保持其它页面行为不变
+        if (onOpenDetail) onOpenDetail(node);
+        else setDetailFile(node);
         break;
       case 'favorite': {
         const added = await toggleFav(node);
@@ -694,6 +771,12 @@ export default function FileBrowser({
         fetchFiles();
         break;
       }
+      case 'lock':
+      case 'unlock':
+        // 锁定/解锁成功后刷新列表：锁定状态以后端字段为准，刷新后他人锁定/解锁可见
+        await onToggleLock?.(action as 'lock' | 'unlock', node);
+        fetchFiles();
+        break;
     }
   };
 
@@ -734,6 +817,14 @@ export default function FileBrowser({
   const [detailFile, setDetailFile] = useState<FileNode | null>(null);
 
   const allSelected = files.length > 0 && files.every((f) => selectedIds.has(f.id));
+
+  // 工具栏「在线编辑」：仅当单选一个可编辑 Office 文件（docx/xlsx/pptx + 编辑权限）时显示
+  const editableSelected = (() => {
+    if (selectedIds.size !== 1) return null;
+    const node = files.find((f) => selectedIds.has(f.id));
+    return node && canEditNode(node) ? node : null;
+  })();
+
   const [folderSearchResults, setFolderSearchResults] = useState<FileNode[]>([]);
 
   useEffect(() => {
@@ -764,6 +855,15 @@ export default function FileBrowser({
     return folderSearchResults;
   }, [sortedFiles, folderSearch, folderSearchResults]);
 
+  // 已锁定节点 ID 集合：由列表节点上的后端锁定字段推导，供列表视图渲染锁图标与右键菜单判断
+  const lockedIds = useMemo(() => {
+    const set = new Set<string>();
+    for (const f of files) {
+      if (isNodeLocked(f)) set.add(f.id);
+    }
+    return set;
+  }, [files]);
+
   return (
     <div
       className="flex flex-col h-full bg-surface"
@@ -787,6 +887,8 @@ export default function FileBrowser({
         filesCount={files.length}
         allSelected={allSelected}
         selectedSize={selectedSize}
+        canEditSelected={!!editableSelected}
+        onEdit={() => editableSelected && handleEdit(editableSelected)}
         sortBy={sortBy}
         onSortChange={(v) => { setSortBy(v); localStorage.setItem('fileSortBy', v); }}
         sortDir={sortDir}
@@ -794,6 +896,7 @@ export default function FileBrowser({
         view={view}
         onViewChange={setView}
         onNewFolder={() => setShowCreateFolder(true)}
+        onNewFile={handleNewFile}
         onUploadClick={handleUploadClick}
         onDownload={() => handleDownload([...selectedIds])}
         onMove={() => setMoveTarget({ nodeIds: [...selectedIds], mode: 'move' })}
@@ -846,7 +949,7 @@ export default function FileBrowser({
       <div className="flex-1 min-h-0 flex overflow-hidden">
       <div
         ref={fileListRef}
-        className="flex-1 min-h-0 overflow-auto px-5 py-4 relative"
+        className="flex-1 min-h-0 min-w-0 overflow-auto px-5 py-4 relative"
         onTouchStart={isMobile ? ptr.onTouchStart : undefined}
         onTouchMove={isMobile ? ptr.onTouchMove : undefined}
         onTouchEnd={isMobile ? ptr.onTouchEnd : undefined}
@@ -886,6 +989,7 @@ export default function FileBrowser({
         ) : view === 'table' ? (
           <FileTableView
             files={filteredFiles}
+            lockedIds={lockedIds}
             selectedIds={selectedIds}
             focusedId={focusedId}
             cutIds={clipboard?.mode === 'cut' ? new Set(clipboard.nodeIds) : null}
@@ -917,6 +1021,7 @@ export default function FileBrowser({
         ) : view === 'card' ? (
           <FileTable
             files={filteredFiles}
+            lockedIds={lockedIds}
             selectedIds={selectedIds}
             focusedId={focusedId}
             cutIds={clipboard?.mode === 'cut' ? new Set(clipboard.nodeIds) : null}
@@ -945,6 +1050,7 @@ export default function FileBrowser({
         ) : (
           <FileGrid
             files={filteredFiles}
+            lockedIds={lockedIds}
             selectedIds={selectedIds}
             focusedId={focusedId}
             cutIds={clipboard?.mode === 'cut' ? new Set(clipboard.nodeIds) : null}
@@ -971,7 +1077,7 @@ export default function FileBrowser({
           />
         )}
       </div>
-      {detailFile && (
+      {!onOpenDetail && detailFile && (
         <FileDetailPanel file={detailFile} onClose={() => setDetailFile(null)} />
       )}
       </div>
@@ -1008,6 +1114,9 @@ export default function FileBrowser({
           showShare={enableShare}
           showVersions={enableVersions}
           isFav={checkFav(contextMenu.node.id)}
+          lockable={!!onToggleLock}
+          locked={isNodeLocked(contextMenu.node)}
+          showEdit={canEditNode(contextMenu.node)}
           onAction={handleContextAction}
           onClose={() => setContextMenu(null)}
         />
@@ -1027,6 +1136,7 @@ export default function FileBrowser({
               case 'selectAll': selectAll(); break;
             }
           }}
+          onNewFile={handleNewFile}
           onClose={() => setBlankContextMenu(null)}
         />
       )}
@@ -1051,6 +1161,12 @@ export default function FileBrowser({
         onCreate={(pid, name) => source.createFolder(pid, name)}
         onClose={() => setShowCreateFolder(false)}
         onSuccess={() => { setShowCreateFolder(false); fetchFiles(); }}
+      />
+      <CreateFileDialog
+        open={newFileType !== null}
+        type={newFileType}
+        onCreate={handleCreateFile}
+        onClose={() => setNewFileType(null)}
       />
       <RenameDialog
         node={renameTarget}

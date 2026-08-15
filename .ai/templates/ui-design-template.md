@@ -1,4 +1,4 @@
-﻿# UI 设计文档
+# UI 设计文档
 
 > 输出标准：`docs/newList/ai-ui-design-document-standard.md`
 > 所有前端页面、新组件、交互改造必须先输出本文档，先设计后编码。

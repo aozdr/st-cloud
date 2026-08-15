@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Capacitor 原生壳环境检测与桥接封装
  * 与 electron.ts 并列,提供 Capacitor 运行时能力
  * 降级链: capacitor > electron > web,本模块仅处理 capacitor 分支

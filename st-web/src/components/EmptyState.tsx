@@ -1,4 +1,4 @@
-﻿import type { ReactNode } from 'react';
+import type { ReactNode } from 'react';
 
 /**
  * 通用空状态组件：SVG 插图 + 标题 + 描述 + 可选操作按钮

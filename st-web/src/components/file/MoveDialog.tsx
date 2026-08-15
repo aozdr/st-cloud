@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import type { FileTreeNode } from '../../types';
 import { X, FolderClosed, ChevronRight, FolderOpen } from 'lucide-react';
 import { cn } from '../../lib/utils';

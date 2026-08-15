@@ -1,0 +1,40 @@
+taskId: "20260813-project-code-review"
+goal:
+  objective: "对当前工作区自 HEAD（213136c）起的全部未提交变更执行 Code Review（两轴：标准符合度 + 需求符合度），输出问题清单与通过/不通过结论，作为后续迭代输入。"
+  scope: "只读审查 st-common / st-core / st-sync / st-search / st-team / st-web / st-desktop / docker/mysql/init 的未提交变更（git diff HEAD + 未跟踪源码）；不改动任何代码；不运行构建（TEST_PASS 阶段负责）"
+  completionCriteria:
+    - "两轴审查报告齐全（标准符合度 + 需求符合度），问题带 文件:行 与等级"
+    - "codereview.md 落盘 .ai/docs/20260813-project-code-review/codereview.md"
+    - "给出通过/不通过结论与必须修改项清单"
+    - "本轮不修改任何业务代码"
+scale: review
+exitCriteria:
+  - { id: CODE_REVIEW, desc: "Code Review 通过（本轮结论：不通过，需修复后复检）", status: pending, dependsOn: [] }
+artifacts:
+  review: { status: done, ref: ".ai/docs/20260813-project-code-review/codereview.md", owner: "reviewer" }
+blockers:
+  - "C1：file_object 唯一键与逻辑删除冲突，永久删除后同 md5 重传 NPE/去重失效"
+  - "M1：mergeChunks 无权限校验"
+  - "M2：S3 完成先于配额扣减，失败后不可恢复"
+  - "M3：relayFinalize 自调用 mergeChunks 绕过事务代理"
+  - "M4：28 号迁移脚本不可重复执行"
+  - "M5：block-upload 信任客户端 storagePath/s3UploadId/fileMd5/fileSize"
+  - "M6：云盘容量行锁持有跨 S3 I/O"
+  - "M7：块级同步 multipart 无 abort/清理"
+  - "M8：SyncBlockServiceImpl 无测试覆盖"
+history:
+  - iter: 0
+    phase: "init"
+    agent: "workflow-manager"
+    action: "用户触发项目级 Code Review；确定固定基点 HEAD=213136c，审查范围为全部未提交变更（85 个已跟踪文件 + 未跟踪源码），规格依据为近期迭代文档"
+    delta: "State 落盘，生成 TASK-20260813-project-code-review"
+    result: "进入 CODE_REVIEW 派发"
+  - iter: 1
+    phase: "review"
+    agent: "reviewer（主 Agent 扮演，因子代理线程上限无法并行派发）"
+    action: "两轴审查：标准符合度（conventions/architecture/frontend/testing/AGENTS + Fowler 坏味道基线）+ 需求符合度（5 个迭代文档）；逐文件核对上传/中转/事件 Outbox/对象去重/块级同步/前端体验/迁移脚本/测试覆盖"
+    delta: "codereview.md 落盘；问题清单 1 Critical + 8 Major + 7 Minor + 3 Suggestion；结论不通过"
+    result: "CODE_REVIEW 保持 pending，新增 9 个 blocker，待修复后复检"
+iteration: 1
+status: running
+maxIterations: 5

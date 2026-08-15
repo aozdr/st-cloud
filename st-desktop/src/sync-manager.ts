@@ -2,7 +2,7 @@ import { BrowserWindow } from 'electron';
 import { apiClient, getUserId } from './api-client';
 import { SyncEngine, type SyncRootInfo } from './sync-engine';
 import { SyncWsClient } from './ws-client';
-import { getAllSyncConfigs, deleteSyncConfig, upsertSyncConfig, claimLegacySyncConfigs } from './database';
+import { getAllSyncConfigs, deleteSyncConfig, upsertSyncConfig, claimLegacySyncConfigs, deleteSyncStatesByRoot, deleteBlockHashesByRoot, deleteSyncHistoryByRoot } from './database';
 
 interface CloudSyncRootVO {
   id: string;
@@ -138,6 +138,10 @@ export async function deleteSyncRoot(rootId: string): Promise<void> {
   await stopSync(rootId);
   await apiClient.delete(`/sync/roots/${rootId}`);
   deleteSyncConfig(rootId);
+  // 清理该同步根的全部本地状态，防止旧状态污染重新配置的新同步根
+  deleteSyncStatesByRoot(rootId);
+  deleteBlockHashesByRoot(rootId);
+  deleteSyncHistoryByRoot(rootId);
 }
 
 /** Fetch exclusions from server and apply to engine */

@@ -13,6 +13,7 @@ import com.stcloud.sync.entity.SyncChangeLog;
 import com.stcloud.sync.entity.SyncConflict;
 import com.stcloud.sync.entity.SyncExclusion;
 import com.stcloud.sync.entity.SyncRoot;
+import com.stcloud.sync.enums.SyncRootStatus;
 import com.stcloud.sync.mapper.SyncChangeLogMapper;
 import com.stcloud.sync.mapper.SyncConflictMapper;
 import com.stcloud.sync.mapper.SyncExclusionMapper;
@@ -68,7 +69,8 @@ public class SyncServiceImpl implements SyncService {
         root.setUserId(userId);
         root.setCloudFolderNodeId(request.getCloudFolderNodeId());
         root.setLocalPathHint(request.getLocalPathHint());
-        root.setStatus(0);
+        // 新建同步根默认启用
+        root.setStatus(SyncRootStatus.ACTIVE.getCode());
         root.setConflictStrategy("keep_both");
         root.setSyncCursor(0L);
         syncRootMapper.insert(root);
@@ -115,7 +117,10 @@ public class SyncServiceImpl implements SyncService {
     public Result<SyncRootVO> togglePause(Long rootId) {
         Long userId = UserContext.getUserId();
         SyncRoot root = getOwnedRoot(rootId, userId);
-        root.setStatus(root.getStatus() == 0 ? 1 : 0);
+        // 暂停/恢复切换：启用(0) -> 暂停(1) -> 启用(0)
+        root.setStatus(root.getStatus() == SyncRootStatus.ACTIVE.getCode()
+                ? SyncRootStatus.PAUSED.getCode()
+                : SyncRootStatus.ACTIVE.getCode());
         syncRootMapper.updateById(root);
 
         FileNode folder = null;
@@ -158,7 +163,22 @@ public class SyncServiceImpl implements SyncService {
 
         List<SyncDeltaItem> changes = new ArrayList<>();
         for (SyncChangeLog logEntry : logs) {
+            // 只返回同步根文件夹范围内的变更（path 与 MOVE/RENAME 的 oldPath 均须在根内），
+            // 防止按用户查询时把其他/已删除同步根的日志串入，造成本地误下载、误移动与冲突循环
+            if (!isUnderRoot(logEntry.getPath(), rootPath)) {
+                continue;
+            }
+            if (("MOVE".equals(logEntry.getChangeType()) || "RENAME".equals(logEntry.getChangeType()))
+                    && !isUnderRoot(logEntry.getOldPath(), rootPath)) {
+                continue;
+            }
             SyncDeltaItem item = toDeltaItem(logEntry, rootPath);
+            // 无意义 MOVE/RENAME（新旧路径一致）：源头守卫漏掉的脏日志兜底过滤，
+            // 防止客户端 MOVE 分支删除并重建 sync_state 导致 local_mtime 丢失、反复上传
+            if (("MOVE".equals(item.getChangeType()) || "RENAME".equals(item.getChangeType()))
+                    && (item.getOldPath() == null || item.getOldPath().equals(item.getPath()))) {
+                continue;
+            }
             // 过滤排除路径下的变更
             if (item.getPath() != null && !isExcluded(item.getPath(), exclusions)) {
                 changes.add(item);
@@ -178,6 +198,14 @@ public class SyncServiceImpl implements SyncService {
         syncRootMapper.updateById(root);
 
         return Result.success(resp);
+    }
+
+    /** 变更路径是否位于同步根文件夹内（含文件夹本身） */
+    private boolean isUnderRoot(String absPath, String rootPath) {
+        if (absPath == null || rootPath == null) {
+            return false;
+        }
+        return absPath.equals(rootPath) || absPath.startsWith(rootPath + PATH_SEP);
     }
 
     // ==================== 选择性同步 ====================

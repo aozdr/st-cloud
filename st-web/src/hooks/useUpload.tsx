@@ -103,6 +103,8 @@ export function UploadProvider({ children }: { children: ReactNode }) {
       };
       setTasks((prev) => [...prev, task]);
 
+      // 中转模式标记（try 内赋值，catch 中用于超时文案分支）
+      let transferMode: 'direct' | 'relay' = 'direct';
       try {
         // Step 1: Calculate MD5
         const fileMd5 = await calculateMd5(file);
@@ -137,8 +139,12 @@ export function UploadProvider({ children }: { children: ReactNode }) {
           parentId,
           ...(replaceFileId ? { replaceFileId } : {}),
           ...(spaceId ? { spaceId } : {}),
-        })) as { uploadId: string; s3UploadId: string };
+          ...(useTransferStore.getState().effective.uploadSpeedLimit > 0
+            ? { clientLimit: useTransferStore.getState().effective.uploadSpeedLimit }
+            : {}),
+        })) as { uploadId: string; s3UploadId: string; transferMode?: 'direct' | 'relay'; relayChunkSize?: number; relayRateKb?: number };
 
+        transferMode = initRes.transferMode || 'direct';
         updateTask(taskId, {
           status: 'uploading',
           uploadId: initRes.uploadId,
@@ -146,8 +152,39 @@ export function UploadProvider({ children }: { children: ReactNode }) {
           totalChunks,
           uploadedChunks: [],
           progress: 10,
+          transferMode,
+          relayLimitKb: initRes.relayRateKb ?? (useTransferStore.getState().effective.uploadSpeedLimit || 0),
         });
 
+        // 中转模式：限速 < 分片下限时走服务端中转，小块顺序 POST + pacing 节流
+        if (transferMode === 'relay' && initRes.relayChunkSize) {
+          const relayChunkSize = initRes.relayChunkSize;
+          const totalRelayChunks = Math.ceil(file.size / relayChunkSize);
+          let relayUploaded = 0;
+          for (let seq = 1; seq <= totalRelayChunks; seq++) {
+            const start = (seq - 1) * relayChunkSize;
+            const end = Math.min(start + relayChunkSize, file.size);
+            const blob = file.slice(start, end);
+            await api.post('/file/upload/relay-chunk', blob, {
+              params: { uploadId: initRes.uploadId, s3UploadId: initRes.s3UploadId, seq },
+              headers: { 'Content-Type': 'application/octet-stream' },
+              timeout: 300000,
+            });
+            relayUploaded++;
+            setTasks((prev) => prev.map((t) => t.id !== taskId ? t : {
+              ...t,
+              progress: 10 + Math.floor((relayUploaded / totalRelayChunks) * 80),
+            }));
+          }
+          // 中转完成：调用 relay-finalize 完成末片 + 合并
+          updateTask(taskId, { status: 'merging', progress: 95 });
+          await api.post('/file/upload/relay-finalize', null, {
+            params: { uploadId: initRes.uploadId, s3UploadId: initRes.s3UploadId },
+          });
+          updateTask(taskId, { status: 'completed', progress: 100 });
+          setRefreshSignal((s) => s + 1);
+          if (!spaceId) useStorageStore.getState().fetchStorage();
+        } else {
         const concurrency = 5;
         let uploadedCount = 0;
         const uploadChunk = async (index: number) => {
@@ -199,11 +236,14 @@ export function UploadProvider({ children }: { children: ReactNode }) {
         updateTask(taskId, { status: 'completed', progress: 100 });
         setRefreshSignal((s) => s + 1);
         if (!spaceId) useStorageStore.getState().fetchStorage();
+        } // end else (direct mode)
       } catch (err) {
         console.error('Upload failed:', err);
+        const rawMsg = err instanceof Error ? err.message : '上传失败';
         updateTask(taskId, {
           status: 'failed',
-          error: err instanceof Error ? err.message : '上传失败',
+          // 中转模式超时：提示限速过低，引导用户调整（exp-review 要点 4）
+          error: transferMode === 'relay' && /timeout|超时/i.test(rawMsg) ? '传输超时，当前限速值过低' : rawMsg,
         });
       }
     }
@@ -268,6 +308,8 @@ export function UploadProvider({ children }: { children: ReactNode }) {
           fileSize: transferTask.fileSize,
           status: statusMap[transferTask.status] || 'uploading',
           error: transferTask.error || undefined,
+          transferMode: transferTask.transferMode,
+          relayLimitKb: transferTask.relayLimitKb,
         };
         return updated;
       });

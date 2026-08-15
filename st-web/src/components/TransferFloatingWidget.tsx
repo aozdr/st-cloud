@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { ChevronUp, ChevronDown, Upload, CheckCircle2, X, Loader2 } from 'lucide-react';
 import { useUpload } from '../hooks/useUpload';
 import { formatSize, cn } from '../lib/utils';

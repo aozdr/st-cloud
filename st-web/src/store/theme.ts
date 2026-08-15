@@ -1,4 +1,4 @@
-﻿import { create } from 'zustand';
+import { create } from 'zustand';
 import { THEMES, DEFAULT_THEME, applyThemeToDOM, getThemeByKey } from '../themes';
 import type { ThemeKey, ThemePalette } from '../themes';
 
