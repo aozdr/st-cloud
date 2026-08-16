@@ -33,7 +33,10 @@ docker/data/
 .env
 .env.*
 !.env.example
-docs
+docs/*
+!docs/screenshots/
+docs/screenshots/*
+!docs/screenshots/*.png
 skill
 .ulpi
 
@@ -57,6 +60,9 @@ design/
 
 # AI dispatch runtime state (file inbox fallback)
 .ai/dispatch/
+
+# AI iteration docs (local working docs, not uploaded)
+.ai/docs/
 
 # AI code lab (isolated parallel-coding verification workspace)
 .ai/lab/
