@@ -1,9 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Download, Pencil, FolderInput, Copy, Trash2, FolderOpen, Eye, Edit3, Scissors, ClipboardPaste, Share2, History, Info, Star, EyeOff, Lock, Unlock, FileInput, FileOutput, FileText, type LucideIcon } from 'lucide-react';
+import { Download, Pencil, FolderInput, Copy, Trash2, FolderOpen, Eye, Edit3, Scissors, ClipboardPaste, Share2, History, Info, Star, EyeOff, Lock, Unlock, FileInput, FileOutput, FileText, Archive, type LucideIcon } from 'lucide-react';
 import type { FileNode } from '../../types';
 import { usePermission } from '../../lib/permission';
-import { isText } from '../../lib/utils';
+import { isText, isZip } from '../../lib/utils';
 
 interface Props {
   x: number;
@@ -18,6 +18,8 @@ interface Props {
   showConvert?: boolean;
   /** 显示「编辑」入口（文本类文件且有上传权限，由 FileBrowser 传入） */
   showTextEdit?: boolean;
+  /** 显示「在线解压」入口（压缩包文件且有上传权限，由 FileBrowser 传入） */
+  showArchive?: boolean;
   isFav?: boolean;
   /** 团队空间：启用右键锁定/解锁入口（按节点锁定状态展示「锁定/解锁」其一） */
   lockable?: boolean;
@@ -27,7 +29,7 @@ interface Props {
   onClose: () => void;
 }
 
-export default function ContextMenu({ x, y, node, hasClipboard, showShare = true, showVersions = true, showEdit = false, showConvert = false, showTextEdit = false, isFav = false, lockable = false, locked = false, onAction, onClose }: Props) {
+export default function ContextMenu({ x, y, node, hasClipboard, showShare = true, showVersions = true, showEdit = false, showConvert = false, showTextEdit = false, showArchive = false, isFav = false, lockable = false, locked = false, onAction, onClose }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const { has } = usePermission();
   const [pos, setPos] = useState<{ left: number; top: number }>({ left: x, top: y });
@@ -46,6 +48,11 @@ export default function ContextMenu({ x, y, node, hasClipboard, showShare = true
   const textEditItem: Array<{ action: string; label: string; icon: LucideIcon }> =
     showTextEdit && node.nodeType === 1 && isText(node.suffix) && has('file:upload')
       ? [{ action: 'textEdit', label: '编辑', icon: FileText }]
+      : [];
+  // ZIP 压缩包提供在线解压入口（后端仅支持 zip；解压会写入文件，需上传权限）
+  const archiveItem: Array<{ action: string; label: string; icon: LucideIcon }> =
+    showArchive && node.nodeType === 1 && isZip(node.suffix) && has('file:upload')
+      ? [{ action: 'archive', label: '在线解压', icon: Archive }]
       : [];
 
   useEffect(() => {
@@ -76,7 +83,7 @@ export default function ContextMenu({ x, y, node, hasClipboard, showShare = true
     ...(node.nodeType === 1 && showEdit ? [{ action: 'edit', label: '在线编辑', icon: Edit3 }] : []),
     ...convertItem,
     ...textEditItem,
-    { action: 'details', label: '详情', icon: Info },
+    ...archiveItem,
     { action: 'favorite', label: isFav ? '取消收藏' : '收藏', icon: Star },
     { action: 'hide', label: '隐藏', icon: EyeOff },
     ...(lockable ? [{ action: locked ? 'unlock' : 'lock', label: locked ? '解锁' : '锁定', icon: locked ? Unlock : Lock }] : []),
@@ -90,6 +97,7 @@ export default function ContextMenu({ x, y, node, hasClipboard, showShare = true
     ...(node.nodeType === 1 && showVersions ? [{ action: 'versions', label: '历史版本', icon: History }] : []),
     { type: 'separator' as const },
     ...(showShare && has('file:share') ? [{ action: 'share', label: '分享', icon: Share2 }] : []),
+    { action: 'details', label: '详情', icon: Info },
     { type: 'separator' as const },
     ...(has('file:delete') ? [{ action: 'delete', label: '删除', icon: Trash2, danger: true }] : []),
   ];

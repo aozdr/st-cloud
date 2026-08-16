@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Cloud, FolderClosed, Trash2, Share2, Users, Settings, ArrowUpDown, Palette, FolderSync, Home, Upload, ChevronRight, PanelLeftClose, PanelLeftOpen, X, Star, Copy, EyeOff } from 'lucide-react';
+import { Cloud, FolderClosed, Trash2, Share2, Users, Settings, ArrowUpDown, Palette, FolderSync, Home, Upload, ChevronRight, PanelLeftClose, PanelLeftOpen, X, Star, Copy, EyeOff, GripVertical } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { formatSize, cn } from '../../lib/utils';
 import { isElectron } from '../../lib/electron';
@@ -14,6 +14,70 @@ interface SidebarProps {
 }
 
 const COLLAPSE_KEY = 'sidebarCollapsed';
+const NAV_ORDER_KEY = 'sidebarNavOrder';
+
+interface NavItem {
+  key: string;
+  to: string;
+  icon: typeof Trash2;
+  label: string;
+  end: boolean;
+}
+
+/** 默认导航顺序（受运行环境与权限影响） */
+function buildNavItems(isElectronEnv: boolean, canAdmin: boolean): NavItem[] {
+  return [
+    { key: 'home', to: '/', icon: Home, label: '首页', end: true },
+    { key: 'files', to: '/files', icon: FolderClosed, label: '全部文件', end: false },
+    // Electron 专属功能紧跟「全部文件」：文件同步 → 传输管理
+    ...(isElectronEnv
+      ? [
+          { key: 'sync', to: '/sync', icon: FolderSync, label: '文件同步', end: false },
+          { key: 'transfers', to: '/transfers', icon: ArrowUpDown, label: '传输管理', end: false },
+        ]
+      : []),
+    { key: 'favorites', to: '/favorites', icon: Star, label: '我的收藏', end: false },
+    { key: 'shares', to: '/shares', icon: Share2, label: '我的分享', end: false },
+    { key: 'team', to: '/team', icon: Users, label: '团队空间', end: false },
+    { key: 'recycle', to: '/recycle', icon: Trash2, label: '回收站', end: false },
+    { key: 'duplicates', to: '/duplicates', icon: Copy, label: '重复检测', end: false },
+    { key: 'hidden', to: '/hidden', icon: EyeOff, label: '隐藏文件', end: false },
+    ...(canAdmin ? [{ key: 'admin', to: '/admin', icon: Settings, label: '系统管理', end: false }] : []),
+  ];
+}
+
+function loadNavOrder(): string[] {
+  try {
+    const raw = localStorage.getItem(NAV_ORDER_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((k): k is string => typeof k === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+/** 应用用户自定义顺序：已保存项按保存顺序排，新增项按默认顺序追加 */
+function applyNavOrder(items: NavItem[], saved: string[]): NavItem[] {
+  if (saved.length === 0) return items;
+  const byKey = new Map(items.map((item) => [item.key, item]));
+  const ordered: NavItem[] = [];
+  const seen = new Set<string>();
+  for (const key of saved) {
+    const item = byKey.get(key);
+    if (item && !seen.has(key)) {
+      ordered.push(item);
+      seen.add(key);
+    }
+  }
+  for (const item of items) {
+    if (!seen.has(item.key)) {
+      ordered.push(item);
+      seen.add(item.key);
+    }
+  }
+  return ordered;
+}
 
 export default function Sidebar({ mobileOpen, onClose }: SidebarProps) {
   const storage = useStorageStore((s) => s.storage);
@@ -26,6 +90,10 @@ export default function Sidebar({ mobileOpen, onClose }: SidebarProps) {
   const { hasAny } = usePermission();
   const canAccessAdmin = hasAny(['admin:user:manage', 'admin:role:manage', 'admin:audit:view', 'admin:stats:view', 'transfer:speed:limit', 'admin:storage:manage']);
   const navigate = useNavigate();
+  // 用户自定义导航顺序（拖拽排序，localStorage 持久化）
+  const [navOrder, setNavOrder] = useState<string[]>(() => loadNavOrder());
+  const [dragKey, setDragKey] = useState<string | null>(null);
+  const [dragOverKey, setDragOverKey] = useState<string | null>(null);
 
   useEffect(() => { fetchStorage(); }, [fetchStorage]);
 
@@ -35,28 +103,43 @@ export default function Sidebar({ mobileOpen, onClose }: SidebarProps) {
   const circ = 2 * Math.PI * radius;
   const dashOffset = circ - (Math.min(usedPercent, 100) / 100) * circ;
 
-  const mainNav = [
-    { to: '/', icon: Home, label: '首页', end: true },
-    { to: '/files', icon: FolderClosed, label: '全部文件', end: false },
-    { to: '/favorites', icon: Star, label: '我的收藏', end: false },
-    { to: '/shares', icon: Share2, label: '我的分享', end: false },
-    { to: '/team', icon: Users, label: '团队空间', end: false },
-  ];
+  const navItems = applyNavOrder(buildNavItems(isElectron(), canAccessAdmin), navOrder);
 
-  const toolNav: { to: string; icon: typeof Trash2; label: string; end: boolean }[] = [
-    { to: '/recycle', icon: Trash2, label: '回收站', end: false },
-    { to: '/duplicates', icon: Copy, label: '重复检测', end: false },
-    { to: '/hidden', icon: EyeOff, label: '隐藏文件', end: false },
-  ];
-
-  if (isElectron()) {
-    toolNav.push({ to: '/transfers', icon: ArrowUpDown, label: '传输管理', end: false });
-    toolNav.push({ to: '/sync', icon: FolderSync, label: '文件同步', end: false });
-  }
-
-  if (canAccessAdmin) {
-    toolNav.push({ to: '/admin', icon: Settings, label: '系统管理', end: false });
-  }
+  const handleDragStart = (e: React.DragEvent, key: string) => {
+    setDragKey(key);
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', key);
+  };
+  const handleDragOver = (e: React.DragEvent, key: string) => {
+    if (!dragKey || dragKey === key) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    setDragOverKey(key);
+  };
+  const handleDrop = (e: React.DragEvent, key: string) => {
+    e.preventDefault();
+    const from = dragKey ?? e.dataTransfer.getData('text/plain');
+    setDragKey(null);
+    setDragOverKey(null);
+    if (!from || from === key) return;
+    const keys = navItems.map((i) => i.key);
+    const fromIdx = keys.indexOf(from);
+    const toIdx = keys.indexOf(key);
+    if (fromIdx < 0 || toIdx < 0) return;
+    const next = [...keys];
+    next.splice(fromIdx, 1);
+    next.splice(toIdx, 0, from);
+    setNavOrder(next);
+    try {
+      localStorage.setItem(NAV_ORDER_KEY, JSON.stringify(next));
+    } catch {
+      // localStorage 不可用时仅本次会话生效
+    }
+  };
+  const handleDragEnd = () => {
+    setDragKey(null);
+    setDragOverKey(null);
+  };
 
   const handleUploadClick = () => {
     setPanelOpen(true);
@@ -82,7 +165,7 @@ export default function Sidebar({ mobileOpen, onClose }: SidebarProps) {
       'group relative flex items-center gap-3 px-3 py-2.5 rounded-lg text-[13px] font-medium transition-colors duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
       collapsed && 'lg:justify-center lg:px-0',
       isActive
-        ? 'text-primary-600 bg-[rgb(var(--nav-active-bg))]'
+        ? 'text-primary-600 bg-[rgb(var(--nav-active-bg))] dark:bg-[rgb(var(--nav-active-bg)/0.15)]'
         : 'text-muted hover:text-fg hover:bg-surface'
     );
 
@@ -142,35 +225,22 @@ export default function Sidebar({ mobileOpen, onClose }: SidebarProps) {
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 overflow-y-auto" aria-label="主导航">
-          {!collapsed && <div className="px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted/70 hidden lg:block">主菜单</div>}
-          {mainNav.map((item) => (
+        <nav className="flex-1 px-3 overflow-y-auto scrollbar-hide" aria-label="主导航">
+          {navItems.map((item) => (
             <NavLink
-              key={item.to}
+              key={item.key}
               to={item.to}
               end={item.end}
-              className={({ isActive }) => navItemClass(isActive)}
-              onClick={onClose}
-              title={collapsed ? item.label : undefined}
-            >
-              {({ isActive }) => (
-                <>
-                  {isActive && <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] bg-primary-500 rounded-r-full" />}
-                  <item.icon className={cn('w-[18px] h-[18px] flex-shrink-0 transition-colors', isActive ? 'text-primary-600' : 'text-muted group-hover:text-fg')} aria-hidden />
-                  {!collapsed && <span className="hidden lg:inline">{item.label}</span>}
-                  <span className="lg:hidden">{item.label}</span>
-                </>
+              draggable={!collapsed}
+              onDragStart={(e) => handleDragStart(e, item.key)}
+              onDragOver={(e) => handleDragOver(e, item.key)}
+              onDrop={(e) => handleDrop(e, item.key)}
+              onDragEnd={handleDragEnd}
+              className={({ isActive }) => cn(
+                navItemClass(isActive),
+                dragOverKey === item.key && 'ring-2 ring-primary-400 bg-surface',
+                dragKey === item.key && 'opacity-50',
               )}
-            </NavLink>
-          ))}
-
-          {!collapsed && <div className="px-3 py-2 mt-3 text-[10px] font-semibold uppercase tracking-wider text-muted/70 hidden lg:block">工具</div>}
-          {toolNav.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) => navItemClass(isActive)}
               onClick={onClose}
               title={collapsed ? item.label : undefined}
             >
@@ -180,6 +250,10 @@ export default function Sidebar({ mobileOpen, onClose }: SidebarProps) {
                   <item.icon className={cn('w-[18px] h-[18px] flex-shrink-0 transition-colors', isActive ? 'text-primary-600' : 'text-muted group-hover:text-fg')} aria-hidden />
                   {!collapsed && <span className="hidden lg:inline">{item.label}</span>}
                   <span className="lg:hidden">{item.label}</span>
+                  {/* 拖拽排序提示：悬停显示抓手图标 */}
+                  {!collapsed && (
+                    <GripVertical className="w-3.5 h-3.5 text-muted/40 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-auto" aria-hidden />
+                  )}
                 </>
               )}
             </NavLink>

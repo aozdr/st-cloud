@@ -84,7 +84,7 @@ export default function TransferFloatingWidget() {
             </div>
           ))}
           {tasks.length > 20 && (
-            <div className="text-center text-[10px] text-muted py-1.5">还有 {tasks.length - 20} 个任务...</div>
+            <div className="text-center text-[10px] text-muted py-1.5">还有 {tasks.length - 20} 个任务…</div>
           )}
           {completedTasks.length > 0 && (
             <button

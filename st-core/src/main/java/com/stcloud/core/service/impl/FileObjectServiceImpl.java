@@ -53,6 +53,14 @@ public class FileObjectServiceImpl implements FileObjectService {
                 fileObjectMapper.incrementRefCount(winner.getId());
                 return winner;
             }
+            // 去重墓碑：同 md5 存在已软删除记录（uk_tenant_md5 唯一键保留但查询不可见）。
+            // 物理对象已由 supplier 重新上传，恢复该记录并原子 +1 引用（ref_count 先置 0 再由 +1 保证并发正确）
+            fileObjectMapper.revive(tenantId, md5, storagePath, size);
+            winner = fileObjectMapper.selectByTenantAndMd5(tenantId, md5);
+            if (winner != null) {
+                fileObjectMapper.incrementRefCount(winner.getId());
+                return fileObjectMapper.selectByTenantAndMd5(tenantId, md5);
+            }
         }
         // 返回权威行（含数据库生成 id）
         return fileObjectMapper.selectByTenantAndMd5(tenantId, md5);

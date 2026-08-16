@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { X, FileInput, FileOutput } from 'lucide-react';
+import { X, FileInput, FileOutput, Loader2 } from 'lucide-react';
 import api from '../../lib/api';
 import type { FileNode } from '../../types';
 import { useToast } from '../ui/Toast';
@@ -79,7 +79,12 @@ export default function ConvertDialog({ node, onClose, onConverted }: Props) {
         <div className="flex justify-end gap-2 px-5 py-3 border-t border-border">
           <button onClick={onClose} className="btn-secondary">取消</button>
           <button onClick={handleConvert} disabled={loading || !name.trim()} className="btn-primary">
-            {loading ? '转换中…' : '转换'}
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
+                转换中…
+              </span>
+            ) : '转换'}
           </button>
         </div>
       </div>

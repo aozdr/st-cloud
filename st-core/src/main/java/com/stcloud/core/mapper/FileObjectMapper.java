@@ -57,4 +57,14 @@ public interface FileObjectMapper extends BaseMapper<FileObject> {
     // SQL 状态含义：status = 1 已删除（失效），deleted = 1 逻辑删除
     @Update("UPDATE file_object SET status = 1, deleted = 1 WHERE id = #{id}")
     int markDeleted(@Param("id") Long id);
+
+    /**
+     * 恢复已软删除的同 md5 对象（去重墓碑场景）：物理对象已重新上传，
+     * 重置 ref_count=0（由调用方原子 +1，避免并发覆盖），恢复 status/deleted 为正常。
+     */
+    // SQL 状态含义：仅删除态（deleted=1 或 status!=0）记录可被恢复
+    @Update("UPDATE file_object SET size = #{size}, storage_path = #{storagePath}, ref_count = 0, status = 0, deleted = 0, updated_at = NOW() "
+            + "WHERE tenant_id = #{tenantId} AND md5 = #{md5} AND (deleted = 1 OR status <> 0)")
+    int revive(@Param("tenantId") Long tenantId, @Param("md5") String md5,
+               @Param("storagePath") String storagePath, @Param("size") long size);
 }

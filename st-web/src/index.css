@@ -280,6 +280,15 @@
   animation: file-enter 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+/* 不确定进度条：解压/上传等无法预知总进度的耗时操作使用 */
+@keyframes progress-indeterminate {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(250%); }
+}
+.animate-progress-indeterminate {
+  animation: progress-indeterminate 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }

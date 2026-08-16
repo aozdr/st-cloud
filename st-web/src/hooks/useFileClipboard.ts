@@ -25,6 +25,7 @@ export function useFileClipboard(
     const st = stateRef.current;
     if (!st.clipboard || st.clipboard.nodeIds.length === 0) return;
     try {
+      showToast('正在粘贴…', 'info');
       if (st.clipboard.mode === 'copy') {
         await st.source.copy(st.clipboard.nodeIds, st.parentId || '0');
         showToast(`已粘贴 ${st.clipboard.nodeIds.length} 项`);

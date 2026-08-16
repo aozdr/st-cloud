@@ -7,7 +7,7 @@ import {
   useEffect,
   type ReactNode,
 } from 'react';
-import { AlertCircle, AlertTriangle } from 'lucide-react';
+import { AlertCircle, AlertTriangle, Loader2 } from 'lucide-react';
 
 interface ConfirmOptions {
   title?: string;
@@ -15,6 +15,8 @@ interface ConfirmOptions {
   confirmText?: string;
   cancelText?: string;
   danger?: boolean;
+  /** 确认后执行的异步操作：执行期间确认按钮显示加载态；成功 resolve(true)，失败 resolve(false) 并关闭 */
+  onConfirm?: () => Promise<void>;
 }
 
 interface ConfirmContextValue {
@@ -31,6 +33,7 @@ export function useConfirm() {
 
 export function ConfirmProvider({ children }: { children: ReactNode }) {
   const [dialog, setDialog] = useState<{ opts: ConfirmOptions; resolve: (v: boolean) => void } | null>(null);
+  const [pending, setPending] = useState(false);
   const confirmBtnRef = useRef<HTMLButtonElement>(null);
 
   const confirm = useCallback((opts: ConfirmOptions) => {
@@ -46,7 +49,22 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
     }
   }, [dialog]);
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
+    if (!dialog || pending) return;
+    if (dialog.opts.onConfirm) {
+      setPending(true);
+      try {
+        await dialog.opts.onConfirm();
+        setPending(false);
+        dialog.resolve(true);
+        setDialog(null);
+      } catch {
+        setPending(false);
+        dialog.resolve(false);
+        setDialog(null);
+      }
+      return;
+    }
     dialog?.resolve(true);
     setDialog(null);
   };
@@ -100,13 +118,21 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
               <button
                 ref={confirmBtnRef}
                 onClick={handleConfirm}
-                className={`flex-1 px-5 py-2.5 text-sm font-medium text-white rounded-md cursor-pointer transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
+                disabled={pending}
+                className={`flex-1 px-5 py-2.5 text-sm font-medium text-white rounded-md cursor-pointer transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60 disabled:cursor-not-allowed ${
                   danger
                     ? 'bg-red-600 hover:bg-red-700'
                     : 'bg-primary-600 hover:bg-primary-700'
                 }`}
               >
-                {dialog.opts.confirmText || '确定'}
+                {pending ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
+                    处理中…
+                  </span>
+                ) : (
+                  dialog.opts.confirmText || '确定'
+                )}
               </button>
             </div>
           </div>

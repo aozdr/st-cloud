@@ -10,6 +10,7 @@ import { getFileTypeConfig, formatSize, formatDate, cn, sanitizeHighlight } from
 import { type FileTypeFilter, FILTER_SUFFIXES } from '../lib/fileTypes';
 import FileTypeIcon from '../components/file/FileTypeIcon';
 import PreviewModal from '../components/preview/PreviewModal';
+import { useMobile } from '../hooks/useMobile';
 
 type SortOption = 'relevance' | 'name' | 'size_desc' | 'size_asc' | 'date_desc' | 'date_asc';
 type SizeFilter = 'all' | 'small' | 'medium' | 'large';
@@ -166,6 +167,7 @@ function SkeletonCard() {
 export default function SearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
+  const isMobile = useMobile();
   const urlKeyword = searchParams.get('keyword') || '';
   const urlNonce = searchParams.get('_t') || '';
   const urlFileType = (searchParams.get('fileType') as FileTypeFilter) || 'all';
@@ -266,7 +268,7 @@ export default function SearchPage() {
         <div className="max-w-4xl mx-auto">
           <div className="relative group">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted group-focus-within:text-primary-600 transition-colors" aria-hidden />
-            <input type="text" value={keyword} onChange={(e) => setKeyword(e.target.value)} onKeyDown={handleSearchSubmit} placeholder="搜索文件名或文档内容..." autoFocus className="w-full pl-12 pr-24 py-2.5 bg-surface-2 border border-border rounded-xl text-base text-fg placeholder-muted outline-none transition focus:bg-surface focus:border-primary-400 focus:ring-2 focus:ring-primary-100" />
+            <input type="text" value={keyword} onChange={(e) => setKeyword(e.target.value)} onKeyDown={handleSearchSubmit} placeholder="搜索文件名或文档内容…" autoFocus={!isMobile} className="w-full pl-12 pr-24 py-2.5 bg-surface-2 border border-border rounded-xl text-base text-fg placeholder-muted outline-none transition focus:bg-surface focus:border-primary-400 focus:ring-2 focus:ring-primary-100" />
             <button onClick={() => triggerSearch(keyword)} className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 active:bg-primary-800 cursor-pointer transition-colors">搜索</button>
           </div>
           {(searched || urlKeyword) && (

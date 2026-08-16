@@ -50,8 +50,6 @@ export default function Login() {
     <div className="flex min-h-screen">
       {/* Left brand panel */}
       <div className="hidden lg:flex lg:w-[45%] brand-gradient flex-col justify-between p-12 relative overflow-hidden">
-        <div className="absolute top-20 right-20 w-72 h-72 bg-primary-600/10 rounded-full blur-3xl" aria-hidden />
-        <div className="absolute bottom-20 left-10 w-96 h-96 bg-primary-600/5 rounded-full blur-3xl" aria-hidden />
         <div className="relative z-10">
           <div className="flex items-center gap-3 text-fg">
             <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-primary">
@@ -93,7 +91,7 @@ export default function Login() {
             <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-primary">
               <Cloud className="w-6 h-6 text-white" aria-hidden />
             </div>
-            <span className="text-xl font-semibold text-fg">星云盘</span>
+            <h1 className="text-xl font-semibold text-fg">星云盘</h1>
           </div>
 
           <h2 className="text-2xl font-semibold text-fg mb-2">

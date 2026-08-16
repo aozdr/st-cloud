@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FolderPlus, Upload, Download, Trash2, Copy, FolderInput, X, RefreshCw, ArrowDownUp, Table2, Rows3, LayoutGrid, Edit3, Plus, ChevronDown, FileType, FileText, FileSpreadsheet, Presentation } from 'lucide-react';
+import { FolderPlus, Upload, Download, Trash2, Copy, FolderInput, X, RefreshCw, ArrowDownUp, Table2, Rows3, LayoutGrid, Edit3, Plus, ChevronDown, MoreHorizontal, FileType, FileText, FileSpreadsheet, Presentation } from 'lucide-react';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
 import { cn, formatSize } from '../../lib/utils';
@@ -51,6 +51,11 @@ export default function FileToolbar({
 }: FileToolbarProps) {
   const hasSelection = selectedCount > 0;
   const [newMenuOpen, setNewMenuOpen] = useState(false);
+  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
+  // 低频批量操作收进「更多」菜单，降低工具栏密度
+  const hasMoreActions = hasSelection && (
+    has('file:move') || has('file:copy') || (selectedCount > 1 && has('file:rename'))
+  );
 
   return (
     <div className="sticky top-0 z-20 flex items-center justify-between gap-2 px-5 py-2 bg-bg border-b border-border/60 overflow-x-auto">
@@ -127,23 +132,44 @@ export default function FileToolbar({
                 <span>下载</span>
               </button>
             )}
-            {has('file:move') && (
-              <button onClick={onMove} className="btn-ghost flex-shrink-0 whitespace-nowrap">
-                <FolderInput className="w-4 h-4" aria-hidden />
-                <span>移动</span>
-              </button>
-            )}
-            {has('file:copy') && (
-              <button onClick={onCopy} className="btn-ghost flex-shrink-0 whitespace-nowrap">
-                <Copy className="w-4 h-4" aria-hidden />
-                <span>复制</span>
-              </button>
-            )}
-            {hasSelection && selectedCount > 1 && has('file:rename') && (
-              <button onClick={onBatchRename} className="btn-ghost flex-shrink-0 whitespace-nowrap">
-                <Edit3 className="w-4 h-4" aria-hidden />
-                <span>批量重命名</span>
-              </button>
+            {hasMoreActions && (
+              <Popover open={moreMenuOpen} onOpenChange={setMoreMenuOpen}>
+                <PopoverTrigger asChild>
+                  <button className="btn-ghost flex-shrink-0 whitespace-nowrap">
+                    <MoreHorizontal className="w-4 h-4" aria-hidden />
+                    <span>更多</span>
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-44 p-1" align="start" sideOffset={4}>
+                  {has('file:move') && (
+                    <button
+                      onClick={() => { setMoreMenuOpen(false); onMove(); }}
+                      className="w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-fg hover:bg-surface-2 rounded-md cursor-pointer transition-colors"
+                    >
+                      <FolderInput className="w-4 h-4" aria-hidden />
+                      <span>移动到</span>
+                    </button>
+                  )}
+                  {has('file:copy') && (
+                    <button
+                      onClick={() => { setMoreMenuOpen(false); onCopy(); }}
+                      className="w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-fg hover:bg-surface-2 rounded-md cursor-pointer transition-colors"
+                    >
+                      <Copy className="w-4 h-4" aria-hidden />
+                      <span>复制到</span>
+                    </button>
+                  )}
+                  {selectedCount > 1 && has('file:rename') && (
+                    <button
+                      onClick={() => { setMoreMenuOpen(false); onBatchRename(); }}
+                      className="w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-fg hover:bg-surface-2 rounded-md cursor-pointer transition-colors"
+                    >
+                      <Edit3 className="w-4 h-4" aria-hidden />
+                      <span>批量重命名</span>
+                    </button>
+                  )}
+                </PopoverContent>
+              </Popover>
             )}
             {has('file:delete') && (
               <button onClick={onDelete} className="btn-ghost text-red-600 dark:text-red-400 hover:bg-red-500/10 flex-shrink-0 whitespace-nowrap">

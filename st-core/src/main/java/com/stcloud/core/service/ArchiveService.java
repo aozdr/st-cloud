@@ -24,4 +24,7 @@ public interface ArchiveService {
      * @return 解压出的文件数量
      */
     int extractArchive(Long nodeId, Long targetFolderId);
+
+    /** 带进度回调的解压（控制器异步任务使用） */
+    int extractArchive(Long nodeId, Long targetFolderId, ArchiveProgressReporter reporter);
 }

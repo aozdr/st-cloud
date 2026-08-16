@@ -49,13 +49,6 @@ export default function AppLayout() {
 
   return (
     <UploadProvider>
-      {/* 无障碍：跳过导航直达主内容 */}
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-[200] focus:px-3 focus:py-2 focus:bg-surface focus:text-fg focus:rounded-lg focus:shadow-float focus:text-sm"
-      >
-        跳到主要内容
-      </a>
       <div className="flex h-screen overflow-hidden bg-bg">
         <Sidebar mobileOpen={mobileSidebarOpen} onClose={() => setMobileSidebarOpen(false)} />
         <div className="flex-1 flex flex-col min-w-0">

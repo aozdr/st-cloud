@@ -121,6 +121,12 @@ export function isText(suffix: string | null | undefined): boolean {
   return TEXT_EXTS.includes(suffix.toLowerCase());
 }
 
+/** 后端在线解压仅支持 ZIP（ArchiveServiceImpl.validateZipFile） */
+export function isZip(suffix: string | null | undefined): boolean {
+  if (!suffix) return false;
+  return suffix.toLowerCase() === 'zip';
+}
+
 export function isPreviewable(suffix: string | null | undefined): boolean {
   return isImage(suffix) || isVideo(suffix) || isAudio(suffix) || isPdf(suffix) || isWord(suffix) || isExcel(suffix) || isPpt(suffix) || isText(suffix);
 }

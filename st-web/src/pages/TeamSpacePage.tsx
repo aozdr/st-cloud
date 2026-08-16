@@ -279,7 +279,7 @@ export default function TeamSpacePage() {
             <div className="space-y-3">
               {activities.length === 0 ? (<div className="text-center py-12 text-muted"><Activity className="w-10 h-10 mx-auto mb-2 opacity-30" /><p className="text-sm">暂无动态</p></div>) : (
                 <>{activities.map(act => (<div key={act.id} className="flex items-start gap-3 px-4 py-3 bg-surface rounded-lg border border-border"><div className="w-9 h-9 bg-primary-600 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0">{act.nickname?.[0] || act.username?.[0] || '?'}</div><div className="min-w-0 flex-1"><p className="text-sm text-fg"><span className="font-medium">{act.nickname || act.username}</span> <span className="text-muted">{actionTextMap[act.action] || act.action}</span>{act.targetName && <span className="font-medium text-fg"> {act.targetName}</span>}</p><p className="text-xs text-muted mt-0.5">{timeAgo(act.createdAt)}</p></div></div>))}
-                  {activityHasMore && <button onClick={loadMoreActivities} className="w-full py-2 text-sm text-primary-600 hover:text-primary-700 cursor-pointer">加载更多...</button>}
+                  {activityHasMore && <button onClick={loadMoreActivities} className="w-full py-2 text-sm text-primary-600 hover:text-primary-700 cursor-pointer">加载更多…</button>}
                 </>
               )}
             </div>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X } from 'lucide-react';
+import { X, Loader2 } from 'lucide-react';
 import { useToast } from '../ui/Toast';
 import api from '../../lib/api';
 import type { FileNode } from '../../types';
@@ -238,7 +238,7 @@ export default function BatchRenameDialog({ files, onClose, onSuccess }: Props) 
               </div>
             ))}
             {files.length > 5 && (
-              <div className="text-xs text-muted text-center pt-1">还有 {files.length - 5} 个文件...</div>
+              <div className="text-xs text-muted text-center pt-1">还有 {files.length - 5} 个文件…</div>
             )}
           </div>
 
@@ -247,7 +247,12 @@ export default function BatchRenameDialog({ files, onClose, onSuccess }: Props) 
             disabled={loading}
             className="w-full py-2.5 bg-primary-600 text-white text-sm font-medium rounded-md hover:bg-primary-700 transition-colors cursor-pointer disabled:opacity-50"
           >
-            {loading ? '重命名中...' : '确认重命名'}
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
+                重命名中…
+              </span>
+            ) : '确认重命名'}
           </button>
         </div>
       </div>

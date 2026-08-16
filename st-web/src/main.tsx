@@ -5,6 +5,7 @@ import App from './App'
 import { ToastProvider } from './components/ui/Toast'
 import { ConfirmProvider } from './components/ui/ConfirmDialog'
 import { PromptProvider } from './components/ui/PromptDialog'
+import { OperationProgressProvider } from './components/ui/OperationProgress'
 import './store/theme'
 import './index.css'
 
@@ -14,7 +15,9 @@ createRoot(document.getElementById('root')!).render(
       <ToastProvider>
         <ConfirmProvider>
           <PromptProvider>
-            <App />
+            <OperationProgressProvider>
+              <App />
+            </OperationProgressProvider>
           </PromptProvider>
         </ConfirmProvider>
       </ToastProvider>

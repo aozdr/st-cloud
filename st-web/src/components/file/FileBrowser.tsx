@@ -19,6 +19,7 @@ import BlankContextMenu from './BlankContextMenu';
 import MoveDialog from './MoveDialog';
 import DownloadDialog from './DownloadDialog';
 import { CreateFolderDialog, CreateFileDialog, RenameDialog, EmptyState, FileListSkeleton } from './Dialogs';
+import GenericEmptyState from '../EmptyState';
 import FileDetailPanel from './FileDetailPanel';
 import PreviewModal from '../preview/PreviewModal';
 import ShareDialog from '../share/ShareDialog';
@@ -28,6 +29,7 @@ import ArchiveDialog from './ArchiveDialog';
 import ConvertDialog from './ConvertDialog';
 import { useToast } from '../ui/Toast';
 import { useConfirm } from '../ui/ConfirmDialog';
+import { useOperationProgress } from '../ui/OperationProgress';
 import { useUpload } from '../../hooks/useUpload';
 import { usePermission } from '../../lib/permission';
 import { useDragSelect } from '../../hooks/useDragSelect';
@@ -64,6 +66,9 @@ function isNodeLocked(node: FileNode): boolean {
   return node.lockExpireAt == null || new Date(node.lockExpireAt).getTime() > Date.now();
 }
 
+/** 各目录滚动位置缓存：组件随目录切换会重挂载，用模块级 Map 跨实例保留 */
+const folderScrollPositions: Record<string, number> = {};
+
 export default function FileBrowser({
   source,
   parentId,
@@ -91,6 +96,7 @@ export default function FileBrowser({
   const [searchParams, setSearchParams] = useSearchParams();
   const [files, setFiles] = useState<FileNode[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [view, setView] = useState<'table' | 'card' | 'grid'>(() => {
     const saved = localStorage.getItem('fileView');
     if (saved === 'grid' || saved === 'card') return saved;
@@ -138,12 +144,15 @@ export default function FileBrowser({
 
   const { showToast } = useToast();
   const { confirm } = useConfirm();
+  const { run: runOperation } = useOperationProgress();
   const { has } = usePermission();
   const isMobile = useMobile();
 
   /** 是否可在线编辑：docx/xlsx/pptx 且当前用户具备编辑（上传）权限；最终权限以后端 config 接口为准 */
   const canEditNode = (node: FileNode) =>
     node.nodeType === 1 && isEditableOfficeSuffix(node.suffix) && has('file:upload');
+  // 在线解压仅个人文件源接入（后端 /file/{id}/archive/*）；团队空间暂不展示
+  const enableArchive = !onToggleLock;
 
   // 选择状态与移动端多选模式
   const selection = useFileSelection(files, isMobile);
@@ -222,6 +231,7 @@ export default function FileBrowser({
       const res = await source.listFiles(parentId, page, 50);
       const records = res?.records || [];
       setFiles(records);
+      setLoadError(false);
       setTotal(Number(res?.total || 0));
       // 编辑器「以预览打开」回退：当前目录存在该文件时自动打开预览
       const pendingId = pendingPreviewIdRef.current;
@@ -233,6 +243,7 @@ export default function FileBrowser({
       }
     } catch {
       setFiles([]);
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -282,6 +293,24 @@ export default function FileBrowser({
   useEffect(() => {
     localStorage.setItem('fileView', view);
   }, [view]);
+
+  // 目录滚动位置：滚动时记录，数据加载完成后恢复（返回目录不丢失位置）
+  useEffect(() => {
+    const el = fileListRef.current;
+    if (!el) return;
+    const handleScroll = () => {
+      if (parentId) folderScrollPositions[parentId] = el.scrollTop;
+    };
+    el.addEventListener('scroll', handleScroll, { passive: true });
+    return () => el.removeEventListener('scroll', handleScroll);
+  }, [parentId]);
+
+  useEffect(() => {
+    if (loading || files.length === 0) return;
+    const el = fileListRef.current;
+    const saved = parentId ? folderScrollPositions[parentId] : undefined;
+    if (el && saved != null) el.scrollTop = saved;
+  }, [loading, parentId, files]);
 
   // 移动端:选中清空时自动退出多选模式
   useEffect(() => {
@@ -454,15 +483,18 @@ export default function FileBrowser({
       danger: true,
     });
     if (!confirmed) return;
-    try {
-      await source.delete(nodeIds);
-      showToast(`已删除 ${nodeIds.length} 项`);
-      clearSelection();
-      fetchFiles();
-    } catch (err) {
-      console.error('Delete failed:', err);
-      showToast('删除失败', 'error');
-    }
+    // 异步删除：右上角常驻「删除中…」直到完成
+    await runOperation('删除中', async () => {
+      try {
+        await source.delete(nodeIds);
+        showToast(`已删除 ${nodeIds.length} 项`);
+        clearSelection();
+        fetchFiles();
+      } catch (err) {
+        console.error('Delete failed:', err);
+        showToast('删除失败', 'error');
+      }
+    });
   };
 
 
@@ -503,6 +535,7 @@ export default function FileBrowser({
         a.click();
         document.body.removeChild(a);
       } else {
+        showToast('正在打包下载，请稍候…', 'info');
         const blob = await source.downloadZip(nodeIds);
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -515,6 +548,34 @@ export default function FileBrowser({
       showToast('下载失败', 'error');
     }
   }, [files, source, showToast, setDownloadTarget]);
+
+  /** 解压成功：跳转到目标目录（根目录用合成节点；其余先按 id 查节点） */
+  const handleArchiveExtracted = async (folderId: string) => {
+    // 合成节点兜底：即使节点查询失败也按 id 直接跳转
+    const fallbackNode: FileNode = {
+      id: folderId, parentId: '0', nodeType: 0, name: '', path: '/',
+      fileSize: null, suffix: null, contentType: null, status: 0,
+      thumbnailPath: null, createdAt: '', updatedAt: '',
+    };
+    try {
+      if (!folderId || folderId === '0') {
+        onNavigateFolder({
+          id: '0', parentId: '0', nodeType: 0, name: '', path: '/',
+          fileSize: null, suffix: null, contentType: null, status: 0,
+          thumbnailPath: null, createdAt: '', updatedAt: '',
+        });
+        return;
+      }
+      const node = await source.getNodeById(folderId);
+      if (node && node.nodeType === 0) {
+        onNavigateFolder(node);
+        return;
+      }
+    } catch {
+      // 节点查询失败时按 id 直接跳转
+    }
+    onNavigateFolder(fallbackNode);
+  };
 
   const enterPathEditMode = () => {
     setPathInput(currentPath === '/' ? '/' : currentPath);
@@ -610,6 +671,9 @@ export default function FileBrowser({
         navigate(`/file/${node.id}/text-editor`, {
           state: { from: location.pathname + location.search, name: node.name, spaceId: uploadSpaceId ?? undefined },
         });
+        break;
+      case 'archive':
+        setArchiveTarget(node);
         break;
       case 'convert':
         setConvertTarget(node);
@@ -854,6 +918,13 @@ export default function FileBrowser({
           )}
           {loading ? (
             <FileListSkeleton view={view} />
+        ) : loadError ? (
+          <GenericEmptyState
+            type="generic"
+            title="加载失败"
+            description="网络异常或服务暂不可用，请检查后重试"
+            action={<button onClick={() => fetchFiles()} className="btn-primary">重试</button>}
+          />
         ) : files.length === 0 ? (
           <EmptyState onCreateFolder={() => setShowCreateFolder(true)} />
         ) : (
@@ -931,6 +1002,7 @@ export default function FileBrowser({
           lockable={!!onToggleLock}
           locked={isNodeLocked(contextMenu.node)}
           showEdit={canEditNode(contextMenu.node)}
+          showArchive={enableArchive}
           showConvert
           showTextEdit
           onAction={handleContextAction}
@@ -961,7 +1033,7 @@ export default function FileBrowser({
         <ArchiveDialog
           file={archiveTarget}
           onClose={() => setArchiveTarget(null)}
-          onExtracted={() => fetchFiles()}
+          onExtracted={handleArchiveExtracted}
         />
       )}
       {showBatchRename && (
