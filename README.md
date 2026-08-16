@@ -2,28 +2,6 @@
 
 免费、可私有化部署的自托管云盘系统。基于 Spring Boot 3 + React 18 + Electron 构建，覆盖 Web、PC 桌面端，同时服务个人网盘与企业团队协作场景。
 
-## 界面预览
-
-| 登录页 | 首页 |
-| ------ | ---- |
-| ![登录页](docs/screenshots/01-login.png) | ![首页](docs/screenshots/02-home.png) |
-
-| 全部文件 | 我的分享 |
-| -------- | -------- |
-| ![全部文件](docs/screenshots/03-files.png) | ![我的分享](docs/screenshots/04-shares.png) |
-
-| 团队空间 | 回收站 |
-| -------- | ------ |
-| ![团队空间](docs/screenshots/05-team.png) | ![回收站](docs/screenshots/06-recycle.png) |
-
-| 系统管理 | 我的收藏 |
-| -------- | -------- |
-| ![系统管理](docs/screenshots/07-admin.png) | ![我的收藏](docs/screenshots/08-favorites.png) |
-
-### 文档预览（OnlyOffice 只读查看）
-
-![文档预览](docs/screenshots/09-doc-preview.png)
-
 ## 功能特性
 
 ### 文件管理
@@ -77,6 +55,28 @@
 - Web：React + Vite，PWA 离线可用
 - 桌面端：Electron 31，原生上传/下载、同步、系统集成
 - SaaS 多租户 / 私有化单租户双模式
+
+## 界面预览
+
+| 登录页 | 首页 |
+| ------ | ---- |
+| ![登录页](docs/screenshots/01-login.png) | ![首页](docs/screenshots/02-home.png) |
+
+| 全部文件 | 我的分享 |
+| -------- | -------- |
+| ![全部文件](docs/screenshots/03-files.png) | ![我的分享](docs/screenshots/04-shares.png) |
+
+| 团队空间 | 回收站 |
+| -------- | ------ |
+| ![团队空间](docs/screenshots/05-team.png) | ![回收站](docs/screenshots/06-recycle.png) |
+
+| 系统管理 | 我的收藏 |
+| -------- | -------- |
+| ![系统管理](docs/screenshots/07-admin.png) | ![我的收藏](docs/screenshots/08-favorites.png) |
+
+### 文档预览（OnlyOffice 只读查看）
+
+![文档预览](docs/screenshots/09-doc-preview.png)
 
 ## 技术栈
 
