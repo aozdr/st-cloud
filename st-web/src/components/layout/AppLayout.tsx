@@ -1,4 +1,4 @@
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Suspense, useEffect, useState } from 'react';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
@@ -18,6 +18,7 @@ export default function AppLayout() {
   const [shortcutOpen, setShortcutOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!user) {
@@ -33,6 +34,12 @@ export default function AppLayout() {
   useEffect(() => {
     setMobileSidebarOpen(false);
   }, [location.pathname]);
+
+  // 桌面端：悬浮窗右键菜单点击"传输管理"时，主进程发消息，这里跳转传输页
+  useEffect(() => {
+    const unsubscribe = window.electronAPI?.onOpenTransfers?.(() => navigate('/transfers'));
+    return unsubscribe;
+  }, [navigate]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {

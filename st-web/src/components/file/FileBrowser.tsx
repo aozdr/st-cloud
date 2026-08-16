@@ -117,6 +117,8 @@ export default function FileBrowser({
     const saved = Number(localStorage.getItem('filePageSize'));
     return PAGE_SIZE_OPTIONS.includes(saved) ? saved : 100;
   });
+  // 分页跳转输入框（与当前页同步）
+  const [pageInput, setPageInput] = useState('1');
   // 刷新中的视觉反馈（Windows 风格：刷新图标旋转 + 列表淡入）
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { toggleFavorite: toggleFav, isFavorite: checkFav } = useFavoritesStore();
@@ -311,6 +313,11 @@ export default function FileBrowser({
     if (refreshSignal > 0) setRefreshKey((k) => k + 1);
   }, [refreshSignal]);
 
+  // 页码输入框与当前页同步（翻页/换文件夹/改每页条数后保持一致）
+  useEffect(() => {
+    setPageInput(String(page));
+  }, [page]);
+
   useEffect(() => {
     localStorage.setItem('fileView', view);
   }, [view]);
@@ -374,6 +381,18 @@ export default function FileBrowser({
     } catch {
       // 忽略持久化失败
     }
+  };
+
+  /** 提交页码跳转：解析并钳制在 1..totalPages */
+  const handlePageInputCommit = () => {
+    const n = parseInt(pageInput, 10);
+    if (Number.isNaN(n) || n < 1) {
+      setPageInput(String(page));
+      return;
+    }
+    const target = Math.min(n, totalPages);
+    setPage(target);
+    setPageInput(String(target));
   };
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -933,6 +952,11 @@ export default function FileBrowser({
         onMouseDown={(e) => {
           if (e.button === 0 && !isFileItemClick(e)) {
             e.preventDefault();
+            // 点击空白处：手动失焦输入框（页码/路径编辑），否则 preventDefault 会阻止 blur
+            const active = document.activeElement as HTMLElement | null;
+            if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
+              active.blur();
+            }
             startDrag(e.clientX, e.clientY);
             clearSelection();
             if (contextMenu) setContextMenu(null);
@@ -1031,7 +1055,24 @@ export default function FileBrowser({
               项
             </label>
             <div className="w-px h-4 bg-border" />
-            <span className="text-xs text-muted tabular-nums">第 {page} / {totalPages} 页</span>
+            <div className="flex items-center gap-1 text-xs text-muted">
+              <span>第</span>
+              <input
+                value={pageInput}
+                onChange={(e) => setPageInput(e.target.value.replace(/[^0-9]/g, ''))}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handlePageInputCommit();
+                  }
+                }}
+                onBlur={handlePageInputCommit}
+                inputMode="numeric"
+                aria-label="跳转到页码"
+                className="w-10 h-7 text-center text-xs text-fg bg-surface-2 rounded-md border border-border focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none tabular-nums"
+              />
+              <span className="tabular-nums">/ {totalPages} 页</span>
+            </div>
             <div className="flex items-center gap-1.5">
               <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}

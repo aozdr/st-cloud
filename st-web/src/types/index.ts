@@ -430,7 +430,11 @@ export interface ElectronAPI {
   getServerUrl: () => Promise<string | null>;
   setServerUrl: (url: string) => Promise<void>;
   setAuth: (token: string, refreshToken: string) => void;
+  getTransferSettings: () => Promise<TransferSettings>;
   setTransferSettings: (settings: TransferSettings) => void;
+  pauseAllTransfers: () => Promise<void>;
+  resumeAllTransfers: () => Promise<void>;
+  quitApp: () => Promise<void>;
   startUpload: (filePath: string, parentId: string, replaceFileId?: string) => Promise<string>;
   pauseUpload: (taskId: string) => Promise<void>;
   resumeUpload: (taskId: string) => Promise<void>;
@@ -465,6 +469,19 @@ trashItem: (filePath: string) => Promise<void>;
   onSyncEvent: (cb: (event: { event: string; data: unknown }) => void) => () => void;
   /** 桌面端：主进程拦截 F5 后通知渲染进程原地刷新文件列表 */
   onRefreshFileList: (cb: () => void) => () => void;
+  /** 桌面传输悬浮小窗：右键菜单小窗显示/隐藏 */
+  showMiniMenu: () => Promise<void>;
+  hideMiniMenu: () => Promise<void>;
+  startMiniWindowDrag: (handleX?: number, handleY?: number) => Promise<void>;
+  endMiniWindowDrag: () => Promise<void>;
+  resetMiniWindowPosition: () => Promise<void>;
+  openMainWindow: () => Promise<void>;
+  /** 打开主窗口并跳转到传输管理页 */
+  openTransfers: () => Promise<void>;
+  /** 主进程通知渲染进程跳转传输页 */
+  onOpenTransfers: (cb: () => void) => () => void;
+  showMiniWindow: () => Promise<void>;
+  hideMiniWindow: () => Promise<void>;
 }
 
 // ==================== Speed Limit Types ====================

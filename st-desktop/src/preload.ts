@@ -18,8 +18,22 @@ const api: ElectronAPI = {
   },
 
   // 传输设置
+  getTransferSettings: () => {
+    return ipcRenderer.invoke('transfer:getSettings');
+  },
   setTransferSettings: (settings: TransferSettings) => {
     ipcRenderer.invoke('transfer:setSettings', settings);
+  },
+  pauseAllTransfers: () => {
+    return ipcRenderer.invoke('transfer:pauseAll');
+  },
+  resumeAllTransfers: () => {
+    return ipcRenderer.invoke('transfer:resumeAll');
+  },
+
+  // 退出整个应用
+  quitApp: () => {
+    return ipcRenderer.invoke('app:quit');
   },
 
   // 上传
@@ -150,6 +164,42 @@ const api: ElectronAPI = {
     return () => {
       ipcRenderer.removeListener('app:refresh-file-list', handler);
     };
+  },
+
+  // 桌面传输悬浮小窗
+  showMiniMenu: () => {
+    return ipcRenderer.invoke('mini:showMenu');
+  },
+  hideMiniMenu: () => {
+    return ipcRenderer.invoke('mini:hideMenu');
+  },
+  startMiniWindowDrag: (handleX?: number, handleY?: number) => {
+    return ipcRenderer.invoke('mini:startDrag', handleX, handleY);
+  },
+  endMiniWindowDrag: () => {
+    return ipcRenderer.invoke('mini:endDrag');
+  },
+  resetMiniWindowPosition: () => {
+    return ipcRenderer.invoke('mini:reset');
+  },
+  openMainWindow: () => {
+    return ipcRenderer.invoke('mini:openMain');
+  },
+  openTransfers: () => {
+    return ipcRenderer.invoke('mini:openTransfers');
+  },
+  onOpenTransfers: (cb: () => void) => {
+    const handler = () => cb();
+    ipcRenderer.on('app:open-transfers', handler);
+    return () => {
+      ipcRenderer.removeListener('app:open-transfers', handler);
+    };
+  },
+  showMiniWindow: () => {
+    return ipcRenderer.invoke('mini:show');
+  },
+  hideMiniWindow: () => {
+    return ipcRenderer.invoke('mini:hide');
   },
 };
 

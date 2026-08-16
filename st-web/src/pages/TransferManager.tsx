@@ -197,6 +197,17 @@ export default function TransferManager() {
               </div>
             )}
             <button
+              onClick={() => {
+                window.electronAPI!.showMiniWindow();
+                // 找回：若悬浮窗存在但在屏幕外，直接复位到右下角可见位置
+                window.electronAPI!.resetMiniWindowPosition();
+              }}
+              className="px-2.5 py-1.5 text-xs font-medium text-muted hover:text-fg hover:bg-surface-2 rounded-md cursor-pointer transition-colors"
+              title="显示/找回桌面传输悬浮窗（复位到右下角）"
+            >
+              悬浮窗
+            </button>
+            <button
               onClick={() => setTransferSettingsOpen(true)}
               className="p-1.5 text-muted hover:text-fg hover:bg-surface-2 rounded-md cursor-pointer transition-colors"
               title="传输设置" aria-label="传输设置"

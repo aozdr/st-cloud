@@ -2,7 +2,7 @@ import { ipcMain, dialog, app, BrowserWindow, shell } from 'electron';
 import { setAuth, setBaseUrl } from './api-client';
 import { getServerUrl, saveServerUrl } from './server-config';
 import { getAllTasks, deleteTask, getSyncHistory, getSyncStats } from './database';
-import { setTransferSettings as applyTransferSettings, type TransferSettings } from './transfer-settings';
+import { getTransferSettings, setTransferSettings as applyTransferSettings, type TransferSettings } from './transfer-settings';
 import {
   startUpload,
   pauseUpload,
@@ -21,6 +21,8 @@ import {
   removeExclusion as syncRemoveExclusion, setConflictStrategy as syncSetConflictStrategy,
   isWsConnected,
 } from './sync-manager';
+import { startMiniWindowDrag, stopMiniWindowDrag, resetMiniWindowPosition, openMainWindow, openTransferPage, showMiniWindow, hideMiniWindow } from './mini-window';
+import { showMenuWindow, hideMenuWindow } from './menu-window';
 
 export function registerIpcHandlers(): void {
   // ==================== 认证 ====================
@@ -45,8 +47,41 @@ export function registerIpcHandlers(): void {
   });
 
   // ==================== 传输设置 ====================
+  ipcMain.handle('transfer:getSettings', () => {
+    return getTransferSettings();
+  });
+
   ipcMain.handle('transfer:setSettings', (_event, settings: TransferSettings) => {
     applyTransferSettings(settings);
+  });
+
+  // ==================== 传输任务：全部暂停 / 全部开始 ====================
+  ipcMain.handle('transfer:pauseAll', () => {
+    const all = getAllTasks();
+    for (const t of all) {
+      if (t.status === 'uploading' || t.status === 'hashing' || t.status === 'merging' || t.status === 'pending') {
+        pauseUpload(t.id);
+      } else if (t.status === 'downloading') {
+        pauseDownload(t.id);
+      }
+    }
+  });
+
+  ipcMain.handle('transfer:resumeAll', async () => {
+    const all = getAllTasks();
+    const resumes: Promise<void>[] = [];
+    for (const t of all) {
+      if (t.status === 'paused') {
+        if (t.type === 'upload') resumes.push(resumeUpload(t.id));
+        else resumes.push(resumeDownload(t.id));
+      }
+    }
+    await Promise.all(resumes);
+  });
+
+  // ==================== 应用退出 ====================
+  ipcMain.handle('app:quit', () => {
+    app.quit();
   });
 
   // ==================== 上传 ====================
@@ -86,6 +121,35 @@ export function registerIpcHandlers(): void {
   // ==================== 查询 ====================
   ipcMain.handle('tasks:getAll', () => {
     return getAllTasks();
+  });
+
+  // ==================== 桌面传输悬浮小窗 ====================
+  ipcMain.handle('mini:showMenu', () => {
+    showMenuWindow();
+  });
+  ipcMain.handle('mini:hideMenu', () => {
+    hideMenuWindow();
+  });
+  ipcMain.handle('mini:startDrag', (_event, handleX: number, handleY: number) => {
+    startMiniWindowDrag(handleX, handleY);
+  });
+  ipcMain.handle('mini:endDrag', () => {
+    stopMiniWindowDrag();
+  });
+  ipcMain.handle('mini:reset', () => {
+    resetMiniWindowPosition();
+  });
+  ipcMain.handle('mini:openMain', () => {
+    openMainWindow();
+  });
+  ipcMain.handle('mini:openTransfers', () => {
+    openTransferPage();
+  });
+  ipcMain.handle('mini:show', () => {
+    showMiniWindow();
+  });
+  ipcMain.handle('mini:hide', () => {
+    hideMiniWindow();
   });
 
   // ==================== 删除任务记录（不中止传输） ====================

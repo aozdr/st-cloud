@@ -7,6 +7,8 @@ import { resumePendingDownloads } from './download-manager';
 import { resumeSyncEngines } from './sync-manager';
 import { loadServerUrl } from './server-config';
 import { getToken } from './api-client';
+import { createMiniWindow, closeMiniWindow } from './mini-window';
+import { prepareMenuWindow, closeMenuWindow } from './menu-window';
 
 const isDev = !app.isPackaged;
 
@@ -50,6 +52,12 @@ async function createWindow(): Promise<void> {
     // 生产模式：加载打包的前端文件
     await win.loadFile(path.join(process.resourcesPath, 'web', 'index.html'));
   }
+
+  // 主窗口关闭时销毁桌面悬浮窗，保持"关窗即退出"
+  win.on('closed', () => {
+    closeMiniWindow();
+    closeMenuWindow();
+  });
 }
 
 /**
@@ -91,6 +99,10 @@ app.whenReady().then(async () => {
 
   // 创建窗口
   await createWindow();
+  // 桌面传输悬浮小窗（独立、置顶、可拖动）
+  createMiniWindow();
+  // 预加载右键菜单小窗（隐藏），保证首次右键打开不卡顿
+  prepareMenuWindow();
 
   // 恢复同步引擎：等待前端加载并同步 auth token 后再执行
   // 前端在 App 初始化时调用 window.electronAPI.setAuth(token, refreshToken)

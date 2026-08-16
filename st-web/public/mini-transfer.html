@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>传输悬浮窗</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-user-select: none; user-select: none; }
+    :root {
+      /* 仿百度网盘悬浮窗配色 */
+      --bd-blue: #2e6be6;        /* 百度系蓝（云朵/上传） */
+      --bd-blue-deep: #1f56c8;
+      --bd-blue-bar: #3a8ffd;    /* 底部进度条蓝 */
+      --down-green: #1bbf73;     /* 下载速度绿 */
+      --text: #333333;
+      --text-2: #8b90a0;
+      --track: #eef1f6;
+      font-size: 12px;
+    }
+    html, body {
+      width: 100%; height: 100%;
+      background: transparent;
+      overflow: hidden;
+      font-family: "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+      color: var(--text);
+    }
+
+    /* 固定尺寸长方形悬浮块：铺满整个窗口（170×36，永不 resize）
+       仿百度网盘：右侧整块是进度条，左侧 logo 区不被进度条覆盖 */
+    .block {
+      position: absolute;
+      left: 0; right: 0; top: 0; bottom: 0;
+      display: flex;
+      background: #ffffff;
+      border: 1px solid #e2e5ec;
+      border-radius: 10px;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
+      cursor: pointer;
+      touch-action: none;
+      z-index: 5;
+      overflow: hidden;
+      /* 硬性禁止任何缩放/位移动画：按住鼠标也不会变大 */
+      transform: none !important;
+      transition: none !important;
+    }
+    .block:active { background: #f7f8fb; }
+
+    /* 左侧 logo 区：固定宽度、白底、右侧细分隔线；进度条不进入该区域 */
+    .block .logo-zone {
+      width: 36px;
+      flex-shrink: 0;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-right: 1px solid #eef1f6;
+      /* 左圆角：消除透明窗口子背景"灰色尖角" */
+      border-radius: 9px 0 0 9px;
+    }
+    .block .logo-zone .cloud {
+      width: 20px; height: 20px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #3f7bf0, var(--bd-blue));
+      display: flex; align-items: center; justify-content: center;
+    }
+    .block .logo-zone .cloud svg { width: 12px; height: 12px; pointer-events: none; }
+
+    /* 右侧进度区：占满剩余整块窗口，轨道即背景，蓝色填充按百分比增长 */
+    .block .bar-zone {
+      flex: 1;
+      min-width: 0;
+      position: relative;
+      background: #eef1f6;
+      overflow: hidden;
+      /* 右圆角：消除透明窗口子背景"灰色尖角" */
+      border-radius: 0 9px 9px 0;
+    }
+    .block .progress-fill {
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 0%;
+      /* 半透明浅蓝：铺满时仍是清晰的蓝色进度条，且深色文字叠加依旧高对比 */
+      background: rgba(64, 140, 250, 0.6);
+      transition: width 0.4s ease;
+    }
+    /* 叠在进度条上的速度文字：无底框、无描边；填充用半透明浅蓝，
+       深色文字在浅灰轨道和浅蓝填充上都天然高对比 */
+    .block .speeds {
+      position: absolute;
+      left: 7px; top: 0; bottom: 0;
+      display: flex; align-items: center;
+      font-size: 9px; font-weight: 700; color: #2b2f3a;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+    .block .speeds .item {
+      display: inline-flex; align-items: center; gap: 2px;
+      white-space: nowrap;
+    }
+    .block .speeds .item + .item { margin-left: 6px; }
+    .block .speeds svg { width: 7px; height: 7px; flex-shrink: 0; }
+    /* 上传/下载统一深色，不再使用蓝/绿：避免蓝字叠在蓝色进度条上看不清 */
+    .block .speeds .up,
+    .block .speeds .down { color: inherit; }
+    .block .pct {
+      position: absolute;
+      right: 6px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 9px; font-weight: 700;
+      color: #1f56c8;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+  </style>
+</head>
+<body>
+  <div class="block" id="block">
+    <!-- 左侧 logo 区（进度条不覆盖） -->
+    <div class="logo-zone">
+      <div class="cloud">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17.5 19a4.5 4.5 0 1 0-.43-8.98 6 6 0 1 0-11.4 2.1A4 4 0 0 0 6.5 19h11z"/>
+        </svg>
+      </div>
+    </div>
+    <!-- 右侧进度区：整块即进度条 -->
+    <div class="bar-zone">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+      <div class="speeds">
+        <span class="item up">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+          <span id="speedUpText">0 B/s</span>
+        </span>
+        <span class="item down">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+          <span id="speedDownText">0 B/s</span>
+        </span>
+      </div>
+      <span class="pct" id="pct">0%</span>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+
+      const api = window.electronAPI;
+      if (!api) {
+        document.body.innerHTML = '<div style="color:#8b90a0;padding:30px;font-size:12px;text-align:center">仅支持在桌面客户端中运行</div>';
+        return;
+      }
+
+      const $ = (id) => document.getElementById(id);
+      const block = $('block');
+      const speedUpEl = $('speedUpText');
+      const speedDownEl = $('speedDownText');
+      const pctEl = $('pct');
+      const progressFill = $('progressFill');
+
+      let tasks = [];
+      const ACTIVE = new Set(['pending', 'hashing', 'uploading', 'downloading', 'merging']);
+
+      function fmtSize(bytes) {
+        if (!bytes || bytes <= 0) return '0 B';
+        const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
+        const v = bytes / Math.pow(1024, i);
+        // 紧凑显示：统一 1 位小数，悬浮窗小，避免文字过长
+        return (v >= 100 ? Math.round(v) : v.toFixed(1)) + ' ' + units[i];
+      }
+      function fmtSpeed(bps) {
+        if (!bps || bps <= 0) return '0 B/s';
+        return fmtSize(bps) + '/s';
+      }
+
+      // 悬浮块显示：上传/下载总速度 + 传输任务平均进度
+      function renderBlock() {
+        let up = 0, down = 0, n = 0, sumPct = 0;
+        for (const t of tasks) {
+          if (ACTIVE.has(t.status)) {
+            n++;
+            sumPct += Math.min(100, t.progress || 0);
+            if (t.type === 'upload') up += t.speed || 0;
+            else down += t.speed || 0;
+          } else if (t.status === 'paused') {
+            n++;
+            sumPct += Math.min(100, t.progress || 0);
+          }
+        }
+
+        // 总进度：进行中/暂停任务的平均进度
+        let p = 0;
+        if (n > 0) p = Math.round((sumPct / n) * 10) / 10;
+
+        speedUpEl.textContent = fmtSpeed(up);
+        speedDownEl.textContent = fmtSpeed(down);
+        progressFill.style.width = p + '%';
+        pctEl.textContent = p + '%';
+      }
+
+      function mergeTask(next) {
+        const idx = tasks.findIndex(t => t.id === next.id);
+        if (idx === -1) tasks.unshift(next);
+        else tasks[idx] = next;
+        renderBlock();
+      }
+
+      api.getTasks().then(function (all) { tasks = all || []; renderBlock(); }).catch(function () {});
+      api.onTaskUpdate(mergeTask);
+
+      // ===== 交互：点击打开网盘、拖拽移动、右键弹出菜单小窗 =====
+      // 拖拽由主进程轮询系统光标直接驱动（鼠标移出悬浮窗也不断流），
+      // 这里只负责按下时上报"抓点偏移"、移动时记录是否真的拖过、松开时结束。
+      function startDrag(e, onMove) {
+        const st = { sx: e.screenX, sy: e.screenY, total: 0, moved: false };
+        if (e.target.setPointerCapture) {
+          try { e.target.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+        }
+        if (api.startMiniWindowDrag) {
+          const r = block.getBoundingClientRect();
+          // 抓点偏移 = 鼠标按住点相对窗口左上角，保证"抓住哪就跟到哪"、不跳变
+          api.startMiniWindowDrag(e.clientX - r.left, e.clientY - r.top);
+        }
+        const move = function (ev) {
+          st.total += Math.abs(ev.screenX - st.sx) + Math.abs(ev.screenY - st.sy);
+          if (st.total > 4) st.moved = true;
+        };
+        const up = function () {
+          document.removeEventListener('pointermove', move);
+          document.removeEventListener('pointerup', up);
+          if (api.endMiniWindowDrag) api.endMiniWindowDrag();
+          onMove(st.moved);
+        };
+        document.addEventListener('pointermove', move);
+        document.addEventListener('pointerup', up);
+      }
+
+      let blockDragged = false;
+      block.addEventListener('pointerdown', function (e) {
+        if (e.button !== 0) return;
+        startDrag(e, function (moved) { blockDragged = moved; });
+      });
+      block.addEventListener('click', function () {
+        if (!blockDragged && api.openMainWindow) api.openMainWindow();
+        blockDragged = false;
+      });
+      block.addEventListener('contextmenu', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if (api.showMiniMenu) api.showMiniMenu();
+      });
+      document.addEventListener('contextmenu', function (e) {
+        e.preventDefault();
+        if (api.showMiniMenu) api.showMiniMenu();
+      });
+    })();
+  </script>
+</body>
+</html>

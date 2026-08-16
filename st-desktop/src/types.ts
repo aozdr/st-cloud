@@ -55,7 +55,14 @@ export interface ElectronAPI {
   // 认证
   setAuth: (token: string, refreshToken: string) => void;
   // 传输设置
+  getTransferSettings: () => Promise<TransferSettings>;
   setTransferSettings: (settings: TransferSettings) => void;
+  /** 暂停全部进行中任务（上传/下载） */
+  pauseAllTransfers: () => Promise<void>;
+  /** 开始全部已暂停任务 */
+  resumeAllTransfers: () => Promise<void>;
+  // 退出整个应用
+  quitApp: () => Promise<void>;
   // 上传
   startUpload: (filePath: string, parentId: string, replaceFileId?: string) => Promise<string>;
   pauseUpload: (taskId: string) => Promise<void>;
@@ -99,6 +106,21 @@ export interface ElectronAPI {
   onSyncEvent: (cb: (event: { event: string; data: unknown }) => void) => () => void;
   /** 主进程拦截 F5 后通知渲染进程原地刷新文件列表 */
   onRefreshFileList: (cb: () => void) => () => void;
+  /** 桌面传输悬浮小窗：右键菜单小窗显示/隐藏 */
+  showMiniMenu: () => Promise<void>;
+  hideMiniMenu: () => Promise<void>;
+  /** 主进程拖拽：按下开始（handleX/handleY 为抓点相对窗口的偏移）/ 松开结束 */
+  startMiniWindowDrag: (handleX?: number, handleY?: number) => Promise<void>;
+  endMiniWindowDrag: () => Promise<void>;
+  /** 悬浮窗拖飞/找不到时复位到主屏右下角 */
+  resetMiniWindowPosition: () => Promise<void>;
+  openMainWindow: () => Promise<void>;
+  /** 打开主窗口并跳转到传输管理页 */
+  openTransfers: () => Promise<void>;
+  /** 主进程通知渲染进程跳转传输页 */
+  onOpenTransfers: (cb: () => void) => () => void;
+  showMiniWindow: () => Promise<void>;
+  hideMiniWindow: () => Promise<void>;
 }
 
 // ==================== 后端 API 响应类型 ====================

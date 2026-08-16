@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>悬浮窗菜单</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-user-select: none; user-select: none; }
+    :root {
+      --primary: #4c6ef5;
+      --primary-deep: #3b5bdb;
+      --bg: #ffffff;
+      --bg-soft: #f5f6fa;
+      --border: #e8eaf0;
+      --text: #2b2f3a;
+      --text-2: #8b90a0;
+      --red: #f04438;
+      font-size: 12px;
+    }
+    html, body {
+      width: 100%; height: 100%;
+      background: transparent;
+      overflow: hidden;
+      font-family: "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
+      color: var(--text);
+    }
+    button { font-family: inherit; border: none; background: none; cursor: pointer; color: inherit; }
+    input { font-family: inherit; }
+
+    .card {
+      position: absolute;
+      left: 0; right: 0; top: 0; bottom: 0;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      box-shadow: 0 10px 28px rgba(30, 40, 80, 0.22);
+      padding: 6px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ===== 菜单视图 ===== */
+    .menu-view { flex: 1; display: flex; flex-direction: column; }
+    /* 菜单项拉伸填满卡片：底部不再留大块空白 */
+    .menu-view .menu-item { flex: 1 1 0; }
+    .menu-item {
+      display: flex; align-items: center; gap: 8px;
+      width: 100%; padding: 8px 10px;
+      border-radius: 7px; font-size: 12.5px; text-align: left;
+    }
+    .menu-item:hover { background: rgba(76, 110, 245, 0.08); }
+    .menu-item svg { width: 14px; height: 14px; color: var(--text-2); flex-shrink: 0; }
+    .menu-item.disabled { opacity: 0.45; pointer-events: none; }
+    .menu-item.danger:hover { background: rgba(240, 68, 56, 0.08); }
+    .menu-item.danger, .menu-item.danger svg { color: var(--red); }
+    .menu-sep { height: 1px; background: var(--border); margin: 3px 6px; }
+
+    /* ===== 设置视图 ===== */
+    .settings-view {
+      flex: 1; display: none; flex-direction: column;
+      padding: 6px 10px; overflow-y: auto; min-height: 0;
+    }
+    body.settings .menu-view { display: none; }
+    body.settings .settings-view { display: flex; }
+    .settings-view h3 {
+      font-size: 12.5px; font-weight: 700;
+      margin-bottom: 6px; display: flex; align-items: center; gap: 6px;
+    }
+    .settings-view h3 svg { width: 14px; height: 14px; color: var(--primary); }
+    .field { margin-bottom: 6px; }
+    .field label {
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 11px; color: var(--text-2); margin-bottom: 2px;
+    }
+    .field .hint { font-size: 10.5px; color: #b6bac8; }
+    .field input {
+      width: 100%; height: 24px;
+      border: 1px solid var(--border); border-radius: 7px;
+      padding: 0 8px; font-size: 12px; outline: none;
+      background: #fff; color: var(--text);
+      -webkit-user-select: text; user-select: text;
+    }
+    .field input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(76,110,245,0.15); }
+    .field input[type="number"]::-webkit-inner-spin-button,
+    .field input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
+    .settings-view .btns {
+      display: flex; justify-content: flex-end; gap: 6px;
+      margin-top: auto; padding-top: 4px;
+    }
+    .btn {
+      height: 24px; padding: 0 12px;
+      border-radius: 7px; font-size: 11.5px; font-weight: 600;
+    }
+    .btn.ghost { color: var(--text-2); }
+    .btn.ghost:hover { background: var(--bg-soft); color: var(--text); }
+    .btn.primary { background: var(--primary); color: #fff; }
+    .btn.primary:hover { background: var(--primary-deep); }
+    .back-row { display: flex; align-items: center; margin-bottom: 4px; }
+    .back-row .back {
+      display: flex; align-items: center; gap: 4px;
+      font-size: 11.5px; color: var(--text-2); padding: 4px 6px; border-radius: 6px;
+    }
+    .back-row .back:hover { color: var(--primary); background: rgba(76, 110, 245, 0.08); }
+    .back-row .back svg { width: 12px; height: 12px; }
+
+    @keyframes popIn {
+      from { transform: scale(0.94); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .card { animation: popIn 0.12s ease-out; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <!-- 菜单视图 -->
+    <div class="menu-view">
+      <button class="menu-item" id="menuOpen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9"/><path d="M21 3v6h-6"/></svg>
+        打开网盘
+      </button>
+      <button class="menu-item" id="menuTransfers">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v13M7 3l-3 3M7 3l3 3M17 21V8M17 21l-3-3M17 21l3-3"/></svg>
+        传输管理
+      </button>
+      <button class="menu-item" id="menuToggleTasks" title="全部传输任务开始/暂停">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="menuToggleIcon"><path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86a1 1 0 0 0-1.5.86z"/></svg>
+        <span id="menuToggleLabel">开始全部任务</span>
+      </button>
+      <button class="menu-item" id="menuSettings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18M3 12h18M3 17h18"/></svg>
+        简易速度限制配置
+      </button>
+      <div class="menu-sep"></div>
+      <button class="menu-item danger" id="menuQuit">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        退出
+      </button>
+    </div>
+
+    <!-- 限速设置视图 -->
+    <div class="settings-view" id="settingsView">
+      <div class="back-row">
+        <button class="back" id="settingsBack">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          返回
+        </button>
+      </div>
+      <h3>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18M3 12h18M3 17h18"/></svg>
+        简易速度限制配置
+      </h3>
+      <div class="field">
+        <label>上传限速 <span class="hint">0 = 不限速</span></label>
+        <input type="number" id="upLimit" min="0" step="1" placeholder="KB/s" />
+      </div>
+      <div class="field">
+        <label>下载限速 <span class="hint">0 = 不限速</span></label>
+        <input type="number" id="downLimit" min="0" step="1" placeholder="KB/s" />
+      </div>
+      <div class="btns">
+        <button class="btn ghost" id="settingsCancel">取消</button>
+        <button class="btn primary" id="settingsSave">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      'use strict';
+      const api = window.electronAPI;
+      if (!api) {
+        document.body.innerHTML = '<div style="color:#8b90a0;padding:30px;font-size:12px;text-align:center">仅支持在桌面客户端中运行</div>';
+        return;
+      }
+
+      const $ = (id) => document.getElementById(id);
+      const ACTIVE = new Set(['pending', 'hashing', 'uploading', 'downloading', 'merging']);
+      let tasks = [];
+      let toggleMode = 'resume';
+
+      function close() {
+        if (api.hideMiniMenu) api.hideMiniMenu();
+      }
+
+      // 任务状态 → "暂停全部/开始全部"文案与可用性
+      function renderToggle() {
+        const hasActive = tasks.some(t => ACTIVE.has(t.status));
+        const hasPaused = tasks.some(t => t.status === 'paused');
+        if (hasActive) {
+          toggleMode = 'pause';
+          $('menuToggleLabel').textContent = '暂停全部任务';
+          $('menuToggleIcon').innerHTML = '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>';
+          $('menuToggleTasks').classList.remove('disabled');
+        } else if (hasPaused) {
+          toggleMode = 'resume';
+          $('menuToggleLabel').textContent = '开始全部任务';
+          $('menuToggleIcon').innerHTML = '<path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86a1 1 0 0 0-1.5.86z"/>';
+          $('menuToggleTasks').classList.remove('disabled');
+        } else {
+          toggleMode = 'resume';
+          $('menuToggleLabel').textContent = '开始全部任务';
+          $('menuToggleIcon').innerHTML = '<path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86a1 1 0 0 0-1.5.86z"/>';
+          $('menuToggleTasks').classList.add('disabled');
+        }
+      }
+      function mergeTask(next) {
+        const idx = tasks.findIndex(t => t.id === next.id);
+        if (idx === -1) tasks.unshift(next);
+        else tasks[idx] = next;
+        renderToggle();
+      }
+
+      api.getTasks().then(all => { tasks = all || []; renderToggle(); }).catch(() => {});
+      api.onTaskUpdate(mergeTask);
+
+      // ===== 菜单视图 =====
+      $('menuOpen').addEventListener('click', function () {
+        api.openMainWindow();
+        close();
+      });
+      $('menuTransfers').addEventListener('click', function () {
+        api.openTransfers();
+        close();
+      });
+      $('menuToggleTasks').addEventListener('click', function () {
+        if ($('menuToggleTasks').classList.contains('disabled')) return;
+        if (toggleMode === 'pause') api.pauseAllTransfers();
+        else api.resumeAllTransfers();
+        close();
+      });
+      $('menuSettings').addEventListener('click', function () {
+        if (!api.getTransferSettings) return;
+        api.getTransferSettings().then(function (s) {
+          if (!s) return;
+          $('upLimit').value = s.uploadSpeedLimit || 0;
+          $('downLimit').value = s.downloadSpeedLimit || 0;
+          document.body.classList.add('settings');
+        }).catch(() => {});
+      });
+      $('menuQuit').addEventListener('click', function () { api.quitApp(); });
+
+      // ===== 限速设置视图 =====
+      $('settingsBack').addEventListener('click', function () {
+        document.body.classList.remove('settings');
+      });
+      $('settingsCancel').addEventListener('click', function () {
+        document.body.classList.remove('settings');
+      });
+      $('settingsSave').addEventListener('click', function () {
+        const up = Math.max(0, parseInt($('upLimit').value || '0', 10) || 0);
+        const down = Math.max(0, parseInt($('downLimit').value || '0', 10) || 0);
+        api.setTransferSettings({ uploadSpeedLimit: up, downloadSpeedLimit: down });
+        close();
+      });
+    })();
+  </script>
+</body>
+</html>
