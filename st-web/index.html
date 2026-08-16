@@ -24,7 +24,7 @@
       // 防闪烁：在首屏前应用已保存的主题模式（dark/system）
       (function () {
         try {
-          var mode = localStorage.getItem('themeMode') || 'system';
+          var mode = localStorage.getItem('themeMode') || 'dark';
           var isDark =
             mode === 'dark' ||
             (mode === 'system' &&

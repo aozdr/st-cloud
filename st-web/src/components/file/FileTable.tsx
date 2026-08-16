@@ -36,7 +36,7 @@ export default function FileTable({ files, lockedIds, selectedIds, focusedId, cu
   const selectedCount = files.filter((f) => selectedIds.has(f.id)).length;
 
   return (
-    <div className="rounded-xl bg-surface overflow-hidden">
+    <div className="bg-surface overflow-hidden">
       <div className="flex items-center gap-3 px-4 h-10 border-b border-border">
         <button
           onClick={onSelectAll}

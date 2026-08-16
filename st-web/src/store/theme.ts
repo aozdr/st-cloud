@@ -34,8 +34,8 @@ function loadMode(): ThemeMode {
   } catch {
     // ignore
   }
-  // PikPak 风格浅色优先，默认 light（PikPak 实证 color-scheme: light）
-  return 'light';
+  // 对齐 .ulpi/design/DESIGN.md（V4）：暗色优先，默认 dark
+  return 'dark';
 }
 
 /** Resolve the effective appearance (light or dark) from the mode. */

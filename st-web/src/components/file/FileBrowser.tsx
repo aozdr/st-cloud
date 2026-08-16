@@ -842,7 +842,7 @@ export default function FileBrowser({
 
   return (
     <div
-      className="flex flex-col h-full bg-surface"
+      className="flex flex-col h-full bg-surface-2/50"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -926,7 +926,7 @@ export default function FileBrowser({
       <div className="flex-1 min-h-0 flex overflow-hidden">
       <div
         ref={fileListRef}
-        className="flex-1 min-h-0 min-w-0 overflow-auto px-5 py-4 relative"
+        className={"flex-1 min-h-0 min-w-0 overflow-auto px-5 py-4 relative" + (view === 'grid' ? ' bg-surface' : '')}
         onTouchStart={isMobile ? ptr.onTouchStart : undefined}
         onTouchMove={isMobile ? ptr.onTouchMove : undefined}
         onTouchEnd={isMobile ? ptr.onTouchEnd : undefined}

@@ -60,7 +60,7 @@ export default function FileToolbar({
   );
 
   return (
-    <div className="sticky top-0 z-20 flex items-center justify-between gap-2 px-5 py-2 bg-bg border-b border-border/60 overflow-x-auto">
+    <div className="sticky top-0 z-20 flex items-center justify-between gap-2 px-5 py-2 bg-surface border-b border-border/60 overflow-x-auto">
       <div className="flex items-center gap-1.5 flex-shrink-0">
         {has('file:upload') && (
           <Popover open={newMenuOpen} onOpenChange={setNewMenuOpen}>

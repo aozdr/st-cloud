@@ -59,7 +59,7 @@ export default function FileTableView({
   );
 
   return (
-    <div className="rounded-xl bg-surface overflow-hidden border border-border/80 overflow-x-auto md:overflow-hidden">
+    <div className="bg-surface overflow-hidden overflow-x-auto md:overflow-hidden">
       <table className="w-full table-fixed border-collapse" aria-label="文件列表">
         <colgroup>
           <col className="w-12" />

@@ -120,7 +120,7 @@ export const THEMES: ThemePalette[] = [
   },
 ];
 
-export const DEFAULT_THEME: ThemeKey = 'blue';
+export const DEFAULT_THEME: ThemeKey = 'violet';
 
 /** 将主题色板写入 CSS 变量到 document.documentElement */
 export function applyThemeToDOM(palette: ThemePalette) {
