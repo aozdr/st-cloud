@@ -173,6 +173,14 @@ const api: ElectronAPI = {
   hideMiniMenu: () => {
     return ipcRenderer.invoke('mini:hideMenu');
   },
+  /** 菜单小窗每次显示前，主进程通知页面重置回菜单列表视图 */
+  onMenuReset: (cb: () => void) => {
+    const handler = () => cb();
+    ipcRenderer.on('mini-menu:reset', handler);
+    return () => {
+      ipcRenderer.removeListener('mini-menu:reset', handler);
+    };
+  },
   startMiniWindowDrag: (handleX?: number, handleY?: number) => {
     return ipcRenderer.invoke('mini:startDrag', handleX, handleY);
   },
@@ -193,6 +201,16 @@ const api: ElectronAPI = {
     ipcRenderer.on('app:open-transfers', handler);
     return () => {
       ipcRenderer.removeListener('app:open-transfers', handler);
+    };
+  },
+  openTransferSettings: () => {
+    return ipcRenderer.invoke('mini:openTransferSettings');
+  },
+  onOpenTransferSettings: (cb: () => void) => {
+    const handler = () => cb();
+    ipcRenderer.on('app:open-transfer-settings', handler);
+    return () => {
+      ipcRenderer.removeListener('app:open-transfer-settings', handler);
     };
   },
   showMiniWindow: () => {

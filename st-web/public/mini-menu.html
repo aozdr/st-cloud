@@ -56,7 +56,7 @@
     .menu-item.danger, .menu-item.danger svg { color: var(--red); }
     .menu-sep { height: 1px; background: var(--border); margin: 3px 6px; }
 
-    /* ===== 设置视图 ===== */
+    /* ===== 简易限速设置视图（与主应用传输设置对话框一致的交互方式，可滚动） ===== */
     .settings-view {
       flex: 1; display: none; flex-direction: column;
       padding: 6px 10px; overflow-y: auto; min-height: 0;
@@ -68,32 +68,54 @@
       margin-bottom: 6px; display: flex; align-items: center; gap: 6px;
     }
     .settings-view h3 svg { width: 14px; height: 14px; color: var(--primary); }
-    .field { margin-bottom: 6px; }
-    .field label {
-      display: flex; align-items: center; justify-content: space-between;
-      font-size: 11px; color: var(--text-2); margin-bottom: 2px;
+    .sec { padding: 8px 0; border-top: 1px solid var(--border); }
+    .sec:first-of-type { border-top: none; }
+    .sec-title {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 11.5px; font-weight: 600; color: var(--text); margin-bottom: 6px;
     }
-    .field .hint { font-size: 10.5px; color: #b6bac8; }
-    .field input {
-      width: 100%; height: 24px;
-      border: 1px solid var(--border); border-radius: 7px;
-      padding: 0 8px; font-size: 12px; outline: none;
+    .sec-title .sub { font-size: 10px; color: var(--text-2); font-weight: 400; }
+    .parallels { display: flex; gap: 6px; }
+    .parallels button {
+      flex: 1; padding: 8px 0; border-radius: 8px;
+      font-size: 13px; font-weight: 600;
+      background: var(--bg-soft); color: var(--text-2); cursor: pointer;
+    }
+    .parallels button.active { background: var(--primary); color: #fff; }
+    .toggle-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; cursor: pointer; }
+    .switch {
+      position: relative; width: 30px; height: 16px; flex-shrink: 0;
+      border-radius: 10px; background: var(--primary);
+      transition: background 0.15s; cursor: pointer;
+    }
+    .switch.off { background: rgba(76, 110, 245, 0.25); }
+    .switch span {
+      position: absolute; top: 2px; left: 16px;
+      width: 12px; height: 12px; border-radius: 50%; background: #fff;
+      transition: left 0.15s;
+    }
+    .switch.off span { left: 2px; }
+    .toggle-label { font-size: 11px; color: var(--text-2); }
+    .input-row { display: flex; align-items: center; gap: 6px; }
+    .input-row input {
+      flex: 1; height: 34px; min-width: 0;
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 0 10px; font-size: 14px; outline: none;
       background: #fff; color: var(--text);
       -webkit-user-select: text; user-select: text;
     }
-    .field input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(76,110,245,0.15); }
-    .field input[type="number"]::-webkit-inner-spin-button,
-    .field input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; }
-    .settings-view .btns {
-      display: flex; justify-content: flex-end; gap: 6px;
-      margin-top: auto; padding-top: 4px;
+    .input-row input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(76,110,245,0.15); }
+    .unit { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; flex-shrink: 0; }
+    .unit button {
+      padding: 8px 16px; font-size: 13px; font-weight: 600;
+      background: var(--bg); color: var(--text-2); cursor: pointer;
     }
+    .unit button.active { background: var(--primary); color: #fff; }
+    .settings-view .btns { display: flex; justify-content: flex-end; gap: 6px; padding: 8px 0 2px; }
     .btn {
-      height: 24px; padding: 0 12px;
-      border-radius: 7px; font-size: 11.5px; font-weight: 600;
+      height: 26px; padding: 0 14px;
+      border-radius: 7px; font-size: 12px; font-weight: 600;
     }
-    .btn.ghost { color: var(--text-2); }
-    .btn.ghost:hover { background: var(--bg-soft); color: var(--text); }
     .btn.primary { background: var(--primary); color: #fff; }
     .btn.primary:hover { background: var(--primary-deep); }
     .back-row { display: flex; align-items: center; margin-bottom: 4px; }
@@ -129,7 +151,7 @@
       </button>
       <button class="menu-item" id="menuSettings">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18M3 12h18M3 17h18"/></svg>
-        简易速度限制配置
+        限速管理
       </button>
       <div class="menu-sep"></div>
       <button class="menu-item danger" id="menuQuit">
@@ -138,7 +160,7 @@
       </button>
     </div>
 
-    <!-- 限速设置视图 -->
+    <!-- 简易限速设置视图：与主应用传输设置对话框一致（并行任务数 + 不限速开关 + 数字输入 + KB/s/MB/s） -->
     <div class="settings-view" id="settingsView">
       <div class="back-row">
         <button class="back" id="settingsBack">
@@ -148,19 +170,46 @@
       </div>
       <h3>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18M3 12h18M3 17h18"/></svg>
-        简易速度限制配置
+        限速管理
       </h3>
-      <div class="field">
-        <label>上传限速 <span class="hint">0 = 不限速</span></label>
-        <input type="number" id="upLimit" min="0" step="1" placeholder="KB/s" />
+
+      <div class="sec">
+        <div class="sec-title">最大并行任务数 <span class="sub">上传/下载共享</span></div>
+        <div class="parallels" id="parallelBtns"></div>
       </div>
-      <div class="field">
-        <label>下载限速 <span class="hint">0 = 不限速</span></label>
-        <input type="number" id="downLimit" min="0" step="1" placeholder="KB/s" />
+
+      <div class="sec">
+        <div class="sec-title">上传限速</div>
+        <label class="toggle-row">
+          <button type="button" class="switch" id="upSwitch"><span></span></button>
+          <span class="toggle-label" id="upToggleLabel">不限速</span>
+        </label>
+        <div class="input-row" id="upInputRow" style="display:none">
+          <input type="number" id="upValue" min="1" placeholder="输入数值" />
+          <div class="unit">
+            <button type="button" id="upKb" class="active">KB/s</button>
+            <button type="button" id="upMb">MB/s</button>
+          </div>
+        </div>
       </div>
+
+      <div class="sec">
+        <div class="sec-title">下载限速</div>
+        <label class="toggle-row">
+          <button type="button" class="switch" id="downSwitch"><span></span></button>
+          <span class="toggle-label" id="downToggleLabel">不限速</span>
+        </label>
+        <div class="input-row" id="downInputRow" style="display:none">
+          <input type="number" id="downValue" min="1" placeholder="输入数值" />
+          <div class="unit">
+            <button type="button" id="downKb" class="active">KB/s</button>
+            <button type="button" id="downMb">MB/s</button>
+          </div>
+        </div>
+      </div>
+
       <div class="btns">
-        <button class="btn ghost" id="settingsCancel">取消</button>
-        <button class="btn primary" id="settingsSave">保存</button>
+        <button class="btn primary" id="settingsSave">完成</button>
       </div>
     </div>
   </div>
@@ -213,6 +262,12 @@
 
       api.getTasks().then(all => { tasks = all || []; renderToggle(); }).catch(() => {});
       api.onTaskUpdate(mergeTask);
+      // 每次菜单弹出前，主进程通知重置回菜单列表视图
+      if (api.onMenuReset) {
+        api.onMenuReset(function () {
+          document.body.classList.remove('settings');
+        });
+      }
 
       // ===== 菜单视图 =====
       $('menuOpen').addEventListener('click', function () {
@@ -229,28 +284,95 @@
         else api.resumeAllTransfers();
         close();
       });
+
+      // ===== 简易限速设置（与主应用传输设置对话框一致的交互方式） =====
+      const PARALLEL_OPTIONS = [1, 2, 3, 4, 5];
+      let settingsState = { maxParallelTasks: 3, uploadSpeedLimit: 0, downloadSpeedLimit: 0 };
+      const kindValue = { up: 1, down: 1 };
+      const kindUnit = { up: 'mb', down: 'mb' };
+      const kindUnlimited = { up: true, down: true };
+
+      // 存储的 KB/s → 显示用 {value, unit}
+      function kbToDisplay(kbps) {
+        if (kbps === 0) return { value: 1, unit: 'mb' };
+        if (kbps >= 1024 && kbps % 1024 === 0) return { value: kbps / 1024, unit: 'mb' };
+        return { value: kbps, unit: 'kb' };
+      }
+
+      function renderSpeed(kind) {
+        const unlimited = kindUnlimited[kind];
+        const unit = kindUnit[kind];
+        $(kind + 'Value').value = kindValue[kind] || '';
+        $(kind + 'Kb').classList.toggle('active', unit === 'kb');
+        $(kind + 'Mb').classList.toggle('active', unit === 'mb');
+        $(kind + 'Switch').classList.toggle('off', unlimited);
+        $(kind + 'ToggleLabel').textContent = unlimited ? '不限速' : '自定义限速';
+        $(kind + 'InputRow').style.display = unlimited ? 'none' : 'flex';
+      }
+
+      function speedKbps(kind) {
+        if (kindUnlimited[kind]) return 0;
+        const raw = parseInt($(kind + 'Value').value, 10);
+        const v = isNaN(raw) || raw < 1 ? 1 : raw;
+        return kindUnit[kind] === 'mb' ? v * 1024 : v;
+      }
+
+      ['up', 'down'].forEach(function (kind) {
+        $(kind + 'Kb').addEventListener('click', function () { kindUnit[kind] = 'kb'; renderSpeed(kind); });
+        $(kind + 'Mb').addEventListener('click', function () { kindUnit[kind] = 'mb'; renderSpeed(kind); });
+        $(kind + 'Value').addEventListener('input', function () {
+          kindValue[kind] = parseInt(this.value, 10);
+        });
+        $(kind + 'Switch').addEventListener('click', function () {
+          kindUnlimited[kind] = !kindUnlimited[kind];
+          renderSpeed(kind);
+        });
+      });
+
       $('menuSettings').addEventListener('click', function () {
         if (!api.getTransferSettings) return;
         api.getTransferSettings().then(function (s) {
           if (!s) return;
-          $('upLimit').value = s.uploadSpeedLimit || 0;
-          $('downLimit').value = s.downloadSpeedLimit || 0;
+          settingsState = s;
+          // 并行任务数按钮
+          const pb = $('parallelBtns');
+          pb.innerHTML = '';
+          PARALLEL_OPTIONS.forEach(function (n) {
+            const b = document.createElement('button');
+            b.textContent = String(n);
+            b.className = n === (s.maxParallelTasks || 3) ? 'active' : '';
+            b.addEventListener('click', function () {
+              settingsState = Object.assign({}, settingsState, { maxParallelTasks: n });
+              Array.prototype.forEach.call(pb.children, function (x) {
+                x.classList.toggle('active', x === b);
+              });
+            });
+            pb.appendChild(b);
+          });
+          // 上传/下载限速
+          ['up', 'down'].forEach(function (kind) {
+            const kbps = kind === 'up' ? s.uploadSpeedLimit : s.downloadSpeedLimit;
+            const d = kbToDisplay(kbps);
+            kindValue[kind] = d.value;
+            kindUnit[kind] = d.unit;
+            kindUnlimited[kind] = kbps === 0;
+            renderSpeed(kind);
+          });
           document.body.classList.add('settings');
-        }).catch(() => {});
+        }).catch(function () {});
       });
       $('menuQuit').addEventListener('click', function () { api.quitApp(); });
 
-      // ===== 限速设置视图 =====
+      // ===== 简易限速设置视图 =====
       $('settingsBack').addEventListener('click', function () {
         document.body.classList.remove('settings');
       });
-      $('settingsCancel').addEventListener('click', function () {
-        document.body.classList.remove('settings');
-      });
       $('settingsSave').addEventListener('click', function () {
-        const up = Math.max(0, parseInt($('upLimit').value || '0', 10) || 0);
-        const down = Math.max(0, parseInt($('downLimit').value || '0', 10) || 0);
-        api.setTransferSettings({ uploadSpeedLimit: up, downloadSpeedLimit: down });
+        api.setTransferSettings({
+          maxParallelTasks: settingsState.maxParallelTasks,
+          uploadSpeedLimit: speedKbps('up'),
+          downloadSpeedLimit: speedKbps('down'),
+        });
         close();
       });
     })();

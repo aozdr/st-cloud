@@ -21,7 +21,7 @@ import {
   removeExclusion as syncRemoveExclusion, setConflictStrategy as syncSetConflictStrategy,
   isWsConnected,
 } from './sync-manager';
-import { startMiniWindowDrag, stopMiniWindowDrag, resetMiniWindowPosition, openMainWindow, openTransferPage, showMiniWindow, hideMiniWindow } from './mini-window';
+import { startMiniWindowDrag, stopMiniWindowDrag, resetMiniWindowPosition, openMainWindow, openTransferPage, openTransferSettings, showMiniWindow, hideMiniWindow } from './mini-window';
 import { showMenuWindow, hideMenuWindow } from './menu-window';
 
 export function registerIpcHandlers(): void {
@@ -144,6 +144,9 @@ export function registerIpcHandlers(): void {
   });
   ipcMain.handle('mini:openTransfers', () => {
     openTransferPage();
+  });
+  ipcMain.handle('mini:openTransferSettings', () => {
+    openTransferSettings();
   });
   ipcMain.handle('mini:show', () => {
     showMiniWindow();

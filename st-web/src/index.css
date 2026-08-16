@@ -357,3 +357,21 @@
     -webkit-touch-callout: none;
   }
 }
+
+/* ===== 桌面端顶部蓝色标题栏（配合 Electron titleBarStyle: hidden + titleBarOverlay） ===== */
+.app-titlebar {
+  height: 36px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  padding-left: 12px;
+  padding-right: 140px; /* 给系统最小化/最大化/关闭按钮留位 */
+  /* 与系统 titleBarOverlay 颜色一致（#2e6be6），避免按钮区域与标题栏色差 */
+  background: #2e6be6;
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  -webkit-app-region: drag;
+  user-select: none;
+}

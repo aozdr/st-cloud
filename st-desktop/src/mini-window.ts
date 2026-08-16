@@ -309,6 +309,16 @@ export function openTransferPage(): void {
   target.webContents.send('app:open-transfers');
 }
 
+/** 打开主窗口并弹出传输设置对话框（与"传输管理"同样的打开方式） */
+export function openTransferSettings(): void {
+  const target = BrowserWindow.getAllWindows().find((w) => !w.isDestroyed() && w !== miniWindow && !isMenuWindow(w));
+  if (!target) return;
+  if (target.isMinimized()) target.restore();
+  target.show();
+  target.focus();
+  target.webContents.send('app:open-transfer-settings');
+}
+
 /** 主窗口关闭时一并销毁悬浮窗，保持"关窗即退出"行为 */
 export function closeMiniWindow(): void {
   if (miniWindow && !miniWindow.isDestroyed()) {

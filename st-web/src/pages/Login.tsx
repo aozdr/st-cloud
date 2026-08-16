@@ -4,6 +4,7 @@ import { Cloud, Lock, User, Mail, Building2, ArrowRight } from 'lucide-react';
 import { useAuthStore } from '../store/auth';
 import { isElectron } from '../lib/electron';
 import type { LoginRequest, RegisterRequest } from '../types';
+import TitleBar from '../components/layout/TitleBar';
 
 export default function Login() {
   const { login, register } = useAuthStore();
@@ -47,9 +48,11 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-screen">
-      {/* Left brand panel */}
-      <div className="hidden lg:flex lg:w-[45%] brand-gradient flex-col justify-between p-12 relative overflow-hidden">
+    <div className="flex flex-col min-h-screen">
+      <TitleBar />
+      <div className="flex flex-1 min-h-0">
+        {/* Left brand panel */}
+        <div className="hidden lg:flex lg:w-[45%] brand-gradient flex-col justify-between p-12 relative overflow-hidden">
         <div className="relative z-10">
           <div className="flex items-center gap-3 text-fg">
             <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-primary">
@@ -223,6 +226,7 @@ export default function Login() {
             </div>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

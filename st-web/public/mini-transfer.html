@@ -31,11 +31,11 @@
       position: absolute;
       left: 0; right: 0; top: 0; bottom: 0;
       display: flex;
-      background: #ffffff;
+      /* 蓝色风格：蓝渐变卡片，白色风格在浅色桌面上看不清 */
+      background: linear-gradient(180deg, #4a86f5, #2e6be6);
       border-radius: 10px;
-      /* 去掉灰色边框与会被窗口裁切的外阴影（透明窗口角落易出灰色伪影），
-         改用跟随圆角的内阴影描边，边角干净 */
-      box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.06);
+      /* 透明窗口上任何 box-shadow（含 inset）都可能渲染成黑色描边/黑线，
+         这里完全去掉，蓝色卡片与桌面背景的对比足够清晰 */
       cursor: pointer;
       touch-action: none;
       z-index: 5;
@@ -44,34 +44,34 @@
       transform: none !important;
       transition: none !important;
     }
-    .block:active { background: #f7f8fb; }
+    .block:active { background: linear-gradient(180deg, #3f7bf0, #2661d8); }
 
-    /* 左侧 logo 区：固定宽度、白底、右侧细分隔线；进度条不进入该区域 */
+    /* 左侧 logo 区：背景透明（蓝卡直接显示，避免白色圆角在透明窗口角上渲出黑边）；
+       白色云朵芯片内缩在区域内，不接触窗口角 */
     .block .logo-zone {
       width: 36px;
       flex-shrink: 0;
-      background: #ffffff;
+      background: transparent;
       display: flex;
       align-items: center;
       justify-content: center;
-      border-right: 1px solid #eef1f6;
-      /* 左圆角：消除透明窗口子背景"灰色尖角" */
-      border-radius: 10px 0 0 10px;
+      border-right: 1px solid rgba(255, 255, 255, 0.28);
     }
     .block .logo-zone .cloud {
       width: 20px; height: 20px;
       border-radius: 6px;
-      background: linear-gradient(135deg, #3f7bf0, var(--bd-blue));
+      background: #ffffff;
       display: flex; align-items: center; justify-content: center;
     }
-    .block .logo-zone .cloud svg { width: 12px; height: 12px; pointer-events: none; }
+    .block .logo-zone .cloud svg { width: 12px; height: 12px; pointer-events: none; stroke: #2e6be6; }
 
     /* 右侧进度区：占满剩余整块窗口，轨道即背景，蓝色填充按百分比增长 */
     .block .bar-zone {
       flex: 1;
       min-width: 0;
       position: relative;
-      background: #eef1f6;
+      /* 浅色轨道：在蓝卡上叠一层半透明白，衬托深蓝填充 */
+      background: rgba(255, 255, 255, 0.18);
       overflow: hidden;
       /* 右圆角：消除透明窗口子背景"灰色尖角" */
       border-radius: 0 10px 10px 0;
@@ -80,19 +80,19 @@
       position: absolute;
       left: 0; top: 0; bottom: 0;
       width: 0%;
-      /* 半透明浅蓝：铺满时仍是清晰的蓝色进度条，且深色文字叠加依旧高对比 */
-      background: rgba(64, 140, 250, 0.6);
+      /* 深蓝填充：与浅色轨道对比清晰，白色文字始终可读 */
+      background: #1d4ed8;
       transition: width 0.4s ease;
     }
-    /* 叠在进度条上的速度文字：无底框、无描边；填充用半透明浅蓝，
-       深色文字在浅灰轨道和浅蓝填充上都天然高对比 */
+    /* 叠在进度条上的速度文字：白色 + 轻投影，蓝卡/浅轨道/深蓝填充上都清晰 */
     .block .speeds {
       position: absolute;
       left: 7px; top: 0; bottom: 0;
       display: flex; align-items: center;
-      font-size: 9px; font-weight: 700; color: #2b2f3a;
+      font-size: 9px; font-weight: 700; color: #ffffff;
       font-variant-numeric: tabular-nums;
       white-space: nowrap;
+      text-shadow: 0 1px 2px rgba(8, 20, 50, 0.4);
     }
     .block .speeds .item {
       display: inline-flex; align-items: center; gap: 2px;
@@ -100,7 +100,7 @@
     }
     .block .speeds .item + .item { margin-left: 6px; }
     .block .speeds svg { width: 7px; height: 7px; flex-shrink: 0; }
-    /* 上传/下载统一深色，不再使用蓝/绿：避免蓝字叠在蓝色进度条上看不清 */
+    /* 上传/下载统一白色，避免彩色字与蓝色背景撞色 */
     .block .speeds .up,
     .block .speeds .down { color: inherit; }
   </style>

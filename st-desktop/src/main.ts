@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell, protocol, net } from 'electron';
+import { app, BrowserWindow, shell, protocol, net, Menu } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { pathToFileURL } from 'url';
@@ -42,6 +42,13 @@ async function createWindow(): Promise<void> {
     title: '星云盘',
     // 白底：页面加载完成前避免黑色闪屏
     backgroundColor: '#ffffff',
+    // 隐藏系统标题栏，改用页面内蓝色标题条；保留系统最小化/最大化/关闭按钮（白色符号）
+    titleBarStyle: 'hidden',
+    titleBarOverlay: {
+      color: '#2e6be6',
+      symbolColor: '#ffffff',
+      height: 36,
+    },
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -124,6 +131,9 @@ function waitForAuth(timeoutMs: number): Promise<void> {
 }
 
 app.whenReady().then(async () => {
+  // 去掉 Electron 默认菜单栏（File/Edit/View/Window/Help）
+  Menu.setApplicationMenu(null);
+
   // 注册 app:// 协议：app://web/xxx → resources/web/xxx；SPA 路由无对应文件时回退 index.html
   protocol.handle('app', (request) => {
     const url = new URL(request.url);

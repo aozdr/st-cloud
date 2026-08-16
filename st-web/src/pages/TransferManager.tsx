@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   ArrowUp, ArrowDown, Pause, Play, X, CheckCircle2, AlertCircle,
   Loader2, FileUp, Clock, FolderOpen, FileText, Trash2,
@@ -35,12 +36,20 @@ const statusConfig: Record<TransferStatus, { label: string; color: string; icon:
 const activeStatuses = ['uploading', 'downloading', 'hashing', 'merging', 'pending'];
 
 export default function TransferManager() {
+  const [searchParams] = useSearchParams();
   const [tasks, setTasks] = useState<TransferTask[]>([]);
   const [filter, setFilter] = useState<'all' | 'upload' | 'download' | 'active'>('all');
   const [deleteTarget, setDeleteTarget] = useState<TransferTask | null>(null);
   const [deleteSourceFile, setDeleteSourceFile] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [transferSettingsOpen, setTransferSettingsOpen] = useState(false);
+
+  // 悬浮窗"简易限速"入口：跳转到 ?settings=1 时自动弹出传输设置对话框
+  useEffect(() => {
+    if (searchParams.get('settings') === '1') {
+      setTransferSettingsOpen(true);
+    }
+  }, [searchParams]);
 
   // 初始加载
   useEffect(() => {
@@ -195,6 +204,26 @@ export default function TransferManager() {
                 <ArrowDown className="w-3.5 h-3.5 text-emerald-500" />
                 <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">{formatSpeed(totalDownloadSpeed)}</span>
               </div>
+            )}
+            {isElectron() && (
+              <>
+                <button
+                  onClick={() => window.electronAPI!.pauseAllTransfers()}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-muted hover:text-fg hover:bg-surface-2 rounded-md cursor-pointer transition-colors"
+                  title="暂停全部任务"
+                >
+                  <Pause className="w-3.5 h-3.5" aria-hidden />
+                  全部暂停
+                </button>
+                <button
+                  onClick={() => window.electronAPI!.resumeAllTransfers()}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-muted hover:text-fg hover:bg-surface-2 rounded-md cursor-pointer transition-colors"
+                  title="开始全部任务"
+                >
+                  <Play className="w-3.5 h-3.5" aria-hidden />
+                  全部开始
+                </button>
+              </>
             )}
             <button
               onClick={() => {

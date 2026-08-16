@@ -10,6 +10,7 @@ import { useAuthStore } from '../../store/auth';
 import { useTransferStore } from '../../store/transfer';
 import { useFavoritesStore } from '../../store/favorites';
 import { UploadProvider } from '../../hooks/useUpload';
+import TitleBar from './TitleBar';
 
 export default function AppLayout() {
   const { user, fetchUser } = useAuthStore();
@@ -41,6 +42,12 @@ export default function AppLayout() {
     return unsubscribe;
   }, [navigate]);
 
+  // 桌面端：悬浮窗右键菜单点击"简易限速"时，主进程发消息，跳转传输页并自动弹出设置对话框
+  useEffect(() => {
+    const unsubscribe = window.electronAPI?.onOpenTransferSettings?.(() => navigate('/transfers?settings=1'));
+    return unsubscribe;
+  }, [navigate]);
+
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === '?' && !e.ctrlKey && !e.metaKey && !e.altKey) {
@@ -56,19 +63,22 @@ export default function AppLayout() {
 
   return (
     <UploadProvider>
-      <div className="flex h-screen overflow-hidden bg-bg">
-        <Sidebar mobileOpen={mobileSidebarOpen} onClose={() => setMobileSidebarOpen(false)} />
-        <div className="flex-1 flex flex-col min-w-0">
-          <TopBar onMenuClick={() => setMobileSidebarOpen(true)} />
-          <main id="main-content" className="flex-1 min-h-0 overflow-hidden pb-20 md:pb-0">
-            {/* Suspense 仅包裹 Outlet：路由切换时侧边栏/顶栏不重新挂载，仅顶部进度条提示。
-                不按 pathname 加 key：打开文件夹时页面不整页重挂载，只有文件列表原地更新（Windows 风格） */}
-            <Suspense fallback={<SuspenseProgressBar />}>
-              <div className="h-full">
-                <Outlet />
-              </div>
-            </Suspense>
-          </main>
+      <div className="flex flex-col h-screen overflow-hidden bg-bg">
+        <TitleBar />
+        <div className="flex flex-1 overflow-hidden">
+          <Sidebar mobileOpen={mobileSidebarOpen} onClose={() => setMobileSidebarOpen(false)} />
+          <div className="flex-1 flex flex-col min-w-0">
+            <TopBar onMenuClick={() => setMobileSidebarOpen(true)} />
+            <main id="main-content" className="flex-1 min-h-0 overflow-hidden pb-20 md:pb-0">
+              {/* Suspense 仅包裹 Outlet：路由切换时侧边栏/顶栏不重新挂载，仅顶部进度条提示。
+                  不按 pathname 加 key：打开文件夹时页面不整页重挂载，只有文件列表原地更新（Windows 风格） */}
+              <Suspense fallback={<SuspenseProgressBar />}>
+                <div className="h-full">
+                  <Outlet />
+                </div>
+              </Suspense>
+            </main>
+          </div>
         </div>
       </div>
       <MobileTabBar onMoreClick={() => setMobileSidebarOpen(true)} />

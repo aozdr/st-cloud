@@ -109,6 +109,8 @@ export interface ElectronAPI {
   /** 桌面传输悬浮小窗：右键菜单小窗显示/隐藏 */
   showMiniMenu: () => Promise<void>;
   hideMiniMenu: () => Promise<void>;
+  /** 菜单小窗每次显示前，主进程通知页面重置回菜单列表视图 */
+  onMenuReset: (cb: () => void) => () => void;
   /** 主进程拖拽：按下开始（handleX/handleY 为抓点相对窗口的偏移）/ 松开结束 */
   startMiniWindowDrag: (handleX?: number, handleY?: number) => Promise<void>;
   endMiniWindowDrag: () => Promise<void>;
@@ -119,6 +121,10 @@ export interface ElectronAPI {
   openTransfers: () => Promise<void>;
   /** 主进程通知渲染进程跳转传输页 */
   onOpenTransfers: (cb: () => void) => () => void;
+  /** 打开主窗口并弹出传输设置对话框 */
+  openTransferSettings: () => Promise<void>;
+  /** 主进程通知渲染进程打开传输设置对话框 */
+  onOpenTransferSettings: (cb: () => void) => () => void;
   showMiniWindow: () => Promise<void>;
   hideMiniWindow: () => Promise<void>;
 }

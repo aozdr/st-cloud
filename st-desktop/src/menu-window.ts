@@ -7,7 +7,7 @@ import path from 'path';
  */
 
 const isDev = !app.isPackaged;
-const MENU_WIDTH = 210;
+const MENU_WIDTH = 260;
 // 高度按"简易速度限制配置"视图完整内容（约183px）+ 卡片内边距定，避免按钮被裁切
 const MENU_HEIGHT = 196;
 
@@ -103,6 +103,8 @@ export function showMenuWindow(): void {
     if (!menuWindow || menuWindow.isDestroyed()) return;
     menuWindow.setPosition(Math.round(shownMx), Math.round(shownMy));
     lastShownAt = Date.now();
+    // 每次弹出都重置回菜单列表视图（避免上次停在"简易限速"设置页）
+    menuWindow.webContents.send('mini-menu:reset');
     // show() 本身会显示并聚焦窗口；不要再额外调 focus()，
     // 否则透明无边框窗口会被系统激活两次，出现"闪两下"。
     // 已可见（重复右键）时只重定位，不重新 show，避免闪烁。
