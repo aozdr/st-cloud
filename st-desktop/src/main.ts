@@ -1,5 +1,7 @@
-import { app, BrowserWindow, shell } from 'electron';
+import { app, BrowserWindow, shell, protocol, net } from 'electron';
 import path from 'path';
+import fs from 'fs';
+import { pathToFileURL } from 'url';
 import { initDatabase } from './database';
 import { registerIpcHandlers } from './ipc-handlers';
 import { resumePendingUploads } from './upload-manager';
@@ -12,6 +14,25 @@ import { prepareMenuWindow, closeMenuWindow } from './menu-window';
 
 const isDev = !app.isPackaged;
 
+// 打包后前端用自定义 app:// 协议加载：file:// 下 Vite 的 ES module 会被 Chromium CORS
+// 拦截导致黑屏；app:// 注册为 standard/secure 特权协议后 module 可正常加载。
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: 'app',
+    privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, stream: true },
+  },
+]);
+
+/** 诊断日志：渲染进程报错/加载失败会写到这里，便于定位黑屏等问题 */
+function appendLog(line: string): void {
+  try {
+    const f = path.join(app.getPath('userData'), 'desktop-log.txt');
+    fs.appendFileSync(f, `${new Date().toISOString()} ${line}\n`);
+  } catch {
+    // 忽略日志写入失败
+  }
+}
+
 async function createWindow(): Promise<void> {
   const win = new BrowserWindow({
     width: 1280,
@@ -19,12 +40,31 @@ async function createWindow(): Promise<void> {
     minWidth: 960,
     minHeight: 600,
     title: '星云盘',
+    // 白底：页面加载完成前避免黑色闪屏
+    backgroundColor: '#ffffff',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
+      // 渲染进程需直连后端 API（127.0.0.1:8080），服务端 CORS 白名单桌面端无法预知，
+      // 绕过 CORS 校验；仅加载本地打包内容，风险可控。
+      webSecurity: false,
     },
+  });
+
+  // 诊断：记录渲染进程错误与页面加载结果
+  win.webContents.on('console-message', (_e, _level, message) => {
+    appendLog(`[renderer] ${message}`);
+  });
+  win.webContents.on('did-fail-load', (_e, code, desc, url) => {
+    appendLog(`[fail] code=${code} desc=${desc} url=${url}`);
+  });
+  win.webContents.on('did-finish-load', () => {
+    appendLog('[load-ok] index.html');
+  });
+  win.webContents.on('render-process-gone', (_e, details) => {
+    appendLog(`[gone] ${details.reason} ${details.exitCode}`);
   });
 
   // 外部链接用系统浏览器打开
@@ -49,8 +89,8 @@ async function createWindow(): Promise<void> {
     await win.loadURL('http://localhost:5173');
     win.webContents.openDevTools();
   } else {
-    // 生产模式：加载打包的前端文件
-    await win.loadFile(path.join(process.resourcesPath, 'web', 'index.html'));
+    // 生产模式：通过 app:// 协议加载打包的前端（file:// 无法加载 ES module）
+    await win.loadURL('app://web/index.html');
   }
 
   // 主窗口关闭时销毁桌面悬浮窗，保持"关窗即退出"
@@ -84,6 +124,20 @@ function waitForAuth(timeoutMs: number): Promise<void> {
 }
 
 app.whenReady().then(async () => {
+  // 注册 app:// 协议：app://web/xxx → resources/web/xxx；SPA 路由无对应文件时回退 index.html
+  protocol.handle('app', (request) => {
+    const url = new URL(request.url);
+    let pathname = decodeURIComponent(url.pathname);
+    if (pathname === '/' || pathname === '') pathname = '/index.html';
+    const filePath = path.join(process.resourcesPath, 'web', pathname);
+    try {
+      if (!fs.statSync(filePath).isFile()) throw new Error('not a file');
+    } catch {
+      return net.fetch(pathToFileURL(path.join(process.resourcesPath, 'web', 'index.html')).toString());
+    }
+    return net.fetch(pathToFileURL(filePath).toString());
+  });
+
   // 加载服务器地址配置
   loadServerUrl();
 

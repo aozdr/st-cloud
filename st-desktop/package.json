@@ -10,6 +10,9 @@
     "build:main": "tsup src/main.ts src/preload.ts --format cjs --outDir dist",
     "build:web": "cd ../st-web && npm run build",
     "build": "npm run build:main && npm run build:web && electron-builder",
+    "package:win": "powershell -NoProfile -ExecutionPolicy Bypass -File package.ps1",
+    "package:win:clean": "powershell -NoProfile -ExecutionPolicy Bypass -File package.ps1 -Clean",
+    "package:win:force": "powershell -NoProfile -ExecutionPolicy Bypass -File package.ps1 -ForceClose",
     "lint": "tsc --noEmit",
     "test": "tsc src/sync-retry.ts src/sync-retry.test.ts src/db-migrate.ts src/db-migrate.test.ts src/sync-utils.ts src/sync-utils.test.ts --outDir .test-dist --module commonjs --target ES2020 --skipLibCheck --esModuleInterop && node --test \".test-dist/*.test.js\""
   },

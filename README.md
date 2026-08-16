@@ -172,6 +172,25 @@ npm run dev
 
 前端监听 `http://localhost:5173`，`/api` 请求由 Vite 代理到后端。
 
+### 5. 桌面客户端与打包
+
+桌面客户端（Electron）源码位于 `st-desktop/`，完整说明见 [st-desktop/README.md](st-desktop/README.md)。
+
+一键打包（Windows）：
+
+```bash
+cd st-desktop
+npm run package:win          # 打包绿色版 + 安装包（需先关闭正在运行的星云盘）
+npm run package:win:force    # 运行中时自动结束进程再打包
+```
+
+产物：
+
+- `st-desktop/release/win-unpacked/`：绿色版，整个文件夹一起分发，双击 `星云盘.exe` 直接运行
+- `st-desktop/release/星云盘 Setup <版本>.exe`：NSIS 安装包
+
+> 首次打包需联网下载 Electron 运行时（约 111MB）；前端默认连接 `http://127.0.0.1:8080` 后端，运行 exe 前先启动后端。
+
 ### 5. 启动桌面端
 
 ```bash

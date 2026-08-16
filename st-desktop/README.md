@@ -40,6 +40,7 @@ st-desktop/
 │   └── utils/               # 工具（文件处理、MD5）
 ├── dist/                    # tsup 编译输出（main.js / preload.js）
 ├── electron-builder.json    # 打包配置
+├── package.ps1              # 一键打包脚本（绿色版 + 安装包）
 ├── tsup.config.ts           # tsup 构建配置
 └── package.json
 ```
@@ -63,11 +64,37 @@ npm run dev
 
 ### 打包构建
 
+推荐使用一键打包脚本 `package.ps1`（或对应的 npm 快捷命令）：
+
 ```bash
-npm run build
+cd st-desktop
+npm run package:win          # 打包绿色版 + 安装包（需先关闭正在运行的星云盘）
+npm run package:win:clean    # 先清空 release/ 输出再打包
+npm run package:win:force    # 检测到星云盘运行中时自动结束进程再打包
 ```
 
-`build` 流程：编译主进程/预加载脚本 → 构建 st-web 生产包 → electron-builder 打包为 `release/` 下的 NSIS 安装包。
+脚本流程（`package.ps1`）：
+
+1. 编译主进程 / 预加载脚本（tsup）
+2. 构建 st-web 生产包（vite build，要求 `base: './'` 相对资源路径）
+3. electron-builder 打包绿色版 `release/win-unpacked/星云盘.exe`
+4. electron-builder 生成 NSIS 安装包 `release/星云盘 Setup <版本>.exe`
+
+### 打包产物
+
+| 产物 | 说明 |
+|------|------|
+| `release/win-unpacked/` | 绿色版：整个文件夹一起分发，双击 `星云盘.exe` 直接运行 |
+| `release/星云盘 Setup <版本>.exe` | 安装包：安装后生成桌面快捷方式，可自选安装目录 |
+
+### 打包注意事项
+
+- **首次打包需联网**下载 Electron 运行时（约 111MB）与 NSIS 工具，缓存于 `%LOCALAPPDATA%\electron-builder\Cache`，之后离线复用；网络受限时先配置代理。
+- **打包前必须退出正在运行的星云盘**（`release` 文件被占用会导致失败），或使用 `npm run package:win:force` 自动结束进程。
+- **应用图标**：`build/icon.png`（打包必需，缺失时脚本会报错）。
+- **前端默认连接 `http://127.0.0.1:8080` 后端**：运行 exe 前请先启动后端（见根目录 README「快速开始」）。
+- **产物未签名**：Windows SmartScreen 首次运行可能提示，点「更多信息 → 仍要运行」。
+- 打包配置见 `electron-builder.json`；生产环境通过 `app://` 自定义协议加载前端（`file://` 无法加载 Vite 的 ES module，会造成黑屏）。
 
 ## 服务器地址配置
 

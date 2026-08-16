@@ -10,18 +10,47 @@ import { isMenuWindow } from './menu-window';
 
 const isDev = !app.isPackaged;
 /** 悬浮块固定尺寸：永不变化（右键菜单是独立小窗，不再撑大本窗口） */
-const DEFAULT_WIDTH = 170;
+const DEFAULT_WIDTH = 150;
 const DEFAULT_HEIGHT = 36;
 let miniWindow: BrowserWindow | null = null;
 let saveTimer: NodeJS.Timeout | null = null;
-let restoringSize = false;
 let dragging = false;
+let sizeFixTimer: NodeJS.Timeout | null = null;
 
 /** 主进程拖拽状态：按下时记录锚点偏移，轮询跟随鼠标（鼠标移出小窗也不断流） */
 let dragTimer: NodeJS.Timeout | null = null;
-let dragState: { grabX: number; grabY: number; width: number; height: number } | null = null;
+let dragState: { grabX: number; grabY: number } | null = null;
 let lastCursor: { x: number; y: number } | null = null;
 let dragMoved = false;
+let dragTarget: { x: number; y: number } | null = null; // 拖拽最后一次计算的目标位置
+let fixAnchor: { x: number; y: number } | null = null; // 尺寸修正时锁定的位置
+
+/**
+ * 把悬浮窗内容尺寸钉回 150×36。
+ * Windows 透明无边框窗口在移动/释放后可能被系统改动尺寸（一次改一点），
+ * 这里用防抖 + 反复校验：最后一次尺寸变化 80ms 后若仍不准，继续修正直到精确。
+ */
+function scheduleSizeFix(anchor?: { x: number; y: number }): void {
+  if (!miniWindow || miniWindow.isDestroyed() || dragging) return;
+  if (anchor) fixAnchor = anchor;
+  if (sizeFixTimer) clearTimeout(sizeFixTimer);
+  sizeFixTimer = setTimeout(() => {
+    sizeFixTimer = null;
+    if (!miniWindow || miniWindow.isDestroyed() || dragging) return;
+    const [cw, ch] = miniWindow.getContentSize();
+    const [px, py] = miniWindow.getPosition();
+    const tx = fixAnchor ? fixAnchor.x : px;
+    const ty = fixAnchor ? fixAnchor.y : py;
+    if (cw !== DEFAULT_WIDTH || ch !== DEFAULT_HEIGHT || px !== tx || py !== ty) {
+      // 位置与尺寸一起钉回：不读取可能已被系统挪动的实时位置，锁定释放时的目标位置
+      miniWindow.setBounds({ x: tx, y: ty, width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT }, false);
+      // 系统可能延迟应用/再次改动，继续校验直到收敛
+      scheduleSizeFix(fixAnchor ?? undefined);
+    } else {
+      fixAnchor = null;
+    }
+  }, 80);
+}
 
 function boundsFile(): string {
   return path.join(app.getPath('userData'), 'mini-window-bounds.json');
@@ -109,22 +138,11 @@ export function createMiniWindow(): void {
   // 最小=最大会与内衬冲突导致内容被挤偏（顶部出现空白）。统一用内容尺寸兜底恢复。
   miniWindow.setMaximizable(false);
   miniWindow.setFullScreenable(false);
-  miniWindow.on('will-resize', (event) => {
-    event.preventDefault();
-  });
-  // 兜底：任何路径导致窗口尺寸变化，立即恢复 180×44（按窗口外层尺寸）。
-  // 不用 useContentSize：实测它会与 setBounds 冲突，导致拖拽时窗口忽大忽小。
+  // 兜底：任何路径导致窗口尺寸变化，防抖修正回 150×36（拖拽期间跳过）
   miniWindow.on('resize', () => {
-    // 拖拽期间跳过：拖拽用锁定尺寸，避免守卫与 setBounds 互相干扰导致窗口时大时小
-    if (!miniWindow || miniWindow.isDestroyed() || restoringSize || dragging) return;
-    const [w, h] = miniWindow.getSize();
-    if (w !== DEFAULT_WIDTH || h !== DEFAULT_HEIGHT) {
-      restoringSize = true;
-      const [x, y] = miniWindow.getPosition();
-      miniWindow.setBounds({ x, y, width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT }, false);
-      setTimeout(() => { restoringSize = false; }, 60);
-    }
+    scheduleSizeFix();
   });
+  scheduleSizeFix();
 
   // 开发模式：清缓存并重试加载（避免 Vite 未就绪/旧缓存导致小窗空白或旧页面）
   const loadPage = (): void => {
@@ -198,13 +216,14 @@ export function hideMiniWindow(): void {
 export function startMiniWindowDrag(handleX = 0, handleY = 0): void {
   if (!miniWindow || miniWindow.isDestroyed()) return;
   if (dragTimer) return; // 已在拖拽中
-  // 锁定按下瞬间的窗口尺寸：Windows 缩放下 getSize 可能抖动，
-  // 拖拽全程使用这份固定尺寸，避免窗口拖动时"时大时小"
-  const [w, h] = miniWindow.getSize();
-  dragState = { grabX: handleX, grabY: handleY, width: w, height: h };
+  // 拖拽始终使用固定尺寸常量，不继承任何漂移后的尺寸；
+  // Windows 缩放下 getSize 可能抖动，不能拿它当拖拽基准
+  dragState = { grabX: handleX, grabY: handleY };
   lastCursor = screen.getCursorScreenPoint();
   dragMoved = false;
   dragging = true;
+  // 拖拽开始时先把尺寸钉回标准值
+  scheduleSizeFix();
 
   dragTimer = setInterval(() => {
     if (!miniWindow || miniWindow.isDestroyed() || !dragState) {
@@ -217,8 +236,8 @@ export function startMiniWindowDrag(handleX = 0, handleY = 0): void {
     lastCursor = cur;
 
     const [wx2, wy2] = miniWindow.getPosition();
-    const w = dragState.width;
-    const h = dragState.height;
+    const w = DEFAULT_WIDTH;
+    const h = DEFAULT_HEIGHT;
     // 目标位置 = 光标 - 抓点偏移：窗口移动后，按下时抓住的那一点仍保持在鼠标正下方，
     // 不会跳回窗口左上角。
     let nx = cur.x - dragState.grabX;
@@ -230,7 +249,8 @@ export function startMiniWindowDrag(handleX = 0, handleY = 0): void {
     ny = Math.min(Math.max(ny, area.y), area.y + Math.max(0, area.height - h));
     // 关键：Windows 系统缩放≠100% 时，拖拽用 setPosition 会被系统放大窗口；
     // 必须用 setBounds 并显式传入当前窗口尺寸，保证移动过程中大小不变。
-    miniWindow.setBounds({ x: Math.round(nx), y: Math.round(ny), width: w, height: h }, false);
+    dragTarget = { x: Math.round(nx), y: Math.round(ny) };
+    miniWindow.setBounds({ ...dragTarget, width: w, height: h }, false);
   }, 16);
 }
 
@@ -245,6 +265,14 @@ export function stopMiniWindowDrag(): void {
   dragMoved = false;
   dragging = false;
   saveBounds();
+  // 释放后把位置和尺寸一起钉回拖拽目标位置，防止系统挪动导致往左上漂移
+  if (dragTarget) {
+    scheduleSizeFix(dragTarget);
+  } else if (miniWindow && !miniWindow.isDestroyed()) {
+    const [x, y] = miniWindow.getPosition();
+    scheduleSizeFix({ x, y });
+  }
+  dragTarget = null;
 }
 
 /** 复位：把悬浮窗拉回主屏右下角默认位置（右键菜单/悬浮窗按钮触发） */

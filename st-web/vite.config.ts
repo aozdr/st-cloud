@@ -4,6 +4,9 @@ import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
 
 export default defineConfig({
+  // 相对资源路径：Electron 打包后以 file:// 协议加载 index.html，
+  // 绝对路径 /assets/... 会 404 导致黑屏
+  base: './',
   plugins: [
     react(),
     VitePWA({
