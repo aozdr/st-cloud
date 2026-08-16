@@ -40,7 +40,7 @@
 - Elasticsearch 文件名 + 内容全文搜索（IK 中文分词，ingest-attachment 文档解析）
 - 高级筛选：文件类型 / 时间 / 大小
 - 文档预览：Office（docx/xlsx/pptx）与 PDF 通过 OnlyOffice 只读查看（全屏页 + 返回按钮，
-  排版/图片与 Office 一致）；分享场景本地渲染（docx-preview / pdf.js 兜底）；图片/音视频内嵌预览
+  排版/图片与 Office 一致）；分享场景本地渲染（docx-preview 兜底）；图片/音视频内嵌预览
 - 格式转换：Word（doc/docx）↔ PDF 一键互转（右键菜单，转换名可编辑，重名自动按云盘规则处理）
 - OnlyOffice 在线编辑 Word / Excel / PPT：编辑锁（Redis）、回调验签、SSRF 防护
 

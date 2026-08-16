@@ -9,7 +9,6 @@ import type { WorkBook } from 'xlsx';
 import { isEditableOfficeSuffix } from '../../lib/editor';
 
 const PlyrPlayer = lazy(() => import('./PlyrPlayer'));
-const PdfViewer = lazy(() => import('./PdfViewer'));
 
 async function renderDocx(blob: Blob, container: HTMLElement) {
   const { renderAsync } = await import('docx-preview');
@@ -76,8 +75,6 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
   const [sheetDropdownOpen, setSheetDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [docxBlob, setDocxBlob] = useState<Blob | null>(null);
-  const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
-  const [pdfError, setPdfError] = useState(false);
   const docxContainerRef = useRef<HTMLDivElement>(null);
   const excelWorkbookRef = useRef<WorkBook | null>(null);
 
@@ -105,7 +102,7 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
   useEffect(() => {
     if (!file || file.nodeType !== 1) return;
     // Office（docx/xlsx/pptx）与 PDF：非分享场景改为 OnlyOffice 只读查看（全屏页 + 返回按钮），
-    // 排版/图片与 Office 一致；分享场景无编辑器配置，保留本地渲染（docx-preview / pdf.js）
+    // 排版/图片与 Office 一致；分享场景保留本地渲染兜底（docx-preview）
     if (!shareContext && (isEditableOfficeSuffix(file.suffix) || isPdf(file.suffix))) {
       navigate(
         `/file/${file.id}/editor?mode=view&from=${encodeURIComponent(location.pathname + location.search)}`,
@@ -120,8 +117,6 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
     setExcelSheetIdx(0);
     excelWorkbookRef.current = null;
     setDocxBlob(null);
-    setPdfBlob(null);
-    setPdfError(false);
 
     if (shareContext) {
       // 分享模式：使用 stream 端点，无需登录 token，不会增加下载次数
@@ -157,22 +152,6 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
             });
           })
           .catch(() => setLoading(false));
-      } else if (isPdf(file.suffix)) {
-        // PDF：通过分享 stream 端点取字节，用 pdf.js 渲染（不依赖浏览器 PDF 插件）
-        fetch(streamUrl)
-          .then((res) => {
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            return res.blob();
-          })
-          .then((blob) => {
-            setPdfBlob(blob);
-            setPdfError(false);
-          })
-          .catch((err) => {
-            console.error('pdf stream fetch failed:', err);
-            setPdfError(true);
-          })
-          .finally(() => setLoading(false));
       } else {
         setLoading(false);
       }
@@ -209,37 +188,6 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
             });
           })
           .catch(() => setLoading(false));
-      } else if (isPdf(file.suffix)) {
-        // PDF：字节经后端 stream 端点获取（与 docx/excel 同一取数链路），
-        // 渲染交给 pdf.js，避免 iframe + 预签名 URL 依赖 RustFS 响应头/浏览器 PDF 插件
-        fetch(streamUrl, { headers })
-          .then((res) => {
-            if (!res.ok) throw new Error('HTTP ' + res.status);
-            return res.blob();
-          })
-          .then((blob) => {
-            setPdfBlob(blob);
-            setPdfError(false);
-          })
-          .catch((err) => {
-            console.error('pdf stream fetch failed:', err);
-            setPdfError(true);
-          })
-          .finally(() => setLoading(false));
-        // 下载链接：优先预览 API 的预签名 URL，失败回退下载令牌流
-        api
-          .get<PreviewResult>(`/preview/${file.id}`)
-          .then((data) => {
-            if (data.url) setUrl(data.url);
-          })
-          .catch(() => {
-            api
-              .post<{ token: string }>(`/file/${file.id}/download-token`)
-              .then((d) => {
-                setUrl(`/api/file/${file.id}/stream?token=${encodeURIComponent(d.token)}&inline=1`);
-              })
-              .catch(() => {});
-          });
       } else if (isImage(file.suffix)) {
         // 图片：通过预览 API 获取预签名 URL（access token 无法用于 <img src>）
         api.get<string>(`/preview/${file.id}/thumbnail`, { params: { size: 'lg' } })
@@ -284,9 +232,18 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
   // Keyboard navigation
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-      else if (e.key === 'ArrowLeft') setIndex((i) => Math.max(0, i - 1));
-      else if (e.key === 'ArrowRight') setIndex((i) => Math.min(files.length - 1, i + 1));
+      // 视频播放器（Plyr）内部的方向键交给播放器做快进/快退，不切换文件；
+      // 输入类元素内同样跳过，避免误触文件切换
+      const target = e.target as HTMLElement | null;
+      const inFormField = !!target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable);
+      const inMediaPlayer = !!target && (target.tagName === 'VIDEO' || target.tagName === 'AUDIO' || !!target.closest('.plyr'));
+      if (e.key === 'Escape') {
+        onClose();
+      } else if (!inFormField && !inMediaPlayer && e.key === 'ArrowLeft') {
+        setIndex((i) => Math.max(0, i - 1));
+      } else if (!inFormField && !inMediaPlayer && e.key === 'ArrowRight') {
+        setIndex((i) => Math.min(files.length - 1, i + 1));
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
@@ -480,33 +437,6 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
                 <config.icon className={cn('w-16 h-16', config.color)} />
               </div>
               <audio src={url} controls autoPlay className="w-96" />
-            </div>
-          ) : isPdf(file.suffix) && pdfBlob ? (
-            <Suspense
-              fallback={
-                <div className="w-[80vw] h-[80vh] bg-surface rounded-lg flex items-center justify-center">
-                  <div className="w-10 h-10 border-3 border-white/30 border-t-white rounded-full animate-spin" />
-                </div>
-              }
-            >
-              <PdfViewer blob={pdfBlob} fileName={file.name} />
-            </Suspense>
-          ) : isPdf(file.suffix) && pdfError ? (
-            <div className="w-[80vw] h-[80vh] bg-surface rounded-lg flex items-center justify-center">
-              <div className="text-center">
-                <p className="text-white/60 text-sm mb-3">PDF 加载失败，可尝试下载后查看</p>
-                {url && (
-                  <a
-                    href={url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm rounded-lg cursor-pointer transition-colors"
-                  >
-                    <Download className="w-4 h-4" aria-hidden />
-                    <span>下载文件</span>
-                  </a>
-                )}
-              </div>
             </div>
           ) : isText(file.suffix) && textContent !== null ? (
             <div className="w-[80vw] h-[80vh] bg-surface rounded-lg overflow-auto">

@@ -61,6 +61,8 @@ export function useFileKeyboard(
 
       const target = e.target as HTMLElement;
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
+      // 视频播放器获得焦点时，方向键交给播放器做快进/快退，不参与文件列表导航
+      if (target.tagName === 'VIDEO' || target.tagName === 'AUDIO' || target.closest('.plyr')) return;
       const hasTextSelection = (window.getSelection()?.toString().length ?? 0) > 0;
 
       if (e.ctrlKey || e.metaKey) {
