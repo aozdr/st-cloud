@@ -5,6 +5,30 @@ import { formatSize } from '../../lib/utils';
 import { useUpload } from '../../hooks/useUpload';
 import type { UploadTask } from '../../types';
 
+/** 上传任务 icon 尺寸（w-12 h-12）与默认边距 */
+const FAB_SIZE = 48;
+const FAB_MARGIN = 24;
+const FAB_POS_KEY = 'uploadFabPos';
+
+/** 读取用户拖拽保存的上传 icon 位置；无记录时默认右下角 */
+function loadFabPos(): { left: number; top: number } {
+  try {
+    const raw = localStorage.getItem(FAB_POS_KEY);
+    if (raw) {
+      const p = JSON.parse(raw);
+      if (typeof p?.left === 'number' && typeof p?.top === 'number') {
+        return { left: p.left, top: p.top };
+      }
+    }
+  } catch {
+    // localStorage 不可用时使用默认位置
+  }
+  return {
+    left: Math.max(0, (typeof window !== 'undefined' ? window.innerWidth : 1280) - FAB_SIZE - FAB_MARGIN),
+    top: Math.max(0, (typeof window !== 'undefined' ? window.innerHeight : 800) - FAB_SIZE - FAB_MARGIN),
+  };
+}
+
 function formatEta(seconds: number): string {
   if (seconds <= 0 || !isFinite(seconds)) return '';
   if (seconds < 60) return Math.ceil(seconds) + 's';
@@ -126,16 +150,80 @@ function UploadTaskItem({ task, onRemove }: { task: UploadTask; onRemove: () => 
 export default function UploadPanel() {
   const { tasks, panelOpen, setPanelOpen, removeTask, clearCompleted } = useUpload();
   const navigate = useNavigate();
+  // 上传任务 icon 可拖拽移动；展开的队列面板仍固定在右下角原位置
+  const [fabPos, setFabPos] = useState(loadFabPos);
+  const fabPosRef = useRef(fabPos);
+  fabPosRef.current = fabPos;
+  const fabDragRef = useRef<{ startX: number; startY: number; origLeft: number; origTop: number; moved: boolean } | null>(null);
+  const fabJustDraggedRef = useRef(false);
+
+  const handleFabPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+    fabDragRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      origLeft: fabPos.left,
+      origTop: fabPos.top,
+      moved: false,
+    };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const handleFabPointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+    const d = fabDragRef.current;
+    if (!d) return;
+    const dx = e.clientX - d.startX;
+    const dy = e.clientY - d.startY;
+    if (!d.moved && Math.hypot(dx, dy) > 4) d.moved = true;
+    if (!d.moved) return;
+    const maxLeft = Math.max(0, window.innerWidth - FAB_SIZE);
+    const maxTop = Math.max(0, window.innerHeight - FAB_SIZE);
+    setFabPos({
+      left: Math.min(Math.max(0, d.origLeft + dx), maxLeft),
+      top: Math.min(Math.max(0, d.origTop + dy), maxTop),
+    });
+  };
+
+  const handleFabPointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+    const d = fabDragRef.current;
+    fabDragRef.current = null;
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      // 指针捕获已释放时忽略
+    }
+    if (d?.moved) {
+      // 拖拽结束：持久化位置；阻止随后的 click 展开面板
+      fabJustDraggedRef.current = true;
+      try {
+        localStorage.setItem(FAB_POS_KEY, JSON.stringify(fabPosRef.current));
+      } catch {
+        // 忽略持久化失败
+      }
+    }
+  };
+
+  const handleFabClick = () => {
+    if (fabJustDraggedRef.current) {
+      fabJustDraggedRef.current = false;
+      return;
+    }
+    setPanelOpen(true);
+  };
 
   const activeCount = tasks.filter((t) => !['completed', 'instant', 'failed', 'paused'].includes(t.status)).length;
   const hasCompleted = tasks.some((t) => t.status === 'completed' || t.status === 'instant');
 
   if (!panelOpen) {
     return (
-      <div className="fixed bottom-6 right-6 z-50">
+      <div className="fixed z-50" style={{ left: fabPos.left, top: fabPos.top }}>
         <button
-          onClick={() => setPanelOpen(true)} aria-label="展开上传队列"
-          className="relative w-12 h-12 bg-surface rounded-full border border-border shadow-md flex items-center justify-center hover:scale-105 cursor-pointer transition-transform"
+          onClick={handleFabClick}
+          onPointerDown={handleFabPointerDown}
+          onPointerMove={handleFabPointerMove}
+          onPointerUp={handleFabPointerUp}
+          aria-label="展开上传队列"
+          title="拖拽可移动，点击展开上传队列"
+          className="relative w-12 h-12 bg-surface rounded-full border border-border shadow-md flex items-center justify-center hover:scale-105 cursor-grab active:cursor-grabbing transition-transform touch-none select-none"
         >
           <FileUp className="w-5 h-5 text-muted" aria-hidden />
           {activeCount > 0 && (

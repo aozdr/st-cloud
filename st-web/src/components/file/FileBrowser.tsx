@@ -9,6 +9,7 @@ import FileToolbar from './FileToolbar';
 import FileBreadcrumb from './FileBreadcrumb';
 import FileList from './FileList';
 import ContextMenu from './ContextMenu';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
 import { useMobile } from '../../hooks/useMobile';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import { isCapacitor } from '../../lib/runtime';
@@ -69,6 +70,9 @@ function isNodeLocked(node: FileNode): boolean {
 /** 各目录滚动位置缓存：组件随目录切换会重挂载，用模块级 Map 跨实例保留 */
 const folderScrollPositions: Record<string, number> = {};
 
+/** 每页条数选项（默认 100） */
+const PAGE_SIZE_OPTIONS = [50, 100, 150, 200];
+
 export default function FileBrowser({
   source,
   parentId,
@@ -109,6 +113,10 @@ export default function FileBrowser({
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [pageSize, setPageSize] = useState<number>(() => {
+    const saved = Number(localStorage.getItem('filePageSize'));
+    return PAGE_SIZE_OPTIONS.includes(saved) ? saved : 100;
+  });
   // 刷新中的视觉反馈（Windows 风格：刷新图标旋转 + 列表淡入）
   const [isRefreshing, setIsRefreshing] = useState(false);
   const { toggleFavorite: toggleFav, isFavorite: checkFav } = useFavoritesStore();
@@ -230,7 +238,7 @@ export default function FileBrowser({
   const fetchFiles = useCallback(async () => {
     if (!hasFilesRef.current) setLoading(true);
     try {
-      const res = await source.listFiles(parentId, page, 50);
+      const res = await source.listFiles(parentId, page, pageSize);
       const records = res?.records || [];
       setFiles(records);
       setLoadError(false);
@@ -250,13 +258,16 @@ export default function FileBrowser({
       setLoading(false);
       setIsRefreshing(false);
     }
-  }, [source, parentId, page, setPreview]);
+  }, [source, parentId, page, pageSize, setPreview]);
 
   useEffect(() => {
     // 换文件夹：立即进入骨架屏给出反馈（避免旧列表停留产生笨重感），新数据到达后淡入
     const isFolderChange = prevParentId.current !== parentId;
     prevParentId.current = parentId;
-    if (isFolderChange) setLoading(true);
+    if (isFolderChange) {
+      setLoading(true);
+      setPage(1);
+    }
     fetchFiles();
     clearSelection();
     setFocusedIndex(-1);
@@ -352,6 +363,16 @@ export default function FileBrowser({
     } else {
       setSortBy(col);
       localStorage.setItem('fileSortBy', col);
+    }
+  };
+
+  const handlePageSizeChange = (v: number) => {
+    setPageSize(v);
+    setPage(1);
+    try {
+      localStorage.setItem('filePageSize', String(v));
+    } catch {
+      // 忽略持久化失败
     }
   };
 
@@ -792,6 +813,7 @@ export default function FileBrowser({
   const [detailFile, setDetailFile] = useState<FileNode | null>(null);
 
   const allSelected = files.length > 0 && files.every((f) => selectedIds.has(f.id));
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   // 工具栏「在线编辑」：仅当单选一个可编辑 Office 文件（docx/xlsx/pptx + 编辑权限）时显示
   const editableSelected = (() => {
@@ -990,25 +1012,44 @@ export default function FileBrowser({
       )}
       </div>
 
-      {total > 50 && (
-        <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-surface">
-          <span className="text-sm text-stone-500">{'\u5171'} {total} {'\u9879'}</span>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page <= 1}
-              className="btn-ghost disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {'\u4e0a\u4e00\u9875'}
-            </button>
-            <span className="text-sm text-stone-700">{page}</span>
-            <button
-              onClick={() => setPage((p) => p + 1)}
-              disabled={page * 50 >= total}
-              className="btn-ghost disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {'\u4e0b\u4e00\u9875'}
-            </button>
+      {total > pageSize && (
+        <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-t border-border bg-surface">
+          <span className="text-xs text-muted tabular-nums">共 {total} 项</span>
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-1.5 text-xs text-muted whitespace-nowrap">
+              每页
+              <Select value={String(pageSize)} onValueChange={(v) => handlePageSizeChange(Number(v))}>
+                <SelectTrigger className="h-7 w-[72px] gap-1 text-xs border-border px-2 py-0.5 font-medium text-fg">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="min-w-[4.5rem]">
+                  {PAGE_SIZE_OPTIONS.map((s) => (
+                    <SelectItem key={s} value={String(s)}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              项
+            </label>
+            <div className="w-px h-4 bg-border" />
+            <span className="text-xs text-muted tabular-nums">第 {page} / {totalPages} 页</span>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page <= 1}
+                aria-label="上一页"
+                className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium text-muted rounded-md border border-border bg-surface hover:bg-surface-2 hover:text-fg disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                上一页
+              </button>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page >= totalPages}
+                aria-label="下一页"
+                className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium text-muted rounded-md border border-border bg-surface hover:bg-surface-2 hover:text-fg disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                下一页
+              </button>
+            </div>
           </div>
         </div>
       )}
