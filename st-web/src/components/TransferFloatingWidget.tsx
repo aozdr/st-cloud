@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { ChevronUp, ChevronDown, Upload, CheckCircle2, X, Loader2 } from 'lucide-react';
 import { useUpload } from '../hooks/useUpload';
-import { formatSize, cn } from '../lib/utils';
+import { cn } from '../lib/utils';
 
 /**
  * 传输浮窗：全局悬浮显示 Web 端上传进度
  * 有活跃上传任务时在右下角显示，可展开/收起
  */
 export default function TransferFloatingWidget() {
-  const { tasks, panelOpen, setPanelOpen, removeTask, clearCompleted } = useUpload();
+  const { tasks, removeTask, clearCompleted } = useUpload();
   const [expanded, setExpanded] = useState(false);
 
   // 仅在有任务时显示
@@ -16,7 +16,6 @@ export default function TransferFloatingWidget() {
 
   const activeTasks = tasks.filter((t) => t.status === 'uploading' || t.status === 'pending' || t.status === 'hashing');
   const completedTasks = tasks.filter((t) => t.status === 'completed');
-  const failedTasks = tasks.filter((t) => t.status === 'failed');
 
   const totalProgress = tasks.length > 0
     ? tasks.reduce((sum, t) => sum + (t.progress || 0), 0) / tasks.length

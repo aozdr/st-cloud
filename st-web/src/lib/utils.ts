@@ -15,6 +15,25 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/**
+ * 白名单 HTML 消毒：仅保留 <em>（搜索高亮用），其余标签去标签保留文本，属性全部清除。
+ * 用于渲染服务端返回的搜索高亮片段，防止文件名/内容注入 HTML（存储型 XSS）。
+ */
+const HIGHLIGHT_ALLOWED_TAGS = new Set(['EM']);
+
+export function sanitizeHighlight(html: string): string {
+  if (!html) return '';
+  const doc = new DOMParser().parseFromString(html, 'text/html');
+  for (const el of Array.from(doc.body.querySelectorAll('*'))) {
+    if (HIGHLIGHT_ALLOWED_TAGS.has(el.tagName)) {
+      for (const attr of Array.from(el.attributes)) el.removeAttribute(attr.name);
+    } else {
+      el.replaceWith(...Array.from(el.childNodes));
+    }
+  }
+  return doc.body.innerHTML;
+}
+
 // ==================== File Type Detection ====================
 
 export interface FileTypeConfig {

@@ -40,7 +40,7 @@ export default function DuplicateFilesPage() {
   const fetchDuplicates = useCallback(() => {
     setLoading(true);
     api.get<DuplicateGroup[]>('/file/duplicates')
-      .then((data) => setGroups((data || []).filter((g: any) => g && g.fileMd5)))
+      .then((data) => setGroups((data || []).filter((g) => g && g.fileMd5)))
       .catch(() => showToast('检测失败', 'error'))
       .finally(() => setLoading(false));
   }, [showToast]);

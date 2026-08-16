@@ -3,22 +3,18 @@ import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { isElectron } from '../../lib/electron';
 import api from '../../lib/api';
 import { useTransferStore } from '../../store/transfer';
-import type { BlankFileType, FileNode, SearchResultVO } from '../../types';
+import type { BlankFileType, FileNode } from '../../types';
 import type { FileSource } from '../../lib/fileSource';
-import FileTable from './FileTable';
-import FileTableView from './FileTableView';
-import FileGrid from './FileGrid';
 import FileToolbar from './FileToolbar';
 import FileBreadcrumb from './FileBreadcrumb';
+import FileList from './FileList';
 import ContextMenu from './ContextMenu';
-import ActionSheet, { type ActionSheetItem } from '../ui/ActionSheet';
 import { useMobile } from '../../hooks/useMobile';
-import { useLongPress } from '../../hooks/useLongPress';
 import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import { isCapacitor } from '../../lib/runtime';
 import { pickFromGallery } from '../../lib/capacitor';
 import MultiSelectBar from '../ui/MultiSelectBar';
-import { Upload, RefreshCw, AlertCircle } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import BlankContextMenu from './BlankContextMenu';
 import MoveDialog from './MoveDialog';
 import DownloadDialog from './DownloadDialog';
@@ -40,6 +36,10 @@ import { useFolderFilterStore } from '../../store/folderFilter';
 import { useFavoritesStore } from '../../store/favorites';
 import { FolderInput } from 'lucide-react';
 import { isEditableOfficeSuffix } from '../../lib/editor';
+import { useFileSelection } from '../../hooks/useFileSelection';
+import { useFileClipboard } from '../../hooks/useFileClipboard';
+import { useFileDialogs } from '../../hooks/useFileDialogs';
+import { useFolderSearch } from '../../hooks/useFolderSearch';
 
 export interface FileBrowserProps {
   source: FileSource;
@@ -100,13 +100,10 @@ export default function FileBrowser({
   const setFolderSearch = useFolderFilterStore((s) => s.setKeyword);
   const setFolderPath = useFolderFilterStore((s) => s.setFolderPath);
   const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
   const { toggleFavorite: toggleFav, isFavorite: checkFav } = useFavoritesStore();
-  // 订阅 favoriteIds，收藏状态变化时触发 sortedFiles 重算
-  const favoriteIds = useFavoritesStore((s) => s.favoriteIds);
   const [sortBy, setSortBy] = useState<'name' | 'size' | 'time'>(() => {
     if (syncUrl) {
       const s = searchParams.get('sort');
@@ -139,9 +136,6 @@ export default function FileBrowser({
     );
   }, [sortBy, sortDir, syncUrl, setSearchParams]);
 
-  const [clipboard, setClipboard] = useState<{ nodeIds: string[]; mode: 'copy' | 'cut' } | null>(null);
-  const [focusedIndex, setFocusedIndex] = useState(-1);
-
   const { showToast } = useToast();
   const { confirm } = useConfirm();
   const { has } = usePermission();
@@ -150,24 +144,39 @@ export default function FileBrowser({
   /** 是否可在线编辑：docx/xlsx/pptx 且当前用户具备编辑（上传）权限；最终权限以后端 config 接口为准 */
   const canEditNode = (node: FileNode) =>
     node.nodeType === 1 && isEditableOfficeSuffix(node.suffix) && has('file:upload');
-  // 网络错误状态:区分网络异常与空数据,显示重试按钮而非 EmptyState
-  const [networkError, setNetworkError] = useState(false);
-  // 移动端多选模式:长按文件进入,单击切换选中,顶部 MultiSelectBar 操作
-  const [mobileSelectMode, setMobileSelectMode] = useState(false);
+
+  // 选择状态与移动端多选模式
+  const selection = useFileSelection(files, isMobile);
+  const {
+    selectedIds, setSelectedIds, setFocusedIndex, setLastSelectedId,
+    focusedIndex, lastSelectedId, mobileSelectMode, setMobileSelectMode,
+    handleSelect, toggleSelect, selectAll, clearSelection, moveFocus,
+    handleMobileLongPress, handleMobileClick,
+  } = selection;
+
+  // 剪贴板（复制/剪切/粘贴）
+  const { clipboard, setClipboard, paste } = useFileClipboard(source, parentId, showToast, () => fetchFiles());
+
+  // 各类对话框/浮层目标状态
+  const dialogs = useFileDialogs();
+  const {
+    showCreateFolder, setShowCreateFolder,
+    newFileType, setNewFileType,
+    showBatchRename, setShowBatchRename,
+    archiveTarget, setArchiveTarget,
+    renameTarget, setRenameTarget,
+    convertTarget, setConvertTarget,
+    moveTarget, setMoveTarget,
+    shareTarget, setShareTarget,
+    downloadTarget, setDownloadTarget,
+    versionTarget, setVersionTarget,
+    preview, setPreview,
+    contextMenu, setContextMenu,
+    blankContextMenu, setBlankContextMenu,
+  } = dialogs;
 
   const fileListRef = useRef<HTMLDivElement>(null);
   const { dragRect, startDrag } = useDragSelect(fileListRef, setSelectedIds);
-
-  const [showCreateFolder, setShowCreateFolder] = useState(false);
-  const [newFileType, setNewFileType] = useState<BlankFileType | null>(null);
-  const [showBatchRename, setShowBatchRename] = useState(false);
-  const [archiveTarget, setArchiveTarget] = useState<FileNode | null>(null);
-  const [renameTarget, setRenameTarget] = useState<FileNode | null>(null);
-  const [convertTarget, setConvertTarget] = useState<FileNode | null>(null);
-  const [moveTarget, setMoveTarget] = useState<{ nodeIds: string[]; mode: 'move' | 'copy' } | null>(null);
-
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; node: FileNode } | null>(null);
-  const [blankContextMenu, setBlankContextMenu] = useState<{ x: number; y: number } | null>(null);
 
   // 从编辑器「以预览打开」回退：接收路由 state.openPreview，在目录加载完成后自动打开预览
   const pendingPreviewIdRef = useRef<string | null>(null);
@@ -182,13 +191,7 @@ export default function FileBrowser({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const [preview, setPreview] = useState<{ files: FileNode[]; index: number } | null>(null);
-  const [shareTarget, setShareTarget] = useState<FileNode | null>(null);
-  const [downloadTarget, setDownloadTarget] = useState<FileNode | null>(null);
-  const [versionTarget, setVersionTarget] = useState<FileNode | null>(null);
-
   const [isDragging, setIsDragging] = useState(false);
-  const [lastSelectedId, setLastSelectedId] = useState<string | null>(null);
   const prevParentId = useRef<string | null>(null);
 
   const stateRef = useRef({ selectedIds, files, clipboard, view, parentId, focusedIndex, lastSelectedId });
@@ -204,14 +207,21 @@ export default function FileBrowser({
   }, [selectedIds, files, clipboard, view, parentId, focusedIndex, lastSelectedId]);
   const { addFiles, addFilePaths, refreshSignal } = useUpload();
 
+  // 当前文件夹内搜索（关键词来自全局 folderFilter store）
+  const folderSearchResults = useFolderSearch(folderSearch, currentPath);
+
+  // 是否已有列表数据：用于决定是否显示骨架屏，避免切换文件夹时内容跳变
+  const hasFilesRef = useRef(false);
+  useEffect(() => {
+    hasFilesRef.current = files.length > 0;
+  }, [files]);
+
   const fetchFiles = useCallback(async () => {
-    // 仅在无已有数据时显示骨架屏，避免切换文件夹时内容跳变
-    if (files.length === 0) setLoading(true);
+    if (!hasFilesRef.current) setLoading(true);
     try {
       const res = await source.listFiles(parentId, page, 50);
       const records = res?.records || [];
       setFiles(records);
-      setNetworkError(false);
       setTotal(Number(res?.total || 0));
       // 编辑器「以预览打开」回退：当前目录存在该文件时自动打开预览
       const pendingId = pendingPreviewIdRef.current;
@@ -223,19 +233,17 @@ export default function FileBrowser({
       }
     } catch {
       setFiles([]);
-      setNetworkError(true);
     } finally {
       setLoading(false);
     }
-  }, [source, parentId, page]);
+  }, [source, parentId, page, setPreview]);
 
   useEffect(() => {
     // 换文件夹：保留旧列表不清空，新数据到达后平滑替换，避免抖动
-    const isFolderChange = prevParentId.current !== parentId;
     prevParentId.current = parentId;
     
     fetchFiles();
-    setSelectedIds(new Set());
+    clearSelection();
     setFocusedIndex(-1);
     setFolderSearch('');
     setDetailFile(null);
@@ -249,8 +257,7 @@ export default function FileBrowser({
     setSelectedIds(new Set([focusId]));
     const el = fileListRef.current?.querySelector(`[data-file-id="${focusId}"]`);
     el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focusId, loading, files]);
+  }, [focusId, loading, files, setSelectedIds]);
 
   useEffect(() => {
     if (!parentId || parentId === '0' || parentId === 'null') {
@@ -281,7 +288,7 @@ export default function FileBrowser({
     if (isMobile && mobileSelectMode && selectedIds.size === 0) {
       setMobileSelectMode(false);
     }
-  }, [isMobile, mobileSelectMode, selectedIds.size]);
+  }, [isMobile, mobileSelectMode, selectedIds.size, setMobileSelectMode]);
 
   // 移动端下拉刷新
   const ptr = usePullToRefresh({ onRefresh: async () => { await fetchFiles(); } });
@@ -421,84 +428,6 @@ export default function FileBrowser({
     }
   };
 
-  const handleSelect = (id: string, e: React.MouseEvent) => {
-    // 移动端多选模式:单击切换选中(复用 toggleSelect 逻辑)
-    if (isMobile && mobileSelectMode) {
-      toggleSelect(id);
-      return;
-    }
-    if (e.ctrlKey || e.metaKey) {
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        if (next.has(id)) next.delete(id);
-        else next.add(id);
-        return next;
-      });
-      setLastSelectedId(id);
-    } else if (e.shiftKey && lastSelectedId) {
-      const ids = files.map((f) => f.id);
-      const start = ids.indexOf(lastSelectedId);
-      const end = ids.indexOf(id);
-      if (start >= 0 && end >= 0) {
-        const [from, to] = start < end ? [start, end] : [end, start];
-        setSelectedIds(new Set(ids.slice(from, to + 1)));
-      } else {
-        setSelectedIds(new Set([id]));
-      }
-    } else {
-      // 普通点击：若该项已选中且仅选中一项，则取消选中；否则仅选中该项
-      if (selectedIds.has(id) && selectedIds.size === 1) {
-        setSelectedIds(new Set());
-        setLastSelectedId(null);
-      } else {
-        setSelectedIds(new Set([id]));
-        setLastSelectedId(id);
-      }
-    }
-  };
-
-  const selectAll = () => {
-    setSelectedIds(new Set(files.map((f) => f.id)));
-    setLastSelectedId(null);
-  };
-  const clearSelection = () => {
-    setSelectedIds(new Set());
-    setLastSelectedId(null);
-  };
-
-  /** 复选框点击：切换单项选中状态，不影响其他已选项 */
-  const toggleSelect = (id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-    setLastSelectedId(id);
-  };
-
-  // 移动端长按:进入多选模式 + 选中该文件
-  const handleMobileLongPress = (node: FileNode) => {
-    if (!isMobile) return;
-    setMobileSelectMode(true);
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      next.add(node.id);
-      return next;
-    });
-    setLastSelectedId(node.id);
-  };
-
-  // 移动端多选模式下单击切换选中;非多选模式单击打开/预览
-  const handleMobileClick = (node: FileNode) => {
-    if (!isMobile || !mobileSelectMode) return;
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(node.id)) next.delete(node.id);
-      else next.add(node.id);
-      return next;
-    });
-  };
   const handleContextMenu = (e: React.MouseEvent, node: FileNode) => {
     e.preventDefault();
     // 移动端: onContextMenu 由长按触发,进入多选模式而非弹菜单
@@ -514,55 +443,7 @@ export default function FileBrowser({
     setContextMenu({ x: e.clientX, y: e.clientY, node });
   };
 
-  const handleItemMenu = (e: React.MouseEvent, node: FileNode) => {
-    if (!selectedIds.has(node.id)) {
-      setSelectedIds(new Set([node.id]));
-      setLastSelectedId(node.id);
-    }
-    setBlankContextMenu(null);
-    setContextMenu({ x: e.clientX, y: e.clientY, node });
-  };
-
   const focusedId = focusedIndex >= 0 && focusedIndex < files.length ? files[focusedIndex].id : null;
-
-  const moveFocus = useCallback((delta: number, extendSelection: boolean) => {
-    const st = stateRef.current;
-    if (st.files.length === 0) return;
-    let newIndex = st.focusedIndex >= 0 ? st.focusedIndex + delta : 0;
-    newIndex = Math.max(0, Math.min(st.files.length - 1, newIndex));
-    setFocusedIndex(newIndex);
-    const newId = st.files[newIndex].id;
-    if (extendSelection) {
-      setSelectedIds((prev) => {
-        const next = new Set(prev);
-        next.add(newId);
-        return next;
-      });
-    } else {
-      setSelectedIds(new Set([newId]));
-      setLastSelectedId(newId);
-    }
-  }, []);
-
-  const handlePasteRef = useRef<() => void>(() => {});
-  handlePasteRef.current = async () => {
-    const st = stateRef.current;
-    if (!st.clipboard || st.clipboard.nodeIds.length === 0) return;
-    try {
-      if (st.clipboard.mode === 'copy') {
-        await source.copy(st.clipboard.nodeIds, st.parentId || '0');
-        showToast(`已粘贴 ${st.clipboard.nodeIds.length} 项`);
-      } else {
-        await source.move(st.clipboard.nodeIds, st.parentId || '0');
-        showToast(`已移动 ${st.clipboard.nodeIds.length} 项`);
-        setClipboard(null);
-      }
-      fetchFiles();
-    } catch (err) {
-      console.error('Paste failed:', err);
-      showToast('粘贴失败', 'error');
-    }
-  };
 
   const handleDeleteRef = useRef<(nodeIds: string[]) => void>(() => {});
   handleDeleteRef.current = async (nodeIds: string[]) => {
@@ -592,7 +473,7 @@ export default function FileBrowser({
       setRenameTarget, setPreview, setContextMenu, setBlankContextMenu, setShowCreateFolder,
       selectAll, clearSelection, moveFocus, refresh, navigate,
       onBack, onNavigateFolder,
-      handlePaste: () => handlePasteRef.current(),
+      handlePaste: paste,
       handleDelete: (ids: string[]) => handleDeleteRef.current(ids),
       showToast, hasPermission: has,
     },
@@ -633,7 +514,7 @@ export default function FileBrowser({
     } catch {
       showToast('下载失败', 'error');
     }
-  }, [files, source, showToast]);
+  }, [files, source, showToast, setDownloadTarget]);
 
   const enterPathEditMode = () => {
     setPathInput(currentPath === '/' ? '/' : currentPath);
@@ -735,14 +616,14 @@ export default function FileBrowser({
         break;
       case 'cut':
         setClipboard({ nodeIds: [...selectedIds], mode: 'cut' });
-        showToast(`\u5df2\u526a\u5207 ${selectedIds.size} \u9879`);
+        showToast(`已剪切 ${selectedIds.size} 项`);
         break;
       case 'copy':
         setClipboard({ nodeIds: [...selectedIds], mode: 'copy' });
-        showToast(`\u5df2\u590d\u5236 ${selectedIds.size} \u9879`);
+        showToast(`已复制 ${selectedIds.size} 项`);
         break;
       case 'paste':
-        handlePasteRef.current();
+        paste();
         break;
       case 'rename':
         setRenameTarget(node);
@@ -817,7 +698,7 @@ export default function FileBrowser({
       return sortDir === 'asc' ? cmp : -cmp;
     });
     return arr;
-  }, [files, sortBy, sortDir, foldersFirst, favoriteIds]);
+  }, [files, sortBy, sortDir, foldersFirst, checkFav]);
 
   const selectedSize = useMemo(
     () => files.reduce((sum, f) => selectedIds.has(f.id) ? sum + Number(f.fileSize || 0) : sum, 0),
@@ -835,30 +716,9 @@ export default function FileBrowser({
     return node && canEditNode(node) ? node : null;
   })();
 
-  const [folderSearchResults, setFolderSearchResults] = useState<FileNode[]>([]);
-
   useEffect(() => {
     setFolderPath(currentPath);
   }, [currentPath, setFolderPath]);
-
-  useEffect(() => {
-    if (!folderSearch.trim()) { setFolderSearchResults([]); return; }
-    let cancelled = false;
-    api.get<SearchResultVO[]>('/search', { params: { keyword: folderSearch, page: 1, size: 200 } })
-      .then((res) => {
-        if (cancelled) return;
-        const prefix = currentPath === '/' ? '/' : currentPath + '/';
-        const filtered = (res || []).filter((r) => {
-          const p = r.path || '';
-          return p === currentPath || p.startsWith(prefix) || (currentPath === '/' && p.startsWith('/'));
-        });
-        setFolderSearchResults(filtered.map((r) => ({
-          id: r.fileId, parentId: '', nodeType: r.nodeType ?? 1, name: r.fileName.replace(/<[^>]*>/g, ''), path: r.path, fileSize: r.fileSize ?? '0', suffix: r.suffix, contentType: r.contentType, status: 0, thumbnailPath: null, createdAt: r.createdAt, updatedAt: r.updatedAt,
-        })));
-      })
-      .catch(() => { if (!cancelled) setFolderSearchResults([]); });
-    return () => { cancelled = true; };
-  }, [folderSearch, currentPath]);
 
   const filteredFiles = useMemo(() => {
     if (!folderSearch.trim()) return sortedFiles;
@@ -996,8 +856,9 @@ export default function FileBrowser({
             <FileListSkeleton view={view} />
         ) : files.length === 0 ? (
           <EmptyState onCreateFolder={() => setShowCreateFolder(true)} />
-        ) : view === 'table' ? (
-          <FileTableView
+        ) : (
+          <FileList
+            view={view}
             files={filteredFiles}
             lockedIds={lockedIds}
             selectedIds={selectedIds}
@@ -1008,73 +869,11 @@ export default function FileBrowser({
             onSortChange={handleSortChange}
             onSelect={handleSelect}
             onToggleSelect={toggleSelect}
-            isFavorite={checkFav}
-            onToggleFavorite={handleToggleFavorite}
             onSelectAll={selectAll}
-            onContextMenu={handleContextMenu}
-            onNavigate={(node) => { if (isMobile && mobileSelectMode) { handleMobileClick(node); return; } if (node.nodeType === 0) onNavigateFolder(node); }}
-            onItemDragStart={handleItemDragStart}
-            onFolderDragOver={handleFolderDragOver}
-            onFolderDragLeave={handleFolderDragLeave}
-            onFolderDrop={handleFolderDrop}
-            dragOverFolderId={dragOverFolderId}
-            onDoubleClick={(node) => {
-              if (node.nodeType === 0) {
-                onNavigateFolder(node);
-              } else if (has('file:preview')) {
-                const fileFiles = files.filter((f) => f.nodeType === 1);
-                const idx = fileFiles.findIndex((f) => f.id === node.id);
-                setPreview({ files: fileFiles, index: idx >= 0 ? idx : 0 });
-              }
-            }}
-          />
-        ) : view === 'card' ? (
-          <FileTable
-            files={filteredFiles}
-            lockedIds={lockedIds}
-            selectedIds={selectedIds}
-            focusedId={focusedId}
-            cutIds={clipboard?.mode === 'cut' ? new Set(clipboard.nodeIds) : null}
-            onSelect={handleSelect}
-            onToggleSelect={toggleSelect}
-            isFavorite={checkFav}
-            onToggleFavorite={handleToggleFavorite}
-            onSelectAll={selectAll}
-            onContextMenu={handleContextMenu}
-            onNavigate={(node) => { if (isMobile && mobileSelectMode) { handleMobileClick(node); return; } if (node.nodeType === 0) onNavigateFolder(node); }}
-            onItemDragStart={handleItemDragStart}
-            onFolderDragOver={handleFolderDragOver}
-            onFolderDragLeave={handleFolderDragLeave}
-            onFolderDrop={handleFolderDrop}
-            dragOverFolderId={dragOverFolderId}
-            onDoubleClick={(node) => {
-              if (node.nodeType === 0) {
-                onNavigateFolder(node);
-              } else if (has('file:preview')) {
-                const fileFiles = files.filter((f) => f.nodeType === 1);
-                const idx = fileFiles.findIndex((f) => f.id === node.id);
-                setPreview({ files: fileFiles, index: idx >= 0 ? idx : 0 });
-              }
-            }}
-          />
-        ) : (
-          <FileGrid
-            files={filteredFiles}
-            lockedIds={lockedIds}
-            selectedIds={selectedIds}
-            focusedId={focusedId}
-            cutIds={clipboard?.mode === 'cut' ? new Set(clipboard.nodeIds) : null}
-            onSelect={handleSelect}
-            onToggleSelect={toggleSelect}
             isFavorite={checkFav}
             onToggleFavorite={handleToggleFavorite}
             onContextMenu={handleContextMenu}
             onNavigate={(node) => { if (isMobile && mobileSelectMode) { handleMobileClick(node); return; } if (node.nodeType === 0) onNavigateFolder(node); }}
-            onItemDragStart={handleItemDragStart}
-            onFolderDragOver={handleFolderDragOver}
-            onFolderDragLeave={handleFolderDragLeave}
-            onFolderDrop={handleFolderDrop}
-            dragOverFolderId={dragOverFolderId}
             onDoubleClick={(node) => {
               if (node.nodeType === 0) {
                 onNavigateFolder(node);
@@ -1084,6 +883,11 @@ export default function FileBrowser({
                 setPreview({ files: fileFiles, index: idx >= 0 ? idx : 0 });
               }
             }}
+            onItemDragStart={handleItemDragStart}
+            onFolderDragOver={handleFolderDragOver}
+            onFolderDragLeave={handleFolderDragLeave}
+            onFolderDrop={handleFolderDrop}
+            dragOverFolderId={dragOverFolderId}
           />
         )}
       </div>
@@ -1141,7 +945,7 @@ export default function FileBrowser({
           hasClipboard={!!clipboard}
           onAction={(action) => {
             switch (action) {
-              case 'paste': handlePasteRef.current(); break;
+              case 'paste': paste(); break;
               case 'newFolder': setShowCreateFolder(true); break;
               case 'upload': handleUploadClick(); break;
               case 'refresh': fetchFiles(); break;

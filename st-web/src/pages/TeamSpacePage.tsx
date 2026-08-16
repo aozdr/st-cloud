@@ -97,7 +97,6 @@ export default function TeamSpacePage() {
   const [detailTab, setDetailTab] = useState<'info' | 'permission'>('info');
   const [showRoleManage, setShowRoleManage] = useState(false);
   const [showStats, setShowStats] = useState(false);
-  const [statsDays] = useState(7);
   const [transferTarget, setTransferTarget] = useState<string | null>(null);
 
   const fetchSpace = useCallback(async () => {
@@ -118,7 +117,7 @@ export default function TeamSpacePage() {
 
   // 挂载即拉取成员列表：用于判断当前用户是否为管理员（权限入口可见性，后端 checkPermission(spaceId,0) 为最终闸门）
   useEffect(() => { fetchSpace(); fetchMembers(); }, [fetchSpace, fetchMembers]);
-  useEffect(() => { if (showMembers) fetchMembers(); }, [sortBy]);
+  useEffect(() => { if (showMembers) fetchMembers(); }, [sortBy, fetchMembers, showMembers]);
   useEffect(() => { if (activeTab === 'activity') { setActivityPage(1); fetchActivities(1, false); } }, [activeTab, fetchActivities]);
 
   const handleUserSearch = (keyword: string) => {
@@ -165,7 +164,7 @@ export default function TeamSpacePage() {
 
   const handleLeaveSpace = async () => {
     if (!confirm('确定退出该空间？退出后将无法访问空间文件。')) return;
-    try { await api.post(`/team/${spaceId}/leave`); showToast('已退出空间', 'success'); navigate('/team'); } catch (e: any) { showToast(e?.message || '退出失败', 'error'); }
+    try { await api.post(`/team/${spaceId}/leave`); showToast('已退出空间', 'success'); navigate('/team'); } catch (e) { showToast((e instanceof Error ? e.message : '') || '退出失败', 'error'); }
   };
 
   const handleLock = async (nodeId: string, hours: number) => {

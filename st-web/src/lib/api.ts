@@ -12,6 +12,15 @@ export function updateApiBaseUrl(): void {
   instance.defaults.baseURL = getApiBaseUrl();
 }
 
+/** 拼接文件流下载/预览 URL（token 入 query 仅作 Authorization 头不可用时的兜底） */
+export function buildStreamUrl(nodeId: string | number, opts?: { token?: string | null; inline?: boolean }): string {
+  const params = new URLSearchParams();
+  if (opts?.token) params.set('token', opts.token);
+  if (opts?.inline) params.set('inline', '1');
+  const qs = params.toString();
+  return `/api/file/${nodeId}/stream${qs ? `?${qs}` : ''}`;
+}
+
 // ApiError carries the business error code from the server
 class ApiError extends Error {
   code?: number;

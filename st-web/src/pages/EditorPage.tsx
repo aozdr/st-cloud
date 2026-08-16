@@ -162,7 +162,7 @@ export default function EditorPage() {
       }
       editorRef.current = null;
     };
-  }, [effectiveNodeId, goBack, mode, shareCode]);
+  }, [effectiveNodeId, goBack, mode, shareCode, searchParams]);
 
   // OnlyOffice 9.x 高度塌缩修复：DocEditor 生成的 iframe 在百分比高度下只渲染工具栏高度（实测 150px），
   // 需按容器实际像素高度强制校正（固定像素生效，百分比不生效）。

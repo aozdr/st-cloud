@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Check, MessageSquare, Users, AlertTriangle, FileText } from 'lucide-react';
+import { Bell, MessageSquare, Users, AlertTriangle, FileText } from 'lucide-react';
 import api from '../../lib/api';
 import { cn } from '../../lib/utils';
 import type { NotificationItem, PageResult } from '../../types';

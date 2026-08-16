@@ -2,17 +2,16 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Image as ImageIcon, Video, FileText, Music, Archive, FolderClosed, Clock, Star, ChevronRight, FolderOpen } from 'lucide-react';
 import api from '../lib/api';
-import { formatSize, formatDate, getFileTypeConfig, cn } from '../lib/utils';
+import { formatSize, formatDate } from '../lib/utils';
 import { useStorageStore } from '../store/storage';
 import { useAuthStore } from '../store/auth';
 import type { FileNode, PageResult } from '../types';
 import FileThumbnail from '../components/file/FileThumbnail';
-import FileTypeIcon from '../components/file/FileTypeIcon';
+import FileCard from '../components/home/FileCard';
 import { getRecentFiles, clearRecentFiles, type RecentFile } from '../lib/recentFiles';
 import { useFavoritesStore } from '../store/favorites';
 import { personalFileSource } from '../lib/fileSource';
 import PreviewModal from '../components/preview/PreviewModal';
-import StorageAnalysis from '../components/StorageAnalysis';
 
 const QUICK_CARDS = [
   { label: '图片', icon: ImageIcon, type: 'image', gradient: 'from-blue-500 to-blue-600', glow: 'shadow-[0_4px_20px_-4px_rgba(59,130,246,0.4)]' },
@@ -64,7 +63,7 @@ export default function HomePage() {
     fetchRecent();
     setAccessedFiles(getRecentFiles());
     fetchFavorites();
-  }, [fetchRecent]);
+  }, [fetchRecent, fetchFavorites]);
 
   const handleCardClick = (type: string | null) => {
     if (type) navigate(`/files/category/${type}`);
@@ -176,32 +175,27 @@ export default function HomePage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
               {favFiles.slice(0, 8).map((file) => {
-                const config = getFileTypeConfig(file.nodeType, file.suffix);
-                const fn = file;
                 return (
-                  <div
+                  <FileCard
                     key={file.id}
-                    role="button"
-                    tabIndex={0}
-                    aria-label={`收藏：${file.name}`}
-                    onClick={() => file.nodeType === 0 ? jumpToFolder(fn) : openPreview(fn, favFiles)}
-                    onContextMenu={(e) => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY, file: fn }); }}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); file.nodeType === 0 ? jumpToFolder(fn) : openPreview(fn, favFiles); } }}
-                    className="group flex items-center gap-3 p-3 bg-surface rounded-xl hover:shadow-card hover:-translate-y-0.5 transition-[transform,box-shadow] duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
-                  >
-                    <div className="flex-shrink-0"><FileTypeIcon config={config} size="sm" isFolder={file.nodeType === 0} suffix={file.suffix} /></div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-fg truncate">{file.name}</div>
-                      <div className="text-xs text-muted mt-0.5 truncate">{file.path || '/'}</div>
-                    </div>
-                    <button
-                      onClick={async (e) => { e.stopPropagation(); const added = await toggleFav(file); if (!added) fetchFavorites(); }}
-                      className="text-muted hover:text-amber-500 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
-                      aria-label="取消收藏"
-                    >
-                      <Star className="w-4 h-4 fill-current" />
-                    </button>
-                  </div>
+                    file={file}
+                    actionLabel="收藏"
+                    subtitle={file.path || '/'}
+                    onOpen={() => {
+                      if (file.nodeType === 0) jumpToFolder(file);
+                      else openPreview(file, favFiles);
+                    }}
+                    onContextMenu={(e) => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY, file }); }}
+                    trailing={
+                      <button
+                        onClick={async (e) => { e.stopPropagation(); const added = await toggleFav(file); if (!added) fetchFavorites(); }}
+                        className="text-muted hover:text-amber-500 transition-colors opacity-0 group-hover:opacity-100 cursor-pointer"
+                        aria-label="取消收藏"
+                      >
+                        <Star className="w-4 h-4 fill-current" aria-hidden />
+                      </button>
+                    }
+                  />
                 );
               })}
             </div>
@@ -217,25 +211,16 @@ export default function HomePage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
               {accessedFiles.slice(0, 8).map((file) => {
-                const config = getFileTypeConfig(1, file.suffix);
                 const fn = toFileNode(file);
                 return (
-                  <div
+                  <FileCard
                     key={file.id}
-                    role="button"
-                    tabIndex={0}
-                    aria-label={`访问：${file.name}`}
-                    onClick={() => openPreview(fn, accessedFiles.map(toFileNode))}
+                    file={fn}
+                    actionLabel="访问"
+                    subtitle={file.fileSize != null && Number(file.fileSize) > 0 ? <span className="tabular-nums">{formatSize(Number(file.fileSize))}</span> : undefined}
+                    onOpen={() => openPreview(fn, accessedFiles.map(toFileNode))}
                     onContextMenu={(e) => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY, file: fn }); }}
-                    onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPreview(fn, accessedFiles.map(toFileNode)); } }}
-                    className="flex items-center gap-3 p-3 bg-surface rounded-xl hover:shadow-card hover:-translate-y-0.5 transition-[transform,box-shadow] duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
-                  >
-                    <div className="flex-shrink-0"><FileTypeIcon config={config} size="sm" isFolder={false} suffix={file.suffix} /></div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium text-fg truncate">{file.name}</div>
-                      <div className="text-xs text-muted mt-0.5 tabular-nums">{file.fileSize != null && Number(file.fileSize) > 0 ? formatSize(Number(file.fileSize)) : ''}</div>
-                    </div>
-                  </div>
+                  />
                 );
               })}
             </div>
@@ -270,29 +255,24 @@ export default function HomePage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
               {recentFiles.map((file) => (
-                <div
+                <FileCard
                   key={file.id}
-                  role="button"
-                  tabIndex={0}
-                  aria-label={`文件：${file.name}`}
-                  onClick={() => openPreview(file, recentFiles)}
+                  file={file}
+                  actionLabel="文件"
+                  icon={<FileThumbnail file={file} size="sm" />}
+                  onOpen={() => openPreview(file, recentFiles)}
                   onContextMenu={(e) => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY, file }); }}
-                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPreview(file, recentFiles); } }}
-                  className="flex items-center gap-3 p-3 bg-surface rounded-xl hover:shadow-card hover:-translate-y-0.5 transition-[transform,box-shadow] duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
-                >
-                  <FileThumbnail file={file} size="sm" />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-fg truncate">{file.name}</div>
-                    <div className="flex items-center gap-2 text-xs text-muted mt-0.5">
+                  subtitle={
+                    <span className="flex items-center gap-2">
                       <span className="tabular-nums">{formatSize(Number(file.fileSize))}</span>
                       <span className="text-muted">·</span>
                       <span className="flex items-center gap-0.5 tabular-nums truncate">
                         <Clock className="w-3 h-3 flex-shrink-0" aria-hidden />
                         {formatDate(file.updatedAt)}
                       </span>
-                    </div>
-                  </div>
-                </div>
+                    </span>
+                  }
+                />
               ))}
             </div>
           )}

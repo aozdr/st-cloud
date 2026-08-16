@@ -4,7 +4,6 @@ import { Search, LogOut, User as UserIcon, X, Home, Clock, Trash2, FolderOpen, M
 import { useAuthStore } from '../../store/auth';
 import { useFolderFilterStore } from '../../store/folderFilter';
 import { cn } from '../../lib/utils';
-import NotificationBell from '../team/NotificationBell';
 
 const SEARCH_HISTORY_KEY = 'searchHistory';
 const MAX_HISTORY = 8;
@@ -58,7 +57,7 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
       setSearchValue('');
       setFolderFilter('');
     }
-  }, [isSearchPage, searchParams, location.pathname]);
+  }, [isSearchPage, searchParams, location.pathname, setFolderFilter]);
 
   // Ctrl+K / Cmd+K to focus search
   useEffect(() => {
@@ -227,12 +226,13 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
               )}
               {isFilesPage && (
                 <div className="border-t border-border px-3 py-2 flex-shrink-0">
-                  <label className="flex items-center justify-between gap-2 cursor-pointer">
-                    <span className="flex items-center gap-2 text-sm text-fg">
+                  <div className="flex items-center justify-between gap-2">
+                    <label htmlFor="search-in-folder-switch" className="flex items-center gap-2 text-sm text-fg cursor-pointer">
                       <FolderOpen className="w-4 h-4 text-muted" aria-hidden />
                       搜索当前文件夹
-                    </span>
+                    </label>
                     <button
+                      id="search-in-folder-switch"
                       type="button"
                       role="switch"
                       aria-checked={searchInFolder}
@@ -243,9 +243,9 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
                       }}
                       className={cn('relative w-9 h-5 rounded-full transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', searchInFolder ? 'bg-primary-600' : 'bg-muted/50')}
                     >
-                      <span className={cn('absolute top-0.5 left-0.5 w-4 h-4 bg-surface rounded-full transition-transform', searchInFolder && 'translate-x-4')} />
+                      <span className={cn('absolute top-0.5 left-0.5 w-4 h-4 bg-surface rounded-full transition-transform', searchInFolder && 'translate-x-4')} aria-hidden />
                     </button>
-                  </label>
+                  </div>
                 </div>
               )}
             </div>

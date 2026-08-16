@@ -149,7 +149,6 @@ export default function Sidebar({ mobileOpen, onClose }: SidebarProps) {
               key={item.to}
               to={item.to}
               end={item.end}
-              aria-current="page"
               className={({ isActive }) => navItemClass(isActive)}
               onClick={onClose}
               title={collapsed ? item.label : undefined}

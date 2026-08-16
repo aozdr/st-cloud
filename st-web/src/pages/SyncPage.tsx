@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { RefreshCw, FolderSync, Trash2, Play, Square, Plus, HardDrive, Cloud, AlertCircle, FileUp, FileDown, FileX, GitBranch, Info, AlertTriangle, FileEdit, FilePlus, FolderInput, Settings, Wifi, WifiOff, History, Clock, BarChart3, ChevronDown, ChevronRight } from 'lucide-react';
+import { RefreshCw, FolderSync, Trash2, Play, Square, Plus, HardDrive, Cloud, AlertCircle, FileUp, FileDown, FileX, GitBranch, Info, AlertTriangle, FileEdit, FilePlus, FolderInput, Settings, Wifi, WifiOff, History, BarChart3, ChevronDown, ChevronRight } from 'lucide-react';
 import api from '../lib/api';
 import { isElectron } from '../lib/electron';
 import { useToast } from '../components/ui/Toast';

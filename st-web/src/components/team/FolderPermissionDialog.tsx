@@ -197,7 +197,7 @@ export default function FolderPermissionDialog({ spaceId, node, onClose, variant
       showToast('权限已保存', 'success');
       // 面板模式：保存后停留在权限 tab 并回显已保存规则；弹窗模式：保存后关闭
       if (variant === 'dialog') onClose();
-    } catch (e) { showToast('保存失败', 'error'); }
+    } catch { showToast('保存失败', 'error'); }
   };
 
   const subjectBadge = (type: SubjectType) => {

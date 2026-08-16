@@ -3,7 +3,7 @@ import { X, Send, Trash2, Pencil, CornerDownRight } from 'lucide-react';
 import api from '../../lib/api';
 import { useToast } from '../ui/Toast';
 import { cn } from '../../lib/utils';
-import type { TeamCommentItem, FileNode, UserSearch, TeamMember } from '../../types';
+import type { TeamCommentItem, FileNode, UserSearch } from '../../types';
 
 interface CommentPanelProps {
   spaceId: string;
@@ -18,8 +18,6 @@ export default function CommentPanel({ spaceId, node, onClose, canComment }: Com
   const [content, setContent] = useState('');
   const [replyTo, setReplyTo] = useState<TeamCommentItem | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editContent, setEditContent] = useState('');
-  const [mentionQuery, setMentionQuery] = useState('');
   const [mentionUsers, setMentionUsers] = useState<UserSearch[]>([]);
   const [showMention, setShowMention] = useState(false);
   const [mentionedIds, setMentionedIds] = useState<string[]>([]);
@@ -34,7 +32,6 @@ export default function CommentPanel({ spaceId, node, onClose, canComment }: Com
     const beforeCursor = text.substring(0, cursorPos);
     const atMatch = beforeCursor.match(/@([^\s@]*)$/);
     if (atMatch) {
-      setMentionQuery(atMatch[1]);
       setShowMention(true);
       if (atMatch[1].length >= 0) {
         api.get<UserSearch[]>(`/team/${spaceId}/users/search`, { params: { keyword: atMatch[1] } })
@@ -65,7 +62,7 @@ export default function CommentPanel({ spaceId, node, onClose, canComment }: Com
       setContent(''); setReplyTo(null); setMentionedIds([]);
       fetchComments();
       showToast('评论已发送', 'success');
-    } catch (e) { showToast('发送失败', 'error'); }
+    } catch { showToast('发送失败', 'error'); }
   };
 
   const handleDelete = async (commentId: string) => {

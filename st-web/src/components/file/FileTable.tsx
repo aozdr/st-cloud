@@ -1,10 +1,14 @@
 import { getFileTypeConfig, formatSize, formatDate, cn } from '../../lib/utils';
 import type { FileNode } from '../../types';
+import type { SortBy, SortDir } from './FileToolbar';
 import { Check, MoreHorizontal, Star, Lock } from 'lucide-react';
 import FileThumbnail from './FileThumbnail';
 
 interface Props {
   files: FileNode[];
+  sortBy?: SortBy;
+  sortDir?: SortDir;
+  onSortChange?: (col: SortBy) => void;
   /** 已锁定节点 ID 集合（团队空间传入；用于列表行显示锁图标） */
   lockedIds?: Set<string>;
   selectedIds: Set<string>;

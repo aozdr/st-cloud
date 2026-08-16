@@ -1,4 +1,4 @@
-import api from './api';
+import api, { buildStreamUrl } from './api';
 import type { BlankFileType, FileNode, PageResult, FileTreeNode, SearchResultVO } from '../types';
 
 /**
@@ -45,7 +45,7 @@ export const personalFileSource: FileSource = {
     api.get('/file/by-path', { params: { path: path || '/' } }),
   getDownloadUrl: async (nodeId) => {
     const { token } = await api.post<{ token: string }>(`/file/${nodeId}/download-token`);
-    return `/api/file/${nodeId}/stream?token=${encodeURIComponent(token || '')}`;
+    return buildStreamUrl(nodeId, { token });
   },
   downloadZip: (nodeIds) =>
     api.post('/file/download/zip', { nodeIds }, { responseType: 'blob' }) as unknown as Promise<Blob>,
@@ -76,7 +76,7 @@ export function teamFileSource(spaceId: string): FileSource {
       api.get(`/team/${spaceId}/files/by-path`, { params: { path: path || '/' } }),
     getDownloadUrl: async (nodeId) => {
       const { token } = await api.post<{ token: string }>(`/file/${nodeId}/download-token`);
-      return `/api/file/${nodeId}/stream?token=${encodeURIComponent(token || '')}`;
+      return buildStreamUrl(nodeId, { token });
     },
     downloadZip: (nodeIds) =>
       api.post('/file/download/zip', { nodeIds }, { responseType: 'blob' }) as unknown as Promise<Blob>,

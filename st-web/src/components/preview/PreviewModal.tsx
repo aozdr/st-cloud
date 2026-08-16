@@ -1,56 +1,13 @@
-import { lazy, Suspense, useEffect, useRef, useState } from 'react';
-import { X, Download, ChevronLeft, ChevronRight, Table, ChevronDown, RotateCw, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
+import { lazy, Suspense, useEffect, useState } from 'react';
+import { X, Download, ChevronLeft, ChevronRight, RotateCw, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import api from '../../lib/api';
+import api, { buildStreamUrl } from '../../lib/api';
 import type { FileNode, PreviewResult } from '../../types';
 import { addRecentFile } from '../../lib/recentFiles';
-import { isImage, isVideo, isPdf, isAudio, isText, isWord, isExcel, isPpt, getFileTypeConfig, cn } from '../../lib/utils';
-import type { WorkBook } from 'xlsx';
+import { isImage, isVideo, isPdf, isAudio, isText, getFileTypeConfig, cn } from '../../lib/utils';
 import { isEditableOfficeSuffix } from '../../lib/editor';
 
 const PlyrPlayer = lazy(() => import('./PlyrPlayer'));
-
-async function renderDocx(blob: Blob, container: HTMLElement) {
-  const { renderAsync } = await import('docx-preview');
-  container.innerHTML = '';
-  await renderAsync(blob, container, undefined, {
-    className: 'docx-container',
-    inWrapper: true,
-    ignoreWidth: false,
-    ignoreHeight: false,
-    breakPages: true,
-    // 忽略 Word 写入的 lastRenderedPageBreak，按 docx-preview 重新排版分页，
-    // 否则会重复断页导致页数翻倍（如 2 页变 4 页）
-    ignoreLastRenderedPageBreak: true,
-    experimental: true,
-  });
-  // 拦截文档内超链接，防止点击后跳转离开网盘：改为新标签页打开
-  container.querySelectorAll('a[href]').forEach((el) => {
-    const link = el as HTMLAnchorElement;
-    link.target = '_blank';
-    link.rel = 'noopener noreferrer';
-    link.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      window.open(link.href, '_blank', 'noopener,noreferrer');
-    });
-  });
-}
-
-async function parseExcel(data: ArrayBuffer): Promise<{ sheets: string[]; firstHtml: string; wb: WorkBook }> {
-  const XLSX = await import('xlsx');
-  const wb = XLSX.read(data);
-  return {
-    sheets: wb.SheetNames,
-    firstHtml: XLSX.utils.sheet_to_html(wb.Sheets[wb.SheetNames[0]], { editable: false }),
-    wb,
-  };
-}
-
-async function excelSheetToHtml(wb: WorkBook, sheetName: string): Promise<string> {
-  const XLSX = await import('xlsx');
-  return XLSX.utils.sheet_to_html(wb.Sheets[sheetName], { editable: false });
-}
 
 interface Props {
   files: FileNode[];
@@ -69,24 +26,7 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
   const [imgRotate, setImgRotate] = useState(0);
   const [url, setUrl] = useState<string | null>(null);
   const [textContent, setTextContent] = useState<string | null>(null);
-  const [excelHtml, setExcelHtml] = useState<string | null>(null);
-  const [excelSheets, setExcelSheets] = useState<string[]>([]);
-  const [excelSheetIdx, setExcelSheetIdx] = useState(0);
-  const [sheetDropdownOpen, setSheetDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [docxBlob, setDocxBlob] = useState<Blob | null>(null);
-  const docxContainerRef = useRef<HTMLDivElement>(null);
-  const excelWorkbookRef = useRef<WorkBook | null>(null);
-
-  // Separate effect: render docx blob into container when both are ready
-  useEffect(() => {
-    if (!docxBlob || !docxContainerRef.current) return;
-    let cancelled = false;
-    renderDocx(docxBlob, docxContainerRef.current)
-      .then(() => { if (!cancelled) setLoading(false); })
-      .catch((err) => { if (!cancelled) { console.error('docx render failed:', err); setLoading(false); } });
-    return () => { cancelled = true; };
-  }, [docxBlob]);
   const file = files[index];
 
   useEffect(() => {
@@ -101,22 +41,22 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
 
   useEffect(() => {
     if (!file || file.nodeType !== 1) return;
-    // Office（docx/xlsx/pptx）与 PDF：非分享场景改为 OnlyOffice 只读查看（全屏页 + 返回按钮），
-    // 排版/图片与 Office 一致；分享场景保留本地渲染兜底（docx-preview）
-    if (!shareContext && (isEditableOfficeSuffix(file.suffix) || isPdf(file.suffix))) {
-      navigate(
-        `/file/${file.id}/editor?mode=view&from=${encodeURIComponent(location.pathname + location.search)}`,
-      );
+    // Office（docx/xlsx/pptx）与 PDF：一律走 OnlyOffice 只读查看（全屏页 + 返回按钮），
+    // 不再使用 docx-preview/xlsx 本地渲染；分享场景跳转分享编辑器路由
+    if (isEditableOfficeSuffix(file.suffix) || isPdf(file.suffix)) {
+      const from = location.pathname + location.search;
+      if (shareContext) {
+        const params = new URLSearchParams({ nodeId: String(file.id), mode: 'view', from });
+        if (shareContext.password) params.set('password', shareContext.password);
+        navigate(`/share/${shareContext.shareCode}/editor?${params.toString()}`);
+      } else {
+        navigate(`/file/${file.id}/editor?mode=view&from=${encodeURIComponent(from)}`);
+      }
       return;
     }
     setLoading(true);
     setUrl(null);
     setTextContent(null);
-    setExcelHtml(null);
-    setExcelSheets([]);
-    setExcelSheetIdx(0);
-    excelWorkbookRef.current = null;
-    setDocxBlob(null);
 
     if (shareContext) {
       // 分享模式：使用 stream 端点，无需登录 token，不会增加下载次数
@@ -131,25 +71,6 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
           .then((text) => {
             setTextContent(text.length > 500000 ? text.slice(0, 500000) + '\n\n… (内容过长，已截断)' : text);
             setLoading(false);
-          })
-          .catch(() => setLoading(false));
-      } else if (isWord(file.suffix)) {
-        fetch(streamUrl)
-          .then((res) => res.blob())
-          .then((blob) => { setDocxBlob(blob); setLoading(false); })
-          .catch(() => setLoading(false));
-      } else if (isExcel(file.suffix)) {
-        fetch(streamUrl)
-          .then((res) => res.blob())
-          .then((blob) => blob.arrayBuffer())
-          .then((data) => {
-            parseExcel(data).then(({ sheets, firstHtml, wb }) => {
-              excelWorkbookRef.current = wb;
-              setExcelSheets(sheets);
-              setExcelSheetIdx(0);
-              setExcelHtml(firstHtml);
-              setLoading(false);
-            });
           })
           .catch(() => setLoading(false));
       } else {
@@ -169,25 +90,6 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
             setLoading(false);
           })
           .catch(() => setLoading(false));
-      } else if (isWord(file.suffix)) {
-        fetch(streamUrl, { headers })
-          .then((res) => { if (!res.ok) throw new Error('HTTP ' + res.status); return res.blob(); })
-          .then((blob) => { setDocxBlob(blob); setLoading(false); })
-          .catch((err) => { console.error('docx fetch failed:', err); setLoading(false); });
-      } else if (isExcel(file.suffix)) {
-        fetch(streamUrl, { headers })
-          .then((res) => res.blob())
-          .then((blob) => blob.arrayBuffer())
-          .then((data) => {
-            parseExcel(data).then(({ sheets, firstHtml, wb }) => {
-              excelWorkbookRef.current = wb;
-              setExcelSheets(sheets);
-              setExcelSheetIdx(0);
-              setExcelHtml(firstHtml);
-              setLoading(false);
-            });
-          })
-          .catch(() => setLoading(false));
       } else if (isImage(file.suffix)) {
         // 图片：通过预览 API 获取预签名 URL（access token 无法用于 <img src>）
         api.get<string>(`/preview/${file.id}/thumbnail`, { params: { size: 'lg' } })
@@ -204,7 +106,7 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
               // 后端不支持该格式预览，回退到下载令牌流
               return api.post<{ token: string }>(`/file/${file.id}/download-token`)
                 .then((d) => {
-                  setUrl(`/api/file/${file.id}/stream?token=${encodeURIComponent(d.token)}&inline=1`);
+                  setUrl(buildStreamUrl(file.id, { token: d.token, inline: true }));
                   setLoading(false);
                 });
             }
@@ -214,20 +116,13 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
         // 不支持预览：获取下载令牌用于下载按钮
         api.post<{ token: string }>(`/file/${file.id}/download-token`)
           .then((data) => {
-            setUrl(`/api/file/${file.id}/stream?token=${encodeURIComponent(data.token)}&inline=1`);
+            setUrl(buildStreamUrl(file.id, { token: data.token, inline: true }));
             setLoading(false);
           })
           .catch(() => setLoading(false));
       }
     }
-  }, [file, shareContext?.shareCode, shareContext?.password]);
-
-  // Switch Excel sheet
-  useEffect(() => {
-    if (excelWorkbookRef.current && excelSheets.length > 0) {
-      excelSheetToHtml(excelWorkbookRef.current, excelSheets[excelSheetIdx]).then(setExcelHtml);
-    }
-  }, [excelSheetIdx]);
+  }, [file, shareContext, location.pathname, location.search, navigate]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -252,15 +147,10 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
   if (!file) return null;
 
   const config = getFileTypeConfig(file.nodeType, file.suffix);
-  const canPreview = isImage(file.suffix) || isVideo(file.suffix) || isPdf(file.suffix) || isAudio(file.suffix) || isText(file.suffix) || isWord(file.suffix) || isExcel(file.suffix) || isPpt(file.suffix);
+  const canPreview = isImage(file.suffix) || isVideo(file.suffix) || isPdf(file.suffix) || isAudio(file.suffix) || isText(file.suffix);
 
   const goPrev = () => setIndex((i) => Math.max(0, i - 1));
   const goNext = () => setIndex((i) => Math.min(files.length - 1, i + 1));
-
-  const switchSheet = (idx: number) => {
-    setExcelSheetIdx(idx);
-    setSheetDropdownOpen(false);
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-neutral-950/95 overscroll-contain animate-fade-in">
@@ -271,35 +161,6 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
             <config.icon className={cn('w-4 h-4', config.color)} aria-hidden />
           </div>
           <span className="text-white text-sm font-medium truncate">{file.name}</span>
-          {/* Excel sheet selector */}
-          {isExcel(file.suffix) && excelSheets.length > 1 && (
-            <div className="relative ml-2">
-              <button
-                onClick={() => setSheetDropdownOpen(!sheetDropdownOpen)}
-                className="flex items-center gap-1 px-2 py-1 text-xs text-white/70 hover:text-white hover:bg-white/10 rounded transition-colors"
-              >
-                <Table className="w-3 h-3" aria-hidden />
-                {excelSheets[excelSheetIdx]}
-                <ChevronDown className="w-3 h-3" aria-hidden />
-              </button>
-              {sheetDropdownOpen && (
-                <div className="absolute top-full left-0 mt-1 bg-surface rounded-lg shadow-md border border-border py-1 min-w-[120px] z-20">
-                  {excelSheets.map((name, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => switchSheet(idx)}
-                      className={cn(
-                        'w-full text-left px-3 py-1.5 text-xs cursor-pointer transition-colors',
-                        idx === excelSheetIdx ? 'bg-primary-500/10 text-primary-600' : 'text-muted hover:bg-surface-2'
-                      )}
-                    >
-                      {name}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
         </div>
         <div className="flex items-center gap-2">
           {url && onDownload ? (
@@ -321,7 +182,7 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
               <span>下载</span>
             </a>
           ) : null}
-          <button onClick={onClose} aria-label="关闭" className="text-white/60 hover:text-white p-1.5 cursor-pointer transition-colors">
+          <button onClick={onClose} aria-label="关闭" className="text-white/60 hover:text-white p-1.5 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 rounded-lg">
             <X className="w-5 h-5" aria-hidden />
           </button>
         </div>
@@ -333,7 +194,7 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
           <button
             onClick={goPrev} aria-label="上一个"
             disabled={index === 0}
-            className="absolute left-4 p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-full cursor-pointer transition-colors disabled:opacity-30 disabled:cursor-not-allowed z-10"
+            className="absolute left-4 p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-full cursor-pointer transition-colors disabled:opacity-30 disabled:cursor-not-allowed z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
           >
             <ChevronLeft className="w-6 h-6" aria-hidden />
           </button>
@@ -444,19 +305,6 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
                 {textContent}
               </pre>
             </div>
-          ) : isWord(file.suffix) ? (
-            <div className="w-[80vw] h-[80vh] bg-surface rounded-lg overflow-auto shadow-lg">
-              <div ref={docxContainerRef} className="docx-container" />
-            </div>
-          ) : isExcel(file.suffix) && excelHtml ? (
-            <div className="w-[80vw] h-[80vh] bg-surface rounded-lg overflow-auto shadow-lg">
-              <style>{`
-                .xlsx-table { border-collapse: collapse; width: max-content; min-width: 100%; font-size: 13px; color: rgb(var(--fg)); }
-                .xlsx-table td, .xlsx-table th { border: 1px solid rgb(var(--border)); padding: 4px 8px; text-align: left; white-space: nowrap; }
-                .xlsx-table tr:first-child td { background: rgb(var(--surface-2)); font-weight: 600; position: sticky; top: 0; z-index: 1; }
-              `}</style>
-              <table className="xlsx-table" dangerouslySetInnerHTML={{ __html: excelHtml }} />
-            </div>
           ) : null}
         </div>
 
@@ -464,7 +312,7 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
           <button
             onClick={goNext} aria-label="下一个"
             disabled={index === files.length - 1}
-            className="absolute right-4 p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-full cursor-pointer transition-colors disabled:opacity-30 disabled:cursor-not-allowed z-10"
+            className="absolute right-4 p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-full cursor-pointer transition-colors disabled:opacity-30 disabled:cursor-not-allowed z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
           >
             <ChevronRight className="w-6 h-6" aria-hidden />
           </button>

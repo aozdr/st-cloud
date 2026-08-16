@@ -1,0 +1,38 @@
+import type { FileNode } from '../../types';
+import type { SortBy, SortDir, ViewMode } from './FileToolbar';
+import FileTableView from './FileTableView';
+import FileTable from './FileTable';
+import FileGrid from './FileGrid';
+
+/** 三种视图（表格/列表/网格）的公共 props，避免调用方重复传参 */
+export interface FileListProps {
+  view: ViewMode;
+  files: FileNode[];
+  lockedIds: Set<string>;
+  selectedIds: Set<string>;
+  focusedId: string | null;
+  cutIds: Set<string> | null;
+  sortBy: SortBy;
+  sortDir: SortDir;
+  onSortChange: (col: SortBy) => void;
+  onSelect: (id: string, e: React.MouseEvent) => void;
+  onToggleSelect: (id: string) => void;
+  onSelectAll: () => void;
+  isFavorite: (id: string) => boolean;
+  onToggleFavorite: (node: FileNode) => void;
+  onContextMenu: (e: React.MouseEvent, node: FileNode) => void;
+  onNavigate: (node: FileNode) => void;
+  onDoubleClick: (node: FileNode) => void;
+  onItemDragStart: (e: React.DragEvent, node: FileNode) => void;
+  onFolderDragOver: (e: React.DragEvent, folder: FileNode) => void;
+  onFolderDragLeave: (e: React.DragEvent, folder: FileNode) => void;
+  onFolderDrop: (e: React.DragEvent, folder: FileNode) => void;
+  dragOverFolderId: string | null;
+}
+
+/** 按当前视图渲染文件列表（统一 onDoubleClick/拖拽等行为） */
+export default function FileList({ view, onSelectAll, ...common }: FileListProps) {
+  if (view === 'table') return <FileTableView {...common} onSelectAll={onSelectAll} />;
+  if (view === 'card') return <FileTable {...common} onSelectAll={onSelectAll} />;
+  return <FileGrid {...common} />;
+}

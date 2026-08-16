@@ -32,7 +32,7 @@ export default function ArchiveDialog({ file, onClose, onExtracted }: Props) {
       .then((data) => setEntries(data || []))
       .catch(() => showToast('读取压缩包失败', 'error'))
       .finally(() => setLoading(false));
-  }, [file.id]);
+  }, [file.id, showToast]);
 
   const handleExtract = async () => {
     setExtracting(true);

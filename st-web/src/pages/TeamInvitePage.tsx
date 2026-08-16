@@ -2,14 +2,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { CheckCircle2, XCircle, Info, Loader2, FolderOpen } from 'lucide-react';
 import api from '../lib/api';
-import { useToast } from '../components/ui/Toast';
 
 type InviteStatus = 'loading' | 'success' | 'already' | 'invalid' | 'unauthorized';
 
 export default function TeamInvitePage() {
   const { code } = useParams<{ code: string }>();
   const navigate = useNavigate();
-  const { showToast } = useToast();
   const [status, setStatus] = useState<InviteStatus>('loading');
   const [spaceId, setSpaceId] = useState<string | null>(null);
 
@@ -18,8 +16,8 @@ export default function TeamInvitePage() {
       const id: string = await api.post(`/team/invite/${code}`);
       setSpaceId(id);
       setStatus('success');
-    } catch (e: any) {
-      if (e?.status === 401) {
+    } catch (e) {
+      if ((e as { status?: number } | null)?.status === 401) {
         setStatus('unauthorized');
       } else {
         setStatus('invalid');

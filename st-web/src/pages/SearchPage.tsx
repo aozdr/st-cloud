@@ -6,7 +6,7 @@ import { Calendar as CalendarPicker } from '../components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import api from '../lib/api';
 import type { SearchResultVO, FileNode } from '../types';
-import { getFileTypeConfig, formatSize, formatDate, cn } from '../lib/utils';
+import { getFileTypeConfig, formatSize, formatDate, cn, sanitizeHighlight } from '../lib/utils';
 import { type FileTypeFilter, FILTER_SUFFIXES } from '../lib/fileTypes';
 import FileTypeIcon from '../components/file/FileTypeIcon';
 import PreviewModal from '../components/preview/PreviewModal';
@@ -344,9 +344,9 @@ export default function SearchPage() {
                   }} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); (e.currentTarget as HTMLElement).click(); } }} className="group flex items-start gap-3.5 py-3 px-4 hover:bg-surface-2/70 rounded-none cursor-pointer transition-colors duration-150 animate-file-enter focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                     <div className="flex-shrink-0 mt-0.5"><FileTypeIcon config={config} size="lg" isFolder={isFolder} suffix={item.suffix} /></div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-sm font-medium text-fg truncate group-hover:text-primary-600 transition-colors"><span className="search-highlight" dangerouslySetInnerHTML={{ __html: item.fileName }} /></h3>
+                      <h3 className="text-sm font-medium text-fg truncate group-hover:text-primary-600 transition-colors"><span className="search-highlight" dangerouslySetInnerHTML={{ __html: sanitizeHighlight(item.fileName) }} /></h3>
                       {item.path && (<div className="flex items-center gap-1 mt-0.5 text-xs text-muted"><FolderOpen className="w-3 h-3 flex-shrink-0" aria-hidden /><span className="truncate max-w-[400px]" title={item.path}>{parentPath || '/'}</span></div>)}
-                      {item.highlight && (<div className="search-highlight mt-1.5 text-sm text-muted leading-relaxed line-clamp-2" dangerouslySetInnerHTML={{ __html: item.highlight }} />)}
+                      {item.highlight && (<div className="search-highlight mt-1.5 text-sm text-muted leading-relaxed line-clamp-2" dangerouslySetInnerHTML={{ __html: sanitizeHighlight(item.highlight) }} />)}
                       <div className="flex items-center gap-2 mt-1.5 text-xs text-muted">
                         <span className={cn('inline-flex items-center px-1.5 py-0.5 rounded font-medium tabular-nums', isFolder ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' : 'bg-surface-2 text-muted')}>{config.label}</span>
                         {item.fileSize && Number(item.fileSize) > 0 && (<span className="tabular-nums">{formatSize(item.fileSize)}</span>)}

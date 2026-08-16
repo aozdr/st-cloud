@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import api from '../lib/api';
 import EmptyState from '../components/EmptyState';
@@ -15,14 +15,14 @@ export default function HiddenFilesPage() {
   const [files, setFiles] = useState<FileNode[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchHidden = () => {
+  const fetchHidden = useCallback(() => {
     api.get<FileNode[]>('/file/hidden')
       .then(setFiles)
       .catch(() => showToast('加载失败', 'error'))
       .finally(() => setLoading(false));
-  };
+  }, [showToast]);
 
-  useEffect(fetchHidden, []);
+  useEffect(() => { fetchHidden(); }, [fetchHidden]);
 
   const handleUnhide = async (file: FileNode) => {
     await api.put(`/file/${file.id}/unhide`);

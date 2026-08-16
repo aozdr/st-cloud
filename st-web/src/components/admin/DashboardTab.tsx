@@ -49,7 +49,7 @@ export default function DashboardTab() {
         {statCards.map((card) => (
           <div key={card.label} className="bg-surface rounded-lg border border-border p-4">
             <div className="w-10 h-10 bg-primary-500/10 rounded-lg flex items-center justify-center mb-3">
-              <card.icon className="w-5 h-5 text-primary-600" />
+              <card.icon className="w-5 h-5 text-primary-600" aria-hidden />
             </div>
             <p className="text-2xl font-bold text-fg">{card.value}</p>
             <p className="text-xs text-muted mt-0.5">{card.label}</p>

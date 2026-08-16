@@ -37,7 +37,6 @@ export default function StatsPanel({ spaceId }: StatsPanelProps) {
 
   const usedPercent = Number(stats.storageQuota) > 0 ? Math.min(100, (Number(stats.storageUsed) / Number(stats.storageQuota)) * 100) : 0;
   const maxOpCount = Math.max(...stats.operationStats.map(o => o.count), 1);
-  const maxActivity = stats.memberActivity.length;
 
   return (
     <div className="p-5 space-y-5">

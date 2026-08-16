@@ -1,24 +1,25 @@
 import { useState, useEffect } from 'react';
-import api from '../../lib/api';
-import { getFileTypeConfig, cn } from '../../lib/utils';
+import api, { buildStreamUrl } from '../../lib/api';
+import { getFileTypeConfig, isImage, cn } from '../../lib/utils';
 import type { FileNode } from '../../types';
 import FileTypeIcon from './FileTypeIcon';
-
-const IMAGE_SUFFIXES = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'];
 
 interface Props {
   file: FileNode;
   size?: 'sm' | 'lg' | 'xl' | 'xxl';
+  /** 网格大图模式：显示模糊背景层；配合 className 撑满容器 */
+  blur?: boolean;
+  className?: string;
 }
 
-export default function FileThumbnail({ file, size = 'sm' }: Props) {
+export default function FileThumbnail({ file, size = 'sm', blur = false, className }: Props) {
   const [url, setUrl] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const config = getFileTypeConfig(file.nodeType, file.suffix);
-  const isImage = file.nodeType === 1 && IMAGE_SUFFIXES.includes((file.suffix || '').toLowerCase());
+  const img = file.nodeType === 1 && isImage(file.suffix);
 
   useEffect(() => {
-    if (!isImage) return;
+    if (!img) return;
     let cancelled = false;
     setLoaded(false);
     api
@@ -28,39 +29,48 @@ export default function FileThumbnail({ file, size = 'sm' }: Props) {
       })
       .catch(() => {
         if (!cancelled) {
-          const token = localStorage.getItem('accessToken');
-          setUrl(`/api/file/${file.id}/stream?token=${encodeURIComponent(token || '')}&inline=1`);
+          setUrl(buildStreamUrl(file.id, { token: localStorage.getItem('accessToken'), inline: true }));
         }
       });
     return () => {
       cancelled = true;
     };
-  }, [file.id, isImage]);
+  }, [file.id, img]);
 
-  const sizeClass = size === 'xxl' ? 'w-28 h-28' : size === 'xl' ? 'w-20 h-20' : size === 'lg' ? 'w-10 h-10' : 'w-8 h-8';
-  // Small list/table thumbnails: contained with padding so images don't look like
-  // jarring solid squares next to transparent file-type icons.
-  const pad = size === 'sm' || size === 'lg';
-
-  if (isImage) {
-    return (
-      <div className={`${sizeClass} rounded-lg overflow-hidden flex-shrink-0 relative`}>
-        <div className={cn('absolute inset-0 flex items-center justify-center transition-opacity duration-300', loaded ? 'opacity-0' : 'opacity-100', pad && 'p-0.5')}>
-          <FileTypeIcon config={config} size={size} isFolder={false} suffix={file.suffix} />
-        </div>
-        {url && (
-          <img
-            src={url}
-            alt={file.name}
-            className={cn('absolute inset-0 w-full h-full transition-opacity duration-300', loaded ? 'opacity-100' : 'opacity-0', pad ? 'object-contain p-0.5' : 'object-cover')}
-            loading="lazy"
-            draggable={false}
-            onLoad={() => setLoaded(true)}
-          />
-        )}
-      </div>
-    );
+  if (!img) {
+    return <FileTypeIcon config={config} size={size} isFolder={file.nodeType === 0} suffix={file.suffix} />;
   }
 
-  return <FileTypeIcon config={config} size={size} isFolder={file.nodeType === 0} suffix={file.suffix} />;
+  const sizeClass = size === 'xxl' ? 'w-28 h-28' : size === 'xl' ? 'w-20 h-20' : size === 'lg' ? 'w-10 h-10' : 'w-8 h-8';
+  // 列表小尺寸：contain + padding，避免图片贴边；网格大图（blur）contain 完整显示，由模糊背景层填充留白
+  const pad = size === 'sm' || size === 'lg';
+
+  return (
+    <div className={cn(sizeClass, 'rounded-lg overflow-hidden flex-shrink-0 relative', className)}>
+      {/* 模糊背景层：网格大图用同图 blur 填充，消除 letterbox 留白 */}
+      {blur && url && (
+        <img
+          src={url}
+          alt=""
+          aria-hidden
+          className="absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-60"
+        />
+      )}
+      {/* 占位图标 */}
+      <div className={cn('absolute inset-0 flex items-center justify-center transition-opacity duration-300', loaded ? 'opacity-0' : 'opacity-100', pad && 'p-0.5')}>
+        <FileTypeIcon config={config} size={size} isFolder={false} suffix={file.suffix} />
+      </div>
+      {/* 前景图：居中完整展示原始比例（模糊背景层负责填充留白，避免竖图拉伸发糊） */}
+      {url && (
+        <img
+          src={url}
+          alt={file.name}
+          className={cn('absolute inset-0 w-full h-full transition-opacity duration-300', loaded ? 'opacity-100' : 'opacity-0', pad ? 'object-contain p-0.5' : blur ? 'object-contain' : 'object-cover')}
+          loading="lazy"
+          draggable={false}
+          onLoad={() => setLoaded(true)}
+        />
+      )}
+    </div>
+  );
 }

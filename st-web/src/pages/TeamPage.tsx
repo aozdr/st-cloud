@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Users, Plus, FolderClosed, X, HardDrive, Search, Pin } from 'lucide-react';
+import { Users, Plus, FolderClosed, X, HardDrive, Pin } from 'lucide-react';
 import api from '../lib/api';
 import { useToast } from '../components/ui/Toast';
 import { formatSize, cn } from '../lib/utils';
@@ -13,8 +13,6 @@ export default function TeamPage() {
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ spaceName: '', description: '' });
-  const [keyword, setKeyword] = useState('');
-  const [sortBy, setSortBy] = useState('createdAt');
 
   const fetchSpaces = useCallback(async () => {
     setLoading(true);
@@ -26,7 +24,7 @@ export default function TeamPage() {
     } finally {
       setLoading(false);
     }
-  }, [keyword, sortBy]);
+  }, []);
 
   useEffect(() => {
     fetchSpaces();

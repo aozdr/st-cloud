@@ -1,12 +1,14 @@
-import { useState, useEffect } from 'react';
-import api from '../../lib/api';
-import { getFileTypeConfig, cn, formatSize, formatDate } from '../../lib/utils';
+import { cn, formatSize, formatDate, isVideo } from '../../lib/utils';
 import type { FileNode } from '../../types';
-import FileTypeIcon from './FileTypeIcon';
+import FileThumbnail from './FileThumbnail';
+import type { SortBy, SortDir } from './FileToolbar';
 import { Check, Star, Play, Lock } from 'lucide-react';
 
 interface Props {
   files: FileNode[];
+  sortBy?: SortBy;
+  sortDir?: SortDir;
+  onSortChange?: (col: SortBy) => void;
   /** 已锁定节点 ID 集合（团队空间传入；用于列表行显示锁图标） */
   lockedIds?: Set<string>;
   selectedIds: Set<string>;
@@ -24,87 +26,6 @@ interface Props {
   onToggleSelect: (id: string) => void;
   isFavorite: (id: string) => boolean;
   onToggleFavorite: (node: FileNode) => void;
-}
-
-const IMAGE_SUFFIXES = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'ico'];
-const VIDEO_SUFFIXES = ['mp4', 'mkv', 'avi', 'mov', 'wmv', 'flv', 'webm', 'm4v', 'mpg', 'mpeg', '3gp'];
-
-function isImage(file: FileNode): boolean {
-  if (file.nodeType === 0) return false;
-  const suffix = (file.suffix || '').toLowerCase();
-  return IMAGE_SUFFIXES.includes(suffix);
-}
-
-function isVideo(file: FileNode): boolean {
-  if (file.nodeType === 0) return false;
-  const suffix = (file.suffix || '').toLowerCase();
-  return VIDEO_SUFFIXES.includes(suffix);
-}
-
-
-function GridThumbnail({ file }: { file: FileNode }) {
-  const [url, setUrl] = useState<string | null>(null);
-  const [loaded, setLoaded] = useState(false);
-  const config = getFileTypeConfig(file.nodeType, file.suffix);
-  const img = isImage(file);
-  const video = isVideo(file);
-
-  useEffect(() => {
-    if (!img) return;
-    let cancelled = false;
-    setLoaded(false);
-    api
-      .get<string>(`/preview/${file.id}/thumbnail`, { params: { size: 'sm' } })
-      .then((u) => {
-        if (!cancelled) setUrl(u);
-      })
-      .catch(() => {
-        if (!cancelled) {
-          const token = localStorage.getItem('accessToken');
-          setUrl(`/api/file/${file.id}/stream?token=${encodeURIComponent(token || '')}&inline=1`);
-        }
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [file.id, img]);
-
-  return (
-    <div className="absolute inset-0">
-      {/* 模糊背景层：图片文件用同图 blur 填充，消除 letterbox 留白 */}
-      {img && url && (
-        <img
-          src={url}
-          alt=""
-          aria-hidden
-          className="absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-60"
-        />
-      )}
-      {/* 占位图标 */}
-      <div className={cn('absolute inset-0 flex items-center justify-center transition-opacity duration-300', loaded ? 'opacity-0' : 'opacity-100')}>
-        <FileTypeIcon config={config} size="xl" isFolder={file.nodeType === 0} suffix={file.suffix} />
-      </div>
-      {/* 前景图：contain 居中展示原始比例 */}
-      {img && url && (
-        <img
-          src={url}
-          alt={file.name}
-          className={cn('absolute inset-0 w-full h-full object-contain transition-opacity duration-300', loaded ? 'opacity-100' : 'opacity-0')}
-          loading="lazy"
-          draggable={false}
-          onLoad={() => setLoaded(true)}
-        />
-      )}
-      {/* 视频播放按钮：半透明圆形 + 白色三角（点击进入预览播放器） */}
-      {video && (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <span className="w-12 h-12 rounded-full bg-black/50 flex items-center justify-center backdrop-blur-sm">
-            <Play className="w-5 h-5 text-white ml-0.5" fill="currentColor" aria-hidden />
-          </span>
-        </div>
-      )}
-    </div>
-  );
 }
 
 export default function FileGrid({
@@ -171,8 +92,18 @@ export default function FileGrid({
             </button>
 
             <div className="relative aspect-video w-full rounded-2xl overflow-hidden mb-2 bg-surface-2">
-              <GridThumbnail file={file} />
-
+              {/* 居中容器：非图片文件图标居中展示；图片文件由 FileThumbnail 铺满 */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <FileThumbnail file={file} size="xl" blur className="absolute inset-0 w-full h-full" />
+              </div>
+              {/* 视频播放按钮：半透明圆形 + 白色三角（点击进入预览播放器） */}
+              {isVideo(file.suffix) && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <span className="w-12 h-12 rounded-full bg-black/50 flex items-center justify-center backdrop-blur-sm">
+                    <Play className="w-5 h-5 text-white ml-0.5" fill="currentColor" aria-hidden />
+                  </span>
+                </div>
+              )}
             </div>
 
             <div className="px-1">
