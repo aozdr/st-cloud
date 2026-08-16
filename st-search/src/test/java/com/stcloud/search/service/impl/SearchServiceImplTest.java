@@ -14,6 +14,7 @@ import com.stcloud.core.service.StorageService;
 import com.stcloud.search.dto.SearchResultVO;
 import com.stcloud.search.init.SearchIndexInitializer;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -28,7 +29,9 @@ import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.ArgumentMatchers.anyCollection;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 /**
  * SearchServiceImpl 单元测试
@@ -56,6 +59,19 @@ class SearchServiceImplTest {
 
     @InjectMocks
     private SearchServiceImpl searchService;
+
+    @BeforeEach
+    void stubDatabaseLookup() {
+        // 默认：命中节点均存在且可访问（回收子树过滤由独立用例覆盖）；
+        // lenient：未触达 DB 的用例（无命中/异常）不因多余桩失败
+        lenient().when(fileNodeMapper.selectBatchIds(anyCollection())).thenAnswer(inv -> {
+            Collection<?> ids = inv.getArgument(0);
+            return ids.stream()
+                    .map(id -> buildFileNode(((Number) id).longValue(), "x.txt", "txt", 1L))
+                    .toList();
+        });
+        lenient().when(fileNodeMapper.findIdsWithInaccessibleAncestor(anyCollection())).thenReturn(List.of());
+    }
 
     @BeforeAll
     static void disableRequiredPropertiesCheck() {
@@ -470,6 +486,38 @@ class SearchServiceImplTest {
             doReturn(mockResponse).when(client).search(any(Function.class), eq(Map.class));
 
             assertDoesNotThrow(() -> searchService.searchContent("test", 1L, 0, 10, null, null, null, null, null, null));
+        }
+
+        @Test
+        @DisplayName("祖先链含回收节点的命中被过滤（回收文件夹不再逐子孙删索引）")
+        void testSearchExcludesNodeUnderRecycledAncestor() throws Exception {
+            Map<String, Object> source = new HashMap<>();
+            source.put(SearchIndexInitializer.FIELD_FILE_ID, "100");
+            source.put(SearchIndexInitializer.FIELD_FILE_NAME, "leak.txt");
+            source.put(SearchIndexInitializer.FIELD_PATH, "/recycled/leak.txt");
+            SearchResponse<Map> mockResponse = buildSearchResponse(List.of(source), Collections.singletonList(null));
+            doReturn(mockResponse).when(client).search(any(Function.class), eq(Map.class));
+            when(fileNodeMapper.findIdsWithInaccessibleAncestor(anyCollection())).thenReturn(List.of(100L));
+
+            List<SearchResultVO> results = searchService.searchContent("leak", 1L, 1, 10, null, null, null, null, null, null);
+
+            assertTrue(results.isEmpty(), "回收子树中的节点不应出现在搜索结果");
+        }
+
+        @Test
+        @DisplayName("数据库中已不存在的命中被过滤")
+        void testSearchExcludesMissingNode() throws Exception {
+            Map<String, Object> source = new HashMap<>();
+            source.put(SearchIndexInitializer.FIELD_FILE_ID, "100");
+            source.put(SearchIndexInitializer.FIELD_FILE_NAME, "gone.txt");
+            source.put(SearchIndexInitializer.FIELD_PATH, "/gone.txt");
+            SearchResponse<Map> mockResponse = buildSearchResponse(List.of(source), Collections.singletonList(null));
+            doReturn(mockResponse).when(client).search(any(Function.class), eq(Map.class));
+            when(fileNodeMapper.selectBatchIds(anyCollection())).thenReturn(List.of());
+
+            List<SearchResultVO> results = searchService.searchContent("gone", 1L, 1, 10, null, null, null, null, null, null);
+
+            assertTrue(results.isEmpty(), "已删除节点不应出现在搜索结果");
         }
     }
 

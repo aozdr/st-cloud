@@ -10,7 +10,9 @@ import com.stcloud.core.dto.FileNodeVO;
 import com.stcloud.core.entity.FileNode;
 import com.stcloud.core.entity.FileObject;
 import com.stcloud.core.enums.UploadStatus;
+import com.stcloud.core.event.FileIndexEvent;
 import com.stcloud.core.event.ReliableEventPublisher;
+import com.stcloud.core.event.SyncChangeEvent;
 import com.stcloud.core.mapper.FileNodeMapper;
 import com.stcloud.core.mapper.FileObjectMapper;
 import com.stcloud.core.mapper.UserQuotaMapper;
@@ -33,7 +35,13 @@ import java.util.List;
 import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
@@ -43,6 +51,9 @@ import static org.mockito.Mockito.when;
  */
 @Import(FileServiceFlowIntegrationTest.FlowTestConfig.class)
 class FileServiceFlowIntegrationTest extends AbstractIntegrationTest {
+
+    @Autowired
+    private ReliableEventPublisher reliableEventPublisher;
 
     @TestConfiguration
     static class FlowTestConfig {
@@ -255,6 +266,17 @@ class FileServiceFlowIntegrationTest extends AbstractIntegrationTest {
         FileNode child = file("child.txt", folder.getId(), "/sub/child.txt");
 
         fileService.deleteToRecycleBin(List.of(folder.getId()));
+        // 只产生文件夹自身事件（索引+同步各 1 条），不逐子孙发布
+        verify(reliableEventPublisher, times(1)).publishFileIndex(
+                argThat(n -> n != null && n.getId().equals(folder.getId())),
+                eq(FileIndexEvent.ActionType.DELETE));
+        verify(reliableEventPublisher, times(1)).publishSyncChange(
+                argThat(n -> n != null && n.getId().equals(folder.getId())),
+                eq(SyncChangeEvent.ChangeType.DELETE));
+        verify(reliableEventPublisher, never()).publishFileIndex(
+                argThat(n -> n != null && n.getId().equals(child.getId())), any());
+        verify(reliableEventPublisher, never()).publishSyncChange(
+                argThat(n -> n != null && n.getId().equals(child.getId())), any());
         assertEquals(NodeStatus.RECYCLED.getCode(),
                 fileNodeMapper.selectById(folder.getId()).getStatus());
         // 子孙自身仍是 NORMAL，但祖先被回收 → 不可访问

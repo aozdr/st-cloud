@@ -327,14 +327,14 @@ public class FileServiceImpl implements FileService {
             fileNodeMapper.updateById(node);
             // 回收后该节点立即不可访问：失效可访问性缓存
             invalidateAccessible(nodeId);
-            // ES：从索引移除被删节点及其子孙（子孙 status 虽未变，但需不可搜）
+            // ES/同步：仅移除被删节点自身（子孙由搜索侧祖先链过滤、同步端递归删除兜底）
             reliableEventPublisher.publishFileIndex(node, FileIndexEvent.ActionType.DELETE);
             reliableEventPublisher.publishSyncChange(node, SyncChangeEvent.ChangeType.DELETE);
             for (FileNode descendant : collectDescendants(nodeId)) {
-                // 祖先回收后子孙即不可访问：级联失效可访问性缓存，避免 TTL 窗口内泄漏
+                // 只改变被删文件夹自身状态：子孙不发事件（桌面端对文件夹 DELETE 递归删本地子树；
+                // 搜索侧按祖先链过滤兜底）。此处仅级联失效可访问性缓存（内存操作，无 DB 写入），
+                // 避免 TTL 窗口内缓存命中导致已回收子孙仍可访问
                 invalidateAccessible(descendant.getId());
-                reliableEventPublisher.publishFileIndex(descendant, FileIndexEvent.ActionType.DELETE);
-                reliableEventPublisher.publishSyncChange(descendant, SyncChangeEvent.ChangeType.DELETE);
             }
         }
     }
@@ -742,14 +742,13 @@ public class FileServiceImpl implements FileService {
             fileNodeMapper.updateById(node);
             // 回收后该节点立即不可访问：失效可访问性缓存
             invalidateAccessible(nodeId);
-            // ES：从索引移除被删节点及其子孙（子孙 status 虽未变，但需不可搜）
+            // ES/同步：仅移除被删节点自身（子孙由搜索侧祖先链过滤、同步端递归删除兜底）
             reliableEventPublisher.publishFileIndex(node, FileIndexEvent.ActionType.DELETE);
             reliableEventPublisher.publishSyncChange(node, SyncChangeEvent.ChangeType.DELETE);
             for (FileNode descendant : collectDescendants(nodeId)) {
-                // 祖先回收后子孙即不可访问：级联失效可访问性缓存，避免 TTL 窗口内泄漏
+                // 只改变被删文件夹自身状态：子孙不发事件（同步端文件夹 DELETE 递归删本地子树；
+                // 搜索侧按祖先链过滤兜底）。此处仅级联失效可访问性缓存（内存操作，无 DB 写入）
                 invalidateAccessible(descendant.getId());
-                reliableEventPublisher.publishFileIndex(descendant, FileIndexEvent.ActionType.DELETE);
-                reliableEventPublisher.publishSyncChange(descendant, SyncChangeEvent.ChangeType.DELETE);
             }
         }
     }

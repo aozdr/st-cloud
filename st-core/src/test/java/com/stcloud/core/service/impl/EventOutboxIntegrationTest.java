@@ -28,6 +28,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.ArrayList;
@@ -129,6 +131,19 @@ class EventOutboxIntegrationTest extends AbstractIntegrationTest {
         ReflectionTestUtils.setField(reliableEventPublisher, "nameServer", enabled ? "127.0.0.1:9876" : "");
     }
 
+    /** 异步投递：轮询等待 Outbox 行被标记为已投递（status=1） */
+    private void awaitOutboxSent(Long eventLogId, long timeoutMs) throws InterruptedException {
+        long deadline = System.currentTimeMillis() + timeoutMs;
+        while (System.currentTimeMillis() < deadline) {
+            EventLog outbox = eventLogMapper.selectById(eventLogId);
+            if (outbox != null && Integer.valueOf(1).equals(outbox.getStatus())) {
+                return;
+            }
+            Thread.sleep(50);
+        }
+        fail("等待 Outbox 异步投递超时: id=" + eventLogId);
+    }
+
     private OutboxRelayEvent lastOutboxRelayEvent() {
         for (int i = capturedEvents.size() - 1; i >= 0; i--) {
             if (capturedEvents.get(i) instanceof OutboxRelayEvent relay) {
@@ -180,8 +195,9 @@ class EventOutboxIntegrationTest extends AbstractIntegrationTest {
         assertNotNull(lastOutboxRelayEvent());
     }
 
-    /** 事务提交后由 EventRelay 投递 RocketMQ 并标记已投递 */
+    /** 事务提交后由 EventRelay 异步投递 RocketMQ 并标记已投递（不阻塞业务事务） */
     @Test
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     void relay_sendsAfterCommit() throws Exception {
         setMqEnabled(true);
         TransactionTemplate tx = new TransactionTemplate(transactionManager);
@@ -189,11 +205,13 @@ class EventOutboxIntegrationTest extends AbstractIntegrationTest {
         tx.executeWithoutResult(s -> {
             reliableEventPublisher.publishFileIndex(buildNode(9006L), FileIndexEvent.ActionType.INDEX);
         });
-        // AFTER_COMMIT 同步触发：投递一次、标记已投递
-        verify(rocketMQTemplate, times(1)).syncSend(eq("FILE_INDEX"), any(EventMessage.class));
         OutboxRelayEvent relay = lastOutboxRelayEvent();
         assertNotNull(relay);
-        EventLog outbox = eventLogMapper.selectById(relay.getEventLogId());
+        Long eventLogId = relay.getEventLogId();
+        // AFTER_COMMIT 触发后台异步投递：轮询等待发送完成并标记已投递
+        awaitOutboxSent(eventLogId, 5000);
+        verify(rocketMQTemplate, times(1)).syncSend(eq("FILE_INDEX"), any(EventMessage.class));
+        EventLog outbox = eventLogMapper.selectById(eventLogId);
         assertNotNull(outbox);
         assertEquals(1, outbox.getStatus(), "投递成功后应标记 status=1");
         // 负载可反序列化且字段一致
@@ -201,7 +219,7 @@ class EventOutboxIntegrationTest extends AbstractIntegrationTest {
         assertEquals(9006L, parsed.getFileNode().getId());
         assertEquals("INDEX", parsed.getActionType());
         assertEquals("FILE_INDEX", parsed.getEventType());
-        assertEquals(relay.getEventLogId(), parsed.getEventLogId());
+        assertEquals(eventLogId, parsed.getEventLogId());
         assertEquals("/a.txt", parsed.getFileNode().toFileNode().getPath());
     }
 

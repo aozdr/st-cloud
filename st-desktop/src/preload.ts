@@ -142,6 +142,15 @@ const api: ElectronAPI = {
       ipcRenderer.removeListener('sync:event', handler);
     };
   },
+
+  // 主进程拦截 F5 后通知渲染进程原地刷新文件列表
+  onRefreshFileList: (cb: () => void) => {
+    const handler = () => cb();
+    ipcRenderer.on('app:refresh-file-list', handler);
+    return () => {
+      ipcRenderer.removeListener('app:refresh-file-list', handler);
+    };
+  },
 };
 
 contextBridge.exposeInMainWorld('electronAPI', api);

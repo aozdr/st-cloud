@@ -463,6 +463,8 @@ trashItem: (filePath: string) => Promise<void>;
   syncGetHistory: (rootId: string) => Promise<SyncHistoryEntry[]>;
   syncGetStats: (rootId: string) => Promise<SyncStats>;
   onSyncEvent: (cb: (event: { event: string; data: unknown }) => void) => () => void;
+  /** 桌面端：主进程拦截 F5 后通知渲染进程原地刷新文件列表 */
+  onRefreshFileList: (cb: () => void) => () => void;
 }
 
 // ==================== Speed Limit Types ====================

@@ -97,6 +97,8 @@ export interface ElectronAPI {
   syncGetHistory: (rootId: string) => Promise<{ id: number; rootId: string; action: string; fileName: string | null; relPath: string | null; status: string; detail: string | null; createdAt: string }[]>;
   syncGetStats: (rootId: string) => Promise<{ synced: number; error: number; conflict: number; excluded: number }>;
   onSyncEvent: (cb: (event: { event: string; data: unknown }) => void) => () => void;
+  /** 主进程拦截 F5 后通知渲染进程原地刷新文件列表 */
+  onRefreshFileList: (cb: () => void) => () => void;
 }
 
 // ==================== 后端 API 响应类型 ====================

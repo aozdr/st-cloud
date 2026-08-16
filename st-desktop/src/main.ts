@@ -34,6 +34,14 @@ async function createWindow(): Promise<void> {
     return { action: 'allow' };
   });
 
+  // F5 = 仅刷新文件列表：拦截窗口级刷新，通知渲染进程原地重新拉取当前目录（不整页重载、不丢状态）
+  win.webContents.on('before-input-event', (event, input) => {
+    if (input.type === 'keyDown' && input.key === 'F5') {
+      event.preventDefault();
+      win.webContents.send('app:refresh-file-list');
+    }
+  });
+
   if (isDev) {
     // 开发模式：加载 Vite dev server
     await win.loadURL('http://localhost:5173');

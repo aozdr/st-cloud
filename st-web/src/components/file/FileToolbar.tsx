@@ -36,6 +36,8 @@ interface FileToolbarProps {
   onSelectAll: () => void;
   onClearSelection: () => void;
   onRefresh: () => void;
+  /** 刷新中：刷新按钮图标旋转（Windows 风格反馈） */
+  refreshing?: boolean;
   onBatchRename: () => void;
   foldersFirst: boolean;
   onToggleFoldersFirst: (v: boolean) => void;
@@ -46,7 +48,7 @@ export default function FileToolbar({
   sortBy, onSortChange, sortDir, onSortDirToggle,
   view, onViewChange,
   onNewFolder, onNewFile, onUploadClick, onDownload, onMove, onCopy, onDelete,
-  onSelectAll, onClearSelection, onRefresh, onBatchRename,
+  onSelectAll, onClearSelection, onRefresh, refreshing = false, onBatchRename,
   foldersFirst, onToggleFoldersFirst,
 }: FileToolbarProps) {
   const hasSelection = selectedCount > 0;
@@ -224,8 +226,8 @@ export default function FileToolbar({
             </div>
           </>
         )}
-        <button onClick={onRefresh} aria-label="刷新" className="btn-ghost" title="刷新">
-          <RefreshCw className="w-4 h-4" aria-hidden />
+        <button onClick={onRefresh} disabled={refreshing} aria-label="刷新" className="btn-ghost" title="刷新">
+          <RefreshCw className={cn('w-4 h-4', refreshing && 'animate-spin')} aria-hidden />
         </button>
         {!hasSelection && (
           <div className="flex items-center bg-surface-2 rounded-lg p-0.5">

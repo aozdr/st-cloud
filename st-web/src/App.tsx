@@ -73,9 +73,10 @@ export default function App() {
           }
         >
           <Route index element={<HomePage />} />
-          <Route path="files" element={<FileManager />} />
+          {/* 单一路由条目（parentId 可选）：/files 与 /files/:parentId 之间切换不重挂载，
+              打开文件夹/返回根目录都原地更新，避免闪烁 */}
+          <Route path="files/:parentId?" element={<FileManager />} />
           <Route path="files/category/:type" element={<CategoryPage />} />
-          <Route path="files/:parentId" element={<FileManager />} />
           <Route path="search" element={<SearchPage />} />
           <Route path="recycle" element={<RecycleBin />} />
           <Route path="favorites" element={<FavoritesPage />} />

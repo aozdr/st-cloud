@@ -35,11 +35,14 @@ export default function FileManager() {
       <div className={`flex-1 min-h-0 flex ${dualPanel ? 'gap-px bg-border' : ''} overflow-hidden`}>
         <div className="flex-1 min-h-0 min-w-0 overflow-hidden">
           <FileBrowser
-            key={parentId}
             source={personalFileSource}
             parentId={parentId}
             focusId={focusId}
-            onNavigateFolder={(node: FileNode) => navigate(`/files/${node.id}`)}
+            onNavigateFolder={(node: FileNode) => navigate(
+              node.id === '0' ? '/files' : `/files/${node.id}`,
+              // 携带目标节点路径：FileBrowser 可即时更新面包屑，不等额外请求
+              { state: { nodeId: node.id, nodePath: node.path } },
+            )}
             onBack={() => navigate(-1)}
             enableShare
             enableVersions
@@ -49,7 +52,6 @@ export default function FileManager() {
         {dualPanel && (
           <div className="flex-1 min-w-0 overflow-hidden">
             <FileBrowser
-              key={`right-${rightParentId}`}
               source={personalFileSource}
               parentId={rightParentId}
               onNavigateFolder={(node: FileNode) => setRightParentId(node.id)}

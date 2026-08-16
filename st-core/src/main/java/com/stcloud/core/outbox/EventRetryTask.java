@@ -11,10 +11,11 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
- * 事件失败重投定时任务（TASK-004）：周期扫描 status=2 且 retry_count 未达上限的 event_log，
+ * 事件失败重投定时任务（TASK-004）：周期扫描失败(status=2)或异步投递前崩溃遗留的 PENDING 超时行，
  * 重新投递 RocketMQ。重投成功标记 status=1；重试次数耗尽后不再选中并记录告警日志。
  * <p>
  * 仅当 rocketmq.name-server 配置时启用；多实例部署下同一行可能被重复处理，
@@ -32,6 +33,8 @@ public class EventRetryTask {
     private static final int BATCH_LIMIT = 100;
     /** 扫描间隔：60 秒 */
     private static final long RETRY_INTERVAL_MS = 60_000;
+    /** PENDING 在途事件卡死阈值：异步投递线程在途或发送前崩溃遗留时兜底重投 */
+    private static final long PENDING_STUCK_MINUTES = 5;
 
     private final EventLogMapper eventLogMapper;
     private final RocketMQTemplate rocketMQTemplate;
@@ -39,7 +42,8 @@ public class EventRetryTask {
 
     @Scheduled(fixedDelay = RETRY_INTERVAL_MS)
     public void retryFailedEvents() {
-        List<EventLog> failedEvents = eventLogMapper.selectRetryable(MAX_RETRY, BATCH_LIMIT);
+        LocalDateTime stuckBefore = LocalDateTime.now().minusMinutes(PENDING_STUCK_MINUTES);
+        List<EventLog> failedEvents = eventLogMapper.selectRetryable(MAX_RETRY, BATCH_LIMIT, stuckBefore);
         for (EventLog outbox : failedEvents) {
             try {
                 EventMessage message = objectMapper.readValue(outbox.getPayload(), EventMessage.class);

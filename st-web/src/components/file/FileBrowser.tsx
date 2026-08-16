@@ -109,6 +109,8 @@ export default function FileBrowser({
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
+  // 刷新中的视觉反馈（Windows 风格：刷新图标旋转 + 列表淡入）
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const { toggleFavorite: toggleFav, isFavorite: checkFav } = useFavoritesStore();
   const [sortBy, setSortBy] = useState<'name' | 'size' | 'time'>(() => {
     if (syncUrl) {
@@ -246,13 +248,15 @@ export default function FileBrowser({
       setLoadError(true);
     } finally {
       setLoading(false);
+      setIsRefreshing(false);
     }
   }, [source, parentId, page, setPreview]);
 
   useEffect(() => {
-    // 换文件夹：保留旧列表不清空，新数据到达后平滑替换，避免抖动
+    // 换文件夹：立即进入骨架屏给出反馈（避免旧列表停留产生笨重感），新数据到达后淡入
+    const isFolderChange = prevParentId.current !== parentId;
     prevParentId.current = parentId;
-    
+    if (isFolderChange) setLoading(true);
     fetchFiles();
     clearSelection();
     setFocusedIndex(-1);
@@ -275,6 +279,12 @@ export default function FileBrowser({
       setCurrentPath('/');
       return;
     }
+    // 路由 state 携带目标节点路径时直接使用：路径秒换，不等额外请求
+    const st = (location.state ?? null) as { nodeId?: string; nodePath?: string } | null;
+    if (st?.nodeId === parentId && st.nodePath) {
+      setCurrentPath(st.nodePath);
+      return;
+    }
     let cancelled = false;
     source.getNodeById(parentId).then((node) => {
       if (!cancelled && node) {
@@ -284,7 +294,7 @@ export default function FileBrowser({
       if (!cancelled) setCurrentPath('/');
     });
     return () => { cancelled = true; };
-  }, [source, parentId]);
+  }, [source, parentId, location.state]);
 
   useEffect(() => {
     if (refreshSignal > 0) setRefreshKey((k) => k + 1);
@@ -322,7 +332,17 @@ export default function FileBrowser({
   // 移动端下拉刷新
   const ptr = usePullToRefresh({ onRefresh: async () => { await fetchFiles(); } });
 
-  const refresh = () => setRefreshKey((k) => k + 1);
+  const refresh = () => {
+    setIsRefreshing(true);
+    setRefreshKey((k) => k + 1);
+  };
+
+  // 桌面端：主进程拦截 F5 后经 IPC 触发原地刷新（只刷新文件列表，不整页重载）
+  useEffect(() => {
+    if (!isElectron()) return;
+    const unsubscribe = window.electronAPI?.onRefreshFileList?.(() => refresh());
+    return () => unsubscribe?.();
+  }, []);
 
   const handleSortChange = (col: 'name' | 'size' | 'time') => {
     if (col === sortBy) {
@@ -816,6 +836,7 @@ export default function FileBrowser({
       )}
 
       <FileToolbar
+        refreshing={isRefreshing}
         has={has}
         selectedCount={selectedIds.size}
         filesCount={files.length}
@@ -928,38 +949,40 @@ export default function FileBrowser({
         ) : files.length === 0 ? (
           <EmptyState onCreateFolder={() => setShowCreateFolder(true)} />
         ) : (
-          <FileList
-            view={view}
-            files={filteredFiles}
-            lockedIds={lockedIds}
-            selectedIds={selectedIds}
-            focusedId={focusedId}
-            cutIds={clipboard?.mode === 'cut' ? new Set(clipboard.nodeIds) : null}
-            sortBy={sortBy}
-            sortDir={sortDir}
-            onSortChange={handleSortChange}
-            onSelect={handleSelect}
-            onToggleSelect={toggleSelect}
-            onSelectAll={selectAll}
-            isFavorite={checkFav}
-            onToggleFavorite={handleToggleFavorite}
-            onContextMenu={handleContextMenu}
-            onNavigate={(node) => { if (isMobile && mobileSelectMode) { handleMobileClick(node); return; } if (node.nodeType === 0) onNavigateFolder(node); }}
-            onDoubleClick={(node) => {
-              if (node.nodeType === 0) {
-                onNavigateFolder(node);
-              } else if (has('file:preview')) {
-                const fileFiles = files.filter((f) => f.nodeType === 1);
-                const idx = fileFiles.findIndex((f) => f.id === node.id);
-                setPreview({ files: fileFiles, index: idx >= 0 ? idx : 0 });
-              }
-            }}
-            onItemDragStart={handleItemDragStart}
-            onFolderDragOver={handleFolderDragOver}
-            onFolderDragLeave={handleFolderDragLeave}
-            onFolderDrop={handleFolderDrop}
-            dragOverFolderId={dragOverFolderId}
-          />
+          <div key={`${refreshKey}:${parentId}`} className="animate-file-enter">
+            <FileList
+              view={view}
+              files={filteredFiles}
+              lockedIds={lockedIds}
+              selectedIds={selectedIds}
+              focusedId={focusedId}
+              cutIds={clipboard?.mode === 'cut' ? new Set(clipboard.nodeIds) : null}
+              sortBy={sortBy}
+              sortDir={sortDir}
+              onSortChange={handleSortChange}
+              onSelect={handleSelect}
+              onToggleSelect={toggleSelect}
+              onSelectAll={selectAll}
+              isFavorite={checkFav}
+              onToggleFavorite={handleToggleFavorite}
+              onContextMenu={handleContextMenu}
+              onNavigate={(node) => { if (isMobile && mobileSelectMode) { handleMobileClick(node); return; } if (node.nodeType === 0) onNavigateFolder(node); }}
+              onDoubleClick={(node) => {
+                if (node.nodeType === 0) {
+                  onNavigateFolder(node);
+                } else if (has('file:preview')) {
+                  const fileFiles = files.filter((f) => f.nodeType === 1);
+                  const idx = fileFiles.findIndex((f) => f.id === node.id);
+                  setPreview({ files: fileFiles, index: idx >= 0 ? idx : 0 });
+                }
+              }}
+              onItemDragStart={handleItemDragStart}
+              onFolderDragOver={handleFolderDragOver}
+              onFolderDragLeave={handleFolderDragLeave}
+              onFolderDrop={handleFolderDrop}
+              dragOverFolderId={dragOverFolderId}
+            />
+          </div>
         )}
       </div>
       {!onOpenDetail && detailFile && (

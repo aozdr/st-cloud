@@ -1,5 +1,4 @@
 import { useEffect, useRef } from 'react';
-import { isElectron } from '../lib/electron';
 import type { FileNode } from '../types';
 
 
@@ -127,12 +126,6 @@ export function useFileKeyboard(
           if (st.selectedIds.size === 1) {
             const node = st.files.find((f) => st.selectedIds.has(f.id));
             if (node) a.setRenameTarget(node);
-          }
-          return;
-        case 'F5':
-          if (isElectron()) {
-            e.preventDefault();
-            a.refresh();
           }
           return;
         case ' ':

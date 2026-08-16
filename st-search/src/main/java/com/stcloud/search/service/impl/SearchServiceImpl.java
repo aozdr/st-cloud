@@ -271,11 +271,13 @@ public class SearchServiceImpl implements SearchService {
                 if (!fileIds.isEmpty()) {
                     List<FileNode> nodes = fileNodeMapper.selectBatchIds(fileIds);
                     Map<Long, FileNode> nodeMap = new HashMap<>();
-                    for (FileNode node : nodes) {
-                        nodeMap.put(node.getId(), node);
+                    if (nodes != null) {
+                        for (FileNode node : nodes) {
+                            nodeMap.put(node.getId(), node);
+                        }
                     }
                     for (SearchResultVO vo : results) {
-                        FileNode node = nodeMap.get(vo.getFileId());
+                        FileNode node = vo.getFileId() != null ? nodeMap.get(vo.getFileId()) : null;
                         if (node != null) {
                             if (vo.getCreatedAt() == null && node.getCreatedAt() != null) {
                                 vo.setCreatedAt(node.getCreatedAt());
@@ -285,6 +287,18 @@ public class SearchServiceImpl implements SearchService {
                             }
                         }
                     }
+                    // 可访问性过滤：回收/删除文件夹不再逐子孙删除索引，改为查询时按祖先链排除。
+                    // 排除：节点已删除（DB 查不到）、自身非正常态、祖先链含回收/已删除节点。
+                    List<Long> inaccessible = fileNodeMapper.findIdsWithInaccessibleAncestor(fileIds);
+                    Set<Long> inaccessibleIds = new HashSet<>(
+                            inaccessible == null ? Collections.emptyList() : inaccessible);
+                    results.removeIf(vo -> {
+                        if (vo.getFileId() == null) return false;
+                        FileNode node = nodeMap.get(vo.getFileId());
+                        if (node == null) return true;
+                        if (node.getStatus() == null || node.getStatus() != NodeStatus.NORMAL.getCode()) return true;
+                        return inaccessibleIds.contains(vo.getFileId());
+                    });
                 }
             }
 

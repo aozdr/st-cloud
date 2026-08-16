@@ -54,9 +54,10 @@ export default function AppLayout() {
         <div className="flex-1 flex flex-col min-w-0">
           <TopBar onMenuClick={() => setMobileSidebarOpen(true)} />
           <main id="main-content" className="flex-1 min-h-0 overflow-hidden pb-20 md:pb-0">
-            {/* Suspense 仅包裹 Outlet：路由切换时侧边栏/顶栏不重新挂载，仅顶部进度条提示 */}
+            {/* Suspense 仅包裹 Outlet：路由切换时侧边栏/顶栏不重新挂载，仅顶部进度条提示。
+                不按 pathname 加 key：打开文件夹时页面不整页重挂载，只有文件列表原地更新（Windows 风格） */}
             <Suspense fallback={<SuspenseProgressBar />}>
-              <div key={location.pathname} className="animate-route-fade h-full">
+              <div className="h-full">
                 <Outlet />
               </div>
             </Suspense>

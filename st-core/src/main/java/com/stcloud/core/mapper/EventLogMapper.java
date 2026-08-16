@@ -27,10 +27,13 @@ public interface EventLogMapper extends BaseMapper<EventLog> {
     @Update("UPDATE event_log SET status = 2, retry_count = retry_count + 1 WHERE id = #{id}")
     int markFailed(@Param("id") Long id);
 
-    /** 查询待重投的失败事件（未达最大重试次数，按创建时间升序） */
-    // SQL 状态含义：status = 2 失败且未达最大重试次数，等待重投
-    @Select("SELECT * FROM event_log WHERE status = 2 AND retry_count < #{maxRetry} AND deleted = 0 ORDER BY created_at LIMIT #{limit}")
-    List<EventLog> selectRetryable(@Param("maxRetry") int maxRetry, @Param("limit") int limit);
+    /** 查询待重投事件：投递失败(status=2)未达上限，或异步投递前崩溃遗留的 PENDING(status=0) 超时行 */
+    // SQL 状态含义：status = 2 失败未达上限等待重投；status = 0 在途但 updated_at 早于 stuckBefore 视为卡死
+    @Select("SELECT * FROM event_log WHERE deleted = 0 AND retry_count < #{maxRetry} "
+            + "AND (status = 2 OR (status = 0 AND updated_at < #{stuckBefore})) "
+            + "ORDER BY created_at LIMIT #{limit}")
+    List<EventLog> selectRetryable(@Param("maxRetry") int maxRetry, @Param("limit") int limit,
+                                   @Param("stuckBefore") LocalDateTime stuckBefore);
 
     /**
      * 清理超过保留期的历史事件（TASK-002）：仅删除可安全清除的行。
