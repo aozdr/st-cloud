@@ -1,6 +1,6 @@
 # 星云盘（st-cloud）
 
-免费、可私有化部署的自托管云盘系统。基于 Spring Boot 3 + React 18 + Electron 构建，覆盖 Web、PC 桌面端与移动端（PWA / Capacitor），同时服务个人网盘与企业团队协作场景。
+免费、可私有化部署的自托管云盘系统。基于 Spring Boot 3 + React 18 + Electron 构建，覆盖 Web、PC 桌面端，同时服务个人网盘与企业团队协作场景。
 
 ## 功能特性
 
@@ -54,7 +54,6 @@
 
 - Web：React + Vite，PWA 离线可用
 - 桌面端：Electron 31，原生上传/下载、同步、系统集成
-- 移动端：PWA 适配 + Capacitor Android 壳（企业内部分发）
 - SaaS 多租户 / 私有化单租户双模式
 
 ## 技术栈
@@ -64,7 +63,6 @@
 | 后端 | Java 17、Spring Boot 3.2.5、MyBatis-Plus、MySQL 8、Redis 7、Elasticsearch 8.12、RocketMQ 5（事件 Outbox）、AWS S3 SDK、Spring Security + JWT + RBAC、Knife4j |
 | Web | React 18、TypeScript、Vite 5、Tailwind CSS、Radix UI、Zustand、React Router 7、Recharts、PWA |
 | 桌面端 | Electron 31、TypeScript、tsup、electron-builder、sql.js、ws |
-| 移动端 | Capacitor 8（Android 壳） |
 
 ## 项目结构
 
@@ -81,7 +79,7 @@ st-cloud/
 ├── st-preview     # 文档预览：Office / PDF / 图片 / 音视频
 ├── st-admin       # 系统管理：用户、角色、权限、审计、统计、限速、容量
 ├── st-api         # 启动聚合模块（唯一可启动的后端入口）
-├── st-web         # Web 前端（React + Vite + PWA + Capacitor）
+├── st-web         # Web 前端（React + Vite + PWA）
 ├── st-desktop     # 桌面客户端（Electron）
 ├── docker         # Docker Compose 编排、MySQL 初始化脚本、ES 自定义镜像
 │   └── mysql/init # 数据库初始化脚本（02 ~ 36，含说明 README）
