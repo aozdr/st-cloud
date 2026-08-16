@@ -105,30 +105,43 @@ async function doDownload(taskId: string): Promise<void> {
           return;
         }
 
-        // 追加写入临时文件
+        // 续传(206)追加写入；若服务端未按 Range 返回 200 全量，则覆盖重写，
+        // 避免把全量内容追加到已有部分上导致文件超出容量
+        const resumeOk = existingBytes > 0 && response.statusCode === 206;
         const writeStream = fs.createWriteStream(tempPath, {
-          flags: existingBytes > 0 ? 'a' : 'w',
+          flags: resumeOk ? 'a' : 'w',
         });
 
-        let transferred = existingBytes;
+        // 实际写入临时文件的字节数（覆盖旧文件时从 0 开始）
+        let totalBytes = resumeOk ? existingBytes : 0;
+        let transferred = totalBytes;
         let lastUpdate = Date.now();
         let lastBytes = transferred;
+        let finished = false;
 
         response.on('data', (chunk: Buffer) => {
-          if (state.cancelled) {
+          if (state.cancelled || state.paused) {
             req.destroy();
             writeStream.destroy();
+            finished = true;
             resolve();
             return;
           }
-          if (state.paused) {
-            req.destroy();
-            writeStream.destroy();
-            resolve();
-            return;
-          }
+          if (finished) return;
 
+          // 严格不超过文件大小：即使服务端多发字节，也只写到 fileSize，防止超容量
+          const remain = task.fileSize - totalBytes;
+          if (remain <= 0) {
+            finished = true;
+            req.destroy();
+            writeStream.end(() => resolve());
+            return;
+          }
+          if (chunk.length > remain) {
+            chunk = chunk.subarray(0, remain);
+          }
           transferred += chunk.length;
+          totalBytes += chunk.length;
           writeStream.write(chunk);
 
           // 每秒更新一次进度
@@ -145,15 +158,28 @@ async function doDownload(taskId: string): Promise<void> {
 
         writeStream.on('error', reject);
         response.on('end', () => {
+          if (finished) return;
+          finished = true;
           writeStream.end(() => {
-            const finalTransferred = existingBytes + (response.headers['content-length']
-              ? parseInt(response.headers['content-length'])
-              : transferred - existingBytes);
-
-            if (finalTransferred >= task.fileSize || (!state.paused && !state.cancelled)) {
-              // 下载完成
+            if (state.paused || state.cancelled) {
+              resolve();
+              return;
+            }
+            if (totalBytes >= task.fileSize) {
+              // 字节数达标才算完成，防止把不完整文件标记为成功
               finalizeDownloadFile(taskId, task.savePath!);
               updateTask(taskId, { status: 'completed', progress: 100, transferredBytes: task.fileSize, speed: 0 });
+              emitTaskUpdate(getTask(taskId)!);
+            } else {
+              // 流提前结束（下载中断）：保留临时文件供恢复，标记失败
+              const pct = task.fileSize > 0 ? Math.round((totalBytes / task.fileSize) * 100) : 0;
+              updateTask(taskId, {
+                status: 'failed',
+                error: `下载中断（已下载 ${pct}%），可恢复后继续`,
+                transferredBytes: totalBytes,
+                progress: pct,
+                speed: 0,
+              });
               emitTaskUpdate(getTask(taskId)!);
             }
             resolve();
@@ -161,6 +187,8 @@ async function doDownload(taskId: string): Promise<void> {
         });
 
         response.on('error', (err) => {
+          if (finished) return;
+          finished = true;
           writeStream.destroy();
           if (state.paused || state.cancelled) {
             resolve();

@@ -57,6 +57,10 @@ function onRefreshed(token: string | null) {
 
 instance.interceptors.response.use(
   (response) => {
+    // Blob 响应（如多文件打包下载 zip）直接透传，不走业务码解包
+    if (response.config.responseType === 'blob') {
+      return response.data;
+    }
     const result = response.data;
     if (result.code === 200) {
       return result.data;

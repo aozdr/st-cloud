@@ -24,6 +24,13 @@ const api: ElectronAPI = {
   setTransferSettings: (settings: TransferSettings) => {
     ipcRenderer.invoke('transfer:setSettings', settings);
   },
+  onTransferSettingsChanged: (cb: (settings: TransferSettings) => void) => {
+    const handler = (_event: unknown, settings: TransferSettings) => cb(settings);
+    ipcRenderer.on('transfer:settings-changed', handler);
+    return () => {
+      ipcRenderer.removeListener('transfer:settings-changed', handler);
+    };
+  },
   pauseAllTransfers: () => {
     return ipcRenderer.invoke('transfer:pauseAll');
   },

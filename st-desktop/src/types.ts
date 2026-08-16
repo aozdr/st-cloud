@@ -57,6 +57,8 @@ export interface ElectronAPI {
   // 传输设置
   getTransferSettings: () => Promise<TransferSettings>;
   setTransferSettings: (settings: TransferSettings) => void;
+  /** 传输设置变更广播（悬浮窗限速管理/前端设置修改后同步到各窗口） */
+  onTransferSettingsChanged: (cb: (settings: TransferSettings) => void) => () => void;
   /** 暂停全部进行中任务（上传/下载） */
   pauseAllTransfers: () => Promise<void>;
   /** 开始全部已暂停任务 */

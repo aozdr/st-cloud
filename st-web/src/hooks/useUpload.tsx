@@ -314,7 +314,8 @@ export function UploadProvider({ children }: { children: ReactNode }) {
         return updated;
       });
 
-      if (transferTask.status === 'completed') {
+      // 只有上传完成才刷新文件列表（下载完成不应触发列表刷新）
+      if (transferTask.status === 'completed' && transferTask.type === 'upload') {
         setRefreshSignal((s) => s + 1);
       }
     });

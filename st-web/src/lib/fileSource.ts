@@ -16,7 +16,8 @@ export interface FileSource {
   copy(nodeIds: string[], targetParentId: string): Promise<void>;
   loadTree(): Promise<FileTreeNode[]>;
   getDownloadUrl(nodeId: string): Promise<string>;
-  downloadZip(nodeIds: string[]): Promise<Blob>;
+  /** onProgress: 打包下载过程中的已下载字节数（服务端流式打包时可能没有总大小） */
+  downloadZip(nodeIds: string[], onProgress?: (loaded: number, total?: number) => void): Promise<Blob>;
   getNodeById(nodeId: string): Promise<FileNode | null>;
   resolveByPath(path: string): Promise<FileNode | null>;
 }
@@ -47,8 +48,13 @@ export const personalFileSource: FileSource = {
     const { token } = await api.post<{ token: string }>(`/file/${nodeId}/download-token`);
     return buildStreamUrl(nodeId, { token });
   },
-  downloadZip: (nodeIds) =>
-    api.post('/file/download/zip', { nodeIds }, { responseType: 'blob' }) as unknown as Promise<Blob>,
+  downloadZip: (nodeIds, onProgress) =>
+    // timeout=0：打包下载可能较大且受限速影响，关闭默认 30s 超时
+    api.post('/file/download/zip', { nodeIds }, {
+      responseType: 'blob',
+      timeout: 0,
+      onDownloadProgress: (e) => onProgress?.(e.loaded, e.total || undefined),
+    }) as unknown as Promise<Blob>,
 };
 
 /** Team space file source - calls /team/{spaceId}/* endpoints */
@@ -78,8 +84,12 @@ export function teamFileSource(spaceId: string): FileSource {
       const { token } = await api.post<{ token: string }>(`/file/${nodeId}/download-token`);
       return buildStreamUrl(nodeId, { token });
     },
-    downloadZip: (nodeIds) =>
-      api.post('/file/download/zip', { nodeIds }, { responseType: 'blob' }) as unknown as Promise<Blob>,
+    downloadZip: (nodeIds, onProgress) =>
+      api.post('/file/download/zip', { nodeIds }, {
+        responseType: 'blob',
+        timeout: 0,
+        onDownloadProgress: (e) => onProgress?.(e.loaded, e.total || undefined),
+      }) as unknown as Promise<Blob>,
   };
 }
 

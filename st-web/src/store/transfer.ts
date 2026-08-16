@@ -66,6 +66,8 @@ interface TransferStore {
   setSettings: (partial: Partial<TransferSettings>) => void;
   setServerLimits: (limits: Partial<ServerLimits>) => void;
   fetchServerLimits: () => Promise<void>;
+  /** 接收主进程广播的外部设置（如悬浮窗"限速管理"保存），更新本地并持久化，不再回发避免循环 */
+  applyExternalSettings: (settings: TransferSettings) => void;
 }
 
 export const useTransferStore = create<TransferStore>((set, get) => ({
@@ -85,6 +87,12 @@ export const useTransferStore = create<TransferStore>((set, get) => ({
     syncToElectron(effective);
     set({ serverLimits, effective });
   },
+  applyExternalSettings: (settings) => {
+    const merged = { ...DEFAULT_SETTINGS, ...settings };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+    const effective = computeEffective(merged, get().serverLimits);
+    set({ settings: merged, effective });
+  },
   fetchServerLimits: async () => {
     try {
       const data = await api.get<ServerLimits>('/transfer/speed-limit');
@@ -97,3 +105,10 @@ export const useTransferStore = create<TransferStore>((set, get) => ({
     }
   },
 }));
+
+// 订阅主进程传输设置变更（悬浮窗"限速管理"保存后，这里同步并持久化）
+if (isElectron()) {
+  window.electronAPI!.onTransferSettingsChanged((settings) => {
+    useTransferStore.getState().applyExternalSettings(settings);
+  });
+}

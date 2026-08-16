@@ -53,6 +53,11 @@ export function registerIpcHandlers(): void {
 
   ipcMain.handle('transfer:setSettings', (_event, settings: TransferSettings) => {
     applyTransferSettings(settings);
+    // 广播给所有窗口：悬浮窗"限速管理"或前端传输设置修改后，前端 store 同步并持久化
+    const latest = getTransferSettings();
+    BrowserWindow.getAllWindows().forEach((w) => {
+      if (!w.isDestroyed()) w.webContents.send('transfer:settings-changed', latest);
+    });
   });
 
   // ==================== 传输任务：全部暂停 / 全部开始 ====================

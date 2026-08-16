@@ -15,7 +15,8 @@ import { usePullToRefresh } from '../../hooks/usePullToRefresh';
 import { isCapacitor } from '../../lib/runtime';
 import { pickFromGallery } from '../../lib/capacitor';
 import MultiSelectBar from '../ui/MultiSelectBar';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Loader2, CheckCircle2, ListChecks } from 'lucide-react';
+import { formatSize } from '../../lib/utils';
 import BlankContextMenu from './BlankContextMenu';
 import MoveDialog from './MoveDialog';
 import DownloadDialog from './DownloadDialog';
@@ -110,6 +111,10 @@ export default function FileBrowser({
   const setFolderSearch = useFolderFilterStore((s) => s.setKeyword);
   const setFolderPath = useFolderFilterStore((s) => s.setFolderPath);
   const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null);
+  // web 端打包下载进度（null=未打包；否则为已下载字节数）
+  const [zipProgress, setZipProgress] = useState<number | null>(null);
+  // 多选下载加入队列后的提示弹窗（null=不显示；否则为任务数）
+  const [downloadQueuedCount, setDownloadQueuedCount] = useState<number | null>(null);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -166,8 +171,42 @@ export default function FileBrowser({
   // 在线解压仅个人文件源接入（后端 /file/{id}/archive/*）；团队空间暂不展示
   const enableArchive = !onToggleLock;
 
+  const [currentPath, setCurrentPath] = useState('/');
+  // 当前文件夹内搜索（关键词来自全局 folderFilter store）
+  const folderSearchResults = useFolderSearch(folderSearch, currentPath);
+
+  // 显示顺序 = 排序（含文件夹优先/收藏置顶）后的列表；文件夹搜索时用搜索结果。
+  // 选择状态（尤其 Shift 范围选择）必须按"用户看到"的顺序计算
+  const sortedFiles = useMemo(() => {
+    const arr = [...files];
+    arr.sort((a, b) => {
+      // 文件夹优先于文件（受 foldersFirst 开关控制）
+      if (foldersFirst && a.nodeType !== b.nodeType) return a.nodeType === 0 ? -1 : 1;
+      // 收藏项在同类型内置顶
+      const aFav = checkFav(a.id) ? 1 : 0;
+      const bFav = checkFav(b.id) ? 1 : 0;
+      if (aFav !== bFav) return bFav - aFav;
+      // 按用户选择的排序字段排列
+      let cmp = 0;
+      if (sortBy === 'name') {
+        cmp = a.name.localeCompare(b.name, 'zh-CN');
+      } else if (sortBy === 'size') {
+        cmp = (Number(a.fileSize || 0) - Number(b.fileSize || 0));
+      } else {
+        cmp = (new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime());
+      }
+      return sortDir === 'asc' ? cmp : -cmp;
+    });
+    return arr;
+  }, [files, sortBy, sortDir, foldersFirst, checkFav]);
+
+  const filteredFiles = useMemo(() => {
+    if (!folderSearch.trim()) return sortedFiles;
+    return folderSearchResults;
+  }, [sortedFiles, folderSearch, folderSearchResults]);
+
   // 选择状态与移动端多选模式
-  const selection = useFileSelection(files, isMobile);
+  const selection = useFileSelection(filteredFiles, isMobile);
   const {
     selectedIds, setSelectedIds, setFocusedIndex, setLastSelectedId,
     focusedIndex, lastSelectedId, mobileSelectMode, setMobileSelectMode,
@@ -217,7 +256,6 @@ export default function FileBrowser({
 
   const stateRef = useRef({ selectedIds, files, clipboard, view, parentId, focusedIndex, lastSelectedId });
 
-  const [currentPath, setCurrentPath] = useState('/');
   const [pathEditMode, setPathEditMode] = useState(false);
   const [pathInput, setPathInput] = useState('/');
   const [pathError, setPathError] = useState(false);
@@ -227,9 +265,6 @@ export default function FileBrowser({
     stateRef.current = { selectedIds, files, clipboard, view, parentId, focusedIndex, lastSelectedId };
   }, [selectedIds, files, clipboard, view, parentId, focusedIndex, lastSelectedId]);
   const { addFiles, addFilePaths, refreshSignal } = useUpload();
-
-  // 当前文件夹内搜索（关键词来自全局 folderFilter store）
-  const folderSearchResults = useFolderSearch(folderSearch, currentPath);
 
   // 是否已有列表数据：用于决定是否显示骨架屏，避免切换文件夹时内容跳变
   const hasFilesRef = useRef(false);
@@ -574,12 +609,27 @@ export default function FileBrowser({
 
   const handleDownload = useCallback(async (nodeIds: string[]) => {
     try {
-      if (isElectron() && nodeIds.length === 1) {
-        const node = files.find((f) => f.id === nodeIds[0]);
-        if (node && node.nodeType === 1) {
-          setDownloadTarget(node);
+      if (isElectron()) {
+        const nodes = nodeIds
+          .map((id) => files.find((f) => f.id === id))
+          .filter((n): n is FileNode => !!n);
+        const fileNodes = nodes.filter((n) => n.nodeType === 1);
+        if (nodes.length > 0 && fileNodes.length === nodes.length) {
+          // PC 端设计：不打包，逐个走桌面下载管理器（可合并、带任务进度、真实保存目录）
+          if (nodes.length === 1) {
+            setDownloadTarget(nodes[0]);
+          } else {
+            // 多选：不弹原生保存框，直接加入下载队列，保存到系统默认下载目录
+            const downloadsDir = await window.electronAPI!.getDownloadsPath();
+            const dir = downloadsDir || '';
+            for (const n of nodes) {
+              await window.electronAPI!.startDownload(n.id, n.name, Number(n.fileSize || 0), `${dir}\\${n.name}`);
+            }
+            setDownloadQueuedCount(nodes.length);
+          }
           return;
         }
+        // 选中包含文件夹：桌面端不支持按文件夹单文件下载，退回打包下载
       }
 
       if (nodeIds.length === 1) {
@@ -595,14 +645,23 @@ export default function FileBrowser({
         a.click();
         document.body.removeChild(a);
       } else {
-        showToast('正在打包下载，请稍候…', 'info');
-        const blob = await source.downloadZip(nodeIds);
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'download.zip';
-        a.click();
-        URL.revokeObjectURL(url);
+        // web 端打包：显示实时进度，完成后触发浏览器保存
+        setZipProgress(0);
+        try {
+          showToast('正在打包下载，请稍候…', 'info');
+          const blob = await source.downloadZip(nodeIds, (loaded) => setZipProgress(loaded));
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'download.zip';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+          showToast('打包完成，已开始下载', 'success');
+        } finally {
+          setZipProgress(null);
+        }
       }
     } catch {
       showToast('下载失败', 'error');
@@ -752,9 +811,12 @@ export default function FileBrowser({
       case 'rename':
         setRenameTarget(node);
         break;
-      case 'download':
-        handleDownload([node.id]);
+      case 'download': {
+        // 多选：右键的是选中集合中的一项时，对整个选中集合生效
+        const ids = selectedIds.has(node.id) ? [...selectedIds] : [node.id];
+        handleDownload(ids);
         break;
+      }
       case 'moveTo':
         setMoveTarget({ nodeIds: [node.id], mode: 'move' });
         break;
@@ -801,29 +863,6 @@ export default function FileBrowser({
     showToast(added ? '已收藏' : '已取消收藏');
   };
 
-  const sortedFiles = useMemo(() => {
-    const arr = [...files];
-    arr.sort((a, b) => {
-      // 文件夹优先于文件（受 foldersFirst 开关控制）
-      if (foldersFirst && a.nodeType !== b.nodeType) return a.nodeType === 0 ? -1 : 1;
-      // 收藏项在同类型内置顶
-      const aFav = checkFav(a.id) ? 1 : 0;
-      const bFav = checkFav(b.id) ? 1 : 0;
-      if (aFav !== bFav) return bFav - aFav;
-      // 按用户选择的排序字段排列
-      let cmp = 0;
-      if (sortBy === 'name') {
-        cmp = a.name.localeCompare(b.name, 'zh-CN');
-      } else if (sortBy === 'size') {
-        cmp = (Number(a.fileSize || 0) - Number(b.fileSize || 0));
-      } else {
-        cmp = (new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime());
-      }
-      return sortDir === 'asc' ? cmp : -cmp;
-    });
-    return arr;
-  }, [files, sortBy, sortDir, foldersFirst, checkFav]);
-
   const selectedSize = useMemo(
     () => files.reduce((sum, f) => selectedIds.has(f.id) ? sum + Number(f.fileSize || 0) : sum, 0),
     [files, selectedIds],
@@ -844,11 +883,6 @@ export default function FileBrowser({
   useEffect(() => {
     setFolderPath(currentPath);
   }, [currentPath, setFolderPath]);
-
-  const filteredFiles = useMemo(() => {
-    if (!folderSearch.trim()) return sortedFiles;
-    return folderSearchResults;
-  }, [sortedFiles, folderSearch, folderSearchResults]);
 
   // 已锁定节点 ID 集合：由列表节点上的后端锁定字段推导，供列表视图渲染锁图标与右键菜单判断
   const lockedIds = useMemo(() => {
@@ -1207,6 +1241,42 @@ export default function FileBrowser({
         />
       )}
 
+      {/* 多选下载：已加入队列 → 可跳转传输列表 */}
+      {downloadQueuedCount !== null && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 overscroll-contain animate-fade-in"
+          role="presentation"
+          onClick={() => setDownloadQueuedCount(null)}
+        >
+          <div
+            className="bg-surface rounded-xl shadow-lg w-[420px] animate-dialog-pop p-6 text-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-12 h-12 rounded-full bg-green-500/15 flex items-center justify-center mx-auto mb-3">
+              <CheckCircle2 className="w-6 h-6 text-green-500" />
+            </div>
+            <p className="text-sm font-medium text-fg mb-5">
+              已添加 {downloadQueuedCount} 个下载任务
+            </p>
+            <div className="flex justify-center gap-2">
+              <button onClick={() => setDownloadQueuedCount(null)} className="btn-secondary">
+                关闭
+              </button>
+              <button
+                onClick={() => {
+                  setDownloadQueuedCount(null);
+                  navigate('/transfers');
+                }}
+                className="btn-primary flex items-center gap-1.5"
+              >
+                <ListChecks className="w-4 h-4" />
+                查看传输列表
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {downloadTarget && (
         <DownloadDialog
           fileName={downloadTarget.name}
@@ -1240,6 +1310,19 @@ export default function FileBrowser({
             height: Math.abs(dragRect.currentY - dragRect.startY),
           }}
         />
+      )}
+
+      {/* web 端打包下载进度浮层 */}
+      {zipProgress !== null && (
+        <div className="fixed top-16 right-4 z-[110] w-64 bg-surface rounded-lg border border-border shadow-md p-3">
+          <p className="text-xs font-medium text-fg mb-1.5 flex items-center gap-1.5">
+            <Loader2 className="w-3.5 h-3.5 text-primary-600 animate-spin" aria-hidden />
+            正在打包下载
+          </p>
+          <p className="text-[10px] text-muted">
+            {zipProgress > 0 ? `已下载 ${formatSize(zipProgress)}` : '准备中…'}
+          </p>
+        </div>
       )}
     </div>
   );
