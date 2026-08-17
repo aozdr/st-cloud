@@ -159,6 +159,25 @@ public Result<FileNodeVO> getNode(@PathVariable Long nodeId) {
 - Service 方法涉及 Mapper 调用的，必须有集成测试覆盖主路径
 - 新增数据库表/字段的迭代，集成测试启动即验证 schema 完整性（表缺失则启动失败）
 
+## 事务边界
+
+核心写路径的事务边界原则（详见 `.ai/docs/20260817-transaction-boundary/design.md`）：
+
+1. S3/外部网络调用一律在事务外执行；DB 写一律在事务内
+2. 删除类：DB 事务内引用归零 + 记录待删状态（outbox 事件），提交后异步删 S3，失败进补偿队列重试
+3. 只读查询方法禁止 `@Transactional`；确需一致性快照用 `readOnly=true`
+4. 长事务显式 `timeout`，全局默认 `spring.transaction.default-timeout=30s`
+5. 半成品对象统一 `tmp/` 前缀，失败尽力删除 + 定时清理兜底
+
+已知反例（第二迭代逐项改造，见 design.md 3.3 节）：
+
+- `ArchiveServiceImpl.extractArchive`
+- `UploadServiceImpl.simpleUpload` / `mergeChunks`
+- `EditorCallbackServiceImpl.handleCallback`
+- `SyncBlockServiceImpl.blockCheck` / `blockUpload`
+- `RecycleBinServiceImpl` 永久删除系列
+- `TextFileServiceImpl.overwriteContent`
+
 ## AI 协作约定
 
 ### 任务入口（Workflow Manager）

@@ -16,6 +16,9 @@ spring:
       max-file-size: 10GB
       max-request-size: 10GB
       file-size-threshold: 0
+  # 全局事务默认超时兜底：防止长事务/网络耗时无限占用 DB 连接
+  transaction:
+    default-timeout: 30s
 
 # MyBatis-Plus
 mybatis-plus:
