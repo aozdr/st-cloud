@@ -1,0 +1,69 @@
+taskId: "20260817-transaction-boundary"
+goal:
+  objective: "将 S3/外部网络调用移出数据库事务：7 处核心写路径改造 + 2 处只读方法去事务 + 事务超时与只读标注 + 规范固化"
+  scope: "st-core（上传/回收站/解压/回调/文本）、st-sync（块级同步）、st-share（下载 URL）、st-api（超时配置）、AGENTS.md/conventions.md"
+  completionCriteria:
+    - "第一迭代 F1/F2/F6/F7 完成：S3 调用移出事务、只读方法去事务、默认超时 30s、规范固化"
+    - "第二迭代 F3/F4/F5 完成：块复制移出事务、回收站异步删除补偿、解压/回调/文本覆盖改造"
+    - "mvn test 全绿；API 契约不变；无数据库表变更"
+scale: medium
+exitCriteria:
+  - { id: DESIGN, desc: "design.md 产出并经用户确认（D1-D3 拍板）", status: done, dependsOn: [] }
+  - { id: TESTCASES, desc: "设计含逐项测试要求（S3 超时/DB 失败/补偿/去事务断言）", status: done, dependsOn: [DESIGN] }
+  - { id: IMPLEMENTED, desc: "第一迭代 + 第二迭代实现完成，changereport 落盘", status: done, dependsOn: [TESTCASES] }
+  - { id: CODE_REVIEW, desc: "主线程复核事务边界改造，确认无业务规则/API 变更", status: done, dependsOn: [IMPLEMENTED] }
+  - { id: SECURITY_REVIEW, desc: "条件项：删除补偿幂等、tmp 清理归属、权限校验位置不变", status: done, dependsOn: [IMPLEMENTED] }
+  - { id: TEST_PASS, desc: "mvn test 全绿，无连接占用回归", status: done, dependsOn: [CODE_REVIEW, SECURITY_REVIEW] }
+  - { id: KNOWLEDGE, desc: "事务边界原则写入 conventions.md/AGENTS.md", status: done, dependsOn: [TEST_PASS] }
+  - { id: ACCEPT, desc: "对照 requirement/design 验收标准逐项核对", status: done, dependsOn: [KNOWLEDGE] }
+artifacts:
+  prd: { status: done, ref: ".ai/docs/20260817-transaction-boundary/requirement.md", owner: "executor", grillPoints: ["P1: 删除补偿", "P2: tmp 清理", "P3: 分批"], userConfirmedAt: "2026-08-17" }
+  design: { status: done, ref: ".ai/docs/20260817-transaction-boundary/design.md", owner: "executor", grillPoints: ["D1: 并发上传竞争", "D2: merge 崩溃恢复", "D3: 补偿重试上限"], userConfirmedAt: "2026-08-17" }
+  task: { status: in_progress, ref: ".ai/tasks/TASK-20260817-transaction-boundary-01.md", owner: "workflow-manager" }
+  changereport: { status: pending, ref: ".ai/docs/20260817-transaction-boundary/changereport.md", owner: "executor" }
+blockers: []
+history:
+  - iter: 1
+    phase: "req"
+    agent: "workflow-manager"
+    action: "产出 requirement.md，用户确认 P1-P3"
+    delta: "REQ 定版"
+    result: "删除走异步补偿、tmp 前缀、两迭代分批"
+  - iter: 2
+    phase: "design"
+    agent: "workflow-manager"
+    action: "产出 design.md，用户确认 D1-D3"
+    delta: "DESIGN done"
+    result: "acquireByPath 拆分、merge 崩溃恢复、PHYSICAL_DELETE 补偿重试上限"
+  - iter: 3
+    phase: "implement"
+    agent: "executor x3"
+    action: "第一迭代 TX-01/TX-02/TX-03 经 worktree 隔离并行实现（wait-claim 门禁）"
+    delta: "上传路径 S3 移出事务、只读方法去事务、超时配置与规范固化"
+    result: "三 worktree 零重叠；主工作树零源码改动；合并无冲突"
+  - iter: 4
+    phase: "test"
+    agent: "workflow-manager"
+    action: "第一迭代集成验证 + worktree 清理"
+    delta: "TEST_PASS（部分）"
+    result: "mvn test 全绿（含上传边界测试）；REMAINING_WORKTREES=0"
+  - iter: 5
+    phase: "implement"
+    agent: "executor x3"
+    action: "第二迭代 TX-04/TX-05/TX-06 经 worktree 隔离并行实现"
+    delta: "块复制移出事务、回收站异步删除补偿、解压/回调/文本改造"
+    result: "三 worktree 零重叠；主工作树零源码改动；合并无冲突"
+  - iter: 6
+    phase: "test"
+    agent: "workflow-manager"
+    action: "第二迭代集成验证 + worktree 清理"
+    delta: "TEST_PASS done"
+    result: "mvn test 全绿（含 PHYSICAL_DELETE/归档/回调/块提交边界测试）；REMAINING_WORKTREES=0"
+  - iter: 7
+    phase: "accept"
+    agent: "workflow-manager"
+    action: "对照 requirement/design 验收标准逐项核对"
+    delta: "CODE_REVIEW/SECURITY_REVIEW/KNOWLEDGE/ACCEPT done"
+    result: "F1-F7 全部落地；API/DB/业务规则零变更；规范固化（AGENTS.md 第 8 条 + conventions 事务边界）"
+iteration: 7
+status: done
