@@ -2,27 +2,30 @@ package com.stcloud.core.service.impl;
 
 import cn.hutool.crypto.digest.DigestUtil;
 import com.stcloud.common.context.UserContext;
-import com.stcloud.common.enums.NodeStatus;
 import com.stcloud.common.enums.NodeType;
 import com.stcloud.common.exception.BusinessException;
 import com.stcloud.common.response.ResultCode;
 import com.stcloud.core.dto.StorageInfoVO;
 import com.stcloud.core.entity.FileObject;
 import com.stcloud.core.entity.FileNode;
-import com.stcloud.core.enums.UploadStatus;
 import com.stcloud.core.mapper.FileNodeMapper;
 import com.stcloud.core.mapper.UserQuotaMapper;
 import com.stcloud.core.service.ArchiveService;
 import com.stcloud.core.service.ArchiveProgressReporter;
 import com.stcloud.core.service.FileObjectService;
 import com.stcloud.core.service.StorageService;
+import com.stcloud.core.service.impl.upload.UploadCommitManager;
+import com.stcloud.core.service.impl.upload.UploadStorageManager;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 import com.stcloud.common.context.TenantContext;
@@ -42,12 +45,12 @@ public class ArchiveServiceImpl implements ArchiveService {
     private FileObjectService fileObjectService;
     @Resource
     private UserQuotaMapper userQuotaMapper;
+    @Resource
+    private UploadCommitManager uploadCommitManager;
+    @Resource
+    private UploadStorageManager uploadStorageManager;
 
     private static final String ZIP_SUFFIX = "zip";
-    /** 引用计数：文件夹不引用物理对象 */
-    private static final int REF_COUNT_NONE = 0;
-    /** 引用计数：文件初始引用（随后由 syncRefCountByMd5 校正为同 md5 节点数） */
-    private static final int REF_COUNT_INITIAL = 1;
 
     @Override
     public List<Map<String, Object>> listArchiveContents(Long nodeId) {
@@ -84,14 +87,18 @@ public class ArchiveServiceImpl implements ArchiveService {
     }
 
     @Override
-    @Transactional
     public int extractArchive(Long nodeId, Long targetFolderId) {
         return extractArchive(nodeId, targetFolderId, null);
     }
 
-    /** 带进度回调的解压（控制器异步任务使用；reporter 为 null 时与无回调行为一致） */
+    /**
+     * 带进度回调的解压（控制器异步任务使用；reporter 为 null 时与无回调行为一致）。
+     * <p>
+     * 事务边界（F5）：ZIP 下载到本地临时文件（事务外）→ 预检统计 → 逐条目去重预查 + S3 上传（事务外）
+     * → 一个事务内插入文件夹/文件节点 + 扣配额 + 引用校正（UploadCommitManager.commitExtract）；
+     * 失败时尽力清理本次上传对象，残留交由定时任务兜底。
+     */
     @Override
-    @Transactional
     public int extractArchive(Long nodeId, Long targetFolderId, ArchiveProgressReporter reporter) {
         FileNode node = getAccessibleFileNode(nodeId);
         validateZipFile(node);
@@ -109,97 +116,91 @@ public class ArchiveServiceImpl implements ArchiveService {
             }
         }
 
-        // 预检：先统计压缩包内文件条目总大小与总数，校验配额，避免解压中途超配额留下孤儿 S3 对象
-        ArchiveSummary summary = summarizeArchive(node);
-        checkUserQuota(userId, summary.totalSize);
-        if (reporter != null) reporter.begin(summary.totalFiles);
+        // 事务外：ZIP 先下载到本地临时文件，后续统计与逐条目上传均不占用 DB 连接
+        Path tempZip = downloadZipToTemp(node);
+        try {
+            // 预检：先统计压缩包内文件条目总大小与总数，校验配额，避免解压中途超配额留下孤儿 S3 对象
+            ArchiveSummary summary = summarizeArchive(tempZip);
+            checkUserQuota(userId, summary.totalSize);
+            if (reporter != null) reporter.begin(summary.totalFiles);
 
-        int count = 0;
-        try (InputStream s3Stream = storageService.downloadObject(node.getStoragePath());
-             java.util.zip.ZipInputStream zis = new java.util.zip.ZipInputStream(s3Stream)) {
-            // ZIP 内路径 -> file_node ID 的映射，用于构建嵌套文件夹结构
-            Map<String, Long> folderMap = new HashMap<>();
-            folderMap.put("", targetFolderId);
-            // ZIP 内路径 -> file_node path 的映射，用于产物路径拼接
-            Map<String, String> folderPathMap = new HashMap<>();
-            folderPathMap.put("", targetFolderPath);
+            // 事务外：逐条目读取并上传 S3（去重预查），收集待落库条目元数据
+            List<Map<String, Object>> entries = new ArrayList<>();
+            try (java.util.zip.ZipInputStream zis =
+                         new java.util.zip.ZipInputStream(Files.newInputStream(tempZip))) {
+                java.util.zip.ZipEntry entry;
+                while ((entry = zis.getNextEntry()) != null) {
+                    if (entry.getName().startsWith("__MACOSX") || entry.getName().endsWith(".DS_Store")) {
+                        zis.closeEntry();
+                        continue;
+                    }
+                    Map<String, Object> item = new LinkedHashMap<>();
+                    item.put("zipPath", entry.getName());
+                    item.put("directory", entry.isDirectory());
+                    if (!entry.isDirectory()) {
+                        // 读取条目内容（整块入内存，用于 MD5 计算与上传）
+                        byte[] content = readEntryContent(zis);
+                        String[] parts = entry.getName().split("/");
+                        String fileName = parts[parts.length - 1];
+                        String suffix = getSuffix(fileName);
+                        String md5 = DigestUtil.md5Hex(content);
+                        String contentType = guessContentType(suffix);
 
-            java.util.zip.ZipEntry entry;
-            while ((entry = zis.getNextEntry()) != null) {
-                if (entry.getName().startsWith("__MACOSX") || entry.getName().endsWith(".DS_Store")) {
+                        // 去重预查（事务外）：同租户同 md5 复用物理对象（秒传），否则上传到规范路径 {tenantId}/{md5}
+                        FileObject existing = fileObjectService.findByTenantAndMd5(tenantId, md5);
+                        String storagePath;
+                        boolean uploadedNew = false;
+                        if (existing != null) {
+                            storagePath = existing.getStoragePath();
+                        } else {
+                            storagePath = tenantId + "/" + md5;
+                            storageService.uploadObject(storagePath,
+                                    new ByteArrayInputStream(content),
+                                    content.length, contentType);
+                            uploadedNew = true;
+                        }
+                        item.put("size", (long) content.length);
+                        item.put("md5", md5);
+                        item.put("storagePath", storagePath);
+                        item.put("contentType", contentType);
+                        item.put("suffix", suffix);
+                        item.put("uploadedNew", uploadedNew);
+                    }
+                    entries.add(item);
                     zis.closeEntry();
-                    continue;
                 }
-
-                String[] parts = entry.getName().split("/");
-                // 逐级创建父文件夹
-                String parentZipPath = "";
-                for (int i = 0; i < parts.length - 1; i++) {
-                    String folderZipPath = parentZipPath.isEmpty() ? parts[i] : parentZipPath + "/" + parts[i];
-                    if (!folderMap.containsKey(folderZipPath)) {
-                        Long parentFolderId = folderMap.get(parentZipPath);
-                        String parentPath = folderPathMap.get(parentZipPath);
-                        String newPath = "/".equals(parentPath) ? "/" + parts[i] : parentPath + "/" + parts[i];
-                        Long newFolderId = createFolderNode(parts[i], parentFolderId, newPath, userId, tenantId);
-                        folderMap.put(folderZipPath, newFolderId);
-                        folderPathMap.put(folderZipPath, newPath);
-                    }
-                    parentZipPath = folderZipPath;
-                }
-
-                if (!entry.isDirectory()) {
-                    Long parentFolderId = folderMap.getOrDefault(parentZipPath, targetFolderId);
-                    String parentPath = folderPathMap.getOrDefault(parentZipPath, targetFolderPath);
-                    String fileName = parts[parts.length - 1];
-                    String suffix = getSuffix(fileName);
-                    String filePath = "/".equals(parentPath) ? "/" + fileName : parentPath + "/" + fileName;
-
-                    // 读取条目内容（整块入内存，用于 MD5 计算与上传）
-                    java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
-                    byte[] buffer = new byte[8192];
-                    int len;
-                    while ((len = zis.read(buffer)) > 0) {
-                        baos.write(buffer, 0, len);
-                    }
-                    byte[] content = baos.toByteArray();
-
-                    // 原子扣减配额（并发超配额时 UPDATE 返回 0，抛异常回滚本次事务；预检保证常规场景不触发）
-                    if (content.length > 0 && userQuotaMapper.updateStorageUsed(userId, (long) content.length) <= 0) {
-                        throw new BusinessException(ResultCode.STORAGE_QUOTA_EXCEEDED);
-                    }
-
-                    // 走去重引用：同租户同 md5 复用物理对象（秒传），否则上传到规范路径 {tenantId}/{md5}
-                    String md5 = DigestUtil.md5Hex(content);
-                    FileObject object = fileObjectService.acquire(tenantId, md5, content.length,
-                            () -> {
-                                String key = tenantId + "/" + md5;
-                                storageService.uploadObject(key,
-                                        new ByteArrayInputStream(content),
-                                        content.length,
-                                        guessContentType(suffix));
-                                return key;
-                            });
-                    if (object == null) {
-                        throw new BusinessException(ResultCode.FILE_UPLOAD_FAILED);
-                    }
-
-                    createFileNode(fileName, suffix, object.getStoragePath(), (long) content.length,
-                            md5, object.getId(),
-                            parentFolderId, filePath, userId, tenantId);
-                    // 保持 file_node.ref_count 与对象引用一致（同 md5 节点数）
-                    fileNodeMapper.syncRefCountByMd5(md5);
-                    count++;
-                    if (reporter != null) reporter.onFileExtracted();
-                }
-                zis.closeEntry();
+            } catch (BusinessException e) {
+                // 上传阶段失败：尽力清理本次已上传对象，残留交由定时任务兜底
+                cleanupUploadedEntries(tenantId, entries);
+                throw e;
+            } catch (Exception e) {
+                log.error("解压失败, nodeId={}", nodeId, e);
+                cleanupUploadedEntries(tenantId, entries);
+                throw new BusinessException(ResultCode.BUSINESS_ERROR);
             }
-        } catch (BusinessException e) {
-            throw e;
-        } catch (Exception e) {
-            log.error("解压失败, nodeId={}", nodeId, e);
-            throw new BusinessException(ResultCode.BUSINESS_ERROR);
+
+            // 一个事务内落库：文件夹/文件节点 + 原子扣减配额 + 引用校正
+            int count;
+            try {
+                count = uploadCommitManager.commitExtract(userId, tenantId, targetFolderId,
+                        targetFolderPath, entries);
+            } catch (RuntimeException e) {
+                // 事务失败清理：仅删除本次新上传且无记录/引用归零的对象；残留交由定时任务兜底
+                cleanupUploadedEntries(tenantId, entries);
+                throw e;
+            }
+            // 进度回调在全部落库成功后按文件数触发（语义与改造前一致：成功才计数）
+            for (int i = 0; i < count; i++) {
+                if (reporter != null) reporter.onFileExtracted();
+            }
+            return count;
+        } finally {
+            try {
+                Files.deleteIfExists(tempZip);
+            } catch (IOException ignored) {
+                // 临时文件清理失败不影响主流程
+            }
         }
-        return count;
     }
 
     /** ZIP 内文件条目统计（跳过 macOS 系统文件；流式读取保证 size 准确） */
@@ -208,10 +209,10 @@ public class ArchiveServiceImpl implements ArchiveService {
         int totalFiles;
     }
 
-    private ArchiveSummary summarizeArchive(FileNode node) {
+    private ArchiveSummary summarizeArchive(Path zipFile) {
         ArchiveSummary summary = new ArchiveSummary();
-        try (InputStream s3Stream = storageService.downloadObject(node.getStoragePath());
-             java.util.zip.ZipInputStream zis = new java.util.zip.ZipInputStream(s3Stream)) {
+        try (java.util.zip.ZipInputStream zis =
+                     new java.util.zip.ZipInputStream(Files.newInputStream(zipFile))) {
             java.util.zip.ZipEntry entry;
             byte[] buffer = new byte[8192];
             while ((entry = zis.getNextEntry()) != null) {
@@ -227,10 +228,66 @@ public class ArchiveServiceImpl implements ArchiveService {
                 zis.closeEntry();
             }
         } catch (Exception e) {
-            log.error("统计压缩包大小失败, nodeId={}", node.getId(), e);
+            log.error("统计压缩包大小失败: {}", e.getMessage());
             throw new BusinessException(ResultCode.BUSINESS_ERROR);
         }
         return summary;
+    }
+
+    /** 事务外：将 S3 上的压缩包下载到本地临时文件（不占用 DB 连接） */
+    private Path downloadZipToTemp(FileNode node) {
+        try {
+            Path temp = Files.createTempFile("archive-extract-", ".zip");
+            try (InputStream in = storageService.downloadObject(node.getStoragePath());
+                 OutputStream out = Files.newOutputStream(temp)) {
+                in.transferTo(out);
+            }
+            return temp;
+        } catch (IOException e) {
+            log.error("下载压缩包到临时文件失败, nodeId={}", node.getId(), e);
+            throw new BusinessException(ResultCode.BUSINESS_ERROR);
+        }
+    }
+
+    /** 读取 ZIP 条目完整内容（整块入内存，用于 MD5 计算与上传） */
+    private byte[] readEntryContent(java.util.zip.ZipInputStream zis) throws IOException {
+        java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+        byte[] buffer = new byte[8192];
+        int len;
+        while ((len = zis.read(buffer)) > 0) {
+            baos.write(buffer, 0, len);
+        }
+        return baos.toByteArray();
+    }
+
+    /** 解压失败时尽力清理本次新上传且无记录/引用归零的对象（残留交由定时任务兜底） */
+    private void cleanupUploadedEntries(Long tenantId, List<Map<String, Object>> entries) {
+        for (Map<String, Object> item : entries) {
+            if (Boolean.TRUE.equals(item.get("uploadedNew"))) {
+                cleanupOrphanUpload(tenantId, (String) item.get("md5"), (String) item.get("storagePath"));
+            }
+        }
+    }
+
+    /**
+     * 孤儿对象清理（与简单上传口径一致）：仅当当前无对象记录（本次 insertIgnore 已随事务回滚）
+     * 或记录引用归零且路径一致时才删除物理对象；删除失败不阻断主流程，交由定时任务兜底。
+     */
+    private void cleanupOrphanUpload(Long tenantId, String md5, String storagePath) {
+        try {
+            FileObject current = fileObjectService.findByTenantAndMd5(tenantId, md5);
+            boolean noRecord = current == null;
+            boolean unreferenced = current != null
+                    && current.getRefCount() != null && current.getRefCount() <= 0
+                    && storagePath.equals(current.getStoragePath());
+            if (noRecord || unreferenced) {
+                uploadStorageManager.deleteObjectQuietly(storagePath);
+                log.warn("已尽力清理解压失败产生的孤儿对象: md5={}, storagePath={}", md5, storagePath);
+            }
+        } catch (Exception e) {
+            // 清理失败不阻断主流程，交由定时任务兜底
+            log.warn("解压失败清理孤儿对象异常（交由定时任务兜底）: md5={}", md5, e);
+        }
     }
 
     /** 校验个人存储配额（与上传/复制路径一致） */
@@ -282,48 +339,6 @@ public class ArchiveServiceImpl implements ArchiveService {
         if (suffix == null || !ZIP_SUFFIX.equalsIgnoreCase(suffix)) {
             throw new BusinessException(ResultCode.FILE_TYPE_NOT_ALLOWED);
         }
-    }
-
-    private Long createFolderNode(String name, Long parentId, String path, Long userId, Long tenantId) {
-        FileNode folder = new FileNode();
-        folder.setTenantId(tenantId);
-        folder.setParentId(parentId);
-        folder.setNodeType(NodeType.FOLDER.getCode());
-        folder.setName(name);
-        folder.setPath(path);
-        folder.setStatus(NodeStatus.NORMAL.getCode());
-        folder.setOwnerId(userId);
-        folder.setUploaderId(userId);
-        // 解压创建的文件夹不引用任何物理对象
-        folder.setRefCount(REF_COUNT_NONE);
-        folder.setVersion(0);
-        fileNodeMapper.insert(folder);
-        return folder.getId();
-    }
-
-    private void createFileNode(String name, String suffix, String storagePath, Long size,
-                                String fileMd5, Long objectId,
-                                Long parentId, String path, Long userId, Long tenantId) {
-        FileNode file = new FileNode();
-        file.setTenantId(tenantId);
-        file.setParentId(parentId);
-        file.setNodeType(NodeType.FILE.getCode());
-        file.setName(name);
-        file.setPath(path);
-        file.setFileSize(size);
-        file.setFileMd5(fileMd5);
-        file.setObjectId(objectId);
-        file.setSuffix(suffix);
-        file.setContentType(guessContentType(suffix));
-        file.setStoragePath(storagePath);
-        file.setStatus(NodeStatus.NORMAL.getCode());
-        file.setUploadStatus(UploadStatus.COMPLETED.getCode());
-        file.setOwnerId(userId);
-        file.setUploaderId(userId);
-        // 引用计数由 syncRefCountByMd5 校正为同 md5 节点数
-        file.setRefCount(REF_COUNT_INITIAL);
-        file.setVersion(0);
-        fileNodeMapper.insert(file);
     }
 
     private String getSuffix(String fileName) {
