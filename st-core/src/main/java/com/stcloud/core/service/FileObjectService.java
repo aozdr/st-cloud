@@ -27,6 +27,21 @@ public interface FileObjectService {
     FileObject acquire(Long tenantId, String md5, long size, Supplier<String> storagePathSupplier);
 
     /**
+     * 按路径获取或创建对象并 +1 引用（事务边界治理 F1-3/F2-1/F2-2）。
+     * <p>
+     * 与 {@link #acquire} 的唯一区别：物理对象已由调用方在事务外上传完成，
+     * 本方法<b>只做 DB 操作</b>（select → 命中 incrementRefCount / 未命中 insertIgnore + 竞争复用），
+     * 不触发任何 S3/上传调用。必须由事务内方法调用，保证对象记录与节点/配额同一事务。
+     *
+     * @param tenantId    租户ID
+     * @param md5         文件MD5
+     * @param size        文件大小
+     * @param storagePath 物理对象存储路径（已上传）
+     * @return 权威对象（含 id/storagePath/refCount）
+     */
+    FileObject acquireByPath(Long tenantId, String md5, long size, String storagePath);
+
+    /**
      * 只读查询：按租户+MD5 查找正常对象（不改变引用计数）。用于秒传命中判定。
      */
     FileObject findByTenantAndMd5(Long tenantId, String md5);

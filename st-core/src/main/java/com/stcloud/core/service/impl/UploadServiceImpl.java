@@ -21,7 +21,7 @@ import com.stcloud.core.service.UploadService;
 import com.stcloud.core.service.VersionService;
 import com.stcloud.core.service.impl.upload.RelayBufferManager;
 import com.stcloud.core.service.impl.upload.UploadChunkManager;
-import com.stcloud.core.service.impl.upload.UploadEventPublisher;
+import com.stcloud.core.service.impl.upload.UploadCommitManager;
 import com.stcloud.core.service.impl.upload.UploadManager;
 import com.stcloud.core.service.impl.upload.UploadStorageManager;
 import jakarta.annotation.Resource;
@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
  * 文件上传服务编排门面（TASK-002）。
  * 职责收敛为流程编排：配额/容量检查、状态机转换与幂等守卫交给 {@link UploadManager}，
  * 分片记录交给 {@link UploadChunkManager}，S3 生命周期交给 {@link UploadStorageManager}，
- * 事件发布交给 {@link UploadEventPublisher}。本类不再直接操作分片/S3/事件细节。
+ * 事件发布交给 UploadEventPublisher。本类不再直接操作分片/S3/事件细节。
  */
 @Slf4j
 @Service
@@ -64,11 +64,11 @@ public class UploadServiceImpl implements UploadService {
     @Resource
     private UploadManager uploadManager;
     @Resource
+    private UploadCommitManager uploadCommitManager;
+    @Resource
     private UploadChunkManager chunkManager;
     @Resource
     private UploadStorageManager storageManager;
-    @Resource
-    private UploadEventPublisher uploadEventPublisher;
     @Resource
     private RelayBufferManager relayBufferManager;
     /** 编辑保护锁服务：生产必有；测试上下文手工装配时缺失，保护检查跳过（保持既有测试兼容） */
@@ -83,10 +83,10 @@ public class UploadServiceImpl implements UploadService {
     private static final int REF_COUNT_INITIAL = 1;
 
     @Override
-    @Transactional
     public UploadCheckResponse checkInstantUpload(UploadCheckRequest request) {
         Long userId = UserContext.getUserId();
         Long tenantId = UserContext.getTenantId();
+        // 只读检查（F1-3）：非秒传路径不开启事务，避免无谓占用 DB 连接
         FileObject existingObj = fileObjectService.findByTenantAndMd5(tenantId, request.getFileMd5());
         if (existingObj != null) {
             uploadManager.checkQuotaForUpload(userId, request.getSpaceId(), request.getFileSize());
@@ -94,41 +94,18 @@ public class UploadServiceImpl implements UploadService {
 
             String parentPath = fileService.validateAndGetParentPath(request.getParentId());
             String fileName = fileService.resolveNameConflict(request.getParentId(), request.getFileName());
+            String contentType = fileService.guessContentType(fileName);
 
-            // 秒传：复用同租户同 md5 对象并 +1 引用，不重复上传物理对象
-            FileObject object = fileObjectService.acquire(tenantId, request.getFileMd5(), request.getFileSize(),
-                    () -> existingObj.getStoragePath());
-
-            FileNode node = new FileNode();
-            node.setParentId(request.getParentId());
-            node.setNodeType(NodeType.FILE.getCode());
-            node.setName(fileName);
-            node.setPath(parentPath + "/" + fileName);
-            node.setFileSize(request.getFileSize());
-            node.setFileMd5(request.getFileMd5());
-            node.setContentType(fileService.guessContentType(fileName));
-            node.setSuffix(fileService.extractSuffix(fileName));
-            node.setStoragePath(object.getStoragePath());
-            node.setObjectId(object.getId());
-            node.setStatus(NodeStatus.NORMAL.getCode());
-            node.setUploadStatus(UploadStatus.COMPLETED.getCode());
-            node.setOwnerId(userId);
-            node.setUploaderId(userId);
-            node.setSpaceId(request.getSpaceId());
-            node.setRefCount(REF_COUNT_INITIAL);
-            node.setVersion(0);
-            fileNodeMapper.insert(node);
-
-            uploadEventPublisher.publishCreated(node);
-            uploadManager.consumeQuota(userId, node.getSpaceId(), request.getFileSize());
-
+            // 秒传创建：独立 bean 事务方法承接 DB 写（引用+1 + 节点 + 配额 + 事件），
+            // 保证 Spring 代理生效且网络/校验耗时不再占用事务连接
+            FileNode node = uploadCommitManager.createInstantNode(userId, tenantId, request,
+                    parentPath, fileName, existingObj.getStoragePath(), contentType);
             return UploadCheckResponse.builder().instant(true).fileId(node.getId()).build();
         }
         return UploadCheckResponse.builder().instant(false).build();
     }
 
     @Override
-    @Transactional
     public FileNodeVO simpleUpload(Long parentId, MultipartFile file, Long spaceId) {
         Long userId = UserContext.getUserId();
         long fileSize = file.getSize();
@@ -156,39 +133,31 @@ public class UploadServiceImpl implements UploadService {
         }
 
         Long tenantId = UserContext.getTenantId();
-        // 去重：同租户同 md5 已存在对象则复用（不重复上传）；否则上传规范化路径 tenantId/md5 并创建对象
-        FileObject object = fileObjectService.acquire(tenantId, md5, fileSize, () -> {
-            String key = tenantId + "/" + md5;
-            storageManager.uploadObject(key, pacedInputStream(getInputStream(file), rateBytes, userId),
+        // 去重预查（F2-1，事务外）：同租户同 md5 已存在对象则复用，不重复上传；
+        // 不存在则先上传规范化路径 tenantId/md5（限速保留），S3 上传发生在事务外
+        FileObject existing = fileObjectService.findByTenantAndMd5(tenantId, md5);
+        String storagePath;
+        boolean uploadedNew = false;
+        if (existing != null) {
+            storagePath = existing.getStoragePath();
+        } else {
+            storagePath = tenantId + "/" + md5;
+            storageManager.uploadObject(storagePath, pacedInputStream(getInputStream(file), rateBytes, userId),
                     fileSize, file.getContentType());
-            return key;
-        });
-
-        String storagePath = object.getStoragePath();
-
-        FileNode node = new FileNode();
-        node.setParentId(parentId);
-        node.setNodeType(NodeType.FILE.getCode());
-        node.setName(fileName);
-        node.setPath(parentPath + "/" + fileName);
-        node.setFileSize(fileSize);
-        node.setFileMd5(md5);
-        node.setContentType(file.getContentType());
-        node.setSuffix(fileService.extractSuffix(fileName));
-        node.setStoragePath(storagePath);
-        node.setObjectId(object.getId());
-        node.setStatus(NodeStatus.NORMAL.getCode());
-        node.setUploadStatus(UploadStatus.COMPLETED.getCode());
-        node.setOwnerId(userId);
-        node.setUploaderId(userId);
-        node.setSpaceId(spaceId);
-        node.setRefCount(REF_COUNT_INITIAL);
-        node.setVersion(0);
-        fileNodeMapper.insert(node);
-
-        uploadEventPublisher.publishCreated(node);
-        uploadManager.consumeQuota(userId, spaceId, fileSize);
-        return fileService.toVO(node);
+            uploadedNew = true;
+        }
+        try {
+            // 事务内落库：acquireByPath（对象记录/引用）+ 节点 + 配额 + 事件
+            return uploadCommitManager.commitSimpleUpload(userId, tenantId, spaceId, parentId,
+                    parentPath, fileName, md5, fileSize, storagePath, file.getContentType());
+        } catch (RuntimeException e) {
+            // 事务失败清理（F2-1）：仅当本次请求创建过对象记录且引用归零时才删除已上传对象，
+            // 避免误删并发请求正在复用的对象；无法确定时交由定时任务兜底
+            if (uploadedNew) {
+                cleanupOrphanUpload(tenantId, md5, storagePath);
+            }
+            throw e;
+        }
     }
 
     @Override
@@ -374,8 +343,8 @@ public class UploadServiceImpl implements UploadService {
     }
 
     @Override
-    @Transactional
     public FileNodeVO mergeChunks(UploadMergeRequest request) {
+        // 幂等检查与 S3 合并均在事务外执行（F2-2）：网络耗时不再占用 DB 连接
         FileChunk firstChunk = chunkManager.getFirstChunk(request.getUploadId());
         if (firstChunk == null) {
             throw new BusinessException(ResultCode.CHUNK_NOT_FOUND);
@@ -409,47 +378,21 @@ public class UploadServiceImpl implements UploadService {
                 // 替换上传：清理 S3 残留并恢复上一版本，既有文件保持可用
                 storageManager.abortMultipart(node.getStoragePath(), request.getS3UploadId());
             }
-            // 新建上传：保留 S3 分片与节点（FAILED），支持断点续传/重试
+            // 新建上传：保留 S3 分片与节点（FAILED），支持断点续传/重试；
+            // handleMergeFailure 收敛为独立小事务，S3 调用全部在事务外
             uploadManager.handleMergeFailure(node, isReplaceUpload);
             throw e;
         }
 
-        // 合并成功：标记分片已合并（保留记录以支撑重复 merge 幂等）
-        chunkManager.markChunksMerged(request.getUploadId());
-
-        // 去重归属对象：合并完成后按 md5 归属 file_object；同 md5 已存在则复用并清理刚合并的临时对象
-        Long oldObjectId = node.getObjectId();
-        Long objectTenant = node.getTenantId() != null ? node.getTenantId() : UserContext.getTenantId();
-        long objectSize = node.getFileSize() == null ? 0L : node.getFileSize();
-        FileObject object = fileObjectService.acquire(objectTenant, node.getFileMd5(), objectSize,
-                () -> node.getStoragePath());
-        if (object != null) {
-            if (!object.getStoragePath().equals(node.getStoragePath())) {
-                // 去重命中：合并产生的临时对象不再需要，尽力清理
-                storageManager.deleteObjectQuietly(node.getStoragePath());
-            }
-            node.setObjectId(object.getId());
-            node.setStoragePath(object.getStoragePath());
-        } else {
-            node.setObjectId(null);
+        // 合并成功：S3 完成后事务内落库（分片标记 + 对象归属 + 节点更新 + 版本快照 + 差值配额 + 事件）
+        String mergedPath = node.getStoragePath();
+        FileNodeVO vo = uploadCommitManager.finalizeMerge(node, request.getUploadId(),
+                firstChunk.getOriginalSize());
+        // 事务提交后：去重命中时临时合并对象已无引用，尽力清理（不误删被引用对象）
+        if (!mergedPath.equals(node.getStoragePath())) {
+            storageManager.deleteObjectQuietly(mergedPath);
         }
-        // 替换上传：旧对象引用释放（保留物理对象，可能仍被版本历史引用）
-        if (oldObjectId != null && (object == null || !oldObjectId.equals(object.getId()))) {
-            fileObjectService.release(oldObjectId);
-        }
-
-        uploadManager.markCompleted(node);
-        fileNodeMapper.updateById(node);
-        versionService.snapshotCurrentVersion(node);
-
-        uploadEventPublisher.publishUpdated(node);
-        // 按差值计费：替换上传仅补/退新旧大小差值，新建上传 delta = 全量 fileSize
-        long newSize = node.getFileSize() == null ? 0 : node.getFileSize();
-        long original = firstChunk.getOriginalSize() == null ? 0 : firstChunk.getOriginalSize();
-        long delta = newSize - original;
-        uploadManager.consumeQuota(node.getOwnerId(), node.getSpaceId(), delta);
-
-        return fileService.toVO(node);
+        return vo;
     }
 
     @Override
@@ -610,6 +553,31 @@ public class UploadServiceImpl implements UploadService {
             return file.getInputStream();
         } catch (IOException e) {
             throw new BusinessException(ResultCode.FILE_UPLOAD_FAILED);
+        }
+    }
+
+    /**
+     * 上传事务失败后的孤儿对象清理（F2-1）：
+     * 仅当本次请求实际上传了新对象（uploadedNew），且当前无对象记录（本次 insertIgnore 已随事务回滚）
+     * 或记录引用归零时才删除物理对象，避免误删并发请求正在复用的对象；删除失败不阻断主流程，交由定时任务兜底。
+     */
+    private void cleanupOrphanUpload(Long tenantId, String md5, String storagePath) {
+        try {
+            FileObject current = fileObjectService.findByTenantAndMd5(tenantId, md5);
+            boolean noRecord = current == null;
+            boolean unreferenced = current != null
+                    && current.getRefCount() != null && current.getRefCount() <= 0
+                    && storagePath.equals(current.getStoragePath());
+            if (noRecord || unreferenced) {
+                storageManager.deleteObjectQuietly(storagePath);
+                log.warn("已尽力清理上传失败产生的孤儿对象: md5={}, storagePath={}", md5, storagePath);
+            } else {
+                log.warn("上传事务失败但对象仍被引用，跳过物理删除: md5={}, refCount={}",
+                        md5, current.getRefCount());
+            }
+        } catch (Exception e) {
+            // 清理失败不阻断主流程，交由定时任务兜底
+            log.warn("上传失败清理孤儿对象异常（交由定时任务兜底）: md5={}", md5, e);
         }
     }
 }

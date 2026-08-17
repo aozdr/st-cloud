@@ -48,6 +48,9 @@ class FileObjectIntegrationTest extends AbstractIntegrationTest {
     @Autowired
     private FileObjectService fileObjectService;
 
+    @Autowired
+    private StorageService storageService;
+
     @Test
     void acquire_dedupSameTenantAndIsolateTenants() {
         // 上下文租户 1
@@ -88,6 +91,29 @@ class FileObjectIntegrationTest extends AbstractIntegrationTest {
         assertEquals(1, uploads.get());
         assertEquals(obj.getId(), again.getId());
         assertEquals(2, fileObjectMapper.getRefCount(obj.getId()));
+    }
+
+    @Test
+    void acquireByPath_createsObjectWithoutAnyS3Call() {
+        // 事务边界治理 F2-1：物理对象已由调用方上传，acquireByPath 仅做 DB 操作，禁止触发 S3
+        Mockito.reset(storageService);
+        FileObject obj = fileObjectService.acquireByPath(1L, "md5-bbp", 250L, "t1/md5-bbp");
+        assertNotNull(obj.getId());
+        assertEquals("t1/md5-bbp", obj.getStoragePath());
+        assertEquals(1, obj.getRefCount());
+        Mockito.verifyNoInteractions(storageService);
+    }
+
+    @Test
+    void acquireByPath_reusesExistingAndIncrementsRefWithoutS3() {
+        Mockito.reset(storageService);
+        FileObject first = fileObjectService.acquireByPath(1L, "md5-ccq", 350L, "t1/md5-ccq");
+        // 命中复用：同一对象、引用 +1，且不触发任何 S3 调用
+        FileObject again = fileObjectService.acquireByPath(1L, "md5-ccq", 350L, "should-not-be-used");
+        assertEquals(first.getId(), again.getId());
+        assertEquals("t1/md5-ccq", again.getStoragePath());
+        assertEquals(2, fileObjectMapper.getRefCount(first.getId()));
+        Mockito.verifyNoInteractions(storageService);
     }
 
     @Test

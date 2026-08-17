@@ -14,6 +14,7 @@ import com.stcloud.core.service.VersionService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 上传状态机与配额管理器（TASK-002）。
@@ -104,7 +105,10 @@ public class UploadManager {
      * 合并失败处理：
      * - 替换上传：清理 S3 残留并恢复上一版本（COMPLETED），保证既有文件可用；
      * - 新建上传：仅标记 FAILED，保留节点与分片，供客户端断点续传/重试 merge。
+     * 独立小事务（事务边界治理 F2-2）：S3 complete/abort 已移出事务，本方法仅收敛 DB 状态写，
+     * 由 Spring 代理保证失败状态落库后即提交，不占用长事务连接。
      */
+    @Transactional
     public void handleMergeFailure(FileNode node, boolean isReplaceUpload) {
         if (isReplaceUpload) {
             FileVersion latest = versionService.getLatestVersion(node.getId());
