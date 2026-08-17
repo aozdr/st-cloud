@@ -66,3 +66,6 @@ design/
 
 # AI code lab (isolated parallel-coding verification workspace)
 .ai/lab/
+
+# AI worktree isolation (V15 parallel implementation batches)
+.ai/worktrees/

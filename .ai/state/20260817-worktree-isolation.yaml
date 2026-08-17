@@ -1,0 +1,80 @@
+taskId: "20260817-worktree-isolation"
+goal:
+  objective: "实现阶段引入 git worktree 文件系统级隔离：每个实现子 Agent 在独立 worktree 中工作，主线程统一提交/合并/验证/清理，解决并发写同一工作目录的互相覆盖与构建产物冲突"
+  scope: "AI 工作流基础设施（.ai/ 目录、AGENTS.md、.gitignore）+ 试点验证（st-core/st-web 少量新增工具代码）"
+  completionCriteria:
+    - "基础设施文件按 design.md 落地并生效（dispatch-template V9、worktree.ps1、知识库、AGENTS.md、版本号 V15）"
+    - "试点批次：2 后端 + 1 前端任务经 worktree 隔离并行完成，主工作树批次期间零源码改动"
+    - "合并后 mvn test（st-core）+ npm run build（st-web）通过，worktree 清理无残留"
+scale: medium
+exitCriteria:
+  - id: DESIGN
+    desc: "design.md 已产出、Grill Me 收敛（遗留问题点 ≤3）、用户已逐项拍板"
+    status: done
+    dependsOn: []
+  - id: TESTCASES
+    desc: "试点验证方案已定版（design.md 第九章 Task2），含隔离断言/合并/集成验证/清理验收点"
+    status: done
+    dependsOn: [DESIGN]
+  - id: IMPLEMENTED
+    desc: "TASK-01 基础设施 + TASK-02 试点批次实现完成，changereport 落盘"
+    status: done
+    dependsOn: [TESTCASES]
+  - id: CODE_REVIEW
+    desc: "主线程复核 worktree.ps1 与协议改动，确认无越界、无破坏性操作"
+    status: done
+    dependsOn: [IMPLEMENTED]
+  - id: SECURITY_REVIEW
+    desc: "条件项：检查文件删除/覆盖安全（无 --force、删除有保护）、git 权限收敛"
+    status: done
+    dependsOn: [IMPLEMENTED]
+  - id: TEST_PASS
+    desc: "mvn test（st-core）+ npm run build（st-web）全绿，worktree 清理无残留"
+    status: done
+    dependsOn: [CODE_REVIEW, SECURITY_REVIEW]
+  - id: KNOWLEDGE
+    desc: "试点报告与 V15 知识沉淀写入知识库"
+    status: done
+    dependsOn: [TEST_PASS]
+  - id: ACCEPT
+    desc: "对照 design.md 验收标准逐项核对通过"
+    status: done
+    dependsOn: [KNOWLEDGE]
+artifacts:
+  design: { status: done, ref: ".ai/docs/20260817-worktree-isolation/design.md", owner: "workflow-manager", userConfirmedAt: "2026-08-17" }
+  task: { status: done, ref: ".ai/tasks/TASK-20260817-worktree-isolation-01.md", owner: "workflow-manager" }
+  changereport: { status: done, ref: ".ai/docs/20260817-worktree-isolation/changereport.md", owner: "executor" }
+blockers: []
+history:
+  - iter: 1
+    phase: "design"
+    agent: "workflow-manager"
+    action: "产出 design.md 并交用户确认"
+    delta: "DESIGN done"
+    result: "用户确认方案，遗留问题点 P1-P3 按建议方案执行"
+  - iter: 2
+    phase: "implement"
+    agent: "workflow-manager"
+    action: "Task1 基础设施落地 + 自检"
+    delta: "IMPLEMENTED done"
+    result: ".gitignore/worktree.ps1/dispatch-template V9/知识库/AGENTS.md/版本号 V15 落地；脚本 BOM+语法通过；产品代码零改动"
+  - iter: 3
+    phase: "implement"
+    agent: "executor x3"
+    action: "Task2 试点批次（be01/be02/fe01）经 worktree 隔离实现"
+    delta: "试点产物入 worktree，主工作树零源码改动"
+    result: "3 任务完成，be02/fe01 确认并发；收件箱认领动态门禁生效"
+  - iter: 4
+    phase: "test"
+    agent: "workflow-manager"
+    action: "提交合并 + 集成验证 + 清理"
+    delta: "TEST_PASS done"
+    result: "mvn test 146 例全绿（含新增 12 例）、npm build 通过、worktree 清理无残留"
+  - iter: 5
+    phase: "accept"
+    agent: "workflow-manager"
+    action: "对照 design.md 验收标准逐项核对"
+    delta: "ACCEPT done，status=done"
+    result: "三项完成标准全部满足；BE-02 只读 git status 合规例外已记录不阻塞"
+iteration: 5
+status: done

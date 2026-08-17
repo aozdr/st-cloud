@@ -207,7 +207,7 @@ Dispatch Message = 唯一任务来源
 ## 环节串行：子线程生命周期（主线程硬规则）
 
 - **用完即关（硬规则）**：子线程返回最终结果、主线程完成数据收集后，**立即** `interrupt_agent` 关闭该子线程，不得让其滞留到 `pending_init`。实测：`pending_init` 状态的线程无法通过 interrupt 释放且占用并发槽位（会导致后续 spawn 报 `agent thread limit reached`），因此关闭必须发生在线程仍处于 running/completed 状态时。
-- **测试串行化（硬规则）**：并发实现子线程**禁止并行运行 `mvn test` / `mvn compile`**——Maven 本地仓库（`~/.m2`）存在全局锁，多个进程并发构建会互相等待/锁冲突，且 `-am` 会共享构建上游模块（st-common/st-core 等）的 target 目录，产生假失败。实现子线程只产出代码与静态自检；**编译与测试验证统一由主线程（或单一测试执行 agent）在实现全部完成后串行执行**。
+- **测试串行化（硬规则）**：并发实现子线程**禁止并行运行 `mvn test` / `mvn compile`**——Maven 本地仓库（`~/.m2`）存在全局锁，多个进程并发构建会互相等待/锁冲突，且 `-am` 会共享构建上游模块（st-common/st-core 等）的 target 目录，产生假失败。实现子线程只产出代码与静态自检；**编译与测试验证统一由主线程（或单一测试执行 agent）在实现全部完成后串行执行**（V15 起实现子线程在独立 worktree 内工作，见「实现阶段 Worktree 隔离」）。
 - **严格执行检测 + ETA 超时（硬规则）**：子线程 completed 后，主线程**必须核对产物**（TASK 约定文件存在且含 taskCode），仅回复 ACK 或产物缺失判定未执行（重派或降级）；信封 `etaMinutes` 为预计执行时间，超时（1.5×eta）未完成 → `interrupt_agent` 中断并标记 `ABNORMAL/TIMEOUT`；子代理明显超 ETA 时回复自标 `STATUS: OVERTIME`。
 - **每次进入新的环节（REQ_ANALYSIS / IMPACT_ANALYSIS / EXP_DESIGN / TECH_DESIGN / TESTCASES / IMPLEMENTED / CODE_REVIEW / SECURITY_REVIEW / EXP_ACCEPT / TEST_PASS / KNOWLEDGE / ACCEPT）开启子线程前，主线程必须先关闭上一环节的全部子线程**（`interrupt_agent` 逐个中断，`list_agents` 确认无残留）。
 - 同一环节内可并行派发多个无依赖子线程；**不允许跨环节残留子线程**（例如设计评审未收尾就开启编码实现线程）。
@@ -513,6 +513,18 @@ Review/测试/验收发现问题不退格，编排器重新 Plan 派发对应 Ag
 -   **子任务行为**：子 agent 收到派遣消息后立即执行，首条消息声明“我是 <role>，任务类型 <type>，开始执行 <objective>”，禁止寒暄、禁止等待确认；**禁止向用户发起任何确认请求（不得调用 request_user_input / 提问 / “请确认是否继续”），用户无法操作子 Agent 的确认交互，此类行为会使任务卡死**；编码输入只接受 TASK 文件；**任务自完，禁止再派发任何子 Agent（forbidSpawn）**，需要额外专业能力时返回 `delegationRequest`，缺少外部条件时返回 `BLOCKED`，派发包不完整时返回 `DISPATCH_INVALID`，均不向用户确认；完成后追加 `.ai/docs/<task-id>/changereport.md` 对应章节并回复结果摘要。
 -   **合并与验收**：Workflow Manager 等待全部子任务返回，合并 changereport.md，执行集成验证（`mvn test` + `npm run build` / `tsc`），全部通过才标记 IMPLEMENTED done 并进入 Review。
 -   **rework**：Review/测试/验收打回时，通过 follow-up 消息定向派发对应子任务修复；代码变更触发级联回退（见 `.ai/knowledge/loop-state-model.md`）。
+
+### 实现阶段 Worktree 隔离（V15 硬规则，2026-08-17 起）
+
+并行实现批次中，每个实现子线程在独立 git worktree 内工作，由主线程统一管理 git 生命周期：
+
+-   **创建**：主线程逐个执行 `git worktree add -b codex/<taskCode> .ai/worktrees/<taskCode> main`，顺序准入不变（创建 → 写收件箱 → spawn → 等 ACK → 下一个）。
+-   **子线程约束**：只写 Dispatch 的 `worktreeRoot` 内源码；只读 `mainRoot/.ai/` 协调文件；changereport 写回 `mainRoot/.ai/docs/<task-id>/`；**禁 git / mvn（forbidGitMvn）**；验证统一由主线程执行。
+-   **git 权限收敛**：git 写操作（worktree add / commit / merge / branch / worktree remove）只由主线程执行，子线程无 git 能力。
+-   **隔离断言**：实现批次期间主工作树源码零改动；合并前主线程核对 `git -C <wt> status --porcelain` 改动 ⊆ scope.include，越界不合并。
+-   **合并与验证**：子线程完成后主线程 `git -C <wt> add -A` + commit → `git merge --no-ff codex/<taskCode>` → 主工作树串行集成验证。
+-   **清理**：验证通过后 `git worktree remove` + `git branch -d`；**禁止 `--force` 删除**，未提交或失败的 worktree 保留现场。
+-   **降级**：`git worktree add` 失败时自动降级 V14 共享目录 + scope 白名单模式，TASK 无需重写。
 
 ------------------------------------------------------------------------
 

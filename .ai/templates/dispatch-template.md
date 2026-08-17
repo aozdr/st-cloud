@@ -1,4 +1,4 @@
-# Dispatch Template V7 — Reliable Task Injection / V2 Sequential Admission
+# Dispatch Template V9 — Reliable Task Injection / V2 Sequential Admission / V15 Worktree Isolation
 
 > 内部协议。用户永远不需要填写。
 
@@ -45,6 +45,9 @@ etaMinutes: <预计执行分钟数，按规模：前端组件10-15/多组件20-3
 taskId: <task-id>
 taskRef: <task-file>
 stateRef: <state-file>
+worktreeRoot: <V15 实现任务专属 worktree 绝对路径，如 D:\code\st-cloud\.ai\worktrees\be01；非实现任务填 "-">
+mainRoot: <主仓库绝对路径，如 D:\code\st-cloud；协调文件读取与 changereport 写回>
+forbidGitMvn: true
 role: <executor|reviewer|tester>
 taskType: <requirement|discovery|impact|architecture|design|implement|ui-design|knowledge|review|security|ui-review|exp-review|accept|testcases|test>
 skillRefs:
@@ -106,6 +109,9 @@ etaMinutes
 taskId
 taskRef
 stateRef
+worktreeRoot
+mainRoot
+forbidGitMvn
 role
 taskType
 skillRefs
@@ -174,6 +180,14 @@ TASK-BE → message_BE → child_BE
 ```
 
 不得共享 message，不得先创建空 child 再补任务。
+
+## V15 Worktree 隔离（实现任务）
+
+- 并行实现批次中，每个实现 child 在独立 worktree 内工作；worktree 由主线程创建（`git worktree add -b codex/<taskCode> .ai/worktrees/<taskCode> main`）。
+- 子 Agent 只写 `worktreeRoot` 内源码；只读 `mainRoot/.ai/` 协调文件；changereport 写回 `mainRoot/.ai/docs/<task-id>/`。
+- **forbidGitMvn = true**：子 Agent 禁止执行任何 git / mvn / npm 构建命令；验证统一由主线程在合并后串行执行。
+- 主线程负责：提交（`git -C <wt> add -A` + commit）、合并（`--no-ff`）、清理（`git worktree remove` + `git branch -d`，禁止 `--force`）。
+- `git worktree add` 失败时，主线程降级 V14 共享目录 + scope 白名单模式，TASK 无需重写。
 
 ## File Inbox 兜底（非 OpenAI provider 强制，多文件认领版）
 

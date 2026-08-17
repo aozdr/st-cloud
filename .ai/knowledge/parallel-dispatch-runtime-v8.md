@@ -203,3 +203,48 @@ A/B 不创建孙 Agent
 A/B 分别返回 State Delta
 Workflow Manager 最终合并 State
 ```
+
+## V9 Worktree 隔离（2026-08-17，V15 运行时）
+
+### 目的
+
+在 V8 上下文隔离（`fork_turns=none`）之上增加**文件系统级隔离**：每个实现 child 在独立 git worktree 中工作，解决并发写同一工作目录的互相覆盖、读到半成品、`-am` 共享 target 互相破坏问题。
+
+### 生命周期（主线程统一管理）
+
+```text
+规划批次（文件零重叠）
+  ↓
+git worktree add -b codex/<taskCode> .ai/worktrees/<taskCode> main   # 逐个，顺序准入
+  ↓
+写 inbox → spawn child（envelope 含 worktreeRoot/mainRoot/forbidGitMvn）
+  ↓
+child 只写 worktreeRoot；changelog 写回 mainRoot/.ai/docs/<task-id>/
+  ↓
+核对：git -C <wt> status --porcelain 改动 ⊆ scope.include；主工作树 git status 必须为空（隔离断言）
+  ↓
+git -C <wt> add -A + commit → git merge --no-ff codex/<taskCode>
+  ↓
+主工作树串行集成验证（mvn test + npm run build / tsc）
+  ↓
+git worktree remove + git branch -d（禁止 --force；失败保留现场）
+```
+
+### 角色与权限
+
+| 对象 | 职责 | git 能力 |
+|------|------|---------|
+| 主线程 | 创建/提交/合并/清理/验证 | 全部 git 写操作（沙箱对 `.git` 只读，需提权） |
+| 子 Agent | 只写 worktreeRoot 源码 + changereport | 无（forbidGitMvn） |
+| 主工作树 | 实现批次期间源码冻结 | 源码只读 |
+
+### 与 V8.4 测试串行化的关系
+
+- worktree 各自拥有独立 target 目录，`-am` 共享上游 target 的互相破坏问题消除。
+- `~/.m2` 全局锁仍在，`mvn` 依然统一由主线程串行执行；worktree 内无依赖目录，child 物理上无法构建。
+
+### 失败处理
+
+- `git worktree add` 失败：自动降级 V14 共享目录 + scope 白名单模式，TASK 不重写。
+- 合并冲突：保留现场、人工裁决；不得 `--force` 清理。
+- worktree 有未提交改动：cleanup 拒绝执行，保留现场供排查。

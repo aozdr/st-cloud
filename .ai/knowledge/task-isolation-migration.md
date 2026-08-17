@@ -128,3 +128,24 @@ task discipline
 ```text
 context isolation
 ```
+
+## V7 文件系统级隔离（Worktree，2026-08-17）
+
+V6 的 `fork_turns=none` 解决的是**上下文隔离**（子 Agent 不继承父线程历史）。
+
+V7 解决**文件系统隔离**：多个实现 child 并发写同一工作目录时，可能互相覆盖、读到对方半成品、`-am` 构建共享 target 互相破坏。
+
+### 规则
+
+1. 并行实现批次中，每个实现 child 在独立 worktree 内工作：`git worktree add -b codex/<taskCode> .ai/worktrees/<taskCode> main`。
+2. 子 Agent 只写 `worktreeRoot` 内源码；只读 `mainRoot/.ai/` 协调文件；changereport 写回 `mainRoot/.ai/docs/<task-id>/`。
+3. `forbidGitMvn`：子 Agent 禁 git / mvn；验证统一由主线程合并后串行执行。
+4. 隔离断言：实现批次期间主工作树源码零改动；主线程合并前核对 worktree 改动 ⊆ scope.include。
+5. 清理：验证通过后 `git worktree remove` + `git branch -d`；禁止 `--force`，失败保留现场。
+6. `git worktree add` 失败时降级 V14 共享目录 + scope 白名单模式。
+
+### 与 V6 的关系
+
+```text
+V6 上下文隔离（fork_turns=none）  +  V7 文件系统隔离（worktree）  = 完整 Task Isolation
+```

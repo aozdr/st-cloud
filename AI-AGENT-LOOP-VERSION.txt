@@ -1,1 +1,1 @@
-st-cloud AI Agent Loop V14 — Sequential Admission / Concurrent Execution
+st-cloud AI Agent Loop V15 — Git Worktree Isolation for Parallel Implementation
