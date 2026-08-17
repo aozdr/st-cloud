@@ -215,9 +215,13 @@ Workflow Manager 最终合并 State
 ```text
 规划批次（文件零重叠）
   ↓
-git worktree add -b codex/<taskCode> .ai/worktrees/<taskCode> main   # 逐个，顺序准入
+git worktree add -b codex/<taskCode> .ai/worktrees/<taskCode> main   # 逐个
   ↓
 写 inbox → spawn child（envelope 含 worktreeRoot/mainRoot/forbidGitMvn）
+  ↓
+轮询 .ai/dispatch/archived/inbox-<taskCode>.md 直到出现（worktree.ps1 wait-claim，动态 ACK 门禁）
+  ↓
+ACK 判据命中后立即派发下一个 child（禁止等待业务完成）
   ↓
 child 只写 worktreeRoot；changelog 写回 mainRoot/.ai/docs/<task-id>/
   ↓
@@ -229,6 +233,13 @@ git -C <wt> add -A + commit → git merge --no-ff codex/<taskCode>
   ↓
 git worktree remove + git branch -d（禁止 --force；失败保留现场）
 ```
+
+### 顺序准入的动态 ACK 门禁（2026-08-17 实测修正）
+
+- ACK 判据 = `archived/inbox-<taskCode>.md` 存在（子 Agent 原子认领即移动至此）。
+- 主线程 spawn 后必须轮询认领文件（`worktree.ps1 -Action wait-claim`），**不得**用等待子线程完整完成/最终回复作为派发下一个的条件——那是串行执行，不是顺序准入。
+- 认领命中后立即创建下一个 child；多个 child 在 ACK 后并发执行。
+- 认领超时（默认 180s）→ 检查 spawn message 是否注入失败，按 V8 失败处理重派。
 
 ### 角色与权限
 

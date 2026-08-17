@@ -1,24 +1,29 @@
 ﻿# worktree.ps1 - V15 worktree 隔离生命周期工具（主线程专用）
-# 操作：create / list / commit-merge / cleanup / verify
+# 操作：create / list / wait-claim / commit-merge / cleanup / verify
 # 用法（Windows 执行策略限制，需 -ExecutionPolicy Bypass）：
 #   powershell -NoProfile -ExecutionPolicy Bypass -File .ai/scripts/worktree.ps1 -Action create -TaskCode be01
 #   powershell -NoProfile -ExecutionPolicy Bypass -File .ai/scripts/worktree.ps1 -Action list
+#   powershell -NoProfile -ExecutionPolicy Bypass -File .ai/scripts/worktree.ps1 -Action wait-claim -TaskCode be01 -TimeoutSeconds 180
 #   powershell -NoProfile -ExecutionPolicy Bypass -File .ai/scripts/worktree.ps1 -Action commit-merge -TaskCode be01 -Message "TASK-BE-01: 新增 FileNameSanitizer"
 #   powershell -NoProfile -ExecutionPolicy Bypass -File .ai/scripts/worktree.ps1 -Action cleanup -TaskCode be01
 #   powershell -NoProfile -ExecutionPolicy Bypass -File .ai/scripts/worktree.ps1 -Action verify
 # 安全规则：
 #   - cleanup 拒绝删除有未提交改动的 worktree（禁止 --force，保护现场）
 #   - git 写操作仅主线程执行；子 Agent 禁调 git（forbidGitMvn）
+# 顺序准入（V8.5/V15）：spawn 后必须用 wait-claim 轮询 archived 认领文件作为动态 ACK 判据，
+#   认领即 ACK，立即派发下一个 child；禁止等待子线程业务完成。
 
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet('create', 'list', 'commit-merge', 'cleanup', 'verify')]
+    [ValidateSet('create', 'list', 'wait-claim', 'commit-merge', 'cleanup', 'verify')]
     [string]$Action,
 
     [string]$TaskCode,
 
-    [string]$Message
+    [string]$Message,
+
+    [int]$TimeoutSeconds = 180
 )
 
 $ErrorActionPreference = 'Stop'
@@ -71,6 +76,19 @@ switch ($Action) {
                 }
             }
         }
+    }
+    'wait-claim' {
+        Assert-TaskCode
+        $claimFile = Join-Path (Join-Path $RepoRoot '.ai\dispatch\archived') "inbox-$TaskCode.md"
+        $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+        while ((Get-Date) -lt $deadline) {
+            if (Test-Path $claimFile) {
+                Write-Output "CLAIMED taskCode=$TaskCode claimFile=$claimFile"
+                return
+            }
+            Start-Sleep -Seconds 3
+        }
+        Write-Output "CLAIM_TIMEOUT taskCode=$TaskCode waitedSeconds=$TimeoutSeconds"
     }
     'commit-merge' {
         Assert-TaskCode

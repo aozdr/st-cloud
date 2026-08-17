@@ -76,5 +76,11 @@ history:
     action: "对照 design.md 验收标准逐项核对"
     delta: "ACCEPT done，status=done"
     result: "三项完成标准全部满足；BE-02 只读 git status 合规例外已记录不阻塞"
+  - iter: 6
+    phase: "knowledge"
+    agent: "workflow-manager"
+    action: "固化 wait-claim 动态 ACK 门禁（worktree.ps1 + 协议文档 + AGENTS.md）"
+    delta: "顺序准入规则补强"
+    result: "wait-claim 双向测试通过（已认领立即命中 / 未认领超时）"
 iteration: 5
 status: done

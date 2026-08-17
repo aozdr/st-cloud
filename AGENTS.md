@@ -518,7 +518,7 @@ Review/测试/验收发现问题不退格，编排器重新 Plan 派发对应 Ag
 
 并行实现批次中，每个实现子线程在独立 git worktree 内工作，由主线程统一管理 git 生命周期：
 
--   **创建**：主线程逐个执行 `git worktree add -b codex/<taskCode> .ai/worktrees/<taskCode> main`，顺序准入不变（创建 → 写收件箱 → spawn → 等 ACK → 下一个）。
+-   **创建**：主线程逐个执行 `git worktree add -b codex/<taskCode> .ai/worktrees/<taskCode> main`，顺序准入不变（创建 → 写收件箱 → spawn → 轮询认领 → 下一个）。**ACK 判据 = `archived/inbox-<taskCode>.md` 认领文件出现（`worktree.ps1 -Action wait-claim`），不得等待子线程业务完成**。
 -   **子线程约束**：只写 Dispatch 的 `worktreeRoot` 内源码；只读 `mainRoot/.ai/` 协调文件；changereport 写回 `mainRoot/.ai/docs/<task-id>/`；**禁 git / mvn（forbidGitMvn）**；验证统一由主线程执行。
 -   **git 权限收敛**：git 写操作（worktree add / commit / merge / branch / worktree remove）只由主线程执行，子线程无 git 能力。
 -   **隔离断言**：实现批次期间主工作树源码零改动；合并前主线程核对 `git -C <wt> status --porcelain` 改动 ⊆ scope.include，越界不合并。
