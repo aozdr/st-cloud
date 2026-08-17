@@ -7,15 +7,9 @@ import com.stcloud.common.exception.BusinessException;
 import com.stcloud.common.response.Result;
 import com.stcloud.common.response.ResultCode;
 import com.stcloud.core.entity.FileNode;
-import com.stcloud.core.entity.FileObject;
-import com.stcloud.core.mapper.FileNodeMapper;
-import com.stcloud.core.service.FileObjectService;
 import com.stcloud.core.service.FileService;
 import com.stcloud.core.service.StorageService;
-import com.stcloud.core.service.VersionService;
-import com.stcloud.core.service.impl.upload.UploadEventPublisher;
 import com.stcloud.core.service.impl.upload.UploadStorageManager;
-import com.stcloud.core.service.impl.upload.UploadManager;
 import com.stcloud.sync.dto.BlockCheckRequest;
 import com.stcloud.sync.dto.BlockCheckResponse;
 import com.stcloud.sync.dto.BlockUploadRequest;
@@ -26,7 +20,6 @@ import com.stcloud.sync.service.SyncBlockService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -49,21 +42,13 @@ public class SyncBlockServiceImpl implements SyncBlockService {
     @Resource
     private FileBlockMapper fileBlockMapper;
     @Resource
-    private FileNodeMapper fileNodeMapper;
-    @Resource
     private FileService fileService;
     @Resource
     private StorageService storageService;
     @Resource
-    private FileObjectService fileObjectService;
-    @Resource
-    private VersionService versionService;
-    @Resource
-    private UploadEventPublisher uploadEventPublisher;
-    @Resource
-    private UploadManager uploadManager;
-    @Resource
     private UploadStorageManager uploadStorageManager;
+    @Resource
+    private SyncBlockCommitManager syncBlockCommitManager;
 
     @Override
     // F1-2 只读方法去事务：blockCheck 仅读 DB（块布局查询），无 DB 写；
@@ -141,9 +126,10 @@ public class SyncBlockServiceImpl implements SyncBlockService {
     }
 
     @Override
-    @Transactional
+    // F3（TX-04）：blockUpload 的 S3 调用全部在事务外执行，DB 写入收敛进 SyncBlockCommitManager
+    // 独立事务方法。S3 复制/合并失败直接抛错返回，不开启事务、不产生半成品 DB 状态；
+    // 去重命中清理在事务提交后执行（幂等，不误删被引用对象）。
     public Result<BlockUploadResponse> blockUpload(BlockUploadRequest request) {
-        Long userId = UserContext.getUserId();
         Long tenantId = TenantContext.getTenantId();
         FileNode node = fileService.getNodeByIdAndOwner(request.getFileNodeId());
         if (node == null || !node.isFile()) {
@@ -155,7 +141,7 @@ public class SyncBlockServiceImpl implements SyncBlockService {
         String oldStoragePath = node.getStoragePath();
         Long oldObjectId = node.getObjectId();
 
-        // 1. 重新派生可复用块（从旧版本块布局对比客户端全量块列表）
+        // 1. 重新派生可复用块（事务外只读：仅用于计算 S3 复制范围）
         List<FileBlock> serverBlocks = fileBlockMapper.selectList(
                 new LambdaQueryWrapper<FileBlock>()
                         .eq(FileBlock::getFileNodeId, node.getId())
@@ -166,7 +152,7 @@ public class SyncBlockServiceImpl implements SyncBlockService {
             serverBlockMap.put(fb.getBlockIndex(), fb);
         }
 
-        // 2. 复制可复用块到新 multipart（UploadPartCopy）
+        // 2. 复制可复用块到新 multipart（事务外 S3 网络调用）
         int copiedCount = 0;
         for (BlockCheckRequest.BlockHash clientBlock : request.getBlocks()) {
             int blockIndex = clientBlock.getIndex();
@@ -183,64 +169,22 @@ public class SyncBlockServiceImpl implements SyncBlockService {
             // 缺失块已由客户端通过预签名URL直传S3，此处无需处理
         }
 
-        // 3. 合并 multipart
+        // 3. 合并 multipart（事务外 S3 网络调用）
         storageService.completeMultipartUpload(request.getStoragePath(), request.getS3UploadId());
 
-        // 4. 去重归属：按 md5 归属 file_object
-        FileObject object = fileObjectService.acquire(tenantId, request.getFileMd5(), request.getFileSize(),
-                () -> request.getStoragePath());
-        if (object != null && !object.getStoragePath().equals(request.getStoragePath())) {
-            // 去重命中：合并产生的临时对象不再需要，清理
-            uploadStorageManager.deleteObjectQuietly(request.getStoragePath());
+        // 4. 事务内统一落库：去重归属 + 节点更新 + 版本快照 + 块布局 + 差值配额 + 事件
+        String mergedPath = request.getStoragePath();
+        BlockUploadResponse resp = syncBlockCommitManager.commitBlockUpload(
+                node, tenantId, oldSize, oldVersion, oldObjectId, request);
+
+        // 5. 去重命中清理（事务提交后执行）：合并产物被复用对象替代且无引用，尽力删除（幂等）
+        if (!mergedPath.equals(node.getStoragePath())) {
+            uploadStorageManager.deleteObjectQuietly(mergedPath);
         }
-
-        // 5. 更新文件节点
-        node.setStoragePath(object != null ? object.getStoragePath() : request.getStoragePath());
-        node.setObjectId(object != null ? object.getId() : null);
-        node.setFileMd5(request.getFileMd5());
-        node.setFileSize(request.getFileSize());
-        node.setVersion(oldVersion + 1);
-        node.setUploadStatus(2); // 已完成
-        fileNodeMapper.updateById(node);
-
-        // 旧对象引用释放（保留物理对象，可能被版本历史引用）
-        if (oldObjectId != null && (object == null || !oldObjectId.equals(object.getId()))) {
-            fileObjectService.release(oldObjectId);
-        }
-
-        // 6. 创建版本快照
-        versionService.snapshotCurrentVersion(node);
-
-        // 7. 写入新版本块布局：先删旧版本记录，再批量插入
-        fileBlockMapper.delete(new LambdaQueryWrapper<FileBlock>()
-                .eq(FileBlock::getFileNodeId, node.getId())
-                .eq(FileBlock::getVersion, oldVersion));
-        String finalStoragePath = node.getStoragePath();
-        for (BlockCheckRequest.BlockHash block : request.getBlocks()) {
-            FileBlock fb = new FileBlock();
-            fb.setTenantId(tenantId);
-            fb.setFileNodeId(node.getId());
-            fb.setVersion(oldVersion + 1);
-            fb.setBlockIndex(block.getIndex());
-            fb.setBlockMd5(block.getMd5());
-            fb.setBlockSize(block.getSize());
-            fb.setStoragePath(finalStoragePath);
-            fileBlockMapper.insert(fb);
-        }
-
-        // 8. 发布同步变更事件（UPDATE）+ 索引事件
-        uploadEventPublisher.publishUpdated(node);
-
-        // 9. 按差值计配额
-        long delta = request.getFileSize() - oldSize;
-        uploadManager.consumeQuota(userId, node.getSpaceId(), delta);
-
-        BlockUploadResponse resp = new BlockUploadResponse();
-        resp.setFileId(String.valueOf(node.getId()));
-        resp.setVersion(node.getVersion());
 
         log.info("块级上传组装完成: nodeId={}, version={}, copied={}, totalBlocks={}, delta={}",
-                node.getId(), node.getVersion(), copiedCount, request.getTotalBlocks(), delta);
+                node.getId(), node.getVersion(), copiedCount, request.getTotalBlocks(),
+                request.getFileSize() - oldSize);
         return Result.success(resp);
     }
 }
