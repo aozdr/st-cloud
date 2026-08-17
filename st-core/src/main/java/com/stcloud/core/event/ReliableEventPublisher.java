@@ -72,6 +72,24 @@ public class ReliableEventPublisher {
     }
 
     /**
+     * 发布物理删除事件（事务边界治理 F4）：回收站永久删除引用归零时调用，事务内写 Outbox。
+     * <p>
+     * MQ 配置时提交后由 {@link com.stcloud.core.outbox.EventRelay} 投递 PHYSICAL_DELETE 主题，
+     * 消费端异步删除 S3 物理对象；MQ 未配置时由本地 {@link PhysicalDeleteEventListener}
+     * 在事务提交后（AFTER_COMMIT）兜底删除（幂等），保证单实例部署仍能清理。
+     */
+    public void publishPhysicalDelete(FileNode node) {
+        Long eventLogId = writeOutbox(EventMessage.fromPhysicalDelete(node, null));
+        if (mqEnabled()) {
+            eventPublisher.publishEvent(new OutboxRelayEvent(this, eventLogId));
+        } else {
+            // MQ 未配置：提交后本地兜底删除，同时标记 Outbox 已投递（本地投递），供定期清理
+            eventPublisher.publishEvent(new PhysicalDeleteEvent(this, node));
+            eventLogMapper.markSent(eventLogId);
+        }
+    }
+
+    /**
      * 事务内写 Outbox 行：预生成雪花 ID（与 @TableId ASSIGN_ID 同一 IdWorker），
      * 事件日志ID 直接写入 payload 作为消费者幂等键，一次 INSERT 完成。
      */

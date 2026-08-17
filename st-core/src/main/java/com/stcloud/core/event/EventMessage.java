@@ -18,7 +18,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 public class EventMessage {
 
-    /** 事件类型：FILE_INDEX / SYNC_CHANGE */
+    /** 事件类型：FILE_INDEX / SYNC_CHANGE / PHYSICAL_DELETE */
     private String eventType;
 
     /** 文件索引动作：INDEX / DELETE / UPDATE_META（仅 FILE_INDEX 事件） */
@@ -53,6 +53,16 @@ public class EventMessage {
         message.setChangeType(change.name());
         message.setOldPath(oldPath);
         message.setEventLogId(eventLogId);
+        message.setFileNode(FileNodeSnapshot.from(node));
+        return message;
+    }
+
+    /** 由物理删除事件构建（事务边界治理 F4：回收站永久删除引用归零后的 S3 异步删除补偿） */
+    public static EventMessage fromPhysicalDelete(FileNode node, Long eventLogId) {
+        EventMessage message = new EventMessage();
+        message.setEventType("PHYSICAL_DELETE");
+        message.setEventLogId(eventLogId);
+        // payload 快照含 storagePath / fileMd5 / tenantId / objectId，供消费端定位并删除 S3 物理对象
         message.setFileNode(FileNodeSnapshot.from(node));
         return message;
     }
