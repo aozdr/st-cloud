@@ -22,6 +22,7 @@ import com.stcloud.core.service.StorageService;
 import com.stcloud.core.service.UploadService;
 import com.stcloud.core.service.VersionService;
 import com.stcloud.core.service.impl.upload.UploadChunkManager;
+import com.stcloud.core.service.impl.upload.UploadCommitManager;
 import com.stcloud.core.service.impl.upload.UploadEventPublisher;
 import com.stcloud.core.service.impl.upload.UploadManager;
 import com.stcloud.core.service.impl.upload.UploadStorageManager;
@@ -134,6 +135,11 @@ class UploadStateMachineIntegrationTest extends AbstractIntegrationTest {
         @Bean
         UploadEventPublisher uploadEventPublisher(ReliableEventPublisher reliableEventPublisher) {
             return new UploadEventPublisher(reliableEventPublisher);
+        }
+
+        @Bean
+        UploadCommitManager uploadCommitManager() {
+            return new UploadCommitManager();
         }
 
         @Bean

@@ -182,4 +182,56 @@ class ConcurrentUploadIntegrationTest {
         assertNotNull(fileObjectService.findByTenantAndMd5(1L, "md5-race-001"));
         TenantContext.clear();
     }
+
+    @Test
+    void concurrentAcquireByPath_dedupToSingleObjectAndConsistentRefCount() throws Exception {
+        // 事务边界治理 F2-1：acquireByPath 仅 DB 归属，不触发上传；
+        // 并发竞争下必须与 acquire 一致——单一对象 + 引用计数等于请求数
+        TenantContext.setTenantId(1L);
+        TenantContext.setTenantMode("SAAS");
+
+        int threads = 4;
+        ExecutorService pool = Executors.newFixedThreadPool(threads);
+        CountDownLatch ready = new CountDownLatch(threads);
+        CountDownLatch start = new CountDownLatch(1);
+        CountDownLatch done = new CountDownLatch(threads);
+        ConcurrentLinkedQueue<Long> objectIds = new ConcurrentLinkedQueue<>();
+        AtomicInteger unexpected = new AtomicInteger();
+
+        for (int i = 0; i < threads; i++) {
+            pool.submit(() -> {
+                TenantContext.setTenantId(1L);
+                TenantContext.setTenantMode("SAAS");
+                ready.countDown();
+                try {
+                    start.await();
+                    FileObject obj = fileObjectService.acquireByPath(1L, "md5-race-002", 100L, "t1/md5-race-002");
+                    if (obj != null) {
+                        objectIds.add(obj.getId());
+                    }
+                } catch (Exception e) {
+                    unexpected.incrementAndGet();
+                } finally {
+                    done.countDown();
+                }
+            });
+        }
+
+        assertTrue(ready.await(10, TimeUnit.SECONDS), "线程未全部就绪");
+        start.countDown();
+        assertTrue(done.await(30, TimeUnit.SECONDS), "并发去重超时");
+        pool.shutdownNow();
+        TenantContext.clear();
+
+        assertEquals(0, unexpected.get(), "并发去重不应出现意外异常");
+        List<Long> ids = objectIds.stream().collect(Collectors.toList());
+        assertEquals(threads, ids.size(), "所有线程都应获得对象");
+        assertEquals(1L, ids.stream().distinct().count(), "同 md5 并发归属必须去重为单一对象");
+        Long objId = ids.get(0);
+        assertEquals(threads, fileObjectMapper.getRefCount(objId), "对象引用计数应等于归属次数");
+        TenantContext.setTenantId(1L);
+        TenantContext.setTenantMode("SAAS");
+        assertNotNull(fileObjectService.findByTenantAndMd5(1L, "md5-race-002"));
+        TenantContext.clear();
+    }
 }

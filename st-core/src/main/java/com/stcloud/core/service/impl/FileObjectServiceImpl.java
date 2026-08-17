@@ -35,15 +35,30 @@ public class FileObjectServiceImpl implements FileObjectService {
             fileObjectMapper.incrementRefCount(existing.getId());
             return existing;
         }
-        // 未命中：上传新物理对象并创建对象记录
+        // 未命中：由调用方（事务内/事务外均可）先上传新物理对象，再按路径归属/创建对象记录
         String storagePath = storagePathSupplier.get();
+        return acquireByPath(tenantId, md5, size, storagePath);
+    }
+
+    @Override
+    public FileObject acquireByPath(Long tenantId, String md5, long size, String storagePath) {
+        if (md5 == null || md5.isEmpty()) {
+            return null;
+        }
+        // 仅 DB 操作（事务边界治理）：物理对象已上传，此处不再触发任何 S3 调用。
+        // 先复用命中，再尝试创建，最后处理并发竞争，与 acquire 的"上传后归属"语义保持一致。
+        FileObject existing = fileObjectMapper.selectByTenantAndMd5(tenantId, md5);
+        if (existing != null) {
+            fileObjectMapper.incrementRefCount(existing.getId());
+            return existing;
+        }
         FileObject created = new FileObject();
         created.setTenantId(tenantId);
         created.setMd5(md5);
         created.setSize(size);
         created.setStoragePath(storagePath);
         created.setRefCount(1);
-        // 新建文件对象状态正常
+        // 新建文件对象状态正常（status=0 正常，deleted=0 未删除）
         created.setStatus(FileObjectStatus.NORMAL.getCode());
         int inserted = fileObjectMapper.insertIgnore(created);
         if (inserted == 0) {
