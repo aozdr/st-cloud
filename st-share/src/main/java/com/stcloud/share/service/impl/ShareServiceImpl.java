@@ -359,7 +359,8 @@ public class ShareServiceImpl implements ShareService {
     }
 
     @Override
-    @Transactional
+    // F1-1 只读方法去事务：本方法仅读分享/节点 + 生成预签名 URL + 单条原子 UPDATE（下载计数），
+    // 无多写一致性需求，不开启 DB 事务，避免无效事务占用连接（设计文档 F1-1）
     public Result<String> getDownloadUrl(String shareCode, Long nodeId, String password) {
         FileShare share = validateShareAccess(shareCode, password);
 
