@@ -14,7 +14,6 @@ import com.stcloud.core.mapper.UserQuotaMapper;
 import com.stcloud.core.service.FileObjectService;
 import com.stcloud.core.service.FileService;
 import com.stcloud.core.service.RecycleBinService;
-import com.stcloud.core.service.StorageService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -37,8 +36,6 @@ public class RecycleBinServiceImpl implements RecycleBinService {
     private com.stcloud.core.mapper.TeamStorageMapper teamStorageMapper;
     @Resource
     private FileService fileService;
-    @Resource
-    private StorageService storageService;
     @Resource
     private FileObjectService fileObjectService;
     @Resource
@@ -148,15 +145,17 @@ public class RecycleBinServiceImpl implements RecycleBinService {
                 permanentDeleteNodeAndChildren(child);
             }
         } else {
-            // 删除引用：对象引用归零才真正删除 S3 物理对象；旧数据（无 object_id）回退按 storage_path 判重
+            // 删除引用：仅引用归零时发布 PHYSICAL_DELETE 事件；S3 物理删除由事务提交后的
+            // 消费者/本地兜底异步执行（事务边界治理 F4），事务内不再做任何 S3/外部网络调用。
+            // 旧数据（无 object_id）回退按 storage_path 判重，判重归零同样发布事件。
             if (node.getObjectId() != null) {
                 int remaining = fileObjectService.release(node.getObjectId());
                 if (remaining <= 0) {
-                    fileObjectService.deletePhysical(node.getObjectId());
+                    reliableEventPublisher.publishPhysicalDelete(node);
                 }
             } else if (node.getStoragePath() != null
                     && fileNodeMapper.countOtherRefsByStoragePath(node.getStoragePath(), node.getId()) == 0) {
-                storageService.deleteObject(node.getStoragePath());
+                reliableEventPublisher.publishPhysicalDelete(node);
             }
             // 按归属退还配额：团队文件退团队空间，个人文件退用户
             if (node.getFileSize() != null && node.getFileSize() > 0) {

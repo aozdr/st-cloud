@@ -99,15 +99,13 @@ class FileServiceFlowIntegrationTest extends AbstractIntegrationTest {
         @Bean
         RecycleBinService recycleBinService(FileNodeMapper fileNodeMapper, UserQuotaMapper userQuotaMapper,
                                             com.stcloud.core.mapper.TeamStorageMapper teamStorageMapper,
-                                            FileService fileService, StorageService storageService,
-                                            FileObjectService fileObjectService,
+                                            FileService fileService, FileObjectService fileObjectService,
                                             ReliableEventPublisher reliableEventPublisher) {
             RecycleBinServiceImpl svc = new RecycleBinServiceImpl();
             ReflectionTestUtils.setField(svc, "fileNodeMapper", fileNodeMapper);
             ReflectionTestUtils.setField(svc, "userQuotaMapper", userQuotaMapper);
             ReflectionTestUtils.setField(svc, "teamStorageMapper", teamStorageMapper);
             ReflectionTestUtils.setField(svc, "fileService", fileService);
-            ReflectionTestUtils.setField(svc, "storageService", storageService);
             ReflectionTestUtils.setField(svc, "fileObjectService", fileObjectService);
             ReflectionTestUtils.setField(svc, "reliableEventPublisher", reliableEventPublisher);
             return svc;
