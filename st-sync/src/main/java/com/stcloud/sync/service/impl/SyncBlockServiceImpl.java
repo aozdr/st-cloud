@@ -66,7 +66,8 @@ public class SyncBlockServiceImpl implements SyncBlockService {
     private UploadStorageManager uploadStorageManager;
 
     @Override
-    @Transactional
+    // F1-2 只读方法去事务：blockCheck 仅读 DB（块布局查询），无 DB 写；
+    // S3 initMultipartUpload 在事务外执行（整体无事务），S3 失败直接抛错返回（设计文档 F1-2）
     public Result<BlockCheckResponse> blockCheck(BlockCheckRequest request) {
         Long userId = UserContext.getUserId();
         Long tenantId = TenantContext.getTenantId();
@@ -78,6 +79,12 @@ public class SyncBlockServiceImpl implements SyncBlockService {
         if (request.getBlockSize() == null || request.getBlockSize() != BLOCK_SIZE_5MB) {
             throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "块大小必须为5MB");
         }
+
+        // S3 multipart 初始化移至事务外：本方法无 DB 写，不开启事务，
+        // S3 网络耗时不再占用 DB 连接；S3 失败在此直接抛错返回，不留半成品状态
+        String newStoragePath = tenantId + "/" + userId + "/" + request.getFileMd5()
+                + "_" + System.currentTimeMillis();
+        String s3UploadId = storageService.initMultipartUpload(newStoragePath);
 
         // 查询当前版本的块布局
         Integer currentVersion = node.getVersion() != null ? node.getVersion() : 0;
@@ -92,11 +99,6 @@ public class SyncBlockServiceImpl implements SyncBlockService {
         for (FileBlock fb : serverBlocks) {
             serverBlockMd5Map.put(fb.getBlockIndex(), fb.getBlockMd5());
         }
-
-        // 初始化新版本对象的 multipart 上传
-        String newStoragePath = tenantId + "/" + userId + "/" + request.getFileMd5()
-                + "_" + System.currentTimeMillis();
-        String s3UploadId = storageService.initMultipartUpload(newStoragePath);
 
         // 逐块对比：md5 匹配 -> 可复用（服务端复制）；否则 -> 缺失（客户端上传）
         List<BlockCheckResponse.ReusableBlock> reusableBlocks = new ArrayList<>();
