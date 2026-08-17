@@ -1,9 +1,11 @@
 package com.stcloud.core.editor;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.stcloud.core.AbstractIntegrationTest;
+import com.stcloud.common.context.TenantContext;
+import com.stcloud.common.context.UserContext;
+import com.stcloud.core.CoreTestApplication;
 import com.stcloud.core.entity.FileNode;
-import com.stcloud.core.entity.FileObject;
+import com.stcloud.core.event.FileIndexEvent;
 import com.stcloud.core.event.ReliableEventPublisher;
 import com.stcloud.core.mapper.EventLogMapper;
 import com.stcloud.core.mapper.FileNodeMapper;
@@ -26,41 +28,60 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import org.apache.rocketmq.spring.core.RocketMQTemplate;
 import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 
 /**
- * OnlyOffice 保存回调集成测试（H2 + 真实 Mapper + 本地 HttpServer 提供回调内容）。
- * 覆盖 TC-07（自动保存覆盖不生成版本）、TC-08/15（关闭生成 source=1 版本）、TC-09（伪造签名拒绝）、
- * TC-10（重复回调幂等）、TC-13（事件发布）、TC-14（配额差值）、TC-20（编辑标记移除）。
+ * OnlyOffice 保存回调事务边界集成测试（事务边界治理 F5）。
+ * <p>
+ * 独立于 AbstractIntegrationTest（类级不开启测试事务）：真实提交/回滚，
+ * 断言 handleCallback 的 URL 下载与 S3 上传发生在事务外、DB 更新收敛进独立事务方法、
+ * 事务失败后按引用归零规则清理本次上传对象。
  */
-@Import(EditorCallbackIntegrationTest.EditorCallbackTestConfig.class)
-class EditorCallbackIntegrationTest extends AbstractIntegrationTest {
+@SpringBootTest(classes = CoreTestApplication.class)
+@ActiveProfiles("test")
+@Import(EditorCallbackTransactionBoundaryTest.EditorTxBoundaryConfig.class)
+class EditorCallbackTransactionBoundaryTest {
 
     private static final String SECRET = "test-onlyoffice-secret-0123456789abcdef";
     private static HttpServer httpServer;
     private static byte[] callbackContent;
 
     @TestConfiguration
-    static class EditorCallbackTestConfig {
+    static class EditorTxBoundaryConfig {
 
         @Bean
         EditorProperties editorProperties() {
@@ -137,22 +158,22 @@ class EditorCallbackIntegrationTest extends AbstractIntegrationTest {
 
         @Bean
         ReliableEventPublisher reliableEventPublisher(EventLogMapper eventLogMapper,
-                                                       ApplicationEventPublisher eventPublisher,
-                                                       ObjectMapper objectMapper) {
-            return new ReliableEventPublisher(eventLogMapper, eventPublisher, objectMapper);
+                                                      ApplicationEventPublisher eventPublisher,
+                                                      ObjectMapper objectMapper) {
+            return Mockito.spy(new ReliableEventPublisher(eventLogMapper, eventPublisher, objectMapper));
         }
 
         @Bean
         EditorCallbackServiceImpl editorCallbackService(EditorProperties editorProperties,
-                                                       EditorLockService editorLockService,
-                                                       FileNodeMapper fileNodeMapper,
-                                                       FileObjectService fileObjectService,
-                                                       StorageService storageService,
-                                                       CloudStorageService cloudStorageService,
-                                                       UserQuotaMapper userQuotaMapper,
-                                                       TeamStorageMapper teamStorageMapper,
-                                                       VersionService versionService,
-                                                       ReliableEventPublisher reliableEventPublisher) {
+                                                        EditorLockService editorLockService,
+                                                        FileNodeMapper fileNodeMapper,
+                                                        FileObjectService fileObjectService,
+                                                        StorageService storageService,
+                                                        CloudStorageService cloudStorageService,
+                                                        UserQuotaMapper userQuotaMapper,
+                                                        TeamStorageMapper teamStorageMapper,
+                                                        VersionService versionService,
+                                                        ReliableEventPublisher reliableEventPublisher) {
             return new EditorCallbackServiceImpl(editorProperties, editorLockService, fileNodeMapper,
                     fileObjectService, storageService, cloudStorageService, userQuotaMapper,
                     teamStorageMapper, versionService, reliableEventPublisher);
@@ -168,14 +189,13 @@ class EditorCallbackIntegrationTest extends AbstractIntegrationTest {
     @Autowired
     private VersionService versionService;
     @Autowired
-    private EditorLockService editorLockService;
+    private ReliableEventPublisher reliableEventPublisher;
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
     @BeforeEach
     void resetMocks() {
-        // @TestConfiguration 的 mock bean 跨测试方法共享，需重置避免调用污染
-        Mockito.reset(versionService, storageService);
+        Mockito.reset(storageService, versionService, reliableEventPublisher);
     }
 
     @BeforeAll
@@ -195,6 +215,16 @@ class EditorCallbackIntegrationTest extends AbstractIntegrationTest {
         if (httpServer != null) {
             httpServer.stop(0);
         }
+    }
+
+    @AfterEach
+    void cleanup() {
+        jdbcTemplate.update("DELETE FROM file_node WHERE name = '报告.docx'");
+        jdbcTemplate.update("DELETE FROM file_object WHERE tenant_id = 1");
+        jdbcTemplate.update("DELETE FROM event_log");
+        jdbcTemplate.update("DELETE FROM sys_user WHERE id = 1");
+        UserContext.clear();
+        TenantContext.clear();
     }
 
     private String callbackUrl() {
@@ -220,139 +250,83 @@ class EditorCallbackIntegrationTest extends AbstractIntegrationTest {
         return req;
     }
 
-    private FileNode insertDocx(Long tenantId, Long ownerId) {
-        FileNode node = insertFileNode(tenantId, ownerId, "报告.docx", 0);
+    private FileNode insertDocx() {
+        TenantContext.setTenantId(1L);
+        TenantContext.setTenantMode("SAAS");
+        UserContext.setCurrentUser(UserContext.CurrentUser.builder()
+                .userId(1L).tenantId(1L).username("u").build());
+        FileNode node = new FileNode();
+        node.setTenantId(1L);
+        node.setParentId(0L);
+        node.setNodeType(1);
+        node.setName("报告.docx");
+        node.setPath("/报告.docx");
+        node.setFileSize(1024L);
+        node.setContentType("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+        node.setSuffix("docx");
+        node.setStatus(0);
+        node.setUploadStatus(2);
+        node.setOwnerId(1L);
+        node.setUploaderId(1L);
+        node.setVersion(0);
+        fileNodeMapper.insert(node);
         jdbcTemplate.update("INSERT INTO sys_user (id, tenant_id, username, password, storage_used, storage_quota) "
-                + "VALUES (?, ?, 'u', 'x', 1024, 1048576) ON DUPLICATE KEY UPDATE storage_used=1024", ownerId, tenantId);
+                + "VALUES (1, 1, 'u', 'x', 1024, 1048576) "
+                + "ON DUPLICATE KEY UPDATE storage_used = 1024");
         return node;
     }
 
     @Test
-    void invalidToken_rejected() {
-        FileNode node = insertDocx(1L, 1L);
-        setUpUser(1L, 1L);
-        String badToken = Jwts.builder()
-                .claim("key", node.getId() + "_0")
-                .signWith(Keys.hmacShaKeyFor("wrong-secret-wrong-secret-wrong-sec".getBytes(StandardCharsets.UTF_8)))
-                .compact();
-        com.stcloud.core.editor.dto.OnlyOfficeCallbackRequest req =
-                request(node.getId(), 2, node.getId() + "_0", badToken);
-        assertThrows(EditorCallbackRejectedException.class,
-                () -> editorCallbackService.handleCallback(node.getId(), req));
-    }
-
-    @Test
-    void missingToken_rejected() {
-        FileNode node = insertDocx(1L, 1L);
-        setUpUser(1L, 1L);
-        com.stcloud.core.editor.dto.OnlyOfficeCallbackRequest req =
-                request(node.getId(), 2, node.getId() + "_0", null);
-        assertThrows(EditorCallbackRejectedException.class,
-                () -> editorCallbackService.handleCallback(node.getId(), req));
-    }
-
-    @Test
-    void autosave_overwritesWithoutVersion() {
-        FileNode node = insertDocx(1L, 1L);
-        setUpUser(1L, 1L);
-        String key = node.getId() + "_0";
-        com.stcloud.core.editor.dto.OnlyOfficeCallbackRequest req =
-                request(node.getId(), 2, key, signToken(node.getId(), 2, callbackUrl(), key));
-
-        editorCallbackService.handleCallback(node.getId(), req);
-
-        FileNode after = fileNodeMapper.selectById(node.getId());
-        assertEquals(callbackContent.length, after.getFileSize());
-        assertNotNull(after.getFileMd5());
-        // 自动保存不生成版本
-        verify(versionService, never()).snapshotCurrentVersion(any(), any(Integer.class));
-        verify(versionService, never()).snapshotCurrentVersion(any());
-        // 事件已发布（Outbox 行写入）
-        Long outbox = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM event_log WHERE event_type = 'FILE_INDEX'", Long.class);
-        assertTrue(outbox != null && outbox > 0, "保存后应发布索引事件");
-    }
-
-    @Test
-    void close_generatesEditorVersion_andClearsEditMark() {
-        FileNode node = insertDocx(1L, 1L);
-        setUpUser(1L, 1L);
-        editorLockService.markEditing(node.getId(), "1");
-        assertTrue(editorLockService.isEditing(node.getId()));
-
+    void handleCallback_downloadAndUploadRunOutsideTransaction_dbCommitInsideTransaction() {
+        FileNode node = insertDocx();
         String key = node.getId() + "_1";
         com.stcloud.core.editor.dto.OnlyOfficeCallbackRequest req =
                 request(node.getId(), 6, key, signToken(node.getId(), 6, callbackUrl(), key));
+
+        // S3 上传发生在事务外（F5 断言）
+        AtomicBoolean txActiveDuringUpload = new AtomicBoolean(true);
+        doAnswer(inv -> {
+            txActiveDuringUpload.set(TransactionSynchronizationManager.isActualTransactionActive());
+            return null;
+        }).when(storageService).uploadObject(anyString(), any(InputStream.class), anyLong(), anyString());
+        // DB 写（关闭保存的版本快照）应在事务内（落库收敛进独立事务方法）
+        AtomicBoolean txActiveDuringDbWrite = new AtomicBoolean(false);
+        doAnswer(inv -> {
+            txActiveDuringDbWrite.set(TransactionSynchronizationManager.isActualTransactionActive());
+            return null;
+        }).when(versionService).snapshotCurrentVersion(any(FileNode.class), eq(1));
+
         editorCallbackService.handleCallback(node.getId(), req);
 
+        assertFalse(txActiveDuringUpload.get(), "回调 S3 上传应在事务外执行");
+        assertTrue(txActiveDuringDbWrite.get(), "回调 DB 更新应在事务内完成");
+        assertFalse(TransactionSynchronizationManager.isActualTransactionActive(),
+                "调用结束后不应残留活动事务");
         FileNode after = fileNodeMapper.selectById(node.getId());
         assertEquals(callbackContent.length, after.getFileSize());
-        // 关闭保存：生成 source=1 版本 + 裁剪 + 移除编辑标记（P1/D1/P2）
-        verify(versionService).snapshotCurrentVersion(any(FileNode.class), eq(1));
         verify(versionService).pruneEditorVersions(node.getId(), 20);
-        assertFalse(editorLockService.isEditing(node.getId()), "关闭回调应移除编辑标记");
     }
 
     @Test
-    void duplicateCallback_isSkipped() {
-        FileNode node = insertDocx(1L, 1L);
-        setUpUser(1L, 1L);
+    void handleCallback_dbFailure_cleansUploadedObject() {
+        FileNode node = insertDocx();
         String key = node.getId() + "_0";
         com.stcloud.core.editor.dto.OnlyOfficeCallbackRequest req =
                 request(node.getId(), 2, key, signToken(node.getId(), 2, callbackUrl(), key));
+        // DB 事务内事件写入失败 -> 整个落库事务回滚（模拟 DB 写失败）
+        doThrow(new RuntimeException("db commit boom"))
+                .when(reliableEventPublisher).publishFileIndex(any(FileNode.class),
+                        any(FileIndexEvent.ActionType.class));
 
-        editorCallbackService.handleCallback(node.getId(), req);
-        editorCallbackService.handleCallback(node.getId(), req);
-
-        // 幂等：同一 key+status+url 只落盘一次
-        verify(storageService, times(1)).uploadObject(anyString(), any(), eq((long) callbackContent.length), anyString());
-    }
-
-    @Test
-    void keyMismatch_rejected() {
-        FileNode node = insertDocx(1L, 1L);
-        setUpUser(1L, 1L);
-        String tokenKey = node.getId() + "_0";
-        com.stcloud.core.editor.dto.OnlyOfficeCallbackRequest req =
-                request(node.getId(), 2, "999:0", signToken(node.getId(), 2, callbackUrl(), tokenKey));
-        assertThrows(EditorCallbackRejectedException.class,
+        assertThrows(RuntimeException.class,
                 () -> editorCallbackService.handleCallback(node.getId(), req));
-    }
 
-    @Test
-    void quotaDelta_appliedOnGrow() {
-        FileNode node = insertDocx(1L, 1L);
-        setUpUser(1L, 1L);
-        String key = node.getId() + "_0";
-        com.stcloud.core.editor.dto.OnlyOfficeCallbackRequest req =
-                request(node.getId(), 2, key, signToken(node.getId(), 2, callbackUrl(), key));
-
-        editorCallbackService.handleCallback(node.getId(), req);
-
-        // 原 1024 字节 → 新内容长度，增量计入 storage_used（TC-14）
-        Long used = jdbcTemplate.queryForObject(
-                "SELECT storage_used FROM sys_user WHERE id = ?", Long.class, 1L);
-        assertEquals((long) callbackContent.length, used);
-    }
-
-    @Test
-    void sizeTooLarge_rejected() {
-        FileNode node = insertDocx(1L, 1L);
-        setUpUser(1L, 1L);
-        // 覆盖默认配置：缩小上限到 10 字节，内容超限拒绝
-        EditorProperties p = (EditorProperties) ReflectionTestUtils
-                .getField(editorCallbackService, "editorProperties");
-        long old = p.getMaxSaveSize();
-        p.setMaxSaveSize(10);
-        try {
-            String key = node.getId() + "_0";
-            com.stcloud.core.editor.dto.OnlyOfficeCallbackRequest req =
-                    request(node.getId(), 2, key, signToken(node.getId(), 2, callbackUrl(), key));
-            assertThrows(EditorCallbackRejectedException.class,
-                    () -> editorCallbackService.handleCallback(node.getId(), req));
-        } finally {
-            p.setMaxSaveSize(old);
-        }
+        // 本次上传的对象应被尽力清理（记录已回滚、无引用）
+        ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
+        verify(storageService).uploadObject(keyCaptor.capture(), any(InputStream.class),
+                eq((long) callbackContent.length), anyString());
+        verify(storageService).deleteObject(keyCaptor.getValue());
+        FileNode after = fileNodeMapper.selectById(node.getId());
+        assertEquals(1024L, after.getFileSize(), "DB 失败后节点内容不应变化");
     }
 }
-

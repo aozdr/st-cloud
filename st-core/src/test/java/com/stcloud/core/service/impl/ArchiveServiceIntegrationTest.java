@@ -11,8 +11,17 @@ import com.stcloud.core.mapper.FileObjectMapper;
 import com.stcloud.core.mapper.UserQuotaMapper;
 import com.stcloud.core.service.ArchiveProgressReporter;
 import com.stcloud.core.service.ArchiveService;
+import com.stcloud.core.service.CloudStorageService;
 import com.stcloud.core.service.FileObjectService;
+import com.stcloud.core.service.FileService;
 import com.stcloud.core.service.StorageService;
+import com.stcloud.core.service.VersionService;
+import com.stcloud.core.event.ReliableEventPublisher;
+import com.stcloud.core.service.impl.upload.UploadChunkManager;
+import com.stcloud.core.service.impl.upload.UploadCommitManager;
+import com.stcloud.core.service.impl.upload.UploadEventPublisher;
+import com.stcloud.core.service.impl.upload.UploadManager;
+import com.stcloud.core.service.impl.upload.UploadStorageManager;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -67,6 +76,51 @@ class ArchiveServiceIntegrationTest extends AbstractIntegrationTest {
         @Bean
         FileObjectService fileObjectService() {
             return new FileObjectServiceImpl();
+        }
+
+        @Bean
+        FileService fileService() {
+            return Mockito.mock(FileService.class);
+        }
+
+        @Bean
+        VersionService versionService() {
+            return Mockito.mock(VersionService.class);
+        }
+
+        @Bean
+        CloudStorageService cloudStorageService() {
+            return Mockito.mock(CloudStorageService.class);
+        }
+
+        @Bean
+        UploadManager uploadManager() {
+            return new UploadManager();
+        }
+
+        @Bean
+        UploadChunkManager uploadChunkManager() {
+            return new UploadChunkManager();
+        }
+
+        @Bean
+        ReliableEventPublisher reliableEventPublisher() {
+            return Mockito.mock(ReliableEventPublisher.class);
+        }
+
+        @Bean
+        UploadEventPublisher uploadEventPublisher(ReliableEventPublisher reliableEventPublisher) {
+            return new UploadEventPublisher(reliableEventPublisher);
+        }
+
+        @Bean
+        UploadCommitManager uploadCommitManager() {
+            return new UploadCommitManager();
+        }
+
+        @Bean
+        UploadStorageManager uploadStorageManager() {
+            return new UploadStorageManager();
         }
 
         @Bean

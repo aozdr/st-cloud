@@ -8,9 +8,7 @@ import com.stcloud.core.editor.dto.OnlyOfficeCallbackRequest;
 import com.stcloud.core.entity.FileNode;
 import com.stcloud.core.entity.FileObject;
 import com.stcloud.core.enums.UploadStatus;
-import com.stcloud.core.event.FileIndexEvent;
 import com.stcloud.core.event.ReliableEventPublisher;
-import com.stcloud.core.event.SyncChangeEvent;
 import com.stcloud.core.mapper.FileNodeMapper;
 import com.stcloud.core.mapper.TeamStorageMapper;
 import com.stcloud.core.mapper.UserQuotaMapper;
@@ -18,13 +16,15 @@ import com.stcloud.core.service.CloudStorageService;
 import com.stcloud.core.service.FileObjectService;
 import com.stcloud.core.service.StorageService;
 import com.stcloud.core.service.VersionService;
+import com.stcloud.core.service.impl.upload.UploadCommitManager;
+import com.stcloud.core.service.impl.upload.UploadStorageManager;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
@@ -36,7 +36,6 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -69,9 +68,12 @@ public class EditorCallbackServiceImpl implements EditorCallbackService {
     private final TeamStorageMapper teamStorageMapper;
     private final VersionService versionService;
     private final ReliableEventPublisher reliableEventPublisher;
+    @Resource
+    private UploadCommitManager uploadCommitManager;
+    @Resource
+    private UploadStorageManager uploadStorageManager;
 
     @Override
-    @Transactional
     public void handleCallback(Long nodeId, OnlyOfficeCallbackRequest request) {
         // 1. 验签：JWT 签名缺失/无效 → 拒绝并审计（TC-09）
         String secret = editorProperties.getJwtSecret();
@@ -138,7 +140,10 @@ public class EditorCallbackServiceImpl implements EditorCallbackService {
         }
     }
 
-    /** 保存落盘主流程（事务内执行，异常整体回滚） */
+    /**
+     * 保存落盘主流程（F5）：回调内容下载与 S3 上传在事务外执行，
+     * DB 写（对象归属 + 节点 + 配额 + 事件 + 版本）收敛进 UploadCommitManager 独立事务，异常整体失败。
+     */
     private void doSave(FileNode node, OnlyOfficeCallbackRequest request, Integer status) {
         Long nodeId = node.getId();
         Path tempFile = downloadToTemp(node, request.getUrl());
@@ -165,64 +170,46 @@ public class EditorCallbackServiceImpl implements EditorCallbackService {
                 throw new EditorCallbackRejectedException(400, "回调内容校验失败");
             }
 
-            Long oldObjectId = node.getObjectId();
             long oldSize = node.getFileSize() == null ? 0 : node.getFileSize();
             long delta = newSize - oldSize;
-            // 增大时先校验配额与云盘容量（与既有上传/版本恢复口径一致，TC-14）
+            // 增大时先校验配额与云盘容量（与既有上传/版本恢复口径一致，事务外预检，TC-14）
             if (delta > 0) {
                 checkQuotaBeforeWrite(node, delta);
                 cloudStorageService.checkCapacity(delta);
             }
 
-            // 去重落盘：同租户同 md5 复用对象 +1 引用，否则上传新物理对象（TC-07/12）
+            // 去重预查（事务外）：同租户同 md5 复用对象 +1 引用，否则上传新物理对象（S3 在事务外，TC-07/12）
             Long tenantId = node.getTenantId();
             String contentType = node.getContentType() != null ? node.getContentType() : "application/octet-stream";
-            FileObject object = fileObjectService.acquire(tenantId, md5, newSize, () -> {
-                String key = tenantId + "/" + md5;
+            FileObject existing = fileObjectService.findByTenantAndMd5(tenantId, md5);
+            String storagePath;
+            boolean uploadedNew = false;
+            if (existing != null) {
+                storagePath = existing.getStoragePath();
+            } else {
+                storagePath = tenantId + "/" + md5;
                 try (InputStream is = Files.newInputStream(tempFile)) {
-                    storageService.uploadObject(key, is, newSize, contentType);
+                    storageService.uploadObject(storagePath, is, newSize, contentType);
                 } catch (IOException e) {
                     throw new BusinessException(ResultCode.FILE_UPLOAD_FAILED, "回调内容上传失败");
                 }
-                return key;
-            });
-            if (object == null) {
-                throw new EditorCallbackRejectedException(500, "回调内容落盘失败");
+                uploadedNew = true;
             }
 
-            node.setStoragePath(object.getStoragePath());
-            node.setObjectId(object.getId());
-            node.setFileMd5(md5);
-            node.setFileSize(newSize);
-            node.setUpdatedAt(LocalDateTime.now());
-            // @Version 乐观锁：文件被其他操作并发更新时 update 返回 0，保存失败交由 OnlyOffice 重试
-            int rows = fileNodeMapper.updateById(node);
-            if (rows <= 0) {
-                throw new BusinessException(ResultCode.CONFLICT, "文件已被其他操作更新，保存失败");
-            }
-            if (oldObjectId != null && !oldObjectId.equals(object.getId())) {
-                // 旧对象引用释放（保留物理对象，可能仍被版本历史引用）
-                fileObjectService.release(oldObjectId);
-            }
-
-            // 配额差值记账（增大失败即回滚，TC-14）
-            if (delta != 0) {
-                int q = node.getSpaceId() != null && node.getSpaceId() > 0
-                        ? teamStorageMapper.updateTeamStorageUsed(node.getSpaceId(), delta)
-                        : userQuotaMapper.updateStorageUsed(node.getOwnerId(), delta);
-                if (q <= 0 && delta > 0) {
-                    throw new BusinessException(ResultCode.STORAGE_QUOTA_EXCEEDED);
+            try {
+                // 事务内落库：acquireByPath（对象归属）+ 节点 + 配额 + 事件 + （关闭/强制保存）版本
+                uploadCommitManager.commitEditorSave(node, status, md5, newSize, storagePath, delta,
+                        editorProperties.getEditorVersionLimit());
+            } catch (RuntimeException e) {
+                // 事务失败清理：仅当本次实际上传过新对象且无记录/引用归零时才删除，避免误删并发复用对象
+                if (uploadedNew) {
+                    cleanupOrphanUpload(tenantId, md5, storagePath);
                 }
+                throw e;
             }
 
-            // 事件：索引更新 + 同步变更（TC-13）
-            reliableEventPublisher.publishFileIndex(node, FileIndexEvent.ActionType.INDEX);
-            reliableEventPublisher.publishSyncChange(node, SyncChangeEvent.ChangeType.UPDATE);
-
-            // 关闭/强制保存：生成版本（source=1）+ 上限裁剪 + 移除编辑标记（TC-08/15/17）
+            // 关闭/强制保存：提交成功后移除编辑标记（Redis 调用，事务外，TC-08/20）
             if (status == STATUS_CLOSED || status == STATUS_FORCE_SAVE) {
-                versionService.snapshotCurrentVersion(node, 1);
-                versionService.pruneEditorVersions(nodeId, editorProperties.getEditorVersionLimit());
                 if (request.getUsers() != null) {
                     for (String uid : request.getUsers()) {
                         editorLockService.removeEditingUser(nodeId, uid);
@@ -237,6 +224,28 @@ public class EditorCallbackServiceImpl implements EditorCallbackService {
             } catch (IOException ignored) {
                 // 临时文件清理失败不影响主流程
             }
+        }
+    }
+
+    /**
+     * 回调落库事务失败后的孤儿对象清理（F5，与简单上传口径一致）：
+     * 仅当当前无对象记录（本次 insertIgnore 已随事务回滚）或记录引用归零且路径一致时才删除物理对象；
+     * 删除失败不阻断主流程，交由定时任务兜底。
+     */
+    private void cleanupOrphanUpload(Long tenantId, String md5, String storagePath) {
+        try {
+            FileObject current = fileObjectService.findByTenantAndMd5(tenantId, md5);
+            boolean noRecord = current == null;
+            boolean unreferenced = current != null
+                    && current.getRefCount() != null && current.getRefCount() <= 0
+                    && storagePath.equals(current.getStoragePath());
+            if (noRecord || unreferenced) {
+                uploadStorageManager.deleteObjectQuietly(storagePath);
+                log.warn("已尽力清理回调落库失败产生的孤儿对象: md5={}, storagePath={}", md5, storagePath);
+            }
+        } catch (Exception e) {
+            // 清理失败不阻断主流程，交由定时任务兜底
+            log.warn("回调落库失败清理孤儿对象异常（交由定时任务兜底）: md5={}", md5, e);
         }
     }
 
