@@ -83,3 +83,34 @@
 
 - 禁止在组件/样式中硬编码深色（如 `#0d0d0f`），一律用 `rgb(var(--bg))` 等 token
 - brand-gradient 等渐变背景用 token 驱动，确保明暗模式自适应
+
+## UI_DESIGN_SPEC v1.0 视觉契约（2026-08-20 重做，现行基准）
+
+> 依据用户文档 `UI_DESIGN_SPEC.md`（Figma 风格契约），替代 PikPak 天蓝方案为现行视觉基准。实现细则见 `.ai/docs/20260820-ui-refactor/uispec.md`。
+
+### 设计方向
+
+- **现代 SaaS / Cloud Drive**：明亮、干净、轻量、大面积留白、低对比度边框、白色内容卡 + 浅灰页面背景
+- **默认浅色**：默认 `light`，保留 dark 切换（dark 独立定义 Token，禁止 invert）
+- **主色固定 #4F6EF7**：`primary-600=#4F6EF7`、hover `#4563E6`（700）、active `#3D59D1`（800）、light `#EEF2FF`（100）；主题切换保留但默认主题为 `indigo`
+- **字体 Inter**（回退 PingFang SC / 微软雅黑）
+
+### 布局常量
+
+- 侧栏 `--sidebar-width: 240px`（白底，导航激活 `#EEF2FF` 底 + 主色文字，无粗左边条）
+- 顶栏 `--header-height: 68px`（下边框 `#EEF0F4`，搜索框 320×40 r10）
+- 内容边距 `28px 32px 40px`，页面底色 `#F7F8FC`
+
+### 文件列表规范
+
+- 容器：白底 + 1px `#E8EBF1` + r14，无阴影
+- 表头 44px（底 `#FCFCFD`，12px/500/`#929AAA`），列 Name/Modified/Owner/Size
+- 行 64px，hover `#F8FAFF`、selected `#F1F4FF`；禁止位移/缩放动画
+- 复选框 16×16 r4；FileIcon 40×40 r10（类型底色按 §24）
+- 视图：**list + grid 两视图**（2026-08-20 收敛，删除 card 视图）
+- 空态 56px 图标；骨架屏行高 64px
+
+### 通用组件
+
+- 主按钮 40px/r9/`#4F6EF7`；弹窗 480px/r16/shadow-lg；右键菜单 180px/r10/项 36px/r7
+- 动画 120~180ms ease-out；禁 hover 位移/缩放、渐变、发光、emoji 图标

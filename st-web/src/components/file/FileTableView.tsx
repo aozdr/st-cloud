@@ -1,7 +1,8 @@
-import { formatSize, formatDate, cn } from '../../lib/utils';
+import { formatSize, formatDate, cn, getFileTypeConfig } from '../../lib/utils';
 import type { FileNode } from '../../types';
 import type { SortBy, SortDir } from './FileToolbar';
 import { Check, MoreHorizontal, ArrowUp, ArrowDown, Star, Lock } from 'lucide-react';
+import { useAuthStore } from '../../store/auth';
 import FileThumbnail from './FileThumbnail';
 
 interface Props {
@@ -36,11 +37,12 @@ export default function FileTableView({
   onItemDragStart, onFolderDragOver, onFolderDragLeave, onFolderDrop, dragOverFolderId, onItemMenu,
   onToggleSelect, isFavorite, onToggleFavorite,
 }: Props) {
+  const { user } = useAuthStore();
   const allSelected = files.length > 0 && files.every((f) => selectedIds.has(f.id));
   const someSelected = files.some((f) => selectedIds.has(f.id));
 
-  const renderSortHeader = (col: SortBy, label: string, align?: 'right') => (
-    <th scope="col" className={cn('h-10 px-3 text-xs font-medium text-muted select-none', align === 'right' && 'text-right')}>
+  const renderSortHeader = (col: SortBy, label: string, align?: 'right', hiddenClass?: string) => (
+    <th scope="col" className={cn('h-10 px-4 text-xs font-medium text-tertiary select-none text-left', hiddenClass, align === 'right' && 'text-right')}>
       <button
         type="button"
         onClick={() => onSortChange(col)}
@@ -52,35 +54,48 @@ export default function FileTableView({
       >
         <span>{label}</span>
         {sortBy === col && (sortDir === 'asc'
-          ? <ArrowUp className="w-3 h-3" aria-hidden />
-          : <ArrowDown className="w-3 h-3" aria-hidden />)}
+          ? <ArrowUp className="w-3.5 h-3.5" aria-hidden />
+          : <ArrowDown className="w-3.5 h-3.5" aria-hidden />)}
       </button>
     </th>
   );
 
+  const renderOwner = (file: FileNode) => {
+    const owner = file.ownerName || user?.nickname || user?.username || '我';
+    return (
+      <td className="hidden lg:table-cell px-4 py-0 align-middle">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="truncate text-sm text-muted">{owner}</span>
+        </div>
+      </td>
+    );
+  };
+
   return (
-    <div className="bg-surface overflow-hidden overflow-x-auto md:overflow-hidden">
-      <table className="w-full table-fixed border-collapse" aria-label="文件列表">
+    <div className="bg-[#FEFEFD] dark:bg-surface overflow-x-auto">
+      <table className="w-full min-w-[760px] table-fixed border-collapse" aria-label="文件列表">
         <colgroup>
-          <col className="w-12" />
+          <col className="w-11" />
           <col />
           <col className="w-28" />
-          <col className="w-44" />
-          <col className="w-12" />
+          <col className="w-24" />
+          <col className="w-40" />
+          <col className="w-32" />
+          <col className="w-24" />
         </colgroup>
-        <thead className="bg-surface-2/40">
-          <tr className="border-b border-border">
-            <th scope="col" className="h-10 px-3">
+        <thead className="bg-[#F8FAFC] dark:bg-surface-2 border-t border-border-light">
+          <tr className="border-b border-border-light">
+            <th scope="col" className="h-10 px-4">
               <button
                 onClick={onSelectAll}
                 aria-label="全选"
                 className={cn(
-                  'w-[18px] h-[18px] rounded-[5px] border flex items-center justify-center cursor-pointer transition-colors',
+                  'w-4 h-4 rounded border flex items-center justify-center cursor-pointer transition-colors',
                   allSelected
                     ? 'bg-primary-600 border-primary-600'
                     : someSelected
-                      ? 'bg-primary-100 border-primary-400'
-                      : 'border-border hover:border-primary-500',
+                      ? 'bg-primary-100 border-primary-300'
+                      : 'border-[#CDD2DC] hover:border-primary-400 bg-surface',
                 )}
               >
                 {allSelected && <Check className="w-3 h-3 text-white" strokeWidth={3} aria-hidden />}
@@ -88,14 +103,17 @@ export default function FileTableView({
               </button>
             </th>
             {renderSortHeader('name', '名称')}
-            {renderSortHeader('size', '大小', 'right')}
-            {renderSortHeader('time', '修改时间')}
+            <th scope="col" className="hidden sm:table-cell h-10 px-4 text-xs font-medium text-tertiary text-left select-none">类型</th>
+            {renderSortHeader('size', '大小', 'right', 'hidden sm:table-cell')}
+            {renderSortHeader('time', '修改时间', undefined, 'hidden md:table-cell')}
+            <th scope="col" className="hidden lg:table-cell h-10 px-4 text-xs font-medium text-tertiary text-left select-none">所有者</th>
             <th scope="col" className="h-10" aria-label="操作" />
           </tr>
         </thead>
         <tbody>
           {files.map((file) => {
             const isSelected = selectedIds.has(file.id);
+            const config = getFileTypeConfig(file.nodeType, file.suffix);
             return (
               <tr
                 key={file.id}
@@ -109,49 +127,54 @@ export default function FileTableView({
                 onDoubleClick={() => onDoubleClick(file)}
                 onContextMenu={(e) => onContextMenu(e, file)}
                 className={cn(
-                  'group relative border-b border-border transition-colors duration-150',
+                  'group border-b border-border-light last:border-0 transition-colors duration-150',
                   isSelected
-                    ? 'bg-primary-500/15'
+                    ? 'bg-[#EEF0FF] dark:bg-primary-950/40'
                     : dragOverFolderId === file.id
-                      ? 'bg-primary-500/10'
-                      : 'hover:bg-surface-2/70',
+                      ? 'bg-primary-500/10 ring-2 ring-primary-400 ring-inset'
+                      : 'hover:bg-[#F8FAFF] dark:hover:bg-surface-2',
                   focusedId === file.id && !isSelected && dragOverFolderId !== file.id && 'bg-primary-500/5',
                   cutIds?.has(file.id) && 'opacity-50',
                 )}
               >
-                {isSelected && <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r bg-primary-600" aria-hidden />}
-
-                <td className="px-3 py-0 align-middle">
+                <td className="px-4 py-0 align-middle">
                   <button
                     onClick={(e) => { e.stopPropagation(); onToggleSelect(file.id); }}
                     aria-label="选择"
                     className={cn(
-                      'w-[18px] h-[18px] rounded-[5px] border flex items-center justify-center transition-[background-color,border-color,opacity]',
-                      isSelected ? 'bg-primary-600 border-primary-600 opacity-100' : 'border-border bg-surface opacity-0 group-hover:opacity-100',
+                      'w-4 h-4 rounded border flex items-center justify-center transition-[background-color,border-color,opacity]',
+                      isSelected ? 'bg-primary-600 border-primary-600 opacity-100' : 'border-[#CDD2DC] bg-surface opacity-0 group-hover:opacity-100',
                     )}
                   >
                     {isSelected && <Check className="w-3 h-3 text-white" strokeWidth={3} aria-hidden />}
                   </button>
                 </td>
 
-                <td className="px-3 py-0 align-middle">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <FileThumbnail file={file} size="lg" />
-                    <div className={cn('flex items-center gap-1 min-w-0 text-sm', isSelected ? 'text-primary-600 font-medium' : 'text-fg')}>
-                      <span className="min-w-0 truncate">{file.name}</span>
-                      {lockedIds?.has(file.id) && <Lock className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" aria-hidden />}
+                <td className="px-4 py-0 align-middle">
+                  <div className="flex items-center gap-3 min-w-0 h-[52px]">
+                    {/* FileIcon：与网格视图一致的 FileThumbnail（图片缩略图 / 类型 SVG 徽标） */}
+                    <FileThumbnail file={file} size="lg" className="flex-shrink-0" />
+                    <div className="min-w-0 flex-1">
+                      <div className={cn('flex items-center gap-1 min-w-0 text-sm leading-5 font-medium', isSelected ? 'text-primary-600' : 'text-fg')}>
+                        <span className="min-w-0 truncate">{file.name}</span>
+                        {lockedIds?.has(file.id) && <Lock className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" aria-hidden />}
+                      </div>
                     </div>
                   </div>
                 </td>
 
-                <td className="px-3 py-0 align-middle text-right text-xs text-muted tabular-nums whitespace-nowrap">
+                <td className="hidden sm:table-cell px-4 py-0 align-middle text-sm text-muted truncate">
+                  {config.label}
+                </td>
+                <td className="hidden sm:table-cell px-4 py-0 align-middle text-right text-sm text-muted tabular-nums whitespace-nowrap">
                   {file.nodeType === 0 ? '-' : formatSize(file.fileSize)}
                 </td>
-                <td className="px-3 py-0 align-middle text-xs text-muted tabular-nums truncate">
+                <td className="hidden md:table-cell px-4 py-0 align-middle text-sm text-muted tabular-nums truncate">
                   {formatDate(file.updatedAt)}
                 </td>
+                {renderOwner(file)}
 
-                <td className="px-1 py-0 align-middle text-right">
+                <td className="px-3 py-0 align-middle text-right">
                   {/* 收藏按钮：已收藏时常驻显示，未收藏时悬停显示 */}
                   <button
                     onClick={(e) => { e.stopPropagation(); onToggleFavorite(file); }}
@@ -160,8 +183,8 @@ export default function FileTableView({
                     className={cn(
                       'inline-flex w-8 h-8 rounded-lg items-center justify-center transition-[background-color,color,opacity]',
                       isFavorite(file.id)
-                        ? 'text-yellow-400 opacity-100'
-                        : 'text-muted hover:text-yellow-400 opacity-0 group-hover:opacity-100',
+                        ? 'text-amber-400 opacity-100'
+                        : 'text-tertiary hover:text-amber-400 opacity-0 group-hover:opacity-100',
                     )}
                   >
                     <Star className="w-4 h-4" fill={isFavorite(file.id) ? 'currentColor' : 'none'} aria-hidden />
@@ -171,7 +194,7 @@ export default function FileTableView({
                       onClick={(e) => { e.stopPropagation(); onItemMenu(e, file); }}
                       onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); onContextMenu(e, file); }}
                       aria-label="更多操作"
-                      className="w-8 h-8 rounded-lg inline-flex items-center justify-center text-muted hover:text-fg hover:bg-surface-2 opacity-0 group-hover:opacity-100 transition-[background-color,color,opacity]"
+                      className="w-8 h-8 rounded-lg inline-flex items-center justify-center text-tertiary hover:text-fg hover:bg-surface-2 opacity-0 group-hover:opacity-100 transition-[background-color,color,opacity]"
                     >
                       <MoreHorizontal className="w-4 h-4" aria-hidden />
                     </button>

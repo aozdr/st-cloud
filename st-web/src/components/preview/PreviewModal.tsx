@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { X, Download, ChevronLeft, ChevronRight, RotateCw, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api, { buildStreamUrl } from '../../lib/api';
@@ -24,10 +24,37 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
   // 图片缩放/旋转状态
   const [imgScale, setImgScale] = useState(1);
   const [imgRotate, setImgRotate] = useState(0);
+  // 图片放大后的平移（拖拽查看）
+  const [imgOffset, setImgOffset] = useState({ x: 0, y: 0 });
+  const [imgDragging, setImgDragging] = useState(false);
+  const imgDragRef = useRef<{ startX: number; startY: number; offsetX: number; offsetY: number } | null>(null);
+  const panRef = useRef({ x: 0, y: 0 });
+  const imgRef = useRef<HTMLImageElement>(null);
   const [url, setUrl] = useState<string | null>(null);
   const [textContent, setTextContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const file = files[index];
+
+  // 左右浏览仅支持媒体文件（图片/视频/音频）：非媒体文件打开时不可切换
+  const previewFiles = useMemo(
+    () => files.filter((f) => f.nodeType === 1 && (isImage(f.suffix) || isVideo(f.suffix) || isAudio(f.suffix))),
+    [files],
+  );
+  const previewPos = previewFiles.findIndex((f) => f.id === file?.id);
+  const goPrev = useCallback(() => {
+    if (previewPos > 0) {
+      const target = previewFiles[previewPos - 1];
+      const idx = files.findIndex((f) => f.id === target.id);
+      if (idx >= 0) setIndex(idx);
+    }
+  }, [previewPos, previewFiles, files]);
+  const goNext = useCallback(() => {
+    if (previewPos >= 0 && previewPos < previewFiles.length - 1) {
+      const target = previewFiles[previewPos + 1];
+      const idx = files.findIndex((f) => f.id === target.id);
+      if (idx >= 0) setIndex(idx);
+    }
+  }, [previewPos, previewFiles, files]);
 
   useEffect(() => {
     if (file && file.nodeType === 1) addRecentFile(file);
@@ -37,6 +64,7 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
   useEffect(() => {
     setImgScale(1);
     setImgRotate(0);
+    setImgOffset({ x: 0, y: 0 });
   }, [index]);
 
   useEffect(() => {
@@ -91,10 +119,17 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
           })
           .catch(() => setLoading(false));
       } else if (isImage(file.suffix)) {
-        // 图片：通过预览 API 获取预签名 URL（access token 无法用于 <img src>）
-        api.get<string>(`/preview/${file.id}/thumbnail`, { params: { size: 'lg' } })
-          .then((u) => { setUrl(u); setLoading(false); })
-          .catch(() => setLoading(false));
+        if (file.suffix?.toLowerCase() === 'gif') {
+          // GIF：缩略图是静态首帧，必须用原文件流才能动起来
+          api.post<{ token: string }>(`/file/${file.id}/download-token`)
+            .then((d) => { setUrl(buildStreamUrl(file.id, { token: d.token, inline: true })); setLoading(false); })
+            .catch(() => setLoading(false));
+        } else {
+          // 其它图片：通过预览 API 获取预签名缩略图（access token 无法用于 <img src>）
+          api.get<string>(`/preview/${file.id}/thumbnail`, { params: { size: 'lg' } })
+            .then((u) => { setUrl(u); setLoading(false); })
+            .catch(() => setLoading(false));
+        }
       } else if (isVideo(file.suffix) || isAudio(file.suffix)) {
         // 视频/音频：通过预览 API 获取预签名 URL（支持 Range 请求/拖动进度条）
         api.get<PreviewResult>(`/preview/${file.id}`)
@@ -135,25 +170,26 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
       if (e.key === 'Escape') {
         onClose();
       } else if (!inFormField && !inMediaPlayer && e.key === 'ArrowLeft') {
-        setIndex((i) => Math.max(0, i - 1));
+        goPrev();
       } else if (!inFormField && !inMediaPlayer && e.key === 'ArrowRight') {
-        setIndex((i) => Math.min(files.length - 1, i + 1));
+        goNext();
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [files.length, onClose]);
+  }, [goPrev, goNext, onClose]);
 
   if (!file) return null;
 
   const config = getFileTypeConfig(file.nodeType, file.suffix);
   const canPreview = isImage(file.suffix) || isVideo(file.suffix) || isPdf(file.suffix) || isAudio(file.suffix) || isText(file.suffix);
 
-  const goPrev = () => setIndex((i) => Math.max(0, i - 1));
-  const goNext = () => setIndex((i) => Math.min(files.length - 1, i + 1));
-
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-neutral-950/95 overscroll-contain animate-fade-in">
+    <div
+      className="fixed inset-0 z-50 flex flex-col bg-neutral-950/95 overscroll-contain animate-fade-in"
+      onDragOver={(e) => e.stopPropagation()}
+      onDrop={(e) => e.stopPropagation()}
+    >
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-3 bg-neutral-950/80">
         <div className="flex items-center gap-3 min-w-0">
@@ -190,10 +226,10 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
 
       {/* Content */}
       <div className="flex-1 flex items-center justify-center relative overflow-hidden">
-        {files.length > 1 && (
+        {previewFiles.length > 1 && (
           <button
             onClick={goPrev} aria-label="上一个"
-            disabled={index === 0}
+            disabled={previewPos <= 0}
             className="absolute left-4 p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-full cursor-pointer transition-colors disabled:opacity-30 disabled:cursor-not-allowed z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
           >
             <ChevronLeft className="w-6 h-6" aria-hidden />
@@ -232,18 +268,61 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
           ) : isImage(file.suffix) && url ? (
             <div className="relative flex flex-col items-center">
               <img
+                ref={imgRef}
                 src={url}
                 alt={file.name}
                 width={800}
                 height={600}
                 loading="lazy"
                 draggable={false}
-                className="max-w-full max-h-[80vh] object-contain rounded-lg transition-transform duration-200 select-none"
-                style={{ transform: `scale(${imgScale}) rotate(${imgRotate}deg)` }}
+                className={cn(
+                  'max-w-full max-h-[80vh] object-contain rounded-lg select-none',
+                  imgScale > 1 && 'cursor-grab touch-none',
+                  imgDragging ? 'transition-none cursor-grabbing' : 'transition-transform duration-200',
+                )}
+                style={{
+                  transform: `translate(${imgOffset.x}px, ${imgOffset.y}px) scale(${imgScale}) rotate(${imgRotate}deg)`,
+                }}
+                onDragStart={(e) => e.preventDefault()}
                 onWheel={(e) => {
                   // 滚轮缩放：上滚放大，下滚缩小
                   e.preventDefault();
                   setImgScale((s) => Math.max(0.25, Math.min(5, s + (e.deltaY < 0 ? 0.15 : -0.15))));
+                }}
+                onPointerDown={(e) => {
+                  // 放大后拖拽平移图片；1x 时不处理
+                  if (imgScale <= 1) return;
+                  e.preventDefault();
+                  panRef.current = { x: imgOffset.x, y: imgOffset.y };
+                  imgDragRef.current = {
+                    startX: e.clientX,
+                    startY: e.clientY,
+                    offsetX: imgOffset.x,
+                    offsetY: imgOffset.y,
+                  };
+                  setImgDragging(true);
+                  (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+                }}
+                onPointerMove={(e) => {
+                  const drag = imgDragRef.current;
+                  if (!drag) return;
+                  // 拖动期间直接写 style（不经 React 重渲染），保证跟手
+                  const x = drag.offsetX + (e.clientX - drag.startX);
+                  const y = drag.offsetY + (e.clientY - drag.startY);
+                  panRef.current = { x, y };
+                  if (imgRef.current) {
+                    imgRef.current.style.transform = `translate(${x}px, ${y}px) scale(${imgScale}) rotate(${imgRotate}deg)`;
+                  }
+                }}
+                onPointerUp={() => {
+                  imgDragRef.current = null;
+                  setImgDragging(false);
+                  setImgOffset({ ...panRef.current });
+                }}
+                onPointerCancel={() => {
+                  imgDragRef.current = null;
+                  setImgDragging(false);
+                  setImgOffset({ ...panRef.current });
                 }}
               />
               {/* 图片工具栏：缩放/旋转/重置 */}
@@ -280,11 +359,19 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
                 </button>
                 <div className="w-px h-5 bg-white/20 mx-1" />
                 <button
-                  onClick={() => { setImgScale(1); setImgRotate(0); }}
+                  onClick={() => { setImgScale(1); setImgRotate(0); setImgOffset({ x: 0, y: 0 }); }}
                   className="w-8 h-8 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 rounded cursor-pointer"
                   aria-label="重置"
                 >
                   <Maximize2 className="w-4 h-4" />
+                </button>
+                <div className="w-px h-5 bg-white/20 mx-1" />
+                <button
+                  onClick={onClose}
+                  aria-label="关闭"
+                  className="w-8 h-8 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 rounded cursor-pointer"
+                >
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             </div>
@@ -308,10 +395,10 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
           ) : null}
         </div>
 
-        {files.length > 1 && (
+        {previewFiles.length > 1 && (
           <button
             onClick={goNext} aria-label="下一个"
-            disabled={index === files.length - 1}
+            disabled={previewPos < 0 || previewPos >= previewFiles.length - 1}
             className="absolute right-4 p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-full cursor-pointer transition-colors disabled:opacity-30 disabled:cursor-not-allowed z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
           >
             <ChevronRight className="w-6 h-6" aria-hidden />

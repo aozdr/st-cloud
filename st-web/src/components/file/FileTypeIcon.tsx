@@ -55,6 +55,28 @@ function FileSVG({ size, label }: { size: number; label: string }) {
   const h = size;
   const badge = TYPE_BADGE[label];
 
+  // 媒体文件（视频/音频）：直接用彩色圆角块展示类型，去掉灰色文件框
+  if (label === '\u89c6\u9891' || label === '\u97f3\u9891') {
+    const media = TYPE_BADGE[label];
+    return (
+      <svg width={w} height={h} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="4" y="4" width="40" height="40" rx="12" fill={media.bg} />
+        <text
+          x="24"
+          y="30"
+          textAnchor="middle"
+          fontSize="12"
+          fontWeight="700"
+          fontFamily="Arial, sans-serif"
+          fill={media.fg}
+          letterSpacing="0.5"
+        >
+          {media.text}
+        </text>
+      </svg>
+    );
+  }
+
   return (
     <svg width={w} height={h} viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
       {/* File body shadow */}

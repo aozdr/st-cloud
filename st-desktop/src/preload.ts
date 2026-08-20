@@ -4,6 +4,11 @@ import type { ElectronAPI, TransferTask, TransferSettings } from './types';
 const api: ElectronAPI = {
   isElectron: true,
 
+  // 窗口标题栏主题（含 Windows 最小化/最大化/关闭按钮颜色）
+  setTitleBarTheme: (isDark: boolean) => {
+    ipcRenderer.send('theme:set-overlay', isDark);
+  },
+
   // 服务器地址
   getServerUrl: () => {
     return ipcRenderer.invoke('server:getUrl');

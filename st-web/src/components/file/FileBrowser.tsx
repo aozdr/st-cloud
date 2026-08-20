@@ -102,10 +102,10 @@ export default function FileBrowser({
   const [files, setFiles] = useState<FileNode[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
-  const [view, setView] = useState<'table' | 'card' | 'grid'>(() => {
+  const [view, setView] = useState<'list' | 'grid'>(() => {
     const saved = localStorage.getItem('fileView');
-    if (saved === 'grid' || saved === 'card') return saved;
-    return 'table';
+    if (saved === 'grid') return 'grid';
+    return 'list';
   });
   const folderSearch = useFolderFilterStore((s) => s.keyword);
   const setFolderSearch = useFolderFilterStore((s) => s.setKeyword);
@@ -261,6 +261,8 @@ export default function FileBrowser({
   const [pathError, setPathError] = useState(false);
   const pathInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // 顶部路径/工具栏区域：不参与空白框选与右键菜单
+  const bandRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     stateRef.current = { selectedIds, files, clipboard, view, parentId, focusedIndex, lastSelectedId };
   }, [selectedIds, files, clipboard, view, parentId, focusedIndex, lastSelectedId]);
@@ -758,14 +760,6 @@ export default function FileBrowser({
     return segments;
   }, [currentPath]);
 
-  const goUp = () => {
-    if (pathSegments.length <= 1) {
-      navigateToPath('/');
-    } else {
-      navigateToPath(pathSegments[pathSegments.length - 2].path);
-    }
-  };
-
   /** 打开在线编辑器：记录来源路径，关闭/回退后返回当前目录（FileBrowser 重挂载即刷新列表） */
   const handleEdit = (node: FileNode) => {
     navigate(`/file/${node.id}/editor`, { state: { from: location.pathname + location.search } });
@@ -818,14 +812,19 @@ export default function FileBrowser({
         break;
       }
       case 'moveTo':
-        setMoveTarget({ nodeIds: [node.id], mode: 'move' });
+        // 多选：右键的是选中集合中的一项时，对整个选中集合生效
+        setMoveTarget({ nodeIds: selectedIds.has(node.id) ? [...selectedIds] : [node.id], mode: 'move' });
         break;
       case 'copyTo':
-        setMoveTarget({ nodeIds: [node.id], mode: 'copy' });
+        // 多选：右键的是选中集合中的一项时，对整个选中集合生效
+        setMoveTarget({ nodeIds: selectedIds.has(node.id) ? [...selectedIds] : [node.id], mode: 'copy' });
         break;
-      case 'delete':
-        handleDeleteRef.current([node.id]);
+      case 'delete': {
+        // 多选：右键的是选中集合中的一项时，对整个选中集合生效
+        const ids = selectedIds.has(node.id) ? [...selectedIds] : [node.id];
+        handleDeleteRef.current(ids);
         break;
+      }
       case 'share':
         setShareTarget(node);
         break;
@@ -895,7 +894,7 @@ export default function FileBrowser({
 
   return (
     <div
-      className="flex flex-col h-full bg-surface-2/50"
+      className="flex flex-col h-full bg-[#FEFEFD] dark:bg-surface overflow-hidden"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -910,101 +909,107 @@ export default function FileBrowser({
         </div>
       )}
 
-      <FileToolbar
-        refreshing={isRefreshing}
-        has={has}
-        selectedCount={selectedIds.size}
-        filesCount={files.length}
-        allSelected={allSelected}
-        selectedSize={selectedSize}
-        canEditSelected={!!editableSelected}
-        onEdit={() => editableSelected && handleEdit(editableSelected)}
-        sortBy={sortBy}
-        onSortChange={(v) => { setSortBy(v); localStorage.setItem('fileSortBy', v); }}
-        sortDir={sortDir}
-        onSortDirToggle={() => { const next = sortDir === 'asc' ? 'desc' : 'asc'; setSortDir(next); localStorage.setItem('fileSortDir', next); }}
-        view={view}
-        onViewChange={setView}
-        onNewFolder={() => setShowCreateFolder(true)}
-        onNewFile={handleNewFile}
-        onUploadClick={handleUploadClick}
-        onDownload={() => handleDownload([...selectedIds])}
-        onMove={() => setMoveTarget({ nodeIds: [...selectedIds], mode: 'move' })}
-        onCopy={() => setMoveTarget({ nodeIds: [...selectedIds], mode: 'copy' })}
-        onDelete={() => handleDeleteRef.current([...selectedIds])}
-        onSelectAll={selectAll}
-        onClearSelection={clearSelection}
-        onRefresh={refresh}
-        onBatchRename={() => setShowBatchRename(true)}
-        foldersFirst={foldersFirst}
-        onToggleFoldersFirst={(v) => { setFoldersFirst(v); localStorage.setItem('fileFoldersFirst', String(v)); }}
-      />
-      {isMobile && mobileSelectMode && (
-        <MultiSelectBar
-          selectedCount={selectedIds.size}
-          allSelected={allSelected}
-          onSelectAll={selectAll}
-          onDownload={() => handleDownload([...selectedIds])}
-          onDelete={() => handleDeleteRef.current([...selectedIds])}
-          onShare={() => { if (selectedIds.size === 1) { const n = files.find((f) => selectedIds.has(f.id)); if (n) setShareTarget(n); } }}
-          onCancel={() => { setMobileSelectMode(false); clearSelection(); }}
-          canDownload={has('file:download')}
-          canDelete={has('file:delete')}
-          canShare={enableShare && has('file:share')}
-        />
-      )}
-      {categoryLabel ? (
-        <div className="flex items-center gap-2 px-4 py-2 border-b border-border bg-surface">
-          <span className="text-sm font-medium text-fg">{categoryLabel}</span>
-          <span className="text-xs text-muted">{total} 项</span>
-        </div>
-      ) : (
-      <FileBreadcrumb
-        currentPath={currentPath}
-        pathEditMode={pathEditMode}
-        setPathEditMode={setPathEditMode}
-        pathInput={pathInput}
-        setPathInput={setPathInput}
-        pathError={pathError}
-        setPathError={setPathError}
-        onPathSubmit={handlePathSubmit}
-        onEnterEditMode={enterPathEditMode}
-        onGoUp={goUp}
-        pathSegments={pathSegments}
-        onNavigateToPath={navigateToPath}
-        pathInputRef={pathInputRef}
-      />
-      )}
-
       <div className="flex-1 min-h-0 flex overflow-hidden">
       <div
         ref={fileListRef}
-        className={"flex-1 min-h-0 min-w-0 overflow-auto px-5 py-4 relative" + (view === 'grid' ? ' bg-surface' : '')}
+        className="flex-1 min-h-0 min-w-0 overflow-y-auto relative"
         onTouchStart={isMobile ? ptr.onTouchStart : undefined}
         onTouchMove={isMobile ? ptr.onTouchMove : undefined}
         onTouchEnd={isMobile ? ptr.onTouchEnd : undefined}
         onMouseDown={(e) => {
-          if (e.button === 0 && !isFileItemClick(e)) {
-            e.preventDefault();
-            // 点击空白处：手动失焦输入框（页码/路径编辑），否则 preventDefault 会阻止 blur
-            const active = document.activeElement as HTMLElement | null;
-            if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
-              active.blur();
-            }
-            startDrag(e.clientX, e.clientY);
-            clearSelection();
-            if (contextMenu) setContextMenu(null);
+          // 顶部路径/工具栏区域与文件行不触发框选；其余空白（含表格下方）均可拖拽多选
+          if (e.button !== 0 || bandRef.current?.contains(e.target as Node) || isFileItemClick(e)) return;
+          e.preventDefault();
+          // 点击空白处：手动失焦输入框（页码/路径编辑），否则 preventDefault 会阻止 blur
+          const active = document.activeElement as HTMLElement | null;
+          if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
+            active.blur();
           }
+          startDrag(e.clientX, e.clientY);
+          clearSelection();
+          if (contextMenu) setContextMenu(null);
         }}
         onContextMenu={(e) => {
-          if (!isFileItemClick(e)) {
-            e.preventDefault();
-            clearSelection();
-            setContextMenu(null);
-            setBlankContextMenu({ x: e.clientX, y: e.clientY });
-          }
+          if (bandRef.current?.contains(e.target as Node) || isFileItemClick(e)) return;
+          e.preventDefault();
+          clearSelection();
+          setContextMenu(null);
+          setBlankContextMenu({ x: e.clientX, y: e.clientY });
         }}
       >
+        {/* 页面顶部：第一行操作按钮（新建/上传最左），第二行路径（无上一级按钮），白色背景 */}
+        <div ref={bandRef} className="bg-[#FEFEFD] dark:bg-surface px-5 md:px-8 pt-3 pb-3">
+          <FileToolbar
+            refreshing={isRefreshing}
+            has={has}
+            selectedCount={selectedIds.size}
+            filesCount={files.length}
+            allSelected={allSelected}
+            selectedSize={selectedSize}
+            canEditSelected={!!editableSelected}
+            onEdit={() => editableSelected && handleEdit(editableSelected)}
+            sortBy={sortBy}
+            onSortChange={(v) => { setSortBy(v); localStorage.setItem('fileSortBy', v); }}
+            sortDir={sortDir}
+            onSortDirToggle={() => { const next = sortDir === 'asc' ? 'desc' : 'asc'; setSortDir(next); localStorage.setItem('fileSortDir', next); }}
+            view={view}
+            onViewChange={setView}
+            onNewFolder={() => setShowCreateFolder(true)}
+            onNewFile={handleNewFile}
+            onUploadClick={handleUploadClick}
+            onDownload={() => handleDownload([...selectedIds])}
+            onMove={() => setMoveTarget({ nodeIds: [...selectedIds], mode: 'move' })}
+            onCopy={() => setMoveTarget({ nodeIds: [...selectedIds], mode: 'copy' })}
+            onDelete={() => handleDeleteRef.current([...selectedIds])}
+            onSelectAll={selectAll}
+            onClearSelection={clearSelection}
+            onRefresh={refresh}
+            onBatchRename={() => setShowBatchRename(true)}
+            foldersFirst={foldersFirst}
+            onToggleFoldersFirst={(v) => { setFoldersFirst(v); localStorage.setItem('fileFoldersFirst', String(v)); }}
+          />
+          <div className="mt-2">
+            {categoryLabel ? (
+              <div className="flex items-baseline gap-2 min-w-0">
+                <h1 className="text-lg font-semibold text-fg truncate">{categoryLabel}</h1>
+                <span className="text-xs text-tertiary whitespace-nowrap">{loading ? '加载中…' : `${total} 项`}</span>
+              </div>
+            ) : (
+              <FileBreadcrumb
+                currentPath={currentPath}
+                pathEditMode={pathEditMode}
+                setPathEditMode={setPathEditMode}
+                pathInput={pathInput}
+                setPathInput={setPathInput}
+                pathError={pathError}
+                setPathError={setPathError}
+                onPathSubmit={handlePathSubmit}
+                onEnterEditMode={enterPathEditMode}
+                pathSegments={pathSegments}
+                onNavigateToPath={navigateToPath}
+                pathInputRef={pathInputRef}
+              />
+            )}
+          </div>
+        </div>
+        {/* 文件列表区域：白底；仅 TableHeader 浅灰。空白区（含表格下方）支持框选与右键菜单 */}
+        <div className="bg-[#FEFEFD] dark:bg-surface px-5 md:px-8 pt-1 pb-8">
+          {isMobile && mobileSelectMode && (
+            <MultiSelectBar
+              selectedCount={selectedIds.size}
+              allSelected={allSelected}
+              onSelectAll={selectAll}
+              onDownload={() => handleDownload([...selectedIds])}
+              onDelete={() => handleDeleteRef.current([...selectedIds])}
+              onShare={() => { if (selectedIds.size === 1) { const n = files.find((f) => selectedIds.has(f.id)); if (n) setShareTarget(n); } }}
+              onCancel={() => { setMobileSelectMode(false); clearSelection(); }}
+              canDownload={has('file:download')}
+              canDelete={has('file:delete')}
+              canShare={enableShare && has('file:share')}
+            />
+          )}
+          {/* 文件列表容器：白底；浅灰仅限 TableHeader（UI_DESIGN_SPEC §13/§29） */}
+          <div className="bg-[#FEFEFD] dark:bg-surface overflow-hidden">
           {/* 移动端下拉刷新指示器 */}
           {isMobile && (ptr.pullDistance > 0 || ptr.refreshing) && (
             <div
@@ -1027,7 +1032,10 @@ export default function FileBrowser({
             action={<button onClick={() => fetchFiles()} className="btn-primary">重试</button>}
           />
         ) : files.length === 0 ? (
-          <EmptyState onCreateFolder={() => setShowCreateFolder(true)} />
+          <EmptyState
+            onCreateFolder={() => setShowCreateFolder(true)}
+            onCreateUpload={has('file:upload') ? handleUploadClick : undefined}
+          />
         ) : (
           <div key={`${refreshKey}:${parentId}`} className="animate-file-enter">
             <FileList
@@ -1064,6 +1072,8 @@ export default function FileBrowser({
             />
           </div>
         )}
+          </div>
+        </div>
       </div>
       {!onOpenDetail && detailFile && (
         <FileDetailPanel file={detailFile} onClose={() => setDetailFile(null)} />
@@ -1071,7 +1081,7 @@ export default function FileBrowser({
       </div>
 
       {total > pageSize && (
-        <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-t border-border bg-surface">
+        <div className="flex items-center justify-between gap-3 px-5 md:px-8 py-3">
           <span className="text-xs text-muted tabular-nums">共 {total} 项</span>
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-1.5 text-xs text-muted whitespace-nowrap">
@@ -1249,7 +1259,7 @@ export default function FileBrowser({
           onClick={() => setDownloadQueuedCount(null)}
         >
           <div
-            className="bg-surface rounded-xl shadow-lg w-[420px] animate-dialog-pop p-6 text-center"
+            className="bg-surface rounded-md shadow-lg w-[420px] animate-dialog-pop p-6 text-center"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="w-12 h-12 rounded-full bg-green-500/15 flex items-center justify-center mx-auto mb-3">
@@ -1314,7 +1324,7 @@ export default function FileBrowser({
 
       {/* web 端打包下载进度浮层 */}
       {zipProgress !== null && (
-        <div className="fixed top-16 right-4 z-[110] w-64 bg-surface rounded-lg border border-border shadow-md p-3">
+        <div className="fixed top-16 right-4 z-[110] w-64 bg-surface rounded-md border border-border shadow-md p-3">
           <p className="text-xs font-medium text-fg mb-1.5 flex items-center gap-1.5">
             <Loader2 className="w-3.5 h-3.5 text-primary-600 animate-spin" aria-hidden />
             正在打包下载

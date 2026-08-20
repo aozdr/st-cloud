@@ -48,7 +48,9 @@ services:
     container_name: stcloud-rocketmq-namesrv
     restart: unless-stopped
     ports:
-      - "9876:9876"
+      # 宿主机映射 19876：Windows 排除端口段（WinNAT 动态保留 9817~9916）禁止绑定 9876，
+      # 容器内仍监听 9876（broker/dashboard 走容器网络服务名），后端连 127.0.0.1:19876
+      - "19876:9876"
     command: sh mqnamesrv
 
   # RocketMQ Broker

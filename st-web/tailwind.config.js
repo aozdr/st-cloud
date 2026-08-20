@@ -23,12 +23,33 @@ export default {
         },
         // Semantic tokens (theme-aware via CSS variables)
         bg: 'rgb(var(--bg) / <alpha-value>)',
+        'bg-hover': 'rgb(var(--bg-hover) / <alpha-value>)',
+        'bg-active': 'rgb(var(--bg-active) / <alpha-value>)',
         surface: 'rgb(var(--surface) / <alpha-value>)',
         'surface-2': 'rgb(var(--surface-2) / <alpha-value>)',
         fg: 'rgb(var(--fg) / <alpha-value>)',
         muted: 'rgb(var(--muted) / <alpha-value>)',
         border: 'rgb(var(--border) / <alpha-value>)',
+        'border-light': 'rgb(var(--border-light) / <alpha-value>)',
+        tertiary: 'rgb(var(--text-tertiary) / <alpha-value>)',
+        disabled: 'rgb(var(--text-disabled) / <alpha-value>)',
         ring: 'rgb(var(--ring) / <alpha-value>)',
+        success: {
+          DEFAULT: 'rgb(var(--success) / <alpha-value>)',
+          light: 'rgb(var(--success-light) / <alpha-value>)',
+        },
+        warning: {
+          DEFAULT: 'rgb(var(--warning) / <alpha-value>)',
+          light: 'rgb(var(--warning-light) / <alpha-value>)',
+        },
+        danger: {
+          DEFAULT: 'rgb(var(--danger) / <alpha-value>)',
+          light: 'rgb(var(--danger-light) / <alpha-value>)',
+        },
+        info: {
+          DEFAULT: 'rgb(var(--info) / <alpha-value>)',
+          light: 'rgb(var(--info-light) / <alpha-value>)',
+        },
         // Stone palette remapped to CSS variables (auto-adapts to dark mode)
         stone: {
           50: 'rgb(var(--stone-50) / <alpha-value>)',
@@ -45,7 +66,7 @@ export default {
         },
       },
       fontFamily: {
-        sans: ['Plus Jakarta Sans', 'PingFang SC', 'Microsoft YaHei', 'system-ui', 'sans-serif'],
+        sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'sans-serif'],
         mono: ['JetBrains Mono', 'Consolas', 'monospace'],
       },
       animation: {

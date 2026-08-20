@@ -1,4 +1,4 @@
-export type ThemeKey = 'red' | 'blue' | 'emerald' | 'violet' | 'orange' | 'teal';
+export type ThemeKey = 'indigo' | 'blue' | 'emerald' | 'violet' | 'orange' | 'red' | 'teal';
 
 export interface ThemePalette {
   key: ThemeKey;
@@ -10,6 +10,24 @@ export interface ThemePalette {
 }
 
 export const THEMES: ThemePalette[] = [
+  {
+    key: 'indigo',
+    label: '靛蓝',
+    shades: {
+      '50': '239 243 255',
+      '100': '238 242 255',
+      '200': '219 227 255',
+      '300': '179 196 255',
+      '400': '121 143 252',
+      '500': '96 120 249',
+      '600': '79 110 247',
+      '700': '69 99 230',
+      '800': '61 89 209',
+      '900': '53 76 171',
+      '950': '32 46 99',
+    },
+    preview: '#4F6EF7',
+  },
   {
     key: 'red',
     label: '红色',
@@ -120,7 +138,7 @@ export const THEMES: ThemePalette[] = [
   },
 ];
 
-export const DEFAULT_THEME: ThemeKey = 'violet';
+export const DEFAULT_THEME: ThemeKey = 'indigo';
 
 /** 将主题色板写入 CSS 变量到 document.documentElement */
 export function applyThemeToDOM(palette: ThemePalette) {

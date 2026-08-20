@@ -18,8 +18,8 @@ st-web/src/
 ├── pages/               页面组件
 ├── components/          可复用组件
 │   ├── layout/          布局（AppLayout / Sidebar / TopBar）
-│   ├── file/            文件管理（FileBrowser / FileGrid / FileTable / ContextMenu / Dialogs / UploadPanel 等）
-│   │                    （另有 FileToolbar / FileBreadcrumb / FileThumbnail / FileTableView / FileDetailPanel /
+│   ├── file/            文件管理（FileBrowser / FileGrid / FileTableView / ContextMenu / Dialogs / UploadPanel 等）
+│   │                    （另有 FileToolbar / FileBreadcrumb / FileThumbnail / FileDetailPanel /
 │   │                      BatchRenameDialog / DownloadDialog / MoveDialog / ArchiveDialog / VersionHistoryDialog / BlankContextMenu）
 │   ├── share/           分享（ShareDialog）
 │   ├── preview/         预览（PreviewModal / PlyrPlayer - 支持字幕/倍速/图片缩放旋转）

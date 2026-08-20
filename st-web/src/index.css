@@ -5,46 +5,68 @@
 @layer base {
   :root {
     /* ---- Accent (switchable, RGB triplets) ---- */
-    --color-primary-50: 235 247 255;
-    --color-primary-100: 212 238 255;
-    --color-primary-200: 184 224 255;
-    --color-primary-300: 128 200 255;
-    --color-primary-400: 54 173 255;
-    --color-primary-500: 6 167 255;
-    --color-primary-600: 0 147 224;
-    --color-primary-700: 0 124 189;
-    --color-primary-800: 0 102 153;
-    --color-primary-900: 0 81 122;
-    --color-primary-950: 0 51 77;
+    /* UI_DESIGN_SPEC v1.0：主色 #4F6EF7（600），hover #4563E6（700），active #3D59D1（800），light #EEF2FF（100） */
+    --color-primary-50: 239 243 255;
+    --color-primary-100: 238 242 255;
+    --color-primary-200: 219 227 255;
+    --color-primary-300: 179 196 255;
+    --color-primary-400: 121 143 252;
+    --color-primary-500: 96 120 249;
+    --color-primary-600: 79 110 247;
+    --color-primary-700: 69 99 230;
+    --color-primary-800: 61 89 209;
+    --color-primary-900: 53 76 171;
+    --color-primary-950: 32 46 99;
 
     /* ---- Semantic tokens: LIGHT ---- */
-    --bg: 250 250 249;
+    --bg: 247 248 252;          /* #F7F8FC */
     --surface: 255 255 255;
-    --surface-2: 245 245 244;
-    --fg: 28 25 23;
-    --muted: 120 113 108;
-    --border: 231 229 228;
+    --surface-2: 244 246 250;   /* #F4F6FA */
+    --fg: 31 36 48;             /* #1F2430 */
+    --muted: 105 115 134;       /* #697386 */
+    --border: 232 235 241;      /* #E8EBF1 */
     --ring: var(--color-primary-600);
-    --nav-active-bg: 229 235 255;   /* #e5ebff 淡蓝底（PikPak 导航选中态） */
+    --nav-active-bg: 238 240 255;   /* #EEF0FF 激活导航底（UI_DESIGN_SPEC brand.primaryLight） */
 
-    /* ---- Stone palette remap: LIGHT (Tailwind defaults) ---- */
-    --stone-50: 250 250 249;
-    --stone-100: 245 245 244;
-    --stone-200: 231 229 228;
-    --stone-300: 214 211 209;
-    --stone-400: 168 162 158;
-    --stone-500: 120 113 108;
-    --stone-600: 87 83 78;
-    --stone-700: 68 64 60;
-    --stone-800: 41 37 36;
-    --stone-900: 28 25 23;
-    --stone-950: 12 10 9;
+    /* ---- UI_DESIGN_SPEC v1.0 扩展中性 Token ---- */
+    --bg-hover: 247 249 253;    /* #F7F9FD */
+    --bg-active: 238 240 255;   /* #EEF0FF（UI_DESIGN_SPEC background.selected） */
+    --border-light: 238 240 244; /* #EEF0F4 */
+    --text-tertiary: 146 154 170; /* #929AAA */
+    --text-disabled: 184 190 201; /* #B8BEC9 */
 
-    /* Shadow system */
-    --shadow-soft: 0 1px 2px 0 rgb(0 0 0 / 0.04), 0 1px 4px -1px rgb(0 0 0 / 0.06);
-    --shadow-card: 0 2px 8px -2px rgb(0 0 0 / 0.08), 0 4px 16px -4px rgb(0 0 0 / 0.06);
-    --shadow-float: 0 8px 32px -8px rgb(0 0 0 / 0.14), 0 16px 48px -12px rgb(0 0 0 / 0.08);
-    --shadow-primary: 0 2px 8px -2px rgb(var(--color-primary-600) / 0.3), 0 4px 12px -2px rgb(var(--color-primary-600) / 0.15);
+    /* ---- 语义色 ---- */
+    --success: 53 165 106;      /* #35A56A */
+    --success-light: 234 248 240;
+    --warning: 230 162 60;      /* #E6A23C */
+    --warning-light: 255 246 229;
+    --danger: 224 82 82;        /* #E05252 */
+    --danger-light: 255 240 240;
+    --info: 79 110 247;
+    --info-light: 238 242 255;
+
+    /* ---- Stone palette remap: LIGHT（对齐规范中性色） ---- */
+    --stone-50: 247 248 252;
+    --stone-100: 244 246 250;
+    --stone-200: 232 235 241;
+    --stone-300: 214 218 227;
+    --stone-400: 168 174 188;
+    --stone-500: 105 115 134;
+    --stone-600: 87 96 114;
+    --stone-700: 68 76 92;
+    --stone-800: 41 47 60;
+    --stone-900: 31 36 48;
+    --stone-950: 12 14 19;
+
+    /* Shadow system（UI_DESIGN_SPEC：sm/md/lg，轻量） */
+    --shadow-soft: 0 1px 2px rgba(31, 36, 48, 0.04);
+    --shadow-card: 0 4px 16px rgba(31, 36, 48, 0.06);
+    --shadow-float: 0 12px 32px rgba(31, 36, 48, 0.10);
+    --shadow-primary: 0 4px 16px rgba(79, 110, 247, 0.12);
+
+    /* 布局常量 */
+    --sidebar-width: 240px;
+    --header-height: 68px;
 
     color-scheme: light;
   }
@@ -60,6 +82,19 @@
     --border: 42 42 48;
     --ring: var(--color-primary-600);
     --nav-active-bg: 48 110 255;    /* primary，搭配 /15 透明度使用 */
+    --bg-hover: 24 24 28;
+    --bg-active: 48 110 255;
+    --border-light: 38 38 44;
+    --text-tertiary: 120 125 135;
+    --text-disabled: 90 94 104;
+    --success: 52 211 153;
+    --success-light: 10 45 30;
+    --warning: 251 191 36;
+    --warning-light: 45 38 12;
+    --danger: 248 113 113;
+    --danger-light: 45 18 18;
+    --info: 48 110 255;
+    --info-light: 16 26 50;
 
     /* ---- Stone remap: DARK（蓝灰调倒置刻度） ---- */
     --stone-50: 15 15 17;
@@ -90,7 +125,7 @@
   }
   body {
     margin: 0;
-    font-family: 'Plus Jakarta Sans', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
     background: rgb(var(--bg));
     color: rgb(var(--fg));
     -webkit-font-smoothing: antialiased;
@@ -106,25 +141,25 @@
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg transition-colors duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
-    box-shadow: var(--shadow-primary);
+    @apply inline-flex items-center justify-center gap-2 h-10 px-4 bg-primary-600 text-white text-sm font-medium rounded-[9px] transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .btn-primary:hover {
     background-color: rgb(var(--color-primary-700));
-    box-shadow: 0 4px 16px -2px rgb(var(--color-primary-600) / 0.4), 0 8px 24px -4px rgb(var(--color-primary-600) / 0.2);
+  }
+  .btn-primary:active {
+    background-color: rgb(var(--color-primary-800));
   }
   .btn-secondary {
-    @apply inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg border cursor-pointer transition-colors duration-200;
+    @apply inline-flex items-center justify-center gap-2 h-10 px-4 text-sm font-medium rounded-[9px] border cursor-pointer transition-colors duration-150;
     background-color: rgb(var(--surface));
     color: rgb(var(--fg));
     border-color: rgb(var(--border));
-    box-shadow: var(--shadow-soft);
   }
   .btn-secondary:hover {
     background-color: rgb(var(--surface-2));
   }
   .btn-danger {
-    @apply inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-150 cursor-pointer;
+    @apply inline-flex items-center justify-center gap-2 px-3 h-9 text-sm font-medium rounded-lg transition-colors duration-150 cursor-pointer;
     color: rgb(220 38 38);
   }
   .btn-danger:hover {
@@ -137,7 +172,7 @@
     background-color: rgb(127 29 29 / 0.3);
   }
   .btn-ghost {
-    @apply inline-flex items-center gap-2 px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-150 cursor-pointer;
+    @apply inline-flex items-center justify-center gap-2 px-3 h-9 text-sm font-medium rounded-lg transition-colors duration-150 cursor-pointer;
     color: rgb(var(--muted));
   }
   .btn-ghost:hover {
@@ -166,11 +201,11 @@
   }
   .modal-overlay {
     @apply fixed inset-0 z-50 flex items-center justify-center animate-fade-in;
-    background-color: rgb(0 0 0 / 0.5);
+    background-color: rgba(15, 20, 30, 0.35);
     overscroll-behavior: contain;
   }
   .modal-content {
-    @apply rounded-2xl animate-scale-in;
+    @apply rounded-[16px] animate-scale-in;
     background-color: rgb(var(--surface));
     color: rgb(var(--fg));
     box-shadow: var(--shadow-float);
@@ -187,11 +222,10 @@
   .shadow-float { box-shadow: var(--shadow-float); }
   .shadow-primary { box-shadow: var(--shadow-primary); }
   .card-hover {
-    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: background-color 0.18s ease-out, box-shadow 0.18s ease-out;
   }
   .card-hover:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-card);
+    background-color: rgb(var(--bg-hover));
   }
   .glass {
     background: rgba(255, 255, 255, 0.06);
@@ -358,7 +392,8 @@
   }
 }
 
-/* ===== 桌面端顶部蓝色标题栏（配合 Electron titleBarStyle: hidden + titleBarOverlay） ===== */
+/* ===== 桌面端顶部标题栏（配合 Electron titleBarStyle: hidden + titleBarOverlay） =====
+   颜色跟随设计 Token：浅色白底深字、深色深底浅字，与 Windows 三键 overlay 一致 */
 .app-titlebar {
   height: 36px;
   flex-shrink: 0;
@@ -366,12 +401,14 @@
   align-items: center;
   padding-left: 12px;
   padding-right: 140px; /* 给系统最小化/最大化/关闭按钮留位 */
-  /* 与系统 titleBarOverlay 颜色一致（#2e6be6），避免按钮区域与标题栏色差 */
-  background: #2e6be6;
-  color: #ffffff;
+  border-top-left-radius: 16px; /* PC 端：与侧栏右缘圆角对齐（文件区域与侧栏分割线圆角化） */
+  background: rgb(var(--surface));
+  color: rgb(var(--fg));
+  /* 与下方区域的分割线透明，视觉上无缝衔接 */
+  border-bottom: 1px solid transparent;
+  -webkit-app-region: drag;
+  user-select: none;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.5px;
-  -webkit-app-region: drag;
-  user-select: none;
 }

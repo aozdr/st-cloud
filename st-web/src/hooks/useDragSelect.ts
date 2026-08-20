@@ -19,6 +19,7 @@ export function useDragSelect(
   const dragStartRef = useRef<{ x: number; y: number } | null>(null);
   const rafRef = useRef<number | null>(null);
   const lastMouseRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const loopRef = useRef<() => void>(() => {});
 
   useEffect(() => {
     let mounted = true;
@@ -47,16 +48,45 @@ export function useDragSelect(
       if (mounted) setSelectedIds(newSelected);
     };
 
+    /** 边缘自动滚动：光标贴近容器上/下边界时按贴近程度滚动列表（Windows 资源管理器行为） */
+    const scrollByEdge = () => {
+      const container = containerRef.current;
+      if (!container) return;
+      const rect = container.getBoundingClientRect();
+      const y = lastMouseRef.current.y;
+      const EDGE = 48;
+      let ratio = 0;
+      if (y < rect.top + EDGE) ratio = -(rect.top + EDGE - y) / EDGE;
+      else if (y > rect.bottom - EDGE) ratio = (y - (rect.bottom - EDGE)) / EDGE;
+      if (ratio === 0) return;
+      const maxScroll = container.scrollHeight - container.clientHeight;
+      const next = container.scrollTop + ratio * 16;
+      container.scrollTop = Math.max(0, Math.min(maxScroll, next));
+    };
+
+    /** 拖动期间每帧执行：边缘滚动 + 重算选区 */
+    const loop = () => {
+      rafRef.current = null;
+      if (!dragStartRef.current || !mounted) return;
+      scrollByEdge();
+      computeSelection();
+      rafRef.current = requestAnimationFrame(loop);
+    };
+    loopRef.current = loop;
+
     const handleMove = (e: MouseEvent) => {
       if (!dragStartRef.current) return;
       lastMouseRef.current = { x: e.clientX, y: e.clientY };
-      if (rafRef.current === null) rafRef.current = requestAnimationFrame(computeSelection);
     };
 
     const handleUp = () => {
       dragStartRef.current = null;
       setDragRect(null);
       document.body.style.userSelect = '';
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
     };
 
     document.addEventListener('mousemove', handleMove);
@@ -65,6 +95,7 @@ export function useDragSelect(
       mounted = false;
       document.body.style.userSelect = '';
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
+      loopRef.current = () => {};
       document.removeEventListener('mousemove', handleMove);
       document.removeEventListener('mouseup', handleUp);
     };
@@ -73,7 +104,12 @@ export function useDragSelect(
   const startDrag = (x: number, y: number) => {
     document.body.style.userSelect = 'none';
     dragStartRef.current = { x, y };
+    lastMouseRef.current = { x, y };
     setDragRect({ startX: x, startY: y, currentX: x, currentY: y });
+    // 启动拖动帧循环（边缘滚动 + 选择计算）
+    if (rafRef.current === null) {
+      rafRef.current = requestAnimationFrame(() => loopRef.current());
+    }
   };
 
   return { dragRect, startDrag };

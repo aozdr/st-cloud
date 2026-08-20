@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect, type RefObject } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
-import { Search, LogOut, User as UserIcon, X, Home, Clock, Trash2, FolderOpen, Menu } from 'lucide-react';
+import { Search, LogOut, User as UserIcon, X, Clock, Trash2, FolderOpen, Menu, ArrowLeft, ArrowRight, Moon, Sun } from 'lucide-react';
 import { useAuthStore } from '../../store/auth';
 import { useFolderFilterStore } from '../../store/folderFilter';
+import { useThemeStore } from '../../store/theme';
+import { isElectron } from '../../lib/electron';
 import { cn } from '../../lib/utils';
 
 const SEARCH_HISTORY_KEY = 'searchHistory';
@@ -38,6 +40,43 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
   const [showHistory, setShowHistory] = useState(false);
   const [searchInFolder, setSearchInFolder] = useState(false);
   const setFolderFilter = useFolderFilterStore((s) => s.setKeyword);
+  const { mode, setMode } = useThemeStore();
+  // 有效深色：dark 模式或 system 跟随系统
+  const isDark = mode === 'dark'
+    || (mode === 'system' && typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+      && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  // Windows 风格前进/后退：跟踪应用内 history 索引
+  // react-router 的 idx 只统计应用内条目；offset 记录应用起点前已有的浏览器条目数
+  const historyOffsetRef = useRef<number | null>(null);
+  const readHistoryState = () => {
+    const st = window.history.state as { idx?: number } | null;
+    const idx = typeof st?.idx === 'number' ? st.idx : 0;
+    const len = window.history.length;
+    if (historyOffsetRef.current == null) {
+      historyOffsetRef.current = Math.max(0, len - 1 - idx);
+    }
+    return { idx, len };
+  };
+  const syncHistory = () => {
+    const { idx, len } = readHistoryState();
+    setNavIdx(idx);
+    setNavLen(len);
+  };
+  const [navIdx, setNavIdx] = useState(() => readHistoryState().idx);
+  const [navLen, setNavLen] = useState(() => window.history.length);
+  useEffect(() => {
+    window.addEventListener('popstate', syncHistory);
+    return () => window.removeEventListener('popstate', syncHistory);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  // 应用内跳转（push/replace）后同步
+  useEffect(() => {
+    syncHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location]);
+  const historyOffset = historyOffsetRef.current ?? Math.max(0, window.history.length - 1 - navIdx);
+  const canGoBack = navIdx > 0;
+  const canGoForward = navIdx + historyOffset < navLen - 1;
   const menuRef: RefObject<HTMLDivElement> = useRef(null);
   const searchRef: RefObject<HTMLDivElement> = useRef(null);
   const inputRef: RefObject<HTMLInputElement> = useRef(null);
@@ -134,7 +173,7 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
   const btnBase = 'flex items-center justify-center rounded-full cursor-pointer transition-colors duration-200 flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 
   return (
-    <header className="h-14 bg-surface border-b border-border flex items-center px-3 sm:px-5 flex-shrink-0 gap-2 sm:gap-4 shadow-soft">
+    <header className={cn('h-16 bg-surface border-b border-border-light flex items-center px-4 sm:px-8 flex-shrink-0 gap-2 sm:gap-4', !isElectron() && 'rounded-tl-2xl')}>
       {/* Mobile menu toggle */}
       <button
         onClick={onMenuClick}
@@ -144,19 +183,32 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
         <Menu className="w-5 h-5" aria-hidden />
       </button>
 
-      {/* Home */}
-      <button
-        onClick={() => navigate('/')}
-        aria-label="回到首页"
-        className={cn(btnBase, 'w-9 h-9 text-muted hover:text-primary-600 hover:bg-primary-500/10')}
-      >
-        <Home className="w-4 h-4" aria-hidden />
-      </button>
+      {/* Windows 风格前进/后退（桌面端） */}
+      <div className="hidden sm:flex items-center gap-0.5 flex-shrink-0">
+        <button
+          onClick={() => navigate(-1)}
+          disabled={!canGoBack}
+          aria-label="后退"
+          title="后退"
+          className={cn(btnBase, 'w-9 h-9 text-muted hover:text-fg hover:bg-surface-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent')}
+        >
+          <ArrowLeft className="w-4 h-4" aria-hidden />
+        </button>
+        <button
+          onClick={() => navigate(1)}
+          disabled={!canGoForward}
+          aria-label="前进"
+          title="前进"
+          className={cn(btnBase, 'w-9 h-9 text-muted hover:text-fg hover:bg-surface-2 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent')}
+        >
+          <ArrowRight className="w-4 h-4" aria-hidden />
+        </button>
+      </div>
 
       {/* Search (desktop/tablet) */}
       <div className="flex-1 hidden sm:flex justify-center">
-        <div className="relative w-full max-w-2xl group" ref={searchRef}>
-          <div className="flex items-center bg-surface-2 border border-border rounded-full transition-colors duration-200 group-focus-within:bg-surface group-focus-within:border-primary-300 group-focus-within:ring-4 group-focus-within:ring-primary-100/50">
+        <div className="relative w-full max-w-[360px] group" ref={searchRef}>
+          <div className="flex items-center h-10 bg-surface-2 border border-transparent rounded-[10px] transition-colors duration-150 group-focus-within:bg-surface group-focus-within:border-[#C9D2FF] group-focus-within:shadow-[0_0_0_3px_rgba(79,110,247,0.10)]">
             <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted group-focus-within:text-primary-500 transition-colors" aria-hidden />
               <input
@@ -168,7 +220,7 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
                 onFocus={() => setShowHistory(true)}
                 aria-label="搜索文件"
                 placeholder="搜索文件名或文档内容… Ctrl+F"
-                className="w-full pl-11 pr-3 py-2 bg-transparent border-0 text-sm text-fg placeholder:text-muted/60 outline-none rounded-full"
+                className="w-full pl-11 pr-3 bg-transparent border-0 text-sm text-fg placeholder:text-tertiary outline-none rounded-[10px]"
               />
             </div>
             <div className="flex items-center pr-1">
@@ -187,7 +239,7 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
               )}
               <button
                 onClick={() => executeSearch(searchValue)}
-                className="flex items-center gap-1.5 px-4 py-1.5 bg-primary-600 text-white text-sm font-medium rounded-full hover:bg-primary-700 active:bg-primary-800 cursor-pointer transition-colors duration-200 flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+                className="flex items-center gap-1.5 px-3.5 h-7 bg-primary-600 text-white text-sm font-medium rounded-md hover:bg-primary-700 active:bg-primary-800 cursor-pointer transition-colors duration-150 flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
               >
                 <Search className="w-4 h-4" aria-hidden />
                 <span className="hidden md:inline">搜索</span>
@@ -197,7 +249,7 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
 
           {/* Unified search dropdown */}
           {showHistory && (
-            <div className="absolute top-full left-0 right-0 mt-1.5 bg-surface rounded-2xl border border-border z-50 animate-scale-in shadow-float overflow-hidden flex flex-col max-h-80">
+            <div className="absolute top-full left-0 right-0 mt-1.5 bg-surface rounded-[10px] border border-border z-50 animate-scale-in shadow-card overflow-hidden flex flex-col max-h-80">
               {!searchValue && searchHistory.length > 0 && (
                 <>
                   <div className="flex items-center justify-between px-3 py-1.5 flex-shrink-0">
@@ -266,6 +318,15 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
 
       {/* Actions */}
       <div className="flex items-center gap-2 flex-shrink-0">
+        {/* 深色模式切换 */}
+        <button
+          onClick={() => setMode(isDark ? 'light' : 'dark')}
+          aria-label={isDark ? '切换到浅色模式' : '切换到深色模式'}
+          title={isDark ? '切换到浅色模式' : '切换到深色模式'}
+          className={cn(btnBase, 'w-9 h-9 text-muted hover:text-fg hover:bg-surface-2')}
+        >
+          {isDark ? <Sun className="w-4 h-4" aria-hidden /> : <Moon className="w-4 h-4" aria-hidden />}
+        </button>
         {/* User menu */}
         <div ref={menuRef} className="relative">
           <button
@@ -275,7 +336,7 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
             aria-expanded={menuOpen}
             className="flex items-center gap-2 px-2 py-1.5 rounded-full hover:bg-surface-2 cursor-pointer transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-700 rounded-full flex items-center justify-center ring-2 ring-transparent hover:ring-primary-200 transition-colors duration-200">
+            <div className="w-9 h-9 bg-primary-600 rounded-full flex items-center justify-center">
               <span className="text-sm font-medium text-white">
                 {user?.username?.charAt(0).toUpperCase() || 'U'}
               </span>

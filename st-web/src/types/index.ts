@@ -53,6 +53,8 @@ export interface FileNode {
   lockedBy?: number | null; // 锁定人ID
   lockedAt?: string | null; // 锁定时间
   lockExpireAt?: string | null; // 锁过期时间，null=永久锁定
+  /** 所有者显示名（后端 VO 未下发时为 undefined，界面回退当前用户） */
+  ownerName?: string;
 }
 
 export interface PageResult<T> {
@@ -427,6 +429,8 @@ export interface TransferSettings {
 
 export interface ElectronAPI {
   isElectron: true;
+  /** 同步窗口标题栏与 Windows 三键颜色（isDark=true 深色） */
+  setTitleBarTheme: (isDark: boolean) => void;
   getServerUrl: () => Promise<string | null>;
   setServerUrl: (url: string) => Promise<void>;
   setAuth: (token: string, refreshToken: string) => void;

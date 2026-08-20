@@ -31,7 +31,7 @@ export default function FileCard({ file, icon, subtitle, trailing, actionLabel, 
           onOpen();
         }
       }}
-      className="group flex items-center gap-3 p-3 bg-surface rounded-xl hover:shadow-card hover:-translate-y-0.5 transition-[transform,box-shadow] duration-200 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+      className="group flex items-center gap-3 p-3 bg-surface border border-border rounded-[14px] hover:bg-bg-hover hover:border-primary-200 transition-[background-color,border-color] duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
     >
       <div className="flex-shrink-0">
         {icon ?? <FileTypeIcon config={config} size="sm" isFolder={file.nodeType === 0} suffix={file.suffix} />}

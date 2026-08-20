@@ -1,0 +1,125 @@
+taskId: "20260820-ui-refactor"
+goal:
+  objective: "按 UI_DESIGN_SPEC.md v1.0 重构 st-web 前端 UI：重映射 Design Token、重构布局（Sidebar/Header/Content）与文件管理界面、统一通用组件，达到现代 SaaS Cloud Drive 观感"
+  scope: "st-web 全局样式与组件（白名单见 requirement.md）；禁止修改后端/数据库/接口契约/桌面端主进程"
+  completionCriteria:
+    - "Design Token 按规范落地，页面无重复定义全局颜色"
+    - "布局尺寸与规范一致（sidebar 240px / header 68px / 内容边距 32px）"
+    - "文件列表按 FileList/FileRow 规范（64px 行、四列、克制交互）"
+    - "通用组件与规范一致"
+    - "保留既有业务功能与三端兼容；npm run build 通过、npm run lint 0 error"
+scale: large
+exitCriteria:
+  - id: REQ_ANALYSIS
+    desc: "requirement.md + uispec.md 已产出、Grill Me 收敛（遗留问题点 <=3）、用户逐项拍板"
+    status: done
+    dependsOn: []
+  - id: IMPACT_ANALYSIS
+    desc: "影响分析完成：明确受影响页面/组件/风险与兼容策略"
+    status: done
+    dependsOn: [REQ_ANALYSIS]
+  - id: EXP_DESIGN
+    desc: "体验评审完成：按 uispec.md 契约核对交互与视觉一致性"
+    status: done
+    dependsOn: [IMPACT_ANALYSIS]
+  - id: TECH_DESIGN
+    desc: "architecture-review.md + design.md 产出并交用户确认"
+    status: done
+    dependsOn: [EXP_DESIGN]
+  - id: TESTCASES
+    desc: "测试用例定版（视觉自检 + 回归 + 响应式断点）"
+    status: done
+    dependsOn: [TECH_DESIGN]
+  - id: IMPLEMENTED
+    desc: "实现完成，changereport 落盘"
+    status: done
+    dependsOn: [TESTCASES]
+  - id: CODE_REVIEW
+    desc: "代码评审通过（无越界、无硬编码颜色、组件复用）"
+    status: done
+    dependsOn: [IMPLEMENTED]
+  - id: SECURITY_REVIEW
+    desc: "条件项：涉及权限/文件操作相关 UI 的安全复核"
+    status: done
+    dependsOn: [IMPLEMENTED]
+  - id: EXP_ACCEPT
+    desc: "体验验收：UI Review Contract 六维自检，P0/P1 清零"
+    status: done
+    dependsOn: [CODE_REVIEW]
+  - id: TEST_PASS
+    desc: "npm run build + npm run lint 通过；dev server 冒烟 200"
+    status: done
+    dependsOn: [CODE_REVIEW, SECURITY_REVIEW, EXP_ACCEPT]
+  - id: KNOWLEDGE
+    desc: "知识库同步（ui-design-system.md / frontend.md）"
+    status: done
+    dependsOn: [TEST_PASS]
+  - id: ACCEPT
+    desc: "对照 requirement.md 完成标准逐项验收通过"
+    status: done
+    dependsOn: [KNOWLEDGE]
+artifacts:
+  prd:
+    status: done
+    ref: ".ai/docs/20260820-ui-refactor/requirement.md"
+    owner: "workflow-manager"
+    grillPoints:
+      - "P1 适用范围：核心界面优先（推荐）"
+      - "P2 深色/主题切换：保留，默认浅色 + 规范主色（推荐）"
+      - "P3 视图模式：收敛为 list/grid，移除 card（用户指定）"
+    userConfirmedAt: "2026-08-20"
+  uiSpec: { status: done, ref: ".ai/docs/20260820-ui-refactor/uispec.md", owner: "workflow-manager" }
+  archReview: { status: done, ref: ".ai/docs/20260820-ui-refactor/architecture-review.md", owner: "workflow-manager" }
+  design:
+    status: done
+    ref: ".ai/docs/20260820-ui-refactor/design.md"
+    owner: "workflow-manager"
+    userConfirmedAt: "2026-08-20"
+    note: "用户以「按推荐执行，不要三视图，按照文档规范执行」授权执行，无新增遗留问题点"
+  testcases: { status: done, ref: ".ai/docs/20260820-ui-refactor/testcases.md", owner: "workflow-manager" }
+  impact: { status: done, ref: ".ai/docs/20260820-ui-refactor/impact.md", owner: "workflow-manager" }
+  expReview: { status: done, ref: ".ai/docs/20260820-ui-refactor/exp-review.md", owner: "workflow-manager" }
+  review: { status: done, ref: ".ai/docs/20260820-ui-refactor/codereview.md", owner: "workflow-manager" }
+  security: { status: done, ref: ".ai/docs/20260820-ui-refactor/security.md", owner: "workflow-manager" }
+  testReport: { status: done, ref: ".ai/docs/20260820-ui-refactor/testreport.md", owner: "workflow-manager" }
+  changereport: { status: done, ref: ".ai/docs/20260820-ui-refactor/changereport.md", owner: "workflow-manager" }
+blockers: []
+history:
+  - iter: 1
+    phase: "req_analysis"
+    agent: "workflow-manager"
+    action: "读取 UI_DESIGN_SPEC.md 与 st-web 现状，产出 requirement.md + uispec.md"
+    delta: "REQ_ANALYSIS 待确认"
+    result: "遗留问题点 3 项（适用范围 / 深色与主题切换 / 视图模式），待用户逐项拍板"
+  - iter: 2
+    phase: "req_analysis"
+    agent: "user"
+    action: "确认「按推荐执行，不要三视图，按照文档规范执行」"
+    delta: "P1/P2 按推荐；P3 收敛为 list/grid"
+    result: "REQ_ANALYSIS done（userConfirmedAt 2026-08-20）"
+  - iter: 3
+    phase: "design"
+    agent: "workflow-manager"
+    action: "产出 impact / architecture-review / design / testcases，授权进入实现"
+    delta: "IMPACT/EXP_DESIGN/TECH_DESIGN/TESTCASES done"
+    result: "设计基于已确认 uispec，无新增决策点"
+  - iter: 4
+    phase: "implement"
+    agent: "workflow-manager"
+    action: "实施 Token/布局/文件模块/页面重构，删除 card 视图"
+    delta: "IMPLEMENTED done"
+    result: "26 文件改动 + 1 删除；npm build/lint 通过"
+  - iter: 5
+    phase: "review+test"
+    agent: "workflow-manager"
+    action: "Code/Security/体验自审 + 无头 Chrome 量化验收（18 项）"
+    delta: "CODE_REVIEW/SECURITY_REVIEW/EXP_ACCEPT/TEST_PASS done"
+    result: "修复 P1 弹窗宽度 480px、P2 文件名 500 字重；P0/P1 清零"
+  - iter: 6
+    phase: "knowledge+accept"
+    agent: "workflow-manager"
+    action: "知识库同步 + 对照完成标准逐项验收"
+    delta: "KNOWLEDGE/ACCEPT done，status=done"
+    result: "全部完成标准满足"
+iteration: 6
+status: done

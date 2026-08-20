@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FolderPlus, Upload, Download, Trash2, Copy, FolderInput, X, RefreshCw, ArrowDownUp, Table2, Rows3, LayoutGrid, Edit3, Plus, ChevronDown, MoreHorizontal, FileType, FileText, FileSpreadsheet, Presentation } from 'lucide-react';
+import { FolderPlus, Upload, Download, Trash2, Copy, FolderInput, X, RefreshCw, ArrowDownUp, List, LayoutGrid, Edit3, Plus, ChevronDown, FileType, FileText, FileSpreadsheet, Presentation } from 'lucide-react';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
 import { cn, formatSize } from '../../lib/utils';
@@ -8,7 +8,7 @@ import type { BlankFileType } from '../../types';
 
 export type SortBy = 'name' | 'size' | 'time';
 export type SortDir = 'asc' | 'desc';
-export type ViewMode = 'table' | 'card' | 'grid';
+export type ViewMode = 'list' | 'grid';
 
 interface FileToolbarProps {
   has: (perm: string) => boolean;
@@ -53,14 +53,10 @@ export default function FileToolbar({
 }: FileToolbarProps) {
   const hasSelection = selectedCount > 0;
   const [newMenuOpen, setNewMenuOpen] = useState(false);
-  const [moreMenuOpen, setMoreMenuOpen] = useState(false);
-  // 低频批量操作收进「更多」菜单，降低工具栏密度
-  const hasMoreActions = hasSelection && (
-    has('file:move') || has('file:copy') || (selectedCount > 1 && has('file:rename'))
-  );
 
   return (
-    <div className="sticky top-0 z-20 flex items-center justify-between gap-2 px-5 py-2 bg-surface border-b border-border/60 overflow-x-auto">
+    <div className="flex items-center overflow-x-auto">
+      {/* 左：新建 / 上传文件 */}
       <div className="flex items-center gap-1.5 flex-shrink-0">
         {has('file:upload') && (
           <Popover open={newMenuOpen} onOpenChange={setNewMenuOpen}>
@@ -72,7 +68,6 @@ export default function FileToolbar({
               </button>
             </PopoverTrigger>
             <PopoverContent className="w-44 p-1" align="start" sideOffset={4}>
-              {/* 新建文件夹：保留原入口 */}
               <button
                 onClick={() => { setNewMenuOpen(false); onNewFolder(); }}
                 className="w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-fg hover:bg-surface-2 rounded-md cursor-pointer transition-colors"
@@ -81,7 +76,6 @@ export default function FileToolbar({
                 <span>新建文件夹</span>
               </button>
               <div className="my-1 border-t border-border" />
-              {/* 新建空白文件：txt 留在列表；docx/xlsx/pptx 由 FileBrowser 跳转在线编辑（P3） */}
               <button
                 onClick={() => { setNewMenuOpen(false); onNewFile('txt'); }}
                 className="w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-fg hover:bg-surface-2 rounded-md cursor-pointer transition-colors"
@@ -119,6 +113,10 @@ export default function FileToolbar({
             <span>上传文件</span>
           </button>
         )}
+      </div>
+
+      {/* 中：选中文件时的操作按钮（未选中留空；选中后以紧凑一组展示，避免大分辨率下内部断裂） */}
+      <div className="flex items-center gap-1.5 flex-1 min-w-0">
         {hasSelection && (
           <>
             <div className="w-px h-5 bg-surface-2 mx-1.5 flex-shrink-0" />
@@ -134,44 +132,23 @@ export default function FileToolbar({
                 <span>下载</span>
               </button>
             )}
-            {hasMoreActions && (
-              <Popover open={moreMenuOpen} onOpenChange={setMoreMenuOpen}>
-                <PopoverTrigger asChild>
-                  <button className="btn-ghost flex-shrink-0 whitespace-nowrap">
-                    <MoreHorizontal className="w-4 h-4" aria-hidden />
-                    <span>更多</span>
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-44 p-1" align="start" sideOffset={4}>
-                  {has('file:move') && (
-                    <button
-                      onClick={() => { setMoreMenuOpen(false); onMove(); }}
-                      className="w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-fg hover:bg-surface-2 rounded-md cursor-pointer transition-colors"
-                    >
-                      <FolderInput className="w-4 h-4" aria-hidden />
-                      <span>移动到</span>
-                    </button>
-                  )}
-                  {has('file:copy') && (
-                    <button
-                      onClick={() => { setMoreMenuOpen(false); onCopy(); }}
-                      className="w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-fg hover:bg-surface-2 rounded-md cursor-pointer transition-colors"
-                    >
-                      <Copy className="w-4 h-4" aria-hidden />
-                      <span>复制到</span>
-                    </button>
-                  )}
-                  {selectedCount > 1 && has('file:rename') && (
-                    <button
-                      onClick={() => { setMoreMenuOpen(false); onBatchRename(); }}
-                      className="w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-fg hover:bg-surface-2 rounded-md cursor-pointer transition-colors"
-                    >
-                      <Edit3 className="w-4 h-4" aria-hidden />
-                      <span>批量重命名</span>
-                    </button>
-                  )}
-                </PopoverContent>
-              </Popover>
+            {has('file:move') && (
+              <button onClick={onMove} className="btn-ghost flex-shrink-0 whitespace-nowrap">
+                <FolderInput className="w-4 h-4" aria-hidden />
+                <span>移动到</span>
+              </button>
+            )}
+            {has('file:copy') && (
+              <button onClick={onCopy} className="btn-ghost flex-shrink-0 whitespace-nowrap">
+                <Copy className="w-4 h-4" aria-hidden />
+                <span>复制到</span>
+              </button>
+            )}
+            {selectedCount > 1 && has('file:rename') && (
+              <button onClick={onBatchRename} className="btn-ghost flex-shrink-0 whitespace-nowrap">
+                <Edit3 className="w-4 h-4" aria-hidden />
+                <span>批量重命名</span>
+              </button>
             )}
             {has('file:delete') && (
               <button onClick={onDelete} className="btn-ghost text-red-600 dark:text-red-400 hover:bg-red-500/10 flex-shrink-0 whitespace-nowrap">
@@ -179,12 +156,25 @@ export default function FileToolbar({
                 <span>删除</span>
               </button>
             )}
+            {!allSelected && filesCount > 1 && (
+              <button onClick={onSelectAll} className="text-xs text-primary-600 hover:text-primary-600 cursor-pointer font-medium whitespace-nowrap">
+                全选
+              </button>
+            )}
+            <div className="flex items-center gap-2 px-2.5 py-1 bg-primary-500/10 rounded-md text-sm text-primary-600">
+              <span className="font-medium">已选 {selectedCount} 项</span>
+              {selectedSize > 0 && <span className="text-primary-400">· {formatSize(selectedSize)}</span>}
+              <button onClick={onClearSelection} aria-label="取消选择" className="text-primary-400 hover:text-primary-600 cursor-pointer ml-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded">
+                <X className="w-3.5 h-3.5" aria-hidden />
+              </button>
+            </div>
           </>
         )}
       </div>
 
-      <div className="flex items-center gap-3 flex-shrink-0">
-        {!hasSelection && view !== 'table' && (
+      {/* 右：排序 / 刷新 / 视图切换 */}
+      <div className="flex items-center gap-1.5 md:gap-3 flex-shrink-0">
+        {!hasSelection && view === 'grid' && (
           <div className="flex items-center gap-1.5">
             <ArrowDownUp className="w-3.5 h-3.5 text-muted" aria-hidden />
             <Select value={sortBy} onValueChange={(v) => onSortChange(v as SortBy)}>
@@ -210,42 +200,20 @@ export default function FileToolbar({
             </label>
           </div>
         )}
-        {hasSelection && (
-          <>
-            {!allSelected && filesCount > 1 && (
-              <button onClick={onSelectAll} className="text-xs text-primary-600 hover:text-primary-600 cursor-pointer font-medium whitespace-nowrap">
-                全选
-              </button>
-            )}
-            <div className="flex items-center gap-2 px-2.5 py-1 bg-primary-500/10 rounded-lg text-sm text-primary-600">
-              <span className="font-medium">已选 {selectedCount} 项</span>
-              {selectedSize > 0 && <span className="text-primary-400">· {formatSize(selectedSize)}</span>}
-              <button onClick={onClearSelection} aria-label="取消选择" className="text-primary-400 hover:text-primary-600 cursor-pointer ml-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded">
-                <X className="w-3.5 h-3.5" aria-hidden />
-              </button>
-            </div>
-          </>
-        )}
         <button onClick={onRefresh} disabled={refreshing} aria-label="刷新" className="btn-ghost" title="刷新">
           <RefreshCw className={cn('w-4 h-4', refreshing && 'animate-spin')} aria-hidden />
         </button>
         {!hasSelection && (
           <div className="flex items-center bg-surface-2 rounded-lg p-0.5">
             <button
-              onClick={() => onViewChange('table')} aria-label="表格视图" title="表格视图"
-              className={cn('p-1.5 rounded-md cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', view === 'table' ? 'bg-surface text-primary-600 shadow-sm' : 'text-muted hover:text-fg')}
+              onClick={() => onViewChange('list')} aria-label="列表视图" title="列表视图"
+              className={cn('p-1.5 rounded-md cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', view === 'list' ? 'bg-surface text-primary-600 shadow-soft' : 'text-muted hover:text-fg')}
             >
-              <Table2 className="w-4 h-4" aria-hidden />
-            </button>
-            <button
-              onClick={() => onViewChange('card')} aria-label="列表视图" title="列表视图"
-              className={cn('p-1.5 rounded-md cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', view === 'card' ? 'bg-surface text-primary-600 shadow-sm' : 'text-muted hover:text-fg')}
-            >
-              <Rows3 className="w-4 h-4" aria-hidden />
+              <List className="w-4 h-4" aria-hidden />
             </button>
             <button
               onClick={() => onViewChange('grid')} aria-label="网格视图" title="网格视图"
-              className={cn('p-1.5 rounded-md cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', view === 'grid' ? 'bg-surface text-primary-600 shadow-sm' : 'text-muted hover:text-fg')}
+              className={cn('p-1.5 rounded-md cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', view === 'grid' ? 'bg-surface text-primary-600 shadow-soft' : 'text-muted hover:text-fg')}
             >
               <LayoutGrid className="w-4 h-4" aria-hidden />
             </button>

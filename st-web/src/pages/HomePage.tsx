@@ -14,11 +14,11 @@ import { personalFileSource } from '../lib/fileSource';
 import PreviewModal from '../components/preview/PreviewModal';
 
 const QUICK_CARDS = [
-  { label: '图片', icon: ImageIcon, type: 'image', gradient: 'from-blue-500 to-blue-600', glow: 'shadow-[0_4px_20px_-4px_rgba(59,130,246,0.4)]' },
-  { label: '视频', icon: Video, type: 'video', gradient: 'from-purple-500 to-purple-600', glow: 'shadow-[0_4px_20px_-4px_rgba(168,85,247,0.4)]' },
-  { label: '文档', icon: FileText, type: 'document', gradient: 'from-amber-500 to-orange-600', glow: 'shadow-[0_4px_20px_-4px_rgba(245,158,11,0.4)]' },
-  { label: '音乐', icon: Music, type: 'audio', gradient: 'from-pink-500 to-rose-600', glow: 'shadow-[0_4px_20px_-4px_rgba(236,72,153,0.4)]' },
-  { label: '压缩包', icon: Archive, type: 'archive', gradient: 'from-emerald-500 to-green-600', glow: 'shadow-[0_4px_20px_-4px_rgba(16,185,129,0.4)]' },
+  { label: '图片', icon: ImageIcon, type: 'image', tile: 'bg-primary-100 text-primary-600' },
+  { label: '视频', icon: Video, type: 'video', tile: 'bg-violet-500/15 text-violet-600' },
+  { label: '文档', icon: FileText, type: 'document', tile: 'bg-[#EDF7FF] text-[#4C91D7]' },
+  { label: '音乐', icon: Music, type: 'audio', tile: 'bg-orange-500/15 text-orange-600' },
+  { label: '压缩包', icon: Archive, type: 'archive', tile: 'bg-violet-500/15 text-violet-600' },
 ];
 
 /** Coerce a recent/favorite entry into a FileNode for preview. */
@@ -99,9 +99,9 @@ export default function HomePage() {
 
   return (
     <div className="h-full overflow-auto" onClick={() => menu && setMenu(null)}>
-      {/* Hero banner */}
-      <div className="relative overflow-hidden brand-gradient">
-        <div className="relative max-w-6xl mx-auto px-6 pt-10 pb-8">
+      {/* Hero banner（UI_DESIGN_SPEC：克制纯色，不渐变/发光） */}
+      <div className="relative border-b border-border-light bg-surface">
+        <div className="relative px-6 pt-8 pb-6">
           <div className="flex items-end justify-between gap-6">
             <div>
               <p className="text-muted text-sm mb-1">{greeting}，</p>
@@ -123,9 +123,9 @@ export default function HomePage() {
             )}
           </div>
           {storage && (
-            <div className="mt-5 h-1 bg-surface-2 rounded-full overflow-hidden">
+            <div className="mt-4 h-1.5 bg-surface-2 rounded-full overflow-hidden">
               <div
-                className={`h-full rounded-full transition-[width] duration-700 ${usedPercent > 90 ? 'bg-gradient-to-r from-red-500 to-orange-400' : 'bg-gradient-to-r from-primary-600 via-primary-500 to-primary-400'}`}
+                className={`h-full rounded-full transition-[width] duration-500 ${usedPercent > 90 ? 'bg-danger' : 'bg-primary-600'}`}
                 style={{ width: `${Math.min(usedPercent, 100)}%` }}
               />
             </div>
@@ -133,7 +133,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-6 py-6 space-y-8">
+      <div className="px-6 py-6 space-y-8">
         {/* Quick access */}
         <section>
           <div className="flex items-center justify-between mb-4">
@@ -147,12 +147,12 @@ export default function HomePage() {
               <button
                 key={card.label}
                 onClick={() => handleCardClick(card.type)}
-                aria-label={card.label} className={`group relative flex flex-col items-center gap-3 p-5 bg-gradient-to-br ${card.gradient} rounded-2xl hover:scale-[1.03] transition-[transform,box-shadow] duration-300 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg ${card.glow}`}
+                aria-label={card.label} className="group relative flex flex-col items-center gap-3 p-5 bg-surface border border-border rounded-[14px] hover:bg-bg-hover hover:border-primary-200 transition-[background-color,border-color] duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
               >
-                <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center backdrop-blur-sm">
-                  <card.icon className="w-6 h-6 text-white" aria-hidden />
+                <div className={`w-12 h-12 ${card.tile} rounded-xl flex items-center justify-center`}>
+                  <card.icon className="w-6 h-6" aria-hidden />
                 </div>
-                <span className="text-sm font-medium text-white">{card.label}</span>
+                <span className="text-sm font-medium text-fg">{card.label}</span>
               </button>
             ))}
           </div>

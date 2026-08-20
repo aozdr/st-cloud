@@ -10,6 +10,7 @@ import { useAuthStore } from '../../store/auth';
 import { useTransferStore } from '../../store/transfer';
 import { useFavoritesStore } from '../../store/favorites';
 import { UploadProvider } from '../../hooks/useUpload';
+import { isElectron } from '../../lib/electron';
 import TitleBar from './TitleBar';
 
 export default function AppLayout() {
@@ -63,22 +64,23 @@ export default function AppLayout() {
 
   return (
     <UploadProvider>
-      <div className="flex flex-col h-screen overflow-hidden bg-bg">
-        <TitleBar />
-        <div className="flex flex-1 overflow-hidden">
-          <Sidebar mobileOpen={mobileSidebarOpen} onClose={() => setMobileSidebarOpen(false)} />
-          <div className="flex-1 flex flex-col min-w-0">
-            <TopBar onMenuClick={() => setMobileSidebarOpen(true)} />
-            <main id="main-content" className="flex-1 min-h-0 overflow-hidden pb-20 md:pb-0">
-              {/* Suspense 仅包裹 Outlet：路由切换时侧边栏/顶栏不重新挂载，仅顶部进度条提示。
-                  不按 pathname 加 key：打开文件夹时页面不整页重挂载，只有文件列表原地更新（Windows 风格） */}
-              <Suspense fallback={<SuspenseProgressBar />}>
-                <div className="h-full">
-                  <Outlet />
-                </div>
-              </Suspense>
-            </main>
-          </div>
+      <div className="flex h-screen overflow-hidden bg-bg">
+        {/* 侧栏整列置顶：桌面端 logo/品牌直接位于窗口顶部，填充标题栏移除后的空白 */}
+        <Sidebar mobileOpen={mobileSidebarOpen} onClose={() => setMobileSidebarOpen(false)} />
+        <div className="flex-1 flex flex-col min-w-0">
+          {/* 标题栏仅 Electron 桌面端渲染（网页端不显示）；保留拖拽区与 Windows 三键 */}
+          {isElectron() && <TitleBar />}
+          <TopBar onMenuClick={() => setMobileSidebarOpen(true)} />
+          {/* 左下圆角与侧栏右缘底部圆角对齐（文件区域与侧栏分割线圆角化） */}
+          <main id="main-content" className="flex-1 min-h-0 overflow-hidden rounded-bl-2xl pb-20 md:pb-0">
+            {/* Suspense 仅包裹 Outlet：路由切换时侧边栏/顶栏不重新挂载，仅顶部进度条提示。
+                不按 pathname 加 key：打开文件夹时页面不整页重挂载，只有文件列表原地更新（Windows 风格） */}
+            <Suspense fallback={<SuspenseProgressBar />}>
+              <div className="h-full">
+                <Outlet />
+              </div>
+            </Suspense>
+          </main>
         </div>
       </div>
       <MobileTabBar onMoreClick={() => setMobileSidebarOpen(true)} />

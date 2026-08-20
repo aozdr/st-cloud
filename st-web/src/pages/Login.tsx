@@ -49,7 +49,8 @@ export default function Login() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <TitleBar />
+      {/* 蓝色标题栏仅 Electron 桌面端渲染（网页端不显示） */}
+      {isElectron() && <TitleBar />}
       <div className="flex flex-1 min-h-0">
         {/* Left brand panel */}
         <div className="hidden lg:flex lg:w-[45%] brand-gradient flex-col justify-between p-12 relative overflow-hidden">

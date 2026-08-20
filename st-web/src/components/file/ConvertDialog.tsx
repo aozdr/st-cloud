@@ -50,7 +50,7 @@ export default function ConvertDialog({ node, onClose, onConverted }: Props) {
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content w-96" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content w-[480px] max-w-[92vw]" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
           <div className="flex items-center gap-2">
             <Icon className="w-4 h-4 text-primary-600" />

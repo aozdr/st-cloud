@@ -34,8 +34,8 @@ function loadMode(): ThemeMode {
   } catch {
     // ignore
   }
-  // 对齐 .ulpi/design/DESIGN.md（V4）：暗色优先，默认 dark
-  return 'dark';
+  // UI_DESIGN_SPEC v1.0：浅色优先，默认 light
+  return 'light';
 }
 
 /** Resolve the effective appearance (light or dark) from the mode. */
@@ -57,6 +57,8 @@ function applyDarkToDOM(isDark: boolean) {
   if (meta) {
     meta.setAttribute('content', isDark ? '#0F0F11' : '#ffffff');
   }
+  // 同步 Electron 桌面端标题栏与 Windows 三键颜色（网页端无 electronAPI 时忽略）
+  window.electronAPI?.setTitleBarTheme?.(isDark);
 }
 
 let mediaQuery: MediaQueryList | null = null;

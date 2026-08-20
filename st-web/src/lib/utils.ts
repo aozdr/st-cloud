@@ -54,14 +54,15 @@ const ARCHIVE_EXTS = ['zip', 'rar', '7z', 'tar', 'gz', 'bz2', 'xz', 'tgz'];
 const TEXT_EXTS  = ['txt', 'md', 'markdown', 'log', 'json', 'xml', 'yaml', 'yml', 'ini', 'conf', 'properties', 'js', 'ts', 'jsx', 'tsx', 'py', 'java', 'c', 'cpp', 'h', 'css', 'scss', 'less', 'html', 'htm', 'go', 'rs', 'rb', 'php', 'sh', 'bat', 'sql', 'vue', 'svelte'];
 
 const FILE_TYPE_MAP: { exts: string[]; config: FileTypeConfig }[] = [
-  { exts: IMAGE_EXTS,   config: { icon: ImageIcon,    color: 'text-green-500',  bgColor: 'bg-green-500/15',  label: '图片' } },
-  { exts: VIDEO_EXTS,   config: { icon: Video,         color: 'text-purple-500', bgColor: 'bg-purple-500/15', label: '视频' } },
-  { exts: AUDIO_EXTS,   config: { icon: Music,         color: 'text-pink-500',   bgColor: 'bg-pink-500/15',   label: '音频' } },
-  { exts: PDF_EXTS,     config: { icon: FileText,      color: 'text-red-500',    bgColor: 'bg-red-500/15',    label: 'PDF' } },
-  { exts: WORD_EXTS,    config: { icon: FileText,      color: 'text-blue-500',   bgColor: 'bg-blue-500/15',   label: 'Word' } },
-  { exts: EXCEL_EXTS,   config: { icon: Sheet,         color: 'text-emerald-600 dark:text-emerald-400', bgColor: 'bg-emerald-500/15', label: 'Excel' } },
-  { exts: PPT_EXTS,     config: { icon: Presentation,  color: 'text-orange-500',  bgColor: 'bg-orange-500/15',  label: 'PPT' } },
-  { exts: ARCHIVE_EXTS, config: { icon: Archive,       color: 'text-amber-500',  bgColor: 'bg-amber-500/15',  label: '压缩包' } },
+  // UI_DESIGN_SPEC §24/§39：文件夹琥珀、PDF 红、图片靛蓝、文档蓝、表格绿、压缩包紫、视频紫、音频橙
+  { exts: IMAGE_EXTS,   config: { icon: ImageIcon,    color: 'text-primary-600 dark:text-primary-400', bgColor: 'bg-primary-500/15 dark:bg-primary-500/15', label: '图片' } },
+  { exts: VIDEO_EXTS,   config: { icon: Video,         color: 'text-violet-600 dark:text-violet-400', bgColor: 'bg-violet-500/15', label: '视频' } },
+  { exts: AUDIO_EXTS,   config: { icon: Music,         color: 'text-orange-600 dark:text-orange-400', bgColor: 'bg-orange-500/15', label: '音频' } },
+  { exts: PDF_EXTS,     config: { icon: FileText,      color: 'text-danger', bgColor: 'bg-danger-light dark:bg-danger/15', label: 'PDF' } },
+  { exts: WORD_EXTS,    config: { icon: FileText,      color: 'text-[#4C91D7]', bgColor: 'bg-[#EDF7FF] dark:bg-blue-500/15', label: 'Word' } },
+  { exts: EXCEL_EXTS,   config: { icon: Sheet,         color: 'text-success', bgColor: 'bg-success-light dark:bg-success/15', label: 'Excel' } },
+  { exts: PPT_EXTS,     config: { icon: Presentation,  color: 'text-[#4C91D7]', bgColor: 'bg-[#EDF7FF] dark:bg-blue-500/15', label: 'PPT' } },
+  { exts: ARCHIVE_EXTS, config: { icon: Archive,       color: 'text-violet-600 dark:text-violet-400', bgColor: 'bg-violet-500/15', label: '压缩包' } },
   { exts: TEXT_EXTS,    config: { icon: FileText,      color: 'text-muted',  bgColor: 'bg-surface-2',  label: '文档' } },
 ];
 
@@ -73,7 +74,7 @@ for (const entry of FILE_TYPE_MAP) {
 
 export function getFileTypeConfig(nodeType: number, suffix: string | null | undefined): FileTypeConfig {
   if (nodeType === 0) {
-    return { icon: FileIcon, color: 'text-amber-400', bgColor: 'bg-amber-500/15', label: '文件夹' };
+    return { icon: FileIcon, color: 'text-[#E8A93A]', bgColor: 'bg-[#FFF5D9] dark:bg-amber-500/15', label: '文件夹' };
   }
   if (!suffix) {
     return { icon: FileIcon, color: 'text-muted', bgColor: 'bg-surface-2', label: '文件' };

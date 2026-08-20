@@ -113,7 +113,7 @@ export default function ContextMenu({ x, y, node, hasClipboard, showShare = true
   return createPortal(
     <div
       ref={ref}
-      className="fixed z-[100] w-48 bg-surface rounded-lg shadow-md border border-border py-1.5 animate-scale-in"
+      className="fixed z-[100] w-[180px] p-1.5 bg-surface rounded-[10px] shadow-card border border-border animate-scale-in"
       style={{ left: pos.left, top: pos.top }}
       onClick={(e) => e.stopPropagation()}
     >
@@ -126,11 +126,11 @@ export default function ContextMenu({ x, y, node, hasClipboard, showShare = true
           <button
             key={idx}
             onClick={() => onAction(item.action!, node)}
-            className={`w-full flex items-center gap-2.5 px-3 py-1.5 text-sm cursor-pointer transition-colors ${
-              item.danger ? 'text-red-500 hover:bg-red-500/10' : 'text-fg hover:bg-surface-2'
+            className={`w-full flex items-center gap-2.5 px-2.5 h-9 text-sm cursor-pointer rounded-[7px] transition-colors ${
+              item.danger ? 'text-danger hover:bg-danger-light' : 'text-fg hover:bg-surface-2'
             }`}
           >
-            <Icon className="w-4 h-4" aria-hidden />
+            <Icon className="w-4 h-4 flex-shrink-0" aria-hidden />
             <span>{item.label}</span>
           </button>
         );

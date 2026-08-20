@@ -49,7 +49,7 @@ export default function MoveDialog({ nodeIds, mode, loadTree, onConfirm, onClose
       <div key={node.id}>
         <div
           className={cn(
-            'flex items-center gap-1.5 px-2 py-1.5 rounded-lg cursor-pointer transition-colors text-sm',
+            'flex items-center gap-1.5 px-2 py-1.5 rounded-md cursor-pointer transition-colors text-sm',
             targetId === node.id ? 'bg-primary-500/10 text-primary-600 font-medium' : 'hover:bg-surface-2 text-muted'
           )}
           style={{ paddingLeft: `${level * 20 + 8}px` }}
@@ -79,7 +79,7 @@ export default function MoveDialog({ nodeIds, mode, loadTree, onConfirm, onClose
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content w-96 max-h-[70vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-content w-[480px] max-w-[92vw] max-h-[70vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
           <h3 className="text-base font-semibold text-fg">
             {mode === 'move' ? '移动到' : '复制到'}
@@ -93,7 +93,7 @@ export default function MoveDialog({ nodeIds, mode, loadTree, onConfirm, onClose
           {/* Root folder option */}
           <div
             className={cn(
-              'flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer transition-colors text-sm',
+              'flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-colors text-sm',
               targetId === '0' ? 'bg-primary-500/10 text-primary-600 font-medium' : 'hover:bg-surface-2 text-muted'
             )}
             onClick={() => setTargetId('0')}

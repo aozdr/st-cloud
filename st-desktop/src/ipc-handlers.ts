@@ -25,6 +25,20 @@ import { startMiniWindowDrag, stopMiniWindowDrag, resetMiniWindowPosition, openM
 import { showMenuWindow, hideMenuWindow } from './menu-window';
 
 export function registerIpcHandlers(): void {
+  // ==================== 窗口标题栏主题 ====================
+  ipcMain.on('theme:set-overlay', (_event, isDark: boolean) => {
+    const color = isDark ? '#16161a' : '#ffffff';
+    const symbolColor = isDark ? '#e6e7eb' : '#1f2430';
+    for (const win of BrowserWindow.getAllWindows()) {
+      if (win.isDestroyed()) continue;
+      try {
+        win.setTitleBarOverlay({ color, symbolColor, height: 36 });
+      } catch {
+        // 无标题栏的窗口（悬浮窗/菜单窗）不支持 overlay，忽略
+      }
+    }
+  });
+
   // ==================== 认证 ====================
   ipcMain.handle('auth:set', async (_event, token: string, refreshToken: string) => {
     // 切换用户时先停止所有同步引擎，防止旧用户引擎用新 token 访问导致失败日志

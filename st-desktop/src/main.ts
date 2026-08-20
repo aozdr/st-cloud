@@ -42,11 +42,12 @@ async function createWindow(): Promise<void> {
     title: '星云盘',
     // 白底：页面加载完成前避免黑色闪屏
     backgroundColor: '#ffffff',
-    // 隐藏系统标题栏，改用页面内蓝色标题条；保留系统最小化/最大化/关闭按钮（白色符号）
+    // 隐藏系统标题栏，保留系统最小化/最大化/关闭按钮（titleBarOverlay）。
+    // 页面内标题条右上角另有自定义圆形关闭按钮，置于系统按钮左侧避免遮挡。
     titleBarStyle: 'hidden',
     titleBarOverlay: {
-      color: '#2e6be6',
-      symbolColor: '#ffffff',
+      color: '#ffffff',
+      symbolColor: '#1f2430',
       height: 36,
     },
     webPreferences: {

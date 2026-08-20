@@ -34,7 +34,7 @@ export default function TopProgressBar() {
       aria-hidden
     >
       <div
-        className="h-[2px] bg-gradient-to-r from-primary-600 via-primary-400 to-primary-600"
+        className="h-[2px] bg-primary-600"
         style={{
           width: `${width}%`,
           transition: 'width 0.7s cubic-bezier(0.16, 1, 0.3, 1)',
@@ -62,7 +62,7 @@ export function SuspenseProgressBar() {
   return (
     <div className="fixed top-0 left-0 right-0 z-[9999] pointer-events-none" aria-hidden>
       <div
-        className="h-[2px] bg-gradient-to-r from-primary-600 via-primary-400 to-primary-600"
+        className="h-[2px] bg-primary-600"
         style={{
           width: `${width}%`,
           transition: 'width 0.5s cubic-bezier(0.16, 1, 0.3, 1)',

@@ -49,6 +49,8 @@ export interface TransferSettings {
 
 export interface ElectronAPI {
   isElectron: true;
+  /** 同步窗口标题栏与 Windows 三键颜色（isDark=true 深色） */
+  setTitleBarTheme: (isDark: boolean) => void;
   // 服务器地址
   getServerUrl: () => Promise<string | null>;
   setServerUrl: (url: string) => Promise<void>;

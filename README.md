@@ -62,17 +62,21 @@
 | ------ | ---- |
 | ![登录页](docs/screenshots/01-login.png) | ![首页](docs/screenshots/02-home.png) |
 
-| 全部文件 | 我的分享 |
-| -------- | -------- |
-| ![全部文件](docs/screenshots/03-files.png) | ![我的分享](docs/screenshots/04-shares.png) |
+| 全部文件（列表） | 全部文件（视图） |
+| ---------------- | ---------------- |
+| ![全部文件](docs/screenshots/03-files.png) | ![全部文件视图](docs/screenshots/03-files-grid.png) |
 
-| 团队空间 | 回收站 |
-| -------- | ------ |
-| ![团队空间](docs/screenshots/05-team.png) | ![回收站](docs/screenshots/06-recycle.png) |
-
-| 系统管理 | 我的收藏 |
+| 我的分享 | 团队空间 |
 | -------- | -------- |
-| ![系统管理](docs/screenshots/07-admin.png) | ![我的收藏](docs/screenshots/08-favorites.png) |
+| ![我的分享](docs/screenshots/04-shares.png) | ![团队空间](docs/screenshots/05-team.png) |
+
+| 回收站 | 系统管理 |
+| ------ | -------- |
+| ![回收站](docs/screenshots/06-recycle.png) | ![系统管理](docs/screenshots/07-admin.png) |
+
+| 我的收藏 | |
+| -------- | - |
+| ![我的收藏](docs/screenshots/08-favorites.png) | |
 
 ### 文档预览（OnlyOffice 只读查看）
 
@@ -133,7 +137,7 @@ docker-compose up -d
 | mysql | 3306 | MySQL 8.0，首次启动自动执行 `mysql/init/` 下全部脚本（脚本首行 `SET NAMES utf8mb4;`） |
 | redis | 6379 | Redis 7（缓存/会话/编辑锁/限速） |
 | rustfs | 9000 / 9001 | S3 兼容对象存储 |
-| rocketmq-namesrv | 9876 | RocketMQ NameServer |
+| rocketmq-namesrv | 19876 | RocketMQ NameServer（容器内 9876，宿主机映射 19876，避开 Windows 保留端口段） |
 | rocketmq-broker | 10909-10912 | RocketMQ Broker（自动创建 topic） |
 | rocketmq-dashboard | 9080 | RocketMQ 控制台（可选） |
 | elasticsearch | 9200 | ES 8.12，自定义镜像内置 ingest-attachment + IK 插件 |

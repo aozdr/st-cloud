@@ -223,7 +223,7 @@ export default function UploadPanel() {
           onPointerUp={handleFabPointerUp}
           aria-label="展开上传队列"
           title="拖拽可移动，点击展开上传队列"
-          className="relative w-12 h-12 bg-surface rounded-full border border-border shadow-md flex items-center justify-center hover:scale-105 cursor-grab active:cursor-grabbing transition-transform touch-none select-none"
+          className="relative w-12 h-12 bg-surface rounded-full border border-border shadow-card flex items-center justify-center hover:bg-surface-2 cursor-grab active:cursor-grabbing transition-colors touch-none select-none"
         >
           <FileUp className="w-5 h-5 text-muted" aria-hidden />
           {activeCount > 0 && (
