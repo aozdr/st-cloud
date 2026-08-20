@@ -35,6 +35,7 @@ final class TokenBucket {
             lastRefillNs = nowNs;
         }
         while (true) {
+            //距离上次补充token时间
             double elapsedSec = (nowNs - lastRefillNs) / 1_000_000_000.0;
             // 本次等待上限放宽到 max(capacity, bytes)：避免"申请量 > 桶深"时
             // tokens 被封顶到 capacity 永远达不到申请量而死循环；空闲突发仍受 capacity 限制。
