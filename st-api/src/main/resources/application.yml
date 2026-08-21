@@ -89,8 +89,7 @@ knife4j:
 
 # RocketMQ
 rocketmq:
-  # 容器内 9876，宿主机映射 19876（Windows 保留端口段禁绑 9876，见 docker-compose.yml 注释）
-  name-server: 127.0.0.1:19876
+  name-server: 127.0.0.1:9876
   producer:
     group: stcloud-producer
     send-message-timeout: 10000
