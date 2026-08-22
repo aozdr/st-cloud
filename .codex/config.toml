@@ -1,0 +1,9 @@
+model = "dots3-note-prev"
+model_provider = "dots"
+
+[model_providers.dots]
+name = "Dots"
+base_url = "https://note3-prev-api.askdiandian.com/v1"
+wire_api = "chat"
+env_http_headers = { "api-key" = "DOTS_API_KEY" }
+request_max_retries = 2
