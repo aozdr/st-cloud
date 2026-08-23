@@ -1,3 +1,4 @@
+import { memo, type RefObject } from 'react';
 import type { FileNode } from '../../types';
 import type { SortBy, SortDir, ViewMode, IconSize } from './FileToolbar';
 import FileTableView from './FileTableView';
@@ -28,10 +29,14 @@ export interface FileListProps {
   onFolderDragLeave: (e: React.DragEvent, folder: FileNode) => void;
   onFolderDrop: (e: React.DragEvent, folder: FileNode) => void;
   dragOverFolderId: string | null;
+  /** 列表滚动容器（FileBrowser 传入，用于虚拟滚动） */
+  scrollRef?: RefObject<HTMLDivElement | null>;
 }
 
 /** 按当前视图渲染文件列表（统一 onDoubleClick/拖拽等行为） */
-export default function FileList({ view, iconSize, onSelectAll, ...common }: FileListProps) {
-  if (view === 'list') return <FileTableView {...common} onSelectAll={onSelectAll} />;
+function FileList({ view, iconSize, onSelectAll, scrollRef, ...common }: FileListProps) {
+  if (view === 'list') return <FileTableView {...common} onSelectAll={onSelectAll} scrollRef={scrollRef} />;
   return <FileGrid {...common} iconSize={iconSize} />;
 }
+
+export default memo(FileList);

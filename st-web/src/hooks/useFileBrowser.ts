@@ -834,6 +834,12 @@ export function useFileBrowser({
     return set;
   }, [files]);
 
+  /** 剪切态节点集合：稳定引用，避免 FileList memo 因每次渲染新建 Set 失效 */
+  const cutIds = useMemo(() => {
+    if (clipboard?.mode !== 'cut' || !clipboard.nodeIds.length) return null;
+    return new Set(clipboard.nodeIds);
+  }, [clipboard]);
+
   const handleToolbarEdit = useCallback(() => {
     if (editableSelected) handleEdit(editableSelected);
   }, [editableSelected, handleEdit]);
@@ -909,7 +915,7 @@ export function useFileBrowser({
     dragOverFolderId, zipProgress, downloadQueuedCount, setDownloadQueuedCount,
     page, total, refreshKey, pageSize, pageInput, setPageInput, isRefreshing,
     sortBy, sortDir, foldersFirst, currentPath, pathSegments,
-    filteredFiles, selectedIds, focusedId, clipboard,
+    filteredFiles, selectedIds, focusedId, clipboard, cutIds,
     dragRect, detailFile, setDetailFile, allSelected, selectedSize,
     editableSelected, totalPages, lockedIds, isDragging,
     pathEditMode, setPathEditMode, pathInput, setPathInput, pathError, setPathError,

@@ -32,7 +32,7 @@ export default function FileBrowser({
     dragOverFolderId, zipProgress, downloadQueuedCount, setDownloadQueuedCount,
     page, total, refreshKey, pageSize, pageInput, setPageInput, isRefreshing,
     sortBy, sortDir, foldersFirst, currentPath, pathSegments,
-    filteredFiles, selectedIds, focusedId, clipboard,
+    filteredFiles, selectedIds, focusedId, clipboard, cutIds,
     dragRect, detailFile, setDetailFile, allSelected, selectedSize,
     editableSelected, totalPages, lockedIds, isDragging,
     pathEditMode, setPathEditMode, pathInput, setPathInput, pathError, setPathError,
@@ -238,11 +238,12 @@ export default function FileBrowser({
             <FileList
               view={view}
               iconSize={iconSize}
+              scrollRef={fileListRef}
               files={filteredFiles}
               lockedIds={lockedIds}
               selectedIds={selectedIds}
               focusedId={focusedId}
-              cutIds={clipboard?.mode === 'cut' ? new Set(clipboard.nodeIds) : null}
+              cutIds={cutIds}
               sortBy={sortBy}
               sortDir={sortDir}
               onSortChange={handleSortChange}
