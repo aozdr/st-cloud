@@ -1,5 +1,5 @@
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useCallback, useEffect, useState } from 'react';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 import MobileTabBar from './MobileTabBar';
@@ -20,6 +20,8 @@ export default function AppLayout() {
   const fetchFavoriteIds = useFavoritesStore((s) => s.fetchFavoriteIds);
   const [shortcutOpen, setShortcutOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const handleMobileClose = useCallback(() => setMobileSidebarOpen(false), []);
+  const handleMenuClick = useCallback(() => setMobileSidebarOpen(true), []);
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -67,11 +69,11 @@ export default function AppLayout() {
     <UploadProvider>
       <div className="flex h-screen overflow-hidden bg-bg">
         {/* 侧栏整列置顶：桌面端 logo/品牌直接位于窗口顶部，填充标题栏移除后的空白 */}
-        <Sidebar mobileOpen={mobileSidebarOpen} onClose={() => setMobileSidebarOpen(false)} />
+        <Sidebar mobileOpen={mobileSidebarOpen} onClose={handleMobileClose} />
         <div className="flex-1 flex flex-col min-w-0">
           {/* 标题栏仅 Electron 桌面端渲染（网页端不显示）；保留拖拽区与 Windows 三键 */}
           {isElectron() && <TitleBar />}
-          <TopBar onMenuClick={() => setMobileSidebarOpen(true)} />
+          <TopBar onMenuClick={handleMenuClick} />
           {/* 左下圆角与侧栏右缘底部圆角对齐（文件区域与侧栏分割线圆角化） */}
           <main id="main-content" className="flex-1 min-h-0 overflow-hidden rounded-bl-2xl pb-20 md:pb-0">
             {/* Suspense 仅包裹 Outlet：路由切换时侧边栏/顶栏不重新挂载，仅顶部进度条提示。
@@ -84,7 +86,7 @@ export default function AppLayout() {
           </main>
         </div>
       </div>
-      <MobileTabBar onMoreClick={() => setMobileSidebarOpen(true)} />
+      <MobileTabBar onMoreClick={handleMenuClick} />
       <PwaInstallBanner />
       <ShortcutHelpDialog open={shortcutOpen} onClose={() => setShortcutOpen(false)} />
     </UploadProvider>

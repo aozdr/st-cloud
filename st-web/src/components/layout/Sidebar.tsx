@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Cloud, FolderClosed, Trash2, Share2, Users, Settings, ArrowUpDown, Palette, FolderSync, Home, Upload, PanelLeftClose, PanelLeftOpen, X, Star, Copy, EyeOff, GripVertical } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { memo, useEffect, useState } from 'react';
 import { formatSize, cn } from '../../lib/utils';
 import { isElectron } from '../../lib/electron';
 import { usePermission } from '../../lib/permission';
@@ -79,7 +79,7 @@ function applyNavOrder(items: NavItem[], saved: string[]): NavItem[] {
   return ordered;
 }
 
-export default function Sidebar({ mobileOpen, onClose }: SidebarProps) {
+function Sidebar({ mobileOpen, onClose }: SidebarProps) {
   const storage = useStorageStore((s) => s.storage);
   const fetchStorage = useStorageStore((s) => s.fetchStorage);
   const { setPanelOpen, addFiles } = useUpload();
@@ -317,3 +317,5 @@ export default function Sidebar({ mobileOpen, onClose }: SidebarProps) {
     </>
   );
 }
+
+export default memo(Sidebar);

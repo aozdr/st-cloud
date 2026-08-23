@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, type RefObject } from 'react';
+import { memo, useState, useRef, useEffect, type RefObject } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Search, LogOut, User as UserIcon, X, Clock, Trash2, FolderOpen, Menu, ArrowLeft, ArrowRight, Moon, Sun } from 'lucide-react';
 import { useAuthStore } from '../../store/auth';
@@ -29,7 +29,7 @@ interface TopBarProps {
   onMenuClick: () => void;
 }
 
-export default function TopBar({ onMenuClick }: TopBarProps) {
+function TopBar({ onMenuClick }: TopBarProps) {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
@@ -371,3 +371,5 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
     </header>
   );
 }
+
+export default memo(TopBar);

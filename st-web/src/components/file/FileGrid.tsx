@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { cn, formatSize, isVideo } from '../../lib/utils';
 import type { FileNode } from '../../types';
 import FileThumbnail from './FileThumbnail';
@@ -67,7 +68,7 @@ interface Props {
   onToggleFavorite: (node: FileNode) => void;
 }
 
-export default function FileGrid({
+function FileGrid({
   files, iconSize, lockedIds, selectedIds, focusedId, cutIds, onSelect, onContextMenu, onDoubleClick,
   onItemDragStart, onFolderDragOver, onFolderDragLeave, onFolderDrop, dragOverFolderId,
   onToggleSelect, isFavorite, onToggleFavorite,
@@ -173,3 +174,5 @@ export default function FileGrid({
     </div>
   );
 }
+
+export default memo(FileGrid);
