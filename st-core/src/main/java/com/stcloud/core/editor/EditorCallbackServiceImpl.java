@@ -210,10 +210,14 @@ public class EditorCallbackServiceImpl implements EditorCallbackService {
 
             // 关闭/强制保存：提交成功后移除编辑标记（Redis 调用，事务外，TC-08/20）
             if (status == STATUS_CLOSED || status == STATUS_FORCE_SAVE) {
-                if (request.getUsers() != null) {
+                if (request.getUsers() != null && !request.getUsers().isEmpty()) {
                     for (String uid : request.getUsers()) {
                         editorLockService.removeEditingUser(nodeId, uid);
                     }
+                } else {
+                    // 部分 OnlyOffice 版本关闭回调不携带 users 列表：按文档关闭语义清空整个编辑会话标记，
+                    // 避免「保存/关闭已成功但编辑中标记残留」导致后续删除/移动/重命名被误拦
+                    editorLockService.clearEditing(nodeId);
                 }
             }
             log.info("OnlyOffice 回调落盘成功: nodeId={}, status={}, size={}, md5={}",

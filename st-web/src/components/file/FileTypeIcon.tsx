@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import type { FileTypeConfig } from '../../lib/utils';
 
 interface Props {
@@ -117,7 +118,7 @@ function FileSVG({ size, label }: { size: number; label: string }) {
   );
 }
 
-export default function FileTypeIcon({ config, size = 'md', isFolder = false }: Props) {
+function FileTypeIcon({ config, size = 'md', isFolder = false }: Props) {
   const iconSize = SIZE_MAP[size];
 
   if (isFolder) {
@@ -126,3 +127,5 @@ export default function FileTypeIcon({ config, size = 'md', isFolder = false }: 
 
   return <FileSVG size={iconSize} label={config.label} />;
 }
+
+export default memo(FileTypeIcon);

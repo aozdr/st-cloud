@@ -75,7 +75,7 @@ export default function FileGrid({
   const cfg = GRID_SIZE_CFG[iconSize];
 
   return (
-    <div className={cn('grid', cfg.grid)}>
+    <div className={cn('grid file-grid file-grid-' + iconSize, cfg.grid)}>
       {files.map((file) => {
         const isSelected = selectedIds.has(file.id);
 
@@ -109,7 +109,7 @@ export default function FileGrid({
               onClick={(e) => { e.stopPropagation(); onToggleSelect(file.id); }}
               aria-label="选择"
               className={cn(
-                'absolute top-3 left-3 z-10 w-4 h-4 rounded border flex items-center justify-center transition-[background-color,border-color,opacity]',
+                'absolute top-3 left-3 z-10 w-4 h-4 rounded border flex items-center justify-center transition-[background-color,border-color,opacity] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100',
                 isSelected ? 'bg-primary-600 border-primary-600 opacity-100' : 'border-border bg-surface/90 opacity-0 group-hover:opacity-100',
               )}
             >
@@ -122,7 +122,7 @@ export default function FileGrid({
               aria-label={isFavorite(file.id) ? '取消收藏' : '收藏'}
               title={isFavorite(file.id) ? '取消收藏' : '收藏'}
               className={cn(
-                'absolute top-2 right-2 z-10 w-7 h-7 rounded-lg flex items-center justify-center bg-black/30 hover:bg-black/50 backdrop-blur-sm transition-opacity',
+                'absolute top-2 right-2 z-10 w-7 h-7 rounded-lg flex items-center justify-center bg-black/30 hover:bg-black/50 backdrop-blur-sm transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100',
                 isFavorite(file.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
               )}
             >

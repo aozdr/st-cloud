@@ -37,7 +37,7 @@ export default function FileTableView({
   onItemDragStart, onFolderDragOver, onFolderDragLeave, onFolderDrop, dragOverFolderId, onItemMenu,
   onToggleSelect, isFavorite, onToggleFavorite,
 }: Props) {
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const allSelected = files.length > 0 && files.every((f) => selectedIds.has(f.id));
   const someSelected = files.some((f) => selectedIds.has(f.id));
 
@@ -47,7 +47,7 @@ export default function FileTableView({
         type="button"
         onClick={() => onSortChange(col)}
         className={cn(
-          'inline-flex items-center gap-1 transition-colors cursor-pointer hover:text-fg focus-visible:outline-none focus-visible:text-primary-600',
+          'inline-flex items-center gap-1 transition-colors cursor-pointer hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
           align === 'right' && 'flex-row-reverse',
         )}
         aria-sort={sortBy === col ? (sortDir === 'asc' ? 'ascending' : 'descending') : undefined}
@@ -89,8 +89,10 @@ export default function FileTableView({
               <button
                 onClick={onSelectAll}
                 aria-label="全选"
+                role="checkbox"
+                aria-checked={allSelected ? 'true' : someSelected ? 'mixed' : 'false'}
                 className={cn(
-                  'w-4 h-4 rounded border flex items-center justify-center cursor-pointer transition-colors',
+                  'w-4 h-4 rounded border flex items-center justify-center cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                   allSelected
                     ? 'bg-primary-600 border-primary-600'
                     : someSelected
@@ -142,7 +144,7 @@ export default function FileTableView({
                     onClick={(e) => { e.stopPropagation(); onToggleSelect(file.id); }}
                     aria-label="选择"
                     className={cn(
-                      'w-4 h-4 rounded border flex items-center justify-center transition-[background-color,border-color,opacity]',
+                      'w-4 h-4 rounded border flex items-center justify-center transition-[background-color,border-color,opacity] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100',
                       isSelected ? 'bg-primary-600 border-primary-600 opacity-100' : 'border-[#CDD2DC] bg-surface opacity-0 group-hover:opacity-100',
                     )}
                   >
@@ -181,7 +183,7 @@ export default function FileTableView({
                     aria-label={isFavorite(file.id) ? '取消收藏' : '收藏'}
                     title={isFavorite(file.id) ? '取消收藏' : '收藏'}
                     className={cn(
-                      'inline-flex w-8 h-8 rounded-lg items-center justify-center transition-[background-color,color,opacity]',
+                      'inline-flex w-8 h-8 rounded-lg items-center justify-center transition-[background-color,color,opacity] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100',
                       isFavorite(file.id)
                         ? 'text-amber-400 opacity-100'
                         : 'text-tertiary hover:text-amber-400 opacity-0 group-hover:opacity-100',
@@ -194,7 +196,7 @@ export default function FileTableView({
                       onClick={(e) => { e.stopPropagation(); onItemMenu(e, file); }}
                       onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); onContextMenu(e, file); }}
                       aria-label="更多操作"
-                      className="w-8 h-8 rounded-lg inline-flex items-center justify-center text-tertiary hover:text-fg hover:bg-surface-2 opacity-0 group-hover:opacity-100 transition-[background-color,color,opacity]"
+                      className="w-8 h-8 rounded-lg inline-flex items-center justify-center text-tertiary hover:text-fg hover:bg-surface-2 opacity-0 group-hover:opacity-100 transition-[background-color,color,opacity] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100"
                     >
                       <MoreHorizontal className="w-4 h-4" aria-hidden />
                     </button>

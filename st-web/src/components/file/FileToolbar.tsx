@@ -57,7 +57,7 @@ export default function FileToolbar({
   const [newMenuOpen, setNewMenuOpen] = useState(false);
 
   return (
-    <div className="flex items-center overflow-x-auto">
+    <div className="flex items-center overflow-x-auto min-w-0">
       {/* 左：新建 / 上传文件 */}
       <div className="flex items-center gap-1.5 flex-shrink-0">
         {has('file:upload') && (

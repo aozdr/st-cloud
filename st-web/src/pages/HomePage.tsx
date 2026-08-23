@@ -39,10 +39,12 @@ interface MenuState {
 export default function HomePage() {
   const navigate = useNavigate();
   const storage = useStorageStore((s) => s.storage);
-  const { user } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
   const [recentFiles, setRecentFiles] = useState<FileNode[]>([]);
   const [accessedFiles, setAccessedFiles] = useState<RecentFile[]>([]);
-  const { favorites: favFiles, fetchFavorites, toggleFavorite: toggleFav } = useFavoritesStore();
+  const favFiles = useFavoritesStore((s) => s.favorites);
+  const fetchFavorites = useFavoritesStore((s) => s.fetchFavorites);
+  const toggleFav = useFavoritesStore((s) => s.toggleFavorite);
   const [loading, setLoading] = useState(true);
   const [preview, setPreview] = useState<{ files: FileNode[]; index: number } | null>(null);
   const [menu, setMenu] = useState<MenuState | null>(null);

@@ -41,11 +41,19 @@ export default function BlankContextMenu({ x, y, hasClipboard, onAction, onNewFi
     const el = ref.current;
     const w = el?.offsetWidth ?? 192;
     const h = el?.offsetHeight ?? 290;
+    const margin = 6;
+    const titlebarH = document.querySelector('.app-titlebar')?.getBoundingClientRect().height ?? 0;
+    const safeTop = titlebarH + margin;
+    const safeLeft = margin;
+    const safeRight = window.innerWidth - margin;
+    const safeBottom = window.innerHeight - margin;
     let left = x;
     let top = y;
-    if (left + w > window.innerWidth) left = window.innerWidth - w - 4;
-    if (top + h > window.innerHeight) top = y - h;
-    if (top < 0) top = 4;
+    if (left + w > safeRight) left = safeRight - w;
+    if (top + h > safeBottom) top = y - h;
+    if (top < safeTop) top = safeTop;
+    if (left < safeLeft) left = safeLeft;
+    if (top + h > safeBottom) top = safeBottom - h;
     setPos({ left, top });
   }, [x, y]);
 
@@ -58,11 +66,15 @@ export default function BlankContextMenu({ x, y, hasClipboard, onAction, onNewFi
     const rect = newItemRef.current?.getBoundingClientRect();
     const w = 176; // w-44
     const h = 5 * 36 + 10; // 5 项 + 分隔线近似高度
+    const margin = 6;
+    const titlebarH = document.querySelector('.app-titlebar')?.getBoundingClientRect().height ?? 0;
+    const safeTop = titlebarH + margin;
+    const safeBottom = window.innerHeight - margin;
     let left = (rect?.right ?? pos.left + 192) + 4;
     let top = (rect?.top ?? pos.top) - 4;
-    if (left + w > window.innerWidth) left = pos.left - w - 4;
-    if (top + h > window.innerHeight) top = window.innerHeight - h - 4;
-    if (top < 0) top = 4;
+    if (left + w > window.innerWidth - margin) left = pos.left - w - 4;
+    if (top + h > safeBottom) top = safeBottom - h;
+    if (top < safeTop) top = safeTop;
     setNewSubmenu({ left, top });
   };
 
@@ -79,8 +91,8 @@ export default function BlankContextMenu({ x, y, hasClipboard, onAction, onNewFi
       {createPortal(
         <div
           ref={ref}
-          className="fixed z-[100] w-48 bg-surface rounded-lg shadow-md border border-border py-1.5 animate-scale-in"
-          style={{ left: pos.left, top: pos.top }}
+          className="fixed z-[100] w-48 bg-surface rounded-lg shadow-md border border-border py-1.5 animate-scale-in overflow-y-auto"
+          style={{ left: pos.left, top: pos.top, maxHeight: 'calc(100vh - 48px)' }}
           onClick={(e) => e.stopPropagation()}
         >
           {items.map((item, idx) => {
@@ -119,8 +131,8 @@ export default function BlankContextMenu({ x, y, hasClipboard, onAction, onNewFi
       )}
       {newSubmenu && createPortal(
         <div
-          className="fixed z-[110] w-44 bg-surface rounded-lg shadow-md border border-border py-1.5 animate-scale-in"
-          style={{ left: newSubmenu.left, top: newSubmenu.top }}
+          className="fixed z-[110] w-44 bg-surface rounded-lg shadow-md border border-border py-1.5 animate-scale-in overflow-y-auto"
+          style={{ left: newSubmenu.left, top: newSubmenu.top, maxHeight: 'calc(100vh - 48px)' }}
           onClick={(e) => e.stopPropagation()}
         >
           {NEW_ITEMS.map((item, idx) => {

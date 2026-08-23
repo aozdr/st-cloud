@@ -414,3 +414,14 @@
   font-weight: 600;
   letter-spacing: 0.5px;
 }
+
+/* 详情打开：文件列表容器变窄时，网格改用自适应列数（卡片保留最小宽度），避免挤压；默认样式由 grid-cols-* 保持 */
+.detail-open .file-grid-sm {
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+}
+.detail-open .file-grid-md {
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+}
+.detail-open .file-grid-lg {
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+}

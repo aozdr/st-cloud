@@ -37,11 +37,11 @@ export default function FileDetailPanel({ file, onClose, variant = 'sidebar' }: 
       {/* 面板模式：内容全宽/全高展示，限宽居中保证长元数据可读 */}
       <div className={cn('w-full', isPanel && 'mx-auto max-w-2xl')}>
         <div className={cn('flex flex-col items-center border-b border-border', isPanel ? 'px-4 py-8' : 'px-4 py-6')}>
-          <div className={cn('rounded-2xl bg-surface-2 flex items-center justify-center mb-4 overflow-hidden', isPanel ? 'w-32 h-32' : 'w-28 h-28')}>
+          <div className={cn('rounded-2xl bg-surface-2 flex items-center justify-center mb-5 overflow-hidden', isPanel ? 'w-32 h-32' : 'w-28 h-28')}>
             <FileThumbnail file={file} size="xxl" />
           </div>
-          <span className={cn('text-fg text-center break-all line-clamp-3', isPanel ? 'text-base font-semibold' : 'text-sm font-medium')}>{file.name}</span>
-          <span className="mt-1 text-xs text-muted">{file.nodeType === 0 ? '文件夹' : config.label}</span>
+          <span className={cn('text-fg text-center leading-snug break-words line-clamp-2 max-w-full mt-1', isPanel ? 'text-base font-semibold' : 'text-sm font-medium')}>{file.name}</span>
+          <span className="mt-1.5 text-xs text-muted">{file.nodeType === 0 ? '文件夹' : config.label}</span>
         </div>
 
         <div className={cn('space-y-3', isPanel ? 'px-4 py-6' : 'px-4 py-4')}>

@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Download, Pencil, FolderInput, Copy, Trash2, FolderOpen, Eye, Edit3, Scissors, ClipboardPaste, Share2, History, Info, Star, EyeOff, Lock, Unlock, FileInput, FileOutput, FileText, Archive, type LucideIcon } from 'lucide-react';
+import { Download, Pencil, FolderInput, Copy, Trash2, FolderOpen, Eye, Edit3, Scissors, ClipboardPaste, Share2, History, Info, Star, EyeOff, Lock, Unlock, FileInput, FileOutput, FileText, Archive, RefreshCw, type LucideIcon } from 'lucide-react';
 import type { FileNode } from '../../types';
 import { usePermission } from '../../lib/permission';
 import { isText, isZip } from '../../lib/utils';
@@ -61,16 +61,24 @@ export default function ContextMenu({ x, y, node, hasClipboard, showShare = true
     return () => document.removeEventListener('click', clickHandler);
   }, [onClose]);
 
-  // Position: cursor at top-left; if not enough space below, flip so cursor is at bottom-left
+  // Position: cursor at top-left; 依视口边界与 Electron 标题栏安全区翻转/钳制，避免被顶部系统按钮遮挡或溢出窗口
   useLayoutEffect(() => {
     const el = ref.current;
     const w = el?.offsetWidth ?? 192;
     const h = el?.offsetHeight ?? 360;
+    const margin = 6;
+    const titlebarH = document.querySelector('.app-titlebar')?.getBoundingClientRect().height ?? 0;
+    const safeTop = titlebarH + margin;
+    const safeLeft = margin;
+    const safeRight = window.innerWidth - margin;
+    const safeBottom = window.innerHeight - margin;
     let left = x;
     let top = y;
-    if (left + w > window.innerWidth) left = window.innerWidth - w - 4;
-    if (top + h > window.innerHeight) top = y - h;
-    if (top < 0) top = 4;
+    if (left + w > safeRight) left = safeRight - w;
+    if (top + h > safeBottom) top = y - h;
+    if (top < safeTop) top = safeTop;
+    if (left < safeLeft) left = safeLeft;
+    if (top + h > safeBottom) top = safeBottom - h;
     setPos({ left, top });
   }, [x, y]);
 
@@ -98,6 +106,7 @@ export default function ContextMenu({ x, y, node, hasClipboard, showShare = true
     { type: 'separator' as const },
     ...(showShare && has('file:share') ? [{ action: 'share', label: '分享', icon: Share2 }] : []),
     { action: 'details', label: '详情', icon: Info },
+    ...(has('file:reset-editing') ? [{ action: 'resetEditing', label: '重置编辑状态', icon: RefreshCw }] : []),
     { type: 'separator' as const },
     ...(has('file:delete') ? [{ action: 'delete', label: '删除', icon: Trash2, danger: true }] : []),
   ];
@@ -113,8 +122,8 @@ export default function ContextMenu({ x, y, node, hasClipboard, showShare = true
   return createPortal(
     <div
       ref={ref}
-      className="fixed z-[100] w-[180px] p-1.5 bg-surface rounded-[10px] shadow-card border border-border animate-scale-in"
-      style={{ left: pos.left, top: pos.top }}
+      className="fixed z-[100] w-[180px] p-1.5 bg-surface rounded-[10px] shadow-card border border-border animate-scale-in overflow-y-auto"
+      style={{ left: pos.left, top: pos.top, maxHeight: 'calc(100vh - 48px)' }}
       onClick={(e) => e.stopPropagation()}
     >
       {items.map((item, idx) => {

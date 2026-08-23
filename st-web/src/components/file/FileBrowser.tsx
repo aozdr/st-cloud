@@ -1,78 +1,15 @@
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { isElectron } from '../../lib/electron';
-import api from '../../lib/api';
-import { useTransferStore } from '../../store/transfer';
-import type { BlankFileType, FileNode } from '../../types';
-import type { FileSource } from '../../lib/fileSource';
-import FileToolbar, { type IconSize } from './FileToolbar';
+import { RefreshCw, Loader2, FolderInput } from 'lucide-react';
+import { cn } from '../../lib/utils';
+import FileToolbar from './FileToolbar';
 import FileBreadcrumb from './FileBreadcrumb';
 import FileList from './FileList';
-import ContextMenu from './ContextMenu';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
-import { useMobile } from '../../hooks/useMobile';
-import { usePullToRefresh } from '../../hooks/usePullToRefresh';
-import { isCapacitor } from '../../lib/runtime';
-import { pickFromGallery } from '../../lib/capacitor';
 import MultiSelectBar from '../ui/MultiSelectBar';
-import { RefreshCw, Loader2, CheckCircle2, ListChecks } from 'lucide-react';
-import { formatSize, cn } from '../../lib/utils';
-import BlankContextMenu from './BlankContextMenu';
-import MoveDialog from './MoveDialog';
-import DownloadDialog from './DownloadDialog';
-import { CreateFolderDialog, CreateFileDialog, RenameDialog, EmptyState } from './Dialogs';
+import { EmptyState } from './Dialogs';
 import GenericEmptyState from '../EmptyState';
 import FileDetailPanel from './FileDetailPanel';
-import PreviewModal from '../preview/PreviewModal';
-import ShareDialog from '../share/ShareDialog';
-import VersionHistoryDialog from './VersionHistoryDialog';
-import BatchRenameDialog from './BatchRenameDialog';
-import ArchiveDialog from './ArchiveDialog';
-import ConvertDialog from './ConvertDialog';
-import { useToast } from '../ui/Toast';
-import { useConfirm } from '../ui/ConfirmDialog';
-import { useOperationProgress } from '../ui/OperationProgress';
-import { useUpload } from '../../hooks/useUpload';
-import { usePermission } from '../../lib/permission';
-import { useDragSelect } from '../../hooks/useDragSelect';
-import { useFileKeyboard } from '../../hooks/useFileKeyboard';
-import { useFolderFilterStore } from '../../store/folderFilter';
-import { useFavoritesStore } from '../../store/favorites';
-import { FolderInput } from 'lucide-react';
-import { isEditableOfficeSuffix } from '../../lib/editor';
-import { useFileSelection } from '../../hooks/useFileSelection';
-import { useFileClipboard } from '../../hooks/useFileClipboard';
-import { useFileDialogs } from '../../hooks/useFileDialogs';
-import { useFolderSearch } from '../../hooks/useFolderSearch';
-
-export interface FileBrowserProps {
-  source: FileSource;
-  parentId: string | null;
-  onNavigateFolder: (node: FileNode) => void;
-  onBack?: () => void;
-  uploadSpaceId?: string;
-  enableShare?: boolean;
-  enableVersions?: boolean;
-  syncUrl?: boolean;
-  categoryLabel?: string;
-  focusId?: string | null;
-  /** 页面级详情回调：由页面统一管理详情视图（TeamSpacePage）；未提供时回退到内部右侧边栏（兼容其它页面） */
-  onOpenDetail?: (node: FileNode) => void;
-  /** 团队空间右键锁定/解锁回调（仅团队空间传入；执行 POST /team/{spaceId}/files/{nodeId}/lock|unlock） */
-  onToggleLock?: (action: 'lock' | 'unlock', node: FileNode) => void;
-}
-
-/** 节点是否已锁定：以后端锁定字段为准（lockedBy 非空且未过期即视为锁定） */
-function isNodeLocked(node: FileNode): boolean {
-  if (node.lockedBy == null) return false;
-  return node.lockExpireAt == null || new Date(node.lockExpireAt).getTime() > Date.now();
-}
-
-/** 各目录滚动位置缓存：组件随目录切换会重挂载，用模块级 Map 跨实例保留 */
-const folderScrollPositions: Record<string, number> = {};
-
-/** 每页条数选项（默认 100） */
-const PAGE_SIZE_OPTIONS = [50, 100, 150, 200];
+import FileBrowserDialogs from './FileBrowserDialogs';
+import FileBrowserPagination from './FileBrowserPagination';
+import { useFileBrowser, type FileBrowserProps } from '../../hooks/useFileBrowser';
 
 export default function FileBrowser({
   source,
@@ -86,847 +23,47 @@ export default function FileBrowser({
   categoryLabel,
   focusId,
   onOpenDetail,
+  detailOpen,
+  onCloseDetail,
   onToggleLock,
 }: FileBrowserProps) {
-
-  /** Returns true if the click landed on a file/folder item (not blank area) */
-  const isFileItemClick = (e: React.MouseEvent): boolean => {
-    const el = e.target as HTMLElement;
-    return !!(el?.closest && el.closest('[data-file-id]'));
-  };
-
-
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const [files, setFiles] = useState<FileNode[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState(false);
-  const [view, setView] = useState<'list' | 'grid'>(() => {
-    const saved = localStorage.getItem('fileView');
-    if (saved === 'grid') return 'grid';
-    return 'list';
-  });
-  const [iconSize, setIconSize] = useState<IconSize>(() => {
-    const saved = localStorage.getItem('fileIconSize');
-    if (saved === 'sm' || saved === 'lg') return saved;
-    return 'md';
-  });
-  const folderSearch = useFolderFilterStore((s) => s.keyword);
-  const setFolderSearch = useFolderFilterStore((s) => s.setKeyword);
-  const setFolderPath = useFolderFilterStore((s) => s.setFolderPath);
-  const [dragOverFolderId, setDragOverFolderId] = useState<string | null>(null);
-  // web 端打包下载进度（null=未打包；否则为已下载字节数）
-  const [zipProgress, setZipProgress] = useState<number | null>(null);
-  // 多选下载加入队列后的提示弹窗（null=不显示；否则为任务数）
-  const [downloadQueuedCount, setDownloadQueuedCount] = useState<number | null>(null);
-  const [page, setPage] = useState(1);
-  const pageRef = useRef(page);
-  useEffect(() => {
-    pageRef.current = page;
-  }, [page]);
-  const [total, setTotal] = useState(0);
-  const [refreshKey, setRefreshKey] = useState(0);
-  const [pageSize, setPageSize] = useState<number>(() => {
-    const saved = Number(localStorage.getItem('filePageSize'));
-    return PAGE_SIZE_OPTIONS.includes(saved) ? saved : 100;
-  });
-  // 分页跳转输入框（与当前页同步）
-  const [pageInput, setPageInput] = useState('1');
-  // 刷新中的视觉反馈（Windows 风格：刷新图标旋转 + 列表淡入）
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const { toggleFavorite: toggleFav, isFavorite: checkFav } = useFavoritesStore();
-  const [sortBy, setSortBy] = useState<'name' | 'size' | 'time'>(() => {
-    if (syncUrl) {
-      const s = searchParams.get('sort');
-      if (s === 'name' || s === 'size' || s === 'time') return s;
-    }
-    return (localStorage.getItem('fileSortBy') as 'name' | 'size' | 'time') || 'name';
-  });
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>(() => {
-    if (syncUrl) {
-      const d = searchParams.get('dir');
-      if (d === 'asc' || d === 'desc') return d;
-    }
-    return (localStorage.getItem('fileSortDir') as 'asc' | 'desc') || 'asc';
-  });
-  // 文件夹优先开关（默认开启，对齐 PikPak）
-  const [foldersFirst, setFoldersFirst] = useState<boolean>(() => {
-    return localStorage.getItem('fileFoldersFirst') !== 'false';
-  });
-
-  useEffect(() => {
-    if (!syncUrl) return;
-    setSearchParams(
-      (prev) => {
-        if (prev.get('sort') === sortBy && prev.get('dir') === sortDir) return prev;
-        prev.set('sort', sortBy);
-        prev.set('dir', sortDir);
-        return prev;
-      },
-      { replace: true },
-    );
-  }, [sortBy, sortDir, syncUrl, setSearchParams]);
-
-  const { showToast } = useToast();
-  const { confirm } = useConfirm();
-  const { run: runOperation } = useOperationProgress();
-  const { has } = usePermission();
-  const isMobile = useMobile();
-
-  /** 是否可在线编辑：docx/xlsx/pptx/pdf（PDF 自 ONLYOFFICE 8.1+ 可编辑）且当前用户具备编辑（上传）权限；最终权限以后端 config 接口为准 */
-  const canEditNode = (node: FileNode) =>
-    node.nodeType === 1 && isEditableOfficeSuffix(node.suffix) && has('file:upload');
-  // 在线解压仅个人文件源接入（后端 /file/{id}/archive/*）；团队空间暂不展示
-  const enableArchive = !onToggleLock;
-
-  const [currentPath, setCurrentPath] = useState('/');
-  // 当前文件夹内搜索（关键词来自全局 folderFilter store）
-  const folderSearchResults = useFolderSearch(folderSearch, currentPath);
-
-  // 显示顺序 = 排序（含文件夹优先/收藏置顶）后的列表；文件夹搜索时用搜索结果。
-  // 选择状态（尤其 Shift 范围选择）必须按"用户看到"的顺序计算
-  const sortedFiles = useMemo(() => {
-    const arr = [...files];
-    arr.sort((a, b) => {
-      // 文件夹优先于文件（受 foldersFirst 开关控制）
-      if (foldersFirst && a.nodeType !== b.nodeType) return a.nodeType === 0 ? -1 : 1;
-      // 收藏项在同类型内置顶
-      const aFav = checkFav(a.id) ? 1 : 0;
-      const bFav = checkFav(b.id) ? 1 : 0;
-      if (aFav !== bFav) return bFav - aFav;
-      // 按用户选择的排序字段排列
-      let cmp = 0;
-      if (sortBy === 'name') {
-        cmp = a.name.localeCompare(b.name, 'zh-CN');
-      } else if (sortBy === 'size') {
-        cmp = (Number(a.fileSize || 0) - Number(b.fileSize || 0));
-      } else {
-        cmp = (new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime());
-      }
-      return sortDir === 'asc' ? cmp : -cmp;
-    });
-    return arr;
-  }, [files, sortBy, sortDir, foldersFirst, checkFav]);
-
-  const filteredFiles = useMemo(() => {
-    if (!folderSearch.trim()) return sortedFiles;
-    return folderSearchResults;
-  }, [sortedFiles, folderSearch, folderSearchResults]);
-
-  // 选择状态与移动端多选模式
-  const selection = useFileSelection(filteredFiles, isMobile);
   const {
-    selectedIds, setSelectedIds, setFocusedIndex, setLastSelectedId,
-    focusedIndex, lastSelectedId, mobileSelectMode, setMobileSelectMode,
-    handleSelect, toggleSelect, selectAll, clearSelection, moveFocus,
-    handleMobileLongPress, handleMobileClick,
-  } = selection;
+    files, loading, loadError, view, setView, iconSize, setIconSize,
+    dragOverFolderId, zipProgress, downloadQueuedCount, setDownloadQueuedCount,
+    page, total, refreshKey, pageSize, pageInput, setPageInput, isRefreshing,
+    sortBy, sortDir, foldersFirst, currentPath, pathSegments,
+    filteredFiles, selectedIds, focusedId, clipboard,
+    dragRect, detailFile, setDetailFile, allSelected, selectedSize,
+    editableSelected, totalPages, lockedIds, isDragging,
+    pathEditMode, setPathEditMode, pathInput, setPathInput, pathError, setPathError,
+    mobileSelectMode, setMobileSelectMode, ptr, enableArchive,
+    isMobile, has, checkFav, showToast, toggleSelect, handleSelect,
+    selectAll, clearSelection, paste,
+    fileListRef, bandRef, fileInputRef, pathInputRef,
+    fetchFiles, refresh, handleDragOver, handleDragLeave, handleDrop,
+    handleUploadClick, handleUploadChange,
+    handleItemDragStart, handleFolderDragOver, handleFolderDragLeave, handleFolderDrop,
+    handleSortChange, handlePageSizeChange, handlePageInputCommit, handleContextMenu,
+    handleContextAction, handleToggleFavorite, handleDownload, handleArchiveExtracted,
+    handleCreateFile, enterPathEditMode, handlePathSubmit, navigateToPath,
+    handleToolbarEdit, handleToolbarSortChange, handleSortDirToggle, handleNewFolderClick,
+    handleBatchRenameClick, handleToolbarDownload, handleToolbarMove, handleToolbarCopy,
+    handleToolbarDelete, handleToggleFoldersFirst, handleListNavigate, handleListDoubleClick,
+    handlePrevPage, handleNextPage, handleNewFile, handleDeleteRef,
+    isFileItemClick, startDrag,
+    showCreateFolder, setShowCreateFolder, newFileType, setNewFileType,
+    showBatchRename, setShowBatchRename, archiveTarget, setArchiveTarget,
+    renameTarget, setRenameTarget, convertTarget, setConvertTarget,
+    moveTarget, setMoveTarget, shareTarget, setShareTarget,
+    downloadTarget, setDownloadTarget, versionTarget, setVersionTarget,
+    preview, setPreview, contextMenu, setContextMenu, blankContextMenu, setBlankContextMenu,
+  } = useFileBrowser({
+    source, parentId, onNavigateFolder, onBack, uploadSpaceId, enableShare,
+    enableVersions, syncUrl, categoryLabel, focusId, onOpenDetail, onToggleLock,
+  });
 
-  // 剪贴板（复制/剪切/粘贴）
-  const { clipboard, setClipboard, paste } = useFileClipboard(source, parentId, showToast, () => fetchFiles());
-
-  // 各类对话框/浮层目标状态
-  const dialogs = useFileDialogs();
-  const {
-    showCreateFolder, setShowCreateFolder,
-    newFileType, setNewFileType,
-    showBatchRename, setShowBatchRename,
-    archiveTarget, setArchiveTarget,
-    renameTarget, setRenameTarget,
-    convertTarget, setConvertTarget,
-    moveTarget, setMoveTarget,
-    shareTarget, setShareTarget,
-    downloadTarget, setDownloadTarget,
-    versionTarget, setVersionTarget,
-    preview, setPreview,
-    contextMenu, setContextMenu,
-    blankContextMenu, setBlankContextMenu,
-  } = dialogs;
-
-  const fileListRef = useRef<HTMLDivElement>(null);
-  const { dragRect, startDrag } = useDragSelect(fileListRef, setSelectedIds);
-
-  // 从编辑器「以预览打开」回退：接收路由 state.openPreview，在目录加载完成后自动打开预览
-  const pendingPreviewIdRef = useRef<string | null>(null);
-  useEffect(() => {
-    const st = (location.state ?? null) as { openPreview?: string } | null;
-    if (st?.openPreview) {
-      pendingPreviewIdRef.current = st.openPreview;
-      // 消费一次后清除路由状态，避免刷新/重复进入再次弹预览
-      navigate(location.pathname + location.search, { replace: true, state: null });
-    }
-    // 仅在挂载时读取一次（来源导航 state），不随路由变化重复触发
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const [isDragging, setIsDragging] = useState(false);
-  /** 是否为项目内部文件拖拽（移动/排序），用于区分外部文件上传 */
-  const isInternalDragRef = useRef(false);
-  const prevParentId = useRef<string | null>(null);
-
-  const stateRef = useRef({ selectedIds, files, clipboard, view, parentId, focusedIndex, lastSelectedId });
-
-  const [pathEditMode, setPathEditMode] = useState(false);
-  const [pathInput, setPathInput] = useState('/');
-  const [pathError, setPathError] = useState(false);
-  const pathInputRef = useRef<HTMLInputElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  // 顶部路径/工具栏区域：不参与空白框选与右键菜单
-  const bandRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    stateRef.current = { selectedIds, files, clipboard, view, parentId, focusedIndex, lastSelectedId };
-  }, [selectedIds, files, clipboard, view, parentId, focusedIndex, lastSelectedId]);
-  const { addFiles, addFilePaths, refreshSignal } = useUpload();
-
-  // 是否已有列表数据：用于决定是否显示骨架屏，避免切换文件夹时内容跳变
-  const hasFilesRef = useRef(false);
-  useEffect(() => {
-    hasFilesRef.current = files.length > 0;
-  }, [files]);
-
-  const fetchFiles = useCallback(async (pageToUse?: number) => {
-    const targetPage = pageToUse ?? pageRef.current;
-    if (!hasFilesRef.current) setLoading(true);
-    try {
-      const res = await source.listFiles(parentId, targetPage, pageSize);
-      const records = res?.records || [];
-      setFiles(records);
-      setLoadError(false);
-      setTotal(Number(res?.total || 0));
-      // 编辑器「以预览打开」回退：当前目录存在该文件时自动打开预览
-      const pendingId = pendingPreviewIdRef.current;
-      if (pendingId) {
-        pendingPreviewIdRef.current = null;
-        const fileFiles = records.filter((f) => f.nodeType === 1);
-        const idx = fileFiles.findIndex((f) => f.id === pendingId);
-        if (idx >= 0) setPreview({ files: fileFiles, index: idx });
-      }
-    } catch {
-      setFiles([]);
-      setLoadError(true);
-    } finally {
-      setLoading(false);
-      setIsRefreshing(false);
-    }
-  }, [source, parentId, pageSize, setPreview]);
-
-  useEffect(() => {
-    // 换文件夹：复位到第 1 页并只发一次请求；不在此前用旧 page 多发一次
-    const isFolderChange = prevParentId.current !== parentId;
-    prevParentId.current = parentId;
-    if (isFolderChange) {
-      setLoading(true);
-      setPage(1);
-      fetchFiles(1);
-    } else {
-      fetchFiles();
-    }
-    clearSelection();
-    setFocusedIndex(-1);
-    setFolderSearch('');
-    setDetailFile(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fetchFiles, refreshKey]);
-
-  // External focus request: preselect + scroll to a file (e.g. from homepage "jump to folder")
-  useEffect(() => {
-    if (!focusId || loading || files.length === 0) return;
-    if (!files.some((f) => f.id === focusId)) return;
-    setSelectedIds(new Set([focusId]));
-    const el = fileListRef.current?.querySelector(`[data-file-id="${focusId}"]`);
-    el?.scrollIntoView({ block: 'center', behavior: 'smooth' });
-  }, [focusId, loading, files, setSelectedIds]);
-
-  useEffect(() => {
-    if (!parentId || parentId === '0' || parentId === 'null') {
-      setCurrentPath('/');
-      return;
-    }
-    // 路由 state 携带目标节点路径时直接使用：路径秒换，不等额外请求
-    const st = (location.state ?? null) as { nodeId?: string; nodePath?: string } | null;
-    if (st?.nodeId === parentId && st.nodePath) {
-      setCurrentPath(st.nodePath);
-      return;
-    }
-    let cancelled = false;
-    source.getNodeById(parentId).then((node) => {
-      if (!cancelled && node) {
-        setCurrentPath(node.path || '/');
-      }
-    }).catch(() => {
-      if (!cancelled) setCurrentPath('/');
-    });
-    return () => { cancelled = true; };
-  }, [source, parentId, location.state]);
-
-  useEffect(() => {
-    if (refreshSignal > 0) setRefreshKey((k) => k + 1);
-  }, [refreshSignal]);
-
-  // 页码输入框与当前页同步（翻页/换文件夹/改每页条数后保持一致）
-  useEffect(() => {
-    setPageInput(String(page));
-  }, [page]);
-
-  useEffect(() => {
-    localStorage.setItem('fileView', view);
-  }, [view]);
-
-  useEffect(() => {
-    localStorage.setItem('fileIconSize', iconSize);
-  }, [iconSize]);
-
-  // 内部拖拽在 dragend 统一复位，避免下一次拖拽误判为文件上传
-  useEffect(() => {
-    const reset = () => {
-      isInternalDragRef.current = false;
-    };
-    document.addEventListener('dragend', reset);
-    return () => document.removeEventListener('dragend', reset);
-  }, []);
-
-  // 目录滚动位置：滚动时记录，数据加载完成后恢复（返回目录不丢失位置）
-  useEffect(() => {
-    const el = fileListRef.current;
-    if (!el) return;
-    const handleScroll = () => {
-      if (parentId) folderScrollPositions[parentId] = el.scrollTop;
-    };
-    el.addEventListener('scroll', handleScroll, { passive: true });
-    return () => el.removeEventListener('scroll', handleScroll);
-  }, [parentId]);
-
-  useEffect(() => {
-    if (loading || files.length === 0) return;
-    const el = fileListRef.current;
-    const saved = parentId ? folderScrollPositions[parentId] : undefined;
-    if (el && saved != null) el.scrollTop = saved;
-  }, [loading, parentId, files]);
-
-  // 移动端:选中清空时自动退出多选模式
-  useEffect(() => {
-    if (isMobile && mobileSelectMode && selectedIds.size === 0) {
-      setMobileSelectMode(false);
-    }
-  }, [isMobile, mobileSelectMode, selectedIds.size, setMobileSelectMode]);
-
-  // 移动端下拉刷新
-  const ptr = usePullToRefresh({ onRefresh: async () => { await fetchFiles(); } });
-
-  const refresh = () => {
-    setIsRefreshing(true);
-    setRefreshKey((k) => k + 1);
-  };
-
-  // 桌面端：主进程拦截 F5 后经 IPC 触发原地刷新（只刷新文件列表，不整页重载）
-  useEffect(() => {
-    if (!isElectron()) return;
-    const unsubscribe = window.electronAPI?.onRefreshFileList?.(() => refresh());
-    return () => unsubscribe?.();
-  }, []);
-
-  const handleSortChange = (col: 'name' | 'size' | 'time') => {
-    if (col === sortBy) {
-      const next = sortDir === 'asc' ? 'desc' : 'asc';
-      setSortDir(next);
-      localStorage.setItem('fileSortDir', next);
-    } else {
-      setSortBy(col);
-      localStorage.setItem('fileSortBy', col);
-    }
-  };
-
-  const handlePageSizeChange = (v: number) => {
-    setPageSize(v);
-    setPage(1);
-    fetchFiles(1);
-    try {
-      localStorage.setItem('filePageSize', String(v));
-    } catch {
-      // 忽略持久化失败
-    }
-  };
-
-  /** 提交页码跳转：解析并钳制在 1..totalPages */
-  const handlePageInputCommit = () => {
-    const n = parseInt(pageInput, 10);
-    if (Number.isNaN(n) || n < 1) {
-      setPageInput(String(page));
-      return;
-    }
-    const target = Math.min(n, totalPages);
-    setPage(target);
-    setPageInput(String(target));
-    fetchFiles(target);
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    if (isInternalDragRef.current || e.dataTransfer.types.includes('application/x-file-ids')) return;
-    // 仅对真实的本地文件拖拽显示上传覆盖层（项目内拖拽/文本拖拽不触发）
-    const isFileDrag = e.dataTransfer.types.includes('Files') || e.dataTransfer.files.length > 0;
-    if (!isFileDrag) return;
-    e.preventDefault();
-    setIsDragging(true);
-  };
-  const handleDragLeave = (e: React.DragEvent) => {
-    if (isInternalDragRef.current || e.dataTransfer.types.includes('application/x-file-ids')) return;
-    e.preventDefault();
-    if (e.currentTarget === e.target) setIsDragging(false);
-  };
-  const handleDrop = (e: React.DragEvent) => {
-    if (isInternalDragRef.current || e.dataTransfer.types.includes('application/x-file-ids')) {
-      setIsDragging(false);
-      return;
-    }
-    e.preventDefault();
-    setIsDragging(false);
-    const droppedFiles = Array.from(e.dataTransfer.files);
-    if (droppedFiles.length === 0) return;
-    if (isElectron()) {
-      const filePaths = droppedFiles
-        .map((f) => (f as File & { path?: string }).path)
-        .filter((p): p is string => !!p);
-      if (filePaths.length > 0) {
-        addFilePaths(filePaths, parentId || '0', undefined, uploadSpaceId);
-        return;
-      }
-    }
-    addFiles(droppedFiles, parentId || '0', undefined, uploadSpaceId);
-  };
-
-  const handleItemDragStart = (e: React.DragEvent, node: FileNode) => {
-    isInternalDragRef.current = true;
-    const ids = selectedIds.has(node.id) ? [...selectedIds] : [node.id];
-    e.dataTransfer.setData('application/x-file-ids', JSON.stringify(ids));
-    e.dataTransfer.effectAllowed = 'move';
-  };
-
-  const handleFolderDragOver = (e: React.DragEvent, folder: FileNode) => {
-    if (!isInternalDragRef.current && !e.dataTransfer.types.includes('application/x-file-ids')) return;
-    e.preventDefault();
-    e.stopPropagation();
-    e.dataTransfer.dropEffect = 'move';
-    setDragOverFolderId(folder.id);
-  };
-
-  const handleFolderDragLeave = (e: React.DragEvent, folder: FileNode) => {
-    e.stopPropagation();
-    setDragOverFolderId((prev) => (prev === folder.id ? null : prev));
-  };
-
-  const handleFolderDrop = async (e: React.DragEvent, folder: FileNode) => {
-    const data = e.dataTransfer.getData('application/x-file-ids');
-    if (!isInternalDragRef.current && !data) return;
-    e.preventDefault();
-    e.stopPropagation();
-    setDragOverFolderId(null);
-    const ids = JSON.parse(data) as string[];
-    if (ids.includes(folder.id)) return;
-    try {
-      await source.move(ids, folder.id);
-      showToast('\u79fb\u52a8\u6210\u529f', 'success');
-      fetchFiles();
-    } catch {
-      showToast('\u79fb\u52a8\u5931\u8d25', 'error');
-    }
-  };
-
-  const handleUploadClick = async () => {
-    // Capacitor 壳: 调用原生相册选择,权限拒绝时 toast 引导
-    if (isCapacitor()) {
-      try {
-        const files = await pickFromGallery();
-        if (files && files.length > 0) {
-          addFiles(files, parentId || '0', undefined, uploadSpaceId);
-        }
-      } catch (e) {
-        showToast(e instanceof Error ? e.message : '选择照片失败', 'error');
-      }
-      return;
-    }
-    // Web/Electron: 降级 input file
-    fileInputRef.current?.click();
-  };
-  const handleUploadChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selected = Array.from(e.target.files || []);
-    e.target.value = '';
-    if (selected.length === 0) return;
-    if (isElectron()) {
-      const filePaths = selected
-        .map((f) => (f as File & { path?: string }).path)
-        .filter((p): p is string => !!p);
-      if (filePaths.length > 0) {
-        addFilePaths(filePaths, parentId || '0', undefined, uploadSpaceId);
-        return;
-      }
-    }
-    addFiles(selected, parentId || '0', undefined, uploadSpaceId);
-  };
-
-  /**
-   * 新建空白文件（txt/docx/xlsx/pptx）：
-   * - 调接口成功 → 刷新列表；Office 类型（docx/xlsx/pptx）自动跳转在线编辑并携带来源路径（P3），txt 留在列表
-   * - 失败（配额/权限等）→ toast 提示后端错误信息，不跳转编辑
-   */
-  const handleNewFile = async (type: BlankFileType) => {
-    // 弹出文件名输入框（预填默认名），用户确认后创建
-    setNewFileType(type);
-  };
-
-  const handleCreateFile = async (type: BlankFileType, fileName: string) => {
-    try {
-      const node = await source.createBlankFile(parentId, type, fileName);
-      showToast('新建成功');
-      fetchFiles();
-      if (node && node.nodeType === 1 && isEditableOfficeSuffix(node.suffix)) {
-        navigate(`/file/${node.id}/editor`, { state: { from: location.pathname + location.search } });
-      }
-    } catch (err) {
-      console.error('Create blank file failed:', err);
-      showToast(err instanceof Error ? err.message : '新建失败', 'error');
-    } finally {
-      setNewFileType(null);
-    }
-  };
-
-  const handleContextMenu = (e: React.MouseEvent, node: FileNode) => {
-    e.preventDefault();
-    // 移动端: onContextMenu 由长按触发,进入多选模式而非弹菜单
-    if (isMobile) {
-      handleMobileLongPress(node);
-      return;
-    }
-    if (!selectedIds.has(node.id)) {
-      setSelectedIds(new Set([node.id]));
-      setLastSelectedId(node.id);
-    }
-    setBlankContextMenu(null);
-    setContextMenu({ x: e.clientX, y: e.clientY, node });
-  };
-
-  const focusedId = focusedIndex >= 0 && focusedIndex < files.length ? files[focusedIndex].id : null;
-
-  const handleDeleteRef = useRef<(nodeIds: string[]) => void>(() => {});
-  handleDeleteRef.current = async (nodeIds: string[]) => {
-    const confirmed = await confirm({
-      title: '删除文件',
-      message: `确定删除选中的 ${nodeIds.length} 个文件？文件将移入回收站。`,
-      confirmText: '删除',
-      danger: true,
-    });
-    if (!confirmed) return;
-    // 异步删除：右上角常驻「删除中…」直到完成
-    await runOperation('删除中', async () => {
-      try {
-        await source.delete(nodeIds);
-        showToast(`已删除 ${nodeIds.length} 项`);
-        clearSelection();
-        fetchFiles();
-      } catch (err) {
-        console.error('Delete failed:', err);
-        showToast('删除失败', 'error');
-      }
-    });
-  };
-
-
-  useFileKeyboard(
-    () => stateRef.current,
-    {
-      setSelectedIds, setClipboard, setFocusedIndex, setLastSelectedId,
-      setRenameTarget, setPreview, setContextMenu, setBlankContextMenu, setShowCreateFolder,
-      selectAll, clearSelection, moveFocus, refresh, navigate,
-      onBack, onNavigateFolder,
-      handlePaste: paste,
-      handleDelete: (ids: string[]) => handleDeleteRef.current(ids),
-      showToast, hasPermission: has,
-    },
-    !isMobile,
-  );
-
-  const handleDownload = useCallback(async (nodeIds: string[]) => {
-    try {
-      if (isElectron()) {
-        const nodes = nodeIds
-          .map((id) => files.find((f) => f.id === id))
-          .filter((n): n is FileNode => !!n);
-        const fileNodes = nodes.filter((n) => n.nodeType === 1);
-        if (nodes.length > 0 && fileNodes.length === nodes.length) {
-          // PC 端设计：不打包，逐个走桌面下载管理器（可合并、带任务进度、真实保存目录）
-          if (nodes.length === 1) {
-            setDownloadTarget(nodes[0]);
-          } else {
-            // 多选：不弹原生保存框，直接加入下载队列，保存到系统默认下载目录
-            const downloadsDir = await window.electronAPI!.getDownloadsPath();
-            const dir = downloadsDir || '';
-            for (const n of nodes) {
-              await window.electronAPI!.startDownload(n.id, n.name, Number(n.fileSize || 0), `${dir}\\${n.name}`);
-            }
-            setDownloadQueuedCount(nodes.length);
-          }
-          return;
-        }
-        // 选中包含文件夹：桌面端不支持按文件夹单文件下载，退回打包下载
-      }
-
-      if (nodeIds.length === 1) {
-        const node = files.find((f) => f.id === nodeIds[0]);
-        const dlLimit = useTransferStore.getState().effective.downloadSpeedLimit;
-        const url = await source.getDownloadUrl(nodeIds[0]);
-        const sep = url.includes('?') ? '&' : '?';
-        const finalUrl = dlLimit > 0 ? `${url}${sep}clientLimit=${dlLimit}` : url;
-        const a = document.createElement('a');
-        a.href = finalUrl;
-        a.download = node?.name || 'download';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      } else {
-        // web 端打包：显示实时进度，完成后触发浏览器保存
-        setZipProgress(0);
-        try {
-          showToast('正在打包下载，请稍候…', 'info');
-          const blob = await source.downloadZip(nodeIds, (loaded) => setZipProgress(loaded));
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'download.zip';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-          showToast('打包完成，已开始下载', 'success');
-        } finally {
-          setZipProgress(null);
-        }
-      }
-    } catch {
-      showToast('下载失败', 'error');
-    }
-  }, [files, source, showToast, setDownloadTarget]);
-
-  /** 解压成功：跳转到目标目录（根目录用合成节点；其余先按 id 查节点） */
-  const handleArchiveExtracted = async (folderId: string) => {
-    // 合成节点兜底：即使节点查询失败也按 id 直接跳转
-    const fallbackNode: FileNode = {
-      id: folderId, parentId: '0', nodeType: 0, name: '', path: '/',
-      fileSize: null, suffix: null, contentType: null, status: 0,
-      thumbnailPath: null, createdAt: '', updatedAt: '',
-    };
-    try {
-      if (!folderId || folderId === '0') {
-        onNavigateFolder({
-          id: '0', parentId: '0', nodeType: 0, name: '', path: '/',
-          fileSize: null, suffix: null, contentType: null, status: 0,
-          thumbnailPath: null, createdAt: '', updatedAt: '',
-        });
-        return;
-      }
-      const node = await source.getNodeById(folderId);
-      if (node && node.nodeType === 0) {
-        onNavigateFolder(node);
-        return;
-      }
-    } catch {
-      // 节点查询失败时按 id 直接跳转
-    }
-    onNavigateFolder(fallbackNode);
-  };
-
-  const enterPathEditMode = () => {
-    setPathInput(currentPath === '/' ? '/' : currentPath);
-    setPathError(false);
-    setPathEditMode(true);
-    setTimeout(() => pathInputRef.current?.select(), 0);
-  };
-
-  const handlePathSubmit = async () => {
-    const raw = pathInput.trim().replace(/\\/g, '/').replace(/\/$/, '');
-    if (!raw || raw === '/') {
-      setPathEditMode(false);
-      navigateToPath('/');
-      return;
-    }
-    try {
-      const node = await source.resolveByPath(raw);
-      if (node && node.nodeType === 0) {
-        setPathError(false);
-        setPathEditMode(false);
-        onNavigateFolder(node);
-      } else if (node && node.nodeType === 1) {
-        setPathError(true);
-        showToast('该路径指向的是文件而非文件夹', 'error');
-      } else {
-        setPathError(true);
-        showToast('路径不存在', 'error');
-      }
-    } catch {
-      setPathError(true);
-      showToast('路径不存在: ' + raw, 'error');
-    }
-  };
-
-  const navigateToPath = async (path: string) => {
-    if (path === '/' || path === '') {
-      onNavigateFolder({ id: '0', parentId: '0', nodeType: 0, name: '', path: '/', fileSize: null, suffix: null, contentType: null, status: 0, thumbnailPath: null, createdAt: '', updatedAt: '' });
-      return;
-    }
-    try {
-      const node = await source.resolveByPath(path);
-      if (node && node.nodeType === 0) {
-        onNavigateFolder(node);
-      }
-    } catch {
-      showToast('路径不存在', 'error');
-    }
-  };
-
-  const pathSegments = useMemo(() => {
-    const cleanPath = currentPath.replace(/^\/+|\/+$/g, '');
-    if (!cleanPath) return [];
-    const parts = cleanPath.split('/');
-    const segments: { name: string; path: string }[] = [];
-    let acc = '';
-    for (const part of parts) {
-      if (!part) continue;
-      acc += '/' + part;
-      segments.push({ name: part, path: acc });
-    }
-    return segments;
-  }, [currentPath]);
-
-  /** 打开在线编辑器：记录来源路径，关闭/回退后返回当前目录（FileBrowser 重挂载即刷新列表） */
-  const handleEdit = (node: FileNode) => {
-    navigate(`/file/${node.id}/editor`, { state: { from: location.pathname + location.search } });
-  };
-
-  const handleContextAction = async (action: string, node: FileNode) => {
-    setContextMenu(null);
-    switch (action) {
-      case 'open':
-        onNavigateFolder(node);
-        break;
-      case 'preview': {
-        const fileFiles = files.filter((f) => f.nodeType === 1);
-        const idx = fileFiles.findIndex((f) => f.id === node.id);
-        if (idx >= 0) setPreview({ files: fileFiles, index: idx });
-        break;
-      }
-      case 'edit':
-        handleEdit(node);
-        break;
-      case 'textEdit':
-        navigate(`/file/${node.id}/text-editor`, {
-          state: { from: location.pathname + location.search, name: node.name, spaceId: uploadSpaceId ?? undefined },
-        });
-        break;
-      case 'archive':
-        setArchiveTarget(node);
-        break;
-      case 'convert':
-        setConvertTarget(node);
-        break;
-      case 'cut':
-        setClipboard({ nodeIds: [...selectedIds], mode: 'cut' });
-        showToast(`已剪切 ${selectedIds.size} 项`);
-        break;
-      case 'copy':
-        setClipboard({ nodeIds: [...selectedIds], mode: 'copy' });
-        showToast(`已复制 ${selectedIds.size} 项`);
-        break;
-      case 'paste':
-        paste();
-        break;
-      case 'rename':
-        setRenameTarget(node);
-        break;
-      case 'download': {
-        // 多选：右键的是选中集合中的一项时，对整个选中集合生效
-        const ids = selectedIds.has(node.id) ? [...selectedIds] : [node.id];
-        handleDownload(ids);
-        break;
-      }
-      case 'moveTo':
-        // 多选：右键的是选中集合中的一项时，对整个选中集合生效
-        setMoveTarget({ nodeIds: selectedIds.has(node.id) ? [...selectedIds] : [node.id], mode: 'move' });
-        break;
-      case 'copyTo':
-        // 多选：右键的是选中集合中的一项时，对整个选中集合生效
-        setMoveTarget({ nodeIds: selectedIds.has(node.id) ? [...selectedIds] : [node.id], mode: 'copy' });
-        break;
-      case 'delete': {
-        // 多选：右键的是选中集合中的一项时，对整个选中集合生效
-        const ids = selectedIds.has(node.id) ? [...selectedIds] : [node.id];
-        handleDeleteRef.current(ids);
-        break;
-      }
-      case 'share':
-        setShareTarget(node);
-        break;
-      case 'versions':
-        setVersionTarget(node);
-        break;
-      case 'details':
-        // 详情由页面统一管理（onOpenDetail）；未提供时回退到内部边栏，保持其它页面行为不变
-        if (onOpenDetail) onOpenDetail(node);
-        else setDetailFile(node);
-        break;
-      case 'favorite': {
-        const added = await toggleFav(node);
-        showToast(added ? '已收藏' : '已取消收藏');
-        break;
-      }
-      case 'hide': {
-        await api.put(`/file/${node.id}/hide`);
-        showToast('已隐藏');
-        fetchFiles();
-        break;
-      }
-      case 'lock':
-      case 'unlock':
-        // 锁定/解锁成功后刷新列表：锁定状态以后端字段为准，刷新后他人锁定/解锁可见
-        await onToggleLock?.(action as 'lock' | 'unlock', node);
-        fetchFiles();
-        break;
-    }
-  };
-
-  /** 切换单个文件/文件夹的收藏状态 */
-  const handleToggleFavorite = async (node: FileNode) => {
-    const added = await toggleFav(node);
-    showToast(added ? '已收藏' : '已取消收藏');
-  };
-
-  const selectedSize = useMemo(
-    () => files.reduce((sum, f) => selectedIds.has(f.id) ? sum + Number(f.fileSize || 0) : sum, 0),
-    [files, selectedIds],
-  );
-
-  const [detailFile, setDetailFile] = useState<FileNode | null>(null);
-
-  const allSelected = files.length > 0 && files.every((f) => selectedIds.has(f.id));
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
-
-  // 工具栏「在线编辑」：仅当单选一个可编辑 Office 文件（docx/xlsx/pptx/pdf + 编辑权限）时显示
-  const editableSelected = (() => {
-    if (selectedIds.size !== 1) return null;
-    const node = files.find((f) => selectedIds.has(f.id));
-    return node && canEditNode(node) ? node : null;
-  })();
-
-  useEffect(() => {
-    setFolderPath(currentPath);
-  }, [currentPath, setFolderPath]);
-
-  // 已锁定节点 ID 集合：由列表节点上的后端锁定字段推导，供列表视图渲染锁图标与右键菜单判断
-  const lockedIds = useMemo(() => {
-    const set = new Set<string>();
-    for (const f of files) {
-      if (isNodeLocked(f)) set.add(f.id);
-    }
-    return set;
-  }, [files]);
+  /** 详情是否打开：页面级详情走 detailOpen prop；未传时回退到内部详情状态 */
+  const listDetailOpen = onOpenDetail ? (detailOpen ?? false) : !!detailFile;
 
   return (
     <div
@@ -948,15 +85,13 @@ export default function FileBrowser({
       <div className="flex-1 min-h-0 flex overflow-hidden">
       <div
         ref={fileListRef}
-        className="flex-1 min-h-0 min-w-0 overflow-y-auto relative"
+        className={cn('flex-1 min-h-0 min-w-0 overflow-y-auto relative', listDetailOpen && 'detail-open')}
         onTouchStart={isMobile ? ptr.onTouchStart : undefined}
         onTouchMove={isMobile ? ptr.onTouchMove : undefined}
         onTouchEnd={isMobile ? ptr.onTouchEnd : undefined}
         onMouseDown={(e) => {
-          // 顶部路径/工具栏区域与文件行不触发框选；其余空白（含表格下方）均可拖拽多选
           if (e.button !== 0 || bandRef.current?.contains(e.target as Node) || isFileItemClick(e)) return;
           e.preventDefault();
-          // 点击空白处：手动失焦输入框（页码/路径编辑），否则 preventDefault 会阻止 blur
           const active = document.activeElement as HTMLElement | null;
           if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) {
             active.blur();
@@ -964,6 +99,9 @@ export default function FileBrowser({
           startDrag(e.clientX, e.clientY);
           clearSelection();
           if (contextMenu) setContextMenu(null);
+          // 点击列表空白：关闭浮层详情（内部详情 setDetailFile；页面级详情走 onCloseDetail）
+          if (!onOpenDetail) setDetailFile(null);
+          onCloseDetail?.();
         }}
         onContextMenu={(e) => {
           if (bandRef.current?.contains(e.target as Node) || isFileItemClick(e)) return;
@@ -973,7 +111,6 @@ export default function FileBrowser({
           setBlankContextMenu({ x: e.clientX, y: e.clientY });
         }}
       >
-        {/* 页面顶部：第一行操作按钮（新建/上传最左），第二行路径（无上一级按钮），白色背景 */}
         <div ref={bandRef} className="bg-[#FEFEFD] dark:bg-surface px-5 md:px-8 pt-3 pb-3">
           <FileToolbar
             refreshing={isRefreshing}
@@ -983,26 +120,26 @@ export default function FileBrowser({
             allSelected={allSelected}
             selectedSize={selectedSize}
             canEditSelected={!!editableSelected}
-            onEdit={() => editableSelected && handleEdit(editableSelected)}
+            onEdit={handleToolbarEdit}
             sortBy={sortBy}
-            onSortChange={(v) => { setSortBy(v); localStorage.setItem('fileSortBy', v); }}
+            onSortChange={handleToolbarSortChange}
             sortDir={sortDir}
-            onSortDirToggle={() => { const next = sortDir === 'asc' ? 'desc' : 'asc'; setSortDir(next); localStorage.setItem('fileSortDir', next); }}
+            onSortDirToggle={handleSortDirToggle}
             view={view}
             onViewChange={setView}
-            onNewFolder={() => setShowCreateFolder(true)}
+            onNewFolder={handleNewFolderClick}
             onNewFile={handleNewFile}
             onUploadClick={handleUploadClick}
-            onDownload={() => handleDownload([...selectedIds])}
-            onMove={() => setMoveTarget({ nodeIds: [...selectedIds], mode: 'move' })}
-            onCopy={() => setMoveTarget({ nodeIds: [...selectedIds], mode: 'copy' })}
-            onDelete={() => handleDeleteRef.current([...selectedIds])}
+            onDownload={handleToolbarDownload}
+            onMove={handleToolbarMove}
+            onCopy={handleToolbarCopy}
+            onDelete={handleToolbarDelete}
             onSelectAll={selectAll}
             onClearSelection={clearSelection}
             onRefresh={refresh}
-            onBatchRename={() => setShowBatchRename(true)}
+            onBatchRename={handleBatchRenameClick}
             foldersFirst={foldersFirst}
-            onToggleFoldersFirst={(v) => { setFoldersFirst(v); localStorage.setItem('fileFoldersFirst', String(v)); }}
+            onToggleFoldersFirst={handleToggleFoldersFirst}
           />
           <div className="mt-2 flex items-center gap-2">
             <div className="flex-1 min-w-0">
@@ -1028,7 +165,6 @@ export default function FileBrowser({
                 />
               )}
             </div>
-            {/* 网格视图图标大小切换：放在路径右侧空位（原本编辑按钮位置） */}
             {view === 'grid' && (
               <div className="flex items-center bg-surface-2 rounded-lg p-0.5 flex-shrink-0" role="group" aria-label="图标大小">
                 {([
@@ -1053,7 +189,6 @@ export default function FileBrowser({
             )}
           </div>
         </div>
-        {/* 文件列表区域：白底；仅 TableHeader 浅灰。空白区（含表格下方）支持框选与右键菜单 */}
         <div className="bg-[#FEFEFD] dark:bg-surface px-5 md:px-8 pt-1 pb-8">
           {isMobile && mobileSelectMode && (
             <MultiSelectBar
@@ -1069,9 +204,7 @@ export default function FileBrowser({
               canShare={enableShare && has('file:share')}
             />
           )}
-          {/* 文件列表容器：白底；浅灰仅限 TableHeader（UI_DESIGN_SPEC §13/§29） */}
           <div className="bg-[#FEFEFD] dark:bg-surface overflow-hidden">
-          {/* 移动端下拉刷新指示器 */}
           {isMobile && (ptr.pullDistance > 0 || ptr.refreshing) && (
             <div
               className="flex items-center justify-center text-muted"
@@ -1119,16 +252,8 @@ export default function FileBrowser({
               isFavorite={checkFav}
               onToggleFavorite={handleToggleFavorite}
               onContextMenu={handleContextMenu}
-              onNavigate={(node) => { if (isMobile && mobileSelectMode) { handleMobileClick(node); return; } if (node.nodeType === 0) onNavigateFolder(node); }}
-              onDoubleClick={(node) => {
-                if (node.nodeType === 0) {
-                  onNavigateFolder(node);
-                } else if (has('file:preview')) {
-                  const fileFiles = files.filter((f) => f.nodeType === 1);
-                  const idx = fileFiles.findIndex((f) => f.id === node.id);
-                  setPreview({ files: fileFiles, index: idx >= 0 ? idx : 0 });
-                }
-              }}
+              onNavigate={handleListNavigate}
+              onDoubleClick={handleListDoubleClick}
               onItemDragStart={handleItemDragStart}
               onFolderDragOver={handleFolderDragOver}
               onFolderDragLeave={handleFolderDragLeave}
@@ -1145,268 +270,74 @@ export default function FileBrowser({
       )}
       </div>
 
-      {total > pageSize && (
-        <div className="flex items-center justify-between gap-3 px-5 md:px-8 py-3">
-          <span className="text-xs text-muted tabular-nums">共 {total} 项</span>
-          <div className="flex items-center gap-3">
-            <label className="flex items-center gap-1.5 text-xs text-muted whitespace-nowrap">
-              每页
-              <Select value={String(pageSize)} onValueChange={(v) => handlePageSizeChange(Number(v))}>
-                <SelectTrigger className="h-7 w-[72px] gap-1 text-xs border-border px-2 py-0.5 font-medium text-fg">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="min-w-[4.5rem]">
-                  {PAGE_SIZE_OPTIONS.map((s) => (
-                    <SelectItem key={s} value={String(s)}>{s}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              项
-            </label>
-            <div className="w-px h-4 bg-border" />
-            <div className="flex items-center gap-1 text-xs text-muted">
-              <span>第</span>
-              <input
-                value={pageInput}
-                onChange={(e) => setPageInput(e.target.value.replace(/[^0-9]/g, ''))}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handlePageInputCommit();
-                  }
-                }}
-                onBlur={handlePageInputCommit}
-                inputMode="numeric"
-                aria-label="跳转到页码"
-                className="w-10 h-7 text-center text-xs text-fg bg-surface-2 rounded-md border border-border focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none tabular-nums"
-              />
-              <span className="tabular-nums">/ {totalPages} 页</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => {
-                  const np = Math.max(1, page - 1);
-                  setPage(np);
-                  fetchFiles(np);
-                }}
-                disabled={page <= 1}
-                aria-label="上一页"
-                className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium text-muted rounded-md border border-border bg-surface hover:bg-surface-2 hover:text-fg disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                上一页
-              </button>
-              <button
-                onClick={() => {
-                  const np = Math.min(totalPages, page + 1);
-                  setPage(np);
-                  fetchFiles(np);
-                }}
-                disabled={page >= totalPages}
-                aria-label="下一页"
-                className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium text-muted rounded-md border border-border bg-surface hover:bg-surface-2 hover:text-fg disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                下一页
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {contextMenu && (
-        <ContextMenu
-          x={contextMenu.x}
-          y={contextMenu.y}
-          node={contextMenu.node}
-          hasClipboard={!!clipboard}
-          showShare={enableShare}
-          showVersions={enableVersions}
-          isFav={checkFav(contextMenu.node.id)}
-          lockable={!!onToggleLock}
-          locked={isNodeLocked(contextMenu.node)}
-          showEdit={canEditNode(contextMenu.node)}
-          showArchive={enableArchive}
-          showConvert
-          showTextEdit
-          onAction={handleContextAction}
-          onClose={() => setContextMenu(null)}
-        />
-      )}
-
-      {blankContextMenu && (
-        <BlankContextMenu
-          x={blankContextMenu.x}
-          y={blankContextMenu.y}
-          hasClipboard={!!clipboard}
-          onAction={(action) => {
-            switch (action) {
-              case 'paste': paste(); break;
-              case 'newFolder': setShowCreateFolder(true); break;
-              case 'upload': handleUploadClick(); break;
-              case 'refresh': fetchFiles(); break;
-              case 'selectAll': selectAll(); break;
-            }
-          }}
-          onNewFile={handleNewFile}
-          onClose={() => setBlankContextMenu(null)}
-        />
-      )}
-
-      {archiveTarget && (
-        <ArchiveDialog
-          file={archiveTarget}
-          onClose={() => setArchiveTarget(null)}
-          onExtracted={handleArchiveExtracted}
-        />
-      )}
-      {showBatchRename && (
-        <BatchRenameDialog
-          files={filteredFiles.filter((f) => selectedIds.has(f.id))}
-          onClose={() => setShowBatchRename(false)}
-          onSuccess={() => { fetchFiles(); }}
-        />
-      )}
-      <CreateFolderDialog
-        open={showCreateFolder}
-        parentId={parentId || '0'}
-        onCreate={(pid, name) => source.createFolder(pid, name)}
-        onClose={() => setShowCreateFolder(false)}
-        onSuccess={() => { setShowCreateFolder(false); fetchFiles(); }}
+      <FileBrowserPagination
+        total={total}
+        pageSize={pageSize}
+        page={page}
+        totalPages={totalPages}
+        pageInput={pageInput}
+        setPageInput={setPageInput}
+        onPageInputCommit={handlePageInputCommit}
+        onPageSizeChange={handlePageSizeChange}
+        onPrev={handlePrevPage}
+        onNext={handleNextPage}
       />
-      <CreateFileDialog
-        open={newFileType !== null}
-        type={newFileType}
-        onCreate={handleCreateFile}
-        onClose={() => setNewFileType(null)}
+
+      <FileBrowserDialogs
+        files={files}
+        filteredFiles={filteredFiles}
+        selectedIds={selectedIds}
+        clipboard={clipboard}
+        enableShare={enableShare}
+        enableVersions={enableVersions}
+        enableArchive={enableArchive}
+        checkFav={checkFav}
+        has={has}
+        onToggleLock={onToggleLock}
+        source={source}
+        parentId={parentId}
+        zipProgress={zipProgress}
+        downloadQueuedCount={downloadQueuedCount}
+        setDownloadQueuedCount={setDownloadQueuedCount}
+        dragRect={dragRect}
+        showCreateFolder={showCreateFolder}
+        setShowCreateFolder={setShowCreateFolder}
+        newFileType={newFileType}
+        setNewFileType={setNewFileType}
+        showBatchRename={showBatchRename}
+        setShowBatchRename={setShowBatchRename}
+        archiveTarget={archiveTarget}
+        setArchiveTarget={setArchiveTarget}
+        renameTarget={renameTarget}
+        setRenameTarget={setRenameTarget}
+        convertTarget={convertTarget}
+        setConvertTarget={setConvertTarget}
+        moveTarget={moveTarget}
+        setMoveTarget={setMoveTarget}
+        shareTarget={shareTarget}
+        setShareTarget={setShareTarget}
+        downloadTarget={downloadTarget}
+        setDownloadTarget={setDownloadTarget}
+        versionTarget={versionTarget}
+        setVersionTarget={setVersionTarget}
+        preview={preview}
+        setPreview={setPreview}
+        contextMenu={contextMenu}
+        setContextMenu={setContextMenu}
+        blankContextMenu={blankContextMenu}
+        setBlankContextMenu={setBlankContextMenu}
+        handleContextAction={handleContextAction}
+        handleCreateFile={handleCreateFile}
+        handleUploadClick={handleUploadClick}
+        handleNewFile={handleNewFile}
+        handleArchiveExtracted={handleArchiveExtracted}
+        fetchFiles={fetchFiles}
+        clearSelection={clearSelection}
+        selectAll={selectAll}
+        paste={paste}
+        showToast={showToast}
+        onNavigateFolder={onNavigateFolder}
       />
-      <RenameDialog
-        node={renameTarget}
-        onRename={(id, name) => source.rename(id, name)}
-        onClose={() => setRenameTarget(null)}
-        onSuccess={() => { setRenameTarget(null); fetchFiles(); }}
-      />
-      <ConvertDialog
-        node={convertTarget}
-        onClose={() => setConvertTarget(null)}
-        onConverted={fetchFiles}
-      />
-      {moveTarget && (
-        <MoveDialog
-          nodeIds={moveTarget.nodeIds}
-          mode={moveTarget.mode}
-          loadTree={() => source.loadTree()}
-          onConfirm={(ids, tid, mode) => mode === 'move' ? source.move(ids, tid) : source.copy(ids, tid)}
-          onClose={() => setMoveTarget(null)}
-          onSuccess={() => { setMoveTarget(null); fetchFiles(); clearSelection(); }}
-        />
-      )}
-
-      {preview && (
-        <PreviewModal
-          files={preview.files}
-          currentIndex={preview.index}
-          onClose={() => setPreview(null)}
-        />
-      )}
-
-      {enableShare && shareTarget && (
-        <ShareDialog
-          fileNodeId={shareTarget.id}
-          fileName={shareTarget.name}
-          onClose={() => setShareTarget(null)}
-        />
-      )}
-
-      {enableVersions && versionTarget && (
-        <VersionHistoryDialog
-          node={versionTarget}
-          onClose={() => setVersionTarget(null)}
-          onRestored={() => fetchFiles()}
-        />
-      )}
-
-      {/* 多选下载：已加入队列 → 可跳转传输列表 */}
-      {downloadQueuedCount !== null && (
-        <div
-          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 overscroll-contain animate-fade-in"
-          role="presentation"
-          onClick={() => setDownloadQueuedCount(null)}
-        >
-          <div
-            className="bg-surface rounded-md shadow-lg w-[420px] animate-dialog-pop p-6 text-center"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="w-12 h-12 rounded-full bg-green-500/15 flex items-center justify-center mx-auto mb-3">
-              <CheckCircle2 className="w-6 h-6 text-green-500" />
-            </div>
-            <p className="text-sm font-medium text-fg mb-5">
-              已添加 {downloadQueuedCount} 个下载任务
-            </p>
-            <div className="flex justify-center gap-2">
-              <button onClick={() => setDownloadQueuedCount(null)} className="btn-secondary">
-                关闭
-              </button>
-              <button
-                onClick={() => {
-                  setDownloadQueuedCount(null);
-                  navigate('/transfers');
-                }}
-                className="btn-primary flex items-center gap-1.5"
-              >
-                <ListChecks className="w-4 h-4" />
-                查看传输列表
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {downloadTarget && (
-        <DownloadDialog
-          fileName={downloadTarget.name}
-          fileSize={downloadTarget.fileSize ? parseInt(downloadTarget.fileSize) : 0}
-          onClose={() => setDownloadTarget(null)}
-          onConfirm={async (savePath) => {
-            try {
-              await window.electronAPI!.startDownload(
-                downloadTarget.id,
-                downloadTarget.name,
-                downloadTarget.fileSize ? parseInt(downloadTarget.fileSize) : 0,
-                savePath
-              );
-              showToast('\u5df2\u6dfb\u52a0\u5230\u4e0b\u8f7d\u961f\u5217', 'success');
-              return true;
-            } catch {
-              showToast('\u4e0b\u8f7d\u542f\u52a8\u5931\u8d25', 'error');
-              return false;
-            }
-          }}
-        />
-      )}
-
-      {dragRect && (
-        <div
-          className="fixed border border-primary-400 bg-primary-500/10 pointer-events-none z-30 rounded-sm"
-          style={{
-            left: Math.min(dragRect.startX, dragRect.currentX),
-            top: Math.min(dragRect.startY, dragRect.currentY),
-            width: Math.abs(dragRect.currentX - dragRect.startX),
-            height: Math.abs(dragRect.currentY - dragRect.startY),
-          }}
-        />
-      )}
-
-      {/* web 端打包下载进度浮层 */}
-      {zipProgress !== null && (
-        <div className="fixed top-16 right-4 z-[110] w-64 bg-surface rounded-md border border-border shadow-md p-3">
-          <p className="text-xs font-medium text-fg mb-1.5 flex items-center gap-1.5">
-            <Loader2 className="w-3.5 h-3.5 text-primary-600 animate-spin" aria-hidden />
-            正在打包下载
-          </p>
-          <p className="text-[10px] text-muted">
-            {zipProgress > 0 ? `已下载 ${formatSize(zipProgress)}` : '准备中…'}
-          </p>
-        </div>
-      )}
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { AlertCircle, ArrowLeft, FileText } from 'lucide-react';
 import { Dialog } from '../components/ui/Dialog';
+import api from '../lib/api';
 import { getEditorConfig, getShareEditorConfig, loadOnlyOfficeApi } from '../lib/editor';
 import type { OnlyOfficeConfig } from '../types';
 
@@ -86,6 +87,28 @@ export default function EditorPage() {
     navigate(fromPath, { state: { openPreview: nodeId } });
   }, [navigate, fromPath, nodeId]);
 
+  /** 卸载时供释放当前用户编辑标记的最新会话信息 */
+  const releaseEditRef = useRef<{ nodeId?: string; shouldRelease: boolean }>({ shouldRelease: false });
+  useEffect(() => {
+    // 每次渲染同步最新值；仅个人文件编辑模式才需主动释放（只读/分享访客不占编辑位）
+    releaseEditRef.current = {
+      nodeId: effectiveNodeId,
+      shouldRelease: !shareCode && mode !== 'view' && !!effectiveNodeId,
+    };
+  });
+
+  // 组件卸载时主动释放编辑标记：兜底 OnlyOffice status=6 回调丢失/延迟导致的「编辑中」占用残留
+  useEffect(() => {
+    return () => {
+      const { nodeId, shouldRelease } = releaseEditRef.current;
+      if (nodeId && shouldRelease) {
+        api.post(`/file/${nodeId}/editor/close`).catch((e) => {
+          console.error('释放编辑标记失败:', e);
+        });
+      }
+    };
+  }, []);
+
   useEffect(() => {
     if (!effectiveNodeId) {
       setErrorMessage('缺少文件标识，无法打开编辑器');
@@ -118,9 +141,22 @@ export default function EditorPage() {
           ...res.config,
           events: {
             ...(res.config.events ?? {}),
-            // 用户点击 OnlyOffice 内置返回/关闭按钮时回到文件列表
+            // 用户点击 OnlyOffice 内置返回/关闭按钮：先销毁编辑器（确保 OnlyOffice 正常发出 status=6 关闭通知），
+            // 再主动释放当前用户编辑标记（幂等兜底 callback 丢失/延迟），最后回到文件列表
             onRequestClose: () => {
-              if (!cancelled) goBack();
+              if (!cancelled) {
+                try {
+                  editorRef.current?.destroyEditor?.();
+                } catch {
+                  // 销毁异常不影响后续释放与返回
+                }
+                if (!shareCode && mode !== 'view' && effectiveNodeId) {
+                  api.post(`/file/${effectiveNodeId}/editor/close`).catch((e) => {
+                    console.error('释放编辑标记失败:', e);
+                  });
+                }
+                goBack();
+              }
             },
             onError: (err: unknown) => {
               console.error('OnlyOffice editor error:', err);

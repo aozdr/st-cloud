@@ -1,6 +1,7 @@
 package com.stcloud.core.editor;
 
 import com.stcloud.common.exception.BusinessException;
+import com.stcloud.common.context.UserContext;
 import com.stcloud.common.response.Result;
 import com.stcloud.core.editor.dto.EditorConfigResponse;
 import com.stcloud.core.editor.dto.OnlyOfficeCallbackRequest;
@@ -38,6 +39,7 @@ public class EditorController {
     private final EditorPermissionService editorPermissionService;
     private final EditorConfigService editorConfigService;
     private final EditorCallbackService editorCallbackService;
+    private final EditorLockService editorLockService;
 
     @Operation(summary = "获取在线编辑/查看配置（个人文件）")
     @PreAuthorize("isAuthenticated()")
@@ -48,6 +50,28 @@ public class EditorController {
         // mode=view：强制只读查看（仅读权限），用于 Office 文件预览；不占编辑位
         boolean canEdit = access.isCanEdit() && !"view".equalsIgnoreCase(mode);
         return Result.success(editorConfigService.generateConfig(nodeId, canEdit, true, true));
+    }
+
+    @Operation(summary = "结束编辑会话（前端离开编辑器时主动释放编辑标记，作为 OnlyOffice 回调的兜底）")
+    @PreAuthorize("isAuthenticated()")
+    @PostMapping("/{nodeId}/editor/close")
+    public Result<Void> editorClose(@PathVariable Long nodeId) {
+        UserContext.CurrentUser user = UserContext.getCurrentUser();
+        if (user != null && user.getUserId() != null) {
+            String editorUserId = String.valueOf(user.getUserId());
+            editorLockService.removeEditingUser(nodeId, editorUserId);
+            log.info("前端主动结束编辑会话: nodeId={}, editorUser={}", nodeId, editorUserId);
+        }
+        return Result.success();
+    }
+
+    @Operation(summary = "强制重置编辑中状态（清空该文件编辑标记；需 file:reset-editing 权限或 ADMIN）")
+    @PreAuthorize("hasAuthority('file:reset-editing') or hasRole('ADMIN')")
+    @PostMapping("/{nodeId}/editor/reset")
+    public Result<Void> editorReset(@PathVariable Long nodeId) {
+        editorLockService.clearEditing(nodeId);
+        log.info("强制重置编辑状态: nodeId={}", nodeId);
+        return Result.success();
     }
 
     @Operation(summary = "OnlyOffice 保存/关闭回调")

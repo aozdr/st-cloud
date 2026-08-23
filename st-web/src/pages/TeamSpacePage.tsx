@@ -240,17 +240,17 @@ export default function TeamSpacePage() {
         <div className="h-full flex">
           {/* 文件列表：始终渲染在左侧 flex-1，与右侧详情侧边栏并存，不受详情打开影响 */}
           <div className="flex-1 min-h-0 min-w-0">
-            <FileBrowser key={parentId || "root"} source={source} parentId={parentId} onNavigateFolder={navigateToFolder} onBack={handleBack} uploadSpaceId={spaceId} enableShare={false} enableVersions={false} onOpenDetail={handleOpenDetail} onToggleLock={(action, node) => action === 'lock' ? handleLock(node.id, 24) : handleUnlock(node.id)} />
+            <FileBrowser key={parentId || "root"} source={source} parentId={parentId} onNavigateFolder={navigateToFolder} onBack={handleBack} uploadSpaceId={spaceId} enableShare={false} enableVersions={false} onOpenDetail={handleOpenDetail} onCloseDetail={() => setDetailFile(null)} detailOpen={!!detailFile} onToggleLock={(action, node) => action === 'lock' ? handleLock(node.id, 24) : handleUnlock(node.id)} />
           </div>
           {/* 右侧详情侧边栏：w-80 全高（父级 flex-col h-full 链保证延伸到页面内容区底部），保留详情/权限双 tab */}
           {detailFile && (
             <div className="h-full w-80 flex-shrink-0 border-l border-border overflow-hidden flex flex-col">
-              <div className="flex items-center justify-between gap-2 px-4 py-2.5 border-b border-border bg-surface flex-shrink-0">
-                <div className="flex items-center gap-2 min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-border bg-surface flex-shrink-0">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
                   <div className="w-8 h-8 rounded-lg bg-surface-2 flex items-center justify-center flex-shrink-0 overflow-hidden">
                     <FileThumbnail file={detailFile} size="sm" />
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-fg truncate">{detailFile.name}</p>
                     <p className="text-xs text-muted">{detailFile.nodeType === 0 ? '文件夹' : '文件'}详情</p>
                   </div>

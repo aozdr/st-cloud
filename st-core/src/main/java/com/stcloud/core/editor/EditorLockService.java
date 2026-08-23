@@ -125,6 +125,23 @@ public class EditorLockService {
         }
     }
 
+    /** 清空节点的编辑标记（文档关闭回调：整个编辑会话结束；用于 users 字段缺失时兜底） */
+    public void clearEditing(Long nodeId) {
+        if (nodeId == null) {
+            return;
+        }
+        String key = ACTIVE_PREFIX + nodeId;
+        if (redis()) {
+            try {
+                stringRedisTemplate.delete(key);
+            } catch (Exception e) {
+                log.warn("Redis 编辑标记清空失败: nodeId={}, err={}", nodeId, e.getMessage());
+            }
+        } else {
+            memoryActive.remove(key);
+        }
+    }
+
     /** 任一节点处于编辑中则抛出 FILE_EDITING（删除/移动/重命名/覆盖上传/版本恢复前调用） */
     public void assertNotEditing(Collection<Long> nodeIds) {
         if (nodeIds == null) {

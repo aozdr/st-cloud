@@ -7,7 +7,8 @@ import type { LoginRequest, RegisterRequest } from '../types';
 import TitleBar from '../components/layout/TitleBar';
 
 export default function Login() {
-  const { login, register } = useAuthStore();
+  const login = useAuthStore((s) => s.login);
+  const register = useAuthStore((s) => s.register);
   const navigate = useNavigate();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [loading, setLoading] = useState(false);

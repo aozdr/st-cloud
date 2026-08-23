@@ -30,7 +30,8 @@ interface TopBarProps {
 }
 
 export default function TopBar({ onMenuClick }: TopBarProps) {
-  const { user, logout } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
   const navigate = useNavigate();
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -40,7 +41,8 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
   const [showHistory, setShowHistory] = useState(false);
   const [searchInFolder, setSearchInFolder] = useState(false);
   const setFolderFilter = useFolderFilterStore((s) => s.setKeyword);
-  const { mode, setMode } = useThemeStore();
+  const mode = useThemeStore((s) => s.mode);
+  const setMode = useThemeStore((s) => s.setMode);
   // 有效深色：dark 模式或 system 跟随系统
   const isDark = mode === 'dark'
     || (mode === 'system' && typeof window !== 'undefined' && typeof window.matchMedia === 'function'

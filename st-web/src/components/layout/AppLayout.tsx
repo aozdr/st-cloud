@@ -14,7 +14,8 @@ import { isElectron } from '../../lib/electron';
 import TitleBar from './TitleBar';
 
 export default function AppLayout() {
-  const { user, fetchUser } = useAuthStore();
+  const user = useAuthStore((s) => s.user);
+  const fetchUser = useAuthStore((s) => s.fetchUser);
   const fetchServerLimits = useTransferStore((s) => s.fetchServerLimits);
   const fetchFavoriteIds = useFavoritesStore((s) => s.fetchFavoriteIds);
   const [shortcutOpen, setShortcutOpen] = useState(false);

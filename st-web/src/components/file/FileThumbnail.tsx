@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { memo, useState, useEffect } from 'react';
 import api, { buildStreamUrl } from '../../lib/api';
 import { getFileTypeConfig, isImage, cn } from '../../lib/utils';
 import type { FileNode } from '../../types';
@@ -12,7 +12,7 @@ interface Props {
   className?: string;
 }
 
-export default function FileThumbnail({ file, size = 'sm', blur = false, className }: Props) {
+function FileThumbnail({ file, size = 'sm', blur = false, className }: Props) {
   const [url, setUrl] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const config = getFileTypeConfig(file.nodeType, file.suffix);
@@ -81,3 +81,5 @@ export default function FileThumbnail({ file, size = 'sm', blur = false, classNa
     </div>
   );
 }
+
+export default memo(FileThumbnail);
