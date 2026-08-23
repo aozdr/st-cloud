@@ -1,8 +1,8 @@
 import api from './api';
 import type { EditorConfigResponse, OnlyOfficeConfig } from '../types';
 
-/** 支持 OnlyOffice 在线编辑的文件扩展名：仅 docx/xlsx/pptx */
-export const EDITABLE_SUFFIXES = ['docx', 'xlsx', 'pptx'] as const;
+/** 支持 OnlyOffice 在线编辑的文件扩展名：docx/xlsx/pptx/pdf（PDF 自 ONLYOFFICE Docs 8.1+ 起可编辑） */
+export const EDITABLE_SUFFIXES = ['docx', 'xlsx', 'pptx', 'pdf'] as const;
 
 /** 判断文件后缀是否支持在线编辑（大小写不敏感） */
 export function isEditableOfficeSuffix(suffix: string | null | undefined): boolean {

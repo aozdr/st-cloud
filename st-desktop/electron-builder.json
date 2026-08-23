@@ -13,6 +13,10 @@
     {
       "from": "../st-web/dist",
       "to": "web"
+    },
+    {
+      "from": "build",
+      "to": "build"
     }
   ],
   "win": {

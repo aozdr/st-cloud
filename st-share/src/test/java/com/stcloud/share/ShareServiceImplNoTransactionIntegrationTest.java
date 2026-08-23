@@ -71,13 +71,13 @@ class ShareServiceImplNoTransactionIntegrationTest extends AbstractShareIntegrat
         assertFalse(TransactionSynchronizationManager.isActualTransactionActive(),
                 "调用前不应存在事务（测试外层事务已挂起）");
 
-        var result = shareService.getDownloadUrl(share.getShareCode(), null, null);
+        var result = shareService.getDownloadUrl(share.getShareCode(), null, null, null, null);
         assertEquals("https://s3.example.test/presigned-no-tx", result.getData());
         assertFalse(TransactionSynchronizationManager.isActualTransactionActive(),
                 "getDownloadUrl 不应开启 DB 事务");
 
         // 无事务时下载计数 UPDATE 独立自动提交，可重复调用
-        var second = shareService.getDownloadUrl(share.getShareCode(), null, null);
+        var second = shareService.getDownloadUrl(share.getShareCode(), null, null, null, null);
         assertEquals("https://s3.example.test/presigned-no-tx", second.getData());
         assertFalse(TransactionSynchronizationManager.isActualTransactionActive(),
                 "重复调用仍不应开启 DB 事务");

@@ -6,7 +6,7 @@ import FileTypeIcon from './FileTypeIcon';
 
 interface Props {
   file: FileNode;
-  size?: 'sm' | 'lg' | 'xl' | 'xxl';
+  size?: 'sm' | 'lg' | 'xl' | 'xxl' | 'xxxl';
   /** 网格大图模式：显示模糊背景层；配合 className 撑满容器 */
   blur?: boolean;
   className?: string;
@@ -28,9 +28,16 @@ export default function FileThumbnail({ file, size = 'sm', blur = false, classNa
         if (!cancelled) setUrl(u);
       })
       .catch(() => {
-        if (!cancelled) {
-          setUrl(buildStreamUrl(file.id, { token: localStorage.getItem('accessToken'), inline: true }));
-        }
+        // 缩略图接口失败：改用 download-token 兜底（download 令牌后端允许 URL query，绝不暴露 access token）
+        if (cancelled) return;
+        api
+          .post<{ token: string }>(`/file/${file.id}/download-token`)
+          .then((d) => {
+            if (!cancelled) setUrl(buildStreamUrl(file.id, { token: d.token, inline: true }));
+          })
+          .catch(() => {
+            if (!cancelled) setUrl(null);
+          });
       });
     return () => {
       cancelled = true;
@@ -41,7 +48,7 @@ export default function FileThumbnail({ file, size = 'sm', blur = false, classNa
     return <FileTypeIcon config={config} size={size} isFolder={file.nodeType === 0} suffix={file.suffix} />;
   }
 
-  const sizeClass = size === 'xxl' ? 'w-28 h-28' : size === 'xl' ? 'w-20 h-20' : size === 'lg' ? 'w-10 h-10' : 'w-8 h-8';
+  const sizeClass = size === 'xxxl' ? 'w-36 h-36' : size === 'xxl' ? 'w-28 h-28' : size === 'xl' ? 'w-20 h-20' : size === 'lg' ? 'w-10 h-10' : 'w-8 h-8';
   // 列表小尺寸：contain + padding，避免图片贴边；网格大图（blur）contain 完整显示，由模糊背景层填充留白
   const pad = size === 'sm' || size === 'lg';
 

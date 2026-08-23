@@ -22,7 +22,7 @@ export default function MoveDialog({ nodeIds, mode, loadTree, onConfirm, onClose
 
   useEffect(() => {
     loadTree().then(setTree).catch(() => {});
-  }, []);
+  }, [loadTree]);
 
   const toggleExpand = (id: string) => {
     setExpanded((prev) => {

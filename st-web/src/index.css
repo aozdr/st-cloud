@@ -323,14 +323,16 @@
   animation: progress-indeterminate 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 0.8; }
 }
 .shimmer {
   background: linear-gradient(90deg, rgb(var(--surface-2)) 25%, rgb(var(--border)) 50%, rgb(var(--surface-2)) 75%);
   background-size: 200% 100%;
-  animation: shimmer 1.4s ease-in-out infinite;
+  /* 柔和呼吸：不用左右滑过高光，避免闪眼 */
+  opacity: 0.6;
+  animation: skeleton-pulse 1.8s ease-in-out infinite;
 }
 
 @keyframes route-fade {

@@ -9,7 +9,7 @@ import lombok.Data;
  */
 public interface EditorPermissionService {
 
-    /** 是否支持在线编辑的后缀（本迭代仅 docx/xlsx/pptx，D2 决策） */
+    /** 是否支持在线编辑的后缀（docx/xlsx/pptx/pdf；PDF 自 ONLYOFFICE Docs 8.1+ 起可编辑） */
     boolean isEditableSuffix(String suffix);
 
     /** 校验格式支持，不支持抛业务异常 */

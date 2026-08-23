@@ -1,0 +1,84 @@
+taskId: "20260823-share-bruteforce"
+goal:
+  objective: "为星云盘文件分享实现'分享标识不可枚举 + 提取码验证防暴力枚举'，对齐百度网盘私密分享访问控制方案"
+  scope: "st-share 分享访问链路（ShareServiceImpl/ShareService/ShareController）、st-common 错误码、st-web 分享访问页提示；file_share 无结构变更（share_code VARCHAR(32) 可容纳扩长码）"
+  completionCriteria:
+    - "分享标识 shareCode 扩长为不可枚举高熵随机码"
+    - "私密分享提取码验证具备失败计数/阈值/锁定防爆破机制"
+    - "IP 维度总探测频控，防止遍历多个分享码"
+    - "超限返回明确错误码与文案，前端友好提示"
+    - "单元+集成测试覆盖防爆破、锁定、解锁、正常访问不误伤"
+scale: medium
+exitCriteria:
+  - id: DESIGN
+    desc: "设计已定；design.md 经 Grill Me 拷打收敛（遗留问题点<=3 写入文档）并经用户确认"
+    status: done
+    dependsOn: []
+  - id: TESTCASES
+    desc: "验收用例已编写"
+    status: done
+    dependsOn: [DESIGN]
+  - id: IMPLEMENTED
+    desc: "代码已实现"
+    status: done
+    dependsOn: [DESIGN, TESTCASES]
+  - id: CODE_REVIEW
+    desc: "Code Review 通过"
+    status: done
+    dependsOn: [IMPLEMENTED]
+  - id: SECURITY_REVIEW
+    desc: "安全审查通过（条件项：涉及分享访问控制，激活）"
+    status: done
+    dependsOn: [IMPLEMENTED]
+  - id: TEST_PASS
+    desc: "测试通过"
+    status: done
+    dependsOn: [CODE_REVIEW, SECURITY_REVIEW]
+  - id: KNOWLEDGE
+    desc: "知识库已回顾"
+    status: done
+    dependsOn: [TEST_PASS]
+  - id: ACCEPT
+    desc: "验收通过（对照完成标准逐项核对）"
+    status: done
+    dependsOn: [KNOWLEDGE]
+artifacts:
+  design:
+    status: done
+    ref: ".ai/docs/20260823-share-bruteforce/design.md"
+    owner: "executor"
+    grillPoints:
+      - "P1: 已裁决 -> 全局配置，后台可改，不做静态"
+      - "P2: 已裁决 -> 引入图形验证码"
+      - "P3: 已裁决 -> 分享不存在/已取消直接跳过，不计频控"
+    userConfirmedAt: "2026-08-23"
+  testcases: { status: done, ref: ".ai/docs/20260823-share-bruteforce/testcases.md", owner: "tester" }
+  code: { status: done, ref: "", owner: "executor" }
+  review: { status: done, ref: ".ai/docs/20260823-share-bruteforce/codereview.md", owner: "reviewer" }
+  security: { status: done, ref: ".ai/docs/20260823-share-bruteforce/security.md", owner: "reviewer" }
+  testReport: { status: done, ref: ".ai/docs/20260823-share-bruteforce/testreport.md", owner: "tester" }
+  knowledge: { status: done, ref: ".ai/docs/20260823-share-bruteforce/knowledge.md", owner: "" }
+  changereport: { status: done, ref: ".ai/docs/20260823-share-bruteforce/changereport.md", owner: "executor" }
+  task: { status: done, ref: ".ai/tasks/TASK-20260823-share-bruteforce-001.md", owner: "workflow-manager" }
+blockers: []
+history:
+  - iter: 2
+    phase: "implement-and-verify"
+    agent: "workflow-manager"
+    action: "实现分享防枚举 + 单测/集成测试 + 前端构建"
+    delta: "分享码 12 位、频控/验证码守卫、sys_config 后台配置、codereview/security/testreport 落盘"
+    result: "exitCriteria 全部 done"
+  - iter: 1
+    phase: "design-confirm"
+    agent: "workflow-manager"
+    action: "用户确认 P1/P2/P3"
+    delta: "P1 全局配置可后台改；P2 引入图形验证码；P3 不存在/已取消跳过；design.md 定稿"
+    result: "DESIGN done，进入 TESTCASES"
+  - iter: 0
+    phase: "observe"
+    agent: "workflow-manager"
+    action: "盘点分享机制与可复用组件"
+    delta: "确认 shareCode 4 位可枚举、validateShareAccess 无频控；可复用 CacheFactory/IpUtils"
+    result: "判定为中型安全敏感任务，进入设计"
+iteration: 2
+status: done

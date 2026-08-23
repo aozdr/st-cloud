@@ -33,6 +33,14 @@ public class SyncAuthHandshakeInterceptor implements HandshakeInterceptor {
             HttpServletRequest httpRequest = servletRequest.getServletRequest();
             String token = httpRequest.getParameter("token");
 
+            // 兼容两种传参：优先 Authorization: Bearer（桌面端去掉 JWT 入 URL），回退 query token
+            if (token == null || token.isBlank()) {
+                String auth = httpRequest.getHeader("Authorization");
+                if (auth != null && auth.startsWith("Bearer ")) {
+                    token = auth.substring("Bearer ".length()).trim();
+                }
+            }
+
             if (token == null || token.isBlank()) {
                 log.warn("WebSocket 握手失败：缺少 token 参数");
                 return false;

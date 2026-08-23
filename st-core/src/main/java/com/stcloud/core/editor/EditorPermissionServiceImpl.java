@@ -16,7 +16,7 @@ import java.util.Set;
  * <ul>
  *   <li>个人文件：owner 可编辑（租户管理员直通）；非 owner 拒绝（TC-02）</li>
  *   <li>团队/分享文件：由 st-team / st-share 侧基于 upload 权限点判定后调用 config 服务</li>
- *   <li>格式：仅 docx/xlsx/pptx（TC-06；D2 决策：本迭代只接在线编辑，只读预览保持现状）</li>
+ *   <li>格式：docx/xlsx/pptx/pdf（PDF 自 ONLYOFFICE Docs 8.1+ 起可编辑；TC-06）</li>
  * </ul>
  */
 @Service
@@ -24,8 +24,7 @@ import java.util.Set;
 public class EditorPermissionServiceImpl implements EditorPermissionService {
 
     /**
-     * OnlyOffice 支持后缀：docx/xlsx/pptx 可编辑；pdf 仅用于查看模式（前端不提供 PDF 编辑入口，
-     * 后端在生成配置时对 pdf 强制 canEdit=false）
+     * OnlyOffice 支持后缀：docx/xlsx/pptx/pdf 可编辑（PDF 自 ONLYOFFICE Docs 8.1+ 起提供全功能编辑）。
      */
     private static final Set<String> EDITABLE_SUFFIXES = Set.of("docx", "xlsx", "pptx", "pdf");
 

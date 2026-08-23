@@ -42,6 +42,8 @@ public enum ResultCode {
     SHARE_EXPIRED(3002, "分享已过期"),
     SHARE_PASSWORD_ERROR(3003, "提取码错误"),
     SHARE_ACCESS_DENIED(3004, "无访问权限"),
+    SHARE_ATTEMPT_LIMIT(3005, "尝试次数过多，请稍后再试"),
+    SHARE_CAPTCHA_REQUIRED(3006, "请完成验证码"),
 
     // 团队相关 4xxx
     TEAM_NOT_FOUND(4001, "团队空间不存在"),

@@ -1,11 +1,14 @@
 import axios, { type AxiosInstance, type InternalAxiosRequestConfig, type AxiosRequestConfig } from 'axios';
-import { syncAuthToElectron } from './electron';
+import { isElectron, syncAuthToElectron } from './electron';
 import { getApiBaseUrl, getServerUrlSync } from './server-config';
 
 const instance: AxiosInstance = axios.create({
   baseURL: getApiBaseUrl(),
   timeout: 30000,
 });
+
+/** 401 刷新 token 用：不经业务拦截器，且走 fetch adapter 以兼容 app:// 代理 */
+const refreshClient = axios.create();
 
 /** 服务器地址变更后调用，刷新 axios baseURL */
 export function updateApiBaseUrl(): void {
@@ -18,7 +21,9 @@ export function buildStreamUrl(nodeId: string | number, opts?: { token?: string 
   if (opts?.token) params.set('token', opts.token);
   if (opts?.inline) params.set('inline', '1');
   const qs = params.toString();
-  return `/api/file/${nodeId}/stream${qs ? `?${qs}` : ''}`;
+  // Electron 下页面为 app://，相对 /api 会解析到 app://web 导致 404，需用绝对后端地址
+  const base = isElectron() ? getServerUrlSync() : '';
+  return `${base}/api/file/${nodeId}/stream${qs ? `?${qs}` : ''}`;
 }
 
 // ApiError carries the business error code from the server
@@ -89,7 +94,7 @@ instance.interceptors.response.use(
       const refreshToken = localStorage.getItem('refreshToken');
       if (refreshToken) {
         try {
-          const res = await axios.post(getServerUrlSync() + '/api/auth/refresh', { refreshToken });
+          const res = await refreshClient.post(getApiBaseUrl() + '/auth/refresh', { refreshToken });
           const { token, refreshToken: newRefreshToken } = res.data.data;
           localStorage.setItem('accessToken', token);
           localStorage.setItem('refreshToken', newRefreshToken);

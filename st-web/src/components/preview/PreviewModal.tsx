@@ -2,6 +2,8 @@ import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } fro
 import { X, Download, ChevronLeft, ChevronRight, RotateCw, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api, { buildStreamUrl } from '../../lib/api';
+import { isElectron } from '../../lib/electron';
+import { getServerUrlSync } from '../../lib/server-config';
 import type { FileNode, PreviewResult } from '../../types';
 import { addRecentFile } from '../../lib/recentFiles';
 import { isImage, isVideo, isPdf, isAudio, isText, getFileTypeConfig, cn } from '../../lib/utils';
@@ -90,7 +92,7 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
       // 分享模式：使用 stream 端点，无需登录 token，不会增加下载次数
       const params = new URLSearchParams({ nodeId: String(file.id) });
       if (shareContext.password) params.set('password', shareContext.password);
-      const streamUrl = `/api/share/access/stream/${shareContext.shareCode}?${params}`;
+      const streamUrl = `${isElectron() ? getServerUrlSync() : ''}/api/share/access/stream/${shareContext.shareCode}?${params}`;
       setUrl(streamUrl);
 
       if (isText(file.suffix)) {
@@ -107,7 +109,7 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
     } else {
       // 正常模式：需登录 token
       const token = localStorage.getItem('accessToken');
-      const streamUrl = `/api/file/${file.id}/stream`;
+      const streamUrl = `${isElectron() ? getServerUrlSync() : ''}/api/file/${file.id}/stream`;
       const headers = { Authorization: `Bearer ${token}` };
 
       if (isText(file.suffix)) {

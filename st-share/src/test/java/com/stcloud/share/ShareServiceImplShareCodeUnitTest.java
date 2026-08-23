@@ -3,6 +3,7 @@ package com.stcloud.share;
 import com.stcloud.common.context.TenantContext;
 import com.stcloud.common.context.UserContext;
 import com.stcloud.common.exception.BusinessException;
+import com.stcloud.common.sysconfig.SysConfigService;
 import com.stcloud.core.entity.FileNode;
 import com.stcloud.core.mapper.FileNodeMapper;
 import com.stcloud.core.service.FileService;
@@ -56,6 +57,9 @@ class ShareServiceImplShareCodeUnitTest {
     @Mock
     private TeamService teamService;
 
+    @Mock
+    private SysConfigService sysConfigService;
+
     @InjectMocks
     private ShareServiceImpl shareService;
 
@@ -68,6 +72,7 @@ class ShareServiceImplShareCodeUnitTest {
                 .tenantId(1L)
                 .username("unit-test")
                 .build());
+        when(sysConfigService.getInt("share.brute_force.shareCodeLength", 12)).thenReturn(12);
     }
 
     /** 当前用户自己的个人文件节点（spaceId 为空，绕过团队校验）。 */
@@ -88,7 +93,7 @@ class ShareServiceImplShareCodeUnitTest {
     }
 
     @Test
-    @DisplayName("S-06 无冲突时生成 4 位安全字符集分享码")
+    @DisplayName("S-14 无冲突时生成 12 位不可枚举字符集分享码")
     void generateShareCodeValidWhenNoConflict() {
         when(fileNodeMapper.selectById(1L)).thenReturn(ownFile());
         when(fileShareMapper.selectCount(any())).thenReturn(0L);
@@ -98,8 +103,8 @@ class ShareServiceImplShareCodeUnitTest {
         ArgumentCaptor<FileShare> captor = ArgumentCaptor.forClass(FileShare.class);
         verify(fileShareMapper).insert((FileShare) captor.capture());
         String code = captor.getValue().getShareCode();
-        assertEquals(4, code.length());
-        assertTrue(code.matches("[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{4}"));
+        assertEquals(12, code.length());
+        assertTrue(code.matches("[23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz]{12}"));
     }
 
     @Test
@@ -117,8 +122,8 @@ class ShareServiceImplShareCodeUnitTest {
         ArgumentCaptor<FileShare> captor = ArgumentCaptor.forClass(FileShare.class);
         verify(fileShareMapper).insert((FileShare) captor.capture());
         String code = captor.getValue().getShareCode();
-        assertEquals(4, code.length());
-        assertTrue(code.matches("[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{4}"));
+        assertEquals(12, code.length());
+        assertTrue(code.matches("[23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz]{12}"));
     }
 
     @Test

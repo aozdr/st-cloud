@@ -17,6 +17,17 @@
       --red: #f04438;
       font-size: 12px;
     }
+    :root.dark {
+      --primary: #6c8cff;
+      --primary-deep: #5b7bf0;
+      --bg: #16161a;
+      --bg-soft: #1f1f26;
+      --border: #2a2a30;
+      --text: #e6e7eb;
+      --text-2: #969ba6;
+      --red: #f87171;
+      color-scheme: dark;
+    }
     html, body {
       width: 100%; height: 100%;
       background: transparent;
@@ -29,15 +40,18 @@
 
     .card {
       position: absolute;
-      left: 0; right: 0; top: 0; bottom: 0;
+      left: 8px; right: 8px; top: 8px; bottom: 8px;
       background: var(--bg);
       border: 1px solid var(--border);
       border-radius: 12px;
-      box-shadow: 0 10px 28px rgba(30, 40, 80, 0.22);
+      /* 透明窗口内四周留白后，阴影可正常显示而不会在圆角处出现灰色边角 */
+      box-shadow: 0 10px 28px rgba(30, 40, 80, 0.18);
       padding: 6px;
       overflow: hidden;
       display: flex;
       flex-direction: column;
+      transition: none !important;
+      transform: none !important;
     }
 
     /* ===== 菜单视图 ===== */
@@ -101,7 +115,7 @@
       flex: 1; height: 34px; min-width: 0;
       border: 1px solid var(--border); border-radius: 8px;
       padding: 0 10px; font-size: 14px; outline: none;
-      background: #fff; color: var(--text);
+      background: var(--bg); color: var(--text);
       -webkit-user-select: text; user-select: text;
     }
     .input-row input:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(76,110,245,0.15); }
@@ -126,24 +140,23 @@
     .back-row .back:hover { color: var(--primary); background: rgba(76, 110, 245, 0.08); }
     .back-row .back svg { width: 12px; height: 12px; }
 
-    @keyframes popIn {
-      from { transform: scale(0.94); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
-    .card { animation: popIn 0.12s ease-out; }
   </style>
 </head>
 <body>
   <div class="card">
     <!-- 菜单视图 -->
     <div class="menu-view">
-      <button class="menu-item" id="menuOpen">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9"/><path d="M21 3v6h-6"/></svg>
-        打开网盘
+      <button class="menu-item" id="menuExpand">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="menuExpandIcon"><path d="M6 9l6 6 6-6"/></svg>
+        <span id="menuExpandLabel">展开传输详情</span>
+      </button>
+      <button class="menu-item" id="menuMicro">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M8 21H5a2 2 0 0 1-2-2v-3M21 16v3a2 2 0 0 1-2 2h-3"/></svg>
+        微型模式
       </button>
       <button class="menu-item" id="menuTransfers">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3v13M7 3l-3 3M7 3l3 3M17 21V8M17 21l-3-3M17 21l3-3"/></svg>
-        传输管理
+        打开传输列表
       </button>
       <button class="menu-item" id="menuToggleTasks" title="全部传输任务开始/暂停">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="menuToggleIcon"><path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86a1 1 0 0 0-1.5.86z"/></svg>
@@ -151,9 +164,13 @@
       </button>
       <button class="menu-item" id="menuSettings">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18M3 12h18M3 17h18"/></svg>
-        限速管理
+        传输设置
       </button>
       <div class="menu-sep"></div>
+      <button class="menu-item" id="menuClose">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        关闭悬浮窗
+      </button>
       <button class="menu-item danger" id="menuQuit">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
         退出
@@ -170,7 +187,7 @@
       </div>
       <h3>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18M3 12h18M3 17h18"/></svg>
-        限速管理
+        传输设置
       </h3>
 
       <div class="sec">
@@ -228,6 +245,15 @@
       let tasks = [];
       let toggleMode = 'resume';
 
+      // 主题：跟随主应用 Light / Dark，默认取系统偏好
+      function applyDark(isDark) {
+        document.documentElement.classList.toggle('dark', !!isDark);
+      }
+      if (api.onWidgetThemeChanged) api.onWidgetThemeChanged(applyDark);
+      try {
+        applyDark(window.matchMedia('(prefers-color-scheme: dark)').matches);
+      } catch (e) { /* ignore */ }
+
       function close() {
         if (api.hideMiniMenu) api.hideMiniMenu();
       }
@@ -266,12 +292,31 @@
       if (api.onMenuReset) {
         api.onMenuReset(function () {
           document.body.classList.remove('settings');
+          renderExpand();
         });
       }
 
       // ===== 菜单视图 =====
-      $('menuOpen').addEventListener('click', function () {
-        api.openMainWindow();
+      function renderExpand() {
+        if (!api.getWidgetMode) return;
+        api.getWidgetMode().then(function (m) {
+          const expanded = m === 'expanded';
+          $('menuExpandLabel').textContent = expanded ? '收起传输详情' : '展开传输详情';
+          $('menuExpandIcon').innerHTML = expanded
+            ? '<path d="M6 15l6-6 6 6"/>'
+            : '<path d="M6 9l6 6 6-6"/>';
+        }).catch(function () {});
+      }
+      renderExpand();
+      $('menuExpand').addEventListener('click', function () {
+        if (!api.getWidgetMode) return;
+        api.getWidgetMode().then(function (m) {
+          api.setWidgetMode(m === 'expanded' ? 'compact' : 'expanded');
+        }).catch(function () {});
+        close();
+      });
+      $('menuMicro').addEventListener('click', function () {
+        if (api.setWidgetMode) api.setWidgetMode('micro');
         close();
       });
       $('menuTransfers').addEventListener('click', function () {
@@ -360,6 +405,10 @@
           });
           document.body.classList.add('settings');
         }).catch(function () {});
+      });
+      $('menuClose').addEventListener('click', function () {
+        if (api.hideMiniWindow) api.hideMiniWindow();
+        close();
       });
       $('menuQuit').addEventListener('click', function () { api.quitApp(); });
 

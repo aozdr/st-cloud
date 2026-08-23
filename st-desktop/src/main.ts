@@ -1,18 +1,22 @@
-import { app, BrowserWindow, shell, protocol, net, Menu } from 'electron';
+import { app, BrowserWindow, shell, protocol, net, Menu, Tray, nativeImage, dialog } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { pathToFileURL } from 'url';
 import { initDatabase } from './database';
+import { getAllTasks } from './database';
 import { registerIpcHandlers } from './ipc-handlers';
 import { resumePendingUploads } from './upload-manager';
+import { pauseUpload } from './upload-manager';
 import { resumePendingDownloads } from './download-manager';
+import { pauseDownload } from './download-manager';
 import { resumeSyncEngines } from './sync-manager';
 import { loadServerUrl } from './server-config';
 import { getToken } from './api-client';
-import { createMiniWindow, closeMiniWindow } from './mini-window';
-import { prepareMenuWindow, closeMenuWindow } from './menu-window';
+import { createMiniWindow, closeMiniWindow, showMiniWindow, openTransferPage, openTransferSettings } from './mini-window';
+import { prepareMenuWindow, closeMenuWindow, hideMenuWindow } from './menu-window';
 
 const isDev = !app.isPackaged;
+let tray: Tray | null = null;
 
 // 打包后前端用自定义 app:// 协议加载：file:// 下 Vite 的 ES module 会被 Chromium CORS
 // 拦截导致黑屏；app:// 注册为 standard/secure 特权协议后 module 可正常加载。
@@ -54,10 +58,9 @@ async function createWindow(): Promise<void> {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false,
-      // 渲染进程需直连后端 API（127.0.0.1:8080），服务端 CORS 白名单桌面端无法预知，
-      // 绕过 CORS 校验；仅加载本地打包内容，风险可控。
+      // 渲染层直连本机后端 API，服务端 CORS 无法预知桌面端来源，关闭同源校验；仅加载本地打包内容
       webSecurity: false,
+      sandbox: false,
     },
   });
 
@@ -106,6 +109,8 @@ async function createWindow(): Promise<void> {
     closeMiniWindow();
     closeMenuWindow();
   });
+  // 主窗口获得焦点（用户点击主界面）时关闭已弹出的右键菜单小窗
+  win.on('focus', () => hideMenuWindow());
 }
 
 /**
@@ -131,20 +136,108 @@ function waitForAuth(timeoutMs: number): Promise<void> {
   });
 }
 
+/** 托盘图标：打包后优先 resources/build/icon.png，开发态回退到仓库 build/icon.png */
+function resolveTrayIcon(): Electron.NativeImage {
+  const candidates = [
+    path.join(process.resourcesPath, 'build', 'icon.png'),
+    path.join(app.getAppPath(), 'build', 'icon.png'),
+    path.join(__dirname, '..', 'build', 'icon.png'),
+  ];
+  for (const p of candidates) {
+    try {
+      if (fs.existsSync(p)) {
+        const img = nativeImage.createFromPath(p);
+        if (!img.isEmpty()) return img;
+      }
+    } catch {
+      // 继续尝试下一个候选路径
+    }
+  }
+  return nativeImage.createEmpty();
+}
+
+/** 暂停全部进行中传输（与 IPC transfer:pauseAll 相同逻辑，供托盘菜单调用） */
+function pauseAllTransfersTray(): void {
+  const all = getAllTasks();
+  for (const t of all) {
+    if (t.status === 'uploading' || t.status === 'hashing' || t.status === 'merging' || t.status === 'pending') {
+      pauseUpload(t.id);
+    } else if (t.status === 'downloading') {
+      pauseDownload(t.id);
+    }
+  }
+}
+
+function createTray(): void {
+  if (tray) return;
+  const icon = resolveTrayIcon();
+  if (icon.isEmpty()) {
+    console.warn('[tray] 未找到托盘图标，跳过托盘创建');
+    return;
+  }
+  tray = new Tray(icon);
+  tray.setToolTip('星云盘');
+  const menu = Menu.buildFromTemplate([
+    {
+      label: '显示传输悬浮窗',
+      click: () => showMiniWindow(),
+    },
+    {
+      label: '打开传输列表',
+      click: () => openTransferPage(),
+    },
+    {
+      label: '暂停全部',
+      click: () => pauseAllTransfersTray(),
+    },
+    { type: 'separator' },
+    {
+      label: '传输设置',
+      click: () => openTransferSettings(),
+    },
+    {
+      label: '关于星云盘',
+      click: () => {
+        dialog.showMessageBox({
+          type: 'info',
+          title: '关于星云盘',
+          message: '星云盘',
+          detail: `版本 ${app.getVersion()}\n安全高效的企业云盘解决方案`,
+          buttons: ['确定'],
+        });
+      },
+    },
+    { type: 'separator' },
+    {
+      label: '退出',
+      click: () => app.quit(),
+    },
+  ]);
+  tray.setContextMenu(menu);
+  tray.on('double-click', () => showMiniWindow());
+}
+
 app.whenReady().then(async () => {
   // 去掉 Electron 默认菜单栏（File/Edit/View/Window/Help）
   Menu.setApplicationMenu(null);
 
   // 注册 app:// 协议：app://web/xxx → resources/web/xxx；SPA 路由无对应文件时回退 index.html
-  protocol.handle('app', (request) => {
+  const webRoot = path.resolve(process.resourcesPath, 'web');
+  const safeIndex = pathToFileURL(path.join(webRoot, 'index.html')).toString();
+  const fallbackIndex = () => net.fetch(safeIndex);
+  protocol.handle('app', async (request) => {
     const url = new URL(request.url);
-    let pathname = decodeURIComponent(url.pathname);
+    // 防路径穿越：统一正斜杠并解码；仅允许解析结果落在 web 根内，否则回退 index.html
+    let pathname = decodeURIComponent(url.pathname).replace(/\\/g, '/');
     if (pathname === '/' || pathname === '') pathname = '/index.html';
-    const filePath = path.join(process.resourcesPath, 'web', pathname);
+    const filePath = path.resolve(webRoot, '.' + pathname);
+    if (!(filePath === webRoot || filePath.startsWith(webRoot + path.sep))) {
+      return fallbackIndex();
+    }
     try {
       if (!fs.statSync(filePath).isFile()) throw new Error('not a file');
     } catch {
-      return net.fetch(pathToFileURL(path.join(process.resourcesPath, 'web', 'index.html')).toString());
+      return fallbackIndex();
     }
     return net.fetch(pathToFileURL(filePath).toString());
   });
@@ -166,6 +259,8 @@ app.whenReady().then(async () => {
   await createWindow();
   // 桌面传输悬浮小窗（独立、置顶、可拖动）
   createMiniWindow();
+  // 系统托盘：提供悬浮窗显示/暂停全部/设置/关于/退出
+  createTray();
   // 预加载右键菜单小窗（隐藏），保证首次右键打开不卡顿
   prepareMenuWindow();
 

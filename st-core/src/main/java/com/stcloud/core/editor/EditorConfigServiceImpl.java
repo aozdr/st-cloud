@@ -69,8 +69,7 @@ public class EditorConfigServiceImpl implements EditorConfigService {
             throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "文件尚未上传完成");
         }
         editorPermissionService.assertSupported(node);
-        // PDF 仅允许只读查看（OnlyOffice PDF 查看器），不允许编辑
-        canEdit = canEdit && !"pdf".equalsIgnoreCase(node.getSuffix());
+        // PDF 可编辑（ONLYOFFICE Docs 8.1+ 提供全功能 PDF 编辑器）；mode=view 时仍强制只读
 
         String secret = editorProperties.getJwtSecret();
         if (!StringUtils.hasText(secret) || secret.getBytes(StandardCharsets.UTF_8).length < 32) {

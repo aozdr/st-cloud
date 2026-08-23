@@ -1,11 +1,12 @@
 import type { FileNode } from '../../types';
-import type { SortBy, SortDir, ViewMode } from './FileToolbar';
+import type { SortBy, SortDir, ViewMode, IconSize } from './FileToolbar';
 import FileTableView from './FileTableView';
 import FileGrid from './FileGrid';
 
 /** 三种视图（表格/列表/网格）的公共 props，避免调用方重复传参 */
 export interface FileListProps {
   view: ViewMode;
+  iconSize: IconSize;
   files: FileNode[];
   lockedIds: Set<string>;
   selectedIds: Set<string>;
@@ -30,7 +31,7 @@ export interface FileListProps {
 }
 
 /** 按当前视图渲染文件列表（统一 onDoubleClick/拖拽等行为） */
-export default function FileList({ view, onSelectAll, ...common }: FileListProps) {
+export default function FileList({ view, iconSize, onSelectAll, ...common }: FileListProps) {
   if (view === 'list') return <FileTableView {...common} onSelectAll={onSelectAll} />;
-  return <FileGrid {...common} />;
+  return <FileGrid {...common} iconSize={iconSize} />;
 }

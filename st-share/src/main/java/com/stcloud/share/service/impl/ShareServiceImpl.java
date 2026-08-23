@@ -11,6 +11,8 @@ import com.stcloud.common.context.UserContext;
 import com.stcloud.common.exception.BusinessException;
 import com.stcloud.common.response.Result;
 import com.stcloud.common.response.ResultCode;
+import com.stcloud.common.sysconfig.SysConfigService;
+import com.stcloud.common.utils.IpUtils;
 import com.stcloud.core.editor.EditorConfigService;
 import com.stcloud.core.editor.dto.EditorConfigResponse;
 import com.stcloud.core.entity.FileNode;
@@ -24,12 +26,16 @@ import com.stcloud.share.entity.FileShare;
 import com.stcloud.share.enums.ShareStatus;
 import com.stcloud.share.mapper.FileShareMapper;
 import com.stcloud.share.service.ShareService;
+import com.stcloud.share.service.ShareBruteForceGuard;
+import com.stcloud.share.service.ShareCaptchaService;
 import com.stcloud.team.service.TeamService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -44,6 +50,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -53,9 +60,11 @@ import java.util.stream.Collectors;
 @Service
 public class ShareServiceImpl implements ShareService {
 
-    // S-06 分享码字符集：排除易混字符 0/O/1/I（32 字符集，4 位）
-    private static final String SHARE_CODE_CHARS = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
-    private static final int SHARE_CODE_LENGTH = 4;
+    // S-14 分享标识不可枚举：57 字符集（排除易混 0/O/1/I/l），长度默认 12（可后台配置，夹紧 8~16）
+    private static final String SHARE_CODE_CHARS = "23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz";
+    private static final int SHARE_CODE_DEFAULT_LENGTH = 12;
+    private static final int SHARE_CODE_MIN_LENGTH = 8;
+    private static final int SHARE_CODE_MAX_LENGTH = 16;
     private static final int SHARE_CODE_MAX_RETRY = 8;
     private static final SecureRandom SHARE_CODE_RANDOM = new SecureRandom();
 
@@ -78,6 +87,15 @@ public class ShareServiceImpl implements ShareService {
     private TeamService teamService;
     @Resource
     private EditorConfigService editorConfigService;
+
+    @Resource
+    private ShareBruteForceGuard shareBruteForceGuard;
+
+    @Resource
+    private ShareCaptchaService shareCaptchaService;
+
+    @Resource
+    private SysConfigService sysConfigService;
 
     @Override
     @Transactional
@@ -204,8 +222,9 @@ public class ShareServiceImpl implements ShareService {
     }
 
     @Override
-    public Result<EditorConfigResponse> editorConfig(String shareCode, Long nodeId, String password) {
-        FileShare share = validateShareAccess(shareCode, password);
+    public Result<EditorConfigResponse> editorConfig(String shareCode, Long nodeId, String password,
+                                                      String captchaId, String captchaCode) {
+        FileShare share = validateShareAccess(shareCode, password, captchaId, captchaCode);
         Long targetNodeId = nodeId != null ? nodeId : share.getFileNodeId();
         FileNode targetNode = fileNodeMapper.selectById(targetNodeId);
         if (targetNode == null || targetNode.getStatus() != 0 || targetNode.getNodeType() != 1) {
@@ -331,9 +350,19 @@ public class ShareServiceImpl implements ShareService {
     }
 
     @Override
+    public Result<Map<String, String>> getCaptcha() {
+        ShareCaptchaService.CaptchaIssue issue = shareCaptchaService.issue();
+        Map<String, String> data = new LinkedHashMap<>();
+        data.put("captchaId", issue.captchaId());
+        data.put("imageBase64", issue.imageBase64());
+        return Result.success(data);
+    }
+
+    @Override
     @Transactional
     public Result<ShareAccessVO> accessShare(ShareAccessRequest request) {
-        FileShare share = validateShareAccess(request.getShareCode(), request.getPassword());
+        FileShare share = validateShareAccess(request.getShareCode(), request.getPassword(),
+                request.getCaptchaId(), request.getCaptchaCode());
 
         // 增加访问次数
         fileShareMapper.update(null, new LambdaUpdateWrapper<FileShare>()
@@ -361,8 +390,9 @@ public class ShareServiceImpl implements ShareService {
     @Override
     // F1-1 只读方法去事务：本方法仅读分享/节点 + 生成预签名 URL + 单条原子 UPDATE（下载计数），
     // 无多写一致性需求，不开启 DB 事务，避免无效事务占用连接（设计文档 F1-1）
-    public Result<String> getDownloadUrl(String shareCode, Long nodeId, String password) {
-        FileShare share = validateShareAccess(shareCode, password);
+    public Result<String> getDownloadUrl(String shareCode, Long nodeId, String password,
+                                          String captchaId, String captchaCode) {
+        FileShare share = validateShareAccess(shareCode, password, captchaId, captchaCode);
 
         // S-02 权限校验：allow_download=0 统一禁止下载 URL（permission==0 双保险保留）
         if (share.getAllowDownload() == null || share.getAllowDownload() == 0) {
@@ -415,8 +445,9 @@ public class ShareServiceImpl implements ShareService {
     }
 
     @Override
-    public Result<List<FileNodeVO>> listShareFiles(String shareCode, Long parentId, String password) {
-        FileShare share = validateShareAccess(shareCode, password);
+    public Result<List<FileNodeVO>> listShareFiles(String shareCode, Long parentId, String password,
+                                                   String captchaId, String captchaCode) {
+        FileShare share = validateShareAccess(shareCode, password, captchaId, captchaCode);
 
         FileNode root = fileNodeMapper.selectById(share.getFileNodeId());
         if (root == null) {
@@ -452,9 +483,10 @@ public class ShareServiceImpl implements ShareService {
     }
 
     @Override
-    public void streamShareFile(String shareCode, Long nodeId, String password, HttpServletResponse response) {
+    public void streamShareFile(String shareCode, Long nodeId, String password,
+                                String captchaId, String captchaCode, HttpServletResponse response) {
         // 分享码+提取码验证即为认证，无需用户登录 token
-        FileShare share = validateShareAccess(shareCode, password);
+        FileShare share = validateShareAccess(shareCode, password, captchaId, captchaCode);
 
         // S-02 下载开关校验：allow_download=0 禁止流式预览/下载（堵住绕过 getDownloadUrl 的流式链路）
         if (share.getAllowDownload() == null || share.getAllowDownload() == 0) {
@@ -550,22 +582,45 @@ public class ShareServiceImpl implements ShareService {
         }
     }
 
-    private FileShare validateShareAccess(String shareCode, String password) {
+    private FileShare validateShareAccess(String shareCode, String password,
+                                          String captchaId, String captchaCode) {
         FileShare share = fileShareMapper.selectOne(
                 new LambdaQueryWrapper<FileShare>().eq(FileShare::getShareCode, shareCode));
+        // S-14 分享不存在/已取消：直抛，不浪费资源，不计频控（用户决策 P3）
         if (share == null || share.getStatus() == ShareStatus.CANCELLED.getCode()) {
             throw new BusinessException(ResultCode.SHARE_NOT_FOUND);
         }
-        // 过期校验：已过期分享直接拒绝访问/下载/列表/流式预览，且优先级高于提取码校验
+        // 过期校验：已过期分享直接拒绝，且不计频控
         if (share.getExpireAt() != null && share.getExpireAt().isBefore(LocalDateTime.now(ZoneId.of("Asia/Shanghai")))) {
             throw new BusinessException(ResultCode.SHARE_EXPIRED);
         }
         if (share.getShareType() == 1) {
+            String ip = resolveClientIp();
+            // 锁定检查：单分享码或 IP 任一命中直接拒绝
+            if (shareBruteForceGuard.isLocked(ip, shareCode)) {
+                throw new BusinessException(ResultCode.SHARE_ATTEMPT_LIMIT);
+            }
+            // 失败达阈值后要求图形验证码，通过才继续校验提取码
+            if (shareBruteForceGuard.needsCaptcha(shareCode)) {
+                if (!shareCaptchaService.verify(captchaId, captchaCode)) {
+                    shareBruteForceGuard.recordCaptchaFailure(ip);
+                    throw new BusinessException(ResultCode.SHARE_CAPTCHA_REQUIRED);
+                }
+            }
             if (password == null || !password.equals(share.getPassword())) {
+                shareBruteForceGuard.recordFailure(ip, shareCode);
                 throw new BusinessException(ResultCode.SHARE_PASSWORD_ERROR);
             }
+            // 提取码正确：清除该分享码失败计数与锁定
+            shareBruteForceGuard.clearFailure(shareCode);
         }
         return share;
+    }
+
+    private String resolveClientIp() {
+        ServletRequestAttributes attrs =
+                (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        return attrs != null ? IpUtils.getClientIp(attrs.getRequest()) : null;
     }
 
     private FileNodeVO toFileNodeVO(FileNode node) {
@@ -602,9 +657,10 @@ public class ShareServiceImpl implements ShareService {
      * （避免 DuplicateKeyException 直接 500）。
      */
     private String generateShareCode() {
+        int length = resolveShareCodeLength();
         for (int attempt = 0; attempt <= SHARE_CODE_MAX_RETRY; attempt++) {
-            StringBuilder sb = new StringBuilder(SHARE_CODE_LENGTH);
-            for (int i = 0; i < SHARE_CODE_LENGTH; i++) {
+            StringBuilder sb = new StringBuilder(length);
+            for (int i = 0; i < length; i++) {
                 sb.append(SHARE_CODE_CHARS.charAt(SHARE_CODE_RANDOM.nextInt(SHARE_CODE_CHARS.length())));
             }
             String code = sb.toString();
@@ -615,6 +671,18 @@ public class ShareServiceImpl implements ShareService {
             }
         }
         throw new BusinessException(ResultCode.BUSINESS_ERROR, "分享码生成失败，请重试");
+    }
+
+    /** 分享码长度从全局配置读取并夹紧到 8~16，避免超长溢出 VARCHAR(32) */
+    private int resolveShareCodeLength() {
+        int len = sysConfigService.getInt("share.brute_force.shareCodeLength", SHARE_CODE_DEFAULT_LENGTH);
+        if (len < SHARE_CODE_MIN_LENGTH) {
+            return SHARE_CODE_MIN_LENGTH;
+        }
+        if (len > SHARE_CODE_MAX_LENGTH) {
+            return SHARE_CODE_MAX_LENGTH;
+        }
+        return len;
     }
 
     /**

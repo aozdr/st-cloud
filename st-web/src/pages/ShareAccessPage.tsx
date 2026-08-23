@@ -6,7 +6,7 @@ import { formatSize, getFileTypeConfig, formatDate, isPreviewable, isPdf } from 
 import { isEditableOfficeSuffix } from '../lib/editor';
 import FileTypeIcon from '../components/file/FileTypeIcon';
 import PreviewModal from '../components/preview/PreviewModal';
-import type { ShareAccessVO, ShareFileItem, FileNode } from '../types';
+import type { ShareAccessVO, ShareFileItem, FileNode, ShareCaptcha } from '../types';
 
 interface BreadcrumbItem {
   id: string;
@@ -25,12 +25,45 @@ export default function ShareAccessPage() {
   const [fileInfo, setFileInfo] = useState<ShareAccessVO | null>(null);
   // 是否需要提取码：自动访问失败（私密分享无码/错误码）才显示提取码表单
   const [needsPassword, setNeedsPassword] = useState(false);
+  // 是否需图形验证码（失败达阈值后由后端返回 3006 触发）
+  const [needCaptcha, setNeedCaptcha] = useState(false);
+  const [captchaId, setCaptchaId] = useState('');
+  const [captchaImage, setCaptchaImage] = useState('');
+  const [captchaCode, setCaptchaCode] = useState('');
 
   // folder browsing state
   const [fileList, setFileList] = useState<ShareFileItem[]>([]);
   const [listLoading, setListLoading] = useState(false);
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([]);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+
+  const loadFiles = useCallback(
+    async (parentId: string, pwd?: string) => {
+      setListLoading(true);
+      try {
+        const data: ShareFileItem[] = await api.get('/share/access/list', {
+          params: { shareCode, parentId, password: pwd || password || undefined },
+        });
+        setFileList(data);
+      } catch (e) {
+        setError((e instanceof Error ? e.message : '') || '加载文件列表失败');
+      } finally {
+        setListLoading(false);
+      }
+    },
+    [shareCode, password],
+  );
+
+  const loadCaptcha = useCallback(async () => {
+    try {
+      const data: ShareCaptcha = await api.get('/share/captcha');
+      setCaptchaId(data.captchaId);
+      setCaptchaImage(data.imageBase64);
+      setCaptchaCode('');
+    } catch {
+      /* 验证码加载失败不阻塞，仅提示 */
+    }
+  }, []);
 
   const accessShare = useCallback(
     async (pwd: string) => {
@@ -40,21 +73,38 @@ export default function ShareAccessPage() {
         const data: ShareAccessVO = await api.post('/share/access/access', {
           shareCode,
           password: pwd || undefined,
+          captchaId: needCaptcha ? captchaId : undefined,
+          captchaCode: needCaptcha ? captchaCode : undefined,
         });
         setFileInfo(data);
+        setNeedCaptcha(false);
         // if folder, load root children
         if (data.fileType === 0) {
           setBreadcrumbs([{ id: data.fileNodeId, name: data.fileName }]);
           loadFiles(data.fileNodeId, pwd);
         }
       } catch (e) {
-        setError((e instanceof Error ? e.message : '') || '访问失败');
-        setNeedsPassword(true);
+        const code = (e as { code?: number }).code;
+        const msg = (e instanceof Error ? e.message : '') || '访问失败';
+        setError(msg);
+        if (code === 3006) {
+          // 需要验证码：展示验证码输入
+          setNeedCaptcha(true);
+          setNeedsPassword(true);
+          loadCaptcha();
+        } else if (code === 3005) {
+          // 尝试次数过多：锁定提示，不再要求输入
+          setError('尝试次数过多，请稍后再试');
+          setNeedsPassword(true);
+        } else {
+          setNeedsPassword(true);
+          setNeedCaptcha(false);
+        }
       } finally {
         setLoading(false);
       }
     },
-    [shareCode],
+    [shareCode, loadFiles, needCaptcha, captchaId, captchaCode, loadCaptcha],
   );
 
   // 进入页面自动访问：公开分享无需提取码直接进入；私密分享带 pwd 参数也直接尝试；
@@ -65,20 +115,6 @@ export default function ShareAccessPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fileInfo]);
-
-  const loadFiles = async (parentId: string, pwd?: string) => {
-    setListLoading(true);
-    try {
-      const data: ShareFileItem[] = await api.get('/share/access/list', {
-        params: { shareCode, parentId, password: pwd || password || undefined },
-      });
-      setFileList(data);
-    } catch (e) {
-      setError((e instanceof Error ? e.message : '') || '加载文件列表失败');
-    } finally {
-      setListLoading(false);
-    }
-  };
 
   const handleAccess = () => accessShare(password);
 
@@ -394,6 +430,28 @@ export default function ShareAccessPage() {
                 <p className="text-xs text-red-600 dark:text-red-400 bg-red-500/15 rounded-md p-2.5 text-center">
                   {error}
                 </p>
+              )}
+
+              {needCaptcha && (
+                <div className="flex items-center gap-3">
+                  {captchaImage && (
+                    <img
+                      src={captchaImage}
+                      alt="验证码"
+                      title="点击刷新"
+                      onClick={loadCaptcha}
+                      className="h-10 rounded-md border border-border cursor-pointer"
+                    />
+                  )}
+                  <input
+                    type="text"
+                    value={captchaCode}
+                    onChange={(e) => setCaptchaCode(e.target.value)}
+                    maxLength={4}
+                    placeholder="验证码"
+                    className="flex-1 px-3 py-2.5 text-center text-base tracking-widest text-fg bg-surface border border-border rounded-md outline-none transition focus:border-primary-400 focus:ring-2 focus:ring-primary-100 placeholder:text-muted placeholder:text-sm placeholder:tracking-normal"
+                  />
+                </div>
               )}
 
               <input

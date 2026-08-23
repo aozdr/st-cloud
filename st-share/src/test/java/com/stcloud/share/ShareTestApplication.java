@@ -2,11 +2,17 @@ package com.stcloud.share;
 
 import com.stcloud.common.config.MyBatisPlusConfig;
 import com.stcloud.common.config.MyMetaObjectHandler;
+import com.stcloud.common.cache.CacheFactory;
+import com.stcloud.common.mapper.SysConfigMapper;
+import com.stcloud.common.sysconfig.SysConfigService;
+import com.stcloud.common.sysconfig.SysConfigServiceImpl;
 import com.stcloud.core.editor.EditorConfigService;
 import com.stcloud.core.service.DownloadService;
 import com.stcloud.core.service.FileService;
 import com.stcloud.core.service.StorageService;
 import com.stcloud.share.service.ShareService;
+import com.stcloud.share.service.ShareBruteForceGuard;
+import com.stcloud.share.service.ShareCaptchaService;
 import com.stcloud.share.service.impl.ShareServiceImpl;
 import com.stcloud.team.service.TeamService;
 import org.mybatis.spring.annotation.MapperScan;
@@ -20,6 +26,8 @@ import org.springframework.boot.autoconfigure.web.servlet.WebMvcAutoConfiguratio
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.beans.factory.ObjectProvider;
 
 import static org.mockito.Mockito.mock;
 
@@ -40,7 +48,7 @@ import static org.mockito.Mockito.mock;
         UserDetailsServiceAutoConfiguration.class,
         WebMvcAutoConfiguration.class,
 })
-@MapperScan({"com.stcloud.share.mapper", "com.stcloud.core.mapper"})
+@MapperScan({"com.stcloud.share.mapper", "com.stcloud.core.mapper", "com.stcloud.common.mapper"})
 @Import({MyBatisPlusConfig.class, MyMetaObjectHandler.class})
 public class ShareTestApplication {
 
@@ -73,5 +81,25 @@ public class ShareTestApplication {
     @Bean
     EditorConfigService editorConfigService() {
         return mock(EditorConfigService.class);
+    }
+
+    @Bean
+    CacheFactory cacheFactory(ObjectProvider<RedisTemplate<String, Object>> provider) {
+        return new CacheFactory(false, provider);
+    }
+
+    @Bean
+    SysConfigService sysConfigService(SysConfigMapper mapper, CacheFactory cacheFactory) {
+        return new SysConfigServiceImpl(mapper, cacheFactory);
+    }
+
+    @Bean
+    ShareBruteForceGuard shareBruteForceGuard(SysConfigService sysConfigService, CacheFactory cacheFactory) {
+        return new ShareBruteForceGuard(sysConfigService, cacheFactory);
+    }
+
+    @Bean
+    ShareCaptchaService shareCaptchaService(CacheFactory cacheFactory) {
+        return new ShareCaptchaService(cacheFactory);
     }
 }

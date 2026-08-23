@@ -144,6 +144,14 @@ export interface SearchResultVO {
   updatedAt: string;
 }
 
+/** 搜索结果分页（后端 /api/search 返回） */
+export interface SearchResultPage {
+  records: SearchResultVO[];
+  total: number;
+  page: number;
+  size: number;
+}
+
 // ==================== Request Types ====================
 export interface CreateFolderRequest {
   parentId: string;
@@ -251,6 +259,11 @@ export interface ShareFileItem {
   thumbnailPath: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ShareCaptcha {
+  captchaId: string;
+  imageBase64: string;
 }
 
 // ==================== Team Types ====================
@@ -510,6 +523,15 @@ export interface SpeedLimitRule {
   description: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface SysConfig {
+  id: string;
+  configKey: string;
+  configValue?: string | null;
+  configGroup?: string | null;
+  remark?: string | null;
+  enabled?: number;
 }
 
 export interface PermissionVO {

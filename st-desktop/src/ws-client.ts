@@ -69,12 +69,12 @@ export class SyncWsClient {
     }
 
     const httpUrl = getServerUrl();
-    const wsUrl = httpUrl.replace(/^http/, 'ws') + '/api/sync/ws?token=' + encodeURIComponent(token);
+    const wsUrl = httpUrl.replace(/^http/, 'ws') + '/api/sync/ws';
 
-    console.log('[ws] connecting to', wsUrl.replace(/token=[^&]+/, 'token=***'));
+    console.log('[ws] connecting to', wsUrl);
 
     try {
-      this.ws = new WebSocket(wsUrl);
+      this.ws = new WebSocket(wsUrl, { headers: { Authorization: `Bearer ${token}` } });
     } catch (err) {
       console.error('[ws] create failed:', err);
       this.scheduleReconnect(this.reconnectDelay);

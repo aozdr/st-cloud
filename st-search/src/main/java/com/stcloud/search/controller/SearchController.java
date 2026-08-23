@@ -3,6 +3,7 @@ package com.stcloud.search.controller;
 import com.stcloud.common.annotation.Auditable;
 import com.stcloud.common.context.UserContext;
 import com.stcloud.common.response.Result;
+import com.stcloud.search.dto.SearchResultPage;
 import com.stcloud.search.dto.SearchResultVO;
 import com.stcloud.search.service.SearchService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,7 +32,7 @@ public class SearchController {
     @Operation(summary = "搜索文件内容", description = "通过关键词搜索文档内容，返回匹配的文件列表及高亮片段")
     @PreAuthorize("hasAuthority('search:file') or hasRole('ADMIN')")
     @GetMapping
-    public Result<List<SearchResultVO>> search(
+    public Result<SearchResultPage> search(
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "20") int size,
@@ -42,9 +43,9 @@ public class SearchController {
             @RequestParam(required = false) Long dateFrom,
             @RequestParam(required = false) Long dateTo) {
         Long ownerId = UserContext.getUserId();
-        List<SearchResultVO> results = searchService.searchContent(keyword, ownerId, page, size,
+        SearchResultPage result = searchService.searchContent(keyword, ownerId, page, size,
                 nodeType, suffixes, sizeMin, sizeMax, dateFrom, dateTo);
-        return Result.success(results);
+        return Result.success(result);
     }
 
     @Operation(summary = "重建全量索引", description = "将数据库中所有正常状态的文件节点重新索引到 ES（仅管理员）")

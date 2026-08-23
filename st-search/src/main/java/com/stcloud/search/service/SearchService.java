@@ -1,6 +1,7 @@
 package com.stcloud.search.service;
 
 import com.stcloud.core.entity.FileNode;
+import com.stcloud.search.dto.SearchResultPage;
 import com.stcloud.search.dto.SearchResultVO;
 
 import java.util.List;
@@ -27,9 +28,9 @@ public interface SearchService {
      * @param ownerId 用户 ID（权限过滤，null 表示不限制）
      * @param page    页码（从 1 开始）
      * @param size    每页数量
-     * @return 搜索结果列表
+     * @return 搜索结果分页（含总命中数）
      */
-    List<SearchResultVO> searchContent(String keyword, Long ownerId, int page, int size,
+    SearchResultPage searchContent(String keyword, Long ownerId, int page, int size,
             Integer nodeType, List<String> suffixes, Long sizeMin, Long sizeMax, Long dateFrom, Long dateTo);
 
     /**

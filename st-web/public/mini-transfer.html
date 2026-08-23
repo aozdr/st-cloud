@@ -1,22 +1,57 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" class="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>传输悬浮窗</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-user-select: none; user-select: none; }
+
+    /* ===== 传输悬浮窗 Design Token（对齐 DESIGN_SYSTEM / core theme）=====
+       Light：白底 + 轻雾蓝主色 + 低对比边框
+       Dark ：仅转换 Background / Surface / Border / Text / Shadow / Primary，结构不变 */
     :root {
-      /* 仿百度网盘悬浮窗配色 */
-      --bd-blue: #2e6be6;        /* 百度系蓝（云朵/上传） */
-      --bd-blue-deep: #1f56c8;
-      --bd-blue-bar: #3a8ffd;    /* 底部进度条蓝 */
-      --down-green: #1bbf73;     /* 下载速度绿 */
-      --text: #333333;
+      --bg: #ffffff;
+      --bg-soft: #f4f6fb;
+      --border: #e7ecf3;
+      --text: #2b2f3a;
       --text-2: #8b90a0;
+      --primary: #4f6ef7;
+      --primary-weak: #eaf0ff;
+      --up: #4f6ef7;        /* 上传方向 */
+      --down: #1bbf73;      /* 下载方向 */
+      --danger: #f04747;
+      --danger-weak: #ffecec;
+      --warning: #f2a738;
       --track: #eef1f6;
-      font-size: 12px;
+      /* 微型模式：悬浮窗自身为进度条（轨道用中等蓝灰，填充用深主蓝，白字可读） */
+      --micro-track: #16181f;
+      --micro-fill: #4f6ef7;
+      --shadow: 0 10px 28px rgba(30, 40, 80, 0.18);
+      --shadow-hover: 0 12px 32px rgba(30, 40, 80, 0.24);
+      color-scheme: light;
     }
+    :root.dark {
+      --bg: #16161a;
+      --bg-soft: #1f1f26;
+      --border: #2a2a30;
+      --text: #e6e7eb;
+      --text-2: #969ba6;
+      --primary: #6c8cff;
+      --primary-weak: #1c2647;
+      --up: #6c8cff;
+      --down: #34d399;
+      --danger: #f87171;
+      --danger-weak: #3a1d1d;
+      --warning: #fbbf24;
+      --track: #2a2a30;
+      --micro-track: #0b0b0d;
+      --micro-fill: #6c8cff;
+      --shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
+      --shadow-hover: 0 12px 32px rgba(0, 0, 0, 0.5);
+      color-scheme: dark;
+    }
+
     html, body {
       width: 100%; height: 100%;
       background: transparent;
@@ -24,117 +59,279 @@
       font-family: "Segoe UI", "Microsoft YaHei", system-ui, sans-serif;
       color: var(--text);
     }
+    button { font-family: inherit; border: none; background: none; cursor: pointer; color: inherit; }
 
-    /* 固定尺寸长方形悬浮块：铺满整个窗口（150×36，永不 resize）
-       仿百度网盘：右侧整块是进度条，左侧 logo 区不被进度条覆盖 */
-    .block {
-      position: absolute;
-      left: 0; right: 0; top: 0; bottom: 0;
-      display: flex;
-      /* 蓝色风格：蓝渐变卡片，白色风格在浅色桌面上看不清 */
-      background: linear-gradient(180deg, #4a86f5, #2e6be6);
-      border-radius: 10px;
-      /* 透明窗口上任何 box-shadow（含 inset）都可能渲染成黑色描边/黑线，
-         这里完全去掉，蓝色卡片与桌面背景的对比足够清晰 */
-      cursor: pointer;
-      touch-action: none;
-      z-index: 5;
+    /* 悬浮窗根容器：铺满整个透明窗口（未残留四周白边），进度色可填充到边缘 */
+    .widget {
+      position: absolute; left: 0; right: 0; top: 0; bottom: 0;
+      display: flex; flex-direction: column;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
       overflow: hidden;
-      /* 硬性禁止任何缩放/位移动画：按住鼠标也不会变大 */
-      transform: none !important;
+      cursor: default;
+      touch-action: none;
+      /* 透明窗口拖拽时任何 CSS 过渡/位移都会导致抖动与先放大后缩小，禁止 */
       transition: none !important;
+      transform: none !important;
+      will-change: initial;
     }
-    .block:active { background: linear-gradient(180deg, #3f7bf0, #2661d8); }
+    /* 微型模式：悬浮窗即总任务进度条 —— 卡片背景为进度轨道，进度色填充整卡 */
+    [data-mode="micro"] .widget { background: var(--bg); border-color: transparent; border-radius: 6px; }
 
-    /* 左侧 logo 区：背景透明（蓝卡直接显示，避免白色圆角在透明窗口角上渲出黑边）；
-       白色云朵芯片内缩在区域内，不接触窗口角 */
-    .block .logo-zone {
-      width: 36px;
-      flex-shrink: 0;
-      background: transparent;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-right: 1px solid rgba(255, 255, 255, 0.28);
+    /* ===== 顶部条（三种模式共用）===== */
+    .bar {
+      height: 40px; flex: 0 0 40px;
+      display: flex; align-items: center; gap: 8px;
+      padding: 0 8px;
+      position: relative; z-index: 1;
+      border-bottom: 1px solid transparent;
     }
-    .block .logo-zone .cloud {
-      width: 20px; height: 20px;
-      border-radius: 6px;
-      background: #ffffff;
+    /* 微型模式：logo 独立左侧区，进度条只填右侧；速度靠左 */
+    [data-mode="micro"] .bar { height: 34px; flex-basis: 34px; gap: 0; padding: 0; border-bottom: none; }
+
+    /* 云朵 logo 芯片 */
+    .logo {
+      width: 24px; height: 24px; flex-shrink: 0;
+      border-radius: 7px;
+      background: var(--primary-weak);
       display: flex; align-items: center; justify-content: center;
     }
-    .block .logo-zone .cloud svg { width: 12px; height: 12px; pointer-events: none; stroke: #2e6be6; }
-
-    /* 右侧进度区：占满剩余整块窗口，轨道即背景，蓝色填充按百分比增长 */
-    .block .bar-zone {
-      flex: 1;
-      min-width: 0;
-      position: relative;
-      /* 浅色轨道：在蓝卡上叠一层半透明白，衬托深蓝填充 */
-      background: rgba(255, 255, 255, 0.18);
-      overflow: hidden;
-      /* 右圆角：消除透明窗口子背景"灰色尖角" */
-      border-radius: 0 10px 10px 0;
+    .logo svg { width: 14px; height: 14px; stroke: var(--primary); pointer-events: none; }
+    [data-mode="micro"] .logo {
+      width: 34px; height: 34px; border-radius: 0; flex-shrink: 0;
+      background: var(--surface); border-right: 1px solid var(--border);
     }
-    .block .progress-fill {
-      position: absolute;
-      left: 0; top: 0; bottom: 0;
-      width: 0%;
-      /* 深蓝填充：与浅色轨道对比清晰，白色文字始终可读 */
-      background: #1d4ed8;
+    [data-mode="micro"] .logo svg { width: 16px; height: 16px; }
+
+    /* 主显示区：速度 / 状态文字 */
+    .main {
+      flex: 1; min-width: 0;
+      display: flex; align-items: center; gap: 6px;
+      font-size: 13px; font-weight: 600;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap; overflow: hidden;
+    }
+    /* 微型模式：左右横排速度（左=上传、右=下载），紧凑白字+轻投影保证可读 */
+    [data-mode="micro"] .main {
+      flex-direction: row;
+      align-items: center;
+      justify-content: flex-start;
+      padding-left: 6px;
+      gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--fg);
+    }
+    .sp-item { display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0; }
+    .sp-item + .sp-item { margin-left: 2px; }
+    .sp-item svg { width: 10px; height: 10px; flex-shrink: 0; }
+    .sp-item.down svg { color: var(--down); }
+    .sp-item.up svg { color: var(--up); }
+    /* 速度/状态放在小圆角标签芯片上（浅色底 + 主题前景色），落在进度色或轨道上都可读 */
+    [data-mode="micro"] .sp-item,
+    [data-mode="micro"] .status-label {
+      background: var(--surface-2);
+      color: var(--fg);
+      border-radius: 999px;
+      padding: 1px 5px;
+      font-weight: 600;
+    }
+    [data-mode="micro"] .sp-item { gap: 2px; }
+    [data-mode="micro"] .sp-item + .sp-item { margin-left: 0; }
+    .status-label { color: var(--text-2); font-weight: 500; }
+    .status-label.error { color: var(--danger); font-weight: 600; }
+
+    /* 错误徽标：存在失败任务时显示（不过度、可一眼识别） */
+    .err-badge {
+      flex-shrink: 0;
+      min-width: 15px; height: 15px; padding: 0 4px;
+      border-radius: 8px;
+      background: var(--danger-weak); color: var(--danger);
+      font-size: 11px; font-weight: 700;
+      display: none; align-items: center; justify-content: center;
+    }
+    .err-badge.show { display: flex; }
+
+    /* 右上角动作按钮（展开 / 关闭） */
+    .actions { display: flex; align-items: center; gap: 2px; flex-shrink: 0; }
+    .icon-btn {
+      width: 24px; height: 24px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 6px; color: var(--text-2);
+      transition: background 0.14s ease, color 0.14s ease;
+    }
+    .icon-btn:hover { background: var(--bg-soft); color: var(--text); }
+    .icon-btn svg { width: 13px; height: 13px; }
+    [data-mode="micro"] .toggle-btn { display: none; }
+    [data-mode="micro"] .icon-btn { width: 20px; height: 20px; }
+
+    /* 总任务进度条：悬浮窗自身即进度条，填充进度色（微型模式显示） */
+    .progress-fill {
+      position: absolute; left: 0; top: 0; bottom: 0; width: 0%;
+      background: var(--primary); z-index: 0;
       transition: width 0.4s ease;
     }
-    /* 叠在进度条上的速度文字：白色 + 轻投影，蓝卡/浅轨道/深蓝填充上都清晰 */
-    .block .speeds {
-      position: absolute;
-      left: 7px; top: 0; bottom: 0;
-      display: flex; align-items: center;
-      font-size: 9px; font-weight: 700; color: #ffffff;
-      font-variant-numeric: tabular-nums;
-      white-space: nowrap;
-      text-shadow: 0 1px 2px rgba(8, 20, 50, 0.4);
+    [data-mode="micro"] .progress-fill { left: 34px; }
+    [data-mode="expanded"] .progress-fill { display: none; }
+
+    /* ===== 展开模式主体 ===== */
+    .body {
+      flex: 1; min-height: 0;
+      display: none; flex-direction: column;
+      background: var(--bg);
+      position: relative; z-index: 1;
     }
-    .block .speeds .item {
-      display: inline-flex; align-items: center; gap: 2px;
-      white-space: nowrap;
+    [data-mode="expanded"] .body { display: flex; }
+    .body-header {
+      flex: 0 0 36px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 12px;
+      font-size: 13px; font-weight: 700; color: var(--text);
     }
-    .block .speeds .item + .item { margin-left: 6px; }
-    .block .speeds svg { width: 7px; height: 7px; flex-shrink: 0; }
-    /* 上传/下载统一白色，避免彩色字与蓝色背景撞色 */
-    .block .speeds .up,
-    .block .speeds .down { color: inherit; }
+    .body-header .n { color: var(--text-2); font-weight: 500; }
+    .body-tabs {
+      flex: 0 0 34px;
+      display: flex; align-items: center; gap: 4px;
+      padding: 0 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .tab {
+      padding: 4px 12px; border-radius: 999px;
+      font-size: 12px; font-weight: 500; color: var(--text-2);
+      transition: background 0.14s ease, color 0.14s ease;
+    }
+    .tab:hover { background: var(--bg-soft); color: var(--text); }
+    .tab.active { background: var(--primary-weak); color: var(--primary); font-weight: 600; }
+    .body-list {
+      flex: 1; min-height: 0; overflow-y: auto; overflow-x: hidden;
+      padding: 4px 6px 4px 8px;
+    }
+    .body-list::-webkit-scrollbar { width: 4px; }
+    .body-list::-webkit-scrollbar-thumb { background: var(--track); border-radius: 4px; }
+
+    /* 任务行 */
+    .task-row {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 4px;
+      border-radius: 9px;
+    }
+    .task-row:hover { background: var(--bg-soft); }
+    .tr-icon {
+      width: 24px; height: 24px; flex-shrink: 0;
+      border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--bg-soft); color: var(--text-2);
+    }
+    .tr-icon svg { width: 12px; height: 12px; }
+    .task-row.download .tr-icon { color: var(--down); }
+    .task-row.upload .tr-icon { color: var(--up); }
+    .task-row.failed .tr-icon { color: var(--danger); background: var(--danger-weak); }
+    .tr-main { flex: 1; min-width: 0; }
+    .tr-name {
+      font-size: 13px; font-weight: 500; color: var(--text);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .tr-sub {
+      display: flex; align-items: center; gap: 6px;
+      margin-top: 2px; font-size: 11.5px; color: var(--text-2);
+    }
+    .tr-status { flex-shrink: 0; }
+    .task-row.paused .tr-status,
+    .task-row.failed .tr-status { color: var(--danger); }
+    .task-row.completed .tr-status { color: var(--down); }
+    .tr-speed { font-variant-numeric: tabular-nums; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tr-track {
+      margin-top: 5px; height: 3px; border-radius: 2px;
+      background: var(--track); overflow: hidden;
+    }
+    .tr-fill { height: 100%; width: 0%; background: var(--primary); border-radius: 2px; transition: width 0.25s ease; }
+    .task-row.download .tr-fill { background: var(--down); }
+    .task-row.failed .tr-fill { background: var(--danger); }
+    .tr-percent {
+      flex-shrink: 0; font-size: 11.5px; font-weight: 600; color: var(--text);
+      font-variant-numeric: tabular-nums; min-width: 30px; text-align: right;
+    }
+    .tr-action {
+      flex-shrink: 0; width: 26px; height: 26px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 7px; color: var(--text-2);
+      opacity: 0; transition: opacity 0.14s ease, background 0.14s ease, color 0.14s ease;
+    }
+    .task-row:hover .tr-action { opacity: 1; }
+    .tr-action:hover { background: var(--bg-soft); color: var(--text); }
+    .tr-action svg { width: 13px; height: 13px; }
+    .tr-action.primary { background: var(--primary-weak); color: var(--primary); opacity: 1; }
+
+    /* 展开模式底部："打开传输列表" */
+    .body-footer {
+      flex: 0 0 36px;
+      display: flex; align-items: center; justify-content: center;
+      border-top: 1px solid var(--border);
+      color: var(--primary); font-size: 12px; font-weight: 600;
+      cursor: pointer;
+    }
+    .body-footer:hover { background: var(--primary-weak); }
+    .body-footer svg { width: 12px; height: 12px; margin-left: 4px; }
+
+    .empty {
+      padding: 24px 12px; text-align: center;
+      color: var(--text-2); font-size: 12px;
+    }
+
   </style>
 </head>
 <body>
-  <div class="block" id="block">
-    <!-- 左侧 logo 区（进度条不覆盖） -->
-    <div class="logo-zone">
-      <div class="cloud">
-        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <div class="widget" id="widget" data-mode="micro" data-state="idle">
+    <!-- 顶部条 -->
+    <div class="bar" id="bar">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M17.5 19a4.5 4.5 0 1 0-.43-8.98 6 6 0 1 0-11.4 2.1A4 4 0 0 0 6.5 19h11z"/>
         </svg>
       </div>
-    </div>
-    <!-- 右侧进度区：整块即进度条 -->
-    <div class="bar-zone">
-      <div class="progress-fill" id="progressFill" style="width:0%"></div>
-      <div class="speeds">
-        <span class="item up">
+      <div class="main" id="main">
+        <span class="sp-item up" id="spUp" style="display:none">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
-          <span id="speedUpText">0 B/s</span>
+          <span class="sp-val" id="spUpVal">0</span><span class="sp-unit" id="spUpUnit">B/s</span>
         </span>
-        <span class="item down">
+        <span class="sp-item down" id="spDown" style="display:none">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
-          <span id="speedDownText">0 B/s</span>
+          <span class="sp-val" id="spDownVal">0</span><span class="sp-unit" id="spDownUnit">B/s</span>
         </span>
+        <span class="status-label" id="statusLabel">暂无传输任务</span>
+      </div>
+      <div class="err-badge" id="errBadge">0</div>
+      <div class="actions">
+        <button class="icon-btn toggle-btn" id="toggleBtn" title="展开/收起" aria-label="展开/收起">
+          <svg id="toggleIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
       </div>
     </div>
+
+    <!-- 展开模式主体 -->
+    <div class="body">
+      <div class="body-header">
+        <span>传输任务 <span class="n" id="bodyCount">(0)</span></span>
+      </div>
+      <div class="body-tabs" id="tabs">
+        <button class="tab active" data-filter="all">全部</button>
+        <button class="tab" data-filter="upload">上传</button>
+        <button class="tab" data-filter="download">下载</button>
+      </div>
+      <div class="body-list" id="taskList"></div>
+      <div class="body-footer" id="openListBtn">
+        打开传输列表
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </div>
+    </div>
+    <!-- 总任务进度条：微型模式悬浮窗自身即进度条，填充进度色 -->
+    <div class="progress-fill" id="progressFill"></div>
   </div>
 
   <script>
     (function () {
       'use strict';
-
       const api = window.electronAPI;
       if (!api) {
         document.body.innerHTML = '<div style="color:#8b90a0;padding:30px;font-size:12px;text-align:center">仅支持在桌面客户端中运行</div>';
@@ -142,73 +339,387 @@
       }
 
       const $ = (id) => document.getElementById(id);
-      const block = $('block');
-      const speedUpEl = $('speedUpText');
-      const speedDownEl = $('speedDownText');
+      const widget = $('widget');
+      const mainEl = $('main');
+      const spDown = $('spDown');
+      const spUp = $('spUp');
+      const spDownVal = $('spDownVal');
+      const spDownUnit = $('spDownUnit');
+      const spUpVal = $('spUpVal');
+      const spUpUnit = $('spUpUnit');
+      const statusLabel = $('statusLabel');
+      const errBadge = $('errBadge');
+      const bodyCount = $('bodyCount');
+      const listEl = $('taskList');
       const progressFill = $('progressFill');
+      const toggleBtn = $('toggleBtn');
+      const toggleIcon = $('toggleIcon');
+      const openListBtn = $('openListBtn');
 
-      let tasks = [];
+      // ===== 状态与数据模型 =====
       const ACTIVE = new Set(['pending', 'hashing', 'uploading', 'downloading', 'merging']);
+      const MODES = ['micro', 'expanded'];
+      let mode = 'micro';
+      let filter = 'all';
+      let tasks = [];             // 新的在前
+      const taskMap = new Map();  // id -> task
+      let dirty = false;
+      let rafId = null;
+      let listRenderedIds = null;
+      const rowByTask = new Map(); // taskId -> row element
 
-      function fmtSize(bytes) {
-        if (!bytes || bytes <= 0) return '0 B';
-        const units = ['B', 'KB', 'MB', 'GB', 'TB'];
-        const i = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
-        const v = bytes / Math.pow(1024, i);
-        // 紧凑显示：统一 1 位小数，悬浮窗小，避免文字过长
-        return (v >= 100 ? Math.round(v) : v.toFixed(1)) + ' ' + units[i];
-      }
-      function fmtSpeed(bps) {
-        if (!bps || bps <= 0) return '0 B/s';
-        return fmtSize(bps) + '/s';
+      // 缓存渲染值，避免每次 task:update 都重写文本
+      const barCache = { up: '', down: '', status: '', err: '', count: '', state: '' };
+
+      // ===== 格式化 =====
+      function speedParts(bps) {
+        if (!bps || bps <= 0) return { val: '0', unit: 'B/s' };
+        const units = ['B/s', 'KB/s', 'MB/s', 'GB/s', 'TB/s'];
+        const i = Math.min(units.length - 1, Math.floor(Math.log(bps) / Math.log(1024)));
+        const v = bps / Math.pow(1024, i);
+        let s;
+        if (v >= 100) s = String(Math.round(v));
+        else s = v.toFixed(1);
+        return { val: s, unit: units[i] };
       }
 
-      // 悬浮块显示：上传/下载总速度 + 传输任务平均进度
-      function renderBlock() {
-        let up = 0, down = 0, n = 0, sumPct = 0;
+      function taskStatusText(t) {
+        switch (t.status) {
+          case 'pending': return '等待中';
+          case 'hashing': return '计算中';
+          case 'uploading': return '上传中';
+          case 'downloading': return '下载中';
+          case 'merging': return '合并中';
+          case 'paused': return '已暂停';
+          case 'completed': return '已完成';
+          case 'failed': return '失败';
+          case 'cancelled': return '已取消';
+          default: return '—';
+        }
+      }
+
+      // ===== 任务聚合 =====
+      function computeState() {
+        let up = 0, down = 0, activeCount = 0, pausedCount = 0, failedCount = 0, sumP = 0, nP = 0;
+        let hasUp = false, hasDown = false;
         for (const t of tasks) {
           if (ACTIVE.has(t.status)) {
-            n++;
-            sumPct += Math.min(100, t.progress || 0);
-            if (t.type === 'upload') up += t.speed || 0;
-            else down += t.speed || 0;
+            activeCount++;
+            sumP += Math.min(100, t.progress || 0); nP++;
+            if (t.type === 'upload') { up += t.speed || 0; hasUp = true; }
+            else { down += t.speed || 0; hasDown = true; }
           } else if (t.status === 'paused') {
-            n++;
-            sumPct += Math.min(100, t.progress || 0);
+            pausedCount++;
+            sumP += Math.min(100, t.progress || 0); nP++;
+          } else if (t.status === 'failed') {
+            failedCount++;
           }
         }
-
-        // 总进度：进行中/暂停任务的平均进度
-        let p = 0;
-        if (n > 0) p = Math.round((sumPct / n) * 10) / 10;
-
-        speedUpEl.textContent = fmtSpeed(up);
-        speedDownEl.textContent = fmtSpeed(down);
-        progressFill.style.width = p + '%';
+        let state;
+        if (failedCount > 0) state = 'error';
+        else if (activeCount > 0) state = (hasUp && hasDown) ? 'mixed' : (hasUp ? 'uploading' : 'downloading');
+        else if (pausedCount > 0) state = 'paused';
+        else state = 'idle';
+        const progress = nP > 0 ? Math.round((sumP / nP) * 10) / 10 : 0;
+        return {
+          state, up, down,
+          activeCount, pausedCount, failedCount,
+          ongoingCount: activeCount + pausedCount,
+          hasActive: activeCount > 0,
+          progress,
+        };
       }
 
+      // ===== rAF 节流渲染 =====
+      function markDirty() {
+        dirty = true;
+        if (rafId == null) rafId = requestAnimationFrame(renderFrame);
+      }
+
+      function renderFrame() {
+        rafId = null;
+        if (!dirty) return;
+        dirty = false;
+        const s = computeState();
+        applyBar(s);
+        if (mode === 'expanded') applyList(s);
+      }
+
+      // ===== 顶部条渲染（局部更新，值不变不重写）=====
+      function setText(el, key, value) {
+        if (barCache[key] !== String(value)) {
+          barCache[key] = String(value);
+          el.textContent = String(value);
+        }
+      }
+
+      function applyBar(s) {
+        if (barCache.state !== s.state) {
+          barCache.state = s.state;
+          widget.dataset.state = s.state;
+        }
+
+        if (s.hasActive) {
+          spDown.style.display = '';
+          spUp.style.display = '';
+          statusLabel.style.display = 'none';
+          const d = speedParts(s.down);
+          const u = speedParts(s.up);
+          setText(spDownVal, 'downVal', d.val);
+          setText(spDownUnit, 'downUnit', d.unit);
+          setText(spUpVal, 'upVal', u.val);
+          setText(spUpUnit, 'upUnit', u.unit);
+        } else {
+          spDown.style.display = 'none';
+          spUp.style.display = 'none';
+          statusLabel.style.display = '';
+          let text = '暂无传输任务';
+          if (s.state === 'paused') text = '已暂停';
+          else if (s.state === 'error') text = s.failedCount + ' 项失败';
+          statusLabel.textContent = text;
+          statusLabel.classList.toggle('error', s.state === 'error');
+          barCache.status = text;
+        }
+
+        // 错误徽标（任何时候有失败任务都显示）
+        const showErr = s.failedCount > 0;
+        errBadge.classList.toggle('show', showErr);
+        if (showErr) setText(errBadge, 'err', s.failedCount);
+
+        // 展开标题任务数 = 未完成任务（列表只展示未完成）
+        const unfinished = tasks.filter((t) => t.status !== 'completed' && t.status !== 'cancelled').length;
+        setText(bodyCount, 'bodyCount', '(' + unfinished + ')');
+
+        // 总任务进度条：悬浮窗即整体进度（微型模式 logo 独占 34px，填充只覆盖右侧进度区）
+        if (progressFill) {
+          const logoW = mode === 'micro' ? 34 : 0;
+          const zoneW = Math.max(0, (widget.clientWidth || 152) - logoW);
+          const targetPx = (Math.min(100, s.progress) / 100) * zoneW;
+          if (Math.abs((progressFill.__w || 0) - targetPx) >= 1) {
+            progressFill.__w = targetPx;
+            progressFill.style.width = targetPx + 'px';
+          }
+        }
+      }
+
+      // ===== 模式切换 =====
+      function setMode(next, notify) {
+        if (!MODES.includes(next) || next === mode) return;
+        mode = next;
+        widget.dataset.mode = mode;
+        updateToggleIcon();
+        if (notify && api.setWidgetMode) api.setWidgetMode(mode);
+        if (mode === 'expanded') {
+          listRenderedIds = null;
+          applyList(computeState());
+          // 展开时主动拉取一次最新任务，规避个别任务更新未推送到悬浮窗的情况
+          if (api.getTasks) api.getTasks().then(applyAll).catch(function () {});
+        }
+      }
+
+      function updateToggleIcon() {
+        const expanded = mode === 'expanded';
+        toggleIcon.innerHTML = expanded
+          ? '<path d="M6 15l6-6 6 6"/>'
+          : '<path d="M6 9l6 6 6-6"/>';
+      }
+
+      // ===== 展开任务列表 =====
+      function visibleTasks() {
+        // 列表只展示未完成任务（排除已完成/已取消）
+        const unfinished = tasks.filter((t) => t.status !== 'completed' && t.status !== 'cancelled');
+        if (filter === 'upload') return unfinished.filter((t) => t.type === 'upload');
+        if (filter === 'download') return unfinished.filter((t) => t.type === 'download');
+        return unfinished;
+      }
+
+      const SVGS = {
+        up: '<path d="M12 19V5M5 12l7-7 7 7"/>',
+        down: '<path d="M12 5v14M5 12l7 7 7-7"/>',
+        pause: '<path d="M6 5h4v14H6zM14 5h4v14h-4z"/>',
+        play: '<path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72l-11-6.86a1 1 0 0 0-1.5.86z"/>',
+        x: '<path d="M18 6L6 18M6 6l12 12"/>',
+        retry: '<path d="M21 12a9 9 0 1 1-9-9"/><path d="M21 3v6h-6"/>',
+      };
+
+      function makeRow(t) {
+        const row = document.createElement('div');
+        row.className = 'task-row';
+        row.dataset.id = t.id;
+        row.dataset.rev = '0';
+
+        const icon = document.createElement('div');
+        icon.className = 'tr-icon';
+        icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + SVGS.down + '</svg>';
+
+        const main = document.createElement('div');
+        main.className = 'tr-main';
+        const name = document.createElement('div');
+        name.className = 'tr-name';
+        const sub = document.createElement('div');
+        sub.className = 'tr-sub';
+        const status = document.createElement('span');
+        status.className = 'tr-status';
+        const speed = document.createElement('span');
+        speed.className = 'tr-speed';
+        sub.appendChild(status);
+        sub.appendChild(speed);
+        const track = document.createElement('div');
+        track.className = 'tr-track';
+        const fill = document.createElement('div');
+        fill.className = 'tr-fill';
+        track.appendChild(fill);
+        main.appendChild(name);
+        main.appendChild(sub);
+        main.appendChild(track);
+
+        const percent = document.createElement('span');
+        percent.className = 'tr-percent';
+        const action = document.createElement('button');
+        action.className = 'tr-action';
+        action.setAttribute('aria-label', '操作');
+        action.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + SVGS.play + '</svg>';
+
+        row.appendChild(icon);
+        row.appendChild(main);
+        row.appendChild(percent);
+        row.appendChild(action);
+        row.__els = { icon, name, status, speed, fill, percent, action };
+        return row;
+      }
+
+      function updateRow(row, t) {
+        const els = row.__els;
+        row.dataset.rev = String(t.__rev || 0);
+        row.className = 'task-row';
+        row.classList.add(t.type);
+        if (t.status === 'failed') row.classList.add('failed');
+        if (t.status === 'paused') row.classList.add('paused');
+        if (t.status === 'completed') row.classList.add('completed');
+
+        els.icon.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + (t.type === 'upload' ? SVGS.up : SVGS.down) + '</svg>';
+        els.name.textContent = t.fileName || '未知文件';
+
+        const statusText = taskStatusText(t);
+        els.status.textContent = statusText;
+        const sp = speedParts(t.speed || 0);
+        els.speed.textContent = ACTIVE.has(t.status) ? sp.val + ' ' + sp.unit : '';
+
+        const pct = Math.max(0, Math.min(100, t.progress || 0));
+        els.fill.style.width = pct + '%';
+        els.percent.textContent = ACTIVE.has(t.status) || t.status === 'paused'
+          ? Math.round(pct) + '%'
+          : (t.status === 'completed' ? '完成' : (t.status === 'failed' ? '失败' : '—'));
+
+        // 行内动作：进行中→暂停；已暂停/等待中→继续/开始；终态→清除
+        const isActive = ACTIVE.has(t.status);
+        const isPaused = t.status === 'paused' || t.status === 'pending';
+        const isTerminal = t.status === 'completed' || t.status === 'failed' || t.status === 'cancelled';
+        actionSet(els.action, isActive ? 'pause' : (isPaused ? 'play' : 'x'), isTerminal ? 'x' : (isActive ? 'pause' : 'play'), isTerminal || isPaused);
+      }
+
+      function actionSet(btn, kind, icon, emphasis) {
+        btn.dataset.action = kind;
+        btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' + (SVGS[icon] || SVGS.play) + '</svg>';
+        btn.classList.toggle('primary', !!emphasis);
+      }
+
+      function applyList(s) {
+        const vis = visibleTasks();
+        const ids = vis.map((t) => t.id);
+        const idsKey = ids.join(',') + '|' + filter;
+        if (listRenderedIds !== idsKey) {
+          listRenderedIds = idsKey;
+          listEl.innerHTML = '';
+          rowByTask.clear();
+          if (vis.length === 0) {
+            const empty = document.createElement('div');
+            empty.className = 'empty';
+            empty.textContent = '当前筛选下暂无任务';
+            listEl.appendChild(empty);
+            return;
+          }
+          for (const t of vis) {
+            const row = makeRow(t);
+            updateRow(row, t);
+            rowByTask.set(t.id, row);
+            listEl.appendChild(row);
+          }
+          return;
+        }
+        // 对可见行做局部更新：task:update 每约 1s 携带最新速度/进度，
+        // 需每次都刷新（避免 __rev 在 IPC 重新生成导致只更新第一次）。
+        for (const t of vis) {
+          const row = rowByTask.get(t.id);
+          if (row) updateRow(row, t);
+        }
+      }
+
+      // ===== 任务数据接入 =====
       function mergeTask(next) {
-        const idx = tasks.findIndex(t => t.id === next.id);
-        if (idx === -1) tasks.unshift(next);
-        else tasks[idx] = next;
-        renderBlock();
+        const existed = taskMap.has(next.id);
+        next.__rev = (next.__rev || 0) + 1;
+        taskMap.set(next.id, next);
+        if (existed) {
+          const idx = tasks.findIndex((t) => t.id === next.id);
+          if (idx >= 0) tasks[idx] = next;
+        } else {
+          tasks.unshift(next);
+        }
+        markDirty();
       }
 
-      api.getTasks().then(function (all) { tasks = all || []; renderBlock(); }).catch(function () {});
+      function applyAll(all) {
+        taskMap.clear();
+        tasks = [];
+        for (const t of (all || [])) {
+          t.__rev = 1;
+          taskMap.set(t.id, t);
+          tasks.push(t);
+        }
+        tasks.sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+        markDirty();
+      }
+
+      function removeLocalTask(id) {
+        taskMap.delete(id);
+        tasks = tasks.filter((t) => t.id !== id);
+        markDirty();
+      }
+
+      api.getTasks().then(applyAll).catch(function () {});
       api.onTaskUpdate(mergeTask);
 
-      // ===== 交互：点击打开网盘、拖拽移动、右键弹出菜单小窗 =====
-      // 拖拽由主进程轮询系统光标直接驱动（鼠标移出悬浮窗也不断流），
-      // 这里只负责按下时上报"抓点偏移"、移动时记录是否真的拖过、松开时结束。
-      function startDrag(e, onMove) {
+      // ===== 主题：跟随主应用 Light / Dark，默认取系统偏好 =====
+      function applyDark(isDark) {
+        document.documentElement.classList.toggle('dark', !!isDark);
+      }
+      if (api.onWidgetThemeChanged) {
+        api.onWidgetThemeChanged(applyDark);
+      }
+      try {
+        const mq = window.matchMedia('(prefers-color-scheme: dark)');
+        applyDark(mq.matches);
+        mq.addEventListener('change', (e) => applyDark(e.matches));
+      } catch (e) { /* ignore */ }
+
+      // ===== 初始模式恢复 =====
+      if (api.getWidgetMode) {
+        api.getWidgetMode().then(function (m) {
+          if (MODES.includes(m)) setMode(m, false);
+        }).catch(function () {});
+      }
+
+      // ===== 交互：展开/收起/关闭/拖拽/右键 =====
+      // 拖拽：主进程轮询系统光标驱动，这里只上报"抓点偏移"并区分点击 vs 拖拽
+      function startDrag(e) {
         const st = { sx: e.screenX, sy: e.screenY, total: 0, moved: false };
         if (e.target.setPointerCapture) {
           try { e.target.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
         }
         if (api.startMiniWindowDrag) {
-          const r = block.getBoundingClientRect();
-          // 抓点偏移 = 鼠标按住点相对窗口左上角，保证"抓住哪就跟到哪"、不跳变
-          api.startMiniWindowDrag(e.clientX - r.left, e.clientY - r.top);
+          // 抓点偏移 = 鼠标相对窗口左上角（含四周透明留白），与主进程 setBounds 的坐标系一致
+          api.startMiniWindowDrag(e.screenX - window.screenX, e.screenY - window.screenY);
         }
         const move = function (ev) {
           st.total += Math.abs(ev.screenX - st.sx) + Math.abs(ev.screenY - st.sy);
@@ -218,22 +729,78 @@
           document.removeEventListener('pointermove', move);
           document.removeEventListener('pointerup', up);
           if (api.endMiniWindowDrag) api.endMiniWindowDrag();
-          onMove(st.moved);
+          widget.dataset.dragged = st.moved ? '1' : '0';
         };
         document.addEventListener('pointermove', move);
         document.addEventListener('pointerup', up);
       }
 
-      let blockDragged = false;
-      block.addEventListener('pointerdown', function (e) {
+      widget.addEventListener('pointerdown', function (e) {
         if (e.button !== 0) return;
-        startDrag(e, function (moved) { blockDragged = moved; });
+        // 点击悬浮窗时关闭已弹出的右键菜单
+        if (api.hideMiniMenu) api.hideMiniMenu();
+        // 从按钮上按下不应触发拖拽（按钮自己处理点击）
+        if (e.target.closest('button')) return;
+        widget.dataset.dragged = '0';
+        startDrag(e);
       });
-      block.addEventListener('click', function () {
-        if (!blockDragged && api.openMainWindow) api.openMainWindow();
-        blockDragged = false;
+
+      // 点击非拖拽 → 模式切换；微型点击即展开，展开点击收起回微型
+      widget.addEventListener('click', function (e) {
+        if (widget.dataset.dragged === '1') { widget.dataset.dragged = '0'; return; }
+        widget.dataset.dragged = '0';
+        if (e.target.closest('button')) return; // 按钮自行处理
+        if (mode === 'micro') setMode('expanded', true);
+        else setMode('micro', true);
       });
-      block.addEventListener('contextmenu', function (e) {
+
+      toggleBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
+        setMode(mode === 'expanded' ? 'micro' : 'expanded', true);
+      });
+
+      // 展开底部：打开传输列表
+      openListBtn.addEventListener('click', function () {
+        if (api.openTransfers) api.openTransfers();
+      });
+
+      // 任务行动作（事件委托）
+      listEl.addEventListener('click', function (e) {
+        const btn = e.target.closest('.tr-action');
+        if (!btn) return;
+        const row = btn.closest('.task-row');
+        if (!row) return;
+        const id = row.dataset.id;
+        const t = taskMap.get(id);
+        if (!t) return;
+        const kind = btn.dataset.action;
+        const isUpload = t.type === 'upload';
+        if (kind === 'pause') {
+          if (isUpload && api.pauseUpload) api.pauseUpload(id);
+          else if (!isUpload && api.pauseDownload) api.pauseDownload(id);
+        } else if (kind === 'play') {
+          if (isUpload && api.resumeUpload) api.resumeUpload(id);
+          else if (!isUpload && api.resumeDownload) api.resumeDownload(id);
+        } else if (kind === 'x' && api.removeTask) {
+          api.removeTask(id);
+          removeLocalTask(id);
+        }
+      });
+
+      // 筛选 tab
+      $('tabs').addEventListener('click', function (e) {
+        const tab = e.target.closest('.tab');
+        if (!tab) return;
+        filter = tab.dataset.filter;
+        Array.prototype.forEach.call(this.children, function (x) {
+          x.classList.toggle('active', x === tab);
+        });
+        listRenderedIds = null;
+        applyList(computeState());
+      });
+
+      // 右键：打开悬浮窗菜单小窗
+      widget.addEventListener('contextmenu', function (e) {
         e.preventDefault();
         e.stopPropagation();
         if (api.showMiniMenu) api.showMiniMenu();
@@ -242,6 +809,10 @@
         e.preventDefault();
         if (api.showMiniMenu) api.showMiniMenu();
       });
+
+      // 初始渲染
+      setMode('micro', false);
+      updateToggleIcon();
     })();
   </script>
 </body>

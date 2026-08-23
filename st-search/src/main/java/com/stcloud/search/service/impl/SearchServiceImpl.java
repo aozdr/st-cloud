@@ -8,6 +8,7 @@ import com.stcloud.common.enums.NodeStatus;
 import com.stcloud.core.entity.FileNode;
 import com.stcloud.core.mapper.FileNodeMapper;
 import com.stcloud.core.service.StorageService;
+import com.stcloud.search.dto.SearchResultPage;
 import com.stcloud.search.dto.SearchResultVO;
 import com.stcloud.search.init.SearchIndexInitializer;
 import com.stcloud.search.service.SearchService;
@@ -149,7 +150,7 @@ public class SearchServiceImpl implements SearchService {
      * @return 搜索结果列表
      */
     @Override
-    public List<SearchResultVO> searchContent(String keyword, Long ownerId, int page, int size,
+    public SearchResultPage searchContent(String keyword, Long ownerId, int page, int size,
             Integer nodeType, List<String> suffixes, Long sizeMin, Long sizeMax, Long dateFrom, Long dateTo) {
         log.info("Search request: keyword='{}', ownerId={}, page={}, size={}, filters=[nodeType={}, suffixes={}, sizeMin={}, sizeMax={}, dateFrom={}, dateTo={}]", keyword, ownerId, page, size, nodeType, suffixes, sizeMin, sizeMax, dateFrom, dateTo);
         try {
@@ -305,10 +306,10 @@ public class SearchServiceImpl implements SearchService {
             long total = response.hits().total() != null ? response.hits().total().value() : 0;
             log.info("Search completed: keyword='{}', ownerId={}, totalHits={}, returned={}",
                     keyword, ownerId, total, results.size());
-            return results;
+            return new SearchResultPage(results, total, page, size);
         } catch (Exception e) {
             log.error("Search failed, keyword={}, ownerId={}: {}", keyword, ownerId, e.getMessage());
-            return Collections.emptyList();
+            return new SearchResultPage(Collections.emptyList(), 0, page, size);
         }
     }
 

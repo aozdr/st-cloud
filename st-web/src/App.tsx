@@ -47,6 +47,15 @@ export default function App() {
         {/* 分享文件 OnlyOffice 查看/编辑页 - 无需登录（分享权限集决定只读/可编辑） */}
         <Route path="/share/:shareCode/editor" element={<EditorPage />} />
         <Route path="/server-config" element={<ServerConfigPage />} />
+        {/* 系统管理：独立全屏页面，位于 AppLayout 之外 */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute>
+              <AdminPage />
+            </ProtectedRoute>
+          }
+        />
         {/* 在线文档编辑：全屏页面，位于 AppLayout 之外 */}
         <Route
           path="/file/:nodeId/editor"
@@ -83,7 +92,6 @@ export default function App() {
           <Route path="duplicates" element={<DuplicateFilesPage />} />
           <Route path="hidden" element={<HiddenFilesPage />} />
           <Route path="shares" element={<ShareManagePage />} />
-          <Route path="admin" element={<AdminPage />} />
           <Route path="team" element={<TeamPage />} />
           <Route path="team/:spaceId" element={<TeamSpacePage />} />
           <Route path="team/invite/:code" element={<TeamInvitePage />} />

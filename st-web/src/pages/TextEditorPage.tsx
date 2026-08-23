@@ -3,6 +3,8 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, FileText, Save } from 'lucide-react';
 import api from '../lib/api';
 import { useToast } from '../components/ui/Toast';
+import { isElectron } from '../lib/electron';
+import { getServerUrlSync } from '../lib/server-config';
 
 /**
  * 应用内轻量文本编辑器（方案 B）：txt/md/代码等文本文件在线编辑，
@@ -29,7 +31,7 @@ export default function TextEditorPage() {
     const controller = new AbortController();
     const token = localStorage.getItem('accessToken');
     const timer = window.setTimeout(() => controller.abort(), 15000);
-    fetch(`/api/file/${nodeId}/stream`, {
+    fetch(`${isElectron() ? getServerUrlSync() : ''}/api/file/${nodeId}/stream`, {
       headers: { Authorization: `Bearer ${token}` },
       signal: controller.signal,
     })

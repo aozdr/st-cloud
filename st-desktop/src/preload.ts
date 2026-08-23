@@ -1,5 +1,10 @@
 import { contextBridge, ipcRenderer } from 'electron';
-import type { ElectronAPI, TransferTask, TransferSettings } from './types';
+import type { ElectronAPI, TransferTask, TransferSettings, WidgetMode } from './types';
+
+/** Electron preload 运行于渲染进程，这里只声明本文件用到的 window.location 字段，避免引入全局 DOM lib 破坏 Node fetch 类型 */
+declare const window: {
+  location: { protocol: string; origin: string; pathname: string };
+};
 
 const api: ElectronAPI = {
   isElectron: true,
@@ -202,6 +207,19 @@ const api: ElectronAPI = {
   resetMiniWindowPosition: () => {
     return ipcRenderer.invoke('mini:reset');
   },
+  setWidgetMode: (mode: WidgetMode) => {
+    return ipcRenderer.invoke('mini:setWidgetMode', mode);
+  },
+  getWidgetMode: () => {
+    return ipcRenderer.invoke('mini:getWidgetMode');
+  },
+  onWidgetThemeChanged: (cb: (isDark: boolean) => void) => {
+    const handler = (_event: unknown, isDark: boolean) => cb(isDark);
+    ipcRenderer.on('mini:theme-changed', handler);
+    return () => {
+      ipcRenderer.removeListener('mini:theme-changed', handler);
+    };
+  },
   openMainWindow: () => {
     return ipcRenderer.invoke('mini:openMain');
   },
@@ -233,4 +251,33 @@ const api: ElectronAPI = {
   },
 };
 
-contextBridge.exposeInMainWorld('electronAPI', api);
+/**
+ * IPC 来源守卫：仅允许本应用可信页面（app:// / 开发 Vite / 打包 file:// 页面）
+ * 调用 window.electronAPI 暴露的任何方法，防止不可信页面借 API 触发主进程文件操作。
+ */
+function isTrustedPage(): boolean {
+  const proto = window.location.protocol;
+  if (proto === 'app:') return true;
+  if (proto === 'http:' || proto === 'https:') {
+    const origin = window.location.origin;
+    return origin === 'http://localhost:5173' || origin === 'http://127.0.0.1:5173';
+  }
+  if (proto === 'file:') {
+    return window.location.pathname.includes('/web/') || window.location.pathname.includes('mini-transfer');
+  }
+  return false;
+}
+
+const guardedApi: ElectronAPI = { ...api };
+for (const key of Object.keys(api) as Array<keyof ElectronAPI>) {
+  const value = api[key];
+  if (typeof value === 'function') {
+    const original = value as (...args: unknown[]) => unknown;
+    (guardedApi as unknown as Record<string, unknown>)[key] = (...args: unknown[]) => {
+      if (!isTrustedPage()) return Promise.reject(new Error('Unauthorized'));
+      return original.apply(null, args);
+    };
+  }
+}
+
+contextBridge.exposeInMainWorld('electronAPI', guardedApi);

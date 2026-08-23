@@ -141,7 +141,7 @@ class ShareServiceImplSecurityIntegrationTest extends AbstractShareIntegrationTe
 
         // 模拟匿名访问：清空登录上下文（无 userId），分享链路不得再走 owner 校验
         UserContext.clear();
-        Result<String> result = shareService.getDownloadUrl(vo.getShareCode(), null, null);
+        Result<String> result = shareService.getDownloadUrl(vo.getShareCode(), null, null, null, null);
         assertEquals("https://s3.example.test/presigned", result.getData());
     }
 
@@ -152,7 +152,7 @@ class ShareServiceImplSecurityIntegrationTest extends AbstractShareIntegrationTe
         ShareVO vo = createShare(file.getId(), 0, null);
 
         BusinessException ex = assertThrows(BusinessException.class,
-                () -> shareService.getDownloadUrl(vo.getShareCode(), null, null));
+                () -> shareService.getDownloadUrl(vo.getShareCode(), null, null, null, null));
         assertEquals(ResultCode.SHARE_ACCESS_DENIED.getCode(), ex.getCode());
         // permission=0 未显式传 allowDownload 时默认 0，统一命中 allow_download 下载开关
         assertTrue(ex.getMessage().contains("该分享不可下载"));
@@ -195,7 +195,7 @@ class ShareServiceImplSecurityIntegrationTest extends AbstractShareIntegrationTe
         FileNode file = insertFileNode(TENANT_ID, USER_ID, "flag-on.txt", 0);
         ShareVO vo = createShare(file.getId(), 1, null, 1);
 
-        Result<String> result = shareService.getDownloadUrl(vo.getShareCode(), null, null);
+        Result<String> result = shareService.getDownloadUrl(vo.getShareCode(), null, null, null, null);
         assertEquals("https://s3.example.test/presigned", result.getData());
     }
 
@@ -206,7 +206,7 @@ class ShareServiceImplSecurityIntegrationTest extends AbstractShareIntegrationTe
         ShareVO vo = createShare(file.getId(), 1, null, 0);
 
         BusinessException ex = assertThrows(BusinessException.class,
-                () -> shareService.getDownloadUrl(vo.getShareCode(), null, null));
+                () -> shareService.getDownloadUrl(vo.getShareCode(), null, null, null, null));
         assertEquals(ResultCode.SHARE_ACCESS_DENIED.getCode(), ex.getCode());
         assertTrue(ex.getMessage().contains("该分享不可下载"));
     }
@@ -219,7 +219,7 @@ class ShareServiceImplSecurityIntegrationTest extends AbstractShareIntegrationTe
 
         HttpServletResponse response = mock(HttpServletResponse.class);
         BusinessException ex = assertThrows(BusinessException.class,
-                () -> shareService.streamShareFile(vo.getShareCode(), null, null, response));
+                () -> shareService.streamShareFile(vo.getShareCode(), null, null, null, null, response));
         assertEquals(ResultCode.SHARE_ACCESS_DENIED.getCode(), ex.getCode());
         assertTrue(ex.getMessage().contains("该分享不可下载"));
     }
@@ -236,7 +236,7 @@ class ShareServiceImplSecurityIntegrationTest extends AbstractShareIntegrationTe
 
         HttpServletResponse response = mock(HttpServletResponse.class);
         BusinessException ex = assertThrows(BusinessException.class,
-                () -> shareService.streamShareFile(vo.getShareCode(), null, null, response));
+                () -> shareService.streamShareFile(vo.getShareCode(), null, null, null, null, response));
         assertEquals(ResultCode.SHARE_ACCESS_DENIED.getCode(), ex.getCode());
         assertTrue(ex.getMessage().contains("下载次数已达上限"));
     }
@@ -252,7 +252,7 @@ class ShareServiceImplSecurityIntegrationTest extends AbstractShareIntegrationTe
 
         HttpServletResponse response = mock(HttpServletResponse.class);
         when(response.getOutputStream()).thenReturn(mock(ServletOutputStream.class));
-        shareService.streamShareFile(vo.getShareCode(), null, null, response);
+        shareService.streamShareFile(vo.getShareCode(), null, null, null, null, response);
 
         FileShare after = fileShareMapper.selectById(vo.getId());
         assertEquals(1, after.getDownloadCount());
@@ -268,7 +268,7 @@ class ShareServiceImplSecurityIntegrationTest extends AbstractShareIntegrationTe
         ShareVO vo = createShare(root.getId(), 1, null);
 
         BusinessException ex = assertThrows(BusinessException.class,
-                () -> shareService.getDownloadUrl(vo.getShareCode(), sibling.getId(), null));
+                () -> shareService.getDownloadUrl(vo.getShareCode(), sibling.getId(), null, null, null));
         assertEquals(ResultCode.SHARE_ACCESS_DENIED.getCode(), ex.getCode());
     }
 
@@ -280,7 +280,7 @@ class ShareServiceImplSecurityIntegrationTest extends AbstractShareIntegrationTe
         ShareVO vo = createShare(rootFolder.getId(), 1, null);
 
         BusinessException ex = assertThrows(BusinessException.class,
-                () -> shareService.listShareFiles(vo.getShareCode(), siblingFolder.getId(), null));
+                () -> shareService.listShareFiles(vo.getShareCode(), siblingFolder.getId(), null, null, null));
         assertEquals(ResultCode.SHARE_ACCESS_DENIED.getCode(), ex.getCode());
     }
 
@@ -293,7 +293,7 @@ class ShareServiceImplSecurityIntegrationTest extends AbstractShareIntegrationTe
 
         HttpServletResponse response = mock(HttpServletResponse.class);
         BusinessException ex = assertThrows(BusinessException.class,
-                () -> shareService.streamShareFile(vo.getShareCode(), sibling.getId(), null, response));
+                () -> shareService.streamShareFile(vo.getShareCode(), sibling.getId(), null, null, null, response));
         assertEquals(ResultCode.SHARE_ACCESS_DENIED.getCode(), ex.getCode());
     }
 
@@ -319,7 +319,7 @@ class ShareServiceImplSecurityIntegrationTest extends AbstractShareIntegrationTe
         FileNode file = insertFileNode(TENANT_ID, USER_ID, "atomic-ok.txt", 0);
         ShareVO vo = createShare(file.getId(), 1, 1);
 
-        Result<String> result = shareService.getDownloadUrl(vo.getShareCode(), null, null);
+        Result<String> result = shareService.getDownloadUrl(vo.getShareCode(), null, null, null, null);
         assertEquals("https://s3.example.test/presigned", result.getData());
         assertEquals(1, fileShareMapper.selectById(vo.getId()).getDownloadCount());
     }
@@ -334,7 +334,7 @@ class ShareServiceImplSecurityIntegrationTest extends AbstractShareIntegrationTe
                 .set(FileShare::getDownloadCount, 1));
 
         BusinessException ex = assertThrows(BusinessException.class,
-                () -> shareService.getDownloadUrl(vo.getShareCode(), null, null));
+                () -> shareService.getDownloadUrl(vo.getShareCode(), null, null, null, null));
         assertEquals(ResultCode.SHARE_ACCESS_DENIED.getCode(), ex.getCode());
         assertTrue(ex.getMessage().contains("下载次数已达上限"));
         assertEquals(1, fileShareMapper.selectById(vo.getId()).getDownloadCount());
@@ -356,7 +356,7 @@ class ShareServiceImplSecurityIntegrationTest extends AbstractShareIntegrationTe
         when(response.getOutputStream()).thenReturn(mock(ServletOutputStream.class));
 
         long start = System.nanoTime();
-        shareService.streamShareFile(vo.getShareCode(), null, null, response);
+        shareService.streamShareFile(vo.getShareCode(), null, null, null, null, response);
         long elapsedMs = (System.nanoTime() - start) / 1_000_000L;
 
         // 1MB @ 5MB/s 理论下限约 200ms；宽松断言 150ms 避免 CI 计时抖动

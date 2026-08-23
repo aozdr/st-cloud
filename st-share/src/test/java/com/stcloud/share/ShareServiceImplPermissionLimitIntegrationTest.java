@@ -196,7 +196,7 @@ class ShareServiceImplPermissionLimitIntegrationTest extends AbstractShareIntegr
         assertEquals(0, fileShareMapper.selectById(vo.getId()).getAllowDownload());
 
         BusinessException ex = assertThrows(BusinessException.class,
-                () -> shareService.getDownloadUrl(vo.getShareCode(), null, null));
+                () -> shareService.getDownloadUrl(vo.getShareCode(), null, null, null, null));
         assertEquals(ResultCode.SHARE_ACCESS_DENIED.getCode(), ex.getCode());
         assertTrue(ex.getMessage().contains("该分享不可下载"));
     }

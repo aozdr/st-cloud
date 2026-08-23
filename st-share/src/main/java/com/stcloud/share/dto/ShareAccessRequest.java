@@ -14,4 +14,10 @@ public class ShareAccessRequest {
 
     @Schema(description = "访问密码(私密分享必填)")
     private String password;
+
+    @Schema(description = "验证码ID(失败达阈值后必填)")
+    private String captchaId;
+
+    @Schema(description = "验证码内容(失败达阈值后必填)")
+    private String captchaCode;
 }

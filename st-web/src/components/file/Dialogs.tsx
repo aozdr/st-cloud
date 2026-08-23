@@ -277,13 +277,20 @@ export function EmptyState({ onCreateFolder, onCreateUpload }: {
 // ==================== File List Skeleton ====================
 const SKELETON_WIDTHS = ['55%', '70%', '45%', '62%', '50%', '68%', '40%', '58%', '52%', '48%'];
 
-export function FileListSkeleton({ view = 'list' }: { view?: 'list' | 'grid' }) {
+export function FileListSkeleton({ view = 'list', iconSize = 'md' }: { view?: 'list' | 'grid'; iconSize?: 'sm' | 'md' | 'lg' }) {
+  const gridCls =
+    iconSize === 'sm'
+      ? 'grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-2 p-3'
+      : iconSize === 'lg'
+        ? 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 p-5'
+        : 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3 p-4';
+
   if (view === 'grid') {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3 p-4">
-        {Array.from({ length: 16 }).map((_, i) => (
-          <div key={i} className="flex flex-col rounded-[14px] border border-border p-4">
-            <div className="aspect-video mb-3 rounded-[10px] shimmer" />
+      <div className={gridCls}>
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="flex flex-col rounded-[14px] border border-border p-3 opacity-60">
+            <div className="h-24 mb-3 rounded-[10px] shimmer" />
             <div className="h-3 rounded shimmer" style={{ width: SKELETON_WIDTHS[i % SKELETON_WIDTHS.length] }} />
           </div>
         ))}
@@ -292,14 +299,11 @@ export function FileListSkeleton({ view = 'list' }: { view?: 'list' | 'grid' }) 
   }
   return (
     <div className="overflow-hidden">
-      {Array.from({ length: 10 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3 px-5 h-16 border-b border-border-light last:border-0">
-          <div className="w-4 h-4 rounded shimmer flex-shrink-0" />
-          <div className="w-10 h-10 rounded-[10px] shimmer flex-shrink-0" />
-          <div className="flex-1 h-4 rounded shimmer" style={{ maxWidth: SKELETON_WIDTHS[i % SKELETON_WIDTHS.length] }} />
-          <div className="w-16 h-4 rounded shimmer flex-shrink-0" />
-          <div className="w-20 h-4 rounded shimmer flex-shrink-0" />
-          <div className="w-28 h-4 rounded shimmer flex-shrink-0" />
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="flex items-center gap-3 px-5 h-12 opacity-60">
+          <div className="w-9 h-9 rounded-[10px] shimmer flex-shrink-0" />
+          <div className="flex-1 h-3 rounded shimmer" style={{ maxWidth: SKELETON_WIDTHS[i % SKELETON_WIDTHS.length] }} />
+          <div className="w-16 h-3 rounded shimmer flex-shrink-0 hidden md:block" />
         </div>
       ))}
     </div>

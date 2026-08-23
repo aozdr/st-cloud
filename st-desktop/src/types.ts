@@ -12,6 +12,9 @@ export type TransferStatus =
   | 'failed'
   | 'cancelled';
 
+/** 传输悬浮窗显示模式：仅保留微型（默认）与展开两种 */
+export type WidgetMode = 'micro' | 'expanded';
+
 export interface TransferTask {
   id: string;
   type: TransferType;
@@ -120,6 +123,12 @@ export interface ElectronAPI {
   endMiniWindowDrag: () => Promise<void>;
   /** 悬浮窗拖飞/找不到时复位到主屏右下角 */
   resetMiniWindowPosition: () => Promise<void>;
+  /** 切换悬浮窗模式（micro / compact / expanded），主进程同步调整窗口尺寸 */
+  setWidgetMode: (mode: WidgetMode) => Promise<void>;
+  /** 读取悬浮窗当前模式（窗口刚创建时用于恢复上次模式） */
+  getWidgetMode: () => Promise<WidgetMode>;
+  /** 监听悬浮窗主题切换（跟随主应用 Light / Dark） */
+  onWidgetThemeChanged: (cb: (isDark: boolean) => void) => () => void;
   openMainWindow: () => Promise<void>;
   /** 打开主窗口并跳转到传输管理页 */
   openTransfers: () => Promise<void>;

@@ -9,6 +9,8 @@ import type { BlankFileType } from '../../types';
 export type SortBy = 'name' | 'size' | 'time';
 export type SortDir = 'asc' | 'desc';
 export type ViewMode = 'list' | 'grid';
+/** 网格视图图标大小：小 / 中 / 大 */
+export type IconSize = 'sm' | 'md' | 'lg';
 
 interface FileToolbarProps {
   has: (perm: string) => boolean;
@@ -16,7 +18,7 @@ interface FileToolbarProps {
   filesCount: number;
   allSelected: boolean;
   selectedSize: number;
-  /** 当前选中单个可在线编辑文件（docx/xlsx/pptx 且有编辑权限）时可用 */
+  /** 当前选中单个可在线编辑文件（docx/xlsx/pptx/pdf 且有编辑权限）时可用 */
   canEditSelected: boolean;
   onEdit: () => void;
   sortBy: SortBy;

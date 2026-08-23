@@ -78,8 +78,10 @@ public class ShareController {
     public Result<String> getDownloadUrl(
             @PathVariable String shareCode,
             @RequestParam(required = false) Long nodeId,
-            @RequestParam(required = false) String password) {
-        return shareService.getDownloadUrl(shareCode, nodeId, password);
+            @RequestParam(required = false) String password,
+            @RequestParam(required = false) String captchaId,
+            @RequestParam(required = false) String captchaCode) {
+        return shareService.getDownloadUrl(shareCode, nodeId, password, captchaId, captchaCode);
     }
 
     @Operation(summary = "列出分享文件夹子内容")
@@ -87,8 +89,10 @@ public class ShareController {
     public Result<List<FileNodeVO>> listShareFiles(
             @RequestParam String shareCode,
             @RequestParam(required = false) Long parentId,
-            @RequestParam(required = false) String password) {
-        return shareService.listShareFiles(shareCode, parentId, password);
+            @RequestParam(required = false) String password,
+            @RequestParam(required = false) String captchaId,
+            @RequestParam(required = false) String captchaCode) {
+        return shareService.listShareFiles(shareCode, parentId, password, captchaId, captchaCode);
     }
 
     @Operation(summary = "流式预览分享文件")
@@ -97,8 +101,10 @@ public class ShareController {
             @PathVariable String shareCode,
             @RequestParam(required = false) Long nodeId,
             @RequestParam(required = false) String password,
+            @RequestParam(required = false) String captchaId,
+            @RequestParam(required = false) String captchaCode,
             HttpServletResponse response) {
-        shareService.streamShareFile(shareCode, nodeId, password, response);
+        shareService.streamShareFile(shareCode, nodeId, password, captchaId, captchaCode, response);
     }
 
     @Operation(summary = "分享文件在线编辑配置（分享权限含 upload 可编辑，否则只读）")
@@ -106,7 +112,15 @@ public class ShareController {
     public Result<EditorConfigResponse> shareEditorConfig(
             @PathVariable String shareCode,
             @RequestParam(required = false) Long nodeId,
-            @RequestParam(required = false) String password) {
-        return shareService.editorConfig(shareCode, nodeId, password);
+            @RequestParam(required = false) String password,
+            @RequestParam(required = false) String captchaId,
+            @RequestParam(required = false) String captchaCode) {
+        return shareService.editorConfig(shareCode, nodeId, password, captchaId, captchaCode);
+    }
+
+    @Operation(summary = "生成分享访问图形验证码")
+    @GetMapping("/api/share/captcha")
+    public Result<Map<String, String>> shareCaptcha() {
+        return shareService.getCaptcha();
     }
 }

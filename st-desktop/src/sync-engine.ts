@@ -197,6 +197,20 @@ export class SyncEngine {
     return false;
   }
 
+  /**
+   * 将云端/本地相对路径安全解析到同步根内。
+   * 相对路径含 '..' 或解析后越界时返回 null，调用方应跳过该条变更，
+   * 防止恶意/异常路径导致删除或写入同步根之外的文件。
+   */
+  private absPathFor(relPath: string): string | null {
+    if (!relPath) return null;
+    const rootResolved = path.resolve(this.root.localPath);
+    const abs = path.resolve(this.root.localPath, ...relPath.split('/').filter(Boolean));
+    if (abs === rootResolved || abs.startsWith(rootResolved + path.sep)) return abs;
+    syncLog('error', '拒绝越界路径: ' + relPath);
+    return null;
+  }
+
   // File件事件触发即时增量对账（带去重锁）
   private handleLocalEvents(events: FileChangeEvent[]): void {
     if (!this.running) return;
@@ -657,7 +671,8 @@ export class SyncEngine {
       for (const node of records) {
         const relPath = relPrefix + '/' + node.name;
         if (this.isExcluded(relPath)) continue;
-        const absPath = path.join(this.root.localPath, ...relPath.split('/').filter(Boolean));
+        const absPath = this.absPathFor(relPath);
+        if (!absPath) continue;
 
         if (node.nodeType === 0) {
           // 文件夹：确保本地存在，递归对账
@@ -768,7 +783,8 @@ export class SyncEngine {
   private async processCloudDelta(changes: DeltaItem[]): Promise<void> {
     for (const item of changes) {
       const relPath = item.path;
-      const absPath = path.join(this.root.localPath, ...relPath.split('/').filter(Boolean));
+      const absPath = this.absPathFor(relPath);
+      if (!absPath) continue;
       const state = getSyncState(this.root.rootId, relPath);
 
       // Skip excluded paths
@@ -802,7 +818,8 @@ export class SyncEngine {
         case 'RENAME': {
           // 云端移动/重命名 -> 本地同步移动/重命名
           if (!item.oldPath) break;
-          const oldAbs = path.join(this.root.localPath, ...item.oldPath.split('/').filter(Boolean));
+          const oldAbs = this.absPathFor(item.oldPath);
+          if (!oldAbs) break;
           const oldState = getSyncState(this.root.rootId, item.oldPath);
 
           // 无意义变更：新旧路径一致（服务端同目录移动/同名重命名产生的脏日志）

@@ -46,6 +46,7 @@ public class SecurityConfig {
                         // 公开接口
                         .requestMatchers("/api/auth/register", "/api/auth/login", "/api/auth/refresh", "/api/auth/ping").permitAll()
                         .requestMatchers("/api/share/access/**").permitAll()
+                        .requestMatchers("/api/share/captcha").permitAll()
                         .requestMatchers("/api/sync/ws").permitAll()
                         // OnlyOffice 保存回调：匿名可达，验签由 EditorCallbackService 完成（伪造回调被拒）
                         .requestMatchers("/api/file/*/editor/callback").permitAll()

@@ -28,6 +28,7 @@ public class MyBatisPlusConfig {
         IGNORE_TABLES.add("sys_permission");
         IGNORE_TABLES.add("sys_jwt_secret");
         IGNORE_TABLES.add("event_log");
+        IGNORE_TABLES.add("sys_config");
     }
 
     @Bean

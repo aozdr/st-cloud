@@ -40,6 +40,14 @@ class EditorPermissionIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void owner_canEdit_pdf() {
+        FileNode node = insertFileNode(1L, 1L, "合同.pdf", 0);
+        setUpUser(1L, 1L);
+        EditorPermissionService.EditorAccess access = editorPermissionService.resolvePersonal(node.getId());
+        assertTrue(access.isCanEdit());
+    }
+
+    @Test
     void nonOwner_forbidden() {
         FileNode node = insertFileNode(1L, 1L, "报告.docx", 0);
         setUpUser(2L, 1L);

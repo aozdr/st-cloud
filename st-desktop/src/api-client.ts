@@ -30,7 +30,7 @@ client.interceptors.response.use(
         const res = await axios.post(`${API_BASE}/auth/refresh`, {
           refreshToken: refreshTokenValue,
         });
-        const newToken = res.data?.data?.accessToken;
+        const newToken = res.data?.data?.token;
         if (newToken) {
           token = newToken;
           originalRequest.headers.Authorization = `Bearer ${newToken}`;
@@ -64,7 +64,9 @@ export function getUserId(): string | null {
   if (!token) return null;
   try {
     const payload = token.split('.')[1];
-    const decoded = JSON.parse(Buffer.from(payload, 'base64').toString('utf-8'));
+    // JWT payload 为 base64url（含 -/_），先转换为标准 base64 再解码
+    const base64url = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const decoded = JSON.parse(Buffer.from(base64url, 'base64').toString('utf-8'));
     return decoded.userId != null ? String(decoded.userId) : null;
   } catch {
     return null;

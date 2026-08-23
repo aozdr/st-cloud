@@ -5,7 +5,7 @@ import api from '../../lib/api';
 import { useTransferStore } from '../../store/transfer';
 import type { BlankFileType, FileNode } from '../../types';
 import type { FileSource } from '../../lib/fileSource';
-import FileToolbar from './FileToolbar';
+import FileToolbar, { type IconSize } from './FileToolbar';
 import FileBreadcrumb from './FileBreadcrumb';
 import FileList from './FileList';
 import ContextMenu from './ContextMenu';
@@ -16,11 +16,11 @@ import { isCapacitor } from '../../lib/runtime';
 import { pickFromGallery } from '../../lib/capacitor';
 import MultiSelectBar from '../ui/MultiSelectBar';
 import { RefreshCw, Loader2, CheckCircle2, ListChecks } from 'lucide-react';
-import { formatSize } from '../../lib/utils';
+import { formatSize, cn } from '../../lib/utils';
 import BlankContextMenu from './BlankContextMenu';
 import MoveDialog from './MoveDialog';
 import DownloadDialog from './DownloadDialog';
-import { CreateFolderDialog, CreateFileDialog, RenameDialog, EmptyState, FileListSkeleton } from './Dialogs';
+import { CreateFolderDialog, CreateFileDialog, RenameDialog, EmptyState } from './Dialogs';
 import GenericEmptyState from '../EmptyState';
 import FileDetailPanel from './FileDetailPanel';
 import PreviewModal from '../preview/PreviewModal';
@@ -107,6 +107,11 @@ export default function FileBrowser({
     if (saved === 'grid') return 'grid';
     return 'list';
   });
+  const [iconSize, setIconSize] = useState<IconSize>(() => {
+    const saved = localStorage.getItem('fileIconSize');
+    if (saved === 'sm' || saved === 'lg') return saved;
+    return 'md';
+  });
   const folderSearch = useFolderFilterStore((s) => s.keyword);
   const setFolderSearch = useFolderFilterStore((s) => s.setKeyword);
   const setFolderPath = useFolderFilterStore((s) => s.setFolderPath);
@@ -116,6 +121,10 @@ export default function FileBrowser({
   // 多选下载加入队列后的提示弹窗（null=不显示；否则为任务数）
   const [downloadQueuedCount, setDownloadQueuedCount] = useState<number | null>(null);
   const [page, setPage] = useState(1);
+  const pageRef = useRef(page);
+  useEffect(() => {
+    pageRef.current = page;
+  }, [page]);
   const [total, setTotal] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
   const [pageSize, setPageSize] = useState<number>(() => {
@@ -165,7 +174,7 @@ export default function FileBrowser({
   const { has } = usePermission();
   const isMobile = useMobile();
 
-  /** 是否可在线编辑：docx/xlsx/pptx 且当前用户具备编辑（上传）权限；最终权限以后端 config 接口为准 */
+  /** 是否可在线编辑：docx/xlsx/pptx/pdf（PDF 自 ONLYOFFICE 8.1+ 可编辑）且当前用户具备编辑（上传）权限；最终权限以后端 config 接口为准 */
   const canEditNode = (node: FileNode) =>
     node.nodeType === 1 && isEditableOfficeSuffix(node.suffix) && has('file:upload');
   // 在线解压仅个人文件源接入（后端 /file/{id}/archive/*）；团队空间暂不展示
@@ -252,6 +261,8 @@ export default function FileBrowser({
   }, []);
 
   const [isDragging, setIsDragging] = useState(false);
+  /** 是否为项目内部文件拖拽（移动/排序），用于区分外部文件上传 */
+  const isInternalDragRef = useRef(false);
   const prevParentId = useRef<string | null>(null);
 
   const stateRef = useRef({ selectedIds, files, clipboard, view, parentId, focusedIndex, lastSelectedId });
@@ -274,10 +285,11 @@ export default function FileBrowser({
     hasFilesRef.current = files.length > 0;
   }, [files]);
 
-  const fetchFiles = useCallback(async () => {
+  const fetchFiles = useCallback(async (pageToUse?: number) => {
+    const targetPage = pageToUse ?? pageRef.current;
     if (!hasFilesRef.current) setLoading(true);
     try {
-      const res = await source.listFiles(parentId, page, pageSize);
+      const res = await source.listFiles(parentId, targetPage, pageSize);
       const records = res?.records || [];
       setFiles(records);
       setLoadError(false);
@@ -297,17 +309,19 @@ export default function FileBrowser({
       setLoading(false);
       setIsRefreshing(false);
     }
-  }, [source, parentId, page, pageSize, setPreview]);
+  }, [source, parentId, pageSize, setPreview]);
 
   useEffect(() => {
-    // 换文件夹：立即进入骨架屏给出反馈（避免旧列表停留产生笨重感），新数据到达后淡入
+    // 换文件夹：复位到第 1 页并只发一次请求；不在此前用旧 page 多发一次
     const isFolderChange = prevParentId.current !== parentId;
     prevParentId.current = parentId;
     if (isFolderChange) {
       setLoading(true);
       setPage(1);
+      fetchFiles(1);
+    } else {
+      fetchFiles();
     }
-    fetchFiles();
     clearSelection();
     setFocusedIndex(-1);
     setFolderSearch('');
@@ -358,6 +372,19 @@ export default function FileBrowser({
   useEffect(() => {
     localStorage.setItem('fileView', view);
   }, [view]);
+
+  useEffect(() => {
+    localStorage.setItem('fileIconSize', iconSize);
+  }, [iconSize]);
+
+  // 内部拖拽在 dragend 统一复位，避免下一次拖拽误判为文件上传
+  useEffect(() => {
+    const reset = () => {
+      isInternalDragRef.current = false;
+    };
+    document.addEventListener('dragend', reset);
+    return () => document.removeEventListener('dragend', reset);
+  }, []);
 
   // 目录滚动位置：滚动时记录，数据加载完成后恢复（返回目录不丢失位置）
   useEffect(() => {
@@ -413,6 +440,7 @@ export default function FileBrowser({
   const handlePageSizeChange = (v: number) => {
     setPageSize(v);
     setPage(1);
+    fetchFiles(1);
     try {
       localStorage.setItem('filePageSize', String(v));
     } catch {
@@ -430,20 +458,27 @@ export default function FileBrowser({
     const target = Math.min(n, totalPages);
     setPage(target);
     setPageInput(String(target));
+    fetchFiles(target);
   };
 
   const handleDragOver = (e: React.DragEvent) => {
-    if (e.dataTransfer.types.includes('application/x-file-ids')) return;
+    if (isInternalDragRef.current || e.dataTransfer.types.includes('application/x-file-ids')) return;
+    // 仅对真实的本地文件拖拽显示上传覆盖层（项目内拖拽/文本拖拽不触发）
+    const isFileDrag = e.dataTransfer.types.includes('Files') || e.dataTransfer.files.length > 0;
+    if (!isFileDrag) return;
     e.preventDefault();
     setIsDragging(true);
   };
   const handleDragLeave = (e: React.DragEvent) => {
-    if (e.dataTransfer.types.includes('application/x-file-ids')) return;
+    if (isInternalDragRef.current || e.dataTransfer.types.includes('application/x-file-ids')) return;
     e.preventDefault();
     if (e.currentTarget === e.target) setIsDragging(false);
   };
   const handleDrop = (e: React.DragEvent) => {
-    if (e.dataTransfer.types.includes('application/x-file-ids')) return;
+    if (isInternalDragRef.current || e.dataTransfer.types.includes('application/x-file-ids')) {
+      setIsDragging(false);
+      return;
+    }
     e.preventDefault();
     setIsDragging(false);
     const droppedFiles = Array.from(e.dataTransfer.files);
@@ -461,13 +496,14 @@ export default function FileBrowser({
   };
 
   const handleItemDragStart = (e: React.DragEvent, node: FileNode) => {
+    isInternalDragRef.current = true;
     const ids = selectedIds.has(node.id) ? [...selectedIds] : [node.id];
     e.dataTransfer.setData('application/x-file-ids', JSON.stringify(ids));
     e.dataTransfer.effectAllowed = 'move';
   };
 
   const handleFolderDragOver = (e: React.DragEvent, folder: FileNode) => {
-    if (!e.dataTransfer.types.includes('application/x-file-ids')) return;
+    if (!isInternalDragRef.current && !e.dataTransfer.types.includes('application/x-file-ids')) return;
     e.preventDefault();
     e.stopPropagation();
     e.dataTransfer.dropEffect = 'move';
@@ -481,7 +517,7 @@ export default function FileBrowser({
 
   const handleFolderDrop = async (e: React.DragEvent, folder: FileNode) => {
     const data = e.dataTransfer.getData('application/x-file-ids');
-    if (!data) return;
+    if (!isInternalDragRef.current && !data) return;
     e.preventDefault();
     e.stopPropagation();
     setDragOverFolderId(null);
@@ -872,7 +908,7 @@ export default function FileBrowser({
   const allSelected = files.length > 0 && files.every((f) => selectedIds.has(f.id));
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
-  // 工具栏「在线编辑」：仅当单选一个可编辑 Office 文件（docx/xlsx/pptx + 编辑权限）时显示
+  // 工具栏「在线编辑」：仅当单选一个可编辑 Office 文件（docx/xlsx/pptx/pdf + 编辑权限）时显示
   const editableSelected = (() => {
     if (selectedIds.size !== 1) return null;
     const node = files.find((f) => selectedIds.has(f.id));
@@ -968,27 +1004,52 @@ export default function FileBrowser({
             foldersFirst={foldersFirst}
             onToggleFoldersFirst={(v) => { setFoldersFirst(v); localStorage.setItem('fileFoldersFirst', String(v)); }}
           />
-          <div className="mt-2">
-            {categoryLabel ? (
-              <div className="flex items-baseline gap-2 min-w-0">
-                <h1 className="text-lg font-semibold text-fg truncate">{categoryLabel}</h1>
-                <span className="text-xs text-tertiary whitespace-nowrap">{loading ? '加载中…' : `${total} 项`}</span>
+          <div className="mt-2 flex items-center gap-2">
+            <div className="flex-1 min-w-0">
+              {categoryLabel ? (
+                <div className="flex items-baseline gap-2 min-w-0">
+                  <h1 className="text-lg font-semibold text-fg truncate">{categoryLabel}</h1>
+                  <span className="text-xs text-tertiary whitespace-nowrap">{loading ? '加载中…' : `${total} 项`}</span>
+                </div>
+              ) : (
+                <FileBreadcrumb
+                  currentPath={currentPath}
+                  pathEditMode={pathEditMode}
+                  setPathEditMode={setPathEditMode}
+                  pathInput={pathInput}
+                  setPathInput={setPathInput}
+                  pathError={pathError}
+                  setPathError={setPathError}
+                  onPathSubmit={handlePathSubmit}
+                  onEnterEditMode={enterPathEditMode}
+                  pathSegments={pathSegments}
+                  onNavigateToPath={navigateToPath}
+                  pathInputRef={pathInputRef}
+                />
+              )}
+            </div>
+            {/* 网格视图图标大小切换：放在路径右侧空位（原本编辑按钮位置） */}
+            {view === 'grid' && (
+              <div className="flex items-center bg-surface-2 rounded-lg p-0.5 flex-shrink-0" role="group" aria-label="图标大小">
+                {([
+                  ['sm', '小'],
+                  ['md', '中'],
+                  ['lg', '大'],
+                ] as const).map(([value, label]) => (
+                  <button
+                    key={value}
+                    onClick={() => setIconSize(value)}
+                    aria-label={`${label}图标`}
+                    title={`${label}图标`}
+                    className={cn(
+                      'h-7 min-w-7 px-1.5 rounded-md text-xs cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                      iconSize === value ? 'bg-surface text-primary-600 shadow-soft font-medium' : 'text-muted hover:text-fg',
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
-            ) : (
-              <FileBreadcrumb
-                currentPath={currentPath}
-                pathEditMode={pathEditMode}
-                setPathEditMode={setPathEditMode}
-                pathInput={pathInput}
-                setPathInput={setPathInput}
-                pathError={pathError}
-                setPathError={setPathError}
-                onPathSubmit={handlePathSubmit}
-                onEnterEditMode={enterPathEditMode}
-                pathSegments={pathSegments}
-                onNavigateToPath={navigateToPath}
-                pathInputRef={pathInputRef}
-              />
             )}
           </div>
         </div>
@@ -1023,7 +1084,10 @@ export default function FileBrowser({
             </div>
           )}
           {loading ? (
-            <FileListSkeleton view={view} />
+            <div className="flex flex-col items-center justify-center h-full text-muted">
+              <Loader2 className="w-6 h-6 animate-spin mb-3" aria-hidden />
+              <span className="text-sm">加载中…</span>
+            </div>
         ) : loadError ? (
           <GenericEmptyState
             type="generic"
@@ -1040,6 +1104,7 @@ export default function FileBrowser({
           <div key={`${refreshKey}:${parentId}`} className="animate-file-enter">
             <FileList
               view={view}
+              iconSize={iconSize}
               files={filteredFiles}
               lockedIds={lockedIds}
               selectedIds={selectedIds}
@@ -1119,7 +1184,11 @@ export default function FileBrowser({
             </div>
             <div className="flex items-center gap-1.5">
               <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                onClick={() => {
+                  const np = Math.max(1, page - 1);
+                  setPage(np);
+                  fetchFiles(np);
+                }}
                 disabled={page <= 1}
                 aria-label="上一页"
                 className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium text-muted rounded-md border border-border bg-surface hover:bg-surface-2 hover:text-fg disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
@@ -1127,7 +1196,11 @@ export default function FileBrowser({
                 上一页
               </button>
               <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                onClick={() => {
+                  const np = Math.min(totalPages, page + 1);
+                  setPage(np);
+                  fetchFiles(np);
+                }}
                 disabled={page >= totalPages}
                 aria-label="下一页"
                 className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium text-muted rounded-md border border-border bg-surface hover:bg-surface-2 hover:text-fg disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

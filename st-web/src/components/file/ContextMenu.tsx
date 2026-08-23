@@ -12,7 +12,7 @@ interface Props {
   hasClipboard: boolean;
   showShare?: boolean;
   showVersions?: boolean;
-  /** 显示「在线编辑」入口：docx/xlsx/pptx 且有编辑权限（由 FileBrowser 计算） */
+  /** 显示「在线编辑」入口：docx/xlsx/pptx/pdf 且有编辑权限（由 FileBrowser 计算） */
   showEdit?: boolean;
   /** 显示「转换为 PDF/Word」入口（Word/PDF 文件且有上传权限，由 FileBrowser 传入） */
   showConvert?: boolean;

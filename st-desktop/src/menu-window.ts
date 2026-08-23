@@ -1,133 +1,114 @@
-import { app, BrowserWindow, screen } from 'electron';
-import path from 'path';
+import { app, BrowserWindow, Menu } from 'electron';
+import { getAllTasks } from './database';
+import { pauseUpload, resumeUpload } from './upload-manager';
+import { pauseDownload, resumeDownload } from './download-manager';
+import {
+  getMiniWidgetMode,
+  setMiniWidgetMode,
+  hideMiniWindow,
+  openTransferPage,
+  openTransferSettings,
+} from './mini-window';
 
 /**
- * 悬浮窗右键菜单小窗：独立固定尺寸（210×190），在悬浮块旁边弹出，
- * 不影响悬浮块窗口尺寸（悬浮块永远是固定方块，拖拽移动即可）。
+ * 悬浮窗右键上下文菜单：使用 Electron 原生 Menu.popup，而不是独立 HTML 小窗。
+ * 原生菜单在 Windows 上处理焦点、外点关闭、置顶更可靠；首次右键即可弹出，且不会“闪两下”。
  */
 
-const isDev = !app.isPackaged;
-const MENU_WIDTH = 260;
-// 高度按"简易速度限制配置"视图完整内容（约183px）+ 卡片内边距定，避免按钮被裁切
-const MENU_HEIGHT = 196;
+const ACTIVE = new Set(['pending', 'hashing', 'uploading', 'downloading', 'merging']);
 
-let menuWindow: BrowserWindow | null = null;
-let menuReady = false;
-let lastShownAt = 0;
+let activeMenu: Menu | null = null;
 
-/** 判断是否为菜单小窗（供 openMainWindow 排除辅助窗口） */
-export function isMenuWindow(win: BrowserWindow): boolean {
-  return win === menuWindow;
+/** 判断窗口是否为菜单小窗：已改为原生菜单，不再有独立菜单窗口 */
+export function isMenuWindow(_win: BrowserWindow): boolean {
+  return false;
 }
 
-function menuUrl(): string {
-  return isDev
-    ? 'http://localhost:5173/mini-menu.html'
-    : path.join(process.resourcesPath, 'web', 'mini-menu.html');
-}
-
-function createMenuWindow(): BrowserWindow {
-  const win = new BrowserWindow({
-    width: MENU_WIDTH,
-    height: MENU_HEIGHT,
-    // 内容区严格等于 210×190，避免系统边框内衬造成内容偏移/空白
-    useContentSize: true,
-    frame: false,
-    transparent: true,
-    backgroundColor: '#00000000',
-    resizable: false,
-    movable: false,
-    alwaysOnTop: true,
-    skipTaskbar: true,
-    hasShadow: false,
-    show: false,
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: false,
-    },
-  });
-  win.setAlwaysOnTop(true, 'floating');
-  menuReady = false;
-
-  const load = (): void => {
-    const attempt = isDev ? win.loadURL(menuUrl()) : win.loadFile(menuUrl());
-    attempt.catch(() => {
-      console.warn('[mini-menu] 菜单页加载失败，1s 后重试:', menuUrl());
-      setTimeout(load, 1000);
-    });
-  };
-  if (isDev) win.webContents.session.clearCache().catch(() => { /* ignore */ });
-  win.webContents.on('did-finish-load', () => {
-    menuReady = true;
-  });
-  load();
-
-  // 失焦自动隐藏：但显示后 300ms 内的瞬时失焦忽略，避免"显示→焦点竞争→秒关"闪烁
-  win.on('blur', () => {
-    if (!win.isDestroyed() && Date.now() - lastShownAt > 300) win.hide();
-  });
-  win.on('closed', () => {
-    menuWindow = null;
-    menuReady = false;
-  });
-  return win;
-}
-
-/** 预创建菜单小窗（隐藏加载）：首次右键打开时页面已就绪，不闪空白、打开更流畅 */
+/** 预创建相关：原生菜单无需预加载 */
 export function prepareMenuWindow(): void {
-  if (!menuWindow || menuWindow.isDestroyed()) {
-    menuWindow = createMenuWindow();
-  }
+  /* no-op */
 }
 
-/** 在悬浮块旁边弹出菜单小窗（自动选择不越界的方位） */
-export function showMenuWindow(): void {
-  if (!menuWindow || menuWindow.isDestroyed()) {
-    menuWindow = createMenuWindow();
-  }
-  // 从鼠标位置弹出（右击处），默认偏右下 4px；越界自动翻转到鼠标另一侧
-  const cursor = screen.getCursorScreenPoint();
-  const area = screen.getDisplayNearestPoint(cursor).workArea;
-  let mx = cursor.x + 4;
-  let my = cursor.y + 4;
-  if (mx + MENU_WIDTH > area.x + area.width) mx = cursor.x - MENU_WIDTH - 4;
-  if (my + MENU_HEIGHT > area.y + area.height) my = cursor.y - MENU_HEIGHT - 4;
-  mx = Math.min(Math.max(mx, area.x), area.x + Math.max(0, area.width - MENU_WIDTH));
-  my = Math.min(Math.max(my, area.y), area.y + Math.max(0, area.height - MENU_HEIGHT));
-
-  const shownMx = mx;
-  const shownMy = my;
-  const showNow = (): void => {
-    if (!menuWindow || menuWindow.isDestroyed()) return;
-    menuWindow.setPosition(Math.round(shownMx), Math.round(shownMy));
-    lastShownAt = Date.now();
-    // 每次弹出都重置回菜单列表视图（避免上次停在"简易限速"设置页）
-    menuWindow.webContents.send('mini-menu:reset');
-    // show() 本身会显示并聚焦窗口；不要再额外调 focus()，
-    // 否则透明无边框窗口会被系统激活两次，出现"闪两下"。
-    // 已可见（重复右键）时只重定位，不重新 show，避免闪烁。
-    if (!menuWindow.isVisible()) {
-      menuWindow.show();
-    }
-  };
-  if (menuReady || !menuWindow.webContents.isLoading()) {
-    showNow();
-  } else {
-    // 首次打开且页面还没加载完：等加载完成再显示，避免先弹空白窗
-    menuWindow.webContents.once('did-finish-load', showNow);
-  }
-}
-
+/** 关闭可能弹出的原生菜单 */
 export function hideMenuWindow(): void {
-  if (menuWindow && !menuWindow.isDestroyed()) menuWindow.hide();
+  if (activeMenu) {
+    activeMenu.closePopup();
+    activeMenu = null;
+  }
 }
 
-/** 主窗口关闭时一并销毁菜单小窗 */
+/** 主窗口关闭时的清理 */
 export function closeMenuWindow(): void {
-  if (menuWindow && !menuWindow.isDestroyed()) {
-    menuWindow.destroy();
+  hideMenuWindow();
+}
+
+function pauseAll(): void {
+  for (const t of getAllTasks()) {
+    if (ACTIVE.has(t.status)) {
+      if (t.type === 'upload') pauseUpload(t.id);
+      else pauseDownload(t.id);
+    }
   }
-  menuWindow = null;
+}
+
+function resumeAll(): void {
+  for (const t of getAllTasks()) {
+    if (t.status === 'paused') {
+      if (t.type === 'upload') resumeUpload(t.id);
+      else resumeDownload(t.id);
+    }
+  }
+}
+
+function buildMenu(): Menu {
+  const all = getAllTasks();
+  const hasActive = all.some((t) => ACTIVE.has(t.status));
+  const hasPaused = all.some((t) => t.status === 'paused');
+  const mode = getMiniWidgetMode();
+
+  const template: Electron.MenuItemConstructorOptions[] = [
+    {
+      label: mode === 'expanded' ? '收起任务详情' : '展开任务详情',
+      click: () => setMiniWidgetMode(mode === 'expanded' ? 'micro' : 'expanded'),
+    },
+    { type: 'separator' },
+    {
+      label: '打开传输列表',
+      click: () => openTransferPage(),
+    },
+    {
+      label: hasActive ? '暂停全部任务' : '开始全部任务',
+      enabled: hasActive || hasPaused,
+      click: () => (hasActive ? pauseAll() : resumeAll()),
+    },
+    {
+      label: '传输设置',
+      click: () => openTransferSettings(),
+    },
+    { type: 'separator' },
+    {
+      label: '关闭悬浮窗',
+      click: () => hideMiniWindow(),
+    },
+    {
+      label: '退出',
+      click: () => app.quit(),
+    },
+  ];
+
+  return Menu.buildFromTemplate(template);
+}
+
+/** 在指定窗口（悬浮窗）位置弹出原生上下文菜单 */
+export function showMenuWindow(win?: BrowserWindow): void {
+  // 关闭上一次可能仍打开的菜单
+  hideMenuWindow();
+  const menu = buildMenu();
+  activeMenu = menu;
+  try {
+    menu.popup({ window: win });
+  } catch {
+    // 个别平台弹出失败时兜底，不影响悬浮窗本身
+    menu.popup();
+  }
 }

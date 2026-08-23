@@ -22,11 +22,14 @@ public interface ShareService {
 
     Result<ShareAccessVO> accessShare(ShareAccessRequest request);
 
-    Result<String> getDownloadUrl(String shareCode, Long nodeId, String password);
+    Result<String> getDownloadUrl(String shareCode, Long nodeId, String password,
+                                  String captchaId, String captchaCode);
 
-    Result<List<FileNodeVO>> listShareFiles(String shareCode, Long parentId, String password);
+    Result<List<FileNodeVO>> listShareFiles(String shareCode, Long parentId, String password,
+                                            String captchaId, String captchaCode);
 
-    void streamShareFile(String shareCode, Long nodeId, String password, HttpServletResponse response);
+    void streamShareFile(String shareCode, Long nodeId, String password,
+                         String captchaId, String captchaCode, HttpServletResponse response);
 
     /**
      * 当前用户对文件的有效权限集（个人/团队分支，未授权返回空集），供分享权限点选择/禁用。
@@ -36,5 +39,11 @@ public interface ShareService {
     /**
      * 分享文件在线编辑配置（分享权限集含 upload 可编辑；nodeId 为分享文件夹内的子文件时校验归属）。
      */
-    Result<EditorConfigResponse> editorConfig(String shareCode, Long nodeId, String password);
+    Result<EditorConfigResponse> editorConfig(String shareCode, Long nodeId, String password,
+                                              String captchaId, String captchaCode);
+
+    /**
+     * 生成分享访问图形验证码（公开接口，无需登录）。失败达阈值后由前端展示。
+     */
+    Result<Map<String, String>> getCaptcha();
 }

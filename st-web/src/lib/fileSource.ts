@@ -1,5 +1,5 @@
 import api, { buildStreamUrl } from './api';
-import type { BlankFileType, FileNode, PageResult, FileTreeNode, SearchResultVO } from '../types';
+import type { BlankFileType, FileNode, PageResult, FileTreeNode, SearchResultPage } from '../types';
 
 /**
  * FileSource abstracts file operations so FileBrowser can be reused
@@ -122,8 +122,9 @@ export function categoryFileSource(category: FileCategory): FileSource {
     listFiles: async (_parentId, page, size) => {
       const params: Record<string, unknown> = { keyword: '*', page, size };
       if (category.suffixes.length) params.suffixes = category.suffixes.join(',');
-      const res = (await api.get<SearchResultVO[]>('/search', { params })) || [];
-      const records: FileNode[] = res.map((r) => ({
+      const res = (await api.get<SearchResultPage>('/search', { params })) || { records: [], total: 0 };
+      const list = res.records || [];
+      const records: FileNode[] = list.map((r) => ({
         id: r.fileId,
         parentId: '',
         nodeType: r.nodeType ?? 1,
@@ -137,13 +138,13 @@ export function categoryFileSource(category: FileCategory): FileSource {
         createdAt: r.createdAt,
         updatedAt: r.updatedAt,
       }));
-      const total = res.length < size ? (page - 1) * size + res.length : (page + 1) * size;
+      const total = Number(res.total ?? 0);
       return {
         records,
         total: String(total),
         size: String(size),
         current: String(page),
-        pages: String(Math.ceil(total / size)),
+        pages: String(Math.max(1, Math.ceil(total / size))),
       };
     },
   };

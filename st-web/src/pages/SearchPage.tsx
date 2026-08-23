@@ -5,7 +5,7 @@ import { format } from 'date-fns';
 import { Calendar as CalendarPicker } from '../components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import api from '../lib/api';
-import type { SearchResultVO, FileNode } from '../types';
+import type { SearchResultVO, SearchResultPage, FileNode } from '../types';
 import { getFileTypeConfig, formatSize, formatDate, cn, sanitizeHighlight } from '../lib/utils';
 import { type FileTypeFilter, FILTER_SUFFIXES } from '../lib/fileTypes';
 import FileTypeIcon from '../components/file/FileTypeIcon';
@@ -196,8 +196,8 @@ export default function SearchPage() {
       const sr = getSizeParams(sf);
       if (sr.min !== undefined) params.sizeMin = sr.min;
       if (sr.max !== undefined) params.sizeMax = sr.max;
-      const res = await api.get<SearchResultVO[]>('/search', { params });
-      setResults(res || []);
+      const res = await api.get<SearchResultPage>('/search', { params });
+      setResults(res?.records || []);
       setSearchTime(Date.now() - t0);
     } catch { setResults([]); setSearchTime(Date.now() - t0); } finally { setLoading(false); }
   }, []);

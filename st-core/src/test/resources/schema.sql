@@ -249,3 +249,31 @@ CREATE TABLE IF NOT EXISTS file_share (
 
 CREATE INDEX IF NOT EXISTS idx_share_creator ON file_share (creator_id, deleted);
 CREATE INDEX IF NOT EXISTS idx_share_file_node ON file_share (file_node_id);
+
+-- 全局配置表（系统级，不按租户隔离；对照 docker/mysql/init/38_share_security_config.sql）
+CREATE TABLE IF NOT EXISTS sys_config (
+    id            BIGINT       NOT NULL AUTO_INCREMENT,
+    tenant_id     BIGINT       NOT NULL DEFAULT 0,
+    config_key    VARCHAR(128) NOT NULL,
+    config_value  VARCHAR(512) DEFAULT NULL,
+    config_group  VARCHAR(64)  DEFAULT NULL,
+    remark        VARCHAR(256) DEFAULT NULL,
+    enabled       TINYINT      NOT NULL DEFAULT 1,
+    created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted       TINYINT      NOT NULL DEFAULT 0,
+    PRIMARY KEY (id),
+    CONSTRAINT uk_config_key UNIQUE (config_key)
+);
+
+INSERT INTO sys_config (tenant_id, config_key, config_value, config_group, remark, enabled) VALUES
+(0, 'share.brute_force.shareCodeLength', '12', 'share.brute_force.', 'share code length (8~16)', 1),
+(0, 'share.brute_force.maxFailPerCode',  '5',  'share.brute_force.', 'per-code fail threshold', 1),
+(0, 'share.brute_force.codeWindowMs',    '300000', 'share.brute_force.', 'per-code fail window (ms)', 1),
+(0, 'share.brute_force.codeLockMs',      '900000', 'share.brute_force.', 'per-code lock (ms)', 1),
+(0, 'share.brute_force.maxFailPerIp',    '20', 'share.brute_force.', 'per-ip fail threshold', 1),
+(0, 'share.brute_force.ipWindowMs',      '600000', 'share.brute_force.', 'per-ip fail window (ms)', 1),
+(0, 'share.brute_force.ipLockMs',        '1800000', 'share.brute_force.', 'per-ip lock (ms)', 1),
+(0, 'share.brute_force.captchaEnabled',  'true', 'share.brute_force.', 'captcha enabled', 1),
+(0, 'share.brute_force.captchaThreshold', '3', 'share.brute_force.', 'captcha trigger threshold', 1),
+(0, 'share.brute_force.captchaLockMs',   '1800000', 'share.brute_force.', 'captcha fail lock (ms)', 1);

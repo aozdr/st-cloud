@@ -69,3 +69,8 @@ design/
 
 # AI worktree isolation (V15 parallel implementation batches)
 .ai/worktrees/
+
+# AI scratch analysis/report docs (not uploaded)
+*_IMPLEMENTATION_ANALYSIS.md
+*_IMPLEMENTATION_REPORT.md
+TRANSFER_FLOATING_WIDGET_IMPLEMENTATION.md

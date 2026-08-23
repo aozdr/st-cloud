@@ -1,11 +1,50 @@
 import { cn, formatSize, isVideo } from '../../lib/utils';
 import type { FileNode } from '../../types';
 import FileThumbnail from './FileThumbnail';
-import type { SortBy, SortDir } from './FileToolbar';
+import type { SortBy, SortDir, IconSize } from './FileToolbar';
 import { Check, Star, Play, Lock } from 'lucide-react';
+
+/** 每种图标尺寸对应的网格列数、图标大小与文案密度 */
+const GRID_SIZE_CFG: Record<IconSize, {
+  grid: string;
+  thumb: 'xl' | 'xxl' | 'xxxl';
+  cardPad: string;
+  iconMb: string;
+  name: string;
+  meta: string;
+}> = {
+  // 小：更紧凑，单屏更多项，图标 48px
+  sm: {
+    grid: 'grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-2 p-3',
+    thumb: 'xl',
+    cardPad: 'p-3',
+    iconMb: 'mb-1',
+    name: 'text-sm',
+    meta: 'text-[11px]',
+  },
+  // 中：现状基线，图标 72px
+  md: {
+    grid: 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3 p-4',
+    thumb: 'xxl',
+    cardPad: 'p-4',
+    iconMb: 'mb-1.5',
+    name: 'text-sm',
+    meta: 'text-xs',
+  },
+  // 大：单屏更少项，图标 96px
+  lg: {
+    grid: 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4 p-5',
+    thumb: 'xxxl',
+    cardPad: 'p-5',
+    iconMb: 'mb-2',
+    name: 'text-base',
+    meta: 'text-sm',
+  },
+};
 
 interface Props {
   files: FileNode[];
+  iconSize: IconSize;
   sortBy?: SortBy;
   sortDir?: SortDir;
   onSortChange?: (col: SortBy) => void;
@@ -29,12 +68,14 @@ interface Props {
 }
 
 export default function FileGrid({
-  files, lockedIds, selectedIds, focusedId, cutIds, onSelect, onContextMenu, onDoubleClick,
+  files, iconSize, lockedIds, selectedIds, focusedId, cutIds, onSelect, onContextMenu, onDoubleClick,
   onItemDragStart, onFolderDragOver, onFolderDragLeave, onFolderDrop, dragOverFolderId,
   onToggleSelect, isFavorite, onToggleFavorite,
 }: Props) {
+  const cfg = GRID_SIZE_CFG[iconSize];
+
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-7 gap-3 p-4">
+    <div className={cn('grid', cfg.grid)}>
       {files.map((file) => {
         const isSelected = selectedIds.has(file.id);
 
@@ -52,7 +93,8 @@ export default function FileGrid({
             onContextMenu={(e) => onContextMenu(e, file)}
             style={{ contentVisibility: 'auto', containIntrinsicSize: '160px' }}
             className={cn(
-              'group relative flex flex-col rounded-[14px] p-4 bg-[#FEFEFD] dark:bg-surface border border-transparent cursor-pointer select-none transition-[background-color,border-color] duration-150',
+              'group relative flex flex-col rounded-[14px] bg-[#FEFEFD] dark:bg-surface border border-transparent cursor-pointer select-none transition-[background-color,border-color] duration-150',
+              cfg.cardPad,
               isSelected
                 ? 'bg-[#EEF0FF] dark:bg-primary-950/40 border-primary-400'
                 : dragOverFolderId === file.id
@@ -92,10 +134,10 @@ export default function FileGrid({
             </button>
 
             {/* 图标容器：透明背景，不再用灰色底圈住图标 */}
-            <div className="relative aspect-video w-full rounded-2xl overflow-hidden mb-1.5 bg-transparent">
+            <div className={cn('relative aspect-video w-full rounded-2xl overflow-hidden bg-transparent', cfg.iconMb)}>
               {/* 居中容器：非图片文件图标居中展示；图片文件由 FileThumbnail 铺满 */}
               <div className="absolute inset-0 flex items-center justify-center">
-                <FileThumbnail file={file} size="xxl" blur className="absolute inset-0 w-full h-full" />
+                <FileThumbnail file={file} size={cfg.thumb} blur className="absolute inset-0 w-full h-full" />
               </div>
               {/* 视频播放按钮：半透明圆形 + 白色三角（点击进入预览播放器） */}
               {isVideo(file.suffix) && (
@@ -110,7 +152,8 @@ export default function FileGrid({
             <div className="min-w-0">
               <div
                 className={cn(
-                  'flex items-center justify-center gap-1 text-sm leading-5 truncate text-center',
+                  'flex items-center justify-center gap-1 leading-5 truncate text-center',
+                  cfg.name,
                   isSelected ? 'text-primary-600 font-medium' : 'text-fg',
                 )}
                 title={file.name}
@@ -119,7 +162,7 @@ export default function FileGrid({
                 {lockedIds?.has(file.id) && <Lock className="w-3 h-3 text-amber-500 flex-shrink-0" aria-hidden />}
               </div>
               {file.nodeType === 1 && (
-                <div className="text-xs text-tertiary truncate text-center mt-0.5">
+                <div className={cn('text-tertiary truncate text-center mt-0.5', cfg.meta)}>
                   {formatSize(file.fileSize)}
                 </div>
               )}

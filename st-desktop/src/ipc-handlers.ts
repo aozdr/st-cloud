@@ -21,12 +21,31 @@ import {
   removeExclusion as syncRemoveExclusion, setConflictStrategy as syncSetConflictStrategy,
   isWsConnected,
 } from './sync-manager';
-import { startMiniWindowDrag, stopMiniWindowDrag, resetMiniWindowPosition, openMainWindow, openTransferPage, openTransferSettings, showMiniWindow, hideMiniWindow } from './mini-window';
-import { showMenuWindow, hideMenuWindow } from './menu-window';
+import {
+  startMiniWindowDrag,
+  stopMiniWindowDrag,
+  resetMiniWindowPosition,
+  openMainWindow,
+  openTransferPage,
+  openTransferSettings,
+  showMiniWindow,
+  hideMiniWindow,
+  setMiniWidgetMode,
+  getMiniWidgetMode,
+  isMiniWindow,
+} from './mini-window';
+import { showMenuWindow, hideMenuWindow, isMenuWindow } from './menu-window';
+import { setAppThemeDark } from './theme-state';
+import type { WidgetMode } from './types';
+import { allowPath, allowDownloadsDir, isAllowedPath } from './path-allowlist';
 
 export function registerIpcHandlers(): void {
+  // 允许系统下载目录：多选下载、单文件下载默认保存目录
+  allowDownloadsDir();
+
   // ==================== 窗口标题栏主题 ====================
   ipcMain.on('theme:set-overlay', (_event, isDark: boolean) => {
+    setAppThemeDark(isDark);
     const color = isDark ? '#16161a' : '#ffffff';
     const symbolColor = isDark ? '#e6e7eb' : '#1f2430';
     for (const win of BrowserWindow.getAllWindows()) {
@@ -35,6 +54,10 @@ export function registerIpcHandlers(): void {
         win.setTitleBarOverlay({ color, symbolColor, height: 36 });
       } catch {
         // 无标题栏的窗口（悬浮窗/菜单窗）不支持 overlay，忽略
+      }
+      // 悬浮窗/菜单窗没有标题栏，但需跟随主应用切换 Light / Dark 内容主题
+      if (isMiniWindow(win) || isMenuWindow(win)) {
+        win.webContents.send('mini:theme-changed', isDark);
       }
     }
   });
@@ -105,6 +128,7 @@ export function registerIpcHandlers(): void {
 
   // ==================== 上传 ====================
   ipcMain.handle('upload:start', (_event, filePath: string, parentId: string, replaceFileId?: string) => {
+    if (!isAllowedPath(filePath)) throw new Error('Unauthorized path');
     return startUpload(filePath, parentId, replaceFileId);
   });
 
@@ -122,6 +146,7 @@ export function registerIpcHandlers(): void {
 
   // ==================== 下载 ====================
   ipcMain.handle('download:start', (_event, nodeId: string, fileName: string, fileSize: number, savePath: string) => {
+    if (!isAllowedPath(savePath)) throw new Error('Unauthorized path');
     return startDownload(nodeId, fileName, fileSize, savePath);
   });
 
@@ -144,7 +169,8 @@ export function registerIpcHandlers(): void {
 
   // ==================== 桌面传输悬浮小窗 ====================
   ipcMain.handle('mini:showMenu', () => {
-    showMenuWindow();
+    const widgetWin = BrowserWindow.getAllWindows().find(isMiniWindow);
+    showMenuWindow(widgetWin);
   });
   ipcMain.handle('mini:hideMenu', () => {
     hideMenuWindow();
@@ -157,6 +183,12 @@ export function registerIpcHandlers(): void {
   });
   ipcMain.handle('mini:reset', () => {
     resetMiniWindowPosition();
+  });
+  ipcMain.handle('mini:setWidgetMode', (_event, mode: WidgetMode) => {
+    setMiniWidgetMode(mode);
+  });
+  ipcMain.handle('mini:getWidgetMode', () => {
+    return getMiniWidgetMode();
   });
   ipcMain.handle('mini:openMain', () => {
     openMainWindow();
@@ -184,21 +216,27 @@ export function registerIpcHandlers(): void {
     const result = await dialog.showOpenDialog({
       properties: ['openFile', 'multiSelections'],
     });
-    return result.canceled ? [] : result.filePaths;
+    if (result.canceled) return [];
+    result.filePaths.forEach(allowPath);
+    return result.filePaths;
   });
 
   ipcMain.handle('dialog:selectFolder', async () => {
     const result = await dialog.showOpenDialog({
       properties: ['openDirectory', 'multiSelections'],
     });
-    return result.canceled ? [] : result.filePaths;
+    if (result.canceled) return [];
+    result.filePaths.forEach(allowPath);
+    return result.filePaths;
   });
 
   ipcMain.handle('dialog:selectSavePath', async (_event, fileName: string) => {
     const result = await dialog.showSaveDialog({
       defaultPath: fileName,
     });
-    return result.canceled ? null : result.filePath;
+    if (result.canceled) return null;
+    if (result.filePath) allowPath(result.filePath);
+    return result.filePath;
   });
 
   ipcMain.handle('app:getDownloadsPath', () => {
@@ -206,19 +244,23 @@ export function registerIpcHandlers(): void {
   });
 
   ipcMain.handle('shell:openPath', (_event, filePath: string) => {
+    if (!isAllowedPath(filePath)) throw new Error('Unauthorized path');
     return shell.openPath(filePath);
   });
 
   ipcMain.handle('shell:showItemInFolder', (_event, filePath: string) => {
+    if (!isAllowedPath(filePath)) throw new Error('Unauthorized path');
     shell.showItemInFolder(filePath);
   });
 
   ipcMain.handle('shell:trashItem', async (_event, filePath: string) => {
+    if (!isAllowedPath(filePath)) throw new Error('Unauthorized path');
     await shell.trashItem(filePath);
   });
 
   // ==================== 文件同步 ====================
   ipcMain.handle('sync:register', async (_event, cloudFolderNodeId: string, localPath: string) => {
+    if (!isAllowedPath(localPath)) throw new Error('Unauthorized path');
     return registerSyncRoot(cloudFolderNodeId, localPath);
   });
 
@@ -231,6 +273,7 @@ export function registerIpcHandlers(): void {
   });
 
   ipcMain.handle('sync:start', async (_event, rootId: string, cloudFolderNodeId: string, localPath: string) => {
+    if (!isAllowedPath(localPath)) throw new Error('Unauthorized path');
     return startSync(rootId, cloudFolderNodeId, localPath);
   });
 

@@ -47,6 +47,11 @@ export default defineConfig({
         // API 请求走 NetworkFirst(数据需实时),3s 超时回退缓存
         runtimeCaching: [
           {
+            // 文件流/打包下载/带 token 的请求不缓存，避免把文件内容与下载令牌写入 Cache Storage
+            urlPattern: /\/api\/file\/\d+\/stream|\/api\/file\/download\/zip|\?token=/i,
+            handler: 'NetworkOnly',
+          },
+          {
             urlPattern: /^\/api\/.*/i,
             handler: 'NetworkFirst',
             options: {
