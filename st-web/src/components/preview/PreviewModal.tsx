@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { X, Download, ChevronLeft, ChevronRight, RotateCw, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
+import { X, Download, ChevronLeft, ChevronRight, RotateCw, ZoomIn, ZoomOut, Maximize2, Play, Pause } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api, { buildStreamUrl } from '../../lib/api';
 import { isElectron } from '../../lib/electron';
@@ -8,6 +8,7 @@ import type { FileNode, PreviewResult } from '../../types';
 import { addRecentFile } from '../../lib/recentFiles';
 import { isImage, isVideo, isPdf, isAudio, isText, getFileTypeConfig, cn } from '../../lib/utils';
 import { isEditableOfficeSuffix } from '../../lib/editor';
+import AudioPlayer from './AudioPlayer';
 
 const PlyrPlayer = lazy(() => import('./PlyrPlayer'));
 
@@ -32,6 +33,8 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
   const imgDragRef = useRef<{ startX: number; startY: number; offsetX: number; offsetY: number } | null>(null);
   const panRef = useRef({ x: 0, y: 0 });
   const imgRef = useRef<HTMLImageElement>(null);
+  const slideshowTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [slideshowActive, setSlideshowActive] = useState(false);
   const [url, setUrl] = useState<string | null>(null);
   const [textContent, setTextContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,6 +60,48 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
       if (idx >= 0) setIndex(idx);
     }
   }, [previewPos, previewFiles, files]);
+
+  /** 音频播放队列：当前预览列表中的全部音频文件 */
+  const audioQueue = useMemo(
+    () => previewFiles.filter((f) => isAudio(f.suffix)),
+    [previewFiles],
+  );
+  const audioQueuePos = audioQueue.findIndex((f) => f.id === file?.id);
+
+  // 幻灯片自动播放：仅当有 >1 张图片时开启，3 秒切一张
+  const imageOnlyFiles = useMemo(
+    () => previewFiles.filter((f) => isImage(f.suffix)),
+    [previewFiles],
+  );
+
+  useEffect(() => {
+    if (slideshowTimerRef.current) {
+      clearInterval(slideshowTimerRef.current);
+      slideshowTimerRef.current = null;
+    }
+    if (slideshowActive && imageOnlyFiles.length > 1) {
+      slideshowTimerRef.current = setInterval(() => {
+        setIndex((prev) => {
+          // 在 previewFiles 中找当前位置，然后循环切到下一张图片
+          const currentFile = previewFiles[previewPos];
+          const imgPos = imageOnlyFiles.findIndex((f) => f.id === currentFile?.id);
+          const next = imageOnlyFiles[(imgPos + 1) % imageOnlyFiles.length];
+          const idx = files.findIndex((f) => f.id === next.id);
+          return idx >= 0 ? idx : prev;
+        });
+      }, 3000);
+    }
+    return () => {
+      if (slideshowTimerRef.current) {
+        clearInterval(slideshowTimerRef.current);
+        slideshowTimerRef.current = null;
+      }
+    };
+  }, [slideshowActive, imageOnlyFiles, previewFiles, previewPos, files]);
+
+  useEffect(() => {
+    return () => { setSlideshowActive(false); };
+  }, []);
 
   useEffect(() => {
     if (file && file.nodeType === 1) addRecentFile(file);
@@ -108,7 +153,7 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
       }
     } else {
       // 正常模式：需登录 token
-      const token = localStorage.getItem('accessToken');
+      const token = sessionStorage.getItem('accessToken');
       const streamUrl = `${isElectron() ? getServerUrlSync() : ''}/api/file/${file.id}/stream`;
       const headers = { Authorization: `Bearer ${token}` };
 
@@ -368,6 +413,19 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
                   <Maximize2 className="w-4 h-4" />
                 </button>
                 <div className="w-px h-5 bg-white/20 mx-1" />
+                {/* 幻灯片开关：仅有 >1 张图片时显示 */}
+                {imageOnlyFiles.length > 1 && (
+                  <button
+                    onClick={() => setSlideshowActive((s) => !s)}
+                    className={cn(
+                      'w-8 h-8 flex items-center justify-center rounded cursor-pointer transition-colors',
+                      slideshowActive ? 'text-primary-300 bg-white/20' : 'text-white/70 hover:text-white hover:bg-white/10',
+                    )}
+                    aria-label={slideshowActive ? '暂停幻灯片' : '播放幻灯片'}
+                  >
+                    {slideshowActive ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                  </button>
+                )}
                 <button
                   onClick={onClose}
                   aria-label="关闭"
@@ -376,18 +434,54 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
                   <X className="w-4 h-4" />
                 </button>
               </div>
+              {/* 缩略图导航条：仅图片数 > 1 时显示 */}
+              {imageOnlyFiles.length > 1 && (
+                <div className="absolute bottom-16 left-1/2 -translate-x-1/2 flex items-center gap-1.5 max-w-[90%] overflow-x-auto py-1 px-2 bg-black/50 backdrop-blur-sm rounded-lg">
+                  {imageOnlyFiles.map((img) => {
+                    const isActive = img.id === file?.id;
+                    return (
+                      <button
+                        key={img.id}
+                        onClick={() => {
+                          const idx = files.findIndex((f) => f.id === img.id);
+                          if (idx >= 0) setIndex(idx);
+                        }}
+                        className={cn(
+                          'w-12 h-9 rounded overflow-hidden flex-shrink-0 border-2 transition-all cursor-pointer',
+                          isActive ? 'border-primary-400 scale-110' : 'border-transparent opacity-50 hover:opacity-90',
+                        )}
+                      >
+                        <img
+                          src={(() => {
+                            const base = isElectron() ? getServerUrlSync() : '';
+                            return `${base}/api/preview/${img.id}/thumbnail?size=sm`;
+                          })()}
+                          alt={img.name}
+                          className="w-full h-full object-cover"
+                          loading="lazy"
+                        />
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           ) : isVideo(file.suffix) && url ? (
             <Suspense fallback={<div className="w-10 h-10 border-3 border-white/30 border-t-white rounded-full animate-spin" />}>
               <PlyrPlayer src={url} />
             </Suspense>
           ) : isAudio(file.suffix) && url ? (
-            <div className="flex flex-col items-center gap-6">
-              <div className={cn('w-32 h-32 rounded-3xl flex items-center justify-center', config.bgColor)}>
-                <config.icon className={cn('w-16 h-16', config.color)} />
-              </div>
-              <audio src={url} controls autoPlay className="w-96" />
-            </div>
+            <AudioPlayer
+              file={file}
+              src={url}
+              queue={audioQueue}
+              trackIndex={audioQueuePos}
+              onSwitchTrack={(qi) => {
+                const target = audioQueue[qi];
+                const idx = files.findIndex((f) => f.id === target.id);
+                if (idx >= 0) setIndex(idx);
+              }}
+            />
           ) : isText(file.suffix) && textContent !== null ? (
             <div className="w-[80vw] h-[80vh] bg-surface rounded-lg overflow-auto">
               <pre className="p-6 text-sm text-fg font-mono whitespace-pre-wrap break-all leading-relaxed">

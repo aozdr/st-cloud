@@ -3,6 +3,7 @@ import type { FileNode } from '../../types';
 import type { SortBy, SortDir, ViewMode, IconSize } from './FileToolbar';
 import FileTableView from './FileTableView';
 import FileGrid from './FileGrid';
+import type { FolderSizeInfo } from '../../hooks/useFolderSizes';
 
 /** 三种视图（表格/列表/网格）的公共 props，避免调用方重复传参 */
 export interface FileListProps {
@@ -31,12 +32,14 @@ export interface FileListProps {
   dragOverFolderId: string | null;
   /** 列表滚动容器（FileBrowser 传入，用于虚拟滚动） */
   scrollRef?: RefObject<HTMLDivElement | null>;
+  /** 文件夹大小统计（懒加载批量获取） */
+  folderSizes?: Map<string, FolderSizeInfo>;
 }
 
 /** 按当前视图渲染文件列表（统一 onDoubleClick/拖拽等行为） */
-function FileList({ view, iconSize, onSelectAll, scrollRef, ...common }: FileListProps) {
-  if (view === 'list') return <FileTableView {...common} onSelectAll={onSelectAll} scrollRef={scrollRef} />;
-  return <FileGrid {...common} iconSize={iconSize} />;
+function FileList({ view, iconSize, onSelectAll, scrollRef, folderSizes, ...common }: FileListProps) {
+  if (view === 'list') return <FileTableView {...common} onSelectAll={onSelectAll} scrollRef={scrollRef} folderSizes={folderSizes} />;
+  return <FileGrid {...common} iconSize={iconSize} folderSizes={folderSizes} waterfall={view === 'waterfall'} />;
 }
 
 export default memo(FileList);

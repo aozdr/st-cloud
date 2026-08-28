@@ -38,7 +38,7 @@ class ApiError extends Error {
 // Request interceptor: inject JWT
 instance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem('accessToken');
+    const token = sessionStorage.getItem('accessToken');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -96,7 +96,7 @@ instance.interceptors.response.use(
         try {
           const res = await refreshClient.post(getApiBaseUrl() + '/auth/refresh', { refreshToken });
           const { token, refreshToken: newRefreshToken } = res.data.data;
-          localStorage.setItem('accessToken', token);
+          sessionStorage.setItem('accessToken', token);
           localStorage.setItem('refreshToken', newRefreshToken);
           syncAuthToElectron();
           isRefreshing = false;
@@ -106,7 +106,7 @@ instance.interceptors.response.use(
         } catch {
           isRefreshing = false;
           onRefreshed(null);
-          localStorage.removeItem('accessToken');
+          sessionStorage.removeItem('accessToken');
           localStorage.removeItem('refreshToken');
           window.location.href = '/login';
           return Promise.reject(error);

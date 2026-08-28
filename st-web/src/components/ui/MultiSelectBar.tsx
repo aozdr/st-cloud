@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { CheckSquare, Download, Trash2, X, Share2 } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -19,7 +20,7 @@ interface MultiSelectBarProps {
  * 长按文件进入多选模式后,顶部出现此操作栏
  * 仅移动端(md 以下)显示
  */
-export default function MultiSelectBar({
+function MultiSelectBar({
   selectedCount,
   allSelected,
   onSelectAll,
@@ -88,3 +89,6 @@ export default function MultiSelectBar({
     </div>
   );
 }
+
+/** 多选操作栏：props 稳定时跳过重渲染 */
+export default memo(MultiSelectBar);

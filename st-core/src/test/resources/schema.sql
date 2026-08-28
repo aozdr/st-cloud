@@ -266,7 +266,8 @@ CREATE TABLE IF NOT EXISTS sys_config (
     CONSTRAINT uk_config_key UNIQUE (config_key)
 );
 
-INSERT INTO sys_config (tenant_id, config_key, config_value, config_group, remark, enabled) VALUES
+-- 幂等写入：config_key 唯一约束冲突时更新值，避免多 Spring 上下文重复初始化失败
+MERGE INTO sys_config (tenant_id, config_key, config_value, config_group, remark, enabled) KEY (config_key) VALUES
 (0, 'share.brute_force.shareCodeLength', '12', 'share.brute_force.', 'share code length (8~16)', 1),
 (0, 'share.brute_force.maxFailPerCode',  '5',  'share.brute_force.', 'per-code fail threshold', 1),
 (0, 'share.brute_force.codeWindowMs',    '300000', 'share.brute_force.', 'per-code fail window (ms)', 1),

@@ -6,6 +6,7 @@ import type { SortBy, SortDir } from './FileToolbar';
 import { Check, MoreHorizontal, ArrowUp, ArrowDown, Star, Lock } from 'lucide-react';
 import { useAuthStore } from '../../store/auth';
 import FileThumbnail from './FileThumbnail';
+import type { FolderSizeInfo } from '../../hooks/useFolderSizes';
 
 interface Props {
   files: FileNode[];
@@ -28,6 +29,8 @@ interface Props {
   dragOverFolderId?: string | null;
   onItemMenu?: (e: React.MouseEvent, node: FileNode) => void;
   onToggleSelect: (id: string) => void;
+  /** 文件夹大小统计（懒加载批量获取） */
+  folderSizes?: Map<string, FolderSizeInfo>;
   isFavorite: (id: string) => boolean;
   onToggleFavorite: (node: FileNode) => void;
   scrollRef?: RefObject<HTMLDivElement | null>;
@@ -38,6 +41,7 @@ function FileTableView({
   onSelect, onSelectAll, onContextMenu, onDoubleClick,
   onItemDragStart, onFolderDragOver, onFolderDragLeave, onFolderDrop, dragOverFolderId, onItemMenu,
   onToggleSelect, isFavorite, onToggleFavorite, scrollRef,
+  folderSizes,
 }: Props) {
   const user = useAuthStore((s) => s.user);
   const allSelected = files.length > 0 && files.every((f) => selectedIds.has(f.id));
@@ -173,7 +177,9 @@ function FileTableView({
                 </div>
                 <div className="hidden sm:flex w-28 px-4 text-sm text-muted truncate items-center">{config.label}</div>
                 <div className="hidden sm:flex w-24 px-4 text-right text-sm text-muted tabular-nums whitespace-nowrap items-center justify-end">
-                  {file.nodeType === 0 ? '-' : formatSize(file.fileSize)}
+                  {file.nodeType === 0
+                    ? (folderSizes?.get(file.id) ? formatSize(folderSizes.get(file.id)!.size) : '…')
+                    : formatSize(file.fileSize)}
                 </div>
                 <div className="hidden md:flex w-40 px-4 text-sm text-muted tabular-nums truncate items-center">{formatDate(file.updatedAt)}</div>
                 <div className="hidden lg:flex w-32 px-4 text-sm text-muted truncate items-center">{owner}</div>

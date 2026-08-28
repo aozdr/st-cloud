@@ -2,6 +2,7 @@ package com.stcloud.core.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.stcloud.core.dto.FileNodeVO;
+import com.stcloud.core.dto.FolderSizeVO;
 import com.stcloud.core.dto.FileTreeNodeVO;
 import com.stcloud.core.dto.StorageInfoVO;
 import com.stcloud.core.entity.FileNode;
@@ -125,6 +126,14 @@ public interface FileService {
 
     /** 设置文件隐藏状态 */
     void setHidden(Long nodeId, boolean hidden);
+
+    /**
+     * 统计文件夹子树总大小与文件/文件夹数量（懒加载，带 5 分钟 TTL 缓存）。
+     *
+     * @param nodeId 文件夹节点 ID
+     * @return 聚合结果（size 字节 / fileCount / folderCount）
+     */
+    FolderSizeVO getFolderSize(Long nodeId);
 
     /** 查询当前用户的隐藏文件列表 */
     List<FileNodeVO> listHidden();

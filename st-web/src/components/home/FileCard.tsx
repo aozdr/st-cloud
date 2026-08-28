@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { memo, type ReactNode } from 'react';
 import type { FileNode } from '../../types';
 import { getFileTypeConfig } from '../../lib/utils';
 import FileTypeIcon from '../file/FileTypeIcon';
@@ -16,7 +16,7 @@ interface FileCardProps {
 }
 
 /** 首页文件卡片：收藏/最近访问/最近文件共用 */
-export default function FileCard({ file, icon, subtitle, trailing, actionLabel, onOpen, onContextMenu }: FileCardProps) {
+function FileCard({ file, icon, subtitle, trailing, actionLabel, onOpen, onContextMenu }: FileCardProps) {
   const config = getFileTypeConfig(file.nodeType, file.suffix);
   return (
     <div
@@ -44,3 +44,6 @@ export default function FileCard({ file, icon, subtitle, trailing, actionLabel, 
     </div>
   );
 }
+
+/** 网格视图卡片：文件对象/操作回调不变时跳过重渲染，长列表滚动性能优化 */
+export default memo(FileCard);

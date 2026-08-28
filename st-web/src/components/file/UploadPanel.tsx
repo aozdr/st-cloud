@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { X, CheckCircle2, AlertCircle, Loader2, Zap, FileUp, Pause, ListChecks } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { formatSize } from '../../lib/utils';
@@ -157,18 +157,19 @@ export default function UploadPanel() {
   const fabDragRef = useRef<{ startX: number; startY: number; origLeft: number; origTop: number; moved: boolean } | null>(null);
   const fabJustDraggedRef = useRef(false);
 
-  const handleFabPointerDown = (e: React.PointerEvent<HTMLButtonElement>) => {
+  const handleFabPointerDown = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
     fabDragRef.current = {
       startX: e.clientX,
       startY: e.clientY,
-      origLeft: fabPos.left,
-      origTop: fabPos.top,
+      // 通过 ref 读取最新位置，避免 handler 因 fabPos 变化而重建
+      origLeft: fabPosRef.current.left,
+      origTop: fabPosRef.current.top,
       moved: false,
     };
     e.currentTarget.setPointerCapture(e.pointerId);
-  };
+  }, []);
 
-  const handleFabPointerMove = (e: React.PointerEvent<HTMLButtonElement>) => {
+  const handleFabPointerMove = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
     const d = fabDragRef.current;
     if (!d) return;
     const dx = e.clientX - d.startX;
@@ -181,9 +182,9 @@ export default function UploadPanel() {
       left: Math.min(Math.max(0, d.origLeft + dx), maxLeft),
       top: Math.min(Math.max(0, d.origTop + dy), maxTop),
     });
-  };
+  }, []);
 
-  const handleFabPointerUp = (e: React.PointerEvent<HTMLButtonElement>) => {
+  const handleFabPointerUp = useCallback((e: React.PointerEvent<HTMLButtonElement>) => {
     const d = fabDragRef.current;
     fabDragRef.current = null;
     try {
@@ -200,15 +201,15 @@ export default function UploadPanel() {
         // 忽略持久化失败
       }
     }
-  };
+  }, []);
 
-  const handleFabClick = () => {
+  const handleFabClick = useCallback(() => {
     if (fabJustDraggedRef.current) {
       fabJustDraggedRef.current = false;
       return;
     }
     setPanelOpen(true);
-  };
+  }, [setPanelOpen]);
 
   const activeCount = tasks.filter((t) => !['completed', 'instant', 'failed', 'paused'].includes(t.status)).length;
   const hasCompleted = tasks.some((t) => t.status === 'completed' || t.status === 'instant');

@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Cloud, FolderClosed, Trash2, Share2, Users, Settings, ArrowUpDown, Palette, FolderSync, Home, Upload, PanelLeftClose, PanelLeftOpen, X, Star, Copy, EyeOff, GripVertical } from 'lucide-react';
-import { memo, useEffect, useState } from 'react';
+import { memo, useEffect, useState, useCallback } from 'react';
 import { formatSize, cn } from '../../lib/utils';
 import { isElectron } from '../../lib/electron';
 import { usePermission } from '../../lib/permission';
@@ -101,18 +101,18 @@ function Sidebar({ mobileOpen, onClose }: SidebarProps) {
   const isLowSpace = usedPercent > 90;
   const navItems = applyNavOrder(buildNavItems(isElectron(), canAccessAdmin), navOrder);
 
-  const handleDragStart = (e: React.DragEvent, key: string) => {
+  const handleDragStart = useCallback((e: React.DragEvent, key: string) => {
     setDragKey(key);
     e.dataTransfer.effectAllowed = 'move';
     e.dataTransfer.setData('text/plain', key);
-  };
-  const handleDragOver = (e: React.DragEvent, key: string) => {
+  }, []);
+  const handleDragOver = useCallback((e: React.DragEvent, key: string) => {
     if (!dragKey || dragKey === key) return;
     e.preventDefault();
     e.dataTransfer.dropEffect = 'move';
     setDragOverKey(key);
-  };
-  const handleDrop = (e: React.DragEvent, key: string) => {
+  }, [dragKey]);
+  const handleDrop = useCallback((e: React.DragEvent, key: string) => {
     e.preventDefault();
     const from = dragKey ?? e.dataTransfer.getData('text/plain');
     setDragKey(null);
@@ -131,13 +131,13 @@ function Sidebar({ mobileOpen, onClose }: SidebarProps) {
     } catch {
       // localStorage 不可用时仅本次会话生效
     }
-  };
-  const handleDragEnd = () => {
+  }, [dragKey, navItems]);
+  const handleDragEnd = useCallback(() => {
     setDragKey(null);
     setDragOverKey(null);
-  };
+  }, []);
 
-  const handleUploadClick = () => {
+  const handleUploadClick = useCallback(() => {
     setPanelOpen(true);
     const input = document.createElement('input');
     input.type = 'file';
@@ -148,7 +148,7 @@ function Sidebar({ mobileOpen, onClose }: SidebarProps) {
     };
     input.click();
     onClose();
-  };
+  }, [setPanelOpen, addFiles, onClose]);
 
   const toggleCollapse = () => {
     const next = !collapsed;

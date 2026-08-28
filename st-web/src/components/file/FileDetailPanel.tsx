@@ -1,4 +1,7 @@
 import type { FileNode } from '../../types';
+import { useEffect, useState } from 'react';
+import api from '../../lib/api';
+import type { FolderSizeInfo } from '../../hooks/useFolderSizes';
 import { getFileTypeConfig, formatSize, formatDate, cn } from '../../lib/utils';
 import FileThumbnail from './FileThumbnail';
 import { X, FolderOpen, Clock, HardDrive, Calendar, Hash } from 'lucide-react';
@@ -13,6 +16,17 @@ interface Props {
 export default function FileDetailPanel({ file, onClose, variant = 'sidebar' }: Props) {
   const config = getFileTypeConfig(file.nodeType, file.suffix);
   const isPanel = variant === 'panel';
+  const [folderSize, setFolderSize] = useState<FolderSizeInfo | null>(null);
+
+  useEffect(() => {
+    setFolderSize(null);
+    if (file.nodeType !== 0) return;
+    let cancelled = false;
+    api.get<FolderSizeInfo>(`/file/${file.id}/folder-size`)
+      .then((res) => { if (!cancelled) setFolderSize(res); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [file.id, file.nodeType]);
 
   return (
     <aside
@@ -47,6 +61,20 @@ export default function FileDetailPanel({ file, onClose, variant = 'sidebar' }: 
         <div className={cn('space-y-3', isPanel ? 'px-4 py-6' : 'px-4 py-4')}>
           {file.nodeType === 1 && (
             <DetailRow icon={HardDrive} label="大小" value={formatSize(file.fileSize)} />
+          )}
+          {file.nodeType === 0 && (
+            <DetailRow
+              icon={HardDrive}
+              label="总大小"
+              value={folderSize ? formatSize(folderSize.size) : '计算中…'}
+            />
+          )}
+          {file.nodeType === 0 && folderSize && (
+            <DetailRow
+              icon={Hash}
+              label="内容"
+              value={`${folderSize.fileCount} 个文件 · ${folderSize.folderCount} 个文件夹`}
+            />
           )}
           {file.path && file.path !== '/' && (
             <DetailRow icon={FolderOpen} label="位置" value={file.path} />

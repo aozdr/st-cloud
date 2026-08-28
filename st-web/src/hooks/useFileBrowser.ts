@@ -2,10 +2,8 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { isElectron } from '../lib/electron';
 import api from '../lib/api';
-import { useTransferStore } from '../store/transfer';
 import type { BlankFileType, FileNode } from '../types';
 import type { FileSource } from '../lib/fileSource';
-import type { IconSize } from '../components/file/FileToolbar';
 import { useMobile } from './useMobile';
 import { usePullToRefresh } from './usePullToRefresh';
 import { isCapacitor } from '../lib/runtime';
@@ -24,6 +22,10 @@ import { useFileSelection } from './useFileSelection';
 import { useFileClipboard } from './useFileClipboard';
 import { useFileDialogs } from './useFileDialogs';
 import { useFolderSearch } from './useFolderSearch';
+import { isNodeLocked, folderScrollPositions, useBrowserPreferences } from './file-browser/useBrowserPreferences';
+import { usePathNavigation } from './file-browser/usePathNavigation';
+import { useFileDragDrop } from './file-browser/useFileDragDrop';
+import { useFileDownload } from './file-browser/useFileDownload';
 
 export interface FileBrowserProps {
   source: FileSource;
@@ -42,18 +44,6 @@ export interface FileBrowserProps {
   onCloseDetail?: () => void;
   onToggleLock?: (action: 'lock' | 'unlock', node: FileNode) => void;
 }
-
-/** 节点是否已锁定：以后端锁定字段为准（lockedBy 非空且未过期即视为锁定） */
-function isNodeLocked(node: FileNode): boolean {
-  if (node.lockedBy == null) return false;
-  return node.lockExpireAt == null || new Date(node.lockExpireAt).getTime() > Date.now();
-}
-
-/** 各目录滚动位置缓存：组件随目录切换会重挂载，用模块级 Map 跨实例保留 */
-const folderScrollPositions: Record<string, number> = {};
-
-/** 每页条数选项（默认 100） */
-const PAGE_SIZE_OPTIONS = [50, 100, 150, 200];
 
 export function useFileBrowser({
   source,
@@ -78,16 +68,11 @@ export function useFileBrowser({
   const [files, setFiles] = useState<FileNode[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
-  const [view, setView] = useState<'list' | 'grid'>(() => {
-    const saved = localStorage.getItem('fileView');
-    if (saved === 'grid') return 'grid';
-    return 'list';
-  });
-  const [iconSize, setIconSize] = useState<IconSize>(() => {
-    const saved = localStorage.getItem('fileIconSize');
-    if (saved === 'sm' || saved === 'lg') return saved;
-    return 'md';
-  });
+  // 浏览偏好组（视图/图标/分页/排序）：持久化与 URL 同步逻辑拆分至 useBrowserPreferences
+  const {
+    view, setView, iconSize, setIconSize, pageSize, setPageSize,
+    sortBy, setSortBy, sortDir, setSortDir, foldersFirst, setFoldersFirst,
+  } = useBrowserPreferences(syncUrl, searchParams, setSearchParams);
   const folderSearch = useFolderFilterStore((s) => s.keyword);
   const setFolderSearch = useFolderFilterStore((s) => s.setKeyword);
   const setFolderPath = useFolderFilterStore((s) => s.setFolderPath);
@@ -101,44 +86,10 @@ export function useFileBrowser({
   }, [page]);
   const [total, setTotal] = useState(0);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [pageSize, setPageSize] = useState<number>(() => {
-    const saved = Number(localStorage.getItem('filePageSize'));
-    return PAGE_SIZE_OPTIONS.includes(saved) ? saved : 100;
-  });
   const [pageInput, setPageInput] = useState('1');
   const [isRefreshing, setIsRefreshing] = useState(false);
   const toggleFav = useFavoritesStore((s) => s.toggleFavorite);
   const checkFav = useFavoritesStore((s) => s.isFavorite);
-  const [sortBy, setSortBy] = useState<'name' | 'size' | 'time'>(() => {
-    if (syncUrl) {
-      const s = searchParams.get('sort');
-      if (s === 'name' || s === 'size' || s === 'time') return s;
-    }
-    return (localStorage.getItem('fileSortBy') as 'name' | 'size' | 'time') || 'name';
-  });
-  const [sortDir, setSortDir] = useState<'asc' | 'desc'>(() => {
-    if (syncUrl) {
-      const d = searchParams.get('dir');
-      if (d === 'asc' || d === 'desc') return d;
-    }
-    return (localStorage.getItem('fileSortDir') as 'asc' | 'desc') || 'asc';
-  });
-  const [foldersFirst, setFoldersFirst] = useState<boolean>(() => {
-    return localStorage.getItem('fileFoldersFirst') !== 'false';
-  });
-
-  useEffect(() => {
-    if (!syncUrl) return;
-    setSearchParams(
-      (prev) => {
-        if (prev.get('sort') === sortBy && prev.get('dir') === sortDir) return prev;
-        prev.set('sort', sortBy);
-        prev.set('dir', sortDir);
-        return prev;
-      },
-      { replace: true },
-    );
-  }, [sortBy, sortDir, syncUrl, setSearchParams]);
 
   const { showToast } = useToast();
   const { confirm } = useConfirm();
@@ -226,10 +177,6 @@ export function useFileBrowser({
 
   const stateRef = useRef({ selectedIds, files, clipboard, view, parentId, focusedIndex, lastSelectedId });
 
-  const [pathEditMode, setPathEditMode] = useState(false);
-  const [pathInput, setPathInput] = useState('/');
-  const [pathError, setPathError] = useState(false);
-  const pathInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const bandRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -320,14 +267,6 @@ export function useFileBrowser({
   }, [page]);
 
   useEffect(() => {
-    localStorage.setItem('fileView', view);
-  }, [view]);
-
-  useEffect(() => {
-    localStorage.setItem('fileIconSize', iconSize);
-  }, [iconSize]);
-
-  useEffect(() => {
     const reset = () => { isInternalDragRef.current = false; };
     document.addEventListener('dragend', reset);
     return () => document.removeEventListener('dragend', reset);
@@ -359,6 +298,8 @@ export function useFileBrowser({
   const ptr = usePullToRefresh({ onRefresh: async () => { await fetchFiles(); } });
 
   const refresh = useCallback(() => {
+    setContextMenu(null);
+    setBlankContextMenu(null);
     setIsRefreshing(true);
     setRefreshKey((k) => k + 1);
   }, []);
@@ -378,14 +319,14 @@ export function useFileBrowser({
       setSortBy(col);
       localStorage.setItem('fileSortBy', col);
     }
-  }, [sortBy, sortDir]);
+  }, [sortBy, sortDir, setSortBy, setSortDir]);
 
   const handlePageSizeChange = useCallback((v: number) => {
     setPageSize(v);
     setPage(1);
     fetchFiles(1);
     try { localStorage.setItem('filePageSize', String(v)); } catch { /* ignore */ }
-  }, [fetchFiles]);
+  }, [fetchFiles, setPageSize]);
 
   const handlePageInputCommit = useCallback(() => {
     const n = parseInt(pageInput, 10);
@@ -400,77 +341,14 @@ export function useFileBrowser({
     fetchFiles(target);
   }, [pageInput, page, total, pageSize, fetchFiles]);
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    if (isInternalDragRef.current || e.dataTransfer.types.includes('application/x-file-ids')) return;
-    const isFileDrag = e.dataTransfer.types.includes('Files') || e.dataTransfer.files.length > 0;
-    if (!isFileDrag) return;
-    e.preventDefault();
-    setIsDragging(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    if (isInternalDragRef.current || e.dataTransfer.types.includes('application/x-file-ids')) return;
-    e.preventDefault();
-    if (e.currentTarget === e.target) setIsDragging(false);
-  }, []);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    if (isInternalDragRef.current || e.dataTransfer.types.includes('application/x-file-ids')) {
-      setIsDragging(false);
-      return;
-    }
-    e.preventDefault();
-    setIsDragging(false);
-    const droppedFiles = Array.from(e.dataTransfer.files);
-    if (droppedFiles.length === 0) return;
-    if (isElectron()) {
-      const filePaths = droppedFiles
-        .map((f) => (f as File & { path?: string }).path)
-        .filter((p): p is string => !!p);
-      if (filePaths.length > 0) {
-        addFilePaths(filePaths, parentId || '0', undefined, uploadSpaceId);
-        return;
-      }
-    }
-    addFiles(droppedFiles, parentId || '0', undefined, uploadSpaceId);
-  }, [addFilePaths, addFiles, parentId, uploadSpaceId]);
-
-  const handleItemDragStart = useCallback((e: React.DragEvent, node: FileNode) => {
-    isInternalDragRef.current = true;
-    const ids = selectedIds.has(node.id) ? [...selectedIds] : [node.id];
-    e.dataTransfer.setData('application/x-file-ids', JSON.stringify(ids));
-    e.dataTransfer.effectAllowed = 'move';
-  }, [selectedIds]);
-
-  const handleFolderDragOver = useCallback((e: React.DragEvent, folder: FileNode) => {
-    if (!isInternalDragRef.current && !e.dataTransfer.types.includes('application/x-file-ids')) return;
-    e.preventDefault();
-    e.stopPropagation();
-    e.dataTransfer.dropEffect = 'move';
-    setDragOverFolderId(folder.id);
-  }, []);
-
-  const handleFolderDragLeave = useCallback((e: React.DragEvent, folder: FileNode) => {
-    e.stopPropagation();
-    setDragOverFolderId((prev) => (prev === folder.id ? null : prev));
-  }, []);
-
-  const handleFolderDrop = useCallback(async (e: React.DragEvent, folder: FileNode) => {
-    const data = e.dataTransfer.getData('application/x-file-ids');
-    if (!isInternalDragRef.current && !data) return;
-    e.preventDefault();
-    e.stopPropagation();
-    setDragOverFolderId(null);
-    const ids = JSON.parse(data) as string[];
-    if (ids.includes(folder.id)) return;
-    try {
-      await source.move(ids, folder.id);
-      showToast('\u79fb\u52a8\u6210\u529f', 'success');
-      fetchFiles();
-    } catch {
-      showToast('\u79fb\u52a8\u5931\u8d25', 'error');
-    }
-  }, [source, showToast, fetchFiles]);
+  // 拖拽组（外部文件拖入上传/内部拖拽移动）：拆分至 useFileDragDrop
+  const {
+    handleDragOver, handleDragLeave, handleDrop, handleItemDragStart,
+    handleFolderDragOver, handleFolderDragLeave, handleFolderDrop,
+  } = useFileDragDrop({
+    parentId, uploadSpaceId, selectedIds, source, showToast, fetchFiles,
+    addFiles, addFilePaths, isInternalDragRef, setIsDragging, setDragOverFolderId,
+  });
 
   const handleUploadClick = useCallback(async () => {
     if (isCapacitor()) {
@@ -575,147 +453,18 @@ export function useFileBrowser({
     !isMobile,
   );
 
-  const handleDownload = useCallback(async (nodeIds: string[]) => {
-    try {
-      if (isElectron()) {
-        const nodes = nodeIds
-          .map((id) => files.find((f) => f.id === id))
-          .filter((n): n is FileNode => !!n);
-        const fileNodes = nodes.filter((n) => n.nodeType === 1);
-        if (nodes.length > 0 && fileNodes.length === nodes.length) {
-          if (nodes.length === 1) {
-            setDownloadTarget(nodes[0]);
-          } else {
-            const downloadsDir = await window.electronAPI!.getDownloadsPath();
-            const dir = downloadsDir || '';
-            for (const n of nodes) {
-              await window.electronAPI!.startDownload(n.id, n.name, Number(n.fileSize || 0), `${dir}\\${n.name}`);
-            }
-            setDownloadQueuedCount(nodes.length);
-          }
-          return;
-        }
-      }
-      if (nodeIds.length === 1) {
-        const node = files.find((f) => f.id === nodeIds[0]);
-        const dlLimit = useTransferStore.getState().effective.downloadSpeedLimit;
-        const url = await source.getDownloadUrl(nodeIds[0]);
-        const sep = url.includes('?') ? '&' : '?';
-        const finalUrl = dlLimit > 0 ? `${url}${sep}clientLimit=${dlLimit}` : url;
-        const a = document.createElement('a');
-        a.href = finalUrl;
-        a.download = node?.name || 'download';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-      } else {
-        setZipProgress(0);
-        try {
-          showToast('正在打包下载，请稍候…', 'info');
-          const blob = await source.downloadZip(nodeIds, (loaded) => setZipProgress(loaded));
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'download.zip';
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-          showToast('打包完成，已开始下载', 'success');
-        } finally {
-          setZipProgress(null);
-        }
-      }
-    } catch {
-      showToast('下载失败', 'error');
-    }
-  }, [files, source, showToast, setDownloadTarget]);
+  // 下载组（桌面直下/浏览器下载/zip 打包）：拆分至 useFileDownload
+  const { handleDownload } = useFileDownload({
+    source, files, showToast,
+    setDownloadTarget, setZipProgress, setDownloadQueuedCount,
+  });
 
-  const handleArchiveExtracted = useCallback(async (folderId: string) => {
-    const fallbackNode: FileNode = {
-      id: folderId, parentId: '0', nodeType: 0, name: '', path: '/',
-      fileSize: null, suffix: null, contentType: null, status: 0,
-      thumbnailPath: null, createdAt: '', updatedAt: '',
-    };
-    try {
-      if (!folderId || folderId === '0') {
-        onNavigateFolder({
-          id: '0', parentId: '0', nodeType: 0, name: '', path: '/',
-          fileSize: null, suffix: null, contentType: null, status: 0,
-          thumbnailPath: null, createdAt: '', updatedAt: '',
-        });
-        return;
-      }
-      const node = await source.getNodeById(folderId);
-      if (node && node.nodeType === 0) {
-        onNavigateFolder(node);
-        return;
-      }
-    } catch {
-      // 节点查询失败时按 id 直接跳转
-    }
-    onNavigateFolder(fallbackNode);
-  }, [source, onNavigateFolder]);
-
-  const enterPathEditMode = useCallback(() => {
-    setPathInput(currentPath === '/' ? '/' : currentPath);
-    setPathError(false);
-    setPathEditMode(true);
-    setTimeout(() => pathInputRef.current?.select(), 0);
-  }, [currentPath]);
-
-  const navigateToPath = useCallback(async (path: string) => {
-    if (path === '/' || path === '') {
-      onNavigateFolder({ id: '0', parentId: '0', nodeType: 0, name: '', path: '/', fileSize: null, suffix: null, contentType: null, status: 0, thumbnailPath: null, createdAt: '', updatedAt: '' });
-      return;
-    }
-    try {
-      const node = await source.resolveByPath(path);
-      if (node && node.nodeType === 0) onNavigateFolder(node);
-    } catch {
-      showToast('路径不存在', 'error');
-    }
-  }, [source, showToast, onNavigateFolder]);
-
-  const handlePathSubmit = useCallback(async () => {
-    const raw = pathInput.trim().replace(/\\/g, '/').replace(/\/$/, '');
-    if (!raw || raw === '/') {
-      setPathEditMode(false);
-      navigateToPath('/');
-      return;
-    }
-    try {
-      const node = await source.resolveByPath(raw);
-      if (node && node.nodeType === 0) {
-        setPathError(false);
-        setPathEditMode(false);
-        onNavigateFolder(node);
-      } else if (node && node.nodeType === 1) {
-        setPathError(true);
-        showToast('该路径指向的是文件而非文件夹', 'error');
-      } else {
-        setPathError(true);
-        showToast('路径不存在', 'error');
-      }
-    } catch {
-      setPathError(true);
-      showToast('路径不存在: ' + raw, 'error');
-    }
-  }, [pathInput, source, showToast, onNavigateFolder, navigateToPath]);
-
-  const pathSegments = useMemo(() => {
-    const cleanPath = currentPath.replace(/^\/+|\/+$/g, '');
-    if (!cleanPath) return [];
-    const parts = cleanPath.split('/');
-    const segments: { name: string; path: string }[] = [];
-    let acc = '';
-    for (const part of parts) {
-      if (!part) continue;
-      acc += '/' + part;
-      segments.push({ name: part, path: acc });
-    }
-    return segments;
-  }, [currentPath]);
+  // 路径导航组（路径栏编辑/跳转/面包屑分段/解压后跳转）：拆分至 usePathNavigation
+  const {
+    pathEditMode, setPathEditMode, pathInput, setPathInput,
+    pathError, setPathError, pathInputRef,
+    handleArchiveExtracted, enterPathEditMode, handlePathSubmit, navigateToPath, pathSegments,
+  } = usePathNavigation({ source, onNavigateFolder, showToast, currentPath });
 
   const handleEdit = useCallback((node: FileNode) => {
     navigate(`/file/${node.id}/editor`, { state: { from: location.pathname + location.search } });
@@ -853,7 +602,7 @@ export function useFileBrowser({
     const next = sortDir === 'asc' ? 'desc' : 'asc';
     setSortDir(next);
     localStorage.setItem('fileSortDir', next);
-  }, [sortDir]);
+  }, [sortDir, setSortDir]);
 
   const handleNewFolderClick = useCallback(() => setShowCreateFolder(true), [setShowCreateFolder]);
 

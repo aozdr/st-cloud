@@ -59,6 +59,7 @@ async function createWindow(): Promise<void> {
       contextIsolation: true,
       nodeIntegration: false,
       // 渲染层直连本机后端 API，服务端 CORS 无法预知桌面端来源，关闭同源校验；仅加载本地打包内容
+      // TODO(P1#5 revisit): 移除 webSecurity:false 需先实测 app:// Origin 值并重启后端 CORS，本次回滚待重新设计
       webSecurity: false,
       sandbox: false,
     },

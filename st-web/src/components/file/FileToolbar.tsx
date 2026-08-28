@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { FolderPlus, Upload, Download, Trash2, Copy, FolderInput, X, RefreshCw, ArrowDownUp, List, LayoutGrid, Edit3, Plus, ChevronDown, FileType, FileText, FileSpreadsheet, Presentation } from 'lucide-react';
+import { memo, useState } from 'react';
+import { FolderPlus, Upload, Download, Trash2, Copy, FolderInput, X, RefreshCw, ArrowDownUp, List, LayoutGrid, Columns3, Edit3, Plus, ChevronDown, FileType, FileText, FileSpreadsheet, Presentation } from 'lucide-react';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
 import { cn, formatSize } from '../../lib/utils';
@@ -8,7 +8,7 @@ import type { BlankFileType } from '../../types';
 
 export type SortBy = 'name' | 'size' | 'time';
 export type SortDir = 'asc' | 'desc';
-export type ViewMode = 'list' | 'grid';
+export type ViewMode = 'list' | 'grid' | 'waterfall';
 /** 网格视图图标大小：小 / 中 / 大 */
 export type IconSize = 'sm' | 'md' | 'lg';
 
@@ -45,7 +45,7 @@ interface FileToolbarProps {
   onToggleFoldersFirst: (v: boolean) => void;
 }
 
-export default function FileToolbar({
+function FileToolbar({
   has, selectedCount, filesCount, allSelected, selectedSize, canEditSelected, onEdit,
   sortBy, onSortChange, sortDir, onSortDirToggle,
   view, onViewChange,
@@ -219,9 +219,18 @@ export default function FileToolbar({
             >
               <LayoutGrid className="w-4 h-4" aria-hidden />
             </button>
+            <button
+              onClick={() => onViewChange('waterfall')} aria-label="瀑布流视图" title="瀑布流视图"
+              className={cn('p-1.5 rounded-md cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', view === 'waterfall' ? 'bg-surface text-primary-600 shadow-soft' : 'text-muted hover:text-fg')}
+            >
+              <Columns3 className="w-4 h-4" aria-hidden />
+            </button>
           </div>
         )}
       </div>
     </div>
   );
 }
+
+/** 工具栏：props 引用稳定时跳过重渲染，减少文件列表操作时的重绘 */
+export default memo(FileToolbar);

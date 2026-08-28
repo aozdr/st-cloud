@@ -148,6 +148,14 @@
   }
   .btn-primary:active {
     background-color: rgb(var(--color-primary-800));
+    transform: scale(0.98);
+  }
+  .btn-secondary:active {
+    transform: scale(0.98);
+  }
+  .btn-danger:active,
+  .btn-ghost:active {
+    transform: scale(0.98);
   }
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 h-10 px-4 text-sm font-medium rounded-[9px] border cursor-pointer transition-colors duration-150;
@@ -202,6 +210,7 @@
   .modal-overlay {
     @apply fixed inset-0 z-50 flex items-center justify-center animate-fade-in;
     background-color: rgba(15, 20, 30, 0.35);
+    backdrop-filter: blur(2px);
     overscroll-behavior: contain;
   }
   .modal-content {
@@ -335,6 +344,25 @@
   animation: skeleton-pulse 1.8s ease-in-out infinite;
 }
 
+/* 传输进度条光泽流动：仅活跃任务进度条启用，传达"正在推进"的运动感 */
+@keyframes progress-sheen {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(320%); }
+}
+.progress-sheen {
+  position: relative;
+  overflow: hidden;
+}
+.progress-sheen::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 36%;
+  background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.5), transparent);
+  animation: progress-sheen 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
 @keyframes route-fade {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -357,7 +385,24 @@
   border-right: 1px solid rgb(var(--border));
 }
 
-@media (prefers-reduced-motion: reduce) {
+  @media (prefers-reduced-motion: reduce) {
+    /* 无障碍：动画豁免仅缩短 transition，keyframes 类动画全部停用 */
+    .animate-fade-in,
+    .animate-scale-in,
+    .animate-slide-up,
+    .animate-file-enter,
+    .animate-route-fade,
+    .animate-dialog-pop,
+    .animate-toast-slide-down,
+    .animate-toast-progress,
+    .animate-pulse-warning,
+    .animate-sheet-up,
+    .animate-sheet-down,
+    .animate-progress-indeterminate,
+    .shimmer,
+    .progress-sheen::after {
+      animation: none !important;
+    }
   *,
   *::before,
   *::after {

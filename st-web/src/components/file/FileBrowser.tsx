@@ -3,6 +3,7 @@ import { cn } from '../../lib/utils';
 import FileToolbar from './FileToolbar';
 import FileBreadcrumb from './FileBreadcrumb';
 import FileList from './FileList';
+import { useFolderSizes } from '../../hooks/useFolderSizes';
 import MultiSelectBar from '../ui/MultiSelectBar';
 import { EmptyState } from './Dialogs';
 import GenericEmptyState from '../EmptyState';
@@ -61,6 +62,9 @@ export default function FileBrowser({
     source, parentId, onNavigateFolder, onBack, uploadSpaceId, enableShare,
     enableVersions, syncUrl, categoryLabel, focusId, onOpenDetail, onToggleLock,
   });
+
+  // 文件夹大小批量懒加载（去抖），列表表格/网格显示文件夹总占用
+  const folderSizes = useFolderSizes(filteredFiles);
 
   /** 详情是否打开：页面级详情走 detailOpen prop；未传时回退到内部详情状态 */
   const listDetailOpen = onOpenDetail ? (detailOpen ?? false) : !!detailFile;
@@ -240,6 +244,7 @@ export default function FileBrowser({
               iconSize={iconSize}
               scrollRef={fileListRef}
               files={filteredFiles}
+              folderSizes={folderSizes}
               lockedIds={lockedIds}
               selectedIds={selectedIds}
               focusedId={focusedId}

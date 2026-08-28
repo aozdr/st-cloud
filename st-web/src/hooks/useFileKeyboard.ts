@@ -6,7 +6,7 @@ export interface FileKeyboardState {
   files: FileNode[];
   selectedIds: Set<string>;
   clipboard: { nodeIds: string[]; mode: 'copy' | 'cut' } | null;
-  view: 'list' | 'grid';
+  view: 'list' | 'grid' | 'waterfall';
   parentId: string | null;
   focusedIndex: number;
   lastSelectedId: string | null;

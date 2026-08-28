@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { memo, type ReactNode } from 'react';
 
 /**
  * 通用空状态组件：SVG 插图 + 标题 + 描述 + 可选操作按钮
@@ -60,13 +60,25 @@ const ILLUSTRATIONS: Record<string, JSX.Element> = {
   ),
 };
 
-export default function EmptyState({ type = 'generic', title, description, action }: EmptyStateProps) {
+function EmptyState({ type = 'generic', title, description, action }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center justify-center py-20 px-4">
-      <div className="mb-5">{ILLUSTRATIONS[type]}</div>
-      <h3 className="text-base font-semibold text-fg mb-1">{title}</h3>
-      {description && <p className="text-sm text-muted mb-5 text-center max-w-xs">{description}</p>}
-      {action && <div>{action}</div>}
+      {/* 入场 stagger：插图→标题→描述→操作 依次浮现，层次感优于整体淡入 */}
+      <div className="mb-5 animate-scale-in">{ILLUSTRATIONS[type]}</div>
+      <h3 className="text-base font-semibold text-fg mb-1 animate-fade-in">{title}</h3>
+      {description && (
+        <p className="text-sm text-muted mb-5 text-center max-w-xs animate-fade-in" style={{ animationDelay: '60ms', animationFillMode: 'backwards' }}>
+          {description}
+        </p>
+      )}
+      {action && (
+        <div className="animate-fade-in" style={{ animationDelay: '120ms', animationFillMode: 'backwards' }}>
+          {action}
+        </div>
+      )}
     </div>
   );
 }
+
+/** 空状态组件：props 不变时跳过重渲染 */
+export default memo(EmptyState);

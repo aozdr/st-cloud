@@ -50,7 +50,9 @@ stcloud:
     refresh-expiration: 2592000000
   cors:
     # 允许的前端来源（逗号分隔）；生产必须配置，留空则拒绝所有跨域
-    allowed-origins: ${STCLOUD_CORS_ORIGINS:}
+  # 生产环境通过环境变量配置，需包含 Web 前端域名与桌面端 app://web
+  # 示例：STCLOUD_CORS_ORIGINS=https://pan.example.com,app://web
+  allowed-origins: ${STCLOUD_CORS_ORIGINS:}
   # 对象存储 (RustFS)
   storage:
     endpoint: http://127.0.0.1:9000

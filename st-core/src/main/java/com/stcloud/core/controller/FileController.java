@@ -308,6 +308,30 @@ public class FileController {
         return Result.success(fileService.listHidden());
     }
 
+    @Operation(summary = "文件夹大小统计（子树聚合，含文件数/文件夹数）")
+    @GetMapping("/{nodeId}/folder-size")
+    public Result<FolderSizeVO> folderSize(@PathVariable Long nodeId) {
+        return Result.success(fileService.getFolderSize(nodeId));
+    }
+
+    @Operation(summary = "批量文件夹大小统计（列表懒加载）")
+    @PostMapping("/folder-sizes")
+    public Result<Map<String, FolderSizeVO>> folderSizes(@RequestBody Map<String, List<Long>> body) {
+        List<Long> ids = body.get("ids");
+        if (ids == null || ids.isEmpty() || ids.size() > 200) {
+            return Result.success(Map.of());
+        }
+        Map<String, FolderSizeVO> result = new java.util.LinkedHashMap<>();
+        for (Long id : ids) {
+            try {
+                result.put(String.valueOf(id), fileService.getFolderSize(id));
+            } catch (Exception e) {
+                // 单个失败跳过，不影响其余
+            }
+        }
+        return Result.success(result);
+    }
+
     @Operation(summary = "重复文件详情列表（同 MD5 的文件）")
     @GetMapping("/duplicates/detail")
     public Result<List<FileNodeVO>> duplicateDetail(@RequestParam String md5) {

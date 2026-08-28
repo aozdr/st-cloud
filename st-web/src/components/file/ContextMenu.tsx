@@ -4,6 +4,7 @@ import { Download, Pencil, FolderInput, Copy, Trash2, FolderOpen, Eye, Edit3, Sc
 import type { FileNode } from '../../types';
 import { usePermission } from '../../lib/permission';
 import { isText, isZip } from '../../lib/utils';
+import { isEditableOfficeSuffix } from '../../lib/editor';
 
 interface Props {
   x: number;
@@ -106,7 +107,10 @@ export default function ContextMenu({ x, y, node, hasClipboard, showShare = true
     { type: 'separator' as const },
     ...(showShare && has('file:share') ? [{ action: 'share', label: '分享', icon: Share2 }] : []),
     { action: 'details', label: '详情', icon: Info },
-    ...(has('file:reset-editing') ? [{ action: 'resetEditing', label: '重置编辑状态', icon: RefreshCw }] : []),
+    // 重置编辑状态：常驻显示（仅支持在线编辑的文档类型）
+    ...(node.nodeType === 1 && isEditableOfficeSuffix(node.suffix) && has('file:reset-editing')
+      ? [{ action: 'resetEditing', label: '重置编辑状态', icon: RefreshCw }]
+      : []),
     { type: 'separator' as const },
     ...(has('file:delete') ? [{ action: 'delete', label: '删除', icon: Trash2, danger: true }] : []),
   ];

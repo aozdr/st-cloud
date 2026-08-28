@@ -4,6 +4,8 @@ import type { FileNode } from '../../types';
 import FileThumbnail from './FileThumbnail';
 import type { SortBy, SortDir, IconSize } from './FileToolbar';
 import { Check, Star, Play, Lock } from 'lucide-react';
+import { isImage } from '../../lib/utils';
+import type { FolderSizeInfo } from '../../hooks/useFolderSizes';
 
 /** 每种图标尺寸对应的网格列数、图标大小与文案密度 */
 const GRID_SIZE_CFG: Record<IconSize, {
@@ -66,14 +68,62 @@ interface Props {
   onToggleSelect: (id: string) => void;
   isFavorite: (id: string) => boolean;
   onToggleFavorite: (node: FileNode) => void;
+  /** 文件夹大小统计（懒加载批量获取） */
+  folderSizes?: Map<string, FolderSizeInfo>;
+  /** 启用瀑布流布局（仅图片文件以 CSS columns 展示；false=标准网格） */
+  waterfall?: boolean;
 }
 
 function FileGrid({
   files, iconSize, lockedIds, selectedIds, focusedId, cutIds, onSelect, onContextMenu, onDoubleClick,
   onItemDragStart, onFolderDragOver, onFolderDragLeave, onFolderDrop, dragOverFolderId,
-  onToggleSelect, isFavorite, onToggleFavorite,
+  onToggleSelect, isFavorite, onToggleFavorite, folderSizes, waterfall = false,
 }: Props) {
   const cfg = GRID_SIZE_CFG[iconSize];
+
+  // 瀑布流模式：展示图片文件以 CSS columns 排列，高度自适应
+  if (waterfall) {
+    const imageFiles = files.filter((f) => f.nodeType === 1 && isImage(f.suffix));
+    if (imageFiles.length === 0) return null;
+    return (
+      <div className={cn('file-waterfall', iconSize === 'sm' ? 'columns-3 sm:columns-4 md:columns-5 lg:columns-6 xl:columns-7 gap-2' : iconSize === 'md' ? 'columns-2 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-6 gap-3' : 'columns-1 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-4')}>
+        {imageFiles.map((file) => {
+          const isSelected = selectedIds.has(file.id);
+          return (
+            <div
+              key={file.id}
+              data-file-id={file.id}
+              onClick={(e) => onSelect(file.id, e)}
+              onDoubleClick={() => onDoubleClick(file)}
+              onContextMenu={(e) => onContextMenu(e, file)}
+              className={cn(
+                'group relative mb-3 break-inside-avoid rounded-xl overflow-hidden bg-[#FEFEFD] dark:bg-surface border cursor-pointer select-none transition-[background-color,border-color] duration-150',
+                isSelected ? 'border-primary-400 ring-1 ring-primary-300' : 'border-transparent hover:border-primary-200',
+                cutIds?.has(file.id) && 'opacity-50',
+              )}
+            >
+              <button
+                onClick={(e) => { e.stopPropagation(); onToggleSelect(file.id); }}
+                aria-label="选择"
+                className={cn(
+                  'absolute top-2 left-2 z-10 w-4 h-4 rounded border flex items-center justify-center transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  isSelected ? 'bg-primary-600 border-primary-600 opacity-100' : 'border-border bg-surface/90 opacity-0 group-hover:opacity-100',
+                )}
+              >
+                {isSelected && <Check className="w-3 h-3 text-white" strokeWidth={3} aria-hidden />}
+              </button>
+              <FileThumbnail file={file} size={cfg.thumb} blur className="w-full h-auto" />
+              <div className="px-2 py-1.5">
+              <div className={cn('text-xs truncate text-center', isSelected ? 'text-primary-600 font-medium' : 'text-fg')} title={file.name}>
+                {file.name}
+              </div>
+            </div>
+          </div>
+          );
+        })}
+      </div>
+    );
+  }
 
   return (
     <div className={cn('grid file-grid file-grid-' + iconSize, cfg.grid)}>
@@ -133,7 +183,6 @@ function FileGrid({
                 aria-hidden
               />
             </button>
-
             {/* 图标容器：透明背景，不再用灰色底圈住图标 */}
             <div className={cn('relative aspect-video w-full rounded-2xl overflow-hidden bg-transparent', cfg.iconMb)}>
               {/* 居中容器：非图片文件图标居中展示；图片文件由 FileThumbnail 铺满 */}
@@ -165,6 +214,11 @@ function FileGrid({
               {file.nodeType === 1 && (
                 <div className={cn('text-tertiary truncate text-center mt-0.5', cfg.meta)}>
                   {formatSize(file.fileSize)}
+                </div>
+              )}
+              {file.nodeType === 0 && folderSizes?.get(file.id) && (
+                <div className={cn('text-tertiary truncate text-center mt-0.5', cfg.meta)}>
+                  {formatSize(folderSizes.get(file.id)!.size)}
                 </div>
               )}
             </div>

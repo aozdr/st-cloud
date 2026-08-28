@@ -41,7 +41,7 @@ async function proactivelyRefreshToken(): Promise<void> {
 
   try {
     const res = await api.post<{ token: string; refreshToken: string }>('/auth/refresh', { refreshToken });
-    localStorage.setItem('accessToken', res.token);
+    sessionStorage.setItem('accessToken', res.token);
     localStorage.setItem('refreshToken', res.refreshToken);
     syncAuthToElectron();
   } catch {
@@ -58,7 +58,7 @@ async function proactivelyRefreshToken(): Promise<void> {
 function startRefreshTimer(): void {
   stopRefreshTimer();
   refreshTimer = setInterval(() => {
-    const token = localStorage.getItem('accessToken');
+    const token = sessionStorage.getItem('accessToken');
     if (!token) return;
 
     const issuedAt = getTokenIssuedAt(token);
@@ -91,12 +91,16 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
-  isAuthenticated: !!localStorage.getItem('accessToken'),
+  // 会话恢复判定：accessToken 在 sessionStorage（随窗口关闭清空），
+  // 但只要 localStorage 里还有 refreshToken 就视为已登录——
+  // 首个 API 请求返回 401 时，api.ts 拦截器会用 refreshToken 静默换取新 accessToken，
+  // 用户无感知，桌面端/浏览器重开后无需重新登录。
+  isAuthenticated: !!(sessionStorage.getItem('accessToken') || localStorage.getItem('refreshToken')),
   loading: false,
 
   login: async (req: LoginRequest) => {
     const data: LoginResponse = await api.post('/auth/login', req);
-    localStorage.setItem('accessToken', data.token);
+    sessionStorage.setItem('accessToken', data.token);
     localStorage.setItem('refreshToken', data.refreshToken);
     syncAuthToElectron();
     set({ isAuthenticated: true });
@@ -106,7 +110,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   register: async (req: RegisterRequest) => {
     const data: LoginResponse = await api.post('/auth/register', req);
-    localStorage.setItem('accessToken', data.token);
+    sessionStorage.setItem('accessToken', data.token);
     localStorage.setItem('refreshToken', data.refreshToken);
     syncAuthToElectron();
     set({ isAuthenticated: true });
@@ -128,7 +132,7 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   logout: () => {
     api.post('/auth/logout').catch(() => {});
-    localStorage.removeItem('accessToken');
+    sessionStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
     stopRefreshTimer();
     set({ user: null, isAuthenticated: false });
@@ -136,7 +140,8 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 }));
 
-// 页面刷新后：如果已认证，恢复主动刷新定时器
-if (localStorage.getItem('accessToken')) {
+// 应用启动后：只要有任一 token 即恢复主动刷新定时器；
+// accessToken 缺失时（新会话），定时器等待 401 拦截器静默刷新补齐后再生效
+if (sessionStorage.getItem('accessToken') || localStorage.getItem('refreshToken')) {
   startRefreshTimer();
 }

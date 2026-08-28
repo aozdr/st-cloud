@@ -1,4 +1,4 @@
-import { type RefObject } from 'react';
+import { memo, type RefObject } from 'react';
 import { Home, ChevronRight, Pencil, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
@@ -22,7 +22,7 @@ interface FileBreadcrumbProps {
   pathInputRef: RefObject<HTMLInputElement>;
 }
 
-export default function FileBreadcrumb({
+function FileBreadcrumb({
   currentPath, pathEditMode, setPathEditMode,
   pathInput, setPathInput, pathError, setPathError,
   onPathSubmit, onEnterEditMode,
@@ -113,3 +113,6 @@ export default function FileBreadcrumb({
     </div>
   );
 }
+
+/** 面包屑：路径/编辑状态不变时跳过重渲染 */
+export default memo(FileBreadcrumb);

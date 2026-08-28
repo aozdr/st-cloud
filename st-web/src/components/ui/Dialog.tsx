@@ -25,6 +25,8 @@ export function Dialog({ onClose, title, description, children, footer, width = 
   useEffect(() => {
     const panel = panelRef.current;
     if (!panel) return;
+    // 记录打开前的焦点元素，关闭时还原（可访问性要求：键盘用户焦点回到触发按钮）
+    const previouslyFocused = document.activeElement as HTMLElement | null;
     const focusable = panel.querySelectorAll<HTMLElement>(
       'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
     );
@@ -42,7 +44,10 @@ export function Dialog({ onClose, title, description, children, footer, width = 
       }
     };
     panel.addEventListener('keydown', onKeydown);
-    return () => panel.removeEventListener('keydown', onKeydown);
+    return () => {
+      panel.removeEventListener('keydown', onKeydown);
+      previouslyFocused?.focus?.();
+    };
   }, []);
 
   return (

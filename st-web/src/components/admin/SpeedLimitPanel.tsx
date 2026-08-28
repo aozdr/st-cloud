@@ -262,7 +262,7 @@ export default function SpeedLimitPanel() {
       </div>
 
       {modalOpen && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 overscroll-contain" role="presentation" onClick={() => setModalOpen(false)}>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 overscroll-contain" role="presentation" onClick={() => setModalOpen(false)}>
           <div className="bg-surface rounded-lg w-full max-w-lg p-6 max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base font-semibold text-fg">{editingId ? '编辑限速规则' : '新建限速规则'}</h2>

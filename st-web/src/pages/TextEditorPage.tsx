@@ -29,7 +29,7 @@ export default function TextEditorPage() {
     if (!nodeId) return;
     let cancelled = false;
     const controller = new AbortController();
-    const token = localStorage.getItem('accessToken');
+    const token = sessionStorage.getItem('accessToken');
     const timer = window.setTimeout(() => controller.abort(), 15000);
     fetch(`${isElectron() ? getServerUrlSync() : ''}/api/file/${nodeId}/stream`, {
       headers: { Authorization: `Bearer ${token}` },

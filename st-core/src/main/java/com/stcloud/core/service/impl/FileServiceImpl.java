@@ -14,6 +14,7 @@ import com.stcloud.common.enums.NodeType;
 import com.stcloud.common.exception.BusinessException;
 import com.stcloud.common.response.ResultCode;
 import com.stcloud.core.dto.FileNodeVO;
+import com.stcloud.core.dto.FolderSizeVO;
 import com.stcloud.core.dto.FileTreeNodeVO;
 import com.stcloud.core.dto.StorageInfoVO;
 import com.stcloud.core.editor.EditorLockService;
@@ -134,6 +135,71 @@ public class FileServiceImpl implements FileService {
                 .orderByDesc(FileNode::getNodeType)
                 .orderByDesc(FileNode::getUpdatedAt);
         return fileNodeMapper.selectPage(pageParam, wrapper).convert(this::toVO);
+    }
+
+    /** 文件夹大小缓存 TTL：5 分钟（结构变更靠 TTL 兜底，不做全量精确失效） */
+    private static final long FOLDER_SIZE_CACHE_TTL_MS = 300_000;
+    private static final String FOLDER_SIZE_KEY_PREFIX = "fsize:";
+
+    @Override
+    public FolderSizeVO getFolderSize(Long nodeId) {
+        FileNode node = fileNodeMapper.selectById(nodeId);
+        if (node == null || !node.isNormal() || !node.isFolder()) {
+            throw new BusinessException(ResultCode.FILE_NOT_FOUND);
+        }
+        Long userId = UserContext.getUserId();
+        if (!node.getOwnerId().equals(userId) && !UserContext.canAccessTenant()) {
+            throw new BusinessException(ResultCode.FORBIDDEN);
+        }
+        Cache cache = buildFolderSizeCache();
+        String key = FOLDER_SIZE_KEY_PREFIX + nodeId;
+        Object cached = cache.get(key);
+        if (cached instanceof FolderSizeVO vo) {
+            return vo;
+        }
+        FolderSizeVO vo = aggregateFolderSize(node);
+        cache.put(key, vo);
+        return vo;
+    }
+
+    /** 逐层 BFS 聚合子树大小与数量，避免深目录递归栈溢出 */
+    private FolderSizeVO aggregateFolderSize(FileNode root) {
+        FolderSizeVO vo = new FolderSizeVO();
+        vo.setSize(0L);
+        vo.setFileCount(0L);
+        vo.setFolderCount(0L);
+        java.util.Deque<Long> queue = new java.util.ArrayDeque<>();
+        queue.add(root.getId());
+        int processed = 0;
+        while (!queue.isEmpty()) {
+            Long parentId = queue.poll();
+            List<FileNode> children = fileNodeMapper.selectList(new LambdaQueryWrapper<FileNode>()
+                    .eq(FileNode::getParentId, parentId)
+                    .eq(FileNode::getStatus, NodeStatus.NORMAL.getCode())
+                    .eq(FileNode::getUploadStatus, UploadStatus.COMPLETED.getCode()));
+            for (FileNode child : children) {
+                if (child.isFolder()) {
+                    vo.setFolderCount(vo.getFolderCount() + 1);
+                    queue.add(child.getId());
+                } else {
+                    vo.setFileCount(vo.getFileCount() + 1);
+                    vo.setSize(vo.getSize() + (child.getFileSize() != null ? child.getFileSize() : 0L));
+                }
+            }
+            // 防御上限：单次聚合最多遍历 50 万节点，防止异常超大目录拖垮 DB
+            processed += children.size();
+            if (processed > 500_000) {
+                break;
+            }
+        }
+        return vo;
+    }
+
+    private Cache buildFolderSizeCache() {
+        if (cacheFactory != null) {
+            return cacheFactory.create(FOLDER_SIZE_CACHE_TTL_MS);
+        }
+        return new TtlCache(FOLDER_SIZE_CACHE_TTL_MS);
     }
 
     @Override

@@ -1,5 +1,6 @@
 import { type ClassValue, clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
+import DOMPurify from 'dompurify';
 import {
   File as FileIcon,
   Image as ImageIcon,
@@ -16,22 +17,16 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
- * 白名单 HTML 消毒：仅保留 <em>（搜索高亮用），其余标签去标签保留文本，属性全部清除。
+ * 白名单 HTML 消毒：仅保留 <em>（搜索高亮用），其余标签/属性全部清除。
+ * 使用 DOMPurify 库，避免自研 DOMParser 方案在畸形输入上的已知绕过风险。
  * 用于渲染服务端返回的搜索高亮片段，防止文件名/内容注入 HTML（存储型 XSS）。
  */
-const HIGHLIGHT_ALLOWED_TAGS = new Set(['EM']);
-
 export function sanitizeHighlight(html: string): string {
   if (!html) return '';
-  const doc = new DOMParser().parseFromString(html, 'text/html');
-  for (const el of Array.from(doc.body.querySelectorAll('*'))) {
-    if (HIGHLIGHT_ALLOWED_TAGS.has(el.tagName)) {
-      for (const attr of Array.from(el.attributes)) el.removeAttribute(attr.name);
-    } else {
-      el.replaceWith(...Array.from(el.childNodes));
-    }
-  }
-  return doc.body.innerHTML;
+  return DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ['em'],
+    ALLOWED_ATTR: [],
+  });
 }
 
 // ==================== File Type Detection ====================

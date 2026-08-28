@@ -15,7 +15,7 @@ export function getElectronAPI() {
  */
 export function syncAuthToElectron(): void {
   if (!isElectron()) return;
-  const token = localStorage.getItem('accessToken');
+  const token = sessionStorage.getItem('accessToken');
   const refreshToken = localStorage.getItem('refreshToken');
   if (token && refreshToken) {
     window.electronAPI!.setAuth(token, refreshToken);
