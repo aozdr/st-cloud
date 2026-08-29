@@ -8,6 +8,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stcloud.common.context.UserContext;
+import com.stcloud.common.enums.NodeStatus;
 import com.stcloud.common.exception.BusinessException;
 import com.stcloud.common.response.Result;
 import com.stcloud.common.response.ResultCode;
@@ -16,11 +17,19 @@ import com.stcloud.common.utils.IpUtils;
 import com.stcloud.core.editor.EditorConfigService;
 import com.stcloud.core.editor.dto.EditorConfigResponse;
 import com.stcloud.core.entity.FileNode;
+import com.stcloud.core.entity.FileObject;
 import com.stcloud.core.dto.FileNodeVO;
 import com.stcloud.core.enums.UploadStatus;
+import com.stcloud.core.event.FileIndexEvent;
+import com.stcloud.core.event.ReliableEventPublisher;
+import com.stcloud.core.event.SyncChangeEvent;
 import com.stcloud.core.mapper.FileNodeMapper;
+import com.stcloud.core.mapper.UserQuotaMapper;
+import com.stcloud.core.service.CloudStorageService;
+import com.stcloud.core.service.FileObjectService;
 import com.stcloud.core.service.FileService;
 import com.stcloud.core.service.StorageService;
+import com.stcloud.core.dto.StorageInfoVO;
 import com.stcloud.share.dto.*;
 import com.stcloud.share.entity.FileShare;
 import com.stcloud.share.enums.ShareStatus;
@@ -45,6 +54,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -70,6 +80,8 @@ public class ShareServiceImpl implements ShareService {
 
     // S-09 分享流式传输默认限速：5MB/s
     private static final long STREAM_RATE_BYTES_PER_SEC = 5 * 1024 * 1024L;
+    /** 复制/保存文件时对 file_object 的初始引用计数 */
+    private static final int REF_COUNT_INITIAL = 1;
 
     @Resource
     private FileShareMapper fileShareMapper;
@@ -96,6 +108,18 @@ public class ShareServiceImpl implements ShareService {
 
     @Resource
     private SysConfigService sysConfigService;
+
+    @Resource
+    private FileObjectService fileObjectService;
+
+    @Resource
+    private UserQuotaMapper userQuotaMapper;
+
+    @Resource
+    private CloudStorageService cloudStorageService;
+
+    @Resource
+    private ReliableEventPublisher reliableEventPublisher;
 
     @Override
     @Transactional
@@ -837,6 +861,141 @@ public class ShareServiceImpl implements ShareService {
             return perms.contains("download");
         }
         return share.getPermission() != null && share.getPermission() >= 1;
+    }
+
+    @Override
+    @Transactional
+    public Result<SaveShareVO> saveShare(SaveShareRequest request) {
+        // 1. 校验分享访问（匿名可访问：提取码/验证码由 validateShareAccess 处理）
+        FileShare share = validateShareAccess(request.getShareCode(), request.getPassword(),
+                request.getCaptchaId(), request.getCaptchaCode());
+
+        // 2. 保存本质是“下载并复制到我的云盘”，要求分享具备下载权限
+        if (share.getAllowDownload() == null || share.getAllowDownload() == 0 || !shareAllowsDownload(share)) {
+            throw new BusinessException(ResultCode.SHARE_ACCESS_DENIED, "该分享不可下载，无法保存到云盘");
+        }
+
+        // 3. 分享根节点必须存在且可访问
+        FileNode root = fileNodeMapper.selectById(share.getFileNodeId());
+        if (root == null || root.getStatus() != NodeStatus.NORMAL.getCode()) {
+            throw new BusinessException(ResultCode.FILE_NOT_FOUND);
+        }
+
+        // 4. 保存目标必须是当前用户的个人云盘目录（不允许保存到他人/团队空间）
+        Long currentUserId = UserContext.getUserId();
+        if (currentUserId == null) {
+            throw new BusinessException(ResultCode.FORBIDDEN, "请先登录后再保存");
+        }
+        Long effectiveParentId = request.getTargetParentId() == null ? 0L : request.getTargetParentId();
+        if (effectiveParentId != 0L) {
+            FileNode parent = fileNodeMapper.selectById(effectiveParentId);
+            if (parent == null || !parent.isFolder()
+                    || (parent.getSpaceId() != null && parent.getSpaceId() > 0)
+                    || !parent.getOwnerId().equals(currentUserId)) {
+                throw new BusinessException(ResultCode.FORBIDDEN, "保存目标文件夹无效");
+            }
+        }
+        String targetPath = fileService.validateAndGetParentPath(effectiveParentId);
+
+        // 5. 递归保存分享边界内内容（仅从分享根节点向下遍历，绝不越界保存分享外文件）
+        Long currentTenantId = UserContext.getTenantId();
+        SaveShareVO vo = new SaveShareVO();
+        List<Long> nodeIds = new ArrayList<>();
+        vo.setSourceName(root.getName());
+        vo.setNodeIds(nodeIds);
+
+        FileNode rootCopy = saveShareNodeRecursive(root, effectiveParentId, targetPath,
+                currentUserId, currentTenantId, vo);
+        vo.setRootNodeId(rootCopy.getId());
+        vo.setSavedCount(nodeIds.size());
+        log.info("用户{}保存分享到云盘: shareCode={}, targetParentId={}, savedCount={}",
+                currentUserId, request.getShareCode(), effectiveParentId, nodeIds.size());
+        return Result.success(vo);
+    }
+
+    /**
+     * 递归在目标目录下生成分享节点的副本：文件夹递归，文件按 MD5 去重复用物理对象。
+     * <p>
+     * 只沿分享根节点的 parentId 子链向下遍历，任何分享边界外的节点都不会被纳入。
+     */
+    private FileNode saveShareNodeRecursive(FileNode source, Long targetParentId, String targetPath,
+                                            Long currentUserId, Long currentTenantId, SaveShareVO vo) {
+        String newName = fileService.resolveNameConflict(targetParentId, source.getName());
+        String newPath = targetPath == null || targetPath.isEmpty()
+                ? "/" + newName
+                : targetPath + "/" + newName;
+
+        FileNode copy = new FileNode();
+        copy.setParentId(targetParentId);
+        copy.setNodeType(source.getNodeType());
+        copy.setName(newName);
+        copy.setPath(newPath);
+        copy.setFileSize(source.getFileSize());
+        copy.setFileMd5(source.getFileMd5());
+        copy.setContentType(source.getContentType());
+        copy.setSuffix(source.getSuffix());
+        copy.setStoragePath(source.getStoragePath());
+        copy.setStatus(NodeStatus.NORMAL.getCode());
+        copy.setUploadStatus(UploadStatus.COMPLETED.getCode());
+        copy.setOwnerId(currentUserId);
+        copy.setUploaderId(currentUserId);
+        copy.setRefCount(REF_COUNT_INITIAL);
+        copy.setVersion(0);
+        copy.setThumbnailPath(source.getThumbnailPath());
+        // 保存到个人云盘：清空团队空间标识
+        copy.setSpaceId(null);
+
+        // 文件复制：按 MD5 去重复用物理对象（引用计数由 file_object 管理；S3 无网络调用）
+        if (source.isFile() && source.getFileMd5() != null && source.getObjectId() != null) {
+            Long tenantId = source.getTenantId() != null ? source.getTenantId() : currentTenantId;
+            long size = source.getFileSize() == null ? 0 : source.getFileSize();
+            FileObject object = fileObjectService.acquire(tenantId, source.getFileMd5(), size,
+                    () -> source.getStoragePath());
+            if (object != null) {
+                copy.setObjectId(object.getId());
+                copy.setStoragePath(object.getStoragePath());
+            }
+        }
+        fileNodeMapper.insert(copy);
+
+        if (source.isFile() && source.getFileMd5() != null) {
+            long size = source.getFileSize() == null ? 0 : source.getFileSize();
+            checkUserQuota(currentUserId, size);
+            cloudStorageService.checkCapacity(size);
+            // 旧数据（无 object_id）回退按 md5 重算引用
+            if (copy.getObjectId() == null) {
+                fileService.incrementRefCount(source.getFileMd5());
+            }
+            // 原子扣减：并发超配额时 update 返回 0，抛异常回滚本次保存
+            if (size > 0 && userQuotaMapper.updateStorageUsed(currentUserId, size) <= 0) {
+                throw new BusinessException(ResultCode.STORAGE_QUOTA_EXCEEDED);
+            }
+            reliableEventPublisher.publishFileIndex(copy, FileIndexEvent.ActionType.INDEX);
+            reliableEventPublisher.publishSyncChange(copy, SyncChangeEvent.ChangeType.CREATE);
+        } else if (source.isFolder()) {
+            reliableEventPublisher.publishFileIndex(copy, FileIndexEvent.ActionType.INDEX);
+            reliableEventPublisher.publishSyncChange(copy, SyncChangeEvent.ChangeType.CREATE);
+            LambdaQueryWrapper<FileNode> wrapper = new LambdaQueryWrapper<FileNode>()
+                    .eq(FileNode::getParentId, source.getId())
+                    .eq(FileNode::getStatus, NodeStatus.NORMAL.getCode());
+            List<FileNode> children = fileNodeMapper.selectList(wrapper);
+            for (FileNode child : children) {
+                saveShareNodeRecursive(child, copy.getId(), newPath, currentUserId, currentTenantId, vo);
+            }
+        }
+        vo.getNodeIds().add(copy.getId());
+        return copy;
+    }
+
+    /** 校验个人存储配额（与 FileServiceImpl 同口径，避免复制逻辑分散） */
+    private void checkUserQuota(Long userId, long fileSize) {
+        StorageInfoVO quota = userQuotaMapper.getUserQuota(userId);
+        if (quota != null && quota.getQuota() != null && quota.getQuota() > 0) {
+            long used = quota.getUsed() == null ? 0 : quota.getUsed();
+            if (used + fileSize > quota.getQuota()) {
+                throw new BusinessException(ResultCode.STORAGE_QUOTA_EXCEEDED);
+            }
+        }
     }
 
     private ShareVO toVO(FileShare share, String fileName) {

@@ -129,7 +129,8 @@ public class FileServiceImpl implements FileService {
                 .eq(FileNode::getParentId, parentId)
                 .eq(FileNode::getStatus, NodeStatus.NORMAL.getCode())
                 .eq(FileNode::getHidden, 0)
-                .eq(!UserContext.canAccessTenant(), FileNode::getOwnerId, userId)
+                // 个人目录：无条件只返回当前用户自己的文件（单一租户、无租户切换，不因 dataScope 放行他人文件）
+                .eq(FileNode::getOwnerId, userId)
                 .and(w -> w.eq(FileNode::getNodeType, NodeType.FOLDER.getCode())
                         .or().eq(FileNode::getUploadStatus, UploadStatus.COMPLETED.getCode()))
                 .orderByDesc(FileNode::getNodeType)
@@ -148,7 +149,8 @@ public class FileServiceImpl implements FileService {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
         }
         Long userId = UserContext.getUserId();
-        if (!node.getOwnerId().equals(userId) && !UserContext.canAccessTenant()) {
+        // 个人文件夹大小：仅属主可查询；团队文件夹由团队权限前置校验
+        if ((node.getSpaceId() == null || node.getSpaceId() <= 0) && !node.getOwnerId().equals(userId)) {
             throw new BusinessException(ResultCode.FORBIDDEN);
         }
         Cache cache = buildFolderSizeCache();
@@ -206,7 +208,7 @@ public class FileServiceImpl implements FileService {
     public List<FileNodeVO> searchFiles(String keyword) {
         Long userId = UserContext.getUserId();
         LambdaQueryWrapper<FileNode> wrapper = new LambdaQueryWrapper<FileNode>()
-                .eq(!UserContext.canAccessTenant(), FileNode::getOwnerId, userId)
+                .eq(FileNode::getOwnerId, userId)
                 .eq(FileNode::getStatus, NodeStatus.NORMAL.getCode())
                 .eq(FileNode::getHidden, 0)
                 .like(FileNode::getName, keyword)
@@ -420,7 +422,10 @@ public class FileServiceImpl implements FileService {
         LambdaQueryWrapper<FileNode> wrapper = new LambdaQueryWrapper<FileNode>()
                 .eq(FileNode::getNodeType, NodeType.FOLDER.getCode())
                 .eq(FileNode::getStatus, NodeStatus.NORMAL.getCode())
-                .eq(!UserContext.canAccessTenant(), FileNode::getOwnerId, userId)
+                // 个人目录树仅返回当前用户自己的文件夹，不因 dataScope（租户级用户）带上其他用户/管理员的文件夹。
+                // 保存到云盘/移动/归档的目标目录必须落在当前用户自己的云盘内。
+                .eq(FileNode::getOwnerId, userId)
+                .and(w -> w.isNull(FileNode::getSpaceId).or().eq(FileNode::getSpaceId, 0))
                 .orderByAsc(FileNode::getName);
         List<FileNode> folders = fileNodeMapper.selectList(wrapper);
         Map<Long, List<FileNode>> parentIdMap = folders.stream()
@@ -557,7 +562,9 @@ public class FileServiceImpl implements FileService {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
         }
         Long userId = UserContext.getUserId();
-        if (!node.getOwnerId().equals(userId) && !UserContext.canAccessTenant()) {
+        // 个人文件（spaceId 空/0）：仅属主可操作，不因 dataScope 放行他人个人文件；
+        // 团队文件（spaceId>0）由团队权限前置校验（TeamController），此处不拦截。
+        if ((node.getSpaceId() == null || node.getSpaceId() <= 0) && !node.getOwnerId().equals(userId)) {
             throw new BusinessException(ResultCode.FORBIDDEN);
         }
         return node;
@@ -888,7 +895,7 @@ public class FileServiceImpl implements FileService {
     @Override
     public FileNodeVO resolveByPath(String path) {
         Long userId = UserContext.getUserId();
-        return resolvePathInternal(path, UserContext.canAccessTenant() ? null : userId, null);
+        return resolvePathInternal(path, userId, null);
     }
 
     @Override
@@ -1147,7 +1154,8 @@ public class FileServiceImpl implements FileService {
         }
         // 权限校验
         Long userId = UserContext.getUserId();
-        if (!node.getOwnerId().equals(userId) && !UserContext.canAccessTenant()) {
+        // 个人文件：仅属主可设置隐藏；团队文件由团队权限前置校验
+        if ((node.getSpaceId() == null || node.getSpaceId() <= 0) && !node.getOwnerId().equals(userId)) {
             throw new BusinessException(ResultCode.FORBIDDEN);
         }
         node.setHidden(hidden ? 1 : 0);

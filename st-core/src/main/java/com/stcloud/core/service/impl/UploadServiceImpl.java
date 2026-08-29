@@ -196,7 +196,8 @@ public class UploadServiceImpl implements UploadService {
             if (node == null) {
                 throw new BusinessException(ResultCode.FILE_NOT_FOUND);
             }
-            if (!userId.equals(node.getOwnerId()) && !UserContext.canAccessTenant()) {
+            // 个人文件：仅属主可操作；团队文件由团队鉴权前置校验
+            if ((node.getSpaceId() == null || node.getSpaceId() <= 0) && !userId.equals(node.getOwnerId())) {
                 throw new BusinessException(ResultCode.FORBIDDEN);
             }
             if (!node.isFile()) {
@@ -309,7 +310,7 @@ public class UploadServiceImpl implements UploadService {
         if (node == null) {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
         }
-        if (!userId.equals(node.getOwnerId()) && !UserContext.canAccessTenant()) {
+        if ((node.getSpaceId() == null || node.getSpaceId() <= 0) && !userId.equals(node.getOwnerId())) {
             throw new BusinessException(ResultCode.PERMISSION_DENIED);
         }
         int rateKb = SpeedLimitService.capRate(speedLimitService.resolve().getUploadSpeedLimit(), clientLimit);
@@ -334,7 +335,7 @@ public class UploadServiceImpl implements UploadService {
         if (node == null) {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
         }
-        if (!userId.equals(node.getOwnerId()) && !UserContext.canAccessTenant()) {
+        if ((node.getSpaceId() == null || node.getSpaceId() <= 0) && !userId.equals(node.getOwnerId())) {
             throw new BusinessException(ResultCode.PERMISSION_DENIED);
         }
         // 分片状态落库：0-待上传 -> 1-已上传（幂等，重复 confirm 不报错）
@@ -432,7 +433,7 @@ public class UploadServiceImpl implements UploadService {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
         }
         // 权限校验：仅文件 owner 或租户管理员可操作
-        if (!userId.equals(node.getOwnerId()) && !UserContext.canAccessTenant()) {
+        if ((node.getSpaceId() == null || node.getSpaceId() <= 0) && !userId.equals(node.getOwnerId())) {
             throw new BusinessException(ResultCode.PERMISSION_DENIED);
         }
         // Content-Length 校验：单请求不得超过 relayChunkSize，防超大请求打满磁盘（chunked 无长度时跳过）
@@ -488,7 +489,7 @@ public class UploadServiceImpl implements UploadService {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
         }
         // 权限校验：与 relayChunk 一致，仅文件 owner 或租户管理员可操作
-        if (!userId.equals(node.getOwnerId()) && !UserContext.canAccessTenant()) {
+        if ((node.getSpaceId() == null || node.getSpaceId() <= 0) && !userId.equals(node.getOwnerId())) {
             throw new BusinessException(ResultCode.PERMISSION_DENIED);
         }
         try {

@@ -152,13 +152,13 @@ class FileServicePermissionIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
-    void tenantAdminCanAccessAcrossUsers() {
+    void tenantScopeCannotAccessOtherPersonalFiles() {
         FileNode f = fileOwnedBy(OWNER, "admin-see.txt");
         // 普通非所有者：拒绝
         switchUser(OTHER);
         assertThrows(BusinessException.class, () -> fileService.getNodeByIdAndOwner(f.getId()));
 
-        // 租户级数据范围（dataScope=2）：可访问同租户其他用户文件
+        // 单一租户、无租户切换：个人文件仅属主可访问，即使 dataScope=2（租户级）也不放行他人个人文件
         TenantContext.setTenantId(TENANT);
         TenantContext.setTenantMode("SAAS");
         UserContext.setCurrentUser(UserContext.CurrentUser.builder()
@@ -167,7 +167,7 @@ class FileServicePermissionIntegrationTest extends AbstractIntegrationTest {
                 .username("tenant-admin")
                 .dataScope(2)
                 .build());
-        assertDoesNotThrow(() -> fileService.getNodeByIdAndOwner(f.getId()));
+        assertThrows(BusinessException.class, () -> fileService.getNodeByIdAndOwner(f.getId()));
     }
 
     @Test

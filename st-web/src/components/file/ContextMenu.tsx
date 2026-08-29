@@ -100,7 +100,8 @@ export default function ContextMenu({ x, y, node, hasClipboard, showShare = true
     ...(has('file:copy') ? [{ action: 'copy', label: '复制', icon: Copy }] : []),
     ...(hasClipboard && (has('file:copy') || has('file:move')) ? [{ action: 'paste', label: '粘贴', icon: ClipboardPaste }] : []),
     { type: 'separator' as const },
-    ...(node.nodeType === 1 && has('file:download') ? [{ action: 'download', label: '下载', icon: Download }] : []),
+    // 文件走单文件下载，文件夹走 ZIP 打包下载（useFileDownload 已支持），均需下载权限
+    ...(has('file:download') ? [{ action: 'download', label: '下载', icon: Download }] : []),
     ...(has('file:rename') ? [{ action: 'rename', label: '重命名', icon: Pencil }] : []),
     ...(has('file:move') ? [{ action: 'moveTo', label: '移动到…', icon: FolderInput }] : []),
     ...(node.nodeType === 1 && showVersions ? [{ action: 'versions', label: '历史版本', icon: History }] : []),

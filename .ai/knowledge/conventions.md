@@ -121,13 +121,12 @@ public Result<FileNodeVO> getNode(@PathVariable Long nodeId) {
 | 环境变量 | 配置项 | 说明 |
 |----------|--------|------|
 | `STCLOUD_MASTER_KEY` | `stcloud.jwt.master-key` | JWT 主密钥（加解密 DB 中的签名密钥） |
-| `STCLOUD_CORS_ORIGINS` | `stcloud.cors.allowed-origins` | CORS 允许来源（逗号分隔） |
 
 ### 配置规范
 
 - 敏感信息（密钥、密码）使用环境变量覆盖，不硬编码
 - 开发环境使用 `application-dev.yml` 的默认值
-- 生产环境必须通过环境变量覆盖：JWT 密钥、数据库密码、对象存储凭证、CORS 来源
+- 生产环境必须通过环境变量覆盖：JWT 密钥、数据库密码、对象存储凭证
 - `spring.profiles.active: dev` 默认开发环境
 
 ## 数据库迁移
@@ -146,7 +145,7 @@ public Result<FileNodeVO> getNode(@PathVariable Long nodeId) {
 - 密码使用 `BCryptPasswordEncoder` 加密存储
 - JWT 签名密钥通过 `STCLOUD_MASTER_KEY` 加密后存入 `sys_jwt_secret` 表，不入源码
 - 分享提取码使用 BCrypt 加密
-- CORS 生产环境必须配置 `stcloud.cors.allowed-origins`，留空则拒绝所有跨域
+- CORS 由 `SecurityConfig.corsConfigurationSource()` 统一允许所有来源（`setAllowedOriginPatterns("*")`），无运行时白名单配置
 - 无状态认证：`SessionCreationPolicy.STATELESS`
 - 敏感操作使用 `@Auditable` 注解记录审计日志
 

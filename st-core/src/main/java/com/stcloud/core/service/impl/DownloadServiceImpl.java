@@ -53,9 +53,9 @@ public class DownloadServiceImpl implements DownloadService {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
         }
         // 团队空间文件：检查 spaceId 归属由 TeamController 权限控制
-        // 个人文件：检查 ownerId
+        // 个人文件：仅属主可访问（单一租户，不因 dataScope 放行他人文件）
         if (node.getSpaceId() == null || node.getSpaceId() <= 0) {
-            if (!UserContext.getUserId().equals(node.getOwnerId()) && !UserContext.canAccessTenant()) {
+            if (!UserContext.getUserId().equals(node.getOwnerId())) {
                 throw new BusinessException(ResultCode.PERMISSION_DENIED);
             }
         }
@@ -76,9 +76,9 @@ public class DownloadServiceImpl implements DownloadService {
         }
         fileService.validateAccessible(nodeId);
         // 团队空间文件：检查 spaceId 归属由 TeamController 权限控制
-        // 个人文件：检查 ownerId
+        // 个人文件：仅属主可访问（单一租户，不因 dataScope 放行他人文件）
         if (node.getSpaceId() == null || node.getSpaceId() <= 0) {
-            if (!UserContext.getUserId().equals(node.getOwnerId()) && !UserContext.canAccessTenant()) {
+            if (!UserContext.getUserId().equals(node.getOwnerId())) {
                 throw new BusinessException(ResultCode.PERMISSION_DENIED);
             }
         }
@@ -211,7 +211,8 @@ public class DownloadServiceImpl implements DownloadService {
         LambdaQueryWrapper<FileNode> wrapper = new LambdaQueryWrapper<FileNode>()
                 .eq(FileNode::getParentId, folder.getId())
                 .eq(FileNode::getStatus, NodeStatus.NORMAL.getCode())
-                .eq(!UserContext.canAccessTenant(), FileNode::getOwnerId, userId);
+                // 个人文件夹仅属主的子文件；团队文件夹包含团队成员文件（团队鉴权前置）
+                .eq(folder.getSpaceId() == null || folder.getSpaceId() <= 0, FileNode::getOwnerId, userId);
         List<FileNode> children = fileNodeMapper.selectList(wrapper);
         for (FileNode child : children) {
             if (child.isFolder()) {

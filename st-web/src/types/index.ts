@@ -266,6 +266,21 @@ export interface ShareCaptcha {
   imageBase64: string;
 }
 
+export interface SaveShareRequest {
+  shareCode: string;
+  password?: string;
+  captchaId?: string;
+  captchaCode?: string;
+  targetParentId: string;
+}
+
+export interface ShareSaveVO {
+  savedCount: number;
+  sourceName: string;
+  rootNodeId: string;
+  nodeIds: string[];
+}
+
 // ==================== Team Types ====================
 export interface TeamSpace {
   id: string;

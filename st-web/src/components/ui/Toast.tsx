@@ -11,12 +11,14 @@ type ToastType = 'success' | 'error' | 'info' | 'warning';
 
 interface ToastItem {
   id: number;
+  /** 可选分组键：相同 key 的新 toast 会替换旧 toast，避免“进行中/完成”共用多次弹窗 */
+  key?: string;
   message: string;
   type: ToastType;
 }
 
 interface ToastContextValue {
-  showToast: (message: string, type?: ToastType) => void;
+  showToast: (message: string, type?: ToastType, key?: string) => void;
 }
 
 const ToastContext = createContext<ToastContextValue | null>(null);
@@ -44,9 +46,12 @@ const ACCENTS = {
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
-  const showToast = useCallback((message: string, type: ToastType = 'success') => {
+  const showToast = useCallback((message: string, type: ToastType = 'success', key?: string) => {
     const id = Date.now() + Math.random();
-    setToasts((prev) => [...prev, { id, message, type }]);
+    setToasts((prev) => {
+      const next = key ? prev.filter((t) => t.key !== key) : prev;
+      return [...next, { id, key, message, type }];
+    });
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
     }, 3000);

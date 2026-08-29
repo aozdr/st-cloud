@@ -48,7 +48,7 @@ public class RecycleBinServiceImpl implements RecycleBinService {
         Long userId = UserContext.getUserId();
         LambdaQueryWrapper<FileNode> wrapper = new LambdaQueryWrapper<FileNode>()
                 .eq(FileNode::getStatus, NodeStatus.RECYCLED.getCode())
-                .eq(!UserContext.canAccessTenant(), FileNode::getOwnerId, userId)
+                .eq(FileNode::getOwnerId, userId)
                 .orderByDesc(FileNode::getUpdatedAt);
 
         List<FileNode> nodes = fileNodeMapper.selectList(wrapper);
@@ -183,7 +183,7 @@ public class RecycleBinServiceImpl implements RecycleBinService {
         Long userId = UserContext.getUserId();
         LambdaQueryWrapper<FileNode> wrapper = new LambdaQueryWrapper<FileNode>()
                 .eq(FileNode::getStatus, NodeStatus.RECYCLED.getCode())
-                .eq(!UserContext.canAccessTenant(), FileNode::getOwnerId, userId);
+                .eq(FileNode::getOwnerId, userId);
         List<FileNode> nodes = fileNodeMapper.selectList(wrapper);
         for (FileNode node : nodes) {
             permanentDeleteNodeAndChildren(node);

@@ -29,6 +29,10 @@ public class MyBatisPlusConfig {
         IGNORE_TABLES.add("sys_jwt_secret");
         IGNORE_TABLES.add("event_log");
         IGNORE_TABLES.add("sys_config");
+        // 单租户部署：RBAC 配置不按租户隔离，权限分配/角色配置全局生效（无租户切换）
+        IGNORE_TABLES.add("sys_role");
+        IGNORE_TABLES.add("sys_role_permission");
+        IGNORE_TABLES.add("sys_user_role");
     }
 
     @Bean

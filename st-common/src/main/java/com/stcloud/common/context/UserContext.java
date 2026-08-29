@@ -64,13 +64,11 @@ public class UserContext {
     }
 
     /**
-     * 数据范围校验：当前用户是否可访问本租户全部数据（dataScope >= 2）。
-     * data_scope=2（租户级）可访问同租户下所有用户的文件；
-     * data_scope=3（全部）自然满足。
+     * 当前为单租户部署、无租户切换：数据范围(dataScope)不再用于跨用户/跨租户数据访问，
+     * 统一视为「本人」范围。个人文件一律属主可见/可操作，避免租户/全部 scope 泄漏他人文件。
      */
     public static boolean canAccessTenant() {
-        CurrentUser user = getCurrentUser();
-        return user != null && user.getDataScope() != null && user.getDataScope() >= 2;
+        return false;
     }
 
     public static void clear() {

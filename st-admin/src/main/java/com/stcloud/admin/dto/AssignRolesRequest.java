@@ -9,6 +9,6 @@ import java.util.List;
 @Schema(description = "给用户分配角色")
 public class AssignRolesRequest {
 
-    @Schema(description = "角色ID列表")
-    private List<Long> roleIds;
+    @Schema(description = "角色ID列表（字符串承载，防 snowflake 精度丢失）")
+    private List<String> roleIds;
 }

@@ -151,7 +151,7 @@ public class UserManageServiceImpl implements UserManageService {
                             .eq(SysRole::getStatus, 1)
                             .last("LIMIT 1"));
             if (defaultRole != null) {
-                roleService.assignRolesToUser(user.getId(), List.of(defaultRole.getId()));
+                roleService.assignRolesToUser(user.getId(), List.of(String.valueOf(defaultRole.getId())));
             }
         }
 

@@ -1,12 +1,15 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { Lock, Download, FolderClosed, ArrowLeft, Cloud, ChevronRight, Folder, Eye, Edit3 } from 'lucide-react';
+import { Lock, Download, FolderClosed, ArrowLeft, Cloud, ChevronRight, Folder, Eye, Edit3, Save } from 'lucide-react';
 import api from '../lib/api';
 import { formatSize, getFileTypeConfig, formatDate, isPreviewable, isPdf } from '../lib/utils';
 import { isEditableOfficeSuffix } from '../lib/editor';
+import { useAuthStore } from '../store/auth';
+import { useToast } from '../components/ui/Toast';
 import FileTypeIcon from '../components/file/FileTypeIcon';
 import PreviewModal from '../components/preview/PreviewModal';
-import type { ShareAccessVO, ShareFileItem, FileNode, ShareCaptcha } from '../types';
+import SaveShareDialog from '../components/share/SaveShareDialog';
+import type { ShareAccessVO, ShareFileItem, FileNode, ShareCaptcha, ShareSaveVO } from '../types';
 
 interface BreadcrumbItem {
   id: string;
@@ -17,6 +20,8 @@ export default function ShareAccessPage() {
   const { shareCode } = useParams<{ shareCode: string }>();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const { showToast } = useToast();
   const urlPwd = searchParams.get('pwd') || '';
 
   const [password, setPassword] = useState(urlPwd);
@@ -36,6 +41,7 @@ export default function ShareAccessPage() {
   const [listLoading, setListLoading] = useState(false);
   const [breadcrumbs, setBreadcrumbs] = useState<BreadcrumbItem[]>([]);
   const [previewIndex, setPreviewIndex] = useState<number | null>(null);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
 
   const loadFiles = useCallback(
     async (parentId: string, pwd?: string) => {
@@ -169,6 +175,37 @@ export default function ShareAccessPage() {
     loadFiles(newCrumbs[newCrumbs.length - 1].id);
   };
 
+  /** 保存与下载同语义：分享允许下载时才可保存到云盘 */
+  const canSaveShare = canDownloadShare;
+
+  /** 点击保存：未登录提醒并跳登录，登录成功回到本页自动弹保存窗口；已登录直接弹 */
+  const handleSave = () => {
+    if (!isAuthenticated) {
+      showToast('请先登录后再保存分享文件', 'warning');
+      const pwd = password || urlPwd;
+      const current = `/share/${shareCode}${pwd ? `?pwd=${encodeURIComponent(pwd)}` : ''}`;
+      const redirect = `${current}${current.includes('?') ? '&' : '?'}save=1`;
+      navigate(`/login?redirect=${encodeURIComponent(redirect)}`);
+      return;
+    }
+    setSaveDialogOpen(true);
+  };
+
+  // 登录成功跳转回分享页后，自动弹出保存窗口；弹出后移除 save 参数避免刷新重复
+  useEffect(() => {
+    if (searchParams.get('save') === '1' && isAuthenticated && fileInfo) {
+      setSaveDialogOpen(true);
+      navigate(`/share/${shareCode}${urlPwd ? `?pwd=${encodeURIComponent(urlPwd)}` : ''}`, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, isAuthenticated, fileInfo]);
+
+  const handleSaved = (vo: ShareSaveVO, targetParentId: string) => {
+    setSaveDialogOpen(false);
+    showToast(`已保存 ${vo.savedCount} 个项目到云盘`, 'success');
+    navigate(`/files/${targetParentId || '0'}`, { replace: true });
+  };
+
   const config = fileInfo ? getFileTypeConfig(fileInfo.fileType, fileInfo.suffix) : null;
   const isFolder = fileInfo?.fileType === 0;
 
@@ -225,13 +262,24 @@ export default function ShareAccessPage() {
                     <span className="text-xs text-muted">
                       共 {fileList.length} 个项目
                     </span>
-                    <button
-                      onClick={() => handleDownload()}
-                      className="flex items-center gap-1.5 text-xs text-primary-600 hover:text-primary-600 cursor-pointer"
-                    >
-                      <Download className="w-3.5 h-3.5" aria-hidden />
-                      下载整个文件夹
-                    </button>
+                    <div className="flex items-center gap-3">
+                      {canSaveShare && (
+                        <button
+                          onClick={handleSave}
+                          className="flex items-center gap-1.5 text-xs text-primary-600 hover:text-primary-600 cursor-pointer"
+                        >
+                          <Save className="w-3.5 h-3.5" aria-hidden />
+                          保存到云盘
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleDownload()}
+                        className="flex items-center gap-1.5 text-xs text-primary-600 hover:text-primary-600 cursor-pointer"
+                      >
+                        <Download className="w-3.5 h-3.5" aria-hidden />
+                        下载整个文件夹
+                      </button>
+                    </div>
                   </div>
                 )}
 
@@ -404,6 +452,16 @@ export default function ShareAccessPage() {
                   </button>
                 )}
 
+                {canSaveShare && (
+                  <button
+                    onClick={handleSave}
+                    className="w-full flex items-center justify-center gap-2 py-3 bg-neutral-800 text-white text-sm font-medium rounded-md hover:bg-neutral-900 transition-colors cursor-pointer"
+                  >
+                    <Save className="w-4 h-4" aria-hidden />
+                    保存到云盘
+                  </button>
+                )}
+
                 {!canDownloadShare && !isPreviewable(fileInfo.suffix) && (
                   <p className="text-center text-xs text-muted">此分享仅支持查看，不可下载</p>
                 )}
@@ -515,6 +573,17 @@ export default function ShareAccessPage() {
           onClose={() => setPreviewIndex(null)}
           shareContext={{ shareCode: shareCode!, password: password || undefined }}
           onDownload={(file) => handleDownload(file.id)}
+        />
+      )}
+
+      {saveDialogOpen && fileInfo && (
+        <SaveShareDialog
+          shareCode={shareCode!}
+          password={password || urlPwd}
+          sourceName={fileInfo.fileName}
+          isFolder={fileInfo.fileType === 0}
+          onClose={() => setSaveDialogOpen(false)}
+          onSaved={handleSaved}
         />
       )}
     </div>

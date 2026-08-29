@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { Cloud, Lock, User, Mail, Building2, ArrowRight } from 'lucide-react';
 import { useAuthStore } from '../store/auth';
 import { isElectron } from '../lib/electron';
@@ -10,6 +10,7 @@ export default function Login() {
   const login = useAuthStore((s) => s.login);
   const register = useAuthStore((s) => s.register);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -40,7 +41,9 @@ export default function Login() {
         };
         await register(req);
       }
-      navigate('/');
+      // 支持登录后跳转回原页面（如分享页保存流程：/share/xxx?save=1）
+      const redirect = searchParams.get('redirect');
+      navigate(redirect || '/');
     } catch (err) {
       setError(err instanceof Error ? err.message : '操作失败');
     } finally {

@@ -46,4 +46,12 @@ public interface ShareService {
      * 生成分享访问图形验证码（公开接口，无需登录）。失败达阈值后由前端展示。
      */
     Result<Map<String, String>> getCaptcha();
+
+    /**
+     * 将分享内容保存到当前用户的云盘（需登录）。
+     * <p>
+     * 仅保存分享根节点边界内的文件/文件夹，绝不越界保存分享外的资源；
+     * 校验分享访问（匿名可访问）+ 下载权限，目标文件夹必须属于当前用户。
+     */
+    Result<SaveShareVO> saveShare(SaveShareRequest request);
 }

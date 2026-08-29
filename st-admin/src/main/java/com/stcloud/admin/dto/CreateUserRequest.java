@@ -26,6 +26,6 @@ public class CreateUserRequest {
     @Schema(description = "手机号")
     private String phone;
 
-    @Schema(description = "角色ID列表，为空则分配默认 user 角色")
-    private List<Long> roleIds;
+    @Schema(description = "角色ID列表（字符串承载，防 snowflake 精度丢失），为空则分配默认 user 角色")
+    private List<String> roleIds;
 }

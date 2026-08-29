@@ -651,7 +651,7 @@ public class TeamServiceImpl implements TeamService {
             vo.setSpaceId(p.getSpaceId());
             vo.setFolderNodeId(p.getFolderNodeId());
             vo.setSubjectType(p.getSubjectType());
-            vo.setSubjectId(p.getSubjectId());
+            vo.setSubjectId(p.getSubjectId() == null ? null : String.valueOf(p.getSubjectId()));
             vo.setPermission(p.getPermission());
             vo.setPermissions(p.getPermissions());
             // 填充对象名称
@@ -678,7 +678,7 @@ public class TeamServiceImpl implements TeamService {
         List<com.stcloud.team.entity.TeamFolderPermission> rules = request.getRules().stream().map(r -> {
             com.stcloud.team.entity.TeamFolderPermission perm = new com.stcloud.team.entity.TeamFolderPermission();
             perm.setSubjectType(r.getSubjectType());
-            perm.setSubjectId(r.getSubjectId());
+            perm.setSubjectId(r.getSubjectId() == null ? null : Long.valueOf(r.getSubjectId()));
             // 兼容 permission NOT NULL：未传单值时由权限点 JSON 推导旧等级
             perm.setPermission(r.getPermission() != null ? r.getPermission()
                     : FolderPermissionService.legacyLevelOf(FolderPermissionService.parsePermissions(r.getPermissions())));

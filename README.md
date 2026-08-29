@@ -234,7 +234,6 @@ npm run dev
 | 环境变量 | 说明 |
 |----------|------|
 | `STCLOUD_MASTER_KEY` | JWT 主密钥，用于加解密数据库中的签名密钥（≥32 字节） |
-| `STCLOUD_CORS_ORIGINS` | 允许的跨域来源，逗号分隔；留空拒绝所有跨域 |
 | `STCLOUD_S3_ACCESS_KEY` / `STCLOUD_S3_SECRET_KEY` | 对象存储凭证（开发默认 stcloud / stcloud123） |
 | `STCLOUD_ONLYOFFICE_SECRET` | OnlyOffice 签名密钥（≥32 字节），docker-compose 与后端共用 |
 | `MYSQL_ROOT_PASSWORD` | docker-compose 中 MySQL root 密码（默认 123456） |

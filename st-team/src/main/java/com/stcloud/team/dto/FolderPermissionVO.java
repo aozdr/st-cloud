@@ -13,7 +13,7 @@ public class FolderPermissionVO {
     @Schema(description = "空间ID") private Long spaceId;
     @Schema(description = "文件夹节点ID") private Long folderNodeId;
     @Schema(description = "授权对象类型：role/member") private String subjectType;
-    @Schema(description = "角色值或用户ID") private Long subjectId;
+    @Schema(description = "角色值或用户ID（字符串承载，防 snowflake 精度丢失）") private String subjectId;
     @Schema(description = "对象名称") private String subjectName;
     @Schema(description = "权限：-1-无权限 0-管理 1-编辑 2-查看") private Integer permission;
     @Schema(description = "权限点JSON") private String permissions;

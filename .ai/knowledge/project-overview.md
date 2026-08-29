@@ -202,7 +202,6 @@ npm run dev   # 同时启动 web + electron
 | `stcloud.jwt.master-key` | JWT 主密钥 | 环境变量 STCLOUD_MASTER_KEY |
 | `stcloud.jwt.expiration` | Access Token 有效期 | 604800000ms (7d) |
 | `stcloud.jwt.refresh-expiration` | Refresh Token 有效期 | 2592000000ms (30d) |
-| `stcloud.cors.allowed-origins` | CORS 允许来源 | 环境变量 STCLOUD_CORS_ORIGINS |
 | `stcloud.storage.*` | S3 对象存储 | RustFS 127.0.0.1:9000 |
 | `stcloud.elasticsearch.uris` | ES 地址 | 127.0.0.1:9200 |
 | `stcloud.onlyoffice.jwt-secret` | OnlyOffice 签名密钥（≥32 字节） | 环境变量 STCLOUD_ONLYOFFICE_SECRET（开发默认值 `stcloud-onlyoffice-dev-secret-0123456789`，生产必须覆盖） |

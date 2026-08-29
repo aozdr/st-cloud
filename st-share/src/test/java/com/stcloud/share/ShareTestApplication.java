@@ -7,7 +7,10 @@ import com.stcloud.common.mapper.SysConfigMapper;
 import com.stcloud.common.sysconfig.SysConfigService;
 import com.stcloud.common.sysconfig.SysConfigServiceImpl;
 import com.stcloud.core.editor.EditorConfigService;
+import com.stcloud.core.event.ReliableEventPublisher;
+import com.stcloud.core.service.CloudStorageService;
 import com.stcloud.core.service.DownloadService;
+import com.stcloud.core.service.FileObjectService;
 import com.stcloud.core.service.FileService;
 import com.stcloud.core.service.StorageService;
 import com.stcloud.share.service.ShareService;
@@ -81,6 +84,21 @@ public class ShareTestApplication {
     @Bean
     EditorConfigService editorConfigService() {
         return mock(EditorConfigService.class);
+    }
+
+    @Bean
+    FileObjectService fileObjectService() {
+        return mock(FileObjectService.class);
+    }
+
+    @Bean
+    CloudStorageService cloudStorageService() {
+        return mock(CloudStorageService.class);
+    }
+
+    @Bean
+    ReliableEventPublisher reliableEventPublisher() {
+        return mock(ReliableEventPublisher.class);
     }
 
     @Bean

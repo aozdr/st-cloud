@@ -312,7 +312,7 @@ public class ArchiveServiceImpl implements ArchiveService {
             throw new BusinessException(ResultCode.FILE_TYPE_NOT_ALLOWED);
         }
         Long userId = UserContext.getUserId();
-        if (!folder.getOwnerId().equals(userId) && !UserContext.canAccessTenant()) {
+        if ((folder.getSpaceId() == null || folder.getSpaceId() <= 0) && !folder.getOwnerId().equals(userId)) {
             throw new BusinessException(ResultCode.FORBIDDEN);
         }
     }
@@ -324,7 +324,7 @@ public class ArchiveServiceImpl implements ArchiveService {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
         }
         Long userId = UserContext.getUserId();
-        if (!node.getOwnerId().equals(userId) && !UserContext.canAccessTenant()) {
+        if ((node.getSpaceId() == null || node.getSpaceId() <= 0) && !node.getOwnerId().equals(userId)) {
             throw new BusinessException(ResultCode.FORBIDDEN);
         }
         return node;

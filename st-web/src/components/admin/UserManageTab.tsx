@@ -68,7 +68,7 @@ export default function UserManageTab() {
     setCreateUserOpen(true);
   };
 
-  const handleCreateUser = async (form: { username: string; password: string; nickname: string; email: string; phone: string; roleIds: number[] }) => {
+  const handleCreateUser = async (form: { username: string; password: string; nickname: string; email: string; phone: string; roleIds: string[] }) => {
     if (!form.username.trim() || !form.password.trim()) {
       showToast('请输入用户名和密码', 'error');
       return;
@@ -92,7 +92,8 @@ export default function UserManageTab() {
 
   const handleAssignRoles = async (userId: string, roleIds: string[]) => {
     try {
-      await api.put(`/admin/role/user/${userId}`, { roleIds: roleIds.map(Number) });
+      // id 为 snowflake 字符串，直接原样传给后端（后端 Long 转换），避免 Number() 丢失精度
+      await api.put(`/admin/role/user/${userId}`, { roleIds });
       showToast('角色已更新', 'success');
       setRoleTarget(null);
       fetchUsers();
@@ -137,6 +138,14 @@ export default function UserManageTab() {
             </tr>
           </thead>
           <tbody>
+            {users.length === 0 && (
+              <tr>
+                <td colSpan={6} className="py-12 text-center">
+                  <div className="text-sm text-muted">暂无用户</div>
+                  <div className="text-xs text-muted/70 mt-1">点击右上角「新建用户」创建</div>
+                </td>
+              </tr>
+            )}
             {users.map((user) => (
               <tr key={user.id} className="border-b border-border hover:bg-surface-2 transition-colors">
                 <td className="px-4 py-3 text-fg font-medium">{user.username}</td>
@@ -145,12 +154,20 @@ export default function UserManageTab() {
                   {formatSize(Number(user.storageUsed))} / {formatSize(Number(user.storageQuota))}
                 </td>
                 <td className="px-4 py-3 text-center">
-                  {user.roles?.some((r) => r.roleCode === 'admin') ? (
-                    <span className="inline-flex items-center gap-1 text-xs text-primary-600 bg-primary-500/10 px-2 py-0.5 rounded-md">
-                      <Shield className="w-3 h-3" aria-hidden /> 管理员
-                    </span>
+                  {user.roles?.length ? (
+                    <div className="flex flex-wrap justify-center gap-1">
+                      {user.roles.map((r) => (
+                        <span
+                          key={r.id}
+                          className="inline-flex items-center gap-1 text-xs text-primary-600 bg-primary-500/10 px-2 py-0.5 rounded-md"
+                        >
+                          {r.roleCode === 'admin' && <Shield className="w-3 h-3" aria-hidden />}
+                          {r.roleName}
+                        </span>
+                      ))}
+                    </div>
                   ) : (
-                    <span className="text-xs text-muted">普通用户</span>
+                    <span className="text-xs text-muted">未分配</span>
                   )}
                 </td>
                 <td className="px-4 py-3 text-center">

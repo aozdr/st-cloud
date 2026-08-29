@@ -45,6 +45,26 @@ export function useFileDownload({
       }
       if (nodeIds.length === 1) {
         const node = files.find((f) => f.id === nodeIds[0]);
+        // 单个文件夹：单文件下载接口不支持，改走 ZIP 打包下载
+        if (node && node.nodeType === 0) {
+          setZipProgress(0);
+          try {
+            showToast('正在打包下载，请稍候…', 'info', 'zip-download');
+            const blob = await source.downloadZip(nodeIds, (loaded) => setZipProgress(loaded));
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${node.name}.zip`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            showToast('打包完成，已开始下载', 'success', 'zip-download');
+          } finally {
+            setZipProgress(null);
+          }
+          return;
+        }
         const dlLimit = useTransferStore.getState().effective.downloadSpeedLimit;
         const url = await source.getDownloadUrl(nodeIds[0]);
         const sep = url.includes('?') ? '&' : '?';
@@ -58,7 +78,7 @@ export function useFileDownload({
       } else {
         setZipProgress(0);
         try {
-          showToast('正在打包下载，请稍候…', 'info');
+          showToast('正在打包下载，请稍候…', 'info', 'zip-download');
           const blob = await source.downloadZip(nodeIds, (loaded) => setZipProgress(loaded));
           const url = URL.createObjectURL(blob);
           const a = document.createElement('a');
@@ -68,7 +88,7 @@ export function useFileDownload({
           a.click();
           document.body.removeChild(a);
           URL.revokeObjectURL(url);
-          showToast('打包完成，已开始下载', 'success');
+          showToast('打包完成，已开始下载', 'success', 'zip-download');
         } finally {
           setZipProgress(null);
         }

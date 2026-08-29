@@ -49,6 +49,12 @@ public class ShareController {
         return shareService.listShares(page, size);
     }
 
+    @Operation(summary = "保存分享内容到云盘（需登录；仅保存分享边界内文件）")
+    @PostMapping("/api/share/save")
+    public Result<SaveShareVO> saveShare(@Valid @RequestBody SaveShareRequest request) {
+        return shareService.saveShare(request);
+    }
+
     @Operation(summary = "修改分享设置")
     @Auditable(action = "SHARE_UPDATE", targetType = "SHARE", targetIdParam = "shareId")
     @PutMapping("/api/share/{shareId}")

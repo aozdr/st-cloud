@@ -9,6 +9,6 @@ import java.util.List;
 @Schema(description = "给角色分配权限")
 public class AssignPermissionsRequest {
 
-    @Schema(description = "权限ID列表")
-    private List<Long> permissionIds;
+    @Schema(description = "权限ID列表（字符串承载，防 snowflake 精度丢失）")
+    private List<String> permissionIds;
 }

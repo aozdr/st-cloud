@@ -10,6 +10,7 @@ import com.stcloud.core.service.FileService;
 import com.stcloud.core.service.StorageService;
 import com.stcloud.team.service.TeamService;
 import com.stcloud.share.dto.CreateShareRequest;
+import com.stcloud.share.dto.SaveShareRequest;
 import com.stcloud.share.dto.ShareVO;
 import com.stcloud.share.dto.UpdateShareRequest;
 import com.stcloud.share.entity.FileShare;
@@ -156,6 +157,21 @@ class ShareServiceImplSecurityIntegrationTest extends AbstractShareIntegrationTe
         assertEquals(ResultCode.SHARE_ACCESS_DENIED.getCode(), ex.getCode());
         // permission=0 未显式传 allowDownload 时默认 0，统一命中 allow_download 下载开关
         assertTrue(ex.getMessage().contains("该分享不可下载"));
+    }
+
+    @Test
+    @DisplayName("S-02 仅查看（无下载权限）分享保存到云盘被拒")
+    void viewOnlyShareSaveToDriveRejected() {
+        FileNode file = insertFileNode(TENANT_ID, USER_ID, "view-save.txt", 0);
+        ShareVO vo = createShare(file.getId(), 0, null);
+        SaveShareRequest req = new SaveShareRequest();
+        req.setShareCode(vo.getShareCode());
+        req.setTargetParentId(0L);
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> shareService.saveShare(req));
+        assertEquals(ResultCode.SHARE_ACCESS_DENIED.getCode(), ex.getCode());
+        assertTrue(ex.getMessage().contains("无法保存到云盘"));
     }
 
     @Test

@@ -20,7 +20,7 @@ public interface RoleService {
 
     void assignPermissions(Long roleId, AssignPermissionsRequest request);
 
-    void assignRolesToUser(Long userId, List<Long> roleIds);
+    void assignRolesToUser(Long userId, List<String> roleIds);
 
     List<RoleVO> getUserRoles(Long userId);
 }

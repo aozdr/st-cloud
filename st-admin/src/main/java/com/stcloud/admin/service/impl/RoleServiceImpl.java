@@ -84,7 +84,8 @@ public class RoleServiceImpl implements RoleService {
         role.setDescription(request.getDescription());
         role.setStatus(request.getStatus() != null ? request.getStatus() : 1);
         role.setBuiltIn(0);
-        role.setDataScope(request.getDataScope() != null ? request.getDataScope() : 1);
+        // 单租户部署：数据范围固定为「本人」，不做跨用户/跨租户数据访问
+        role.setDataScope(1);
         roleMapper.insert(role);
         log.info("创建角色: code={}, name={}", role.getRoleCode(), role.getRoleName());
         return toVO(role);
@@ -103,9 +104,8 @@ public class RoleServiceImpl implements RoleService {
         if (request.getStatus() != null) {
             role.setStatus(request.getStatus());
         }
-        if (request.getDataScope() != null) {
-            role.setDataScope(request.getDataScope());
-        }
+        // 单租户部署：数据范围固定为「本人」，不做跨用户/跨租户数据访问
+        role.setDataScope(1);
         roleMapper.updateById(role);
         log.info("更新角色: roleId={}", roleId);
         return toVO(role);
@@ -144,7 +144,8 @@ public class RoleServiceImpl implements RoleService {
 
         // 再插入新关联
         if (request.getPermissionIds() != null) {
-            for (Long permId : request.getPermissionIds()) {
+            for (String permIdStr : request.getPermissionIds()) {
+                Long permId = Long.valueOf(permIdStr);
                 SysRolePermission rp = new SysRolePermission();
                 rp.setRoleId(roleId);
                 rp.setPermissionId(permId);
@@ -157,7 +158,7 @@ public class RoleServiceImpl implements RoleService {
 
     @Override
     @Transactional
-    public void assignRolesToUser(Long userId, List<Long> roleIds) {
+    public void assignRolesToUser(Long userId, List<String> roleIds) {
         // 物理删除旧关联（避免软删除+唯一键冲突）
         userRoleMapper.physicalDeleteByUserId(userId);
 
@@ -165,7 +166,8 @@ public class RoleServiceImpl implements RoleService {
         if (roleIds != null) {
             SysUser user = userMapper.selectById(userId);
             Long targetTenantId = user != null ? user.getTenantId() : 0L;
-            for (Long roleId : roleIds) {
+            for (String roleIdStr : roleIds) {
+                Long roleId = Long.valueOf(roleIdStr);
                 SysUserRole userRole = new SysUserRole();
                 userRole.setUserId(userId);
                 userRole.setRoleId(roleId);

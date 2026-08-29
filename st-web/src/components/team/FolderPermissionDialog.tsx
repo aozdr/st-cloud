@@ -190,7 +190,7 @@ export default function FolderPermissionDialog({ spaceId, node, onClose, variant
     try {
       const payload = rules.map(r => ({
         subjectType: r.subjectType,
-        subjectId: r.subjectType === 'all' ? 0 : Number(r.subjectId),
+        subjectId: r.subjectType === 'all' ? '0' : String(r.subjectId),
         permissions: JSON.stringify(rulePermissions(r)),
       }));
       await api.put(`/team/${spaceId}/folder/${node.id}/permissions`, { rules: payload });

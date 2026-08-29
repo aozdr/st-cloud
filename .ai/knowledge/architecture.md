@@ -269,10 +269,9 @@ HTTP 请求
 
 ### CORS
 
-- 配置项：`stcloud.cors.allowed-origins`（逗号分隔）
-- 开发环境默认：`http://localhost:5173,http://127.0.0.1:5173`
-- 生产环境必须配置，留空则拒绝所有跨域请求
-- 允许凭证（`allowCredentials: true`）
+- 由 `SecurityConfig.corsConfigurationSource()` 统一配置：`setAllowedOriginPatterns("*")` + 允许所有请求方法/头 + `allowCredentials: true`
+- 无运行时白名单配置（历史 `stcloud.cors.allowed-origins` / `STCLOUD_CORS_ORIGINS` 已移除）
+- 支持 Web 前端、桌面端 `app://` 等任意来源（允许凭证的安全通配模式）
 
 ## 统一响应与异常
 

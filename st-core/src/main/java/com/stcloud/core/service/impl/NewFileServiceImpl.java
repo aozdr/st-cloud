@@ -180,7 +180,7 @@ public class NewFileServiceImpl implements NewFileService {
             return;
         }
         FileNode parent = fileNodeMapper.selectById(parentId);
-        if (parent != null && !parent.getOwnerId().equals(userId) && !UserContext.canAccessTenant()) {
+        if (parent != null && (parent.getSpaceId() == null || parent.getSpaceId() <= 0) && !parent.getOwnerId().equals(userId)) {
             throw new BusinessException(ResultCode.FORBIDDEN);
         }
     }
