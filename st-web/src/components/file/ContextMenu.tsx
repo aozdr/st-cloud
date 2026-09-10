@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Download, Pencil, FolderInput, Copy, Trash2, FolderOpen, Eye, Edit3, Scissors, ClipboardPaste, Share2, History, Info, Star, EyeOff, Lock, Unlock, FileInput, FileOutput, FileText, Archive, RefreshCw, type LucideIcon } from 'lucide-react';
+import { Download, Pencil, FolderInput, Copy, Trash2, FolderOpen, Eye, Edit3, Scissors, ClipboardPaste, Share2, History, Info, Star, EyeOff, Lock, Unlock, FileInput, FileOutput, FileText, Archive, RefreshCw, Upload, type LucideIcon } from 'lucide-react';
 import type { FileNode } from '../../types';
 import { usePermission } from '../../lib/permission';
 import { isText, isZip } from '../../lib/utils';
@@ -13,6 +13,8 @@ interface Props {
   hasClipboard: boolean;
   showShare?: boolean;
   showVersions?: boolean;
+  /** 显示「上传新版本」入口（以当前文件为覆盖目标，需上传权限；由 FileBrowser 传入） */
+  showNewVersion?: boolean;
   /** 显示「在线编辑」入口：docx/xlsx/pptx/pdf 且有编辑权限（由 FileBrowser 计算） */
   showEdit?: boolean;
   /** 显示「转换为 PDF/Word」入口（Word/PDF 文件且有上传权限，由 FileBrowser 传入） */
@@ -30,7 +32,7 @@ interface Props {
   onClose: () => void;
 }
 
-export default function ContextMenu({ x, y, node, hasClipboard, showShare = true, showVersions = true, showEdit = false, showConvert = false, showTextEdit = false, showArchive = false, isFav = false, lockable = false, locked = false, onAction, onClose }: Props) {
+export default function ContextMenu({ x, y, node, hasClipboard, showShare = true, showVersions = true, showNewVersion = false, showEdit = false, showConvert = false, showTextEdit = false, showArchive = false, isFav = false, lockable = false, locked = false, onAction, onClose }: Props) {
   const ref = useRef<HTMLDivElement>(null);
   const { has } = usePermission();
   const [pos, setPos] = useState<{ left: number; top: number }>({ left: x, top: y });
@@ -104,6 +106,8 @@ export default function ContextMenu({ x, y, node, hasClipboard, showShare = true
     ...(has('file:download') ? [{ action: 'download', label: '下载', icon: Download }] : []),
     ...(has('file:rename') ? [{ action: 'rename', label: '重命名', icon: Pencil }] : []),
     ...(has('file:move') ? [{ action: 'moveTo', label: '移动到…', icon: FolderInput }] : []),
+    // 上传新版本：直接对当前文件覆盖上传并生成历史版本（需上传权限）
+    ...(node.nodeType === 1 && showNewVersion && has('file:upload') ? [{ action: 'newVersion', label: '上传新版本', icon: Upload }] : []),
     ...(node.nodeType === 1 && showVersions ? [{ action: 'versions', label: '历史版本', icon: History }] : []),
     { type: 'separator' as const },
     ...(showShare && has('file:share') ? [{ action: 'share', label: '分享', icon: Share2 }] : []),

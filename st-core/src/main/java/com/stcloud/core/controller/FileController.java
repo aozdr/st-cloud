@@ -17,6 +17,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -35,6 +36,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/file")
 @RequiredArgsConstructor
+@Slf4j
 @PreAuthorize("isAuthenticated()")
 public class FileController {
 
@@ -243,7 +245,26 @@ public class FileController {
     @PreAuthorize("hasAuthority('file:preview') or hasAuthority('file:download') or hasRole('ADMIN')")
     @GetMapping("/{nodeId}/stream")
     public void streamFile(@PathVariable Long nodeId, HttpServletRequest request, HttpServletResponse response) {
-        downloadService.streamFile(nodeId, request, response);
+        downloadService.streamFile(nodeId, resolveVersionIdClaim(request), request, response);
+    }
+
+    /**
+     * 从流式令牌读取 versionId 声明（OnlyOffice 历史版本只读预览场景）。
+     * 令牌由服务端签发并已通过 JwtAuthenticationFilter 验签，这里仅读取声明；
+     * 无声明返回 null，表示按当前版本流式返回。
+     */
+    private Long resolveVersionIdClaim(HttpServletRequest request) {
+        String token = request.getParameter("token");
+        if (token == null || token.isEmpty()) {
+            return null;
+        }
+        try {
+            Object raw = jwtUtils.parseToken(token).get("versionId");
+            return raw instanceof Number number ? number.longValue() : null;
+        } catch (Exception e) {
+            log.warn("解析流式令牌 versionId 失败，按当前版本处理: {}", e.getMessage());
+            return null;
+        }
     }
 
     @Operation(summary = "ZIP批量下载")

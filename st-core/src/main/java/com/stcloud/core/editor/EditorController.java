@@ -45,8 +45,13 @@ public class EditorController {
     @PreAuthorize("isAuthenticated()")
     @GetMapping("/{nodeId}/editor/config")
     public Result<EditorConfigResponse> editorConfig(@PathVariable Long nodeId,
-                                                     @RequestParam(defaultValue = "edit") String mode) {
+                                                     @RequestParam(defaultValue = "edit") String mode,
+                                                     @RequestParam(required = false) Long versionId) {
         EditorPermissionService.EditorAccess access = editorPermissionService.resolvePersonal(nodeId);
+        // 历史版本预览：仍要求对该节点有访问权，但强制只读且不占编辑位
+        if (versionId != null) {
+            return Result.success(editorConfigService.generateVersionConfig(nodeId, versionId));
+        }
         // mode=view：强制只读查看（仅读权限），用于 Office 文件预览；不占编辑位
         boolean canEdit = access.isCanEdit() && !"view".equalsIgnoreCase(mode);
         return Result.success(editorConfigService.generateConfig(nodeId, canEdit, true, true));

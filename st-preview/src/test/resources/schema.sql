@@ -36,3 +36,21 @@ CREATE TABLE IF NOT EXISTS file_node (
 );
 
 CREATE INDEX IF NOT EXISTS idx_fn_owner ON file_node (owner_id, deleted);
+
+-- 对齐 docker/mysql/init/02_create_tables.sql + 36_editor_version_source.sql
+CREATE TABLE IF NOT EXISTS file_version (
+    id              BIGINT       NOT NULL AUTO_INCREMENT,
+    tenant_id       BIGINT       NOT NULL,
+    file_node_id    BIGINT       NOT NULL,
+    version_num     INT          NOT NULL,
+    file_size       BIGINT       NOT NULL,
+    file_md5        VARCHAR(64)  NOT NULL,
+    storage_path    VARCHAR(500) NOT NULL,
+    modifier_id     BIGINT       NOT NULL,
+    modifier_name   VARCHAR(100) DEFAULT NULL,
+    source          TINYINT      NOT NULL DEFAULT 0,
+    created_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_fv_node ON file_version (file_node_id);

@@ -275,6 +275,11 @@
 | GET | `/api/preview/{nodeId}` | 获取预览信息 |
 | GET | `/api/preview/{nodeId}/thumbnail` | 获取缩略图 |
 | GET | `/api/preview/{nodeId}/video` | 视频预览流 |
+| GET | `/api/preview/{nodeId}/version/{versionId}` | 历史版本预览（校验版本归属该节点；图片用版本级缩略图 `thumbnails/{nodeId}/v{n}/`，文本/视频/音频/PDF 读版本对象；Office 返回 unsupported） |
+
+> Office（docx/xlsx/pptx）历史版本不经预览端点：前端跳转 `/file/{id}/editor?mode=view&versionId={versionId}`，
+> 由 `GET /api/file/{nodeId}/editor/config?versionId=` 下发只读配置（`key={nodeId}_v{versionId}`、`edit=false`、无 callbackUrl）。
+> 该配置的 `document.url` 指向 `/api/file/{nodeId}/stream`，编辑器令牌带 `versionId` 声明，`/stream` 据此返回历史版本对象（Range/限速逻辑复用）。
 
 ## 管理模块（st-admin）
 

@@ -4,7 +4,9 @@ import com.stcloud.common.config.S3StorageConfig;
 import com.stcloud.common.exception.BusinessException;
 import com.stcloud.common.response.ResultCode;
 import com.stcloud.core.entity.FileNode;
+import com.stcloud.core.entity.FileVersion;
 import com.stcloud.core.mapper.FileNodeMapper;
+import com.stcloud.core.mapper.FileVersionMapper;
 import com.stcloud.core.service.FileService;
 import com.stcloud.core.service.StorageService;
 import com.stcloud.preview.dto.PreviewResultVO;
@@ -41,12 +43,17 @@ public class PreviewServiceImpl implements PreviewService {
     private static final Set<String> TEXT_TYPES = Set.of(
             "txt", "md", "log", "json", "xml", "yml", "yaml", "csv",
             "js", "ts", "tsx", "jsx", "py", "java", "go", "rs", "c", "cpp", "h",
-            "html", "css", "sql", "sh", "bat", "ini", "conf", "toml", "rtf");
+            "html", "htm", "css", "scss", "less", "sql", "sh", "bat", "ini", "conf", "toml", "rtf",
+            // 与前端 isText 白名单对齐：普通预览走前端自行取文本，版本预览依赖后端，缺这些会误报"不支持"
+            "markdown", "properties", "rb", "php", "vue", "svelte");
     private static final Set<String> OFFICE_TYPES = Set.of(
             "doc", "docx", "xls", "xlsx", "ppt", "pptx");
 
     @Resource
     private FileNodeMapper fileNodeMapper;
+
+    @Resource
+    private FileVersionMapper fileVersionMapper;
 
     @Resource
     private FileService fileService;
@@ -66,27 +73,60 @@ public class PreviewServiceImpl implements PreviewService {
     @Override
     public PreviewResultVO preview(Long nodeId) {
         FileNode node = getFileNode(nodeId);
-        String suffix = node.getSuffix() != null ? node.getSuffix().toLowerCase() : "";
+        String suffix = normalizeSuffix(node.getSuffix());
 
         if (IMAGE_TYPES.contains(suffix)) {
             return PreviewResultVO.of("image", getThumbnailUrl(nodeId, "lg"));
         }
+        return dispatchByStorage(node.getStoragePath(), suffix);
+    }
+
+    @Override
+    public PreviewResultVO previewVersion(Long nodeId, Long versionId) {
+        // 先校验节点：不存在/已删除/无权限/文件夹在此被拦截
+        FileNode node = getFileNode(nodeId);
+        FileVersion version = fileVersionMapper.selectById(versionId);
+        // 越权防护：只凭 versionId 不能取对象，必须确认版本属于该文件节点
+        if (version == null || !nodeId.equals(version.getFileNodeId())) {
+            throw new BusinessException(ResultCode.FILE_NOT_FOUND.getCode(), "版本不存在");
+        }
+        String suffix = normalizeSuffix(node.getSuffix());
+
+        if (IMAGE_TYPES.contains(suffix)) {
+            // 历史版本缩略图使用版本级命名空间，避免覆盖当前版本缩略图缓存
+            String thumbKey = "thumbnails/" + nodeId + "/v" + version.getVersionNum() + "/lg.jpg";
+            if (!doesPreviewObjectExist(thumbKey)) {
+                generateThumbnail(version.getStoragePath(), thumbKey, "lg");
+            }
+            return PreviewResultVO.of("image", generatePreviewUrl(thumbKey));
+        }
+        return dispatchByStorage(version.getStoragePath(), suffix);
+    }
+
+    /**
+     * 按后缀分派预览：当前版本与历史版本共用，只依赖对象存储路径
+     */
+    private PreviewResultVO dispatchByStorage(String storagePath, String suffix) {
         if (VIDEO_TYPES.contains(suffix)) {
-            return getVideoPreview(nodeId);
+            return PreviewResultVO.of("video", storageService.generateDownloadUrl(storagePath));
         }
         if (AUDIO_TYPES.contains(suffix)) {
-            return PreviewResultVO.of("audio", storageService.generateDownloadUrl(node.getStoragePath()));
+            return PreviewResultVO.of("audio", storageService.generateDownloadUrl(storagePath));
         }
         if ("pdf".equals(suffix)) {
-            return PreviewResultVO.of("pdf", storageService.generateDownloadUrl(node.getStoragePath()));
+            return PreviewResultVO.of("pdf", storageService.generateDownloadUrl(storagePath));
         }
         if (TEXT_TYPES.contains(suffix)) {
-            return getTextPreview(node);
+            return getTextPreview(storagePath, suffix);
         }
         if (OFFICE_TYPES.contains(suffix)) {
             return PreviewResultVO.unsupported(suffix);
         }
         return PreviewResultVO.unsupported(suffix);
+    }
+
+    private String normalizeSuffix(String suffix) {
+        return suffix != null ? suffix.toLowerCase() : "";
     }
 
     @Override
@@ -103,7 +143,7 @@ public class PreviewServiceImpl implements PreviewService {
         String thumbKey = "thumbnails/" + nodeId + "/" + size + ".jpg";
         if (!doesPreviewObjectExist(thumbKey)) {
             // 生成缩略图
-            generateThumbnail(node, size, thumbKey);
+            generateThumbnail(node.getStoragePath(), thumbKey, size);
         }
 
         return generatePreviewUrl(thumbKey);
@@ -117,26 +157,26 @@ public class PreviewServiceImpl implements PreviewService {
         return PreviewResultVO.of("video", url);
     }
 
-    private PreviewResultVO getTextPreview(FileNode node) {
-        try (InputStream is = storageService.downloadObject(node.getStoragePath())) {
+    private PreviewResultVO getTextPreview(String storagePath, String suffix) {
+        try (InputStream is = storageService.downloadObject(storagePath)) {
             String content = new String(is.readAllBytes());
             if (content.length() > 500_000) {
                 content = content.substring(0, 500_000) + "\n\n... (内容已截断，仅显示前500KB)";
             }
-            return PreviewResultVO.text(content, node.getSuffix());
+            return PreviewResultVO.text(content, suffix);
         } catch (Exception e) {
-            log.error("读取文本文件失败: nodeId={}", node.getId(), e);
+            log.error("读取文本文件失败: storagePath={}", storagePath, e);
             throw new BusinessException(ResultCode.STORAGE_SERVICE_ERROR, "读取文件内容失败");
         }
     }
 
-    private void generateThumbnail(FileNode node, String size, String thumbKey) {
+    private void generateThumbnail(String storagePath, String thumbKey, String size) {
         int maxDim = switch (size) {
             case "sm" -> 150;
             case "md" -> 400;
             default -> 1200;
         };
-        try (InputStream is = storageService.downloadObject(node.getStoragePath())) {
+        try (InputStream is = storageService.downloadObject(storagePath)) {
             BufferedImage original = ImageIO.read(is);
             if (original == null) {
                 throw new BusinessException(ResultCode.BAD_REQUEST, "无法读取图片");
@@ -165,9 +205,9 @@ public class PreviewServiceImpl implements PreviewService {
                     .contentType("image/jpeg")
                     .build();
             s3Client.putObject(putReq, RequestBody.fromBytes(bytes));
-            log.info("缩略图生成成功: nodeId={}, size={}, key={}", node.getId(), size, thumbKey);
+            log.info("缩略图生成成功: size={}, key={}", size, thumbKey);
         } catch (Exception e) {
-            log.error("缩略图生成失败: nodeId={}", node.getId(), e);
+            log.error("缩略图生成失败: key={}", thumbKey, e);
             throw new BusinessException(ResultCode.STORAGE_SERVICE_ERROR, "缩略图生成失败");
         }
     }

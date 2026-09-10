@@ -2,6 +2,7 @@ import type { Dispatch, SetStateAction } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { BlankFileType, FileNode } from '../../types';
 import type { FileSource } from '../../lib/fileSource';
+import type { PreviewTarget } from '../../hooks/useFileDialogs';
 import { isEditableOfficeSuffix } from '../../lib/editor';
 import { formatSize } from '../../lib/utils';
 import { CheckCircle2, ListChecks, Loader2 } from 'lucide-react';
@@ -65,8 +66,8 @@ export interface FileBrowserDialogsProps {
   setDownloadTarget: Dispatch<SetStateAction<FileNode | null>>;
   versionTarget: FileNode | null;
   setVersionTarget: Dispatch<SetStateAction<FileNode | null>>;
-  preview: { files: FileNode[]; index: number } | null;
-  setPreview: Dispatch<SetStateAction<{ files: FileNode[]; index: number } | null>>;
+  preview: PreviewTarget | null;
+  setPreview: Dispatch<SetStateAction<PreviewTarget | null>>;
   contextMenu: { x: number; y: number; node: FileNode } | null;
   setContextMenu: Dispatch<SetStateAction<{ x: number; y: number; node: FileNode } | null>>;
   blankContextMenu: { x: number; y: number } | null;
@@ -112,6 +113,7 @@ export default function FileBrowserDialogs(props: FileBrowserDialogsProps) {
           hasClipboard={!!clipboard}
           showShare={enableShare}
           showVersions={enableVersions}
+          showNewVersion={enableVersions}
           isFav={checkFav(contextMenu.node.id)}
           lockable={!!onToggleLock}
           locked={isNodeLocked(contextMenu.node)}
@@ -196,6 +198,8 @@ export default function FileBrowserDialogs(props: FileBrowserDialogsProps) {
         <PreviewModal
           files={preview.files}
           currentIndex={preview.index}
+          versionId={preview.versionId}
+          versionNum={preview.versionNum}
           onClose={() => setPreview(null)}
         />
       )}
@@ -213,6 +217,12 @@ export default function FileBrowserDialogs(props: FileBrowserDialogsProps) {
           node={versionTarget}
           onClose={() => setVersionTarget(null)}
           onRestored={() => fetchFiles()}
+          onPreview={(version) => setPreview({
+            files: [versionTarget],
+            index: 0,
+            versionId: version.id,
+            versionNum: version.versionNum,
+          })}
         />
       )}
 

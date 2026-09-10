@@ -69,6 +69,9 @@ export default function EditorPage() {
 
   // 打开模式：?mode=view 为 OnlyOffice 只读查看（Office 文件预览），默认编辑
   const mode: 'edit' | 'view' = searchParams.get('mode') === 'view' ? 'view' : 'edit';
+  // 历史版本只读预览：?versionId=xxx（后端据此下发版本只读配置）
+  const versionId = searchParams.get('versionId') ?? undefined;
+  const readOnly = mode === 'view' || !!versionId;
   // 分享场景：文件节点 ID 由查询参数提供（路由为 /share/:shareCode/editor）
   const effectiveNodeId = nodeId ?? searchParams.get('nodeId') ?? undefined;
 
@@ -93,7 +96,7 @@ export default function EditorPage() {
     // 每次渲染同步最新值；仅个人文件编辑模式才需主动释放（只读/分享访客不占编辑位）
     releaseEditRef.current = {
       nodeId: effectiveNodeId,
-      shouldRelease: !shareCode && mode !== 'view' && !!effectiveNodeId,
+      shouldRelease: !shareCode && !readOnly && !!effectiveNodeId,
     };
   });
 
@@ -124,7 +127,7 @@ export default function EditorPage() {
         // 1) 获取后端下发的编辑器配置（含权限判定与 JWT token）
         const res = shareCode
           ? await getShareEditorConfig(shareCode, effectiveNodeId, searchParams.get('password') ?? undefined)
-          : await getEditorConfig(effectiveNodeId, mode);
+          : await getEditorConfig(effectiveNodeId, mode, versionId);
         if (cancelled || !containerRef.current) return;
         lastConfigRef.current = { editorUrl: res.editorUrl, token: res.config?.token ?? '' };
         setFileName(res.config?.document?.title ?? '');
@@ -150,7 +153,7 @@ export default function EditorPage() {
                 } catch {
                   // 销毁异常不影响后续释放与返回
                 }
-                if (!shareCode && mode !== 'view' && effectiveNodeId) {
+                if (!shareCode && !readOnly && effectiveNodeId) {
                   api.post(`/file/${effectiveNodeId}/editor/close`).catch((e) => {
                     console.error('释放编辑标记失败:', e);
                   });
@@ -198,7 +201,7 @@ export default function EditorPage() {
       }
       editorRef.current = null;
     };
-  }, [effectiveNodeId, goBack, mode, shareCode, searchParams]);
+  }, [effectiveNodeId, goBack, mode, versionId, shareCode, searchParams]);
 
   // OnlyOffice 9.x 高度塌缩修复：DocEditor 生成的 iframe 在百分比高度下只渲染工具栏高度（实测 150px），
   // 需按容器实际像素高度强制校正（固定像素生效，百分比不生效）。

@@ -95,6 +95,10 @@
 - `file_version` 记录：版本号、文件大小、MD5、存储路径、修改人
 - 支持版本列表查看与一键恢复
 - 版本恢复按差值调整配额
+- 支持历史版本在线预览（图片/视频/音频/文本/PDF），预览只读版本对象，不改动当前版本；
+  图片缩略图按 `thumbnails/{nodeId}/v{versionNum}/` 独立缓存，不覆盖当前版本缩略图
+- Office（docx/xlsx/pptx）历史版本走 OnlyOffice 只读打开：编辑器配置带 `versionId`（key 为 `{nodeId}_v{versionId}`），
+  `edit=false` 且不下发 callbackUrl（无保存通道），`document.url` 通过带 `versionId` 声明的令牌从 `/stream` 取版本对象
 
 ### 5. 回收站
 

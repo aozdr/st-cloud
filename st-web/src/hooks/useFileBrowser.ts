@@ -385,6 +385,36 @@ export function useFileBrowser({
     setNewFileType(type);
   }, [setNewFileType]);
 
+  /**
+   * 上传新版本：以目标文件为 replaceFileId 覆盖上传，后端会先快照当前版本再落新对象。
+   * Web 端用 ref 记住目标节点后触发隐藏 input（选中文件由 handleNewVersionChange 处理）；
+   * Electron 端直接调用系统文件选择。
+   */
+  const newVersionInputRef = useRef<HTMLInputElement>(null);
+  const newVersionNodeRef = useRef<FileNode | null>(null);
+
+  const handleNewVersionUpload = useCallback(async (node: FileNode) => {
+    if (isElectron()) {
+      const filePaths = await window.electronAPI!.selectFiles();
+      if (filePaths.length > 0) {
+        addFilePaths(filePaths, node.parentId || '0', node.id, uploadSpaceId);
+      }
+      return;
+    }
+    newVersionNodeRef.current = node;
+    newVersionInputRef.current?.click();
+  }, [addFilePaths, uploadSpaceId]);
+
+  const handleNewVersionChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const input = e.target;
+    const file = input.files?.[0];
+    const node = newVersionNodeRef.current;
+    newVersionNodeRef.current = null;
+    input.value = '';
+    if (!file || !node) return;
+    addFiles([file], node.parentId || '0', node.id, uploadSpaceId);
+  }, [addFiles, uploadSpaceId]);
+
   const handleCreateFile = useCallback(async (type: BlankFileType, fileName: string) => {
     try {
       const node = await source.createBlankFile(parentId, type, fileName);
@@ -518,6 +548,7 @@ export function useFileBrowser({
       }
       case 'share': setShareTarget(node); break;
       case 'versions': setVersionTarget(node); break;
+      case 'newVersion': await handleNewVersionUpload(node); break;
       case 'details':
         if (onOpenDetail) onOpenDetail(node);
         else setDetailFile(node);
@@ -549,6 +580,7 @@ export function useFileBrowser({
     setArchiveTarget, setConvertTarget, setClipboard, selectedIds, showToast, paste,
     setRenameTarget, handleDownload, setMoveTarget, handleDeleteRef, setShareTarget,
     setVersionTarget, onOpenDetail, setDetailFile, toggleFav, fetchFiles, onToggleLock,
+    handleNewVersionUpload,
     onNavigateFolder, setContextMenu, setPreview,
   ]);
 
@@ -671,9 +703,10 @@ export function useFileBrowser({
     mobileSelectMode, setMobileSelectMode, ptr, enableArchive,
     isMobile, has, checkFav, showToast, toggleSelect, handleSelect,
     selectAll, clearSelection, paste,
-    fileListRef, bandRef, fileInputRef, pathInputRef,
+    fileListRef, bandRef, fileInputRef, pathInputRef, newVersionInputRef,
     fetchFiles, refresh, handleDragOver, handleDragLeave, handleDrop,
     handleUploadClick, handleUploadChange,
+    handleNewVersionChange,
     handleItemDragStart, handleFolderDragOver, handleFolderDragLeave, handleFolderDrop,
     handleSortChange, handlePageSizeChange, handlePageInputCommit, handleContextMenu,
     handleContextAction, handleToggleFavorite, handleDownload, handleArchiveExtracted,

@@ -22,6 +22,11 @@ public interface DownloadService {
     void streamFile(Long nodeId, HttpServletRequest request, HttpServletResponse response);
 
     /**
+     * 流式下载指定文件版本的对象（versionId 非空时按 file_version 记录取内容，仅历史版本只读预览使用）
+     */
+    void streamFile(Long nodeId, Long versionId, HttpServletRequest request, HttpServletResponse response);
+
+    /**
      * 将多个文件/文件夹打包为 ZIP 下载
      */
     void downloadAsZip(List<Long> nodeIds, OutputStream outputStream);

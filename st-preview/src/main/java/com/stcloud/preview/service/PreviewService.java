@@ -10,6 +10,11 @@ public interface PreviewService {
     PreviewResultVO preview(Long nodeId);
 
     /**
+     * 获取历史版本预览（不读取、不改动当前版本）
+     */
+    PreviewResultVO previewVersion(Long nodeId, Long versionId);
+
+    /**
      * 获取缩略图URL
      */
     String getThumbnailUrl(Long nodeId, String size);

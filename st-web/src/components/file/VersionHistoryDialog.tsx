@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { X, History, RotateCcw, Loader2, ShieldCheck, Upload } from 'lucide-react';
+import { X, History, RotateCcw, Loader2, ShieldCheck, Upload, Eye } from 'lucide-react';
 import api from '../../lib/api';
 import { useToast } from '../ui/Toast';
 import { useUpload } from '../../hooks/useUpload';
@@ -11,9 +11,11 @@ interface Props {
   node: FileNode;
   onClose: () => void;
   onRestored: () => void;
+  /** 预览指定历史版本（仅非当前版本提供入口） */
+  onPreview: (version: FileVersionVO) => void;
 }
 
-export default function VersionHistoryDialog({ node, onClose, onRestored }: Props) {
+export default function VersionHistoryDialog({ node, onClose, onRestored, onPreview }: Props) {
   const [versions, setVersions] = useState<FileVersionVO[]>([]);
   const [loading, setLoading] = useState(true);
   const [restoringId, setRestoringId] = useState<string | null>(null);
@@ -57,11 +59,13 @@ export default function VersionHistoryDialog({ node, onClose, onRestored }: Prop
       const filePaths = await window.electronAPI!.selectFiles();
       if (filePaths.length === 0) return;
       addFilePaths(filePaths, node.parentId, node.id);
-    } else {
-      fileInputRef.current?.click();
+      showToast('新版本上传已加入队列', 'success');
+      onClose();
+      return;
     }
-    showToast('新版本上传已加入队列', 'success');
-    onClose();
+    // Web 端只触发系统选择器，弹窗保持打开：选中文件后由 handleFileSelect 加入队列再关闭。
+    // （此前在这里立刻 toast + onClose 会卸载 input，选择结果丢失，表现为"上传新版本无反应"）
+    fileInputRef.current?.click();
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -138,6 +142,15 @@ export default function VersionHistoryDialog({ node, onClose, onRestored }: Prop
                       <span>{formatDate(v.createdAt)}</span>
                     </div>
                   </div>
+                  {!isCurrent && (
+                    <button
+                      onClick={() => onPreview(v)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-muted bg-surface border border-border rounded-md hover:bg-surface-2 hover:border-border transition-colors cursor-pointer flex-shrink-0"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      预览
+                    </button>
+                  )}
                   <button
                     onClick={() => handleRestore(v.id)}
                     disabled={isCurrent || isRestoring}

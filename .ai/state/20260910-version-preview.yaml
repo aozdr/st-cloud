@@ -1,0 +1,109 @@
+taskId: "20260910-version-preview"
+goal:
+  objective: "为星云盘文件历史版本提供在线预览能力：用户可直接查看指定历史版本内容，无需恢复即可比对，且不改变当前版本"
+  scope: "st-preview 新增版本预览端点与分派逻辑、st-web 历史版本弹窗与预览弹窗版本模式；st-core 仅复用不改动；无数据库变更"
+  completionCriteria:
+    - "登录用户可通过历史版本弹窗预览指定版本（图片/视频/音频/文本/PDF）"
+    - "预览历史版本不读取、不改动当前版本，且不写最近文件"
+    - "版本归属与节点可访问性双重校验，跨文件/跨租户 versionId 不可预览"
+    - "Office 及其它不支持类型返回明确提示，不跳转 OnlyOffice"
+    - "后端集成测试覆盖正常预览、版本不存在、版本不属于该文件、无权限"
+    - "前端构建通过，现有当前版本预览无回归"
+scale: medium
+exitCriteria:
+  - id: DESIGN
+    desc: "设计已定；design.md 经 Grill Me 拷打收敛（遗留问题点<=3 写入文档）并经用户确认"
+    status: done
+    dependsOn: []
+  - id: TESTCASES
+    desc: "验收用例已编写"
+    status: done
+    dependsOn: [DESIGN]
+  - id: IMPLEMENTED
+    desc: "代码已实现"
+    status: done
+    dependsOn: [DESIGN, TESTCASES]
+  - id: CODE_REVIEW
+    desc: "Code Review 通过"
+    status: done
+    dependsOn: [IMPLEMENTED]
+  - id: SECURITY_REVIEW
+    desc: "安全审查通过（条件项：涉及文件访问与越权防护，激活）"
+    status: done
+    dependsOn: [IMPLEMENTED]
+  - id: TEST_PASS
+    desc: "测试通过"
+    status: done
+    dependsOn: [CODE_REVIEW, SECURITY_REVIEW]
+  - id: KNOWLEDGE
+    desc: "知识库已回顾"
+    status: done
+    dependsOn: [TEST_PASS]
+  - id: ACCEPT
+    desc: "验收通过（对照完成标准逐项核对）"
+    status: done
+    dependsOn: [KNOWLEDGE]
+artifacts:
+  design:
+    status: done
+    ref: ".ai/docs/20260910-version-preview/design.md"
+    owner: "executor"
+    grillPoints:
+      - "P1: 已裁决 -> 仅支持图片/视频/音频/文本/PDF，Office 提示不支持，不跳 OnlyOffice"
+      - "P2: 已裁决 -> 仅非当前版本显示预览入口"
+      - "P3: 已裁决 -> 本次不做下载历史版本"
+    userConfirmedAt: "2026-09-10"
+  testcases: { status: done, ref: ".ai/docs/20260910-version-preview/testcases.md", owner: "tester" }
+  code: { status: done, ref: "", owner: "executor" }
+  review: { status: done, ref: ".ai/docs/20260910-version-preview/codereview.md", owner: "reviewer" }
+  security: { status: done, ref: ".ai/docs/20260910-version-preview/security.md", owner: "reviewer" }
+  testReport: { status: done, ref: ".ai/docs/20260910-version-preview/testreport.md", owner: "tester" }
+  knowledge: { status: done, ref: ".ai/docs/20260910-version-preview/knowledge.md", owner: "executor" }
+  task: { status: done, ref: ".ai/tasks/TASK-20260910-version-preview-01.md", owner: "workflow-manager" }
+  changereport: { status: done, ref: ".ai/docs/20260910-version-preview/changereport.md", owner: "executor" }
+blockers: []
+history:
+  - iter: 6
+    phase: "rework"
+    agent: "workflow-manager"
+    action: "用户实测 Office 历史版本提示不支持 → 改判 P1，实现 Office 历史版本 OnlyOffice 只读预览"
+    delta: "editor/config 增加可选 versionId；版本令牌带 versionId 声明由 /stream 返回版本对象；配置只读且无 callbackUrl；前端 Office 版本预览跳编辑器只读页"
+    result: "mvn -pl st-core,st-preview -am test 通过（196 用例）、npm run build 通过；docservice 运行期行为待用户环境实测"
+  - iter: 5
+    phase: "rework"
+    agent: "workflow-manager"
+    action: "用户反馈：上传新版本无效 + 该入口应放到右键菜单；同时清理 spec 验证发现的文档漂移"
+    delta: "修复 VersionHistoryDialog Web 分支 onClose 卸载 input 的缺陷；右键菜单新增「上传新版本」；block-sync/mobile-pwa/share-expiry/favorites/PRD 六处文档漂移清零"
+    result: "前端构建通过；IMPLEMENTED 变更后 CODE_REVIEW/SECURITY_REVIEW/TEST_PASS 由本轮复核覆盖（前端单文件级改动，未改后端与数据库）"
+  - iter: 4
+    phase: "spec-verification"
+    agent: "workflow-manager"
+    action: "只读复核本次迭代 spec 符合性 + 20260814 全库 spec 审查报告现状"
+    delta: "产出 spec-verification.md：本次 10 项设计要求全部符合（M 项待人工）；原报告 11 条中 8 条已解决、1 条部分、2 条未解决"
+    result: "spec 验证完成，遗留项按 P2/P3 归档"
+  - iter: 3
+    phase: "test-and-accept"
+    agent: "workflow-manager"
+    action: "串行执行 mvn -pl st-preview -am test 与 st-web 构建，更新知识库与 PRD"
+    delta: "194 用例全绿；api-reference/business-domain/PRD Story 6.1 同步；exitCriteria 全部 done"
+    result: "验收通过（浏览器手工项 M-01~M-04 待用户确认）"
+  - iter: 2
+    phase: "implement-and-review"
+    agent: "workflow-manager"
+    action: "实现后端端点与前端版本预览模式，产出 codereview/security/testreport/changereport"
+    delta: "修复 CR-1（单例 Mock 桩泄漏）；测试由 5 失败修正为 14 全绿"
+    result: "IMPLEMENTED/CODE_REVIEW/SECURITY_REVIEW/TEST_PASS done"
+  - iter: 1
+    phase: "testcases-and-task"
+    agent: "workflow-manager"
+    action: "产出 testcases.md（TC-01~09、FE-01~05、M-01~04）与 TASK 文件"
+    delta: "TESTCASES done；TASK-20260910-version-preview-01 落盘"
+    result: "进入 IMPLEMENTED"
+  - iter: 0
+    phase: "observe-and-design"
+    agent: "workflow-manager"
+    action: "盘点 PRD Story 6.1、VersionController/VersionService、st-preview 预览链路、VersionHistoryDialog 与 PreviewModal"
+    delta: "确认缺口只有'预览历史版本'；设计定稿 design.md，用户确认 P1/P2/P3"
+    result: "DESIGN done"
+iteration: 6
+status: done

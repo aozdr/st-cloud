@@ -40,9 +40,10 @@ export default function FileBrowser({
     mobileSelectMode, setMobileSelectMode, ptr, enableArchive,
     isMobile, has, checkFav, showToast, toggleSelect, handleSelect,
     selectAll, clearSelection, paste,
-    fileListRef, bandRef, fileInputRef, pathInputRef,
+    fileListRef, bandRef, fileInputRef, pathInputRef, newVersionInputRef,
     fetchFiles, refresh, handleDragOver, handleDragLeave, handleDrop,
     handleUploadClick, handleUploadChange,
+    handleNewVersionChange,
     handleItemDragStart, handleFolderDragOver, handleFolderDragLeave, handleFolderDrop,
     handleSortChange, handlePageSizeChange, handlePageInputCommit, handleContextMenu,
     handleContextAction, handleToggleFavorite, handleDownload, handleArchiveExtracted,
@@ -77,6 +78,8 @@ export default function FileBrowser({
       onDrop={handleDrop}
     >
       <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleUploadChange} />
+      {/* 上传新版本：单文件选择，父级通过右键菜单「上传新版本」触发 */}
+      <input ref={newVersionInputRef} type="file" className="hidden" onChange={handleNewVersionChange} />
       {isDragging && (
         <div className="absolute inset-0 bg-primary-500/10 backdrop-blur-sm border-2 border-dashed border-primary-400 rounded-xl z-40 flex items-center justify-center pointer-events-none">
           <div className="text-center">

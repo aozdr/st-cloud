@@ -1,6 +1,14 @@
 import { useState } from 'react';
 import type { BlankFileType, FileNode } from '../types';
 
+/** 预览浮层目标：默认预览当前版本；带 versionId 时预览指定历史版本 */
+export interface PreviewTarget {
+  files: FileNode[];
+  index: number;
+  versionId?: string;
+  versionNum?: number;
+}
+
 export interface FileDialogs {
   showCreateFolder: boolean;
   setShowCreateFolder: React.Dispatch<React.SetStateAction<boolean>>;
@@ -22,8 +30,8 @@ export interface FileDialogs {
   setDownloadTarget: React.Dispatch<React.SetStateAction<FileNode | null>>;
   versionTarget: FileNode | null;
   setVersionTarget: React.Dispatch<React.SetStateAction<FileNode | null>>;
-  preview: { files: FileNode[]; index: number } | null;
-  setPreview: React.Dispatch<React.SetStateAction<{ files: FileNode[]; index: number } | null>>;
+  preview: PreviewTarget | null;
+  setPreview: React.Dispatch<React.SetStateAction<PreviewTarget | null>>;
   contextMenu: { x: number; y: number; node: FileNode } | null;
   setContextMenu: React.Dispatch<React.SetStateAction<{ x: number; y: number; node: FileNode } | null>>;
   blankContextMenu: { x: number; y: number } | null;
@@ -42,7 +50,7 @@ export function useFileDialogs(): FileDialogs {
   const [shareTarget, setShareTarget] = useState<FileNode | null>(null);
   const [downloadTarget, setDownloadTarget] = useState<FileNode | null>(null);
   const [versionTarget, setVersionTarget] = useState<FileNode | null>(null);
-  const [preview, setPreview] = useState<{ files: FileNode[]; index: number } | null>(null);
+  const [preview, setPreview] = useState<PreviewTarget | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; node: FileNode } | null>(null);
   const [blankContextMenu, setBlankContextMenu] = useState<{ x: number; y: number } | null>(null);
 

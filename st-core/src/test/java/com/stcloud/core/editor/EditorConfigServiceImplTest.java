@@ -4,9 +4,12 @@ import com.stcloud.common.enums.NodeStatus;
 import com.stcloud.common.utils.JwtUtils;
 import com.stcloud.core.editor.dto.EditorConfigResponse;
 import com.stcloud.core.entity.FileNode;
+import com.stcloud.core.entity.FileVersion;
 import com.stcloud.core.enums.UploadStatus;
 import com.stcloud.core.mapper.FileNodeMapper;
+import com.stcloud.core.mapper.FileVersionMapper;
 import com.stcloud.core.service.VersionService;
+import com.stcloud.common.exception.BusinessException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,6 +20,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -43,6 +48,8 @@ class EditorConfigServiceImplTest {
     @Mock
     private FileNodeMapper fileNodeMapper;
     @Mock
+    private FileVersionMapper fileVersionMapper;
+    @Mock
     private VersionService versionService;
 
     @InjectMocks
@@ -67,7 +74,7 @@ class EditorConfigServiceImplTest {
         lenient().when(editorProperties.getJwtSecret()).thenReturn("0123456789abcdef0123456789abcdef");
         lenient().when(editorProperties.getPublicBaseUrl()).thenReturn("http://localhost:8080");
         lenient().when(editorProperties.getUrl()).thenReturn("http://onlyoffice");
-        lenient().when(jwtUtils.generateEditorToken(any(), any(), any(), any(), any(), anyInt(), any()))
+        lenient().when(jwtUtils.generateEditorToken(any(), any(), any(), any(), any(), anyInt(), any(), any()))
                 .thenReturn("editor-token");
     }
 
@@ -107,5 +114,41 @@ class EditorConfigServiceImplTest {
     void config_includesSignedToken() {
         EditorConfigResponse res = service.generateConfig(100L, true, true, true, 1L, "alice", "1");
         assertTrue(!res.getConfig().get("token").toString().isEmpty());
+    }
+
+    @Test
+    void versionConfig_isReadOnlyAndHasNoCallback() {
+        FileVersion version = new FileVersion();
+        version.setId(7L);
+        version.setFileNodeId(100L);
+        version.setVersionNum(1);
+        version.setStoragePath("1/old.pdf");
+        when(fileVersionMapper.selectById(7L)).thenReturn(version);
+
+        EditorConfigResponse res = service.generateVersionConfig(100L, 7L);
+
+        Map<String, Object> config = res.getConfig();
+        @SuppressWarnings("unchecked")
+        Map<String, Object> document = (Map<String, Object>) config.get("document");
+        // key 带版本号：与当前版本 key（nodeId_乐观锁版本）区分，避免复用当前版本缓存
+        assertEquals("100_v7", document.get("key"));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> permissions = (Map<String, Object>) document.get("permissions");
+        assertEquals(Boolean.FALSE, permissions.get("edit"));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> editorConfig = (Map<String, Object>) config.get("editorConfig");
+        assertEquals("view", editorConfig.get("mode"));
+        // 无保存通道：历史版本只读，不允许回写覆盖当前版本
+        assertNull(editorConfig.get("callbackUrl"));
+    }
+
+    @Test
+    void versionConfig_versionNotBelongingToNode_throws() {
+        FileVersion version = new FileVersion();
+        version.setId(8L);
+        version.setFileNodeId(999L);
+        when(fileVersionMapper.selectById(8L)).thenReturn(version);
+
+        assertThrows(BusinessException.class, () -> service.generateVersionConfig(100L, 8L));
     }
 }

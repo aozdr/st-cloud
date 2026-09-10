@@ -18,9 +18,12 @@ interface Props {
   onClose: () => void;
   shareContext?: { shareCode: string; password?: string };
   onDownload?: (file: FileNode) => void;
+  /** 历史版本预览：指定版本 ID 与版本号（为空则预览当前版本） */
+  versionId?: string;
+  versionNum?: number;
 }
 
-export default function PreviewModal({ files, currentIndex, onClose, shareContext, onDownload }: Props) {
+export default function PreviewModal({ files, currentIndex, onClose, shareContext, onDownload, versionId, versionNum }: Props) {
   const navigate = useNavigate();
   const location = useLocation();
   const [index, setIndex] = useState(currentIndex);
@@ -38,12 +41,19 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
   const [url, setUrl] = useState<string | null>(null);
   const [textContent, setTextContent] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  /** 版本预览的后端返回类型：版本模式以服务端能力为准判定可预览性 */
+  const [versionType, setVersionType] = useState<string | null>(null);
+  const [versionError, setVersionError] = useState(false);
   const file = files[index];
+  /** 历史版本模式：数据来自版本预览接口，不参与文件切换/幻灯片/最近文件/编辑器跳转 */
+  const isVersionMode = !!versionId;
 
   // 左右浏览仅支持媒体文件（图片/视频/音频）：非媒体文件打开时不可切换
   const previewFiles = useMemo(
-    () => files.filter((f) => f.nodeType === 1 && (isImage(f.suffix) || isVideo(f.suffix) || isAudio(f.suffix))),
-    [files],
+    () => (isVersionMode
+      ? []
+      : files.filter((f) => f.nodeType === 1 && (isImage(f.suffix) || isVideo(f.suffix) || isAudio(f.suffix)))),
+    [files, isVersionMode],
   );
   const previewPos = previewFiles.findIndex((f) => f.id === file?.id);
   const goPrev = useCallback(() => {
@@ -104,8 +114,8 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
   }, []);
 
   useEffect(() => {
-    if (file && file.nodeType === 1) addRecentFile(file);
-  }, [file]);
+    if (!isVersionMode && file && file.nodeType === 1) addRecentFile(file);
+  }, [file, isVersionMode]);
 
   // 切换文件时重置图片变换状态
   useEffect(() => {
@@ -116,6 +126,33 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
 
   useEffect(() => {
     if (!file || file.nodeType !== 1) return;
+    // 历史版本预览：只读指定版本对象，不跳编辑器（编辑器只认当前版本）
+    if (versionId) {
+      // Office 文档历史版本：OnlyOffice 编辑器只认当前版本，这里带 versionId 走「版本只读配置」，
+      // 由 docservice 直接加载该版本对象（PDF 仍走下方预签名 URL + 内置查看器）
+      if (isEditableOfficeSuffix(file.suffix) && !isPdf(file.suffix)) {
+        const from = location.pathname + location.search;
+        navigate(`/file/${file.id}/editor?mode=view&versionId=${versionId}&from=${encodeURIComponent(from)}`);
+        return;
+      }
+      setLoading(true);
+      setUrl(null);
+      setTextContent(null);
+      setVersionType(null);
+      setVersionError(false);
+      api.get<PreviewResult>(`/preview/${file.id}/version/${versionId}`)
+        .then((data) => {
+          setVersionType(data.type ?? 'unsupported');
+          if (data.type === 'text') {
+            setTextContent(data.content ?? '');
+          } else if (data.url) {
+            setUrl(data.url);
+          }
+          setLoading(false);
+        })
+        .catch(() => { setVersionError(true); setLoading(false); });
+      return;
+    }
     // Office（docx/xlsx/pptx）与 PDF：一律走 OnlyOffice 只读查看（全屏页 + 返回按钮），
     // 不再使用 docx-preview/xlsx 本地渲染；分享场景跳转分享编辑器路由
     if (isEditableOfficeSuffix(file.suffix) || isPdf(file.suffix)) {
@@ -204,7 +241,7 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
           .catch(() => setLoading(false));
       }
     }
-  }, [file, shareContext, location.pathname, location.search, navigate]);
+  }, [file, versionId, shareContext, location.pathname, location.search, navigate]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -229,11 +266,20 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
   if (!file) return null;
 
   const config = getFileTypeConfig(file.nodeType, file.suffix);
-  const canPreview = isImage(file.suffix) || isVideo(file.suffix) || isPdf(file.suffix) || isAudio(file.suffix) || isText(file.suffix);
+  // 版本模式按服务端返回类型判定与渲染：前端扩展名白名单（如 csv/markdown/scss）比后端集合窄时，
+  // 旧逻辑会误报"该类型历史版本暂不支持在线预览"，这里以服务端能力为准
+  const canPreview = isVersionMode
+    ? !!versionType && versionType !== 'unsupported'
+    : isImage(file.suffix) || isVideo(file.suffix) || isPdf(file.suffix) || isAudio(file.suffix) || isText(file.suffix);
+  const asImage = isVersionMode ? versionType === 'image' : isImage(file.suffix);
+  const asVideo = isVersionMode ? versionType === 'video' : isVideo(file.suffix);
+  const asAudio = isVersionMode ? versionType === 'audio' : isAudio(file.suffix);
+  const asPdf = isVersionMode ? versionType === 'pdf' : isPdf(file.suffix);
+  const asText = isVersionMode ? versionType === 'text' : isText(file.suffix);
 
   return (
     <div
-      className="fixed inset-0 z-50 flex flex-col bg-neutral-950/95 overscroll-contain animate-fade-in"
+      className={cn('fixed inset-0 flex flex-col bg-neutral-950/95 overscroll-contain animate-fade-in', isVersionMode ? 'z-[60]' : 'z-50')}
       onDragOver={(e) => e.stopPropagation()}
       onDrop={(e) => e.stopPropagation()}
     >
@@ -244,9 +290,14 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
             <config.icon className={cn('w-4 h-4', config.color)} aria-hidden />
           </div>
           <span className="text-white text-sm font-medium truncate">{file.name}</span>
+          {isVersionMode && (
+            <span className="flex-shrink-0 text-xs text-amber-300 bg-amber-500/15 px-2 py-0.5 rounded">
+              历史版本 V{versionNum}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2">
-          {url && onDownload ? (
+          {!isVersionMode && url && onDownload ? (
             <button
               onClick={() => onDownload(file)}
               className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white/80 hover:text-white hover:bg-white/10 rounded-lg cursor-pointer transition-colors"
@@ -254,7 +305,7 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
               <Download className="w-4 h-4" aria-hidden />
               <span>下载</span>
             </button>
-          ) : url ? (
+          ) : !isVersionMode && url ? (
             <a
               href={url}
               target="_blank"
@@ -291,7 +342,11 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
               <div className={cn('w-24 h-24 rounded-2xl flex items-center justify-center mx-auto mb-4', config.bgColor)}>
                 <config.icon className={cn('w-10 h-10', config.color)} aria-hidden />
               </div>
-              <p className="text-white/60 text-sm mb-3">此文件类型不支持在线预览</p>
+              <p className="text-white/60 text-sm mb-3">
+                {isVersionMode
+                  ? (versionError ? '历史版本预览加载失败，请关闭后重试' : '该类型历史版本暂不支持在线预览')
+                  : '此文件类型不支持在线预览'}
+              </p>
               {url && onDownload ? (
                 <button
                   onClick={() => onDownload(file)}
@@ -312,7 +367,7 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
                 </a>
               ) : null}
             </div>
-          ) : isImage(file.suffix) && url ? (
+          ) : asImage && url ? (
             <div className="relative flex flex-col items-center">
               <img
                 ref={imgRef}
@@ -466,11 +521,11 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
                 </div>
               )}
             </div>
-          ) : isVideo(file.suffix) && url ? (
+          ) : asVideo && url ? (
             <Suspense fallback={<div className="w-10 h-10 border-3 border-white/30 border-t-white rounded-full animate-spin" />}>
               <PlyrPlayer src={url} />
             </Suspense>
-          ) : isAudio(file.suffix) && url ? (
+          ) : asAudio && url ? (
             <AudioPlayer
               file={file}
               src={url}
@@ -482,12 +537,15 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
                 if (idx >= 0) setIndex(idx);
               }}
             />
-          ) : isText(file.suffix) && textContent !== null ? (
+          ) : asText && textContent !== null ? (
             <div className="w-[80vw] h-[80vh] bg-surface rounded-lg overflow-auto">
               <pre className="p-6 text-sm text-fg font-mono whitespace-pre-wrap break-all leading-relaxed">
                 {textContent}
               </pre>
             </div>
+          ) : asPdf && url ? (
+            /* 历史版本 PDF：编辑器只认当前版本，这里用浏览器内置 PDF 查看器 */
+            <iframe src={url} title={file.name} className="w-[80vw] h-[80vh] bg-white rounded-lg" />
           ) : null}
         </div>
 

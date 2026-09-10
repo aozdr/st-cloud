@@ -10,6 +10,7 @@ import com.stcloud.core.entity.FileNode;
 import com.stcloud.core.entity.FileVersion;
 import com.stcloud.core.enums.UploadStatus;
 import com.stcloud.core.mapper.FileNodeMapper;
+import com.stcloud.core.mapper.FileVersionMapper;
 import com.stcloud.core.service.VersionService;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -44,6 +45,7 @@ public class EditorConfigServiceImpl implements EditorConfigService {
     private final EditorLockService editorLockService;
     private final JwtUtils jwtUtils;
     private final FileNodeMapper fileNodeMapper;
+    private final FileVersionMapper fileVersionMapper;
     private final VersionService versionService;
 
     @Override
@@ -136,8 +138,85 @@ public class EditorConfigServiceImpl implements EditorConfigService {
                 editorProperties.getUrl(), config);
     }
 
+    @Override
+    public EditorConfigResponse generateVersionConfig(Long nodeId, Long versionId) {
+        FileNode node = fileNodeMapper.selectById(nodeId);
+        if (node == null || node.getStatus() == null || node.getStatus() != NodeStatus.NORMAL.getCode()) {
+            throw new BusinessException(ResultCode.FILE_NOT_FOUND);
+        }
+        if (node.isFolder()) {
+            throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "仅文件支持在线预览");
+        }
+        if (node.getUploadStatus() == null || node.getUploadStatus() != UploadStatus.COMPLETED.getCode()) {
+            throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "文件尚未上传完成");
+        }
+        editorPermissionService.assertSupported(node);
+
+        FileVersion version = fileVersionMapper.selectById(versionId);
+        // 越权防护：版本必须属于该文件节点，仅凭 versionId 取不到内容
+        if (version == null || !nodeId.equals(version.getFileNodeId())) {
+            throw new BusinessException(ResultCode.FILE_NOT_FOUND.getCode(), "版本不存在");
+        }
+
+        String secret = editorProperties.getJwtSecret();
+        if (!StringUtils.hasText(secret) || secret.getBytes(StandardCharsets.UTF_8).length < 32) {
+            log.error("OnlyOffice JWT 密钥未配置或长度不足 32 字节（STCLOUD_ONLYOFFICE_SECRET）");
+            throw new BusinessException(ResultCode.EDITOR_SERVICE_ERROR, "编辑服务未配置签名密钥");
+        }
+
+        UserContext.CurrentUser user = UserContext.getCurrentUser();
+        Long userId = user != null ? user.getUserId() : null;
+        String username = user != null ? user.getUsername() : null;
+
+        // 版本令牌：额外带 versionId 声明，/stream 据此返回历史版本对象
+        String downloadToken = buildEditorDownloadToken(node, userId, username, versionId);
+        String documentUrl = editorProperties.getPublicBaseUrl() + "/api/file/" + nodeId + "/stream?token="
+                + URLEncoder.encode(downloadToken, StandardCharsets.UTF_8);
+
+        Map<String, Object> config = new LinkedHashMap<>();
+        config.put("type", "desktop");
+        config.put("width", "100%");
+        config.put("height", "100%");
+        Map<String, Object> document = new LinkedHashMap<>();
+        document.put("fileType", node.getSuffix().toLowerCase());
+        // key 带 versionId：与当前版本 key（nodeId_乐观锁版本）区分，避免 OnlyOffice 复用当前版本缓存
+        document.put("key", nodeId + "_v" + versionId);
+        document.put("title", node.getName());
+        document.put("url", documentUrl);
+        Map<String, Object> permissions = new LinkedHashMap<>();
+        permissions.put("edit", false);
+        permissions.put("download", true);
+        permissions.put("print", true);
+        document.put("permissions", permissions);
+        config.put("document", document);
+        config.put("documentType", documentType(node.getSuffix()));
+
+        Map<String, Object> editorConfig = new LinkedHashMap<>();
+        editorConfig.put("mode", "view");
+        editorConfig.put("lang", "zh-CN");
+        if (userId != null) {
+            Map<String, Object> editorUser = new LinkedHashMap<>();
+            editorUser.put("id", String.valueOf(userId));
+            editorUser.put("name", username != null ? username : "访客");
+            editorConfig.put("user", editorUser);
+        }
+        // 不下发 callbackUrl 且关闭自动保存：历史版本只读、无保存通道，
+        // 杜绝"打开旧版本后被保存回调覆盖当前内容"
+        editorConfig.put("customization", Map.of("autosave", false, "forcesave", false));
+        config.put("editorConfig", editorConfig);
+
+        config.put("token", signPayload(config, secret));
+        log.info("生成历史版本只读预览配置: nodeId={}, versionId={}", nodeId, versionId);
+        return new EditorConfigResponse(editorProperties.getUrl(), config);
+    }
+
     /** 生成绑定 nodeId 的短期下载令牌（5 分钟，不单次消费；补齐 file:preview 权限以访问 stream） */
     private String buildEditorDownloadToken(FileNode node, Long userId, String username) {
+        return buildEditorDownloadToken(node, userId, username, null);
+    }
+
+    /** 生成绑定 nodeId（可选绑定 versionId）的短期下载令牌；versionId 非空时 /stream 返回该历史版本对象 */
+    private String buildEditorDownloadToken(FileNode node, Long userId, String username, Long versionId) {
         if (userId == null) {
             // 匿名（分享访客）场景：基于文件 owner 生成最小下载令牌，仅限该文件 stream
             userId = node.getOwnerId();
@@ -146,7 +225,7 @@ public class EditorConfigServiceImpl implements EditorConfigService {
         List<String> permissions = new ArrayList<>();
         permissions.add("file:preview");
         return jwtUtils.generateEditorToken(userId, node.getTenantId(), username,
-                List.of(), permissions, 1, node.getId());
+                List.of(), permissions, 1, node.getId(), versionId);
     }
 
     /** 文档类型映射：docx-&gt;word / xlsx-&gt;cell / pptx-&gt;slide / pdf-&gt;pdf */

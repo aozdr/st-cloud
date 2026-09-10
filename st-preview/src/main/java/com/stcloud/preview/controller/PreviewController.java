@@ -24,6 +24,13 @@ public class PreviewController {
         return Result.success(previewService.preview(nodeId));
     }
 
+    @Operation(summary = "获取历史版本预览")
+    @GetMapping("/{nodeId}/version/{versionId}")
+    public Result<PreviewResultVO> previewVersion(@PathVariable Long nodeId,
+                                                   @PathVariable Long versionId) {
+        return Result.success(previewService.previewVersion(nodeId, versionId));
+    }
+
     @Operation(summary = "获取图片缩略图URL")
     @GetMapping("/{nodeId}/thumbnail")
     public Result<String> getThumbnail(

@@ -161,6 +161,17 @@ public class JwtUtils {
     public String generateEditorToken(Long userId, Long tenantId, String username,
                                       List<String> roles, List<String> permissions, int dataScope,
                                       Long nodeId) {
+        return generateEditorToken(userId, tenantId, username, roles, permissions, dataScope, nodeId, null);
+    }
+
+    /**
+     * 生成在线编辑器下载令牌（可绑定历史版本）。
+     * versionId 非空时额外写入 versionId 声明，/stream 端点据此返回该历史版本对象
+     * （仅历史版本只读预览使用；声明由服务端签发，客户端无法伪造）。
+     */
+    public String generateEditorToken(Long userId, Long tenantId, String username,
+                                      List<String> roles, List<String> permissions, int dataScope,
+                                      Long nodeId, Long versionId) {
         Set<String> permSet = new LinkedHashSet<>(permissions == null ? List.of() : permissions);
         permSet.add("file:preview");
         Map<String, Object> claims = new HashMap<>();
@@ -172,6 +183,9 @@ public class JwtUtils {
         claims.put("dataScope", dataScope);
         claims.put("type", "editor");
         claims.put("nodeId", nodeId);
+        if (versionId != null) {
+            claims.put("versionId", versionId);
+        }
         return Jwts.builder()
                 .claims(claims)
                 .id(UUID.randomUUID().toString())

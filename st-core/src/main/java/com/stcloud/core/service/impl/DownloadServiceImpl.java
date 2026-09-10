@@ -8,8 +8,10 @@ import com.stcloud.common.ratelimit.SpeedLimitService;
 import com.stcloud.common.ratelimit.UserTransferLimiter;
 import com.stcloud.common.response.ResultCode;
 import com.stcloud.core.entity.FileNode;
+import com.stcloud.core.entity.FileVersion;
 import com.stcloud.core.enums.UploadStatus;
 import com.stcloud.core.mapper.FileNodeMapper;
+import com.stcloud.core.mapper.FileVersionMapper;
 import com.stcloud.core.service.DownloadService;
 import com.stcloud.core.service.FileService;
 import com.stcloud.core.service.StorageService;
@@ -35,6 +37,8 @@ public class DownloadServiceImpl implements DownloadService {
 
     @Resource
     private FileNodeMapper fileNodeMapper;
+    @Resource
+    private FileVersionMapper fileVersionMapper;
     @Resource
     private StorageService storageService;
     @Resource
@@ -70,6 +74,11 @@ public class DownloadServiceImpl implements DownloadService {
 
     @Override
     public void streamFile(Long nodeId, HttpServletRequest request, HttpServletResponse response) {
+        streamFile(nodeId, null, request, response);
+    }
+
+    @Override
+    public void streamFile(Long nodeId, Long versionId, HttpServletRequest request, HttpServletResponse response) {
         FileNode node = fileNodeMapper.selectById(nodeId);
         if (node == null || node.getStatus() != NodeStatus.NORMAL.getCode()) {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
@@ -88,8 +97,19 @@ public class DownloadServiceImpl implements DownloadService {
         if (node.getUploadStatus() != UploadStatus.COMPLETED.getCode()) {
             throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "文件尚未上传完成");
         }
+        // 历史版本流：内容与大小取 file_version 记录（版本必须属于该节点），其余校验沿用节点
+        String storagePath = node.getStoragePath();
+        Long sourceSize = node.getFileSize();
+        if (versionId != null) {
+            FileVersion version = fileVersionMapper.selectById(versionId);
+            if (version == null || !nodeId.equals(version.getFileNodeId())) {
+                throw new BusinessException(ResultCode.FILE_NOT_FOUND.getCode(), "版本不存在");
+            }
+            storagePath = version.getStoragePath();
+            sourceSize = version.getFileSize();
+        }
         Long userId = UserContext.getUserId();
-        long fileSize = node.getFileSize() != null ? node.getFileSize() : 0L;
+        long fileSize = sourceSize != null ? sourceSize : 0L;
         long start = 0L;
         long end = fileSize > 0 ? fileSize - 1 : 0L;
         boolean ranged = false;
@@ -143,8 +163,8 @@ public class DownloadServiceImpl implements DownloadService {
                 return;
             }
             long rateBytes = SpeedLimitService.capRate(speedLimitService.resolve().getDownloadSpeedLimit(), parseClientLimit(request.getParameter("clientLimit"))) * 1024L;
-            try (InputStream is = ranged ? storageService.downloadObjectRange(node.getStoragePath(), start, end)
-                                         : storageService.downloadObject(node.getStoragePath());
+            try (InputStream is = ranged ? storageService.downloadObjectRange(storagePath, start, end)
+                                         : storageService.downloadObject(storagePath);
                  OutputStream os = response.getOutputStream()) {
                 pacedTransfer(is, os, userId, rateBytes);
                 os.flush();

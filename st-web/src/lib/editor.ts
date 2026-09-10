@@ -16,9 +16,17 @@ export function isEditableOfficeSuffix(suffix: string | null | undefined): boole
  * 编辑/只读权限以后端判定为准，前端仅做入口展示。
  * @param mode edit=编辑模式（默认）；view=只读查看模式（Office 文件预览）
  */
-export function getEditorConfig(nodeId: string, mode: 'edit' | 'view' = 'edit'): Promise<EditorConfigResponse> {
+export function getEditorConfig(
+  nodeId: string,
+  mode: 'edit' | 'view' = 'edit',
+  versionId?: string,
+): Promise<EditorConfigResponse> {
+  const params: Record<string, string> = {};
+  if (mode === 'view') params.mode = 'view';
+  // 历史版本预览：后端返回该版本的只读配置（document.url 指向版本对象，无保存回调）
+  if (versionId) params.versionId = versionId;
   return api.get<EditorConfigResponse>(`/file/${nodeId}/editor/config`, {
-    params: mode === 'view' ? { mode: 'view' } : undefined,
+    params: Object.keys(params).length > 0 ? params : undefined,
   });
 }
 
