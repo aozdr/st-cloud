@@ -9,6 +9,7 @@ import { addRecentFile } from '../../lib/recentFiles';
 import { isImage, isVideo, isPdf, isAudio, isText, getFileTypeConfig, cn } from '../../lib/utils';
 import { isEditableOfficeSuffix } from '../../lib/editor';
 import AudioPlayer from './AudioPlayer';
+import FileThumbnail from '../file/FileThumbnail';
 
 const PlyrPlayer = lazy(() => import('./PlyrPlayer'));
 
@@ -252,6 +253,9 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
       const inFormField = !!target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.tagName === 'SELECT' || target.isContentEditable);
       const inMediaPlayer = !!target && (target.tagName === 'VIDEO' || target.tagName === 'AUDIO' || !!target.closest('.plyr'));
       if (e.key === 'Escape') {
+        // 预览层优先消费关闭键，避免被文件列表的全局快捷键先截获。
+        e.preventDefault();
+        e.stopPropagation();
         onClose();
       } else if (!inFormField && !inMediaPlayer && e.key === 'ArrowLeft') {
         goPrev();
@@ -259,8 +263,8 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
         goNext();
       }
     };
-    window.addEventListener('keydown', handler);
-    return () => window.removeEventListener('keydown', handler);
+    window.addEventListener('keydown', handler, true);
+    return () => window.removeEventListener('keydown', handler, true);
   }, [goPrev, goNext, onClose]);
 
   if (!file) return null;
@@ -316,8 +320,13 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
               <span>下载</span>
             </a>
           ) : null}
-          <button onClick={onClose} aria-label="关闭" className="text-white/60 hover:text-white p-1.5 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50 rounded-lg">
-            <X className="w-5 h-5" aria-hidden />
+          <button
+            onClick={onClose}
+            aria-label="关闭预览"
+            title="关闭预览"
+            className="absolute right-5 top-10 z-20 w-9 h-9 inline-flex items-center justify-center rounded-lg border border-white/20 bg-black/60 text-white/80 shadow-lg shadow-black/30 backdrop-blur-sm cursor-pointer transition-[background-color,border-color,color] hover:bg-white/15 hover:border-white/40 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-neutral-950"
+          >
+            <X className="w-5 h-5" strokeWidth={2} aria-hidden />
           </button>
         </div>
       </div>
@@ -506,15 +515,21 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
                           isActive ? 'border-primary-400 scale-110' : 'border-transparent opacity-50 hover:opacity-90',
                         )}
                       >
-                        <img
-                          src={(() => {
-                            const base = isElectron() ? getServerUrlSync() : '';
-                            return `${base}/api/preview/${img.id}/thumbnail?size=sm`;
-                          })()}
-                          alt={img.name}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                        />
+                        {shareContext ? (
+                          <img
+                            src={(() => {
+                              const params = new URLSearchParams({ nodeId: String(img.id) });
+                              if (shareContext.password) params.set('password', shareContext.password);
+                              const base = isElectron() ? getServerUrlSync() : '';
+                              return `${base}/api/share/access/stream/${shareContext.shareCode}?${params.toString()}`;
+                            })()}
+                            alt={img.name}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <FileThumbnail file={img} size="lg" className="!w-full !h-full !rounded-none" />
+                        )}
                       </button>
                     );
                   })}

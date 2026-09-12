@@ -82,12 +82,10 @@ function FileGrid({
   const cfg = GRID_SIZE_CFG[iconSize];
 
   // 瀑布流模式：展示图片文件以 CSS columns 排列，高度自适应
-  if (waterfall) {
-    const imageFiles = files.filter((f) => f.nodeType === 1 && isImage(f.suffix));
-    if (imageFiles.length === 0) return null;
+  if (waterfall && files.length > 0 && files.every((file) => file.nodeType === 1 && isImage(file.suffix))) {
     return (
       <div className={cn('file-waterfall', iconSize === 'sm' ? 'columns-3 sm:columns-4 md:columns-5 lg:columns-6 xl:columns-7 gap-2' : iconSize === 'md' ? 'columns-2 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-6 gap-3' : 'columns-1 sm:columns-2 md:columns-3 lg:columns-4 xl:columns-5 gap-4')}>
-        {imageFiles.map((file) => {
+        {files.map((file) => {
           const isSelected = selectedIds.has(file.id);
           return (
             <div
@@ -97,7 +95,7 @@ function FileGrid({
               onDoubleClick={() => onDoubleClick(file)}
               onContextMenu={(e) => onContextMenu(e, file)}
               className={cn(
-                'group relative mb-3 break-inside-avoid rounded-xl overflow-hidden bg-[#FEFEFD] dark:bg-surface border cursor-pointer select-none transition-[background-color,border-color] duration-150',
+                'group relative mb-3 break-inside-avoid rounded-xl overflow-hidden bg-surface border cursor-pointer select-none transition-[background-color,border-color] duration-150',
                 isSelected ? 'border-primary-400 ring-1 ring-primary-300' : 'border-transparent hover:border-primary-200',
                 cutIds?.has(file.id) && 'opacity-50',
               )}
@@ -107,13 +105,13 @@ function FileGrid({
                 aria-label="选择"
                 className={cn(
                   'absolute top-2 left-2 z-10 w-4 h-4 rounded border flex items-center justify-center transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                  isSelected ? 'bg-primary-600 border-primary-600 opacity-100' : 'border-border bg-surface/90 opacity-0 group-hover:opacity-100',
+                  isSelected ? 'bg-primary-600 border-primary-600 opacity-100' : 'border-border bg-surface/90 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100',
                 )}
               >
                 {isSelected && <Check className="w-3 h-3 text-white" strokeWidth={3} aria-hidden />}
               </button>
               <FileThumbnail file={file} size={cfg.thumb} blur className="w-full h-auto" />
-              <div className="px-2 py-1.5">
+              <div className="px-3 py-2">
               <div className={cn('text-xs truncate text-center', isSelected ? 'text-primary-600 font-medium' : 'text-fg')} title={file.name}>
                 {file.name}
               </div>
@@ -144,10 +142,10 @@ function FileGrid({
             onContextMenu={(e) => onContextMenu(e, file)}
             style={{ contentVisibility: 'auto', containIntrinsicSize: '160px' }}
             className={cn(
-              'group relative flex flex-col rounded-[14px] bg-[#FEFEFD] dark:bg-surface border border-transparent cursor-pointer select-none transition-[background-color,border-color] duration-150',
+              'group relative flex flex-col rounded-xl bg-surface border border-transparent cursor-pointer select-none transition-[background-color,border-color] duration-150',
               cfg.cardPad,
               isSelected
-                ? 'bg-[#EEF0FF] dark:bg-primary-950/40 border-primary-400'
+                ? 'bg-primary-50 dark:bg-primary-950/40 border-primary-400'
                 : dragOverFolderId === file.id
                   ? 'bg-primary-500/10 border-primary-400'
                   : focusedId === file.id
@@ -161,7 +159,7 @@ function FileGrid({
               aria-label="选择"
               className={cn(
                 'absolute top-3 left-3 z-10 w-4 h-4 rounded border flex items-center justify-center transition-[background-color,border-color,opacity] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100',
-                isSelected ? 'bg-primary-600 border-primary-600 opacity-100' : 'border-border bg-surface/90 opacity-0 group-hover:opacity-100',
+                isSelected ? 'bg-primary-600 border-primary-600 opacity-100' : 'border-border bg-surface/90 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100',
               )}
             >
               {isSelected && <Check className="w-3 h-3 text-white" strokeWidth={3} aria-hidden />}
@@ -173,18 +171,18 @@ function FileGrid({
               aria-label={isFavorite(file.id) ? '取消收藏' : '收藏'}
               title={isFavorite(file.id) ? '取消收藏' : '收藏'}
               className={cn(
-                'absolute top-2 right-2 z-10 w-7 h-7 rounded-lg flex items-center justify-center bg-black/30 hover:bg-black/50 backdrop-blur-sm transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100',
-                isFavorite(file.id) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+                'absolute top-2 right-2 z-10 w-8 h-8 rounded-full flex items-center justify-center bg-surface/90 border border-border hover:bg-surface transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100',
+                isFavorite(file.id) || isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100',
               )}
             >
               <Star
-                className={cn('w-3.5 h-3.5', isFavorite(file.id) ? 'text-yellow-400' : 'text-white')}
+                className={cn('w-3.5 h-3.5', isFavorite(file.id) ? 'text-amber-500' : 'text-tertiary')}
                 fill={isFavorite(file.id) ? 'currentColor' : 'none'}
                 aria-hidden
               />
             </button>
             {/* 图标容器：透明背景，不再用灰色底圈住图标 */}
-            <div className={cn('relative aspect-video w-full rounded-2xl overflow-hidden bg-transparent', cfg.iconMb)}>
+            <div className={cn('relative aspect-[16/10] w-full rounded-xl overflow-hidden bg-transparent', cfg.iconMb)}>
               {/* 居中容器：非图片文件图标居中展示；图片文件由 FileThumbnail 铺满 */}
               <div className="absolute inset-0 flex items-center justify-center">
                 <FileThumbnail file={file} size={cfg.thumb} blur className="absolute inset-0 w-full h-full" />
