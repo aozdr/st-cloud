@@ -1,348 +1,155 @@
-# Agent Dispatch Protocol V5
+# Agent Dispatch Protocol V2
 
-## 核心原则
+> 当前唯一 Dispatch 运行协议。历史协议位于 `.ai/archive/protocols/`，仅供审计，禁止加载为当前指令。
 
-```text
-用户自然语言
-    ↓
-Workflow Manager
-    ↓
-Goal / Plan / TASK
-    ↓
-Dispatch Builder
-    ↓
-Child Agent
-```
+## 1. 唯一传输路径
 
-用户不负责 TASK，Agent 不负责理解整个用户需求。
-
-## 1. 用户层
-
-用户只描述：
-
-- 想做什么；
-- 现象/问题；
-- 目标效果；
-- 已知约束（如果有）。
-
-例如：
-
-```text
-文件分享链接增加过期时间，并补测试。
-```
-
-## 2. 编排层
-
-Workflow Manager 自动负责：
-
-- Goal
-- 规模
-- Plan
-- Agent 选择
-- TASK 创建
-- 依赖
-- Dispatch
-- Evaluate
-- Rework
-
-## 3. 执行层
-
-子 Agent 只接收：
-
-- Role
-- TASK
-- Dispatch
-- State 最小快照
-- 明确 artifact
-- 明确 skills
-
-不得自己从整个用户需求推导新的工作。
-
-## 4. Runtime
-
-执行型子 Agent 必须使用当前 Codex Runtime 实际支持的“带任务消息启动”方式。
-
-关键不是某个配置字符串，而是：
-
-> **spawn 时必须真的把 Dispatch Message 传给子线程。**
-
-如果子线程只收到：
-
-```text
-AGENTS.md
-Skills
-Workspace
-```
-
-却没有 TASK：
-
-```text
-DISPATCH_FAILED
-```
-
-不得让子 Agent等待用户。
-
-## 5. Context
-
-如果 Runtime 支持 fresh/bounded child，则优先使用。
-
-如果当前 Runtime 采用父线程继承上下文，则：
-
-- 不把父线程历史当作任务来源；
-- Dispatch Message 必须明确“唯一任务”；
-- scope 作为工作边界；
-- 不能声称 Prompt 本身实现了真正的上下文隔离。
-
-## 6. 错误
-
-```text
-DISPATCH_INVALID
-```
-
-派发包缺字段。
-
-```text
-DISPATCH_FAILED
-```
-
-子线程没有真正收到 TASK。
-
-```text
-BLOCKED
-```
-
-真实外部条件阻塞。
-
-```text
-FAILED
-```
-
-执行失败。
-
-## 7. 完成
-
-```text
-Child Agent
-   ↓
-State Delta
-   ↓
-Workflow Manager Evaluate
-   ↓
-Pass / Rework
-```
-
-子 Agent 的 done 不等于用户需求完成。
-
-
-# V6 Runtime Injection Hard Gate
-
-## 1. “已生成 Dispatch”不等于“已派发 Dispatch”
-
-必须区分：
-
-```text
-Dispatch Built
-```
-
-和：
-
-```text
-Dispatch Delivered
-```
-
-只有当完整 Dispatch Envelope 实际出现在 child 的启动 message 中，才算 Delivered。
+Dispatch 只通过当前 Codex Runtime 的子 Agent 创建消息传递：
 
 ```text
 TASK
- ↓
-Build Dispatch
- ↓
-Validate
- ↓
-spawn(message=<Dispatch>)
- ↓
-DISPATCH_ACK
- ↓
-Delivered
+  ↓ build + schema validate
+Dispatch Envelope
+  ↓ spawn_agent(message=<完整 Envelope>)
+child
+  ↓ DISPATCH_ACK
+execute
+  ↓ 独立 result + criterionProposal
+Workflow Manager Evaluate
 ```
 
-仅仅把：
+写 TASK、State 或结果文件不等于已派发。只有完整 Envelope 实际传入 `spawn_agent.message` 才是一次派发。禁止添加第二传输路径，也禁止 child 自行扫描项目猜任务。
+
+## 2. 身份与幂等
+
+- `taskId`：TASK 的稳定业务标识。
+- `idempotencyKey`：同一 TASK 的稳定幂等键，所有重试保持不变。
+- `dispatchId`：单次 attempt 的唯一标识；每次重派必须生成新值。
+- `taskCode`：可选的人类可读标签，不参与身份、ACK 或幂等判断。
+- `childId`：Runtime 返回的执行实例标识，由主线程记入 dispatchLedger。
+
+主线程以 `dispatchId` 归集一次 attempt，以 `idempotencyKey` 识别它们属于同一 TASK。旧 attempt 的迟到结果不能覆盖新 attempt。
+
+## 3. Envelope
+
+唯一结构定义为 `.ai/schema/dispatch.schema.json`。发送前必须通过 schema 校验；不得在其他文档维护第二份必填字段列表。
+
+额外语义约束：
+
+- 一个 Envelope 的 `taskRefs` 只描述同一独立任务所需的稳定输入，不得捆绑多个可独立验收的 TASK；
+- `scope.include` 是写入白名单，`scope.exclude` 优先级更高；
+- `stateRef` 供定位，child 只读取与 TASK 相关的最小 State 快照，不得写 State；
+- `forbidSpawn` 必须为 `true`；
+- `skillRefs` 中列出的技能在 ACK 后、执行前完整读取；`-` 表示无额外技能。
+
+推荐以 `.ai/templates/dispatch-template.md` 构建消息。
+
+## 4. 创建与并行
+
+一 TASK / 一 Envelope / 一 child：
 
 ```text
-.ai/tasks/TASK-xxx.md
-.ai/state/xxx.yaml
+TASK-A → envelope-A → child-A
+TASK-B → envelope-B → child-B
 ```
 
-写入磁盘，或者在 Workflow Manager 自己的上下文中生成 YAML，都不能证明子 Agent 收到了任务。
+同一批次应先构建并验证所有 Envelope，再创建 child。无依赖 TASK 可以并行创建和执行；不得复用可变 message，不得用 child 的创建顺序或位置识别任务。
 
-## 2. Dispatch Envelope 必填字段
+Runtime 上下文参数不是 Dispatch 字段。无论采用 fresh 还是 bounded context，child 的唯一任务来源仍是本次 `message`。
 
-为了兼容执行 Agent 对错误字段的检查，单任务必须同时提供：
+## 5. ACK 门禁
+
+child 的首条输出必须是：
+
+```text
+DISPATCH_ACK
+dispatchId: <Envelope.dispatchId>
+taskId: <Envelope.taskId>
+role: <Envelope.role>
+```
+
+ACK 只校验 `dispatchId/taskId/role` 三元组。`taskCode`、文件路径、child 位置或自然语言 objective 都不参与 ACK 身份校验。
+
+ACK 前 child 禁止调用工具。ACK 仅证明消息已送达，不代表任务完成；child 必须在同轮继续执行。
+
+主线程为每次 attempt 在 dispatchLedger 记录：
+
+```text
+planned → spawned → acked → running → returned → evaluated
+                                     └→ failed
+```
+
+只有 ACK 三元组完全匹配，attempt 才能进入 `acked`。错配结果标记为 failed，关闭该 child，不得猜测修正。
+
+## 6. 子 Agent 执行边界
+
+ACK 后 child：
+
+1. 校验 Envelope；
+2. 读取 `skillRefs`、`taskRefs` 和最小 State 快照；
+3. 只在 scope 内执行；
+4. 写入该 dispatch 独立的结果文件；
+5. 返回事实结果、证据和 proposal。
+
+child 不得：
+
+- 修改 Loop State 或把 exitCriterion 直接标为 done；
+- 定义 Goal、执行 Evaluate 或宣布整个迭代完成；
+- 创建/指挥其他 Agent；
+- 向用户请求确认；
+- 与其他 child 共同追加同一结果或 changereport 文件。
+
+需要确认时返回 `confirmationRequest`，需要其他能力时返回 `delegationRequest`。主线程决定后续动作。
+
+## 7. 结果契约
+
+每个 attempt 使用独立结果路径，例如 `.ai/runtime/results/<dispatchId>.json`。结果至少包含：
 
 ```yaml
-taskId: "TASK-..."
-taskRef: ".ai/tasks/TASK-xxx.md"
-taskRefs:
-  - ".ai/tasks/TASK-xxx.md"
-stateRef: ".ai/state/....yaml"
-role: "..."
-taskType: "implementation | review | test | design | security | documentation"
-objective: "..."
-exitCriterion: "..."
-scope:
-  include: []
-  exclude: []
-acceptance: []
-validation: []
-forbidSpawn: true
+dispatchId: DISPATCH-...
+taskId: TASK-...
+status: completed | blocked | failed
+artifactRefs: []
+criterionProposal:
+  id: IMPLEMENTED
+  outcome: pass | fail | blocked | skip
+  by: <child identity>
+  dispatchId: DISPATCH-...
+  evidenceRef: .ai/runtime/results/<dispatchId>.json
+  validatedRevision: <design-or-code-revision>
+blockerProposals: []
 ```
 
-`taskRef` 是当前唯一任务文件；`taskRefs` 只是兼容字段，不得用多个 TASK 混淆一个 child。
+`skip` 仅供 canonical 定义声明可跳过的标准使用；当前只有中型 `SECURITY_REVIEW` 可在提供 `skipReason/approvedBy` 后使用。`criterionProposal` 只是建议。主线程核对 schema、attempt、scope、产物、证据、revision 和 DAG 后，才可通过 Evaluate 改变 State。
 
-## 3. Spawn Hard Gate
+共享 `changereport.md` 由主线程串行合并各独立结果，避免并发追加竞态。
 
-Workflow Manager 在执行 spawn 前必须在本轮内部完成：
+## 8. 失败与恢复
 
-```text
-dispatchMessage = 完整自包含字符串
-assert dispatchMessage 包含：
-  dispatchId
-  taskId
-  taskRef
-  stateRef
-  role
-  taskType
-  objective
-  exitCriterion
-  scope
-  acceptance
-  validation
-  forbidSpawn
-```
+| 情况 | attempt 状态 | 恢复 |
+|---|---|---|
+| Envelope schema 无效 | 不得 spawn | 修正原 Envelope |
+| 无 ACK / ACK 超时 | failed | 关闭 child；新 dispatchId 重派 |
+| ACK 三元组错配 | failed | 关闭 child；新 dispatchId 重派 |
+| 只返回 ACK，无独立结果 | failed（ACK_ONLY） | 关闭 child；新 dispatchId 重派 |
+| child 返回 `DISPATCH_INVALID` | failed | 修正构建逻辑；新 dispatchId 重派 |
+| 结果属于旧 attempt | 保留审计，不 Evaluate | 使用当前 attempt 结果 |
+| 真实外部条件阻塞 | returned/blocked | 由主线程建立业务 blocker |
+| scope 越界或证据缺失 | returned/rejected | 定向 rework，禁止 Evaluate 为 pass |
 
-然后：
+同一 TASK 的自动重试保持 `taskId/idempotencyKey` 不变，每次创建新的 `dispatchId` 和 child。Dispatch 故障只进入 dispatchLedger，不增加业务 blocker attempts。
 
-```text
-spawn(..., message=dispatchMessage)
-```
+若 Runtime 无法把 message 送达 child，报告 `DISPATCH_RUNTIME_INJECTION_FAILED` 并停止该 TASK；不得启用其他投递路径。
 
-**不能只说“请执行 TASK-001”，也不能只传 role。**
+## 9. 生命周期与 Evaluate
 
-## 4. Child ACK
+child 返回后，主线程应立即：
 
-child 第一条响应：
+1. 读取独立结果；
+2. 核对 `dispatchId/taskId` 和当前 attempt；
+3. 验证 scope、artifact、evidence、validatedRevision；
+4. 关闭 child；
+5. 调用状态迁移工具执行 Evaluate；
+6. 更新 ledger/history 并重新 Plan。
 
-```text
-DISPATCH_ACK
-```
-
-必须带：
-
-```text
-dispatchId
-taskId
-role
-objective
-```
-
-如果没有 ACK：
-
-```text
-DISPATCH_FAILED
-```
-
-Workflow Manager 只重派该 dispatch。
-
-## 5. 错误分类
-
-```text
-DISPATCH_INVALID
-```
-
-child 收到 message，但 message 缺字段。
-
-```text
-DISPATCH_FAILED
-```
-
-child 没有收到 TASK 或没有 ACK。
-
-```text
-DISPATCH_RUNTIME_INJECTION_FAILED
-```
-
-Workflow Manager 已构建完整 message，但实际 spawn 调用没有把 message 注入 child。
-
-`DISPATCH_*` 都不是业务 blocker，不增加 blocker.attempts。
-
-## 6. 并行派发原子性
-
-N 个并行 TASK 必须有 N 个独立 message：
-
-```text
-TASK-FE → Dispatch-FE → message_FE → child_FE
-TASK-BE → Dispatch-BE → message_BE → child_BE
-```
-
-禁止共享 message。
-
-一个 child 失败时，只重派对应 dispatch。
-
-## 7. 自然语言用户入口
-
-用户永远不需要提供上述字段。
-
-Workflow Manager 自动完成：
-
-```text
-用户一句话
-↓
-Goal
-↓
-Plan
-↓
-TASK
-↓
-Dispatch Message
-↓
-spawn(message=...)
-```
-
-
-## Runtime Override V6 — 以实际送达为准
-
-本项目已验证的关键事实：**直接把任务文本传入 child 创建动作，可以正常工作。**
-
-因此执行型 child 当前采用 `fork_turns`。上下文可能包含父线程历史，但这不是任务来源；任务来源必须是 child 创建动作实际收到的完整 `dispatchMessage`。
-
-### 不得把“文件落盘”当作“消息已送达”
-
-必须验证：
-
-```text
-actual child input contains:
-  taskRef
-  stateRef
-  objective
-  scope
-  acceptance
-  validation
-  role
-  taskType
-```
-
-### DISPATCH_INVALID 恢复
-
-收到 `DISPATCH_INVALID` 后，Workflow Manager 必须重新创建 child，并把完整 `dispatchMessage` 直接放入 child 的实际任务输入；不能停在错误消息，也不能向用户索要任务。
-
-同一 TASK 自动重试 2 次；仍失败才报告 `DISPATCH_RUNTIME_INJECTION_FAILED`。
-
-### File Inbox 兜底（非 OpenAI provider）
-
-**2026-08-14 核验**：DeepSeek 等非 OpenAI provider 下，spawn/followup message 被运行时丢弃（`encrypted_content` 不可消费），“把 message 放入 child 实际输入”物理上不可行。因此：
-
-- 每次 spawn 前必须先把完整信封写入 `.ai/dispatch/inbox-<dispatchId>.md`；
-- child 无可见派发内容时按 AGENTS.md 1.1 节从收件箱消费（读 inbox → 校验 → 归档 → ACK）；
-- 两次重派仍失败时输出 `DISPATCH_RUNTIME_INJECTION_FAILED`，同时保留收件箱现场转人工，不再重复修改 Prompt。
-
-完整规范见 `.ai/knowledge/file-dispatch-runtime.md`。
+阶段切换前必须回收上一阶段的全部 child。最终状态是否完成只由 Workflow Manager 根据当前 State 与 Goal completionCriteria 判定。

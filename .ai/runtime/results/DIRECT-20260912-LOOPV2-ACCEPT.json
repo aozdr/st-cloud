@@ -1,0 +1,47 @@
+{
+  "dispatchId": "DIRECT-20260912-LOOPV2-ACCEPT",
+  "taskId": "TASK-20260912-agent-loop-v2-acceptance",
+  "status": "completed",
+  "artifactRefs": [
+    ".ai/docs/20260911-agent-loop-v2/acceptance-checklist.md",
+    ".ai/docs/20260911-agent-loop-v2/migration-report.md"
+  ],
+  "criterionProposal": {
+    "id": "ACCEPT",
+    "outcome": "pass",
+    "by": "codex-main-acceptance",
+    "dispatchId": "DIRECT-20260912-LOOPV2-ACCEPT",
+    "evidenceRef": ".ai/runtime/results/DIRECT-20260912-LOOPV2-ACCEPT.json",
+    "validatedRevision": "loop-v2-r3-20260912",
+    "userConfirmedAt": "2026-09-12T00:37:29.0253604Z",
+    "confirmedBy": "user",
+    "confirmationArtifact": ".ai/docs/20260911-agent-loop-v2/acceptance-checklist.md"
+  },
+  "acceptanceEvidence": [
+    {
+      "criterion": "File Inbox 与第三方模型兼容仅保留于 archive 历史资料，不存在活跃执行路径",
+      "evidenceRef": ".ai/docs/20260911-agent-loop-v2/acceptance-checklist.md",
+      "validatedRevision": "loop-v2-r3-20260912"
+    },
+    {
+      "criterion": "非法 State、错误依赖和无证据 done 会被严格门禁拒绝",
+      "evidenceRef": ".ai/docs/20260911-agent-loop-v2/acceptance-checklist.md",
+      "validatedRevision": "loop-v2-r3-20260912"
+    },
+    {
+      "criterion": "Review、Security、Test、Accept 证据绑定当前 revision",
+      "evidenceRef": ".ai/docs/20260911-agent-loop-v2/acceptance-checklist.md",
+      "validatedRevision": "loop-v2-r3-20260912"
+    },
+    {
+      "criterion": "Worktree 生命周期幂等、scope 可机械校验、残留资源可对账",
+      "evidenceRef": ".ai/docs/20260911-agent-loop-v2/acceptance-checklist.md",
+      "validatedRevision": "loop-v2-r3-20260912"
+    },
+    {
+      "criterion": "当前协议只有一份，AGENTS.md 不再重复协议正文",
+      "evidenceRef": ".ai/docs/20260911-agent-loop-v2/acceptance-checklist.md",
+      "validatedRevision": "loop-v2-r3-20260912"
+    }
+  ]
+}

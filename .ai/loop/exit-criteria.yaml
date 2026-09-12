@@ -1,0 +1,174 @@
+# Agent Loop 退出标准定义（机器可读，唯一事实源）
+#
+# 本文件定义 small / medium / large 三档退出标准与各标准的归属。
+# 规则：文档只引用本文件，不再自行声明项数；`.ai/scripts/verify-loop.ps1` 以本文件为准校验。
+# 数量口径：large=12 / medium=8（含 1 项条件标准）/ small=4
+version: 2
+updated: "2026-09-11"
+
+scales:
+  large:
+    label: "大型"
+    docs:
+      stateModel: "### 大型任务（12 项）"
+      workflow: "- **大型（12 项）**"
+      checklist: "large=12"
+    criteria:
+      - id: REQ_ANALYSIS
+        dependsOn: []
+      - id: IMPACT_ANALYSIS
+        dependsOn: [REQ_ANALYSIS]
+      - id: EXP_DESIGN
+        dependsOn: [REQ_ANALYSIS]
+      - id: TECH_DESIGN
+        dependsOn: [IMPACT_ANALYSIS, EXP_DESIGN]
+      - id: TESTCASES
+        dependsOn: [TECH_DESIGN]
+      - id: IMPLEMENTED
+        dependsOn: [TECH_DESIGN, TESTCASES]
+      - id: CODE_REVIEW
+        dependsOn: [IMPLEMENTED]
+      - id: SECURITY_REVIEW
+        dependsOn: [IMPLEMENTED]
+      - id: EXP_ACCEPT
+        dependsOn: [IMPLEMENTED]
+      - id: TEST_PASS
+        dependsOn: [CODE_REVIEW, SECURITY_REVIEW]
+      - id: KNOWLEDGE
+        dependsOn: [TEST_PASS, SECURITY_REVIEW, EXP_ACCEPT]
+      - id: ACCEPT
+        dependsOn: [KNOWLEDGE]
+
+  medium:
+    label: "中型"
+    docs:
+      stateModel: "### 中型任务（8 项，含 1 项条件标准）"
+      workflow: "- **中型（8 项，含 1 项条件标准）**"
+      checklist: "medium=8（含 1 条件项）"
+    criteria:
+      - id: DESIGN
+        dependsOn: []
+      - id: TESTCASES
+        dependsOn: [DESIGN]
+      - id: IMPLEMENTED
+        dependsOn: [DESIGN, TESTCASES]
+      - id: CODE_REVIEW
+        dependsOn: [IMPLEMENTED]
+      - id: SECURITY_REVIEW
+        dependsOn: [IMPLEMENTED]
+        skippable: true
+      - id: TEST_PASS
+        dependsOn: [CODE_REVIEW, SECURITY_REVIEW]
+      - id: KNOWLEDGE
+        dependsOn: [TEST_PASS]
+      - id: ACCEPT
+        dependsOn: [KNOWLEDGE]
+
+  small:
+    label: "小型"
+    docs:
+      stateModel: "### 小型任务（4 项）"
+      workflow: "- **小型（4 项）**"
+      checklist: "small=4"
+    criteria:
+      - id: IMPLEMENTED
+        dependsOn: []
+      - id: VERIFIED
+        dependsOn: [IMPLEMENTED]
+      - id: KNOWLEDGE
+        dependsOn: [VERIFIED]
+      - id: ACCEPT
+        dependsOn: [KNOWLEDGE]
+
+# 标准目录：desc / owner（产物 owner，非执行者）/ taskType / artifacts（必需产物）/ 门禁标记
+catalog:
+  REQ_ANALYSIS:
+    desc: "需求已分析（requirement.md + uispec.md），经 Grill Me 收敛（遗留问题点 ≤3）并经用户确认"
+    owner: executor
+    taskType: requirement
+    artifacts: [requirement.md, uispec.md]
+    grill: true
+    userConfirm: true
+  IMPACT_ANALYSIS:
+    desc: "影响范围已分析（前端/后端/数据模型/权限/测试/文档）"
+    owner: executor
+    taskType: impact
+    artifacts: [impact.md]
+  EXP_DESIGN:
+    desc: "体验评审已通过（技术方案覆盖 uiSpec 全部页面与状态）"
+    owner: reviewer
+    taskType: exp-review
+    artifacts: [exp-review.md]
+  TECH_DESIGN:
+    desc: "技术设计已评审：大型先 architecture-review.md，再 design.md；design.md 经 Grill Me 收敛并经用户确认"
+    owner: executor
+    taskType: design
+    artifacts: [architecture-review.md, design.md]
+    grill: true
+    userConfirm: true
+  TESTCASES:
+    desc: "测试用例已编写（每个验收标准至少一条用例）"
+    owner: tester
+    taskType: testcases
+    artifacts: [testcases.md]
+  IMPLEMENTED:
+    desc: "实现阶段已完成（TASK 落盘、change report 落盘）"
+    owner: executor
+    taskType: implement
+    artifacts: [changereport.md]
+  CODE_REVIEW:
+    desc: "Code Review 通过"
+    owner: reviewer
+    taskType: review
+    artifacts: [codereview.md]
+  SECURITY_REVIEW:
+    desc: "安全审查通过（large 必选；medium 在不涉及安全敏感面时可凭审批证据跳过）"
+    owner: reviewer
+    taskType: security
+    artifacts: [security.md]
+  EXP_ACCEPT:
+    desc: "体验验收通过（严格按定版 uiSpec 实现）"
+    owner: reviewer
+    taskType: exp-review
+    artifacts: [exp-review.md]
+  TEST_PASS:
+    desc: "测试执行通过（按用例逐项执行并记录）"
+    owner: tester
+    taskType: test
+    artifacts: [testreport.md]
+  KNOWLEDGE:
+    desc: "知识库已同步（架构/数据模型/接口/业务规则与代码一致）"
+    owner: executor
+    taskType: knowledge
+    artifacts: []
+  ACCEPT:
+    desc: "验收通过：对照 goal.completionCriteria 逐项核对"
+    owner: reviewer
+    taskType: accept
+    artifacts: []
+  DESIGN:
+    desc: "设计已定；design.md 经 Grill Me 收敛（遗留问题点 ≤3）并经用户确认"
+    owner: executor
+    taskType: design
+    artifacts: [design.md]
+    grill: true
+    userConfirm: true
+  VERIFIED:
+    desc: "编译/测试通过"
+    owner: tester
+    taskType: test
+    artifacts: []
+
+# 角色分离（硬规则）：判定 IMPLEMENTED 的执行者不得同时判定评审/验收标准
+separationOfDuty:
+  producers: [IMPLEMENTED]
+  verifiers: [CODE_REVIEW, SECURITY_REVIEW, EXP_ACCEPT, TEST_PASS, ACCEPT]
+  field: "by"
+  rule: "同一执行者（exitCriteria[*].by）不得同时承担 IMPLEMENTED 与任何评审/验收标准"
+
+# State 生命周期状态取值（.ai/state/<task-id>.yaml 的顶层 status）
+stateStatus:
+  allowed: [running, blocked_escalation, done, incomplete, abandoned]
+  doneRequires: "全部 exitCriteria=done 且所有 done 产物的 ref 指向真实文件"
+  incomplete: "曾标 done 但产物缺失/门禁不实，回填后保留"
+  abandoned: "中途放弃或长期停滞未收敛"

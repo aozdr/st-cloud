@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 2,
+  "definitionVersion": 2,
+  "taskId": "20260910-ai-process-optimization",
+  "scale": "medium",
+  "status": "running",
+  "goal": {
+    "objective": "优化 .ai 下的 Agent Loop 流程设计：消除协议自相矛盾、建立可执行门禁、回填不实记录",
+    "scope": "从 20260910-ai-process-optimization.yaml 迁移；原始 State 见 .ai/archive/state-v1/20260910-ai-process-optimization.yaml",
+    "completionCriteria": [
+      "恢复原未完成任务，并使用 Agent Loop V2 的当前门禁重新验收"
+    ]
+  },
+  "revision": {
+    "design": null,
+    "code": null
+  },
+  "exitCriteria": [
+    {
+      "id": "DESIGN",
+      "status": "pending",
+      "dependsOn": []
+    },
+    {
+      "id": "TESTCASES",
+      "status": "pending",
+      "dependsOn": [
+        "DESIGN"
+      ]
+    },
+    {
+      "id": "IMPLEMENTED",
+      "status": "pending",
+      "dependsOn": [
+        "DESIGN",
+        "TESTCASES"
+      ]
+    },
+    {
+      "id": "CODE_REVIEW",
+      "status": "pending",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ]
+    },
+    {
+      "id": "SECURITY_REVIEW",
+      "status": "pending",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ]
+    },
+    {
+      "id": "TEST_PASS",
+      "status": "pending",
+      "dependsOn": [
+        "CODE_REVIEW",
+        "SECURITY_REVIEW"
+      ]
+    },
+    {
+      "id": "KNOWLEDGE",
+      "status": "pending",
+      "dependsOn": [
+        "TEST_PASS"
+      ]
+    },
+    {
+      "id": "ACCEPT",
+      "status": "pending",
+      "dependsOn": [
+        "KNOWLEDGE"
+      ]
+    }
+  ],
+  "artifacts": {},
+  "blockers": [],
+  "acceptanceEvidence": [],
+  "dispatchLedger": [],
+  "proposals": [],
+  "history": [
+    {
+      "eventId": "migration-v1-v2-20260910-ai-process-optimization",
+      "action": "migrate-v1-to-v2",
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-11T12:05:49.8441663Z",
+      "revision": {
+        "design": null,
+        "code": null
+      },
+      "sourceRef": ".ai/archive/state-v1/20260910-ai-process-optimization.yaml"
+    }
+  ]
+}

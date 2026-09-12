@@ -1,0 +1,14 @@
+{
+  "dispatchId": "DISPATCH-20260911-LOOPV2-SEC-01",
+  "taskId": "TASK-20260911-agent-loop-v2-security-review",
+  "status": "completed",
+  "artifactRefs": [".ai/docs/20260911-agent-loop-v2/security.md"],
+  "criterionProposal": {
+    "id": "SECURITY_REVIEW",
+    "outcome": "pass",
+    "by": "loop_v2_security_review",
+    "dispatchId": "DISPATCH-20260911-LOOPV2-SEC-01",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260911-LOOPV2-SEC-01.json",
+    "validatedRevision": "loop-v2-r3-20260912"
+  }
+}

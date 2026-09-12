@@ -36,5 +36,9 @@ history:
     delta: "codereview.md 落盘；问题清单 1 Critical + 8 Major + 7 Minor + 3 Suggestion；结论不通过"
     result: "CODE_REVIEW 保持 pending，新增 9 个 blocker，待修复后复检"
 iteration: 1
-status: running
+status: abandoned
+backfill:
+  date: "2026-09-10"
+  from: "running"
+  reason: "停滞 28 天未收敛（CODE_REVIEW 保持 pending，9 个 blocker 未闭环），回填为 abandoned"
 maxIterations: 5

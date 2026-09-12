@@ -1,4 +1,8 @@
-# Parallel Dispatch Runtime V7
+# 历史归档：Parallel Dispatch Runtime V7
+
+> 归档日期：2026-09-11。以下内容仅供审计，已被 `.ai/knowledge/agent-dispatch-protocol.md` 取代，禁止作为当前指令加载。
+
+## 原始内容
 
 ## 目的
 

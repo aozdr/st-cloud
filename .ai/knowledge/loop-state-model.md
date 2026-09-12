@@ -62,7 +62,32 @@ history:                         # 滚动审计链（保留近 N 轮 + 更早摘
     result: "发现 /share 接口缺权限校验"
 
 iteration: 6                     # 当前轮次
-status: running | blocked_escalation | done
+status: running | blocked_escalation | done | incomplete | abandoned   # 取值定义见 .ai/loop/exit-criteria.yaml
+```
+
+### 状态取值与回填记录
+
+State 顶层 `status` 取值（与 `.ai/loop/exit-criteria.yaml` 的 `stateStatus` 一致）：
+
+| 取值 | 含义 |
+|------|------|
+| `running` | 循环进行中 |
+| `blocked_escalation` | 触发升级条件，暂停待人工裁决 |
+| `done` | 全部 exitCriteria done **且** 所有标记 done 的产物 ref 均指向真实文件 |
+| `incomplete` | 曾标 done 但产物缺失/门禁不实，回填后保留 |
+| `abandoned` | 中途放弃或长期停滞（默认 14 天）未收敛 |
+
+产物状态取值：`pending` / `in_progress` / `done` / `stale` / `missing`。`missing` 表示**曾声称完成但文件不存在**，与从未开始的 `pending` 区分。
+
+回填记录固定格式（置于顶层 `status` 之后）：
+
+```yaml
+backfill:
+  date: "YYYY-MM-DD"
+  from: "done"
+  reason: "产物未落盘，done 前置不成立，回填为 incomplete"
+  missing:
+    - ".ai/docs/<task-id>/testreport.md"
 ```
 
 ### 用户确认状态（需求/设计门禁）
@@ -129,48 +154,23 @@ status: running
 
 ## 退出标准集（按规模）
 
-### 大型任务（完整门禁，12 项）
+> **项数唯一权威**：`.ai/loop/exit-criteria.yaml`。本文件与 `workflows/feature-development.md`、`knowledge/loop-verification-checklist.md` 的规模项数表述由 `.ai/scripts/verify-loop.ps1` 强制一致，改一处必须三处同步。
 
-| id | 标准 | 依赖 dependsOn |
-|----|------|----------------|
-| REQ_ANALYSIS | 需求已分析 + UI/UX 设计文档已产出（executor 的 requirement+ui-design 协作），经 Grill Me 拷打收敛（遗留问题点 ≤3 写入文档）并经用户确认 | - |
-| IMPACT_ANALYSIS | 影响范围已分析 | REQ_ANALYSIS |
-| EXP_DESIGN | 体验评审已通过 | REQ_ANALYSIS |
-| TECH_DESIGN | 技术设计已评审；design.md 经 Grill Me 拷打收敛（遗留问题点 ≤3 写入文档）并经用户确认 | IMPACT_ANALYSIS, EXP_DESIGN |
-| TESTCASES | 测试用例已编写 | TECH_DESIGN |
-| IMPLEMENTED | 实现阶段已完成 | TECH_DESIGN, TESTCASES |
-| CODE_REVIEW | Code Review 通过 | IMPLEMENTED |
-| SECURITY_REVIEW | Security Review 通过 | IMPLEMENTED |
-| EXP_ACCEPT | 体验验收通过 | IMPLEMENTED |
-| TEST_PASS | 测试执行通过 | CODE_REVIEW, SECURITY_REVIEW |
-| KNOWLEDGE | 知识库已更新 | TEST_PASS, SECURITY_REVIEW, EXP_ACCEPT |
-| ACCEPT | 验收通过（对照 goal.completionCriteria 逐项核对；未达标 → 打回 IMPLEMENTED 继续实现，级联回退下游） | KNOWLEDGE |
+### 大型任务（12 项）
+
+具体 ID、依赖和是否可跳过只从 `.ai/loop/exit-criteria.yaml` 读取。本节不复制 DAG，避免文档与机器定义分叉。
 
 > `status: done` 仅当该规模下**所有 exitCriteria 均 done**（ACCEPT 为最后一项，是最终收敛点）。
 
-### 中型任务（精简门禁，6 项 + 1 条件项）
+### 中型任务（8 项，含 1 项条件标准）
 
-| id | 标准 | 依赖 dependsOn |
-|----|------|----------------|
-| DESIGN | 设计已定；design.md 经 Grill Me 拷打收敛（遗留问题点 ≤3 写入文档）并经用户确认 | - |
-| TESTCASES | 验收用例已编写（轻量：不要求完整测试设计文档，至少列出验收点） | DESIGN |
-| IMPLEMENTED | 代码已实现 | DESIGN, TESTCASES |
-| CODE_REVIEW | Code Review 通过 | IMPLEMENTED |
-| SECURITY_REVIEW | 安全审查通过（条件项） | IMPLEMENTED |
-| TEST_PASS | 测试通过 | CODE_REVIEW, SECURITY_REVIEW |
-| KNOWLEDGE | 知识库已回顾 | TEST_PASS |
-| ACCEPT | 验收通过（对照完成标准逐项核对；未达标 → 打回实现） | KNOWLEDGE |
+具体 ID 与依赖只引用 canonical 定义。`SECURITY_REVIEW` 是唯一条件项；只有 `.ai/loop/exit-criteria.yaml` 声明可跳过且具备 skip 证据时，Evaluate 才可接受。
 
 > **SECURITY_REVIEW 为条件项**：仅当本次变更涉及权限校验、分享访问控制、文件操作、配额计算等云盘安全敏感逻辑时启用。编排器在初始化 State 时根据变更范围判断是否激活；不涉及安全敏感逻辑的纯展示/排序类中型任务可跳过此标准（在 State 中标注 `skipReason`）。
 
-### 小型任务（直接执行，3 项）
+### 小型任务（4 项）
 
-| id | 标准 | 依赖 dependsOn |
-|----|------|----------------|
-| IMPLEMENTED | 改动已实现 | - |
-| VERIFIED | 编译/测试通过 | IMPLEMENTED |
-| KNOWLEDGE | 轻量知识库检查 | VERIFIED |
-| ACCEPT | 验收通过（对照完成标准逐项核对） | KNOWLEDGE |
+具体 ID 与依赖只引用 canonical 定义；ACCEPT 仍是唯一终点。
 
 ## 门禁依赖规则（不可降级）
 
@@ -195,17 +195,7 @@ Evaluate 段必须强制检查 dependsOn：
 
 **核心规则**：当代码因 rework 发生变更（如 Code Review / Security Review / 体验验收 / 测试发现问题，导致工程师修改代码），`IMPLEMENTED` 被重开，其全部下游标准自动级联回退为 `pending`。
 
-级联回退范围（传递依赖）：
-
-```
-IMPLEMENTED 重开
-  -> CODE_REVIEW     -> pending  （旧 review 针对旧代码，失效）
-  -> SECURITY_REVIEW -> pending  （旧安全审查针对旧代码，失效）
-  -> EXP_ACCEPT      -> pending  （旧验收针对旧页面，失效）
-     -> TEST_PASS    -> pending  （旧测试针对旧代码，失效）
-        -> ACCEPT -> pending
-           -> KNOWLEDGE -> pending
-```
+级联范围由 `.ai/loop/exit-criteria.yaml` 的反向依赖图计算，不在文档或脚本中维护第二份列表。以大型任务为例，IMPLEMENTED 变化会先使 CODE_REVIEW、SECURITY_REVIEW、EXP_ACCEPT 失效，再沿 DAG 传递到 TEST_PASS、KNOWLEDGE，最终到 ACCEPT。
 
 编排器在 Evaluate 段执行级联回退后，下一轮 Plan 重新派发对应 Agent 复检所有回退标准。这确保 rework 后所有质量门重新验证，而非沿用针对旧代码的 stale 结论。
 
@@ -254,32 +244,43 @@ IMPLEMENTED 重开
 - 避免上下文膨胀，同时保留审计可追溯性
 
 
-## V5 Dispatch Runtime State
+## Dispatch Ledger 与 Evaluate 权限
 
-建议在 State 中增加：
+当前 Dispatch 协议只定义于 `.ai/knowledge/agent-dispatch-protocol.md`，结构只定义于 `.ai/schema/dispatch.schema.json`。State 记录每次 attempt 的 ledger：
 
 ```yaml
-dispatch:
-  current:
-    dispatchId: "DISPATCH-..."
-    role: "executor"
-    taskRef: ".ai/tasks/TASK-..."
-    stateRef: ".ai/state/<task-id>.yaml"
-    status: queued | dispatched | running | returned | invalid | failed
-  history:
-    - dispatchId: "..."
-      role: "..."
-      status: "returned"
-      iteration: 3
+dispatchLedger:
+  - dispatchId: "DISPATCH-20260911-001"  # 每次 attempt 唯一
+    taskId: "TASK-001"
+    idempotencyKey: "TASK-001"          # 同一 TASK 跨 attempt 稳定
+    role: executor
+    childId: "agent-runtime-id"
+    status: planned | spawned | acked | running | returned | evaluated | failed
+    resultRef: ".ai/runtime/results/DISPATCH-20260911-001.json"
 ```
+
+ACK 只核对 `dispatchId/taskId/role`。重派保持 `taskId/idempotencyKey` 不变，并生成新的 `dispatchId` 和 child。旧 attempt 的迟到结果保留审计，但不得覆盖当前 attempt。
+
+子 Agent 不写 State，只返回独立结果和：
+
+```yaml
+criterionProposal:
+  id: IMPLEMENTED
+  outcome: pass | fail | blocked
+  evidenceRef: ".ai/runtime/results/DISPATCH-20260911-001.json"
+  validatedRevision: "<design-or-code-revision>"
+```
+
+只有 Workflow Manager 可以执行 Evaluate：校验 attempt、scope、产物、证据、revision、DAG 和职责分离后，再改变 exitCriteria、artifact、blocker、history 或顶层 status。
 
 ### Dispatch failure 不属于业务 blocker
 
-`DISPATCH_INVALID` / “没有收到具体任务”表示调度协议失败：
+`DISPATCH_INVALID`、无 ACK、ACK 错配、ACK_ONLY 和结果缺失是调度失败：
 
+- 只更新 dispatchLedger；
 - 不增加业务 blocker attempts；
 - 不污染业务 exitCriteria；
-- Workflow Manager 修复 Dispatch 后重新发送。
+- 新 attempt 使用新 dispatchId 重派，不启用备用投递路径。
 
 ### Stale 与 Pending 的区别
 
@@ -299,7 +300,7 @@ State 不应被整份复制给子 Agent。Workflow Manager 应在 Dispatch 时�
 - relevant dependencies
 - relevant blockers
 
-完整 State 仍只由 Workflow Manager 负责读取、合并和持久化。
+完整 State 仍只由 Workflow Manager 负责读取、Evaluate 和持久化。子 Agent 的 proposal 不是已应用的 State Delta。
 
 
 ## 实现阶段与并行派发

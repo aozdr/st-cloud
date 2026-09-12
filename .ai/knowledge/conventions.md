@@ -160,7 +160,7 @@ public Result<FileNodeVO> getNode(@PathVariable Long nodeId) {
 
 ## 事务边界
 
-核心写路径的事务边界原则（详见 `.ai/docs/20260817-transaction-boundary/design.md`）：
+核心写路径的事务边界原则（以下列为准；原任务文档未落盘，见 `.ai/state/20260817-transaction-boundary.yaml` 的回填记录）：
 
 1. S3/外部网络调用一律在事务外执行；DB 写一律在事务内
 2. 删除类：DB 事务内引用归零 + 记录待删状态（outbox 事件），提交后异步删 S3，失败进补偿队列重试

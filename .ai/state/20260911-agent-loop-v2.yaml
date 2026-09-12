@@ -1,0 +1,477 @@
+{
+  "schemaVersion": 2,
+  "definitionVersion": 2,
+  "taskId": "20260911-agent-loop-v2",
+  "scale": "medium",
+  "status": "done",
+  "goal": {
+    "objective": "将 Agent Loop 收敛为单一协议、工具执行的状态迁移和可验证证据，并移除第三方模型与 File Inbox 兼容路径",
+    "scope": "AGENTS.md 与 .ai 下的 Loop、Dispatch、State、Worktree、验证和协议文档；不含业务代码、数据库或业务 API",
+    "completionCriteria": [
+      "File Inbox 与第三方模型兼容仅保留于 archive 历史资料，不存在活跃执行路径",
+      "非法 State、错误依赖和无证据 done 会被严格门禁拒绝",
+      "Review、Security、Test、Accept 证据绑定当前 revision",
+      "Worktree 生命周期幂等、scope 可机械校验、残留资源可对账",
+      "当前协议只有一份，AGENTS.md 不再重复协议正文"
+    ]
+  },
+  "revision": {
+    "design": "design-20260911-confirmed",
+    "code": "loop-v2-r3-20260912"
+  },
+  "exitCriteria": [
+    {
+      "id": "DESIGN",
+      "status": "done",
+      "dependsOn": [],
+      "by": "codex-main",
+      "dispatchId": "DIRECT-20260911-DESIGN",
+      "evidenceRef": ".ai/docs/20260911-agent-loop-v2/design.md",
+      "validatedRevision": "design-20260911-confirmed",
+      "completedAt": "2026-09-11T07:00:00Z",
+      "userConfirmedAt": "2026-09-11T07:00:00Z",
+      "confirmedBy": "user",
+      "confirmationArtifact": ".ai/docs/20260911-agent-loop-v2/design.md"
+    },
+    {
+      "id": "TESTCASES",
+      "status": "done",
+      "dependsOn": [
+        "DESIGN"
+      ],
+      "by": "loop_v2_testcases",
+      "dispatchId": "DISPATCH-20260911-LOOPV2-TC-01",
+      "evidenceRef": ".ai/docs/20260911-agent-loop-v2/testcases.md",
+      "validatedRevision": "design-20260911-confirmed",
+      "completedAt": "2026-09-11T07:03:00Z"
+    },
+    {
+      "id": "IMPLEMENTED",
+      "status": "done",
+      "dependsOn": [
+        "DESIGN",
+        "TESTCASES"
+      ],
+      "by": "loop-v2-executors",
+      "dispatchId": "BATCH-20260911-LOOPV2-IMPLEMENTED",
+      "evidenceRef": ".ai/docs/20260911-agent-loop-v2/changereport.md",
+      "validatedRevision": "loop-v2-r3-20260912",
+      "completedAt": "2026-09-11T07:32:00Z"
+    },
+    {
+      "id": "CODE_REVIEW",
+      "status": "done",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ],
+      "by": "loop_v2_review_standards",
+      "dispatchId": "DISPATCH-20260911-LOOPV2-RS-01",
+      "evidenceRef": ".ai/runtime/results/DISPATCH-20260911-LOOPV2-RS-01.json",
+      "validatedRevision": "loop-v2-r3-20260912",
+      "completedAt": "2026-09-12T00:26:38.3569622Z"
+    },
+    {
+      "id": "SECURITY_REVIEW",
+      "status": "done",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ],
+      "by": "loop_v2_security_review",
+      "dispatchId": "DISPATCH-20260911-LOOPV2-SEC-01",
+      "evidenceRef": ".ai/runtime/results/DISPATCH-20260911-LOOPV2-SEC-01.json",
+      "validatedRevision": "loop-v2-r3-20260912",
+      "completedAt": "2026-09-12T00:26:39.5965202Z"
+    },
+    {
+      "id": "TEST_PASS",
+      "status": "done",
+      "dependsOn": [
+        "CODE_REVIEW",
+        "SECURITY_REVIEW"
+      ],
+      "by": "loop_v2_review_spec",
+      "dispatchId": "DISPATCH-20260912-LOOPV2-TEST-01",
+      "evidenceRef": ".ai/runtime/results/DISPATCH-20260912-LOOPV2-TEST-01.json",
+      "validatedRevision": "loop-v2-r3-20260912",
+      "completedAt": "2026-09-12T00:33:04.4138571Z"
+    },
+    {
+      "id": "KNOWLEDGE",
+      "status": "done",
+      "dependsOn": [
+        "TEST_PASS"
+      ],
+      "by": "codex-main-knowledge",
+      "dispatchId": "DIRECT-20260912-LOOPV2-KNOWLEDGE",
+      "evidenceRef": ".ai/runtime/results/DIRECT-20260912-LOOPV2-KNOWLEDGE.json",
+      "validatedRevision": "loop-v2-r3-20260912",
+      "completedAt": "2026-09-12T00:34:53.5413195Z"
+    },
+    {
+      "id": "ACCEPT",
+      "status": "done",
+      "dependsOn": [
+        "KNOWLEDGE"
+      ],
+      "by": "codex-main-acceptance",
+      "dispatchId": "DIRECT-20260912-LOOPV2-ACCEPT",
+      "evidenceRef": ".ai/runtime/results/DIRECT-20260912-LOOPV2-ACCEPT.json",
+      "validatedRevision": "loop-v2-r3-20260912",
+      "completedAt": "2026-09-12T00:39:02.3065365Z"
+    }
+  ],
+  "artifacts": {
+    "design": {
+      "status": "done",
+      "ref": ".ai/docs/20260911-agent-loop-v2/design.md",
+      "provides": [
+        "DESIGN"
+      ],
+      "userConfirmedAt": "2026-09-11T07:00:00Z",
+      "confirmedBy": "user"
+    },
+    "testcases": {
+      "status": "done",
+      "ref": ".ai/docs/20260911-agent-loop-v2/testcases.md",
+      "provides": [
+        "TESTCASES"
+      ]
+    },
+    "stateEngineResult": {
+      "status": "done",
+      "ref": ".ai/docs/20260911-agent-loop-v2/results/LOOPV2-SE-01.md",
+      "provides": [
+        "IMPLEMENTED"
+      ]
+    },
+    "dispatchResult": {
+      "status": "done",
+      "ref": ".ai/docs/20260911-agent-loop-v2/results/LOOPV2-DP-01.md",
+      "provides": [
+        "IMPLEMENTED"
+      ]
+    },
+    "worktreeResult": {
+      "status": "done",
+      "ref": ".ai/docs/20260911-agent-loop-v2/results/LOOPV2-WT-01.md",
+      "provides": [
+        "IMPLEMENTED"
+      ]
+    },
+    "review": {
+      "status": "done",
+      "ref": ".ai/docs/20260911-agent-loop-v2/codereview.md"
+    },
+    "security": {
+      "status": "done",
+      "ref": ".ai/docs/20260911-agent-loop-v2/security.md"
+    },
+    "testReport": {
+      "status": "done",
+      "ref": ".ai/docs/20260911-agent-loop-v2/testreport.md"
+    },
+    "knowledge": {
+      "status": "done",
+      "ref": ".ai/docs/20260911-agent-loop-v2/knowledge.md"
+    },
+    "acceptanceChecklist": {
+      "status": "done",
+      "ref": ".ai/docs/20260911-agent-loop-v2/acceptance-checklist.md"
+    }
+  },
+  "blockers": [],
+  "acceptanceEvidence": [
+    {
+      "criterion": "File Inbox 与第三方模型兼容仅保留于 archive 历史资料，不存在活跃执行路径",
+      "evidenceRef": ".ai/docs/20260911-agent-loop-v2/acceptance-checklist.md",
+      "validatedRevision": "loop-v2-r3-20260912"
+    },
+    {
+      "criterion": "非法 State、错误依赖和无证据 done 会被严格门禁拒绝",
+      "evidenceRef": ".ai/docs/20260911-agent-loop-v2/acceptance-checklist.md",
+      "validatedRevision": "loop-v2-r3-20260912"
+    },
+    {
+      "criterion": "Review、Security、Test、Accept 证据绑定当前 revision",
+      "evidenceRef": ".ai/docs/20260911-agent-loop-v2/acceptance-checklist.md",
+      "validatedRevision": "loop-v2-r3-20260912"
+    },
+    {
+      "criterion": "Worktree 生命周期幂等、scope 可机械校验、残留资源可对账",
+      "evidenceRef": ".ai/docs/20260911-agent-loop-v2/acceptance-checklist.md",
+      "validatedRevision": "loop-v2-r3-20260912"
+    },
+    {
+      "criterion": "当前协议只有一份，AGENTS.md 不再重复协议正文",
+      "evidenceRef": ".ai/docs/20260911-agent-loop-v2/acceptance-checklist.md",
+      "validatedRevision": "loop-v2-r3-20260912"
+    }
+  ],
+  "dispatchLedger": [
+    {
+      "dispatchId": "DISPATCH-20260911-LOOPV2-TC-01",
+      "taskId": "TASK-20260911-agent-loop-v2-testcases",
+      "idempotencyKey": "TASK-20260911-agent-loop-v2-testcases",
+      "role": "tester",
+      "taskType": "testcases",
+      "criterionId": "TESTCASES",
+      "childId": "loop_v2_testcases",
+      "status": "evaluated",
+      "resultRef": ".ai/docs/20260911-agent-loop-v2/testcases.md",
+      "scopeVerified": true
+    },
+    {
+      "dispatchId": "DISPATCH-20260911-LOOPV2-SE-01",
+      "taskId": "TASK-20260911-agent-loop-v2-state-engine",
+      "idempotencyKey": "TASK-20260911-agent-loop-v2-state-engine",
+      "role": "executor",
+      "taskType": "implement",
+      "criterionId": "IMPLEMENTED",
+      "childId": "loop_v2_state_engine",
+      "status": "evaluated",
+      "resultRef": ".ai/docs/20260911-agent-loop-v2/results/LOOPV2-SE-01.md",
+      "scopeVerified": true
+    },
+    {
+      "dispatchId": "DISPATCH-20260911-LOOPV2-DP-01",
+      "taskId": "TASK-20260911-agent-loop-v2-dispatch",
+      "idempotencyKey": "TASK-20260911-agent-loop-v2-dispatch",
+      "role": "executor",
+      "taskType": "implement",
+      "criterionId": "IMPLEMENTED",
+      "childId": "loop_v2_dispatch",
+      "status": "evaluated",
+      "resultRef": ".ai/docs/20260911-agent-loop-v2/results/LOOPV2-DP-01.md",
+      "scopeVerified": true
+    },
+    {
+      "dispatchId": "DISPATCH-20260911-LOOPV2-WT-01",
+      "taskId": "TASK-20260911-agent-loop-v2-worktree",
+      "idempotencyKey": "TASK-20260911-agent-loop-v2-worktree",
+      "role": "executor",
+      "taskType": "implement",
+      "criterionId": "IMPLEMENTED",
+      "childId": "loop_v2_worktree",
+      "status": "evaluated",
+      "resultRef": ".ai/docs/20260911-agent-loop-v2/results/LOOPV2-WT-01.md",
+      "scopeVerified": true
+    },
+    {
+      "dispatchId": "DISPATCH-20260911-LOOPV2-RS-01",
+      "taskId": "TASK-20260911-agent-loop-v2-review-standards",
+      "idempotencyKey": "TASK-20260911-agent-loop-v2-review-standards",
+      "role": "reviewer",
+      "taskType": "review",
+      "criterionId": "CODE_REVIEW",
+      "childId": "loop_v2_review_standards",
+      "status": "evaluated",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260911-LOOPV2-RS-01.json",
+      "scopeVerified": true,
+      "evaluatedAt": "2026-09-12T00:26:38.3584669Z"
+    },
+    {
+      "dispatchId": "DISPATCH-20260911-LOOPV2-SEC-01",
+      "taskId": "TASK-20260911-agent-loop-v2-security-review",
+      "idempotencyKey": "TASK-20260911-agent-loop-v2-security-review",
+      "role": "reviewer",
+      "taskType": "security",
+      "criterionId": "SECURITY_REVIEW",
+      "childId": "loop_v2_security_review",
+      "status": "evaluated",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260911-LOOPV2-SEC-01.json",
+      "scopeVerified": true,
+      "evaluatedAt": "2026-09-12T00:26:39.5981965Z"
+    },
+    {
+      "dispatchId": "DISPATCH-20260912-LOOPV2-TEST-01",
+      "taskId": "TASK-20260912-agent-loop-v2-final-test",
+      "idempotencyKey": "TASK-20260912-agent-loop-v2-final-test",
+      "role": "tester",
+      "taskType": "test",
+      "criterionId": "TEST_PASS",
+      "childId": "loop_v2_review_spec",
+      "status": "evaluated",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260912-LOOPV2-TEST-01.json",
+      "scopeVerified": true,
+      "evaluatedAt": "2026-09-12T00:33:04.4154152Z"
+    },
+    {
+      "dispatchId": "DIRECT-20260912-LOOPV2-KNOWLEDGE",
+      "taskId": "TASK-20260912-agent-loop-v2-knowledge",
+      "idempotencyKey": "TASK-20260912-agent-loop-v2-knowledge",
+      "role": "executor",
+      "taskType": "knowledge",
+      "criterionId": "KNOWLEDGE",
+      "childId": "codex-main-knowledge",
+      "status": "evaluated",
+      "resultRef": ".ai/runtime/results/DIRECT-20260912-LOOPV2-KNOWLEDGE.json",
+      "scopeVerified": true,
+      "evaluatedAt": "2026-09-12T00:34:53.5431683Z"
+    },
+    {
+      "dispatchId": "DIRECT-20260912-LOOPV2-ACCEPT",
+      "taskId": "TASK-20260912-agent-loop-v2-acceptance",
+      "idempotencyKey": "TASK-20260912-agent-loop-v2-acceptance",
+      "role": "reviewer",
+      "taskType": "accept",
+      "criterionId": "ACCEPT",
+      "childId": "codex-main-acceptance",
+      "status": "evaluated",
+      "resultRef": ".ai/runtime/results/DIRECT-20260912-LOOPV2-ACCEPT.json",
+      "scopeVerified": true,
+      "evaluatedAt": "2026-09-12T00:39:02.3090978Z"
+    }
+  ],
+  "history": [
+    {
+      "eventId": "EVT-20260911-DESIGN-CONFIRMED",
+      "action": "design_confirmed",
+      "actor": "codex-main",
+      "occurredAt": "2026-09-11T07:00:00Z",
+      "revision": {
+        "design": "design-20260911-confirmed",
+        "code": null
+      }
+    },
+    {
+      "eventId": "EVT-20260911-IMPLEMENTED-EVALUATED",
+      "action": "implementation_batch_evaluated",
+      "actor": "codex-main",
+      "occurredAt": "2026-09-11T07:32:00Z",
+      "revision": {
+        "design": "design-20260911-confirmed",
+        "code": "working-tree-20260911-loop-v2-impl1"
+      }
+    },
+    {
+      "eventId": "DISPATCH-20260911-LOOPV2-RS-01:CODE_REVIEW:evaluate",
+      "action": "evaluate",
+      "before": {
+        "id": "CODE_REVIEW",
+        "status": "pending"
+      },
+      "after": {
+        "id": "CODE_REVIEW",
+        "status": "done",
+        "revision": {
+          "design": "design-20260911-confirmed",
+          "code": "loop-v2-r3-20260912"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-12T00:26:38.3598047Z",
+      "revision": {
+        "design": "design-20260911-confirmed",
+        "code": "loop-v2-r3-20260912"
+      }
+    },
+    {
+      "eventId": "DISPATCH-20260911-LOOPV2-SEC-01:SECURITY_REVIEW:evaluate",
+      "action": "evaluate",
+      "before": {
+        "id": "SECURITY_REVIEW",
+        "status": "pending"
+      },
+      "after": {
+        "id": "SECURITY_REVIEW",
+        "status": "done",
+        "revision": {
+          "design": "design-20260911-confirmed",
+          "code": "loop-v2-r3-20260912"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-12T00:26:39.6000409Z",
+      "revision": {
+        "design": "design-20260911-confirmed",
+        "code": "loop-v2-r3-20260912"
+      }
+    },
+    {
+      "eventId": "DISPATCH-20260912-LOOPV2-TEST-01:TEST_PASS:evaluate",
+      "action": "evaluate",
+      "before": {
+        "id": "TEST_PASS",
+        "status": "pending"
+      },
+      "after": {
+        "id": "TEST_PASS",
+        "status": "done",
+        "revision": {
+          "design": "design-20260911-confirmed",
+          "code": "loop-v2-r3-20260912"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-12T00:33:04.4169919Z",
+      "revision": {
+        "design": "design-20260911-confirmed",
+        "code": "loop-v2-r3-20260912"
+      }
+    },
+    {
+      "eventId": "DIRECT-20260912-LOOPV2-KNOWLEDGE:KNOWLEDGE:evaluate",
+      "action": "evaluate",
+      "before": {
+        "id": "KNOWLEDGE",
+        "status": "pending"
+      },
+      "after": {
+        "id": "KNOWLEDGE",
+        "status": "done",
+        "revision": {
+          "design": "design-20260911-confirmed",
+          "code": "loop-v2-r3-20260912"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-12T00:34:53.5450089Z",
+      "revision": {
+        "design": "design-20260911-confirmed",
+        "code": "loop-v2-r3-20260912"
+      }
+    },
+    {
+      "eventId": "DIRECT-20260912-LOOPV2-ACCEPT:ACCEPT:evaluate",
+      "action": "evaluate",
+      "before": {
+        "id": "ACCEPT",
+        "status": "pending"
+      },
+      "after": {
+        "id": "ACCEPT",
+        "status": "done",
+        "revision": {
+          "design": "design-20260911-confirmed",
+          "code": "loop-v2-r3-20260912"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-12T00:39:02.3105796Z",
+      "revision": {
+        "design": "design-20260911-confirmed",
+        "code": "loop-v2-r3-20260912"
+      }
+    },
+    {
+      "eventId": "EVT-20260912-LOOPV2-COMPLETE",
+      "action": "complete",
+      "before": {
+        "status": "running"
+      },
+      "after": {
+        "status": "done",
+        "revision": {
+          "design": "design-20260911-confirmed",
+          "code": "loop-v2-r3-20260912"
+        }
+      },
+      "actor": "codex-main",
+      "occurredAt": "2026-09-12T00:39:10.2438502Z",
+      "revision": {
+        "design": "design-20260911-confirmed",
+        "code": "loop-v2-r3-20260912"
+      }
+    }
+  ]
+}

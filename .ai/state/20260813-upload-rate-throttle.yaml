@@ -46,5 +46,9 @@ history:
     delta: "task-id=20260813-upload-rate-throttle;docs 文件夹创建"
     result: "State 落盘，进入 REQ_ANALYSIS"
 iteration: 0
-status: running
+status: abandoned
+backfill:
+  date: "2026-09-10"
+  from: "running"
+  reason: "停滞 28 天未收敛，回填为 abandoned；REQ_ANALYSIS 未产出 requirement.md"
 maxIterations: 40

@@ -1,0 +1,41 @@
+taskId: "20260910-ai-process-optimization"
+goal:
+  objective: "优化 .ai 下的 Agent Loop 流程设计：消除协议自相矛盾、建立可执行门禁、回填不实记录"
+  scope: ".ai/**（协议文档、校验脚本、State/Task 记录）与仓库级 core.hooksPath；不含业务代码"
+  completionCriteria:
+    - "静态门禁 verify-loop.ps1 退出码 0（基线转绿）"
+    - "退出标准项数在定义文件与三份文档间一致，并由脚本强制"
+    - "历史不实 State 已回填 incomplete/abandoned 并附 backfill 记录"
+    - "预提交门禁在涉及 .ai/ 或 AGENTS.md 的提交上生效"
+scale: medium
+exitCriteria:
+  - { id: DESIGN, desc: "优化方案（拷打决策 + 分轮计划）落盘并经用户确认", status: in_progress, dependsOn: [], by: "codex-main" }
+  - { id: TESTCASES, desc: "R1 可验证项已定义（门禁退出码 / 口径一致 / 回填留痕 / 门禁生效）", status: in_progress, dependsOn: [DESIGN], by: "codex-main" }
+  - { id: IMPLEMENTED, desc: "R1 落地：定义文件 + 校验脚本 + State 回填 + 预提交门禁", status: in_progress, dependsOn: [DESIGN], by: "codex-main" }
+  - { id: CODE_REVIEW, desc: "Code Review 通过（须独立执行者，见遗留问题点 P1）", status: pending, dependsOn: [IMPLEMENTED] }
+  - { id: SECURITY_REVIEW, desc: "安全审查通过（条件项：本次涉及 git 配置与钩子，需确认无权限外溢）", status: pending, dependsOn: [IMPLEMENTED] }
+  - { id: TEST_PASS, desc: "验证通过：verify-loop.ps1 退出码 0 + 钩子冒烟", status: pending, dependsOn: [CODE_REVIEW, SECURITY_REVIEW] }
+  - { id: KNOWLEDGE, desc: "知识库同步（流程规则变更写入 knowledge/）", status: pending, dependsOn: [TEST_PASS] }
+  - { id: ACCEPT, desc: "验收通过：对照 completionCriteria 逐项核对", status: pending, dependsOn: [KNOWLEDGE] }
+artifacts:
+  design: { status: in_progress, ref: ".ai/docs/20260910-ai-process-optimization/optimization-plan.md", owner: "executor" }
+  code: { status: in_progress, ref: ".ai/loop/exit-criteria.yaml + .ai/scripts/verify-loop.ps1 + .ai/githooks/pre-commit + .ai/scripts/install-hooks.ps1", owner: "executor" }
+  task: { status: done, ref: ".ai/tasks/TASK-20260910-ai-process-optimization-01.md", owner: "workflow-manager" }
+  testReport: { status: pending, ref: "", owner: "tester" }
+blockers: []
+history:
+  - iter: 1
+    phase: "design"
+    agent: "codex-main"
+    action: "Grill Me 拷打 .ai 流程设计（4 轮前沿问题），产出分轮优化计划"
+    delta: "DESIGN in_progress；决策 D1-D20 定版"
+    result: "R1 范围确定：机器可读定义 + 校验脚本升级 + State 回填 + 预提交门禁"
+  - iter: 2
+    phase: "implement"
+    agent: "codex-main"
+    action: "R1 落地并验证"
+    delta: "IMPLEMENTED in_progress；verify-loop.ps1 FAIL 93 -> 0"
+    result: "8 份 State 回填、10 个 TASK 标注、三份文档口径统一、grilling 映射修正、门禁安装并冒烟通过"
+iteration: 2
+status: running
+maxIterations: 10

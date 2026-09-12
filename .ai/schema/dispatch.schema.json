@@ -1,0 +1,37 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://st-cloud.local/schema/dispatch.schema.json",
+  "title": "Agent Loop V2 Dispatch Envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "dispatchId", "taskId", "idempotencyKey", "role", "taskType", "objective", "taskRefs", "stateRef", "scope", "acceptance", "validation", "forbidSpawn"],
+  "properties": {
+    "schemaVersion": { "const": 2 },
+    "dispatchId": { "type": "string", "minLength": 1 },
+    "taskCode": { "type": "string" },
+    "taskId": { "type": "string", "minLength": 1 },
+    "idempotencyKey": { "type": "string", "minLength": 1 },
+    "role": { "enum": ["executor", "reviewer", "tester"] },
+    "taskType": { "type": "string", "minLength": 1 },
+    "objective": { "type": "string", "minLength": 1 },
+    "taskRefs": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+    "stateRef": { "type": "string", "minLength": 1 },
+    "artifactRefs": { "type": "array", "items": { "type": "string" } },
+    "skillRefs": { "type": "array", "items": { "type": "string" } },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["include", "exclude"],
+      "properties": {
+        "include": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+        "exclude": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "acceptance": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "validation": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+    "forbidSpawn": { "const": true },
+    "forbidGitMvn": { "type": "boolean" },
+    "etaMinutes": { "type": "integer", "minimum": 1 },
+    "output": { "type": "object" }
+  }
+}

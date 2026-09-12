@@ -1,4 +1,8 @@
-# File Inbox Dispatch Runtime V2 — 多文件认领式投递
+# 历史归档：File Inbox Dispatch Runtime V2
+
+> 归档日期：2026-09-11。以下内容仅供审计，已被 `.ai/knowledge/agent-dispatch-protocol.md` 取代，禁止作为当前指令、运行时兜底或兼容路径加载。
+
+## 原始内容
 
 > 本项目协议文档。针对非 OpenAI provider（DeepSeek 等）下 Codex Multi-Agent V2 的任务消息投递缺陷，提供不依赖 spawn message 的确定性投递通道。V2 起改为“一任务一文件 + 原子认领”，实现文件级任务隔离。
 

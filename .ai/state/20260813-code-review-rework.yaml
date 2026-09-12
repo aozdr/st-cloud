@@ -71,5 +71,9 @@ history:
     delta: "REQ_ANALYSIS/IMPACT_ANALYSIS/EXP_DESIGN/TECH_DESIGN/TESTCASES 标记 done；task 产物 done；code 标记 in_progress；3 个实现子代理运行中"
     result: "进入 IMPLEMENTED 并行实现"
 iteration: 1
-status: running
+status: abandoned
+backfill:
+  date: "2026-09-10"
+  from: "running"
+  reason: "停滞 28 天未收敛，回填为 abandoned；codereview/security/exp-accept/testreport/ADR-009 始终未落盘"
 maxIterations: 40

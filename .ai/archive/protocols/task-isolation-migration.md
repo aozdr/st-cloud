@@ -1,4 +1,8 @@
-# Task Isolation Migration V6
+# 历史归档：Task Isolation Migration V6
+
+> 归档日期：2026-09-11。以下内容仅供审计；当前任务隔离规则见 `.ai/agents/workflow-manager.md` 和现行工具文档，禁止把本文作为当前指令加载。
+
+## 原始内容
 
 ## 为什么必须改
 

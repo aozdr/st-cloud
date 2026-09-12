@@ -1,0 +1,14 @@
+{
+  "dispatchId": "DISPATCH-20260911-LOOPV2-RS-01",
+  "taskId": "TASK-20260911-agent-loop-v2-review-standards",
+  "status": "completed",
+  "artifactRefs": [".ai/docs/20260911-agent-loop-v2/codereview.md"],
+  "criterionProposal": {
+    "id": "CODE_REVIEW",
+    "outcome": "pass",
+    "by": "loop_v2_review_standards",
+    "dispatchId": "DISPATCH-20260911-LOOPV2-RS-01",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260911-LOOPV2-RS-01.json",
+    "validatedRevision": "loop-v2-r3-20260912"
+  }
+}

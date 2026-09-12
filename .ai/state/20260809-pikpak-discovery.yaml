@@ -9,6 +9,8 @@ goal:
     - "对照本项目现状给出差距清单与优先级建议"
 
 scale: discovery
+# 需求发现任务（pre-loop 记录），无 Loop 退出标准
+legacy: true
 exitCriteria: []
 artifacts:
   discovery:

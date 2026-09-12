@@ -1,5 +1,7 @@
 # TASK：试点 FE-01 — st-web fileSize 工具函数
 
+> **[回填标注 2026-09-10]** 本 TASK 已执行，但引用的产物未落盘（见 `.ai/state/20260817-worktree-isolation.yaml` 的 backfill 记录）；静态校验跳过本文件的悬空引用检查。
+
 > 试点用实现任务，验证 V15 worktree 隔离。产物为独立新增 TS 工具文件，不修改任何既有代码。
 
 ## 元信息

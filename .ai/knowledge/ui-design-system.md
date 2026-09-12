@@ -86,7 +86,7 @@
 
 ## UI_DESIGN_SPEC v1.0 视觉契约（2026-08-20 重做，现行基准）
 
-> 依据用户文档 `UI_DESIGN_SPEC.md`（Figma 风格契约），替代 PikPak 天蓝方案为现行视觉基准。实现细则见 `.ai/docs/20260820-ui-refactor/uispec.md`。
+> 依据用户文档 `UI_DESIGN_SPEC.md`（Figma 风格契约），替代 PikPak 天蓝方案为现行视觉基准。实现细则以本文件为准（原任务 uispec 未落盘，见 `.ai/state/20260820-ui-refactor.yaml` 的回填记录）。
 
 ### 设计方向
 

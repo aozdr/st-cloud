@@ -71,7 +71,11 @@ history:
     result: "DESIGN/TESTCASES done，进入 IMPLEMENTED，并行派发前后端"
 
 iteration: 1
-status: running
+status: abandoned
+backfill:
+  date: "2026-09-10"
+  from: "running"
+  reason: "停滞 27 天未收敛，回填为 abandoned；codereview/security/testreport 未落盘"
 
 dispatch:
   current:

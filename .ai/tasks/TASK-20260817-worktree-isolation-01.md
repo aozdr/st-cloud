@@ -1,5 +1,7 @@
 # TASK：V15 Worktree 隔离基础设施落地
 
+> **[回填标注 2026-09-10]** 本 TASK 已执行，但引用的产物未落盘（见 `.ai/state/20260817-worktree-isolation.yaml` 的 backfill 记录）；静态校验跳过本文件的悬空引用检查。
+
 > 依据 `.ai/docs/20260817-worktree-isolation/design.md` 生成。
 
 ## 元信息

@@ -1,0 +1,64 @@
+#!/bin/sh
+# Agent Loop pre-commit gate.
+# Runs the full .ai/scripts/run-loop-gate.ps1 when the commit touches .ai/** or AGENTS.md.
+# Install: powershell -ExecutionPolicy Bypass -File .ai/scripts/install-hooks.ps1
+# Uninstall: git config --unset core.hooksPath
+# Bypass (not recommended): git commit --no-verify
+
+root=$(git rev-parse --show-toplevel)
+if [ -z "$root" ]; then
+  echo "[pre-commit] cannot resolve repository root."
+  exit 1
+fi
+cd "$root" || exit 1
+
+staged=$(git diff --cached --name-only)
+if [ -z "$staged" ]; then
+  exit 0
+fi
+
+relevant=0
+while IFS= read -r path; do
+  case "$path" in
+    .ai/*|AGENTS.md) relevant=1; break ;;
+  esac
+done <<EOF
+$staged
+EOF
+if [ "$relevant" -ne 1 ]; then
+  exit 0
+fi
+
+# 门禁读取工作树；相关路径若同时存在未暂存改动，工作树与待提交快照不一致，必须拒绝。
+unstaged=$(git diff --name-only -- AGENTS.md .ai)
+untracked=$(git ls-files --others --exclude-standard -- AGENTS.md .ai)
+if [ -n "$unstaged" ] || [ -n "$untracked" ]; then
+  echo "[pre-commit] BLOCKED: AGENTS.md/.ai has unstaged or untracked changes; stage or revert them before commit."
+  printf '%s\n' "$unstaged"
+  printf '%s\n' "$untracked"
+  exit 1
+fi
+
+echo "[pre-commit] .ai/ or AGENTS.md changed -> running the full Agent Loop gate"
+
+if command -v pwsh >/dev/null 2>&1; then
+  PS=pwsh
+elif command -v powershell >/dev/null 2>&1; then
+  PS=powershell
+else
+  echo "[pre-commit] PowerShell not found."
+  exit 1
+fi
+
+"$PS" -NoProfile -ExecutionPolicy Bypass -File "$root/.ai/scripts/run-loop-gate.ps1"
+status=$?
+
+if [ "$status" -ne 0 ]; then
+  echo ""
+  echo "[pre-commit] BLOCKED: Agent Loop gate failed (exit $status)."
+  echo "[pre-commit] Fix the findings above, or bypass with: git commit --no-verify"
+  exit 1
+fi
+
+echo "[pre-commit] Agent Loop gate passed."
+exit 0

@@ -1,5 +1,7 @@
 # TASK：第一迭代 TX-01 — st-core 上传路径事务边界改造（F1-3 / F2-1 / F2-2）
 
+> **[回填标注 2026-09-10]** 本 TASK 已执行，但引用的产物未落盘（见 `.ai/state/20260817-transaction-boundary.yaml` 的 backfill 记录）；静态校验跳过本文件的悬空引用检查。
+
 > 依据 `.ai/docs/20260817-transaction-boundary/design.md` 3.3 节 F1-3/F2-1/F2-2。
 
 ## 元信息

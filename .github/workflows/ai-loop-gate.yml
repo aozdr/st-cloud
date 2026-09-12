@@ -1,0 +1,24 @@
+name: Agent Loop Gate
+
+on:
+  pull_request:
+    paths:
+      - "AGENTS.md"
+      - ".ai/**"
+      - ".github/workflows/ai-loop-gate.yml"
+  push:
+    paths:
+      - "AGENTS.md"
+      - ".ai/**"
+      - ".github/workflows/ai-loop-gate.yml"
+
+jobs:
+  verify:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Run the same strict loop gate as pre-commit
+        shell: pwsh
+        run: ./.ai/scripts/run-loop-gate.ps1

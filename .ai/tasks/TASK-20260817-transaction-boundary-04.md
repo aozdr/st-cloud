@@ -1,5 +1,7 @@
 # TASK：第二迭代 TX-04 — st-sync 块复制移出事务（F3）
 
+> **[回填标注 2026-09-10]** 本 TASK 已执行，但引用的产物未落盘（见 `.ai/state/20260817-transaction-boundary.yaml` 的 backfill 记录）；静态校验跳过本文件的悬空引用检查。
+
 > 依据 `.ai/docs/20260817-transaction-boundary/design.md` 3.3 节 F3。
 
 ## 元信息

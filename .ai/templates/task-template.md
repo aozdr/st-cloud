@@ -41,3 +41,5 @@
 ## 输出要求
 
 编码完成后输出 Change Report 并落盘 `.ai/docs/<task-id>/changereport.md`（修改文件清单 / 与验收标准对照 / 测试结果 / 风险）。
+
+若计划产出路径尚不存在，在同一行路径前标记 `[planned-output]`；文件生成后移除标记。未标记路径由 cross-ref 门禁按已存在引用校验。

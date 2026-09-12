@@ -1,0 +1,16 @@
+{
+  "dispatchId": "DIRECT-20260912-LOOPV2-KNOWLEDGE",
+  "taskId": "TASK-20260912-agent-loop-v2-knowledge",
+  "status": "completed",
+  "artifactRefs": [
+    ".ai/docs/20260911-agent-loop-v2/knowledge.md"
+  ],
+  "criterionProposal": {
+    "id": "KNOWLEDGE",
+    "outcome": "pass",
+    "by": "codex-main-knowledge",
+    "dispatchId": "DIRECT-20260912-LOOPV2-KNOWLEDGE",
+    "evidenceRef": ".ai/runtime/results/DIRECT-20260912-LOOPV2-KNOWLEDGE.json",
+    "validatedRevision": "loop-v2-r3-20260912"
+  }
+}
