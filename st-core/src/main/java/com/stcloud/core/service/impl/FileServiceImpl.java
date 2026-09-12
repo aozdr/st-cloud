@@ -94,7 +94,7 @@ public class FileServiceImpl implements FileService {
         // 通用文件接口只能在个人空间写入，团队目录必须经显式团队入口和 ACL 校验。
         String parentPath = validatePersonalParentPath(parentId);
 
-        if (fileNodeMapper.countByParentAndName(UserContext.getTenantId(), parentId, folderName) > 0) {
+        if (countActiveByScope(parentId, null, folderName) > 0) {
             throw new BusinessException(ResultCode.FILE_ALREADY_EXISTS);
         }
 
@@ -250,12 +250,7 @@ public class FileServiceImpl implements FileService {
         String oldPath = node.getPath();
         String parentPath = oldPath.substring(0, oldPath.lastIndexOf("/"));
 
-        LambdaQueryWrapper<FileNode> dupWrapper = new LambdaQueryWrapper<FileNode>()
-                .eq(FileNode::getParentId, node.getParentId())
-                .eq(FileNode::getName, newName)
-                .eq(FileNode::getStatus, NodeStatus.NORMAL.getCode())
-                .ne(FileNode::getId, nodeId);
-        if (fileNodeMapper.selectCount(dupWrapper) > 0) {
+        if (countActiveByScope(node.getParentId(), null, newName) > 0) {
             throw new BusinessException(ResultCode.FILE_ALREADY_EXISTS);
         }
 
@@ -291,7 +286,7 @@ public class FileServiceImpl implements FileService {
             if (targetParentId != null && targetParentId != 0) {
                 assertMoveTargetIsSafe(nodeId, targetParentId);
             }
-            if (fileNodeMapper.countByParentAndName(UserContext.getTenantId(), targetParentId, node.getName()) > 0) {
+            if (countActiveByScope(targetParentId, null, node.getName()) > 0) {
                 throw new BusinessException(ResultCode.FILE_ALREADY_EXISTS.getCode(),
                         "目标目录已存在同名: " + node.getName());
             }
@@ -747,14 +742,23 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public String resolveNameConflict(Long parentId, String name) {
-        Long effectiveParentId = parentId == null ? 0L : parentId;
-        if (fileNodeMapper.countByParentAndName(UserContext.getTenantId(), effectiveParentId, name) == 0) {
-            return name;
-        }
-        return generateUniqueName(effectiveParentId, name);
+        return resolveNameConflictInScope(null, parentId, name);
     }
 
-    private String generateUniqueName(Long parentId, String name) {
+    @Override
+    public String resolveTeamNameConflict(Long spaceId, Long parentId, String name) {
+        return resolveNameConflictInScope(spaceId, parentId, name);
+    }
+
+    private String resolveNameConflictInScope(Long spaceId, Long parentId, String name) {
+        Long effectiveParentId = parentId == null ? 0L : parentId;
+        if (countActiveByScope(effectiveParentId, spaceId, name) == 0) {
+            return name;
+        }
+        return generateUniqueName(effectiveParentId, spaceId, name);
+    }
+
+    private String generateUniqueName(Long parentId, Long spaceId, String name) {
         String baseName;
         String ext = "";
         int dotIdx = name.lastIndexOf(".");
@@ -769,8 +773,15 @@ public class FileServiceImpl implements FileService {
         do {
             newName = baseName + "(" + suffix + ")" + ext;
             suffix++;
-        } while (fileNodeMapper.countByParentAndName(UserContext.getTenantId(), parentId, newName) > 0);
+        } while (countActiveByScope(parentId, spaceId, newName) > 0);
         return newName;
+    }
+
+    /** 同名判断必须与写入节点的个人/团队 scope 一致，避免跨 owner/space 的误冲突。 */
+    private int countActiveByScope(Long parentId, Long spaceId, String name) {
+        return fileNodeMapper.countActiveByScope(UserContext.getTenantId(),
+                parentId == null ? 0L : parentId,
+                spaceId != null && spaceId > 0 ? null : UserContext.getUserId(), spaceId, name);
     }
 
     @Override
@@ -854,7 +865,7 @@ public class FileServiceImpl implements FileService {
         String parentPath = validateTeamParentPath(spaceId, parentId);
 
         Long effectiveParentId = (parentId == null) ? 0L : parentId;
-        if (fileNodeMapper.countByParentAndName(UserContext.getTenantId(), effectiveParentId, folderName) > 0) {
+        if (countActiveByScope(effectiveParentId, spaceId, folderName) > 0) {
             throw new BusinessException(ResultCode.FILE_ALREADY_EXISTS);
         }
 
@@ -899,15 +910,13 @@ public class FileServiceImpl implements FileService {
         }
         // 编辑保护：团队文件正在编辑时禁止重命名（TC-18）
         assertNotEditing(node);
+        if (node.getName().equals(newName)) {
+            return toVO(node);
+        }
         String oldPath = node.getPath();
         String parentPath = oldPath.substring(0, oldPath.lastIndexOf("/"));
 
-        LambdaQueryWrapper<FileNode> dupWrapper = new LambdaQueryWrapper<FileNode>()
-                .eq(FileNode::getParentId, node.getParentId())
-                .eq(FileNode::getName, newName)
-                .eq(FileNode::getStatus, NodeStatus.NORMAL.getCode())
-                .ne(FileNode::getId, nodeId);
-        if (fileNodeMapper.selectCount(dupWrapper) > 0) {
+        if (countActiveByScope(node.getParentId(), spaceId, newName) > 0) {
             throw new BusinessException(ResultCode.FILE_ALREADY_EXISTS);
         }
 
@@ -971,7 +980,7 @@ public class FileServiceImpl implements FileService {
             if (targetParentId != null && targetParentId != 0) {
                 assertMoveTargetIsSafe(nodeId, targetParentId);
             }
-            if (fileNodeMapper.countByParentAndName(UserContext.getTenantId(), targetParentId, node.getName()) > 0) {
+            if (countActiveByScope(targetParentId, spaceId, node.getName()) > 0) {
                 throw new BusinessException(ResultCode.FILE_ALREADY_EXISTS.getCode(),
                         "目标目录已存在同名: " + node.getName());
             }
@@ -1113,7 +1122,7 @@ public class FileServiceImpl implements FileService {
             throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "目录树超过处理上限");
         }
         Long userId = UserContext.getUserId();
-        String newName = resolveNameConflict(targetParentId, source.getName());
+        String newName = resolveTeamNameConflict(source.getSpaceId(), targetParentId, source.getName());
         String newPath = targetPath + "/" + newName;
 
         FileNode copy = new FileNode();

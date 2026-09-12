@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @ConfigurationProperties(prefix = "stcloud.archive")
 public class ArchiveSafetyProperties {
+    private long maxArchiveInputSize = 1024L * 1024 * 1024;
     private int maxEntries = 100_000;
     private long maxEntrySize = 100L * 1024 * 1024;
     private long maxTotalSize = 500L * 1024 * 1024;

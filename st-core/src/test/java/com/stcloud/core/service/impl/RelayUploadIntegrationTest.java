@@ -26,6 +26,7 @@ import com.stcloud.core.service.VersionService;
 import com.stcloud.core.service.impl.upload.RelayBufferManager;
 import com.stcloud.core.service.impl.upload.UploadChunkManager;
 import com.stcloud.core.service.impl.upload.UploadCommitManager;
+import com.stcloud.core.service.impl.upload.UploadInitCommitManager;
 import com.stcloud.core.service.impl.upload.UploadEventPublisher;
 import com.stcloud.core.service.impl.upload.UploadManager;
 import com.stcloud.core.service.impl.upload.UploadStorageManager;
@@ -40,11 +41,14 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.util.Collections;
+import java.util.concurrent.ConcurrentMap;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -129,6 +133,11 @@ class RelayUploadIntegrationTest extends AbstractIntegrationTest {
         @Bean
         UploadCommitManager uploadCommitManager() {
             return new UploadCommitManager();
+        }
+
+        @Bean
+        UploadInitCommitManager uploadInitCommitManager() {
+            return new UploadInitCommitManager();
         }
 
         @Bean
@@ -348,6 +357,64 @@ class RelayUploadIntegrationTest extends AbstractIntegrationTest {
         relayBufferManager.scheduledCleanup();
         assertEquals(0L, relayBufferManager.getRate(resp.getUploadId()), "超时会话应被清理");
         verify(storageService, atLeastOnce()).abortMultipartUpload(anyString(), anyString());
+        assertNull(fileNodeMapper.selectById(resp.getFileId()), "超时中止后 pending 节点应回滚");
+        assertEquals(0, jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM file_chunk WHERE upload_id = ?", Integer.class, resp.getUploadId()));
+        assertEquals(3, jdbcTemplate.queryForObject(
+                "SELECT status FROM upload_session WHERE upload_id = ?", Integer.class, resp.getUploadId()));
+    }
+
+    @Test
+    void state_relayTempWriteFailureRollsBackNodeAndChunks() throws Exception {
+        setServerLimit(100);
+        UploadInitResponse resp = init("state-relay-io.txt", 100L * 1024, 1, null);
+        @SuppressWarnings("unchecked")
+        ConcurrentMap<String, ?> sessions = (ConcurrentMap<String, ?>) ReflectionTestUtils.getField(
+                relayBufferManager, "sessions");
+        OutputStream out = (OutputStream) ReflectionTestUtils.getField(sessions.get(resp.getUploadId()), "out");
+        out.close();
+
+        assertThrows(BusinessException.class, () -> postChunk(resp.getUploadId(), new byte[8192], 1));
+
+        verify(storageService, times(1)).abortMultipartUpload(anyString(), anyString());
+        assertNull(fileNodeMapper.selectById(resp.getFileId()));
+        assertEquals(0, jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM file_chunk WHERE upload_id = ?", Integer.class, resp.getUploadId()));
+        assertEquals(3, jdbcTemplate.queryForObject(
+                "SELECT status FROM upload_session WHERE upload_id = ?", Integer.class, resp.getUploadId()));
+    }
+
+    @Test
+    void state_oldRelayTimeoutDoesNotRollbackNewSessionNode() throws Exception {
+        setServerLimit(100);
+        UploadInitResponse resp = init("state-relay-replaced.txt", 100L * 1024, 1, null);
+        FileNode reused = fileNodeMapper.selectById(resp.getFileId());
+        reused.setStoragePath("new-session-storage-path");
+        fileNodeMapper.updateById(reused);
+        Thread.sleep(400);
+
+        relayBufferManager.scheduledCleanup();
+
+        assertEquals("new-session-storage-path", fileNodeMapper.selectById(resp.getFileId()).getStoragePath());
+        assertEquals(0, jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM file_chunk WHERE upload_id = ?", Integer.class, resp.getUploadId()));
+        assertEquals(3, jdbcTemplate.queryForObject(
+                "SELECT status FROM upload_session WHERE upload_id = ?", Integer.class, resp.getUploadId()));
+    }
+
+    @Test
+    void state_timeoutCleanupCannotAbortClaimedMerge() throws Exception {
+        setServerLimit(100);
+        UploadInitResponse resp = init("state-timeout-merge.txt", 100L * 1024, 1, null);
+        jdbcTemplate.update("UPDATE upload_session SET status = 1 WHERE upload_id = ?", resp.getUploadId());
+        Thread.sleep(400);
+        relayBufferManager.scheduledCleanup();
+        assertTrue(relayBufferManager.getRate(resp.getUploadId()) > 0L,
+                "MERGING 的中转缓冲必须留给认领合并的请求");
+        verify(storageService, never()).abortMultipartUpload(anyString(), anyString());
+        assertEquals(1, jdbcTemplate.queryForObject(
+                "SELECT status FROM upload_session WHERE upload_id = ?", Integer.class, resp.getUploadId()));
+        relayBufferManager.cleanup(resp.getUploadId());
     }
 
     @Test

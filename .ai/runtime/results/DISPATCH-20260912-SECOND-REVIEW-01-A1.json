@@ -1,0 +1,42 @@
+{
+  "dispatchId": "DISPATCH-20260912-SECOND-REVIEW-01-A1",
+  "taskId": "TASK-20260912-second-review-fix-01",
+  "status": "completed",
+  "artifactRefs": [
+    "st-web/src/lib/file-md5.ts",
+    "st-web/src/lib/hash-contract.test.mjs",
+    "st-web/src/hooks/useUpload.tsx",
+    "st-web/package.json",
+    "st-desktop/src/utils/md5.ts",
+    "st-desktop/src/upload-manager.ts",
+    "st-desktop/src/sync-engine.ts",
+    "st-desktop/src/sync/sync-upload.ts"
+  ],
+  "criterionProposal": {
+    "id": "IMPLEMENTED",
+    "outcome": "pass",
+    "by": "phase1_hash",
+    "dispatchId": "DISPATCH-20260912-SECOND-REVIEW-01-A1",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260912-SECOND-REVIEW-01-A1.json",
+    "validatedRevision": "working-tree-phase1-hash-20260912"
+  },
+  "blockerProposals": [],
+  "validation": {
+    "commands": [
+      { "command": "npm run test:hash (st-web)", "exitCode": 0, "passed": 6, "failed": 0 },
+      { "command": "npm run build (st-web)", "exitCode": 0 },
+      { "command": "npm run lint (st-desktop)", "exitCode": 0 },
+      { "command": "npm run build:main (st-desktop)", "exitCode": 0 },
+      { "command": "npm test (st-desktop)", "exitCode": 0, "passed": 17, "failed": 0 },
+      { "command": "git diff --check", "exitCode": 0 },
+      { "command": "rg -n calculateSampledMd5|calculateMd5 st-web/src st-desktop/src", "exitCode": 1, "matches": 0 }
+    ],
+    "findings": [
+      "Web 上传、Desktop 上传和同步状态计算与比较现均使用完整文件 MD5。",
+      "跨端 contract 测试直接导入两端生产函数，覆盖 0B、1KB、5MB、11MB、100MB+，均与 Node crypto 一致。",
+      "两个 11MB 文件前 2MB 和文件大小相同而尾部不同，完整 MD5 不同。",
+      "未修改 HTTP API、UI 或数据库表结构。"
+    ],
+    "residualRisk": "历史采样 MD5 不迁移；旧同步状态在被刷新前可能与新完整 MD5 不一致。"
+  }
+}

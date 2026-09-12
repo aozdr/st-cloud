@@ -1,0 +1,71 @@
+{
+  "dispatchId": "DISPATCH-20260912-SECOND-REVIEW-02-A1",
+  "taskId": "TASK-20260912-second-review-fix-02",
+  "status": "completed",
+  "artifactRefs": [
+    "st-core/src/main/java/com/stcloud/core/mapper/FileNodeMapper.java",
+    "st-core/src/main/java/com/stcloud/core/service/FileService.java",
+    "st-core/src/main/java/com/stcloud/core/service/impl/FileServiceImpl.java",
+    "st-core/src/main/java/com/stcloud/core/service/impl/UploadServiceImpl.java",
+    "st-core/src/main/java/com/stcloud/core/service/impl/RecycleBinServiceImpl.java",
+    "st-core/src/main/java/com/stcloud/core/service/impl/NewFileServiceImpl.java",
+    "st-core/src/test/java/com/stcloud/core/service/impl/FileServiceFlowIntegrationTest.java",
+    "st-core/src/test/java/com/stcloud/core/service/impl/NewFileServiceIntegrationTest.java",
+    "st-core/src/test/java/com/stcloud/core/service/impl/ArchiveExtractTransactionBoundaryTest.java",
+    "st-core/src/test/java/com/stcloud/core/service/impl/UploadTransactionBoundaryTest.java"
+  ],
+  "criterionProposal": {
+    "id": "IMPLEMENTED",
+    "outcome": "pass",
+    "by": "phase2_name_scope",
+    "dispatchId": "DISPATCH-20260912-SECOND-REVIEW-02-A1",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260912-SECOND-REVIEW-02-A1.json",
+    "validatedRevision": "working-tree-phase2-name-scope-20260912"
+  },
+  "blockerProposals": [],
+  "validation": {
+    "commands": [
+      {
+        "command": "mvn -pl st-core -am '-Dtest=FileServiceFlowIntegrationTest,NewFileServiceIntegrationTest,UploadTransactionBoundaryTest,UploadStateMachineIntegrationTest,RelayUploadIntegrationTest,ArchiveExtractTransactionBoundaryTest' '-Dsurefire.failIfNoSpecifiedTests=false' test",
+        "exitCode": 0,
+        "passed": 55,
+        "failed": 0
+      },
+      {
+        "command": "mvn -pl st-core -am '-Dtest=FileServiceFlowIntegrationTest' '-Dsurefire.failIfNoSpecifiedTests=false' test",
+        "exitCode": 0,
+        "passed": 11,
+        "failed": 0
+      },
+      {
+        "command": "mvn -pl st-core -am '-Dtest=ArchiveExtractTransactionBoundaryTest' '-Dsurefire.failIfNoSpecifiedTests=false' test",
+        "exitCode": 0,
+        "passed": 3,
+        "failed": 0
+      },
+      {
+        "command": "mvn -pl st-core -am '-Dtest=UploadTransactionBoundaryTest' '-Dsurefire.failIfNoSpecifiedTests=false' test",
+        "exitCode": 0,
+        "passed": 5,
+        "failed": 0
+      },
+      {
+        "command": "rg -n 'countByParentAndName' st-core/src/main/java st-team/src/main/java st-share/src/main/java",
+        "exitCode": 1,
+        "matches": 0
+      },
+      {
+        "command": "git diff --check",
+        "exitCode": 0
+      }
+    ],
+    "findings": [
+      "真实 H2 Mapper 与唯一约束验证：不同个人 owner、不同团队 space 的根目录同名可并存；同 scope 重名被业务检查拦截，团队命名按 space 而非 uploader 判断。",
+      "rename、move、copy、restore、空白文件和上传命名均经过显式个人或团队 scope；上传 check/init/simple 三处统一调用 scope 路由。",
+      "Archive 解压只写个人空间；新增真实 H2 用例验证其他 owner 已有同名文件和文件夹时仍能解压成功，原有同 scope 唯一约束继续兜底。",
+      "st-team 控制器均调用 st-core 显式团队入口，无需修改 st-team；分享保存走个人入口。",
+      "未改 HTTP API、UI、数据库表结构或数据。"
+    ],
+    "residualRisk": "上传团队命名路由有单元验证且关联上传测试通过；本阶段未新增团队 check/init/simple 各自的端到端 H2 用例。Phase 7 应由跨模块回归再覆盖。"
+  }
+}

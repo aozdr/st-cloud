@@ -27,12 +27,17 @@ public interface FileNodeMapper extends BaseMapper<FileNode> {
     FileNode selectByMd5(@Param("md5") String md5);
 
     /**
-     * 统计同级目录下同名节点数量（重名校验）
+     * 统计当前空间同级同名的正常节点。个人按 tenant+owner 隔离，团队按 tenant+space 隔离；
+     * 与数据库 active_scope_key 唯一约束保持相同的 scope 语义。
      */
-    // SQL 状态含义：status = 0 正常（排除回收站/已删除）；deleted = 0 未删除
-    @Select("SELECT COUNT(*) FROM file_node WHERE tenant_id = #{tenantId} AND parent_id = #{parentId} AND name = #{name} AND status = 0 AND deleted = 0")
-    int countByParentAndName(@Param("tenantId") Long tenantId, @Param("parentId") Long parentId,
-                             @Param("name") String name);
+    @Select("SELECT COUNT(*) FROM file_node WHERE tenant_id = #{tenantId} AND parent_id = #{parentId} " +
+            "AND name = #{name} AND status = 0 AND deleted = 0 " +
+            "AND ((#{spaceId} IS NOT NULL AND #{spaceId} > 0 AND space_id = #{spaceId}) " +
+            "OR ((#{spaceId} IS NULL OR #{spaceId} <= 0) AND owner_id = #{ownerId} " +
+            "AND (space_id IS NULL OR space_id <= 0)))")
+    int countActiveByScope(@Param("tenantId") Long tenantId, @Param("parentId") Long parentId,
+                           @Param("ownerId") Long ownerId, @Param("spaceId") Long spaceId,
+                           @Param("name") String name);
 
     /**
      * 批量更新子节点路径（移动/重命名时）

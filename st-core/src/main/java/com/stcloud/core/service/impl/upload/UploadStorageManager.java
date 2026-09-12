@@ -3,6 +3,7 @@ package com.stcloud.core.service.impl.upload;
 import com.stcloud.core.service.CloudStorageService;
 import com.stcloud.core.service.StorageService;
 import jakarta.annotation.Resource;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.InputStream;
@@ -14,6 +15,7 @@ import java.util.List;
  * 与对象上传/删除、云盘容量检查，供 UploadServiceImpl 编排调用。
  */
 @Component
+@Slf4j
 public class UploadStorageManager {
 
     @Resource
@@ -69,8 +71,9 @@ public class UploadStorageManager {
         }
         try {
             storageService.deleteObject(storagePath);
-        } catch (Exception ignored) {
-            // 尽力清理：失败仅记录，不影响主流程
+        } catch (Exception e) {
+            // 尽力清理：失败必须留下可检索日志，不影响主流程。
+            log.warn("上传对象补偿删除失败: storagePath={}", storagePath, e);
         }
     }
 }

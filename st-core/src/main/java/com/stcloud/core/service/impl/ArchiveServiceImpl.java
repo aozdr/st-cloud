@@ -279,16 +279,37 @@ public class ArchiveServiceImpl implements ArchiveService {
 
     /** 事务外：将 S3 上的压缩包下载到本地临时文件（不占用 DB 连接） */
     private Path downloadZipToTemp(FileNode node) {
+        Path temp = null;
+        boolean success = false;
         try {
-            Path temp = Files.createTempFile("archive-extract-", ".zip");
+            temp = Files.createTempFile("archive-extract-", ".zip");
             try (InputStream in = storageService.downloadObject(node.getStoragePath());
                  OutputStream out = Files.newOutputStream(temp)) {
-                in.transferTo(out);
+                byte[] buffer = new byte[8192];
+                long copied = 0L;
+                int len;
+                while ((len = in.read(buffer)) != -1) {
+                    // 在写入前硬限制输入字节，防止 S3 元数据不可信时填满临时盘。
+                    if (len > archiveSafetyProperties.getMaxArchiveInputSize() - copied) {
+                        throw new BusinessException(ResultCode.FILE_TOO_LARGE.getCode(), "ZIP 压缩包输入大小超过限制");
+                    }
+                    out.write(buffer, 0, len);
+                    copied += len;
+                }
             }
+            success = true;
             return temp;
         } catch (IOException e) {
             log.error("下载压缩包到临时文件失败, nodeId={}", node.getId(), e);
             throw new BusinessException(ResultCode.BUSINESS_ERROR);
+        } finally {
+            if (!success && temp != null) {
+                try {
+                    Files.deleteIfExists(temp);
+                } catch (IOException e) {
+                    log.warn("删除超限或失败的 ZIP 临时文件失败: nodeId={}, path={}", node.getId(), temp, e);
+                }
+            }
         }
     }
 

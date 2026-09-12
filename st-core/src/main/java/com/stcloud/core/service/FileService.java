@@ -51,6 +51,9 @@ public interface FileService {
      */
     String resolveNameConflict(Long parentId, String name);
 
+    /** 团队空间按指定 spaceId 解决同名冲突，不依赖当前用户的个人空间。 */
+    String resolveTeamNameConflict(Long spaceId, Long parentId, String name);
+
     /**
      * 根据文件名推断 Content-Type
      */

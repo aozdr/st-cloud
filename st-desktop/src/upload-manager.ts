@@ -5,7 +5,7 @@ import { BrowserWindow } from 'electron';
 import { apiClient } from './api-client';
 import { getTransferSettings } from './transfer-settings';
 import { createTask, updateTask, getTask, deleteTask, getPendingTasks } from './database';
-import { calculateSampledMd5 } from './utils/md5';
+import { calculateFileMd5 } from './utils/md5';
 import { readChunk, getTotalChunks, CHUNK_SIZE, CONCURRENCY } from './utils/file-utils';
 import { scheduleTask, releaseTask, cancelPendingTask } from './task-scheduler';
 import type { TransferTask, UploadCheckResponse, UploadInitResponse, UploadStatusResponse } from './types';
@@ -77,7 +77,7 @@ async function doUpload(taskId: string): Promise<void> {
     const uploadBase = task.spaceId ? `/team/${task.spaceId}/files/upload` : '/file/upload';
 
     // 1. 计算 MD5
-    const md5 = await calculateSampledMd5(task.filePath!, task.fileSize);
+    const md5 = await calculateFileMd5(task.filePath!);
 
     if (state.cancelled) return;
 

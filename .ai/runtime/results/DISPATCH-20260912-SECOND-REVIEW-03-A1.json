@@ -1,0 +1,47 @@
+{
+  "dispatchId": "DISPATCH-20260912-SECOND-REVIEW-03-A1",
+  "taskId": "TASK-20260912-second-review-fix-03",
+  "status": "completed",
+  "artifactRefs": [
+    "st-core/src/main/java/com/stcloud/core/service/impl/UploadServiceImpl.java",
+    "st-core/src/main/java/com/stcloud/core/service/impl/upload/UploadInitCommitManager.java",
+    "st-core/src/test/java/com/stcloud/core/service/impl/UploadTransactionBoundaryTest.java",
+    "st-core/src/test/java/com/stcloud/core/service/impl/UploadStateMachineIntegrationTest.java",
+    "st-core/src/test/java/com/stcloud/core/service/impl/RelayUploadIntegrationTest.java"
+  ],
+  "criterionProposal": {
+    "id": "IMPLEMENTED",
+    "outcome": "pass",
+    "by": "phase3_upload_init_tx",
+    "dispatchId": "DISPATCH-20260912-SECOND-REVIEW-03-A1",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260912-SECOND-REVIEW-03-A1.json",
+    "validatedRevision": "working-tree-phase3-upload-init-tx-20260912"
+  },
+  "blockerProposals": [],
+  "validation": {
+    "commands": [
+      {
+        "command": "mvn -pl st-core -am -DskipTests compile",
+        "exitCode": 0
+      },
+      {
+        "command": "mvn -pl st-core -am '-Dtest=UploadTransactionBoundaryTest,UploadStateMachineIntegrationTest,RelayUploadIntegrationTest,ConcurrentUploadIntegrationTest' '-Dsurefire.failIfNoSpecifiedTests=false' test",
+        "exitCode": 0,
+        "passed": 36,
+        "failed": 0
+      },
+      {
+        "command": "git diff --check",
+        "exitCode": 0
+      }
+    ],
+    "findings": [
+      "INIT-TX-01: H2 trigger 在第 501 条分片 INSERT 抛 SQL 异常，首批 500 条与新 node/session 均回滚；S3 init 和 abort 均确认无活动事务。",
+      "INIT-TX-02: 替换上传在同样故障下保留旧 node 的 MD5、路径、大小和状态；事务内真实插入的 version 快照、session 和 chunk 均回滚。",
+      "INIT-TX-03: S3 abort 补偿失败有日志，且不覆盖原始数据库异常。",
+      "UploadInitCommitManager 为独立 Spring Bean，commitInit 使用默认事务传播；FOR UPDATE、权限和状态二次校验、version snapshot、node、session、chunk 均在同一事务；事务内无 S3 调用。",
+      "未更改 HTTP API、schema、UI 或其他 Phase 业务逻辑。"
+    ],
+    "residualRisk": "S3 abort 为 best effort；补偿失败只记录日志，仍需既有后台清理机制处理外部 multipart 残留。"
+  }
+}

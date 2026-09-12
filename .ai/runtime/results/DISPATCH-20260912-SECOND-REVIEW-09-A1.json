@@ -1,0 +1,33 @@
+{
+  "dispatchId": "DISPATCH-20260912-SECOND-REVIEW-09-A1",
+  "taskId": "TASK-20260912-second-review-fix-09",
+  "status": "completed",
+  "artifactRefs": [
+    ".ai/docs/20260912-second-review-fix/security.md"
+  ],
+  "criterionProposal": {
+    "id": "SECURITY_REVIEW",
+    "outcome": "pass",
+    "by": "security_review",
+    "dispatchId": "DISPATCH-20260912-SECOND-REVIEW-09-A1",
+    "evidenceRef": ".ai/docs/20260912-second-review-fix/security.md",
+    "validatedRevision": "working-tree-phase7-security-review-20260912"
+  },
+  "blockerProposals": [],
+  "validation": {
+    "methods": [
+      "git diff 与 git show 11ef6c2 基线比较",
+      "源代码调用链与 CAS 影响行数检查",
+      "读取 st-core Surefire 报告：RelayUploadIntegrationTest 15/0、UploadSessionConcurrencyIntegrationTest 6/0",
+      "主线程报告定向受影响测试 41/0；本 reviewer 未争用共享 Maven 缓存独立重跑"
+    ],
+    "findings": [
+      "发现并推动修复 P1 中转 IOException/超时后 pending node/chunk 遗留；现由 CAS 获胜者在短事务内锁节点、比较 storagePath 后回滚，S3 abort 在事务外，故障注入 H2 测试通过。",
+      "发现并推动修复基线即存在的 P1 普通上传路由绕过团队 ACL；现 generic 会话入口拒绝团队 space，七类操作回归测试通过。",
+      "复核 Upload Init 事务无 S3 网络操作、merge/abort 会话 CAS 影响行数为 1、finalize 节点/配额/终态同事务、ZIP 解压输入 1GB 默认硬限制及失败清理。",
+      "限定 P2 残留：ZIP 列表接口未使用解压输入上限；中转 CAS 成功后若 DB 清理事务再次失败，仅日志记录，无自动重试。"
+    ],
+    "unresolvedP0P1": 0,
+    "residualRisk": "S3 补偿为事务外 best effort；Archive list 输入流和故障叠加时的孤儿元数据需后续单独治理。"
+  }
+}

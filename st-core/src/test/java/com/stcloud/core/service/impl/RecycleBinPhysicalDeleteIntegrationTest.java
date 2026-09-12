@@ -222,6 +222,22 @@ class RecycleBinPhysicalDeleteIntegrationTest {
         return node;
     }
 
+    private FileNode insertFolder(String name, Long parentId, String path, NodeStatus status) {
+        FileNode folder = new FileNode();
+        folder.setTenantId(TENANT);
+        folder.setParentId(parentId);
+        folder.setNodeType(NodeType.FOLDER.getCode());
+        folder.setName(name);
+        folder.setPath(path);
+        folder.setStatus(status.getCode());
+        folder.setUploadStatus(2);
+        folder.setOwnerId(USER);
+        folder.setUploaderId(USER);
+        folder.setVersion(0);
+        fileNodeMapper.insert(folder);
+        return folder;
+    }
+
     private long countPhysicalDeleteEvents() {
         return eventLogMapper.selectCount(new LambdaQueryWrapper<EventLog>()
                 .eq(EventLog::getEventType, "PHYSICAL_DELETE"));
@@ -299,5 +315,66 @@ class RecycleBinPhysicalDeleteIntegrationTest {
         EventMessage message = lastPhysicalDeleteMessage();
         assertEquals(storagePath, message.getFileNode().getStoragePath());
         assertNull(message.getFileNode().getObjectId(), "旧数据节点不携带 objectId");
+    }
+
+    @Test
+    @DisplayName("RECYCLE-01 清空回收站只处理没有任意已回收祖先的根")
+    void emptyRecycleBin_nestedRecycledDescendantIsDeletedOnce() {
+        String md5 = "md5-rb-nested-" + System.nanoTime();
+        FileObject object = insertObject(md5, 1);
+        FileNode root = insertFolder("rb-root", 0L, "/rb-root", NodeStatus.RECYCLED);
+        FileNode middle = insertFolder("rb-middle", root.getId(), "/rb-root/rb-middle", NodeStatus.NORMAL);
+        FileNode child = insertRecycledFile("rb-child.txt", object.getId(), md5, object.getStoragePath());
+        child.setParentId(middle.getId());
+        child.setPath("/rb-root/rb-middle/rb-child.txt");
+        fileNodeMapper.updateById(child);
+        jdbcTemplate.update("UPDATE sys_user SET storage_used = 1024 WHERE id = ?", USER);
+
+        recycleBinService.emptyRecycleBin();
+
+        assertNull(fileNodeMapper.selectById(root.getId()));
+        assertNull(fileNodeMapper.selectById(middle.getId()));
+        assertNull(fileNodeMapper.selectById(child.getId()));
+        assertEquals(0L, jdbcTemplate.queryForObject(
+                "SELECT storage_used FROM sys_user WHERE id = ?", Long.class, USER));
+        assertEquals(1L, countPhysicalDeleteEvents());
+        verify(fileObjectService).deletePhysical(object.getId());
+    }
+
+    @Test
+    @DisplayName("RECYCLE-02 重复节点与父子输入只退还一次配额和对象引用")
+    void permanentDelete_repeatedAndParentChildIdsHaveOneEffectiveDelete() {
+        String md5 = "md5-rb-repeat-" + System.nanoTime();
+        FileObject object = insertObject(md5, 1);
+        FileNode parent = insertFolder("rb-parent", 0L, "/rb-parent", NodeStatus.RECYCLED);
+        FileNode child = insertRecycledFile("rb-repeat.txt", object.getId(), md5, object.getStoragePath());
+        child.setParentId(parent.getId());
+        child.setPath("/rb-parent/rb-repeat.txt");
+        fileNodeMapper.updateById(child);
+        jdbcTemplate.update("UPDATE sys_user SET storage_used = 1024 WHERE id = ?", USER);
+
+        recycleBinService.permanentDelete(List.of(parent.getId(), child.getId(), child.getId()));
+        recycleBinService.permanentDelete(List.of(parent.getId(), child.getId()));
+
+        assertEquals(0L, jdbcTemplate.queryForObject(
+                "SELECT storage_used FROM sys_user WHERE id = ?", Long.class, USER));
+        assertEquals(1L, countPhysicalDeleteEvents());
+        verify(fileObjectService).deletePhysical(object.getId());
+    }
+
+    @Test
+    @DisplayName("过期清理也只返回没有任意已回收祖先的根")
+    void expiredRecycleRoots_skipNestedRecycledDescendant() {
+        FileNode root = insertFolder("rb-expired-root", 0L, "/rb-expired-root", NodeStatus.RECYCLED);
+        FileNode middle = insertFolder("rb-expired-middle", root.getId(),
+                "/rb-expired-root/rb-expired-middle", NodeStatus.NORMAL);
+        FileNode child = insertFolder("rb-expired-child", middle.getId(),
+                "/rb-expired-root/rb-expired-middle/rb-expired-child", NodeStatus.RECYCLED);
+        jdbcTemplate.update("UPDATE file_node SET updated_at = DATEADD('DAY', -31, CURRENT_TIMESTAMP) "
+                + "WHERE id IN (?, ?)", root.getId(), child.getId());
+
+        List<Long> roots = recycleBinService.findExpiredRecycleRoots();
+        assertEquals(List.of(root.getId()), roots.stream()
+                .filter(id -> id.equals(root.getId()) || id.equals(child.getId())).toList());
     }
 }

@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260912-SECOND-REVIEW-04-A1",
+  "taskId": "TASK-20260912-second-review-fix-04",
+  "idempotencyKey": "second-review-fix-phase-04",
+  "taskCode": "SESSION_STATE_MACHINE",
+  "role": "executor",
+  "taskType": "implement",
+  "objective": "只实施 Phase 4：UploadSession 作为权威状态，以条件状态更新 CAS 认领 merge/abort/过期，并检查 affectedRows；只有 CAS 胜者执行外部 S3 与 cleanup；MERGING 时 abort 409/CONFLICT；finalize DB 与 session COMPLETED 同一短事务。补真实 20 并发和 CountDownLatch 测试，阶段通过后返回。",
+  "taskRefs": [
+    ".ai/tasks/TASK-20260912-second-review-fix-04.md"
+  ],
+  "stateRef": ".ai/state/20260912-second-review-fix.yaml",
+  "artifactRefs": [
+    ".ai/docs/20260912-second-review-fix/design.md",
+    ".ai/docs/20260912-second-review-fix/testcases.md",
+    ".ai/runtime/results/DISPATCH-20260912-SECOND-REVIEW-03-A1.json"
+  ],
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      "st-core/src/main/java/com/stcloud/core/mapper/UploadSessionMapper.java",
+      "st-core/src/main/java/com/stcloud/core/service/impl/UploadServiceImpl.java",
+      "st-core/src/main/java/com/stcloud/core/service/impl/upload/UploadManager.java",
+      "st-core/src/main/java/com/stcloud/core/service/impl/upload/UploadCommitManager.java",
+      "st-core/src/main/java/com/stcloud/core/service/impl/upload/UploadStorageManager.java",
+      "st-core/src/test/**",
+      ".ai/runtime/results/DISPATCH-20260912-SECOND-REVIEW-04-A1.json"
+    ],
+    "exclude": [
+      "st-web/**",
+      "st-desktop/**",
+      "st-team/**",
+      "docker/**",
+      ".ai/state/**",
+      ".ai/docs/**"
+    ]
+  },
+  "acceptance": [
+    "20 concurrent merge completeMultipart once and final COMPLETED",
+    "merge CAS acquired then abort returns CONFLICT while merge completes",
+    "20 concurrent abort cleanup once and final ABORTED",
+    "resumable new upload FAILED then retry reaches COMPLETED",
+    "all session status transitions check affectedRows and S3 outside DB transaction"
+  ],
+  "validation": [
+    "运行 STATE-01～04 真实并发测试（不 mock CAS/DB）",
+    "运行 UploadStateMachineIntegrationTest、ConcurrentUploadIntegrationTest、RelayUploadIntegrationTest 等定向回归",
+    "记录命令通过数失败数和 git diff --check"
+  ],
+  "forbidSpawn": true,
+  "forbidGitMvn": false,
+  "etaMinutes": 60,
+  "output": {
+    "artifactRef": ".ai/runtime/results/DISPATCH-20260912-SECOND-REVIEW-04-A1.json"
+  }
+}

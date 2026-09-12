@@ -22,6 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -97,7 +99,8 @@ public class RecycleBinServiceImpl implements RecycleBinService {
 
             // 重名冲突处理
             String name = node.getName();
-            if (fileNodeMapper.countByParentAndName(node.getTenantId(), targetParentId, name) > 0) {
+            if (fileNodeMapper.countActiveByScope(node.getTenantId(), targetParentId,
+                    node.getOwnerId(), node.getSpaceId(), name) > 0) {
                 name = fileService.resolveNameConflict(targetParentId, name);
             }
 
@@ -140,6 +143,10 @@ public class RecycleBinServiceImpl implements RecycleBinService {
     @Transactional
     public void permanentDelete(List<Long> nodeIds) {
         for (Long nodeId : nodeIds) {
+            if (nodeId == null || fileNodeMapper.selectById(nodeId) == null) {
+                // 同一请求中的父子节点或重复 ID 已由前一次删除覆盖。
+                continue;
+            }
             FileNode node = fileService.getNodeByIdAndOwner(nodeId);
             permanentDeleteNodeAndChildren(node);
         }
@@ -160,7 +167,13 @@ public class RecycleBinServiceImpl implements RecycleBinService {
             for (FileNode child : children) {
                 permanentDeleteNodeAndChildren(child);
             }
-        } else {
+        }
+        // 先认领节点删除；受影响行数为 0 时，其余副作用必须全部跳过。
+        // 子节点先删、目录后删，保证父子重复输入和并发清理都只扣减一次。
+        if (fileNodeMapper.deleteById(node.getId()) != 1) {
+            return;
+        }
+        if (node.isFile()) {
             // 删除引用：仅引用归零时发布 PHYSICAL_DELETE 事件；S3 物理删除由事务提交后的
             // 消费者/本地兜底异步执行（事务边界治理 F4），事务内不再做任何 S3/外部网络调用。
             // 旧数据（无 object_id）回退按 storage_path 判重，判重归零同样发布事件。
@@ -184,7 +197,6 @@ public class RecycleBinServiceImpl implements RecycleBinService {
         }
         // 删除 ES 索引
         reliableEventPublisher.publishFileIndex(node, FileIndexEvent.ActionType.DELETE);
-        fileNodeMapper.deleteById(node.getId());
         // 物理删除后节点不可再访问：失效可访问性缓存
         fileService.invalidateAccessible(node.getId());
         // 同步剩余同 MD5 节点的引用计数，保持 ref_count 与实际引用数一致
@@ -204,8 +216,35 @@ public class RecycleBinServiceImpl implements RecycleBinService {
                 .and(w -> w.isNull(FileNode::getSpaceId).or().le(FileNode::getSpaceId, 0));
         List<FileNode> nodes = fileNodeMapper.selectList(wrapper);
         for (FileNode node : nodes) {
-            permanentDeleteNodeAndChildren(node);
+            if (!hasRecycledAncestor(node)) {
+                permanentDeleteNodeAndChildren(node);
+            }
         }
+    }
+
+    /** 任意层级存在已回收祖先时，由最外层回收根统一递归删除。 */
+    private boolean hasRecycledAncestor(FileNode node) {
+        Set<Long> seen = new HashSet<>();
+        Long parentId = node.getParentId();
+        while (parentId != null && parentId > 0 && seen.add(parentId)) {
+            FileNode parent = fileNodeMapper.selectById(parentId);
+            if (parent == null || !java.util.Objects.equals(parent.getTenantId(), node.getTenantId())
+                    || !java.util.Objects.equals(parent.getOwnerId(), node.getOwnerId())
+                    || !sameSpace(parent.getSpaceId(), node.getSpaceId())) {
+                return false;
+            }
+            if (parent.getStatus() == NodeStatus.RECYCLED.getCode()) {
+                return true;
+            }
+            parentId = parent.getParentId();
+        }
+        return false;
+    }
+
+    private boolean sameSpace(Long left, Long right) {
+        long leftScope = left == null ? 0L : left;
+        long rightScope = right == null ? 0L : right;
+        return leftScope == rightScope;
     }
 
     @Override
@@ -213,11 +252,9 @@ public class RecycleBinServiceImpl implements RecycleBinService {
         LocalDateTime cutoff = LocalDateTime.now().minusDays(RETENTION_DAYS);
         LambdaQueryWrapper<FileNode> wrapper = new LambdaQueryWrapper<FileNode>()
                 .eq(FileNode::getStatus, NodeStatus.RECYCLED.getCode())
-                .lt(FileNode::getUpdatedAt, cutoff)
-                .notInSql(FileNode::getParentId,
-                        "SELECT id FROM file_node WHERE status = " + NodeStatus.RECYCLED.getCode()
-                                + " AND deleted = 0");
+                .lt(FileNode::getUpdatedAt, cutoff);
         return fileNodeMapper.selectList(wrapper).stream()
+                .filter(node -> !hasRecycledAncestor(node))
                 .map(FileNode::getId)
                 .collect(Collectors.toList());
     }

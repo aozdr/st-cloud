@@ -3,6 +3,7 @@ import api from '../lib/api';
 import { isElectron } from '../lib/electron';
 import { useTransferStore } from '../store/transfer';
 import { useStorageStore } from '../store/storage';
+import { calculateFileMd5 } from '../lib/file-md5';
 import type { UploadTask, UploadTaskStatus, TransferTask } from '../types';
 import UploadPanel from '../components/file/UploadPanel';
 
@@ -21,32 +22,6 @@ const UploadContext = createContext<UploadContextValue | null>(null);
 
 const CHUNK_SIZE = 5 * 1024 * 1024; // 5MB
 
-
-// SparkMD5 for MD5 calculation
-import SparkMD5 from 'spark-md5';
-
-async function calculateMd5(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const spark = new SparkMD5.ArrayBuffer();
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      spark.append(e.target?.result as ArrayBuffer);
-      // Append file size so files with identical prefixes but different sizes do not collide
-      const sizeBuf = new ArrayBuffer(8);
-      new DataView(sizeBuf).setFloat64(0, file.size);
-      spark.append(sizeBuf);
-      resolve(spark.end());
-    };
-    reader.onerror = () => reject(new Error('Failed to read file for MD5'));
-    // For large files, hash the first 2MB + file size for speed; otherwise hash the whole file
-    if (file.size > 10 * 1024 * 1024) {
-      const blob = file.slice(0, 2 * 1024 * 1024);
-      reader.readAsArrayBuffer(blob);
-    } else {
-      reader.readAsArrayBuffer(file);
-    }
-  });
-}
 
 async function uploadChunkToS3(url: string, chunk: Blob): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -109,7 +84,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
       let transferMode: 'direct' | 'relay' = 'direct';
       try {
         // Step 1: Calculate MD5
-        const fileMd5 = await calculateMd5(file);
+        const fileMd5 = await calculateFileMd5(file);
         updateTask(taskId, { fileMd5, status: 'pending', progress: 5 });
 
         // Step 2: Check instant upload（替换上传跳过秒传，始终生成新版本）

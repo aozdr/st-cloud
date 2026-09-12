@@ -1,0 +1,33 @@
+{
+  "dispatchId": "DISPATCH-20260912-SECOND-REVIEW-10-A1",
+  "taskId": "TASK-20260912-second-review-fix-10",
+  "status": "completed",
+  "artifactRefs": [
+    ".ai/docs/20260912-second-review-fix/exp-review.md"
+  ],
+  "criterionProposal": {
+    "id": "EXP_ACCEPT",
+    "outcome": "pass",
+    "by": "experience_review",
+    "dispatchId": "DISPATCH-20260912-SECOND-REVIEW-10-A1",
+    "evidenceRef": ".ai/docs/20260912-second-review-fix/exp-review.md",
+    "validatedRevision": "working-tree-phase7-20260912"
+  },
+  "blockerProposals": [],
+  "validation": {
+    "sources": [
+      "git diff -- st-web st-desktop",
+      "git diff --name-only -- '*.css' '*.scss' '*.tsx' '*.vue' '*.svg' 'st-desktop/src/renderer/**'",
+      ".ai/docs/20260912-second-review-fix/testreport.md",
+      ".ai/docs/20260912-second-review-fix/uispec.md"
+    ],
+    "findings": [
+      "仅 st-web/src/hooks/useUpload.tsx 在 UI 类后缀的 diff 中出现，改动为完整 MD5 的导入和调用；无 JSX、CSS、Desktop renderer 改动。",
+      "Web 上传、Desktop IPC 任务和 Archive 解压提交仍使用既有错误展示链路；没有新增 UI。",
+      "Phase 7 报告记录 Web build、Desktop tsc --noEmit 和主进程构建通过；完整 Desktop build 因 Electron 系统缓存 ZIP 权限拒绝未完成。",
+      "ArchiveDialog 的 contents 请求固定显示“读取压缩包失败”，该入口不能显示新超限错误的具体原因；extract 提交/轮询路径显示错误消息。",
+      "未执行浏览器或安装包端到端体验测试；此结果仅对静态 UI 约束和已记录构建证据作有边界的通过提议。"
+    ],
+    "residualRisk": "Archive 浏览内容入口沿用通用失败 toast；大文件完整 MD5 的实际等待时间未测；Desktop 安装包未构建成功。"
+  }
+}

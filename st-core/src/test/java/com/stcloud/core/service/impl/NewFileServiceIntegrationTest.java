@@ -124,6 +124,7 @@ class NewFileServiceIntegrationTest extends AbstractIntegrationTest {
 
     private void mockDefaults(String name) {
         when(fileService.resolveNameConflict(anyLong(), anyString())).thenReturn(name);
+        when(fileService.resolveTeamNameConflict(anyLong(), anyLong(), anyString())).thenReturn(name);
         when(fileService.validateAndGetParentPath(anyLong())).thenReturn("/");
         when(fileService.guessContentType(anyString())).thenReturn("application/octet-stream");
         when(fileService.extractSuffix(anyString())).thenReturn(name.substring(name.lastIndexOf('.') + 1));
@@ -217,6 +218,7 @@ class NewFileServiceIntegrationTest extends AbstractIntegrationTest {
         newFileService.createBlankFile("docx", folder.getId(), 9L, null);
 
         verify(fileService).validateTeamNode(9L, folder.getId());
+        verify(fileService).resolveTeamNameConflict(9L, folder.getId(), "新建文档.docx");
     }
 
     @Test

@@ -104,7 +104,9 @@ public class NewFileServiceImpl implements NewFileService {
                 ? fileService.validateTeamParentPath(spaceId, effectiveParentId)
                 : fileService.validateAndGetParentPath(effectiveParentId);
         String baseName = normalizeFileName(fileName, suffix);
-        String nodeName = fileService.resolveNameConflict(effectiveParentId, baseName);
+        String nodeName = spaceId != null && spaceId > 0
+                ? fileService.resolveTeamNameConflict(spaceId, effectiveParentId, baseName)
+                : fileService.resolveNameConflict(effectiveParentId, baseName);
 
         // 3. 配额预检 + 云盘总容量校验（TC-07）：并发安全由第 7 步原子扣减兜底
         checkQuota(userId, spaceId, content.length);

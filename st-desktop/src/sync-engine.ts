@@ -8,7 +8,7 @@ import {
   resetSyncData,
 } from './database';
 import { FileWatcher, type FileChangeEvent } from './file-watcher';
-import { calculateSampledMd5 } from './utils/md5';
+import { calculateFileMd5 } from './utils/md5';
 import { shouldRetryUpload } from './sync-retry';
 import {
   isLocallyChanged,
@@ -392,7 +392,7 @@ export class SyncEngine implements SyncEngineCtx {
             const mtimeUnchanged = (state.localMtime ?? 0) >= stat.mtimeMs;
             let contentUnchanged = true;
             if (mtimeUnchanged && state.md5) {
-              const localMd5 = await calculateSampledMd5(absPath, stat.size).catch(() => null);
+              const localMd5 = await calculateFileMd5(absPath).catch(() => null);
               contentUnchanged = localMd5 === state.md5 || localMd5 == null;
             }
             if (mtimeUnchanged && contentUnchanged) {

@@ -6,8 +6,11 @@ import com.stcloud.common.response.ResultCode;
 import com.stcloud.core.dto.StorageInfoVO;
 import com.stcloud.core.entity.FileNode;
 import com.stcloud.core.entity.FileVersion;
+import com.stcloud.core.entity.UploadSession;
 import com.stcloud.core.enums.UploadStatus;
 import com.stcloud.core.mapper.FileNodeMapper;
+import com.stcloud.core.mapper.FileChunkMapper;
+import com.stcloud.core.mapper.UploadSessionMapper;
 import com.stcloud.core.mapper.TeamStorageMapper;
 import com.stcloud.core.mapper.UserQuotaMapper;
 import com.stcloud.core.service.VersionService;
@@ -27,6 +30,10 @@ public class UploadManager {
 
     @Resource
     private FileNodeMapper fileNodeMapper;
+    @Resource
+    private UploadSessionMapper uploadSessionMapper;
+    @Resource
+    private FileChunkMapper fileChunkMapper;
 
     @Resource
     private UserQuotaMapper userQuotaMapper;
@@ -109,7 +116,7 @@ public class UploadManager {
      * 由 Spring 代理保证失败状态落库后即提交，不占用长事务连接。
      */
     @Transactional
-    public void handleMergeFailure(FileNode node, boolean isReplaceUpload) {
+    public void handleMergeFailure(FileNode node, Long sessionId, boolean isReplaceUpload) {
         if (isReplaceUpload) {
             FileVersion latest = versionService.getLatestVersion(node.getId());
             if (latest != null) {
@@ -121,6 +128,7 @@ public class UploadManager {
                 node.setUploadStatus(UploadStatus.FAILED.getCode());
             }
             updateNodeOrThrow(node, "上传失败回滚时文件已被其他操作更新，请重试");
+            markSessionFailed(sessionId);
             return;
         }
         // 新建上传：不删除节点，标记失败供恢复
@@ -132,6 +140,7 @@ public class UploadManager {
             throw new BusinessException(ResultCode.CONFLICT,
                     "上传失败状态写入时文件已被其他操作更新，请重试");
         }
+        markSessionFailed(sessionId);
     }
 
     /**
@@ -153,9 +162,42 @@ public class UploadManager {
         return true;
     }
 
+    /** 中转会话 CAS 中止后的短事务：S3 abort 已由调用方在事务外完成。 */
+    @Transactional
+    public void cleanupClaimedRelayAbort(UploadSession session) {
+        FileNode node = fileNodeMapper.selectByIdForUpdate(session.getFileNodeId());
+        // 替换上传可能已发起新会话；旧会话超时不得回滚新会话写入的节点。
+        if (node != null && node.getUploadStatus() != UploadStatus.COMPLETED.getCode()
+                && java.util.Objects.equals(node.getStoragePath(), session.getStoragePath())) {
+            rollbackUploadNode(node);
+        }
+        fileChunkMapper.deleteByUploadId(session.getUploadId());
+    }
+
+    /** S3 complete 已成功但 DB finalize 回滚：原 multipart 不可重试，收敛为 ABORTED。 */
+    @Transactional
+    public void handleFinalizationFailure(UploadSession session) {
+        FileNode current = fileNodeMapper.selectByIdForUpdate(session.getFileNodeId());
+        if (current != null && current.getUploadStatus() != UploadStatus.COMPLETED.getCode()
+                && java.util.Objects.equals(current.getStoragePath(), session.getStoragePath())) {
+            rollbackUploadNode(current);
+        }
+        fileChunkMapper.deleteByUploadId(session.getUploadId());
+        if (uploadSessionMapper.transitionStatus(session.getId(), java.util.List.of(1), 3) != 1) {
+            throw new BusinessException(ResultCode.CONFLICT, "合并落库失败后上传会话状态已变化");
+        }
+    }
+
     private void updateNodeOrThrow(FileNode node, String message) {
         if (fileNodeMapper.updateById(node) != 1) {
             throw new BusinessException(ResultCode.CONFLICT, message);
+        }
+    }
+
+    private void markSessionFailed(Long sessionId) {
+        // 合并失败的节点恢复和 MERGING→FAILED 在同一短事务内完成。
+        if (uploadSessionMapper.transitionStatus(sessionId, java.util.List.of(1), 4) != 1) {
+            throw new BusinessException(ResultCode.CONFLICT, "合并失败时上传会话状态已变化");
         }
     }
 }

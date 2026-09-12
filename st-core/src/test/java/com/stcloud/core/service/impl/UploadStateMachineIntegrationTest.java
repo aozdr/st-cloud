@@ -17,6 +17,7 @@ import com.stcloud.core.enums.UploadStatus;
 import com.stcloud.core.event.ReliableEventPublisher;
 import com.stcloud.core.mapper.FileChunkMapper;
 import com.stcloud.core.mapper.FileNodeMapper;
+import com.stcloud.core.mapper.UploadSessionMapper;
 import com.stcloud.core.service.CloudStorageService;
 import com.stcloud.core.service.FileObjectService;
 import com.stcloud.core.service.FileService;
@@ -25,6 +26,7 @@ import com.stcloud.core.service.UploadService;
 import com.stcloud.core.service.VersionService;
 import com.stcloud.core.service.impl.upload.UploadChunkManager;
 import com.stcloud.core.service.impl.upload.UploadCommitManager;
+import com.stcloud.core.service.impl.upload.UploadInitCommitManager;
 import com.stcloud.core.service.impl.upload.UploadEventPublisher;
 import com.stcloud.core.service.impl.upload.UploadManager;
 import com.stcloud.core.service.impl.upload.UploadStorageManager;
@@ -145,6 +147,11 @@ class UploadStateMachineIntegrationTest extends AbstractIntegrationTest {
         }
 
         @Bean
+        UploadInitCommitManager uploadInitCommitManager() {
+            return new UploadInitCommitManager();
+        }
+
+        @Bean
         UploadService uploadService() {
             return new UploadServiceImpl();
         }
@@ -158,6 +165,8 @@ class UploadStateMachineIntegrationTest extends AbstractIntegrationTest {
 
     @Autowired
     private FileChunkMapper fileChunkMapper;
+    @Autowired
+    private UploadSessionMapper uploadSessionMapper;
 
     @Autowired
     private StorageService storageService;
@@ -192,13 +201,13 @@ class UploadStateMachineIntegrationTest extends AbstractIntegrationTest {
             int dot = name.lastIndexOf('.');
             return dot > 0 ? name.substring(dot + 1) : null;
         });
-        when(fileService.toVO(any(FileNode.class))).thenAnswer(inv -> {
+        doAnswer(inv -> {
             FileNode n = inv.getArgument(0);
             FileNodeVO vo = new FileNodeVO();
             vo.setId(n.getId());
             vo.setName(n.getName());
             return vo;
-        });
+        }).when(fileService).toVO(any(FileNode.class));
     }
 
     private UploadInitResponse init(String name, int totalChunks, String md5) {
@@ -375,6 +384,9 @@ class UploadStateMachineIntegrationTest extends AbstractIntegrationTest {
         assertNotNull(failed, "失败后节点应保留供重试");
         assertEquals(UploadStatus.FAILED.getCode(), failed.getUploadStatus());
         assertEquals(2, chunks(resp.getUploadId()).size(), "失败后分片应保留供断点续传");
+        Long sessionId = jdbcTemplate.queryForObject(
+                "SELECT id FROM upload_session WHERE upload_id = ?", Long.class, resp.getUploadId());
+        assertEquals(4, uploadSessionMapper.selectById(sessionId).getStatus(), "合并失败会话须为 FAILED");
 
         // 恢复 S3 后重试合并：同一节点转为 COMPLETED（失败可恢复）
         doNothing().when(storageService).completeMultipartUpload(anyString(), anyString());
@@ -382,6 +394,7 @@ class UploadStateMachineIntegrationTest extends AbstractIntegrationTest {
         assertEquals(resp.getFileId(), vo.getId());
         FileNode recovered = fileNodeMapper.selectById(resp.getFileId());
         assertEquals(UploadStatus.COMPLETED.getCode(), recovered.getUploadStatus());
+        assertEquals(2, uploadSessionMapper.selectById(sessionId).getStatus(), "重试后会话须为 COMPLETED");
     }
 
     @Test

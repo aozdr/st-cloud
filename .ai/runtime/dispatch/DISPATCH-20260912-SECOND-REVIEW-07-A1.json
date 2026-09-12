@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260912-SECOND-REVIEW-07-A1",
+  "taskId": "TASK-20260912-second-review-fix-07",
+  "idempotencyKey": "second-review-fix-phase-07",
+  "taskCode": "REGRESSION",
+  "role": "tester",
+  "taskType": "test",
+  "objective": "只在 Phase 1～6 完成并通过后执行 Phase 7：修正 simpleUpload 100MB 错误文案，串行运行完整 backend/team/Web/Desktop/schema/git 门禁，记录真实命令、通过数、失败数、环境限制，写 testreport/changereport；不掩盖失败。",
+  "taskRefs": [
+    ".ai/tasks/TASK-20260912-second-review-fix-07.md"
+  ],
+  "stateRef": ".ai/state/20260912-second-review-fix.yaml",
+  "artifactRefs": [
+    ".ai/docs/20260912-second-review-fix/design.md",
+    ".ai/docs/20260912-second-review-fix/testcases.md",
+    ".ai/runtime/results/DISPATCH-20260912-SECOND-REVIEW-06-A1.json"
+  ],
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      "st-core/src/main/java/com/stcloud/core/service/impl/UploadServiceImpl.java",
+      ".ai/docs/20260912-second-review-fix/testreport.md",
+      ".ai/docs/20260912-second-review-fix/changereport.md",
+      ".ai/runtime/results/DISPATCH-20260912-SECOND-REVIEW-07-A1.json"
+    ],
+    "exclude": [
+      "st-web/src/**",
+      "st-desktop/src/**",
+      "st-team/**",
+      "docker/**",
+      ".ai/state/**"
+    ]
+  },
+  "acceptance": [
+    "100MB simpleUpload 限制与提示一致",
+    "st-core、st-team、Web、Desktop、SchemaConsistencyTest、compare-schema、git diff --check 命令结果真实记录",
+    "每项给出命令、通过数与失败数，失败或环境限制不写成通过",
+    "报告按 P0-01 与 P1-01～05 逐项列修改影响和遗留风险"
+  ],
+  "validation": [
+    "mvn -pl st-core -am test",
+    "mvn -pl st-team -am test 或无测试时 compile",
+    "st-web npm run build 与 st-desktop npm run lint/build:main",
+    "SchemaConsistencyTest 与 .ai/scripts/compare-schema.ps1",
+    "git diff --check"
+  ],
+  "forbidSpawn": true,
+  "forbidGitMvn": false,
+  "etaMinutes": 90,
+  "output": {
+    "artifactRef": ".ai/runtime/results/DISPATCH-20260912-SECOND-REVIEW-07-A1.json"
+  }
+}

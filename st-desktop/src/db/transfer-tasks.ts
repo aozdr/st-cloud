@@ -63,7 +63,7 @@ export function createTask(task: TransferTask): void {
        file_path, parent_id, space_id, upload_id, s3_upload_id, file_id, total_chunks, uploaded_chunks,
        node_id, save_path, created_at, updated_at)
     VALUES
-      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       task.id,
       task.type,

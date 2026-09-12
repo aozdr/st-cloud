@@ -181,6 +181,90 @@ class FileServiceFlowIntegrationTest extends AbstractIntegrationTest {
         return n;
     }
 
+    private FileNode scopedFolder(String name, Long parentId, Long ownerId, Long spaceId) {
+        FileNode node = new FileNode();
+        node.setTenantId(TENANT);
+        node.setParentId(parentId);
+        node.setNodeType(NodeType.FOLDER.getCode());
+        node.setName(name);
+        node.setPath("/" + name);
+        node.setStatus(NodeStatus.NORMAL.getCode());
+        node.setUploadStatus(UploadStatus.COMPLETED.getCode());
+        node.setOwnerId(ownerId);
+        node.setUploaderId(ownerId);
+        node.setSpaceId(spaceId);
+        node.setRefCount(0);
+        node.setVersion(0);
+        fileNodeMapper.insert(node);
+        return node;
+    }
+
+    @Test
+    void scope01_personalRootNamesAreIsolatedButOwnDuplicatesConflict() {
+        scopedFolder("shared", 0L, 2002L, null);
+        scopedFolder("shared", 0L, USER, 10L);
+        FileNodeVO mine = fileService.createFolder(0L, "shared");
+        assertNotNull(mine.getId());
+        assertEquals(1, fileNodeMapper.countActiveByScope(TENANT, 0L, USER, null, "shared"));
+        assertEquals(1, fileNodeMapper.countActiveByScope(TENANT, 0L, 2002L, null, "shared"));
+        assertThrows(BusinessException.class, () -> fileService.createFolder(0L, "shared"));
+    }
+
+    @Test
+    void scope02_teamRootNamesAreIsolatedButSameSpaceConflicts() {
+        scopedFolder("reports", 0L, USER, 10L);
+        FileNodeVO created = fileService.createTeamFolder(11L, 0L, "reports");
+        assertNotNull(created.getId());
+        assertEquals(1, fileNodeMapper.countActiveByScope(TENANT, 0L, null, 10L, "reports"));
+        assertEquals(1, fileNodeMapper.countActiveByScope(TENANT, 0L, null, 11L, "reports"));
+        assertThrows(BusinessException.class, () -> fileService.createTeamFolder(11L, 0L, "reports"));
+    }
+
+    @Test
+    void scope04_renameMoveCopyAndRestoreOnlySeePersonalOwner() {
+        FileNode target = folder("destination", 0L, "/destination");
+        FileNode rename = folder("rename-source", 0L, "/rename-source");
+        scopedFolder("renamed", 0L, 2002L, null);
+        assertEquals("renamed", fileService.rename(rename.getId(), "renamed").getName());
+
+        FileNode move = folder("moving", 0L, "/moving");
+        scopedFolder("moving", target.getId(), 2002L, null);
+        fileService.move(List.of(move.getId()), target.getId());
+        assertEquals(target.getId(), fileNodeMapper.selectById(move.getId()).getParentId());
+
+        FileNode copy = folder("copying", 0L, "/copying");
+        scopedFolder("copying", target.getId(), 2002L, null);
+        fileService.copy(List.of(copy.getId()), target.getId());
+        assertEquals(1, fileNodeMapper.countActiveByScope(TENANT, target.getId(), USER, null, "copying"));
+
+        FileNode recycled = folder("restore-me", 0L, "/restore-me");
+        fileService.deleteToRecycleBin(List.of(recycled.getId()));
+        scopedFolder("restore-me", 0L, 2002L, null);
+        recycleBinService.restore(List.of(recycled.getId()));
+        assertEquals("restore-me", fileNodeMapper.selectById(recycled.getId()).getName());
+    }
+
+    @Test
+    void scope04_teamRenameMoveCopyUseSpaceNotUploader() {
+        FileNode target = scopedFolder("team-target", 0L, USER, 11L);
+        FileNode rename = scopedFolder("team-rename-source", 0L, USER, 11L);
+        scopedFolder("team-renamed", 0L, USER, 10L);
+        assertEquals("team-renamed", fileService.renameTeamFile(11L, rename.getId(), "team-renamed").getName());
+
+        FileNode move = scopedFolder("team-moving", 0L, USER, 11L);
+        scopedFolder("team-moving", target.getId(), USER, 10L);
+        fileService.moveTeamFiles(11L, List.of(move.getId()), target.getId());
+        assertEquals(target.getId(), fileNodeMapper.selectById(move.getId()).getParentId());
+
+        FileNode copy = scopedFolder("team-copying", 0L, USER, 11L);
+        scopedFolder("team-copying", target.getId(), USER, 10L);
+        fileService.copyTeamFiles(11L, List.of(copy.getId()), target.getId());
+        assertEquals(1, fileNodeMapper.countActiveByScope(TENANT, target.getId(), null, 11L, "team-copying"));
+        assertEquals("team-copying(1)", fileService.resolveTeamNameConflict(11L, target.getId(), "team-copying"));
+        scopedFolder("team-conflict", target.getId(), 2002L, 11L);
+        assertEquals("team-conflict(1)", fileService.resolveTeamNameConflict(11L, target.getId(), "team-conflict"));
+    }
+
     // ---- 文件移动 ----
 
     @Test

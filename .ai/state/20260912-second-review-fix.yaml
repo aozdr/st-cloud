@@ -1,0 +1,427 @@
+{
+  "schemaVersion": 2,
+  "definitionVersion": 2,
+  "legacy": false,
+  "taskId": "20260912-second-review-fix",
+  "scale": "large",
+  "status": "incomplete",
+  "goal": {
+    "objective": "严格按 st-cloud 第二轮 Review 修复计划的 Phase 1→7 顺序，关闭 P0/P1 哈希、同名 scope、Upload Init 事务、UploadSession 状态机、回收站幂等和 Archive 输入上限问题，并完成真实回归验证。",
+    "scope": {
+      "include": [
+        "st-web upload hash",
+        "st-desktop upload hash",
+        "st-core upload/file/recycle/archive",
+        "必要的 st-team 调用与测试",
+        "本轮 .ai 文档与证据",
+        "用户追加 Desktop 上传/下载 createTask SQL 修复"
+      ],
+      "exclude": [
+        "UI 视觉",
+        "FileServiceImpl 大拆分",
+        "微服务化",
+        "SHA-256",
+        "无关重构",
+        "自动清理存量冲突",
+        "未经确认的公开 API/schema/migration"
+      ]
+    },
+    "completionCriteria": [
+      "Web/Desktop 使用完整文件 MD5，采样 hash 不再作为 fileMd5/秒传依据",
+      "个人 owner 与团队 space 的同名检查完整隔离且同 scope 仍冲突",
+      "Upload Init 的 node/session/chunks/version DB 写入原子回滚，S3 init/abort 在事务外",
+      "UploadSession 使用 CAS 权威状态机，merge/abort 真实并发测试通过",
+      "回收站 root-only 与重复 permanentDelete 不重复退 quota/ref/object",
+      "Archive ZIP 输入流受 maxArchiveInputSize 限制并清理临时文件",
+      "计划要求的 backend、team、Web、Desktop、schema 和 git 门禁有真实证据",
+      "无新增未批准的 P0/P1，最终报告列出所有遗留 P0/P1/P2 风险"
+    ]
+  },
+  "revision": {
+    "design": "design-approved-20260912-second-review",
+    "code": "working-tree-second-review-phase7-a2-20260912"
+  },
+  "exitCriteria": [
+    {
+      "id": "REQ_ANALYSIS",
+      "status": "done",
+      "dependsOn": [],
+      "by": "codex-main",
+      "dispatchId": "DIRECT-20260912-REQ_ANALYSIS",
+      "evidenceRef": ".ai/docs/20260912-second-review-fix/requirement.md",
+      "validatedRevision": "design-approved-20260912-second-review",
+      "completedAt": "2026-09-12T06:01:27.0002841Z",
+      "userConfirmedAt": "2026-09-12T06:01:27.0002841Z",
+      "confirmedBy": "user",
+      "confirmationArtifact": ".ai/docs/20260912-second-review-fix/confirmation.md"
+    },
+    {
+      "id": "IMPACT_ANALYSIS",
+      "status": "done",
+      "dependsOn": [
+        "REQ_ANALYSIS"
+      ],
+      "by": "codex-main",
+      "dispatchId": "DIRECT-20260912-IMPACT_ANALYSIS",
+      "evidenceRef": ".ai/docs/20260912-second-review-fix/impact.md",
+      "validatedRevision": "design-approved-20260912-second-review",
+      "completedAt": "2026-09-12T06:01:27.0002841Z"
+    },
+    {
+      "id": "EXP_DESIGN",
+      "status": "done",
+      "dependsOn": [
+        "REQ_ANALYSIS"
+      ],
+      "by": "codex-main",
+      "dispatchId": "DIRECT-20260912-EXP_DESIGN",
+      "evidenceRef": ".ai/docs/20260912-second-review-fix/uispec.md",
+      "validatedRevision": "design-approved-20260912-second-review",
+      "completedAt": "2026-09-12T06:01:27.0002841Z"
+    },
+    {
+      "id": "TECH_DESIGN",
+      "status": "done",
+      "dependsOn": [
+        "IMPACT_ANALYSIS",
+        "EXP_DESIGN"
+      ],
+      "by": "codex-main",
+      "dispatchId": "DIRECT-20260912-TECH_DESIGN",
+      "evidenceRef": ".ai/docs/20260912-second-review-fix/design.md",
+      "validatedRevision": "design-approved-20260912-second-review",
+      "completedAt": "2026-09-12T06:01:27.0002841Z",
+      "userConfirmedAt": "2026-09-12T06:01:27.0002841Z",
+      "confirmedBy": "user",
+      "confirmationArtifact": ".ai/docs/20260912-second-review-fix/confirmation.md"
+    },
+    {
+      "id": "TESTCASES",
+      "status": "done",
+      "dependsOn": [
+        "TECH_DESIGN"
+      ],
+      "by": "codex-main",
+      "dispatchId": "DIRECT-20260912-TESTCASES",
+      "evidenceRef": ".ai/docs/20260912-second-review-fix/testcases.md",
+      "validatedRevision": "design-approved-20260912-second-review",
+      "completedAt": "2026-09-12T06:01:27.0002841Z"
+    },
+    {
+      "id": "IMPLEMENTED",
+      "status": "done",
+      "dependsOn": [
+        "TECH_DESIGN",
+        "TESTCASES"
+      ],
+      "by": "codex-main",
+      "dispatchId": "DIRECT-20260912-SECOND-REVIEW-IMPLEMENTED",
+      "evidenceRef": ".ai/runtime/results/DIRECT-20260912-SECOND-REVIEW-IMPLEMENTED.json",
+      "validatedRevision": "working-tree-second-review-phase7-a2-20260912",
+      "completedAt": "2026-09-12T13:29:24.6170686Z"
+    },
+    {
+      "id": "CODE_REVIEW",
+      "status": "done",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ],
+      "by": "code_review_recheck",
+      "dispatchId": "DISPATCH-20260912-SECOND-REVIEW-08-A2",
+      "evidenceRef": ".ai/runtime/results/DISPATCH-20260912-SECOND-REVIEW-08-A2.json",
+      "validatedRevision": "working-tree-second-review-phase7-a2-20260912",
+      "completedAt": "2026-09-12T13:29:25.3163819Z"
+    },
+    {
+      "id": "SECURITY_REVIEW",
+      "status": "pending",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ]
+    },
+    {
+      "id": "EXP_ACCEPT",
+      "status": "pending",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ]
+    },
+    {
+      "id": "TEST_PASS",
+      "status": "pending",
+      "dependsOn": [
+        "CODE_REVIEW",
+        "SECURITY_REVIEW"
+      ]
+    },
+    {
+      "id": "KNOWLEDGE",
+      "status": "pending",
+      "dependsOn": [
+        "TEST_PASS",
+        "SECURITY_REVIEW",
+        "EXP_ACCEPT"
+      ]
+    },
+    {
+      "id": "ACCEPT",
+      "status": "pending",
+      "dependsOn": [
+        "KNOWLEDGE"
+      ]
+    }
+  ],
+  "artifacts": {
+    "prd": {
+      "status": "ready",
+      "ref": ".ai/docs/20260912-second-review-fix/requirement.md",
+      "provides": [
+        "REQ_ANALYSIS"
+      ]
+    },
+    "uiSpec": {
+      "status": "ready",
+      "ref": ".ai/docs/20260912-second-review-fix/uispec.md",
+      "provides": [
+        "REQ_ANALYSIS",
+        "EXP_DESIGN"
+      ]
+    },
+    "impact": {
+      "status": "ready",
+      "ref": ".ai/docs/20260912-second-review-fix/impact.md",
+      "provides": [
+        "IMPACT_ANALYSIS"
+      ]
+    },
+    "archReview": {
+      "status": "ready",
+      "ref": ".ai/docs/20260912-second-review-fix/architecture-review.md",
+      "provides": [
+        "TECH_DESIGN"
+      ]
+    },
+    "design": {
+      "status": "ready",
+      "ref": ".ai/docs/20260912-second-review-fix/design.md",
+      "provides": [
+        "TECH_DESIGN"
+      ]
+    },
+    "testcases": {
+      "status": "ready",
+      "provides": [
+        "TESTCASES"
+      ],
+      "ref": ".ai/docs/20260912-second-review-fix/testcases.md"
+    },
+    "task": {
+      "status": "pending",
+      "provides": [
+        "IMPLEMENTED"
+      ]
+    }
+  },
+  "blockers": [
+    {
+      "status": "resolved",
+      "fingerprint": "team-baseline-subject-id-type",
+      "reason": "基线 Team 测试 Long/String setter 不匹配，2 失败、1 错误；范围内生产编译通过。",
+      "repairAttempts": [
+        {
+          "eventId": "repair:team-baseline-subject-id-type:.ai/docs/20260912-second-review-fix/testreport.md",
+          "evidenceRef": ".ai/docs/20260912-second-review-fix/testreport.md",
+          "outcome": "resolved",
+          "actor": "workflow-manager",
+          "occurredAt": "2026-09-12T13:33:29.9205361Z"
+        }
+      ],
+      "evidenceRef": ".ai/docs/20260912-second-review-fix/testreport.md"
+    }
+  ],
+  "acceptanceEvidence": [],
+  "dispatchLedger": [
+    {
+      "dispatchId": "DISPATCH-20260912-SECOND-REVIEW-01-A1",
+      "taskId": "TASK-20260912-second-review-fix-01",
+      "idempotencyKey": "second-review-fix-phase-01",
+      "role": "executor",
+      "taskType": "implement",
+      "criterionId": "IMPLEMENTED",
+      "childId": "phase1_hash",
+      "status": "evaluated",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260912-SECOND-REVIEW-01-A1.json",
+      "scopeVerified": true,
+      "phaseAcceptance": "HASH stage verified; aggregate IMPLEMENTED remains pending"
+    },
+    {
+      "dispatchId": "DISPATCH-20260912-SECOND-REVIEW-02-A1",
+      "taskId": "TASK-20260912-second-review-fix-02",
+      "idempotencyKey": "second-review-fix-phase-02",
+      "role": "executor",
+      "taskType": "implement",
+      "criterionId": "IMPLEMENTED",
+      "childId": "phase2_name_scope",
+      "status": "evaluated",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260912-SECOND-REVIEW-02-A1.json",
+      "scopeVerified": true,
+      "phaseAcceptance": "NAME_SCOPE stage verified; aggregate IMPLEMENTED remains pending"
+    },
+    {
+      "dispatchId": "DISPATCH-20260912-SECOND-REVIEW-03-A1",
+      "taskId": "TASK-20260912-second-review-fix-03",
+      "idempotencyKey": "second-review-fix-phase-03",
+      "role": "executor",
+      "taskType": "implement",
+      "criterionId": "IMPLEMENTED",
+      "childId": "phase3_upload_init_tx",
+      "status": "evaluated",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260912-SECOND-REVIEW-03-A1.json",
+      "scopeVerified": true,
+      "phaseAcceptance": "UPLOAD_INIT_TX stage verified; aggregate IMPLEMENTED remains pending"
+    },
+    {
+      "status": "evaluated",
+      "taskId": "20260912-second-review-fix",
+      "childId": "codex-main",
+      "taskType": "implement",
+      "resultRef": ".ai/runtime/results/DIRECT-20260912-SECOND-REVIEW-IMPLEMENTED.json",
+      "dispatchId": "DIRECT-20260912-SECOND-REVIEW-IMPLEMENTED",
+      "idempotencyKey": "DIRECT-20260912-SECOND-REVIEW-IMPLEMENTED",
+      "role": "executor",
+      "scopeVerified": true,
+      "criterionId": "IMPLEMENTED",
+      "evaluatedAt": "2026-09-12T13:29:24.6173022Z"
+    },
+    {
+      "status": "evaluated",
+      "taskId": "TASK-20260912-second-review-fix-08",
+      "childId": "code_review_recheck",
+      "taskType": "review",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260912-SECOND-REVIEW-08-A2.json",
+      "dispatchId": "DISPATCH-20260912-SECOND-REVIEW-08-A2",
+      "idempotencyKey": "second-review-fix-code-review-a2",
+      "role": "reviewer",
+      "scopeVerified": true,
+      "criterionId": "CODE_REVIEW",
+      "evaluatedAt": "2026-09-12T13:29:25.3166097Z"
+    }
+  ],
+  "proposals": [],
+  "history": [
+    {
+      "eventId": "EVT-20260912-SECOND-REVIEW-DOCS-PREPARED",
+      "action": "requirement_impact_architecture_design_prepared",
+      "actor": "codex-main",
+      "occurredAt": "2026-09-12T00:00:00Z",
+      "revision": {
+        "design": "design-draft-20260912-second-review",
+        "code": null
+      }
+    },
+    {
+      "eventId": "EVT-20260912-SECOND-REVIEW-PLAN-APPROVED",
+      "action": "user_approved_plan_and_main_evaluated_existing_design_and_testcases",
+      "actor": "codex-main",
+      "occurredAt": "2026-09-12T06:01:27.0002841Z",
+      "revision": {
+        "design": "design-approved-20260912-second-review",
+        "code": null
+      }
+    },
+    {
+      "eventId": "EVT-20260912-SECOND-REVIEW-PHASE12-VERIFIED",
+      "action": "phase_1_and_2_milestones_evaluated",
+      "actor": "codex-main",
+      "occurredAt": "2026-09-12T06:02:49.3775146Z",
+      "revision": {
+        "design": "design-approved-20260912-second-review",
+        "code": null
+      }
+    },
+    {
+      "eventId": "EVT-20260912-SECOND-REVIEW-PHASE3-VERIFIED",
+      "action": "phase_3_milestone_evaluated",
+      "actor": "codex-main",
+      "occurredAt": "2026-09-12T06:09:35.630781Z",
+      "revision": {
+        "design": "design-approved-20260912-second-review",
+        "code": null
+      }
+    },
+    {
+      "revision": {
+        "design": "design-approved-20260912-second-review",
+        "code": "working-tree-second-review-phase7-a2-20260912"
+      },
+      "action": "main_recorded_phase4_to7_and_desktop_evidence_installer_waived_team_gate_open",
+      "eventId": "EVT-20260912-SECOND-REVIEW-PHASE7-DESKTOP",
+      "occurredAt": "2026-09-12T13:29:24.005575Z",
+      "actor": "codex-main",
+      "evidenceRef": ".ai/docs/20260912-second-review-fix/testreport.md"
+    },
+    {
+      "eventId": "DIRECT-20260912-SECOND-REVIEW-IMPLEMENTED:IMPLEMENTED:evaluate",
+      "action": "evaluate",
+      "before": {
+        "id": "IMPLEMENTED",
+        "status": "pending"
+      },
+      "after": {
+        "id": "IMPLEMENTED",
+        "status": "done",
+        "revision": {
+          "design": "design-approved-20260912-second-review",
+          "code": "working-tree-second-review-phase7-a2-20260912"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-12T13:29:24.619583Z",
+      "revision": {
+        "design": "design-approved-20260912-second-review",
+        "code": "working-tree-second-review-phase7-a2-20260912"
+      }
+    },
+    {
+      "eventId": "DISPATCH-20260912-SECOND-REVIEW-08-A2:CODE_REVIEW:evaluate",
+      "action": "evaluate",
+      "before": {
+        "id": "CODE_REVIEW",
+        "status": "pending"
+      },
+      "after": {
+        "id": "CODE_REVIEW",
+        "status": "done",
+        "revision": {
+          "design": "design-approved-20260912-second-review",
+          "code": "working-tree-second-review-phase7-a2-20260912"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-12T13:29:25.3168781Z",
+      "revision": {
+        "design": "design-approved-20260912-second-review",
+        "code": "working-tree-second-review-phase7-a2-20260912"
+      }
+    },
+    {
+      "eventId": "repair:team-baseline-subject-id-type:.ai/docs/20260912-second-review-fix/testreport.md",
+      "action": "repair-blocker",
+      "before": null,
+      "after": {
+        "fingerprint": "team-baseline-subject-id-type",
+        "status": "resolved",
+        "revision": {
+          "design": "design-approved-20260912-second-review",
+          "code": "working-tree-second-review-phase7-a2-20260912"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-12T13:33:29.9257021Z",
+      "revision": {
+        "design": "design-approved-20260912-second-review",
+        "code": "working-tree-second-review-phase7-a2-20260912"
+      }
+    }
+  ]
+}

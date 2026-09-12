@@ -3,6 +3,9 @@ package com.stcloud.core.service.impl.upload;
 import com.stcloud.common.exception.BusinessException;
 import com.stcloud.common.response.ResultCode;
 import com.stcloud.core.config.UploadRelayConfig;
+import com.stcloud.core.entity.UploadSession;
+import com.stcloud.core.mapper.UploadSessionMapper;
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import jakarta.annotation.PreDestroy;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.List;
 
 /**
  * 中转上传缓冲管理器：按 uploadId 隔离临时文件，累积小块至 multipart 分片下限(5MB)后 uploadPart。
@@ -33,6 +37,11 @@ public class RelayBufferManager {
 
     @Resource
     private UploadStorageManager storageManager;
+
+    @Resource
+    private UploadSessionMapper uploadSessionMapper;
+    @Resource
+    private UploadManager uploadManager;
 
     private final ConcurrentMap<String, RelaySession> sessions = new ConcurrentHashMap<>();
 
@@ -207,17 +216,43 @@ public class RelayBufferManager {
         cleanupExpired();
     }
 
-    /** 中止并清理指定会话：先 abort S3 multipart（幂等），再删除临时文件 */
+    /** 中止并清理指定会话：先由持久化状态认领，再在事务外 abort S3。 */
     private void abortSession(String uploadId) {
         RelaySession session = sessions.get(uploadId);
-        if (session != null && session.storagePath != null && session.s3UploadId != null) {
+        if (session == null) {
+            return;
+        }
+        UploadSession persisted = uploadSessionMapper.selectOne(new LambdaQueryWrapper<UploadSession>()
+                .eq(UploadSession::getUploadId, uploadId));
+        if (persisted == null) {
+            // init 尚未提交或已回滚时，由初始化调用方负责 S3 补偿；这里只清理本地缓冲。
+            cleanup(uploadId);
+            return;
+        }
+        if (persisted.getStatus() == 1) {
+            // MERGING 会话由合并者独占，超时扫描不得删除其缓冲或中止 multipart。
+            return;
+        }
+        // ACTIVE/FAILED→ABORTED 是唯一 S3 abort 权限；失败说明其他请求已经认领。
+        boolean claimed = uploadSessionMapper.transitionStatus(persisted.getId(), List.of(0, 4), 3) == 1;
+        if (claimed && session.storagePath != null && session.s3UploadId != null) {
             try {
                 storageManager.abortMultipart(session.storagePath, session.s3UploadId);
             } catch (Exception e) {
                 log.warn("中转会话 abort S3 失败: uploadId={}, error={}", uploadId, e.getMessage());
             }
         }
-        cleanup(uploadId);
+        if (claimed) {
+            try {
+                uploadManager.cleanupClaimedRelayAbort(persisted);
+            } catch (RuntimeException e) {
+                log.error("中转会话中止后的节点与分片回滚失败: uploadId={}", uploadId, e);
+            }
+        }
+        UploadSession latest = claimed ? persisted : uploadSessionMapper.selectById(persisted.getId());
+        if (claimed || latest == null || latest.getStatus() != 1) {
+            cleanup(uploadId);
+        }
     }
 
     private RelaySession getSession(String uploadId) {

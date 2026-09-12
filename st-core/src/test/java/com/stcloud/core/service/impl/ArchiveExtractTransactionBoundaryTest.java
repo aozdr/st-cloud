@@ -4,6 +4,9 @@ import cn.hutool.crypto.digest.DigestUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.stcloud.common.context.TenantContext;
 import com.stcloud.common.context.UserContext;
+import com.stcloud.common.exception.BusinessException;
+import com.stcloud.common.response.ResultCode;
+import com.stcloud.core.config.ArchiveSafetyProperties;
 import com.stcloud.core.CoreTestApplication;
 import com.stcloud.core.entity.FileNode;
 import com.stcloud.core.entity.FileObject;
@@ -39,14 +42,20 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Set;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -152,11 +161,14 @@ class ArchiveExtractTransactionBoundaryTest {
     private UserQuotaMapper userQuotaMapper;
     @Autowired
     private JdbcTemplate jdbcTemplate;
+    private ArchiveSafetyProperties archiveSafetyProperties;
 
     private static final long USER_ID = 100L;
 
     @BeforeEach
     void setUp() {
+        archiveSafetyProperties = (ArchiveSafetyProperties) ReflectionTestUtils.getField(
+                archiveService, "archiveSafetyProperties");
         setUpUser(USER_ID, 1L);
         Mockito.reset(storageService, fileObjectService);
         jdbcTemplate.update("INSERT INTO sys_user (id, tenant_id, username, password, status, storage_used, storage_quota, deleted) "
@@ -165,6 +177,7 @@ class ArchiveExtractTransactionBoundaryTest {
 
     @AfterEach
     void cleanup() {
+        archiveSafetyProperties.setMaxArchiveInputSize(1024L * 1024 * 1024);
         jdbcTemplate.update("DELETE FROM file_node WHERE name IN ('a.txt', 'b.txt', 'folder') "
                 + "OR name LIKE 'tx-archive%'");
         jdbcTemplate.update("DELETE FROM file_object WHERE tenant_id = 1");
@@ -261,6 +274,30 @@ class ArchiveExtractTransactionBoundaryTest {
     }
 
     @Test
+    void extractArchive_allowsOtherOwnerNamesInPersonalRoot() throws Exception {
+        FileNode zip = insertZipNode("tx-archive.zip");
+        // 真实 H2 唯一约束按 owner 隔离；解压目录与文件均不得被别人的根目录同名节点拦截。
+        FileNode otherFile = insertZipNode("a.txt");
+        otherFile.setOwnerId(101L);
+        otherFile.setUploaderId(101L);
+        fileNodeMapper.updateById(otherFile);
+        FileNode otherFolder = insertZipNode("folder");
+        otherFolder.setOwnerId(101L);
+        otherFolder.setUploaderId(101L);
+        otherFolder.setNodeType(0);
+        fileNodeMapper.updateById(otherFolder);
+        byte[] zipData = buildZip("a.txt:hello", "folder/b.txt:world");
+        when(storageService.downloadObject(zip.getStoragePath()))
+                .thenAnswer(inv -> new ByteArrayInputStream(zipData));
+
+        assertEquals(2, archiveService.extractArchive(zip.getId(), 0L));
+        assertEquals(1, fileNodeMapper.countActiveByScope(1L, 0L, USER_ID, null, "a.txt"));
+        assertEquals(1, fileNodeMapper.countActiveByScope(1L, 0L, 101L, null, "a.txt"));
+        assertEquals(1, fileNodeMapper.countActiveByScope(1L, 0L, USER_ID, null, "folder"));
+        assertEquals(1, fileNodeMapper.countActiveByScope(1L, 0L, 101L, null, "folder"));
+    }
+
+    @Test
     void extractArchive_dbFailure_cleansUploadedObjects() throws Exception {
         FileNode zip = insertZipNode("tx-archive.zip");
         byte[] zipData = buildZip("a.txt:hello", "folder/b.txt:world");
@@ -279,5 +316,37 @@ class ArchiveExtractTransactionBoundaryTest {
         assertEquals(0L, fileNodeMapper.selectCount(new LambdaQueryWrapper<FileNode>()
                         .eq(FileNode::getName, "a.txt")), "DB 失败后节点应随事务回滚");
         assertEquals(0L, userQuotaMapper.getUserQuota(USER_ID).getUsed(), "DB 失败后配额不应扣减");
+    }
+
+    @Test
+    void archive01_02_inputLimitStopsStreamingAndDeletesTempFile() throws Exception {
+        archiveSafetyProperties.setMaxArchiveInputSize(1024L * 1024);
+        FileNode zip = insertZipNode("tx-archive-limit.zip");
+        byte[] twoMegabytes = new byte[2 * 1024 * 1024];
+        AtomicInteger bytesRead = new AtomicInteger();
+        when(storageService.downloadObject(zip.getStoragePath())).thenAnswer(inv -> new ByteArrayInputStream(twoMegabytes) {
+            @Override
+            public synchronized int read(byte[] b, int off, int len) {
+                int count = super.read(b, off, len);
+                if (count > 0) bytesRead.addAndGet(count);
+                return count;
+            }
+        });
+        Set<Path> before = archiveTempFiles();
+
+        BusinessException error = assertThrows(BusinessException.class,
+                () -> archiveService.extractArchive(zip.getId(), 0L));
+
+        assertEquals(ResultCode.FILE_TOO_LARGE.getCode(), error.getCode());
+        assertTrue(bytesRead.get() < twoMegabytes.length, "超过 1MB 后不得继续读完 2MB 输入");
+        assertEquals(before, archiveTempFiles(), "超限临时 ZIP 必须删除");
+        verify(storageService, times(0)).uploadObject(anyString(), any(InputStream.class), anyLong(), anyString());
+    }
+
+    private Set<Path> archiveTempFiles() throws Exception {
+        try (var paths = Files.list(Path.of(System.getProperty("java.io.tmpdir")))) {
+            return paths.filter(path -> path.getFileName().toString().startsWith("archive-extract-"))
+                    .collect(Collectors.toSet());
+        }
     }
 }

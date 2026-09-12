@@ -73,7 +73,7 @@ class TeamServicePermissionIntegrationTest extends AbstractTeamIntegrationTest {
         teamFolderPermissionMapper.insert(rule);
     }
 
-    private FolderPermissionRequest.PermissionRule rule(String subjectType, Long subjectId, String permissionsJson) {
+    private FolderPermissionRequest.PermissionRule rule(String subjectType, String subjectId, String permissionsJson) {
         FolderPermissionRequest.PermissionRule rule = new FolderPermissionRequest.PermissionRule();
         rule.setSubjectType(subjectType);
         rule.setSubjectId(subjectId);
@@ -81,7 +81,7 @@ class TeamServicePermissionIntegrationTest extends AbstractTeamIntegrationTest {
         return rule;
     }
 
-    private FolderPermissionRequest ruleRequest(String subjectType, Long subjectId, String permissionsJson) {
+    private FolderPermissionRequest ruleRequest(String subjectType, String subjectId, String permissionsJson) {
         FolderPermissionRequest request = new FolderPermissionRequest();
         request.setRules(List.of(rule(subjectType, subjectId, permissionsJson)));
         return request;
@@ -245,7 +245,7 @@ class TeamServicePermissionIntegrationTest extends AbstractTeamIntegrationTest {
         setUpUser(100L, 1L);
         BusinessException ex = assertThrows(BusinessException.class,
                 () -> teamService.setFolderPermissions(attackerSpace, victimNode.getId(),
-                        ruleRequest("all", 0L, "{\"view\":true}")));
+                        ruleRequest("all", "0", "{\"view\":true}")));
         assertEquals(ResultCode.TEAM_PERMISSION_DENIED.getCode(), ex.getCode());
 
         // 读路径同样拒绝跨空间访问
@@ -260,7 +260,7 @@ class TeamServicePermissionIntegrationTest extends AbstractTeamIntegrationTest {
         // 同空间合法配置不受影响
         setUpUser(200L, 1L);
         assertDoesNotThrow(() -> teamService.setFolderPermissions(victimSpace, victimNode.getId(),
-                ruleRequest("all", 0L, "{\"view\":true}")));
+                ruleRequest("all", "0", "{\"view\":true}")));
     }
 
     @Test
@@ -273,17 +273,17 @@ class TeamServicePermissionIntegrationTest extends AbstractTeamIntegrationTest {
         // all 规则显式包含空间管理权限点 → 拒绝
         BusinessException ex1 = assertThrows(BusinessException.class,
                 () -> teamService.setFolderPermissions(spaceId, node.getId(),
-                        ruleRequest("all", 0L, "{\"view\":true,\"manage_members\":true}")));
+                        ruleRequest("all", "0", "{\"view\":true,\"manage_members\":true}")));
         assertEquals(ResultCode.BAD_REQUEST.getCode(), ex1.getCode());
         // all 规则含 manage_settings → 拒绝
         assertThrows(BusinessException.class,
                 () -> teamService.setFolderPermissions(spaceId, node.getId(),
-                        ruleRequest("all", 0L, "{\"manage_settings\":true}")));
+                        ruleRequest("all", "0", "{\"manage_settings\":true}")));
         // all 规则 permissions 为空 + 旧单值 permission=0（管理）→ 回退映射含空间管理权限 → 拒绝
         FolderPermissionRequest legacyAll = new FolderPermissionRequest();
         FolderPermissionRequest.PermissionRule legacyRule = new FolderPermissionRequest.PermissionRule();
         legacyRule.setSubjectType("all");
-        legacyRule.setSubjectId(0L);
+        legacyRule.setSubjectId("0");
         legacyRule.setPermission(0);
         legacyAll.setRules(List.of(legacyRule));
         assertThrows(BusinessException.class,
@@ -291,7 +291,7 @@ class TeamServicePermissionIntegrationTest extends AbstractTeamIntegrationTest {
         // 非法 subjectType → 拒绝
         assertThrows(BusinessException.class,
                 () -> teamService.setFolderPermissions(spaceId, node.getId(),
-                        ruleRequest("owner", 0L, "{\"view\":true}")));
+                        ruleRequest("owner", "0", "{\"view\":true}")));
         // 全部被拒后不应残留任何规则
         assertEquals(0, teamFolderPermissionMapper.selectCount(
                 new LambdaQueryWrapper<TeamFolderPermission>()
@@ -310,9 +310,9 @@ class TeamServicePermissionIntegrationTest extends AbstractTeamIntegrationTest {
         // 合法 all/member/role 规则同批提交 → 通过
         FolderPermissionRequest request = new FolderPermissionRequest();
         request.setRules(List.of(
-                rule("all", 0L, "{\"view\":true,\"upload\":true}"),
-                rule("member", 200L, "{\"view\":true,\"download\":true}"),
-                rule("role", 1L, "{\"view\":true,\"download\":true}")));
+                rule("all", "0", "{\"view\":true,\"upload\":true}"),
+                rule("member", "200", "{\"view\":true,\"download\":true}"),
+                rule("role", "1", "{\"view\":true,\"download\":true}")));
         assertDoesNotThrow(() -> teamService.setFolderPermissions(spaceId, node.getId(), request));
 
         // 读回：3 条规则均落库且 spaceId 与空间一致（P1 写路径归属正确）

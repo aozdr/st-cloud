@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260912-SECOND-REVIEW-05-A1",
+  "taskId": "TASK-20260912-second-review-fix-05",
+  "idempotencyKey": "second-review-fix-phase-05",
+  "taskCode": "RECYCLE_IDEMPOTENCY",
+  "role": "executor",
+  "taskType": "implement",
+  "objective": "只实施 Phase 5：回收站清空仅处理无任意 RECYCLED 祖先的根；每个节点首次有效删除后才执行 quota/ref/object/index side effects，重复 permanentDelete 幂等。补真实 DB 测试并运行阶段验证，返回后不进入 Phase 6。",
+  "taskRefs": [
+    ".ai/tasks/TASK-20260912-second-review-fix-05.md"
+  ],
+  "stateRef": ".ai/state/20260912-second-review-fix.yaml",
+  "artifactRefs": [
+    ".ai/docs/20260912-second-review-fix/design.md",
+    ".ai/docs/20260912-second-review-fix/testcases.md",
+    ".ai/runtime/results/DISPATCH-20260912-SECOND-REVIEW-04-A1.json"
+  ],
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      "st-core/src/main/java/com/stcloud/core/service/impl/RecycleBinServiceImpl.java",
+      "st-core/src/main/java/com/stcloud/core/mapper/FileNodeMapper.java",
+      "st-core/src/test/**",
+      ".ai/runtime/results/DISPATCH-20260912-SECOND-REVIEW-05-A1.json"
+    ],
+    "exclude": [
+      "st-web/**",
+      "st-desktop/**",
+      "st-team/**",
+      "docker/**",
+      ".ai/state/**",
+      ".ai/docs/**"
+    ]
+  },
+  "acceptance": [
+    "emptyRecycleBin 对已回收父子仅退 quota 一次",
+    "重复 permanentDelete 不重复 quota/refCount/object side effects",
+    "脏数据父子同时入根候选仍无重复副作用",
+    "不改变 schema、HTTP API、UI 或事务外部 IO 约束"
+  ],
+  "validation": [
+    "运行 RECYCLE-01～02 真实 H2 测试",
+    "运行 RecycleBinPhysicalDeleteIntegrationTest 和 FileServiceFlowIntegrationTest 定向回归",
+    "记录通过数失败数与 git diff --check"
+  ],
+  "forbidSpawn": true,
+  "forbidGitMvn": false,
+  "etaMinutes": 45,
+  "output": {
+    "artifactRef": ".ai/runtime/results/DISPATCH-20260912-SECOND-REVIEW-05-A1.json"
+  }
+}

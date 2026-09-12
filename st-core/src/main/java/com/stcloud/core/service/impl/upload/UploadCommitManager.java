@@ -14,6 +14,7 @@ import com.stcloud.core.event.FileIndexEvent;
 import com.stcloud.core.event.ReliableEventPublisher;
 import com.stcloud.core.event.SyncChangeEvent;
 import com.stcloud.core.mapper.FileNodeMapper;
+import com.stcloud.core.mapper.UploadSessionMapper;
 import com.stcloud.core.mapper.TeamStorageMapper;
 import com.stcloud.core.mapper.UserQuotaMapper;
 import com.stcloud.core.service.FileObjectService;
@@ -52,6 +53,8 @@ public class UploadCommitManager {
 
     @Resource
     private FileNodeMapper fileNodeMapper;
+    @Resource
+    private UploadSessionMapper uploadSessionMapper;
     @Resource
     private FileObjectService fileObjectService;
     @Resource
@@ -149,7 +152,7 @@ public class UploadCommitManager {
      * @param originalSize 替换上传时的原文件大小（新建上传为 null），用于差值计费
      */
     @Transactional
-    public FileNodeVO finalizeMerge(FileNode node, String uploadId, Long originalSize) {
+    public FileNodeVO finalizeMerge(FileNode node, String uploadId, Long sessionId, Long originalSize) {
         // 合并成功：标记分片已合并（保留记录以支撑重复 merge 幂等）
         chunkManager.markChunksMerged(uploadId);
 
@@ -182,6 +185,10 @@ public class UploadCommitManager {
         long original = originalSize == null ? 0 : originalSize;
         long delta = newSize - original;
         uploadManager.consumeQuota(node.getOwnerId(), node.getSpaceId(), delta);
+        // 节点、配额与会话终态必须同事务提交；状态不符则全部回滚。
+        if (uploadSessionMapper.transitionStatus(sessionId, List.of(1), 2) != 1) {
+            throw new BusinessException(ResultCode.CONFLICT, "合并提交时上传会话状态已变化");
+        }
         return fileService.toVO(node);
     }
 

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260912-SECOND-REVIEW-08-A2",
+  "taskId": "TASK-20260912-second-review-fix-08",
+  "idempotencyKey": "second-review-fix-code-review-a2",
+  "taskCode": "CODE_REVIEW",
+  "role": "reviewer",
+  "taskType": "review",
+  "objective": "复审 A1 发现的中转中止残留和 S3 complete 后 DB finalize 失败问题，以及新增团队 generic 路由门禁；对最新代码给出独立结论。",
+  "taskRefs": [".ai/tasks/TASK-20260912-second-review-fix-08.md"],
+  "stateRef": ".ai/state/20260912-second-review-fix.yaml",
+  "artifactRefs": [".ai/docs/20260912-second-review-fix/design.md", ".ai/docs/20260912-second-review-fix/testcases.md", ".ai/docs/20260912-second-review-fix/codereview.md"],
+  "skillRefs": ["-"],
+  "scope": {"include": ["st-core/**", "st-web/**", "st-desktop/**", ".ai/docs/20260912-second-review-fix/codereview.md", ".ai/runtime/results/DISPATCH-20260912-SECOND-REVIEW-08-A2.json"], "exclude": [".ai/state/**", "docker/**"]},
+  "acceptance": ["核对所有 A1 P1 的定向修复和测试", "记录剩余风险或审查通过结论"],
+  "validation": ["定向受影响测试 41/0 的报告", "只写审查文档和结果，不改产品代码"],
+  "forbidSpawn": true,
+  "forbidGitMvn": false,
+  "etaMinutes": 20,
+  "output": {"artifactRef": ".ai/runtime/results/DISPATCH-20260912-SECOND-REVIEW-08-A2.json"}
+}

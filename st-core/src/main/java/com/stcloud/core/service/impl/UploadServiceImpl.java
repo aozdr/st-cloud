@@ -3,8 +3,6 @@ package com.stcloud.core.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import cn.hutool.crypto.digest.DigestUtil;
 import com.stcloud.common.context.UserContext;
-import com.stcloud.common.enums.NodeStatus;
-import com.stcloud.common.enums.NodeType;
 import com.stcloud.common.exception.BusinessException;
 import com.stcloud.common.ratelimit.SpeedLimitService;
 import com.stcloud.common.ratelimit.UserTransferLimiter;
@@ -26,6 +24,7 @@ import com.stcloud.core.service.VersionService;
 import com.stcloud.core.service.impl.upload.RelayBufferManager;
 import com.stcloud.core.service.impl.upload.UploadChunkManager;
 import com.stcloud.core.service.impl.upload.UploadCommitManager;
+import com.stcloud.core.service.impl.upload.UploadInitCommitManager;
 import com.stcloud.core.service.impl.upload.UploadManager;
 import com.stcloud.core.service.impl.upload.UploadStorageManager;
 import jakarta.annotation.Resource;
@@ -73,6 +72,8 @@ public class UploadServiceImpl implements UploadService {
     @Resource
     private UploadCommitManager uploadCommitManager;
     @Resource
+    private UploadInitCommitManager uploadInitCommitManager;
+    @Resource
     private UploadChunkManager chunkManager;
     @Resource
     private UploadStorageManager storageManager;
@@ -88,15 +89,12 @@ public class UploadServiceImpl implements UploadService {
     private static final long RELAY_CHUNK_MIN = 8192L;  // 中转小块下限 8KB
     private static final long RELAY_CHUNK_MAX = 1024 * 1024L;  // 中转小块上限 1MB
     private static final long RELAY_WINDOW_SEC = 2L;  // 中转速率窗口(秒)，relayChunkSize = rate * 窗口
-    /** 引用计数：新建文件对 file_object 的初始单引用（去重对象引用 +1） */
-    private static final int REF_COUNT_INITIAL = 1;
     private static final int SESSION_ACTIVE = 0;
     private static final int SESSION_MERGING = 1;
     private static final int SESSION_COMPLETED = 2;
     private static final int SESSION_ABORTED = 3;
     private static final int SESSION_FAILED = 4;
     private static final int SESSION_EXPIRED = 5;
-    private static final Duration UPLOAD_SESSION_TTL = Duration.ofHours(24);
 
     @Override
     public UploadCheckResponse checkInstantUpload(UploadCheckRequest request) {
@@ -122,7 +120,7 @@ public class UploadServiceImpl implements UploadService {
             String parentPath = isTeamSpace(request.getSpaceId())
                     ? fileService.validateTeamParentPath(request.getSpaceId(), request.getParentId())
                     : fileService.validateAndGetParentPath(request.getParentId());
-            String fileName = fileService.resolveNameConflict(request.getParentId(), request.getFileName());
+            String fileName = resolveUploadName(request.getSpaceId(), request.getParentId(), request.getFileName());
             String contentType = fileService.guessContentType(fileName);
 
             // 秒传创建：独立 bean 事务方法承接 DB 写（引用+1 + 节点 + 配额 + 事件），
@@ -151,7 +149,7 @@ public class UploadServiceImpl implements UploadService {
 
         if (fileSize > SIMPLE_UPLOAD_THRESHOLD) {
             throw new BusinessException(ResultCode.FILE_TOO_LARGE.getCode(),
-                    "简单上传限制5MB以内，请使用分片上传");
+                    "简单上传限制100MB以内，请使用分片上传");
         }
 
         // F6：解析有效限速（KB/s）；simpleUpload 服务端中转同样需要节流，修复小文件绕过限速
@@ -164,7 +162,7 @@ public class UploadServiceImpl implements UploadService {
         String parentPath = isTeamSpace(spaceId)
                 ? fileService.validateTeamParentPath(spaceId, parentId)
                 : fileService.validateAndGetParentPath(parentId);
-        String fileName = fileService.resolveNameConflict(parentId, file.getOriginalFilename());
+        String fileName = resolveUploadName(spaceId, parentId, file.getOriginalFilename());
 
         String md5;
         try {
@@ -247,129 +245,52 @@ public class UploadServiceImpl implements UploadService {
         String parentPath = isTeamSpace(request.getSpaceId())
                 ? fileService.validateTeamParentPath(request.getSpaceId(), request.getParentId())
                 : fileService.validateAndGetParentPath(request.getParentId());
-        String fileName = fileService.resolveNameConflict(request.getParentId(), request.getFileName());
+        String fileName = resolveUploadName(request.getSpaceId(), request.getParentId(), request.getFileName());
 
         Long tenantId = UserContext.getTenantId();
         String storagePath = tenantId + "/" + userId + "/" + request.getFileMd5() + "_" + System.currentTimeMillis();
 
-        String s3UploadId = storageManager.initMultipart(storagePath);
-
-        FileNode node = null;
-        UploadSession session = null;
-        try {
-        Long originalSize = null;
-        if (replaceFileId != null && replaceFileId > 0) {
-            node = fileNodeMapper.selectByIdForUpdate(replaceFileId);
-            if (node == null) {
-                throw new BusinessException(ResultCode.FILE_NOT_FOUND);
-            }
-            validateReplacementScope(userId, request.getSpaceId(), node);
-            if (!node.isFile()) {
-                throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "仅文件支持替换上传");
-            }
-            if (!node.isNormal()) {
-                throw new BusinessException(ResultCode.FILE_IN_RECYCLE);
-            }
-            if (versionService.getLatestVersion(node.getId()) == null) {
-                versionService.snapshotCurrentVersion(node);
-            }
-            originalSize = node.getFileSize();
-            node.setStoragePath(storagePath);
-            node.setFileMd5(request.getFileMd5());
-            node.setFileSize(request.getFileSize());
-            node.setContentType(fileService.guessContentType(fileName));
-            node.setSuffix(fileService.extractSuffix(fileName));
-            node.setUploadStatus(UploadStatus.UPLOADING.getCode());
-            if (fileNodeMapper.updateById(node) != 1) {
-                throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "文件已被其他请求修改，请刷新后重试");
-            }
-        } else {
-            node = new FileNode();
-            node.setParentId(request.getParentId());
-            node.setNodeType(NodeType.FILE.getCode());
-            node.setName(fileName);
-            node.setPath(parentPath + "/" + fileName);
-            node.setFileSize(request.getFileSize());
-            node.setFileMd5(request.getFileMd5());
-            node.setContentType(fileService.guessContentType(fileName));
-            node.setSuffix(fileService.extractSuffix(fileName));
-            node.setStoragePath(storagePath);
-            node.setStatus(NodeStatus.NORMAL.getCode());
-            node.setUploadStatus(UploadStatus.UPLOADING.getCode());
-            node.setOwnerId(userId);
-            node.setUploaderId(userId);
-            node.setSpaceId(request.getSpaceId());
-            node.setRefCount(REF_COUNT_INITIAL);
-            node.setVersion(0);
-            fileNodeMapper.insert(node);
-        }
-
         String uploadId = UUID.randomUUID().toString().replace("-", "");
-        session = new UploadSession();
-        session.setTenantId(tenantId);
-        session.setUploadId(uploadId);
-        session.setUserId(userId);
-        session.setFileNodeId(node.getId());
-        session.setSpaceId(request.getSpaceId());
-        session.setStoragePath(storagePath);
-        session.setS3UploadId(s3UploadId);
-        session.setFileSize(request.getFileSize());
-        session.setFileMd5(request.getFileMd5());
-        session.setTotalChunks(request.getTotalChunks());
-        session.setChunkSize(request.getChunkSize());
-        session.setClientLimit(request.getClientLimit());
-        session.setStatus(SESSION_ACTIVE);
-        session.setExpiresAt(LocalDateTime.now().plus(UPLOAD_SESSION_TTL));
-        if (uploadSessionMapper.insert(session) != 1) {
-            throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "上传会话创建失败");
-        }
-        chunkManager.createChunkRecords(uploadId, node.getId(), request.getTotalChunks(),
-                request.getChunkSize(), originalSize);
-
-        // 限速模式判定：有效限速 < 分片大小(5MB) 时走中转，否则直传
+        // 限速判定先于 S3 init；中转资源与 S3 操作均保持在 DB 事务外。
         int rateKb = SpeedLimitService.capRate(speedLimitService.resolve().getUploadSpeedLimit(),
                 request.getClientLimit());
         long rateBytes = (long) rateKb * 1024L;
         long chunkSize = request.getChunkSize() != null ? request.getChunkSize() : 5L * 1024 * 1024;
         boolean relay = rateKb > 0 && rateBytes < chunkSize;
-        String transferMode = relay ? "relay" : "direct";
-        Long relayChunkSize = null;
-        if (relay) {
-            // relayChunkSize = clamp(rate * 窗口, 8KB, 1MB)，平衡节流精度与请求频率
-            relayChunkSize = Math.max(RELAY_CHUNK_MIN, Math.min(rateBytes * RELAY_WINDOW_SEC, RELAY_CHUNK_MAX));
-            // 创建中转缓冲会话，存储有效限速/小块上限/S3 上下文供 pacing 与超时 abort 使用
-            relayBufferManager.createSession(uploadId, rateBytes, storagePath, s3UploadId, relayChunkSize);
-        }
-
-        return UploadInitResponse.builder()
-                .uploadId(uploadId)
-                .s3UploadId(s3UploadId)
-                .fileId(node.getId())
-                .presignedUrls(Collections.emptyList())
-                .transferMode(transferMode)
-                .relayChunkSize(relayChunkSize)
-                .relayRateKb(relay ? (long) rateKb : null)
-                .build();
-        } catch (RuntimeException e) {
-            // S3 multipart 已创建但数据库/中转初始化失败时主动 abort，并补偿节点/会话，避免留下可被误用的孤儿上传。
-            if (session != null && session.getId() != null) {
-                try {
-                    markSessionStatus(session, SESSION_FAILED);
-                } catch (RuntimeException statusError) {
-                    log.warn("上传初始化失败后的会话状态补偿未完成: uploadId={}", session.getUploadId(), statusError);
-                }
+        Long relayChunkSize = relay
+                ? Math.max(RELAY_CHUNK_MIN, Math.min(rateBytes * RELAY_WINDOW_SEC, RELAY_CHUNK_MAX))
+                : null;
+        String s3UploadId = storageManager.initMultipart(storagePath);
+        try {
+            if (relay) {
+                relayBufferManager.createSession(uploadId, rateBytes, storagePath, s3UploadId, relayChunkSize);
             }
-            if (node != null && node.getId() != null) {
+            UploadInitCommitManager.InitResult committed = uploadInitCommitManager.commitInit(
+                    new UploadInitCommitManager.InitCommand(request, userId, tenantId, parentPath,
+                            fileName, storagePath, s3UploadId, uploadId));
+            return UploadInitResponse.builder()
+                    .uploadId(uploadId)
+                    .s3UploadId(s3UploadId)
+                    .fileId(committed.fileNodeId())
+                    .presignedUrls(Collections.emptyList())
+                    .transferMode(relay ? "relay" : "direct")
+                    .relayChunkSize(relayChunkSize)
+                    .relayRateKb(relay ? (long) rateKb : null)
+                    .build();
+        } catch (RuntimeException e) {
+            // DB 事务已整体回滚；这里只补偿事务外的中转与 S3 资源，不再写节点/会话。
+            if (relay) {
                 try {
-                    uploadManager.rollbackUploadNode(node);
-                } catch (RuntimeException nodeError) {
-                    log.warn("上传初始化失败后的节点补偿未完成: nodeId={}", node.getId(), nodeError);
+                    relayBufferManager.cleanup(uploadId);
+                } catch (RuntimeException cleanupError) {
+                    log.warn("上传初始化失败后的中转清理未完成: uploadId={}", uploadId, cleanupError);
                 }
             }
             try {
                 storageManager.abortMultipart(storagePath, s3UploadId);
             } catch (RuntimeException cleanupError) {
-                log.warn("上传初始化失败后的 S3 abort 未完成，交由后台补偿: storagePath={}", storagePath, cleanupError);
+                log.warn("上传初始化失败后的 S3 abort 未完成，交由后台补偿: storagePath={}, s3UploadId={}",
+                        storagePath, s3UploadId, cleanupError);
             }
             throw e;
         }
@@ -496,6 +417,10 @@ public class UploadServiceImpl implements UploadService {
     }
 
     private FileNodeVO mergeChunksInternal(UploadMergeRequest request, UploadSession session) {
+        return mergeChunksInternal(request, session, false);
+    }
+
+    private FileNodeVO mergeChunksInternal(UploadMergeRequest request, UploadSession session, boolean alreadyClaimed) {
         // 会话已完成时允许同一 owner 重试查询结果，避免幂等 merge 被状态门禁误拒绝。
         if (session.getStatus() == SESSION_COMPLETED) {
             FileNode completed = fileNodeMapper.selectById(session.getFileNodeId());
@@ -503,7 +428,12 @@ public class UploadServiceImpl implements UploadService {
                 return fileService.toVO(completed);
             }
         }
-        assertSessionOperable(session);
+        if (session.getStatus() == SESSION_MERGING) {
+            throw new BusinessException(ResultCode.CONFLICT, "上传会话正在合并中");
+        }
+        if (!alreadyClaimed) {
+            assertSessionOperable(session);
+        }
         // 幂等检查与 S3 合并均在事务外执行（F2-2）：网络耗时不再占用 DB 连接
         FileChunk firstChunk = chunkManager.getFirstChunk(session.getUploadId());
         if (firstChunk == null) {
@@ -518,19 +448,25 @@ public class UploadServiceImpl implements UploadService {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
         }
 
-        // 幂等：已完成上传，直接返回已有节点（不重复合并、不产生重复节点）
-        if (node.getUploadStatus() == UploadStatus.COMPLETED.getCode()) {
-            markSessionStatus(session, SESSION_COMPLETED);
-            return fileService.toVO(node);
+        // 会话 CAS 是唯一认领权：先赢得 ACTIVE/FAILED→MERGING，才可操作节点和 S3。
+        if (!alreadyClaimed && !transitionSession(session, List.of(SESSION_ACTIVE, SESSION_FAILED), SESSION_MERGING)) {
+            UploadSession currentSession = uploadSessionMapper.selectById(session.getId());
+            if (currentSession != null && currentSession.getStatus() == SESSION_COMPLETED) {
+                FileNode completed = fileNodeMapper.selectById(session.getFileNodeId());
+                if (completed != null && completed.getUploadStatus() == UploadStatus.COMPLETED.getCode()) {
+                    return fileService.toVO(completed);
+                }
+            }
+            throw new BusinessException(ResultCode.CONFLICT, "上传会话正在合并或已停止");
         }
-
-        // 原子认领合并：并发下仅一个请求执行 completeMultipart；未认领到则重读判断（并发幂等）
         if (!uploadManager.claimMerging(node.getId())) {
             FileNode current = fileNodeMapper.selectById(node.getId());
             if (current != null && current.getUploadStatus() == UploadStatus.COMPLETED.getCode()) {
+                requireTransition(session, List.of(SESSION_MERGING), SESSION_COMPLETED);
                 return fileService.toVO(current);
             }
-            throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "上传正在合并中，请稍后查询状态");
+            requireTransition(session, List.of(SESSION_MERGING), session.getStatus());
+            throw new BusinessException(ResultCode.CONFLICT, "上传正在合并中，请稍后查询状态");
         }
 
         boolean isReplaceUpload = firstChunk.getOriginalSize() != null;
@@ -540,20 +476,34 @@ public class UploadServiceImpl implements UploadService {
             log.error("分片合并失败: uploadId={}, error={}", request.getUploadId(), e.getMessage());
             if (isReplaceUpload) {
                 // 替换上传：清理 S3 残留并恢复上一版本，既有文件保持可用
-                storageManager.abortMultipart(session.getStoragePath(), session.getS3UploadId());
+                try {
+                    storageManager.abortMultipart(session.getStoragePath(), session.getS3UploadId());
+                } catch (RuntimeException abortEx) {
+                    log.warn("替换上传合并失败后的 S3 abort 补偿失败: uploadId={}", request.getUploadId(), abortEx);
+                }
             }
             // 新建上传：保留 S3 分片与节点（FAILED），支持断点续传/重试；
             // handleMergeFailure 收敛为独立小事务，S3 调用全部在事务外
-            uploadManager.handleMergeFailure(node, isReplaceUpload);
-            markSessionStatus(session, SESSION_FAILED);
+            uploadManager.handleMergeFailure(node, session.getId(), isReplaceUpload);
             throw e;
         }
 
         // 合并成功：S3 完成后事务内落库（分片标记 + 对象归属 + 节点更新 + 版本快照 + 差值配额 + 事件）
         String mergedPath = node.getStoragePath();
-        FileNodeVO vo = uploadCommitManager.finalizeMerge(node, session.getUploadId(),
-                firstChunk.getOriginalSize());
-        markSessionStatus(session, SESSION_COMPLETED);
+        FileNodeVO vo;
+        try {
+            vo = uploadCommitManager.finalizeMerge(node, session.getUploadId(), session.getId(),
+                    firstChunk.getOriginalSize());
+        } catch (RuntimeException e) {
+            // S3 complete 已完成，原 multipart 不能再续传；DB finalize 回滚后另起短事务恢复节点。
+            try {
+                uploadManager.handleFinalizationFailure(session);
+                cleanupMergedObjectAfterFinalizeFailure(session.getTenantId(), node.getFileMd5(), mergedPath);
+            } catch (RuntimeException compensationError) {
+                log.error("合并落库失败后的补偿未完成: uploadId={}", session.getUploadId(), compensationError);
+            }
+            throw e;
+        }
         // 事务提交后：去重命中时临时合并对象已无引用，尽力清理（不误删被引用对象）
         if (!mergedPath.equals(node.getStoragePath())) {
             storageManager.deleteObjectQuietly(mergedPath);
@@ -572,30 +522,46 @@ public class UploadServiceImpl implements UploadService {
     }
 
     private void abortUploadInternal(UploadSession session) {
-        if (session.getStatus() == SESSION_COMPLETED || session.getStatus() == SESSION_ABORTED) {
+        UploadSession currentSession = uploadSessionMapper.selectById(session.getId());
+        if (currentSession.getStatus() == SESSION_COMPLETED || currentSession.getStatus() == SESSION_ABORTED) {
             return;
         }
-        assertSessionOperable(session);
+        if (currentSession.getStatus() == SESSION_MERGING) {
+            throw new BusinessException(ResultCode.CONFLICT, "上传正在合并，不能中止");
+        }
+        assertSessionOperable(currentSession);
+        if (!transitionSession(currentSession, List.of(SESSION_ACTIVE, SESSION_FAILED), SESSION_ABORTED)) {
+            UploadSession latest = uploadSessionMapper.selectById(session.getId());
+            if (latest != null && (latest.getStatus() == SESSION_COMPLETED || latest.getStatus() == SESSION_ABORTED)) {
+                return;
+            }
+            throw new BusinessException(ResultCode.CONFLICT, "上传会话状态已变化，不能中止");
+        }
         String uploadId = session.getUploadId();
         FileChunk firstChunk = chunkManager.getFirstChunk(uploadId);
         if (firstChunk == null) {
-            return; // 幂等：无分片记录（已中止或已完成）
+            relayBufferManager.cleanup(uploadId);
+            return;
         }
         FileNode node = fileNodeMapper.selectById(session.getFileNodeId());
         if (node == null) {
             chunkManager.deleteByUploadId(uploadId);
-            markSessionStatus(session, SESSION_ABORTED);
+            relayBufferManager.cleanup(uploadId);
             return;
         }
         // 已完成上传不允许中止（幂等守卫，防止误删已完成文件）
         if (node.getUploadStatus() == UploadStatus.COMPLETED.getCode()) {
+            requireTransition(session, List.of(SESSION_ABORTED), SESSION_COMPLETED);
             return;
         }
-        storageManager.abortMultipart(session.getStoragePath(), session.getS3UploadId());
+        try {
+            storageManager.abortMultipart(session.getStoragePath(), session.getS3UploadId());
+        } catch (RuntimeException e) {
+            log.warn("中止上传 S3 补偿失败: uploadId={}", uploadId, e);
+        }
         // 有历史版本（替换上传）恢复上一版本；无历史版本（新建上传）删除 pending 节点
         uploadManager.rollbackUploadNode(node);
         chunkManager.deleteByUploadId(uploadId);
-        markSessionStatus(session, SESSION_ABORTED);
         // 中转模式：同时清理缓冲临时文件
         relayBufferManager.cleanup(uploadId);
     }
@@ -661,8 +627,7 @@ public class UploadServiceImpl implements UploadService {
             }
         } catch (java.io.IOException e) {
             log.error("中转接收失败: uploadId={}, seq={}", uploadId, seq, e);
-            relayBufferManager.cleanup(uploadId);
-            storageManager.abortMultipart(session.getStoragePath(), session.getS3UploadId());
+            abortUploadInternal(session);
             throw new BusinessException(ResultCode.FILE_UPLOAD_FAILED);
         }
         // 本次触发 uploadPart：同步 file_chunk 状态（0-待上传 -> 1-已上传，幂等，impact.md 遗留）
@@ -700,6 +665,11 @@ public class UploadServiceImpl implements UploadService {
         if (node == null) {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
         }
+        // 中转末片也须先赢得会话合并权，避免其他 merge/abort 在 flush 与 complete 之间抢占。
+        if (!transitionSession(session, List.of(SESSION_ACTIVE, SESSION_FAILED), SESSION_MERGING)) {
+            throw new BusinessException(ResultCode.CONFLICT, "上传会话正在合并或已停止");
+        }
+        boolean mergeStarted = false;
         try {
             // 上传末片（余量 < 5MB，无下限），然后复用 merge 逻辑完成合并
             int lastPart = relayBufferManager.finalize(uploadId, session.getStoragePath(), session.getS3UploadId());
@@ -711,15 +681,25 @@ public class UploadServiceImpl implements UploadService {
             mergeRequest.setUploadId(uploadId);
             mergeRequest.setS3UploadId(session.getS3UploadId());
             mergeRequest.setFileId(node.getId());
-            return mergeChunks(mergeRequest);
+            mergeStarted = true;
+            return mergeChunksInternal(mergeRequest, session, true);
         } catch (RuntimeException e) {
-            // 失败即清理：删临时文件 + abort S3（MVP 不支持中转断点续传，失败重来；替换上传由 mergeChunks 已恢复旧版本）
+            // 仅仍持有本次合并权的会话可以转为 ABORTED 并清理；并发胜者的 multipart 不得被误中止。
             log.error("中转 finalize 失败: uploadId={}, error={}", uploadId, e.getMessage());
-            relayBufferManager.cleanup(uploadId);
-            try {
-                storageManager.abortMultipart(session.getStoragePath(), session.getS3UploadId());
-            } catch (Exception abortEx) {
-                log.warn("中转失败后 abort S3 失败(可能已中止): uploadId={}, error={}", uploadId, abortEx.getMessage());
+            // merge 已开始时仅能认领它自己留下的 FAILED；不能误认领另一次重试的新 MERGING。
+            List<Integer> abortable = mergeStarted ? List.of(SESSION_FAILED) : List.of(SESSION_MERGING);
+            if (transitionSession(session, abortable, SESSION_ABORTED)) {
+                relayBufferManager.cleanup(uploadId);
+                try {
+                    storageManager.abortMultipart(session.getStoragePath(), session.getS3UploadId());
+                } catch (Exception abortEx) {
+                    log.warn("中转失败后 abort S3 失败: uploadId={}", uploadId, abortEx);
+                }
+                FileNode pending = fileNodeMapper.selectById(session.getFileNodeId());
+                if (pending != null && pending.getUploadStatus() != UploadStatus.COMPLETED.getCode()) {
+                    uploadManager.rollbackUploadNode(pending);
+                }
+                chunkManager.deleteByUploadId(uploadId);
             }
             throw e;
         }
@@ -763,6 +743,11 @@ public class UploadServiceImpl implements UploadService {
      */
     private UploadSession requireOwnedSession(String uploadId, String s3UploadId,
                                               Long fileId, boolean allowCompleted) {
+        return requireOwnedSession(uploadId, s3UploadId, fileId, allowCompleted, false);
+    }
+
+    private UploadSession requireOwnedSession(String uploadId, String s3UploadId,
+                                              Long fileId, boolean allowCompleted, boolean teamRoute) {
         if (uploadId == null || uploadId.isBlank()) {
             throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "uploadId不能为空");
         }
@@ -773,6 +758,10 @@ public class UploadServiceImpl implements UploadService {
         if (session == null) {
             throw new BusinessException(ResultCode.PERMISSION_DENIED);
         }
+        // 普通上传入口只服务个人空间；团队会话须经过显式 spaceId 的团队 ACL 入口。
+        if (!teamRoute && isTeamSpace(session.getSpaceId())) {
+            throw new BusinessException(ResultCode.FORBIDDEN, "团队上传会话必须使用团队上传入口");
+        }
         if (s3UploadId != null && !s3UploadId.isBlank()
                 && !s3UploadId.equals(session.getS3UploadId())) {
             throw new BusinessException(ResultCode.PERMISSION_DENIED);
@@ -781,10 +770,11 @@ public class UploadServiceImpl implements UploadService {
             throw new BusinessException(ResultCode.PERMISSION_DENIED);
         }
         if (session.getExpiresAt() != null && session.getExpiresAt().isBefore(LocalDateTime.now())
-                && session.getStatus() != SESSION_COMPLETED
-                && session.getStatus() != SESSION_ABORTED) {
-            markSessionStatus(session, SESSION_EXPIRED);
-            throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "上传会话已过期");
+                && (session.getStatus() == SESSION_ACTIVE || session.getStatus() == SESSION_FAILED)) {
+            if (transitionSession(session, List.of(SESSION_ACTIVE, SESSION_FAILED), SESSION_EXPIRED)) {
+                throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "上传会话已过期");
+            }
+            session = uploadSessionMapper.selectById(session.getId());
         }
         if (!allowCompleted && session.getStatus() == SESSION_COMPLETED) {
             throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "上传会话已完成");
@@ -798,7 +788,7 @@ public class UploadServiceImpl implements UploadService {
         if (spaceId == null || spaceId <= 0) {
             throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "团队空间参数无效");
         }
-        UploadSession session = requireOwnedSession(uploadId, s3UploadId, fileId, allowCompleted);
+        UploadSession session = requireOwnedSession(uploadId, s3UploadId, fileId, allowCompleted, true);
         if (!spaceId.equals(session.getSpaceId())) {
             throw new BusinessException(ResultCode.FORBIDDEN);
         }
@@ -835,6 +825,13 @@ public class UploadServiceImpl implements UploadService {
 
     private boolean isTeamSpace(Long spaceId) {
         return spaceId != null && spaceId > 0;
+    }
+
+    /** 上传命名按请求经过验证的空间路由，团队文件不可落入当前用户个人命名 scope。 */
+    private String resolveUploadName(Long spaceId, Long parentId, String name) {
+        return isTeamSpace(spaceId)
+                ? fileService.resolveTeamNameConflict(spaceId, parentId, name)
+                : fileService.resolveNameConflict(parentId, name);
     }
 
     /** 上传边界校验必须在配额、S3 multipart 和节点写入之前执行。 */
@@ -879,18 +876,18 @@ public class UploadServiceImpl implements UploadService {
         if (session.getStatus() == SESSION_ABORTED) {
             throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "上传会话已中止");
         }
-        if (session.getStatus() != SESSION_ACTIVE
-                && session.getStatus() != SESSION_MERGING
-                && session.getStatus() != SESSION_FAILED) {
+        if (session.getStatus() != SESSION_ACTIVE && session.getStatus() != SESSION_FAILED) {
             throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "上传会话状态不可操作");
         }
     }
 
-    private void markSessionStatus(UploadSession session, int status) {
-        session.setStatus(status);
-        session.setUpdatedAt(LocalDateTime.now());
-        if (uploadSessionMapper.updateById(session) != 1) {
-            throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "上传会话状态更新失败");
+    private boolean transitionSession(UploadSession session, List<Integer> expected, int target) {
+        return uploadSessionMapper.transitionStatus(session.getId(), expected, target) == 1;
+    }
+
+    private void requireTransition(UploadSession session, List<Integer> expected, int target) {
+        if (!transitionSession(session, expected, target)) {
+            throw new BusinessException(ResultCode.CONFLICT, "上传会话状态更新失败");
         }
     }
 
@@ -934,6 +931,19 @@ public class UploadServiceImpl implements UploadService {
         } catch (Exception e) {
             // 清理失败不阻断主流程，交由定时任务兜底
             log.warn("上传失败清理孤儿对象异常（交由定时任务兜底）: md5={}", md5, e);
+        }
+    }
+
+    /** DB finalize 已回滚且会话已中止后，仅删除没有对象记录引用的本次 S3 合并产物。 */
+    private void cleanupMergedObjectAfterFinalizeFailure(Long tenantId, String md5, String storagePath) {
+        try {
+            FileObject current = fileObjectService.findByTenantAndMd5(tenantId, md5);
+            if (current == null || !storagePath.equals(current.getStoragePath())
+                    || current.getRefCount() == null || current.getRefCount() <= 0) {
+                storageManager.deleteObjectQuietly(storagePath);
+            }
+        } catch (RuntimeException e) {
+            log.warn("合并落库失败后检查临时对象引用失败: storagePath={}", storagePath, e);
         }
     }
 }

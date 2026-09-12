@@ -3,7 +3,7 @@ import path from 'path';
 import { apiClient } from '../api-client';
 import { startUpload } from '../upload-manager';
 import { getTask, insertSyncHistory, setBlockHashes, deleteBlockHashes, getSyncState, upsertSyncState } from '../database';
-import { calculateSampledMd5, calculateFileMd5 } from '../utils/md5';
+import { calculateFileMd5 } from '../utils/md5';
 import { computeBackoffMs } from '../sync-retry';
 import { calculateBlockHashes, readBlockData, BLOCK_SIZE } from '../utils/block-hash';
 import { emitSyncEvent, syncLog, BLOCK_SYNC_THRESHOLD, type SyncEngineCtx } from './sync-shared';
@@ -149,7 +149,7 @@ export async function uploadFile(ctx: SyncEngineCtx, absPath: string, relPath: s
   const task = getTask(taskId);
   const nodeId = task?.fileId ? String(task.fileId) : existingNodeId;
 
-  const md5 = await calculateSampledMd5(absPath, stat.size).catch(() => undefined);
+  const md5 = await calculateFileMd5(absPath).catch(() => undefined);
   syncLog('upload', '上传完成: ' + fileName);
   insertSyncHistory({ rootId: ctx.root.rootId, action: 'upload', fileName, relPath, status: 'success' });
   upsertSyncState({ rootId: ctx.root.rootId,

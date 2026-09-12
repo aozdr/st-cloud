@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260912-SECOND-REVIEW-03-A1",
+  "taskId": "TASK-20260912-second-review-fix-03",
+  "idempotencyKey": "second-review-fix-phase-03",
+  "taskCode": "UPLOAD_INIT_TX",
+  "role": "executor",
+  "taskType": "implement",
+  "objective": "只实施 Phase 3 Upload Init DB 原子化：S3 init 在外部，独立 @Transactional Bean 同事务覆盖 replacement FOR UPDATE、version snapshot、node/session/chunk；失败时 DB 全回滚、外部 S3 abort 且补偿失败记录日志。补真实 DB 失败注入测试并运行定向验证；不得进入 Phase 4。",
+  "taskRefs": [
+    ".ai/tasks/TASK-20260912-second-review-fix-03.md"
+  ],
+  "stateRef": ".ai/state/20260912-second-review-fix.yaml",
+  "artifactRefs": [
+    ".ai/docs/20260912-second-review-fix/design.md",
+    ".ai/docs/20260912-second-review-fix/testcases.md",
+    ".ai/runtime/results/DISPATCH-20260912-SECOND-REVIEW-02-A1.json"
+  ],
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      "st-core/src/main/java/com/stcloud/core/service/impl/UploadServiceImpl.java",
+      "st-core/src/main/java/com/stcloud/core/service/impl/upload/UploadInitCommitManager.java",
+      "st-core/src/main/java/com/stcloud/core/service/impl/upload/UploadInitDb*.java",
+      "st-core/src/test/**",
+      ".ai/runtime/results/DISPATCH-20260912-SECOND-REVIEW-03-A1.json"
+    ],
+    "exclude": [
+      "st-web/**",
+      "st-desktop/**",
+      "st-team/**",
+      "docker/**",
+      ".ai/state/**",
+      ".ai/docs/**"
+    ]
+  },
+  "acceptance": [
+    "新建上传第 N 批 chunk 失败后 node/session/chunk 全回滚",
+    "替换上传 chunk 失败后原 node/version 不变且 session/chunk 无残留",
+    "S3 init 后 DB 失败触发事务外 abortMultipart",
+    "FOR UPDATE 和 snapshot 在同一有效事务；无 REQUIRES_NEW 或事务内 S3"
+  ],
+  "validation": [
+    "运行 INIT-TX-01～03 真实 H2 DB 失败注入集成测试",
+    "运行受影响 UploadTransactionBoundaryTest、UploadStateMachineIntegrationTest、RelayUploadIntegrationTest 等定向测试",
+    "记录命令通过数失败数与 git diff --check"
+  ],
+  "forbidSpawn": true,
+  "forbidGitMvn": false,
+  "etaMinutes": 45,
+  "output": {
+    "artifactRef": ".ai/runtime/results/DISPATCH-20260912-SECOND-REVIEW-03-A1.json"
+  }
+}
