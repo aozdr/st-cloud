@@ -120,13 +120,18 @@ public class UploadManager {
             } else {
                 node.setUploadStatus(UploadStatus.FAILED.getCode());
             }
-            fileNodeMapper.updateById(node);
+            updateNodeOrThrow(node, "上传失败回滚时文件已被其他操作更新，请重试");
             return;
         }
         // 新建上传：不删除节点，标记失败供恢复
-        fileNodeMapper.update(null, new LambdaUpdateWrapper<FileNode>()
+        int updated = fileNodeMapper.update(null, new LambdaUpdateWrapper<FileNode>()
                 .eq(FileNode::getId, node.getId())
+                .in(FileNode::getUploadStatus, UploadStatus.UPLOADING.getCode(), UploadStatus.MERGING.getCode())
                 .set(FileNode::getUploadStatus, UploadStatus.FAILED.getCode()));
+        if (updated != 1) {
+            throw new BusinessException(ResultCode.CONFLICT,
+                    "上传失败状态写入时文件已被其他操作更新，请重试");
+        }
     }
 
     /**
@@ -141,10 +146,16 @@ public class UploadManager {
             node.setFileMd5(latest.getFileMd5());
             node.setFileSize(latest.getFileSize());
             node.setUploadStatus(UploadStatus.COMPLETED.getCode());
-            fileNodeMapper.updateById(node);
+            updateNodeOrThrow(node, "中止上传时文件已被其他操作更新，请重试");
             return false;
         }
         fileNodeMapper.deleteById(node.getId());
         return true;
+    }
+
+    private void updateNodeOrThrow(FileNode node, String message) {
+        if (fileNodeMapper.updateById(node) != 1) {
+            throw new BusinessException(ResultCode.CONFLICT, message);
+        }
     }
 }

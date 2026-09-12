@@ -1,6 +1,5 @@
 package com.stcloud.core.service.impl;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.stcloud.common.context.UserContext;
 import com.stcloud.common.enums.NodeStatus;
 import com.stcloud.common.exception.BusinessException;
@@ -15,6 +14,7 @@ import com.stcloud.core.mapper.FileVersionMapper;
 import com.stcloud.core.service.DownloadService;
 import com.stcloud.core.service.FileService;
 import com.stcloud.core.service.StorageService;
+import com.stcloud.core.util.FileNameSanitizer;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -27,7 +27,10 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -52,16 +55,10 @@ public class DownloadServiceImpl implements DownloadService {
 
     @Override
     public String generateDownloadUrl(Long nodeId) {
-        FileNode node = fileNodeMapper.selectById(nodeId);
-        if (node == null || node.getStatus() != NodeStatus.NORMAL.getCode()) {
+        // generic 下载必须经过 personal-only 最终校验；团队下载只能从显式团队入口调用。
+        FileNode node = fileService.getNodeByIdAndOwner(nodeId);
+        if (node.getStatus() != NodeStatus.NORMAL.getCode()) {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
-        }
-        // 团队空间文件：检查 spaceId 归属由 TeamController 权限控制
-        // 个人文件：仅属主可访问（单一租户，不因 dataScope 放行他人文件）
-        if (node.getSpaceId() == null || node.getSpaceId() <= 0) {
-            if (!UserContext.getUserId().equals(node.getOwnerId())) {
-                throw new BusinessException(ResultCode.PERMISSION_DENIED);
-            }
         }
         if (node.isFolder()) {
             throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "文件夹不支持单文件下载，请使用ZIP下载");
@@ -79,18 +76,12 @@ public class DownloadServiceImpl implements DownloadService {
 
     @Override
     public void streamFile(Long nodeId, Long versionId, HttpServletRequest request, HttpServletResponse response) {
-        FileNode node = fileNodeMapper.selectById(nodeId);
-        if (node == null || node.getStatus() != NodeStatus.NORMAL.getCode()) {
+        // generic 流式读取同样必须在对象存储访问前通过 personal-only 校验。
+        FileNode node = fileService.getNodeByIdAndOwner(nodeId);
+        if (node.getStatus() != NodeStatus.NORMAL.getCode()) {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
         }
         fileService.validateAccessible(nodeId);
-        // 团队空间文件：检查 spaceId 归属由 TeamController 权限控制
-        // 个人文件：仅属主可访问（单一租户，不因 dataScope 放行他人文件）
-        if (node.getSpaceId() == null || node.getSpaceId() <= 0) {
-            if (!UserContext.getUserId().equals(node.getOwnerId())) {
-                throw new BusinessException(ResultCode.PERMISSION_DENIED);
-            }
-        }
         if (node.isFolder()) {
             throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "文件夹不支持单文件下载，请使用ZIP下载");
         }
@@ -190,26 +181,22 @@ public class DownloadServiceImpl implements DownloadService {
 
     @Override
     public void downloadAsZip(List<Long> nodeIds, OutputStream outputStream) {
+        List<ZipPlanEntry> plan = buildZipPlan(nodeIds);
         Long userId = UserContext.getUserId();
         long rateBytes = speedLimitService.resolve().getDownloadSpeedLimit() * 1024L;
-        long totalSize = 0;
 
         try (ZipOutputStream zos = new ZipOutputStream(outputStream)) {
-            for (Long nodeId : nodeIds) {
-                fileService.validateAccessible(nodeId);
-                FileNode node = fileService.getNodeByIdAndOwner(nodeId);
-                if (node.isFolder()) {
-                    totalSize += addFolderToZip(node, "", zos, userId, rateBytes);
-                } else {
-                    if (node.getUploadStatus() != UploadStatus.COMPLETED.getCode()) {
-                        continue;
-                    }
-                    totalSize += addFileToZip(node, node.getName(), zos, userId, rateBytes);
+            for (ZipPlanEntry item : plan) {
+                if (item.directory()) {
+                    zos.putNextEntry(new ZipEntry(item.entryName()));
+                    zos.closeEntry();
+                    continue;
                 }
-                if (totalSize > MAX_ZIP_DOWNLOAD_SIZE) {
-                    throw new BusinessException(ResultCode.FILE_TOO_LARGE.getCode(),
-                            "ZIP下载总量超过限制(500MB)");
+                zos.putNextEntry(new ZipEntry(item.entryName()));
+                try (InputStream is = storageService.downloadObject(item.node().getStoragePath())) {
+                    pacedTransfer(is, zos, userId, rateBytes);
                 }
+                zos.closeEntry();
             }
             zos.finish();
         } catch (IOException e) {
@@ -218,44 +205,150 @@ public class DownloadServiceImpl implements DownloadService {
         }
     }
 
-    private long addFolderToZip(FileNode folder, String zipPath, ZipOutputStream zos, Long userId, long rateBytes) {
-        long totalSize = 0;
-        String currentZipPath = zipPath.isEmpty() ? folder.getName() : zipPath + "/" + folder.getName();
-        try {
-            zos.putNextEntry(new ZipEntry(currentZipPath + "/"));
-            zos.closeEntry();
-        } catch (IOException e) {
-            log.error("添加ZIP条目失败: {}", currentZipPath, e);
-        }
-
-        LambdaQueryWrapper<FileNode> wrapper = new LambdaQueryWrapper<FileNode>()
-                .eq(FileNode::getParentId, folder.getId())
-                .eq(FileNode::getStatus, NodeStatus.NORMAL.getCode())
-                // 个人文件夹仅属主的子文件；团队文件夹包含团队成员文件（团队鉴权前置）
-                .eq(folder.getSpaceId() == null || folder.getSpaceId() <= 0, FileNode::getOwnerId, userId);
-        List<FileNode> children = fileNodeMapper.selectList(wrapper);
-        for (FileNode child : children) {
-            if (child.isFolder()) {
-                totalSize += addFolderToZip(child, currentZipPath, zos, userId, rateBytes);
-            } else if (child.getUploadStatus() == UploadStatus.COMPLETED.getCode()) {
-                totalSize += addFileToZip(child, currentZipPath + "/" + child.getName(), zos, userId, rateBytes);
-            }
-        }
-        return totalSize;
+    @Override
+    public void preflightZipDownload(List<Long> nodeIds) {
+        buildZipPlan(nodeIds);
     }
 
-    private long addFileToZip(FileNode node, String zipEntryName, ZipOutputStream zos, Long userId, long rateBytes) {
-        try {
-            zos.putNextEntry(new ZipEntry(zipEntryName));
-            try (InputStream is = storageService.downloadObject(node.getStoragePath())) {
-                pacedTransfer(is, zos, userId, rateBytes);
-            }
-            zos.closeEntry();
-            return node.getFileSize() != null ? node.getFileSize() : 0;
-        } catch (IOException e) {
-            log.error("添加文件到ZIP失败: {}", zipEntryName, e);
-            return 0;
+    /**
+     * ZIP 输出前一次性完成所有根节点权限、scope、状态、条目数和声明大小预检。
+     * 预检使用受限子树收集，任何异常都在创建 ZipOutputStream 前抛出，避免半个 ZIP。
+     */
+    private List<ZipPlanEntry> buildZipPlan(List<Long> nodeIds) {
+        if (nodeIds == null || nodeIds.isEmpty()) {
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "下载节点不能为空");
         }
+        List<ZipPlanEntry> plan = new ArrayList<>();
+        Set<Long> visitedNodes = new HashSet<>();
+        Set<String> entryNames = new HashSet<>();
+        long totalSize = 0L;
+        for (Long nodeId : nodeIds) {
+            FileNode root = fileService.getNodeByIdAndOwner(nodeId);
+            if (!visitedNodes.add(root.getId()) || !root.isNormal()) {
+                throw new BusinessException(ResultCode.FORBIDDEN);
+            }
+            fileService.validateAccessible(root.getId());
+            if (root.isFile()) {
+                if (root.getUploadStatus() != UploadStatus.COMPLETED.getCode()) {
+                    throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "ZIP 中包含未完成文件");
+                }
+                totalSize = addZipPlanEntry(plan, entryNames, visitedNodes, root,
+                        safeZipName(root.getName()), false, totalSize);
+                continue;
+            }
+            if (!root.isFolder()) {
+                throw new BusinessException(ResultCode.FILE_NOT_FOUND);
+            }
+            String rootName = safeZipName(root.getName());
+            totalSize = addZipPlanEntry(plan, entryNames, visitedNodes, root,
+                    rootName + "/", true, totalSize);
+            for (FileNode child : fileService.collectDescendants(root.getId())) {
+                if (child.getId() == null || !visitedNodes.add(child.getId())) {
+                    throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "目录树存在循环或重复引用");
+                }
+                if (!samePersonalScope(root, child)) {
+                    throw new BusinessException(ResultCode.FORBIDDEN);
+                }
+                if (!child.isNormal()) {
+                    continue;
+                }
+                String relative = relativePath(root, child);
+                String entryName = safeZipName(rootName + (relative.isEmpty() ? "" : "/" + relative));
+                boolean directory = child.isFolder();
+                if (directory) {
+                    entryName = entryName.endsWith("/") ? entryName : entryName + "/";
+                } else if (child.getUploadStatus() != UploadStatus.COMPLETED.getCode()) {
+                    throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "ZIP 中包含未完成文件");
+                }
+                totalSize = addZipPlanEntry(plan, entryNames, visitedNodes, child,
+                        entryName, directory, totalSize);
+            }
+        }
+        return plan;
+    }
+
+    private long addZipPlanEntry(List<ZipPlanEntry> plan, Set<String> entryNames, Set<Long> visitedNodes,
+                                 FileNode node, String entryName, boolean directory, long totalSize) {
+        if (!entryNames.add(entryName)) {
+            throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "ZIP 中存在重复条目");
+        }
+        if (entryNames.size() > 100_000 || visitedNodes.size() > 500_000) {
+            throw new BusinessException(ResultCode.FILE_TOO_LARGE.getCode(), "ZIP 条目数量超过限制");
+        }
+        long fileSize = node.getFileSize() == null ? 0L : node.getFileSize();
+        if (fileSize < 0 || (!directory && totalSize > MAX_ZIP_DOWNLOAD_SIZE - fileSize)) {
+            throw new BusinessException(ResultCode.FILE_TOO_LARGE.getCode(),
+                    "ZIP下载总量超过限制(500MB)");
+        }
+        long nextTotal = directory || node.getFileSize() == null ? totalSize : totalSize + fileSize;
+        if (nextTotal > MAX_ZIP_DOWNLOAD_SIZE) {
+            throw new BusinessException(ResultCode.FILE_TOO_LARGE.getCode(),
+                    "ZIP下载总量超过限制(500MB)");
+        }
+        plan.add(new ZipPlanEntry(node, entryName, directory));
+        return nextTotal;
+    }
+
+    private boolean samePersonalScope(FileNode root, FileNode child) {
+        return root.getTenantId() != null && root.getTenantId().equals(child.getTenantId())
+                && root.getOwnerId() != null && root.getOwnerId().equals(child.getOwnerId())
+                && (child.getSpaceId() == null || child.getSpaceId() <= 0)
+                && (root.getSpaceId() == null || root.getSpaceId() <= 0);
+    }
+
+    private String relativePath(FileNode root, FileNode child) {
+        String rootPath = normalizePath(root.getPath());
+        String childPath = normalizePath(child.getPath());
+        if (rootPath.isEmpty()) {
+            return childPath;
+        }
+        if (!childPath.equals(rootPath) && !childPath.startsWith(rootPath + "/")) {
+            throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "文件路径与目录树不一致");
+        }
+        return childPath.equals(rootPath) ? "" : childPath.substring(rootPath.length() + 1);
+    }
+
+    private String normalizePath(String path) {
+        if (path == null) return "";
+        String value = path.replace('\\', '/');
+        while (value.startsWith("/")) value = value.substring(1);
+        while (value.endsWith("/")) value = value.substring(0, value.length() - 1);
+        return value;
+    }
+
+    private String safeZipName(String value) {
+        if (value == null || value.isBlank()) {
+            throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "ZIP 条目名称不能为空");
+        }
+        String normalized = value.replace('\\', '/');
+        if (normalized.startsWith("/") || normalized.matches("^[A-Za-z]:.*")) {
+            throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "ZIP 条目路径非法");
+        }
+        String[] parts = normalized.split("/", -1);
+        boolean trailingSlash = normalized.endsWith("/");
+        StringBuilder safe = new StringBuilder(normalized.length());
+        for (int i = 0; i < parts.length; i++) {
+            String part = parts[i];
+            if (part.isEmpty() && !(trailingSlash && i == parts.length - 1)) {
+                throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "ZIP 条目存在空路径段");
+            }
+            if (part.equals("..") || part.equals(".")) {
+                throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "ZIP 条目存在路径穿越");
+            }
+            if (!part.isEmpty()) {
+                String safePart = FileNameSanitizer.sanitize(part);
+                if (safePart == null) {
+                    throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "ZIP 条目名称非法");
+                }
+                if (safe.length() > 0) safe.append('/');
+                safe.append(safePart);
+            }
+        }
+        if (trailingSlash) safe.append('/');
+        return safe.toString();
+    }
+
+    private record ZipPlanEntry(FileNode node, String entryName, boolean directory) {
     }
 
     private Integer parseClientLimit(String raw) {

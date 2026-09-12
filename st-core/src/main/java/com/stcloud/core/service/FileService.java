@@ -99,6 +99,9 @@ public interface FileService {
     /** 团队空间：校验节点属于指定 spaceId */
     void validateTeamNode(Long spaceId, Long nodeId);
 
+    /** 团队空间：校验父目录属于指定 spaceId，并返回其路径；null/0 表示团队根目录。 */
+    String validateTeamParentPath(Long spaceId, Long parentId);
+
     /** 团队空间：获取文件夹树（按 spaceId 过滤） */
     List<FileTreeNodeVO> getTeamFolderTree(Long spaceId);
     /** 根据路径解析文件夹（个人，按 ownerId 过滤） */

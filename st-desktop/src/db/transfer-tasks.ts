@@ -16,6 +16,7 @@ interface TaskRow {
   error: string | null;
   file_path: string | null;
   parent_id: string | null;
+  space_id: string | null;
   upload_id: string | null;
   s3_upload_id: string | null;
   file_id: string | null;
@@ -41,6 +42,7 @@ function rowToTask(row: Record<string, unknown>): TransferTask {
     createdAt: row.created_at as string,
     filePath: (row.file_path as string | null) ?? undefined,
     parentId: (row.parent_id as string | null) ?? undefined,
+    spaceId: (row.space_id as string | null) ?? undefined,
     uploadId: (row.upload_id as string | null) ?? undefined,
     s3UploadId: (row.s3_upload_id as string | null) ?? undefined,
     fileId: (row.file_id as string | null) ?? undefined,
@@ -58,10 +60,10 @@ export function createTask(task: TransferTask): void {
   getDb().run(
     `INSERT INTO transfer_tasks
       (id, type, status, file_name, file_size, transferred_bytes, progress, error,
-       file_path, parent_id, upload_id, s3_upload_id, file_id, total_chunks, uploaded_chunks,
+       file_path, parent_id, space_id, upload_id, s3_upload_id, file_id, total_chunks, uploaded_chunks,
        node_id, save_path, created_at, updated_at)
     VALUES
-      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       task.id,
       task.type,
@@ -73,6 +75,7 @@ export function createTask(task: TransferTask): void {
       task.error ?? null,
       task.filePath ?? null,
       task.parentId ?? null,
+      task.spaceId ?? null,
       task.uploadId ?? null,
       task.s3UploadId ?? null,
       task.fileId ?? null,
@@ -101,6 +104,7 @@ export function updateTask(id: string, fields: Partial<TransferTask>): void {
     transferredBytes: 'transferred_bytes',
     progress: 'progress',
     error: 'error',
+    spaceId: 'space_id',
     uploadId: 'upload_id',
     s3UploadId: 's3_upload_id',
     fileId: 'file_id',

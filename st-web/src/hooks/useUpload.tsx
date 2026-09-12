@@ -9,7 +9,7 @@ import UploadPanel from '../components/file/UploadPanel';
 interface UploadContextValue {
   tasks: UploadTask[];
   addFiles: (files: File[], parentId: string, replaceFileId?: string, spaceId?: string) => void;
-  addFilePaths: (filePaths: string[], parentId: string, replaceFileId?: string, _spaceId?: string) => void;
+  addFilePaths: (filePaths: string[], parentId: string, replaceFileId?: string, spaceId?: string) => void;
   removeTask: (id: string) => void;
   clearCompleted: () => void;
   panelOpen: boolean;
@@ -88,6 +88,8 @@ export function UploadProvider({ children }: { children: ReactNode }) {
 
   const addFiles = useCallback(async (files: File[], parentId: string, replaceFileId?: string, spaceId?: string) => {
     setPanelOpen(true);
+    // 团队上传必须走显式 spaceId 的专用入口；generic API 只允许个人空间。
+    const uploadBase = spaceId ? `/team/${spaceId}/files/upload` : '/file/upload';
 
     for (const file of files) {
       const taskId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -112,7 +114,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
 
         // Step 2: Check instant upload（替换上传跳过秒传，始终生成新版本）
         if (!replaceFileId) {
-          const checkRes = await api.post<{ instant?: boolean }>('/file/upload/check', {
+          const checkRes = await api.post<{ instant?: boolean }>(`${uploadBase}/check`, {
             fileMd5,
             fileSize: file.size,
             fileName: file.name,
@@ -129,8 +131,9 @@ export function UploadProvider({ children }: { children: ReactNode }) {
         }
 
         // Step 3: 分片上传（服务端门控限速，逐片申请URL）
-        const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
-        const initRes = (await api.post('/file/upload/init', {
+        // 空文件仍创建一个逻辑分片，和服务端 ceil 规则保持一致。
+        const totalChunks = Math.max(1, Math.ceil(file.size / CHUNK_SIZE));
+        const initRes = (await api.post(`${uploadBase}/init`, {
           fileName: file.name,
           fileSize: file.size,
           fileMd5,
@@ -165,7 +168,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
             const start = (seq - 1) * relayChunkSize;
             const end = Math.min(start + relayChunkSize, file.size);
             const blob = file.slice(start, end);
-            await api.post('/file/upload/relay-chunk', blob, {
+            await api.post(`${uploadBase}/relay-chunk`, blob, {
               params: { uploadId: initRes.uploadId, s3UploadId: initRes.s3UploadId, seq },
               headers: { 'Content-Type': 'application/octet-stream' },
               timeout: 300000,
@@ -178,7 +181,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
           }
           // 中转完成：调用 relay-finalize 完成末片 + 合并
           updateTask(taskId, { status: 'merging', progress: 95 });
-          await api.post('/file/upload/relay-finalize', null, {
+          await api.post(`${uploadBase}/relay-finalize`, null, {
             params: { uploadId: initRes.uploadId, s3UploadId: initRes.s3UploadId },
           });
           updateTask(taskId, { status: 'completed', progress: 100 });
@@ -195,7 +198,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
           // 逐片向服务端申请预签名URL（服务端令牌桶门控限速，url为空时等待重试）
           let url = '';
           while (!url) {
-            const res = (await api.get('/file/upload/chunk-url', {
+            const res = (await api.get(`${uploadBase}/chunk-url`, {
               params: { uploadId: initRes.uploadId, s3UploadId: initRes.s3UploadId, chunkIndex: index, clientLimit: useTransferStore.getState().effective.uploadSpeedLimit },
             })) as { url: string; retryAfterMs?: number };
             if (res?.url) {
@@ -207,7 +210,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
           await uploadChunkToS3(url, chunk);
           // 确认分片上传完成，释放服务端限速配额（失败不阻断上传，令牌到期自动回收）
           try {
-            await api.post('/file/upload/chunk-confirm', null, {
+            await api.post(`${uploadBase}/chunk-confirm`, null, {
               params: { uploadId: initRes.uploadId, s3UploadId: initRes.s3UploadId, chunkIndex: index },
             });
           } catch {
@@ -229,7 +232,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
 
         // Merge chunks
         updateTask(taskId, { status: 'merging', progress: 95 });
-        await api.post('/file/upload/merge', {
+        await api.post(`${uploadBase}/merge`, {
           uploadId: initRes.uploadId,
           s3UploadId: initRes.s3UploadId,
         });
@@ -250,7 +253,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
   }, [updateTask]);
 
   // Electron 模式：通过 IPC 委托上传
-  const addFilePaths = useCallback(async (filePaths: string[], parentId: string, replaceFileId?: string, _spaceId?: string) => {
+  const addFilePaths = useCallback(async (filePaths: string[], parentId: string, replaceFileId?: string, spaceId?: string) => {
     if (!isElectron()) return;
     setPanelOpen(true);
 
@@ -270,7 +273,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
       setTasks((prev) => [...prev, task]);
 
       try {
-        const electronTaskId = await window.electronAPI!.startUpload(filePath, parentId, replaceFileId);
+        const electronTaskId = await window.electronAPI!.startUpload(filePath, parentId, replaceFileId, spaceId);
         // 标记为 electron 管理的任务，后续进度由 IPC 更新
         updateTask(taskId, { status: 'uploading', electronTaskId: electronTaskId as string });
       } catch (err) {

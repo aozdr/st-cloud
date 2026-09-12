@@ -171,6 +171,31 @@ class FileServicePermissionIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void genericPersonalBoundary_rejectsTeamNodeEvenWhenOwnerMatches() {
+        FileNode teamNode = fileOwnedBy(OWNER, "team-node.txt");
+        teamNode.setSpaceId(9001L);
+        fileNodeMapper.updateById(teamNode);
+
+        switchUser(OWNER);
+        assertThrows(BusinessException.class,
+                () -> fileService.getNodeByIdAndOwner(teamNode.getId()));
+    }
+
+    @Test
+    void genericParentValidator_rejectsTeamParent() {
+        FileNode teamFolder = fileOwnedBy(OWNER, "team-parent.txt");
+        teamFolder.setNodeType(NodeType.FOLDER.getCode());
+        teamFolder.setSpaceId(9001L);
+        fileNodeMapper.updateById(teamFolder);
+
+        switchUser(OWNER);
+        assertThrows(BusinessException.class,
+                () -> fileService.validateAndGetParentPath(teamFolder.getId()));
+        assertThrows(BusinessException.class,
+                () -> fileService.validateTeamParentPath(9002L, teamFolder.getId()));
+    }
+
+    @Test
     void shareAccessPath_recycledDenied_restoredAllowed() {
         FileNode f = fileOwnedBy(OWNER, "shared.txt");
         switchUser(OWNER);

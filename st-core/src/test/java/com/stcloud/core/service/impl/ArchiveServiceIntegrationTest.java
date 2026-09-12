@@ -38,6 +38,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -52,6 +53,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -139,10 +141,12 @@ class ArchiveServiceIntegrationTest extends AbstractIntegrationTest {
     private FileObjectMapper fileObjectMapper;
     @Autowired
     private UserQuotaMapper userQuotaMapper;
+    private final List<byte[]> uploadedContents = new ArrayList<>();
 
     @BeforeEach
     void resetStorageMock() {
         Mockito.reset(storageService);
+        uploadedContents.clear();
     }
 
     /** 为用户创建配额行（storage_used / storage_quota；quota 传 null 表示不限制） */
@@ -222,20 +226,22 @@ class ArchiveServiceIntegrationTest extends AbstractIntegrationTest {
         FileNode zip = insertZipNode(1L, 100L, 0L, "archive.zip");
         byte[] zipData = buildZip("a.txt:hello", "folder/b.txt:world", "empty/");
         when(storageService.downloadObject(zip.getStoragePath())).thenAnswer(inv -> new ByteArrayInputStream(zipData));
+        doAnswer(inv -> {
+            uploadedContents.add(((InputStream) inv.getArgument(1)).readAllBytes());
+            return null;
+        }).when(storageService).uploadObject(anyString(), any(InputStream.class), anyLong(), anyString());
 
         int count = archiveService.extractArchive(zip.getId(), 0L);
 
         assertEquals(2, count);
         // S3 上传两次（a.txt + b.txt），key 落在 files/1/ 下，内容与 zip 条目一致
         ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
-        ArgumentCaptor<InputStream> streamCaptor = ArgumentCaptor.forClass(InputStream.class);
         ArgumentCaptor<Long> sizeCaptor = ArgumentCaptor.forClass(Long.class);
         verify(storageService, times(2))
-                .uploadObject(keyCaptor.capture(), streamCaptor.capture(), sizeCaptor.capture(), anyString());
+                .uploadObject(keyCaptor.capture(), any(InputStream.class), sizeCaptor.capture(), anyString());
         assertTrue(keyCaptor.getAllValues().stream().allMatch(k -> k.startsWith("1/")));
-        List<byte[]> contents = streamCaptor.getAllValues().stream().map(this::readAll).toList();
-        assertEquals("hello", new String(contents.get(0), StandardCharsets.UTF_8));
-        assertEquals("world", new String(contents.get(1), StandardCharsets.UTF_8));
+        assertEquals("hello", new String(uploadedContents.get(0), StandardCharsets.UTF_8));
+        assertEquals("world", new String(uploadedContents.get(1), StandardCharsets.UTF_8));
         assertEquals(5L, sizeCaptor.getAllValues().get(0));
         assertEquals(5L, sizeCaptor.getAllValues().get(1));
         // file_node 落库：a.txt 在根目录，folder 目录下挂 b.txt

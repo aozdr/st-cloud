@@ -1,0 +1,509 @@
+{
+  "schemaVersion": 2,
+  "definitionVersion": 2,
+  "legacy": false,
+  "taskId": "20260912-stcore-security-consistency",
+  "scale": "large",
+  "status": "done",
+  "goal": {
+    "objective": "�� Review �ƻ��޸� st-core �ļ���Դ�ĸ���/�Ŷ���Ȩ���� scope���ϴ��Ự��Ŀ¼���� P1 ��������Դ�������⡣",
+    "scope": {
+      "include": [
+        "st-core �ļ�Ȩ�ޡ����ṹ���ϴ����汾������վ�����ء����߽�ѹ�Ͳ���",
+        "st-team �Ŷ��ϴ���ʽ��ڼ��ͻ��˵���Ǩ��",
+        "MySQL Ǩ�ơ�H2 schema��schema �Ա�"
+      ],
+      "exclude": [
+        "P0/P1 �ȶ�ǰ���� FileServiceImpl ���ģ���",
+        "���Զ�ɾ��Ǩ��Ԥ�췢�ֵĴ�����ͻ����",
+        "P2-01��P2-05 �Ӻ󵥶��ƽ�"
+      ]
+    },
+    "completionCriteria": [
+      "���� API ���κ� team node ���޷���д��",
+      "�κ� child �� parent �� personal/team scope ��һ�¡�",
+      "�κ� rename/move/restore �������޸����� owner/space �� path��",
+      "uploadId й¶Ҳ���ܲ������˵��ϴ��Ự��",
+      "Ŀ¼���޷��γ� cycle����ʷ�쳣����Ҳ���ᵼ�����޵ݹ顣",
+      "�ֹ�����ͻ����������ֳɹ���",
+      "ͬ����Ч�ڵ�� file version �������ݿ�����Ψһ�Զ��ס�",
+      "��Ŀ¼��ZIP��Archive����Ƭ�ϴ��߱���ȷ��Դ���ޡ�"
+    ]
+  },
+  "revision": {
+    "design": "design-20260912",
+    "code": "code-p1-final-20260912"
+  },
+  "exitCriteria": [
+    {
+      "id": "REQ_ANALYSIS",
+      "status": "done",
+      "dependsOn": [],
+      "by": "codex-main",
+      "dispatchId": "DIRECT-20260912-REQ-01",
+      "evidenceRef": ".ai/docs/20260912-stcore-security-consistency/requirement.md",
+      "validatedRevision": "design-20260912",
+      "completedAt": "2026-09-12T09:47:11+08:00",
+      "userConfirmedAt": "2026-09-12T09:47:11+08:00",
+      "confirmedBy": "user",
+      "confirmationArtifact": ".ai/docs/20260912-stcore-security-consistency/requirement.md"
+    },
+    {
+      "id": "IMPACT_ANALYSIS",
+      "status": "done",
+      "dependsOn": [
+        "REQ_ANALYSIS"
+      ],
+      "by": "codex-main",
+      "dispatchId": "DIRECT-20260912-IMPACT-01",
+      "evidenceRef": ".ai/docs/20260912-stcore-security-consistency/impact.md",
+      "validatedRevision": "design-20260912",
+      "completedAt": "2026-09-12T09:47:11+08:00"
+    },
+    {
+      "id": "EXP_DESIGN",
+      "status": "done",
+      "dependsOn": [
+        "REQ_ANALYSIS"
+      ],
+      "by": "exp-review-synthesis",
+      "dispatchId": "DIRECT-20260912-EXP-01",
+      "evidenceRef": ".ai/docs/20260912-stcore-security-consistency/exp-review.md",
+      "validatedRevision": "design-20260912",
+      "completedAt": "2026-09-12T09:47:11+08:00"
+    },
+    {
+      "id": "TECH_DESIGN",
+      "status": "done",
+      "dependsOn": [
+        "IMPACT_ANALYSIS",
+        "EXP_DESIGN"
+      ],
+      "by": "codex-main",
+      "dispatchId": "DIRECT-20260912-DESIGN-01",
+      "evidenceRef": ".ai/docs/20260912-stcore-security-consistency/design.md",
+      "validatedRevision": "design-20260912",
+      "completedAt": "2026-09-12T09:50:00+08:00",
+      "userConfirmedAt": "2026-09-12T09:50:00+08:00",
+      "confirmedBy": "user",
+      "confirmationArtifact": ".ai/docs/20260912-stcore-security-consistency/design.md"
+    },
+    {
+      "id": "TESTCASES",
+      "status": "done",
+      "dependsOn": [
+        "TECH_DESIGN"
+      ],
+      "by": "codex-main",
+      "dispatchId": "DIRECT-20260912-TESTCASES-01",
+      "evidenceRef": ".ai/runtime/results/DIRECT-20260912-TESTCASES-01.json",
+      "validatedRevision": "design-20260912",
+      "completedAt": "2026-09-12T10:08:00+08:00"
+    },
+    {
+      "id": "IMPLEMENTED",
+      "status": "done",
+      "dependsOn": [
+        "TECH_DESIGN",
+        "TESTCASES"
+      ],
+      "by": "codex-main",
+      "dispatchId": "DIRECT-20260912-IMPLEMENTED-01",
+      "evidenceRef": ".ai/docs/20260912-stcore-security-consistency/changereport.md",
+      "validatedRevision": "code-p1-final-20260912",
+      "completedAt": "2026-09-12T11:58:00+08:00"
+    },
+    {
+      "id": "CODE_REVIEW",
+      "status": "done",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ],
+      "by": "review-synthesis",
+      "dispatchId": "DIRECT-20260912-CODEREVIEW-01",
+      "evidenceRef": ".ai/docs/20260912-stcore-security-consistency/codereview.md",
+      "validatedRevision": "code-p1-final-20260912",
+      "completedAt": "2026-09-12T11:58:00+08:00"
+    },
+    {
+      "id": "SECURITY_REVIEW",
+      "status": "done",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ],
+      "by": "security-synthesis",
+      "dispatchId": "DIRECT-20260912-SECURITY-01",
+      "evidenceRef": ".ai/docs/20260912-stcore-security-consistency/security.md",
+      "validatedRevision": "code-p1-final-20260912",
+      "completedAt": "2026-09-12T11:58:00+08:00"
+    },
+    {
+      "id": "EXP_ACCEPT",
+      "status": "done",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ],
+      "by": "exp-review-synthesis",
+      "dispatchId": "DIRECT-20260912-EXP-ACCEPT-01",
+      "evidenceRef": ".ai/docs/20260912-stcore-security-consistency/exp-review.md",
+      "validatedRevision": "code-p1-final-20260912",
+      "completedAt": "2026-09-12T11:58:00+08:00"
+    },
+    {
+      "id": "TEST_PASS",
+      "status": "done",
+      "dependsOn": [
+        "CODE_REVIEW",
+        "SECURITY_REVIEW"
+      ],
+      "by": "test-synthesis",
+      "dispatchId": "DIRECT-20260912-TEST-PASS-01",
+      "evidenceRef": ".ai/docs/20260912-stcore-security-consistency/testreport.md",
+      "validatedRevision": "code-p1-final-20260912",
+      "completedAt": "2026-09-12T11:58:00+08:00"
+    },
+    {
+      "id": "KNOWLEDGE",
+      "status": "done",
+      "dependsOn": [
+        "TEST_PASS",
+        "SECURITY_REVIEW",
+        "EXP_ACCEPT"
+      ],
+      "by": "codex-main",
+      "dispatchId": "DIRECT-20260912-KNOWLEDGE-01",
+      "evidenceRef": ".ai/docs/20260912-stcore-security-consistency/changereport.md",
+      "validatedRevision": "code-p1-final-20260912",
+      "completedAt": "2026-09-12T11:58:00+08:00"
+    },
+    {
+      "id": "ACCEPT",
+      "status": "done",
+      "dependsOn": [
+        "KNOWLEDGE"
+      ],
+      "by": "acceptance-synthesis",
+      "dispatchId": "DIRECT-20260912-ACCEPT-01",
+      "evidenceRef": ".ai/docs/20260912-stcore-security-consistency/testreport.md",
+      "validatedRevision": "code-p1-final-20260912",
+      "completedAt": "2026-09-12T11:58:00+08:00"
+    }
+  ],
+  "artifacts": {
+    "prd": {
+      "status": "done",
+      "ref": ".ai/docs/20260912-stcore-security-consistency/requirement.md",
+      "provides": [
+        "REQ_ANALYSIS"
+      ],
+      "userConfirmedAt": "2026-09-12T09:47:11+08:00",
+      "confirmedBy": "user"
+    },
+    "uiSpec": {
+      "status": "done",
+      "ref": ".ai/docs/20260912-stcore-security-consistency/uispec.md",
+      "provides": [
+        "REQ_ANALYSIS",
+        "EXP_DESIGN"
+      ],
+      "userConfirmedAt": "2026-09-12T09:47:11+08:00",
+      "confirmedBy": "user"
+    },
+    "impact": {
+      "status": "done",
+      "ref": ".ai/docs/20260912-stcore-security-consistency/impact.md",
+      "provides": [
+        "IMPACT_ANALYSIS"
+      ]
+    },
+    "archReview": {
+      "status": "done",
+      "ref": ".ai/docs/20260912-stcore-security-consistency/architecture-review.md",
+      "provides": [
+        "TECH_DESIGN"
+      ]
+    },
+    "design": {
+      "status": "done",
+      "ref": ".ai/docs/20260912-stcore-security-consistency/design.md",
+      "provides": [
+        "TECH_DESIGN"
+      ],
+      "userConfirmedAt": "2026-09-12T09:50:00+08:00",
+      "confirmedBy": "user"
+    },
+    "testcases": {
+      "status": "done",
+      "ref": ".ai/docs/20260912-stcore-security-consistency/testcases.md",
+      "provides": [
+        "TESTCASES"
+      ]
+    },
+    "changeReport": {
+      "status": "done",
+      "ref": ".ai/docs/20260912-stcore-security-consistency/changereport.md",
+      "provides": [
+        "IMPLEMENTED"
+      ]
+    },
+    "codeReview": {
+      "status": "done",
+      "ref": ".ai/docs/20260912-stcore-security-consistency/codereview.md",
+      "provides": [
+        "CODE_REVIEW"
+      ]
+    },
+    "security": {
+      "status": "done",
+      "ref": ".ai/docs/20260912-stcore-security-consistency/security.md",
+      "provides": [
+        "SECURITY_REVIEW"
+      ]
+    },
+    "expReview": {
+      "status": "done",
+      "ref": ".ai/docs/20260912-stcore-security-consistency/exp-review.md",
+      "provides": [
+        "EXP_DESIGN",
+        "EXP_ACCEPT"
+      ]
+    },
+    "testReport": {
+      "status": "done",
+      "ref": ".ai/docs/20260912-stcore-security-consistency/testreport.md",
+      "provides": [
+        "TEST_PASS"
+      ]
+    }
+  },
+  "blockers": [],
+  "acceptanceEvidence": [
+    {
+      "criterion": "���� API ���κ� team node ���޷���д��",
+      "evidenceRef": ".ai/docs/20260912-stcore-security-consistency/security.md",
+      "validatedRevision": "code-p1-final-20260912"
+    },
+    {
+      "criterion": "�κ� child �� parent �� personal/team scope ��һ�¡�",
+      "evidenceRef": ".ai/runtime/results/DISPATCH-20260912-P0-02-01.json",
+      "validatedRevision": "code-p1-final-20260912"
+    },
+    {
+      "criterion": "�κ� rename/move/restore �������޸����� owner/space �� path��",
+      "evidenceRef": ".ai/runtime/results/DISPATCH-20260912-P0-03-01.json",
+      "validatedRevision": "code-p1-final-20260912"
+    },
+    {
+      "criterion": "uploadId й¶Ҳ���ܲ������˵��ϴ��Ự��",
+      "evidenceRef": ".ai/runtime/results/DISPATCH-20260912-P0-04-01.json",
+      "validatedRevision": "code-p1-final-20260912"
+    },
+    {
+      "criterion": "Ŀ¼���޷��γ� cycle����ʷ�쳣����Ҳ���ᵼ�����޵ݹ顣",
+      "evidenceRef": ".ai/runtime/results/DISPATCH-20260912-P0-02-01.json",
+      "validatedRevision": "code-p1-final-20260912"
+    },
+    {
+      "criterion": "�ֹ�����ͻ����������ֳɹ���",
+      "evidenceRef": ".ai/runtime/results/DISPATCH-20260912-P0-05-01.json",
+      "validatedRevision": "code-p1-final-20260912"
+    },
+    {
+      "criterion": "ͬ����Ч�ڵ�� file version �������ݿ�����Ψһ�Զ��ס�",
+      "evidenceRef": ".ai/runtime/results/DISPATCH-20260912-P0-03-01.json",
+      "validatedRevision": "code-p1-final-20260912"
+    },
+    {
+      "criterion": "��Ŀ¼��ZIP��Archive����Ƭ�ϴ��߱���ȷ��Դ���ޡ�",
+      "evidenceRef": ".ai/docs/20260912-stcore-security-consistency/security.md",
+      "validatedRevision": "code-p1-final-20260912"
+    }
+  ],
+  "dispatchLedger": [
+    {
+      "dispatchId": "DISPATCH-20260912-TESTCASES-01",
+      "taskId": "TASK-20260912-stcore-security-consistency-TESTCASES",
+      "idempotencyKey": "IDEMP-20260912-stcore-security-consistency-TESTCASES",
+      "role": "tester",
+      "taskType": "testcases",
+      "criterionId": "TESTCASES",
+      "childId": "01a0934f-bbe2-7620-9734-3c925713bda5",
+      "status": "failed",
+      "failureReason": "scope_include_exclude_conflict"
+    },
+    {
+      "dispatchId": "DISPATCH-20260912-TESTCASES-02",
+      "taskId": "TASK-20260912-stcore-security-consistency-TESTCASES",
+      "idempotencyKey": "IDEMP-20260912-stcore-security-consistency-TESTCASES",
+      "role": "tester",
+      "taskType": "testcases",
+      "criterionId": "TESTCASES",
+      "childId": "01a09358-5ec8-76f0-82a6-1fe044b3eeb4",
+      "status": "failed",
+      "failureReason": "no_result_after_timeout"
+    },
+    {
+      "dispatchId": "DISPATCH-20260912-P0-01-01",
+      "taskId": "TASK-20260912-stcore-security-consistency-P0-01",
+      "idempotencyKey": "IDEMP-20260912-stcore-security-consistency-P0-01",
+      "role": "executor",
+      "taskType": "implement",
+      "criterionId": "IMPLEMENTED",
+      "childId": "01a09360-0934-7612-937d-25fad879b151",
+      "status": "failed",
+      "failureReason": "no_result_after_timeout_main_takeover"
+    }
+  ],
+  "proposals": [],
+  "history": [
+    {
+      "eventId": "EVT-20260912-STCORE-DOCS-PREPARED",
+      "action": "requirement_ui_spec_prepared",
+      "actor": "codex-main",
+      "occurredAt": "2026-09-12T09:40:00+08:00",
+      "revision": {
+        "design": null,
+        "code": null
+      }
+    },
+    {
+      "eventId": "EVT-20260912-STCORE-DESIGN-PREPARED",
+      "action": "impact_architecture_experience_and_design_prepared",
+      "actor": "codex-main",
+      "occurredAt": "2026-09-12T09:47:11+08:00",
+      "revision": {
+        "design": null,
+        "code": null
+      }
+    },
+    {
+      "eventId": "EVT-20260912-STCORE-DESIGN-CONFIRMED",
+      "action": "technical_design_confirmed",
+      "actor": "user",
+      "occurredAt": "2026-09-12T09:50:00+08:00",
+      "revision": {
+        "design": "design-20260912",
+        "code": null
+      }
+    },
+    {
+      "eventId": "EVT-20260912-TESTCASES-DISPATCHED",
+      "action": "testcases_dispatched",
+      "actor": "codex-main",
+      "occurredAt": "2026-09-12T09:52:00+08:00",
+      "revision": {
+        "design": "design-20260912",
+        "code": null
+      },
+      "dispatchId": "DISPATCH-20260912-TESTCASES-01",
+      "childId": "01a0934f-bbe2-7620-9734-3c925713bda5",
+      "status": "failed",
+      "failureReason": "scope_include_exclude_conflict"
+    },
+    {
+      "eventId": "EVT-20260912-TESTCASES-REDISPATCHED",
+      "action": "testcases_redispatched",
+      "actor": "codex-main",
+      "occurredAt": "2026-09-12T09:58:00+08:00",
+      "revision": {
+        "design": "design-20260912",
+        "code": null
+      },
+      "dispatchId": "DISPATCH-20260912-TESTCASES-02",
+      "childId": "01a09358-5ec8-76f0-82a6-1fe044b3eeb4",
+      "status": "failed",
+      "failureReason": "no_result_after_timeout"
+    },
+    {
+      "eventId": "EVT-20260912-TESTCASES-COMPLETED",
+      "action": "testcases_completed_by_main_fallback",
+      "actor": "codex-main",
+      "occurredAt": "2026-09-12T10:08:00+08:00",
+      "revision": {
+        "design": "design-20260912",
+        "code": null
+      },
+      "evidenceRef": ".ai/runtime/results/DIRECT-20260912-TESTCASES-01.json"
+    },
+    {
+      "eventId": "EVT-20260912-P0-01-DISPATCHED",
+      "action": "p0_01_implementation_dispatched",
+      "actor": "codex-main",
+      "occurredAt": "2026-09-12T10:10:00+08:00",
+      "revision": {
+        "design": "design-20260912",
+        "code": null
+      },
+      "dispatchId": "DISPATCH-20260912-P0-01-01",
+      "childId": "01a09360-0934-7612-937d-25fad879b151",
+      "status": "failed",
+      "failureReason": "no_result_after_timeout"
+    },
+    {
+      "eventId": "EVT-20260912-P0-01-MAIN-TAKEOVER",
+      "action": "p0_01_main_takeover_completed",
+      "actor": "codex-main",
+      "occurredAt": "2026-09-12T10:16:10+08:00",
+      "revision": {
+        "design": "design-20260912",
+        "code": "code-p0-01-20260912"
+      },
+      "evidenceRef": ".ai/runtime/results/DIRECT-20260912-P0-01-01.json"
+    },
+    {
+      "eventId": "EVT-20260912-STCORE-IMPLEMENTED",
+      "action": "implementation_completed_by_main",
+      "actor": "codex-main",
+      "occurredAt": "2026-09-12T11:58:00+08:00",
+      "revision": {
+        "design": "design-20260912",
+        "code": "code-p1-final-20260912"
+      },
+      "evidenceRef": ".ai/docs/20260912-stcore-security-consistency/changereport.md"
+    },
+    {
+      "eventId": "EVT-20260912-STCORE-CODE-REVIEW",
+      "action": "code_review_accepted_after_remediation",
+      "actor": "review-synthesis",
+      "occurredAt": "2026-09-12T11:58:00+08:00",
+      "revision": {
+        "design": "design-20260912",
+        "code": "code-p1-final-20260912"
+      },
+      "evidenceRef": ".ai/docs/20260912-stcore-security-consistency/codereview.md"
+    },
+    {
+      "eventId": "EVT-20260912-STCORE-SECURITY-REVIEW",
+      "action": "security_review_accepted",
+      "actor": "security-synthesis",
+      "occurredAt": "2026-09-12T11:58:00+08:00",
+      "revision": {
+        "design": "design-20260912",
+        "code": "code-p1-final-20260912"
+      },
+      "evidenceRef": ".ai/docs/20260912-stcore-security-consistency/security.md"
+    },
+    {
+      "eventId": "EVT-20260912-STCORE-TEST-PASS",
+      "action": "validation_gate_passed",
+      "actor": "test-synthesis",
+      "occurredAt": "2026-09-12T11:58:00+08:00",
+      "revision": {
+        "design": "design-20260912",
+        "code": "code-p1-final-20260912"
+      },
+      "evidenceRef": ".ai/docs/20260912-stcore-security-consistency/testreport.md"
+    },
+    {
+      "eventId": "EVT-20260912-STCORE-ACCEPTED",
+      "action": "goal_accepted",
+      "actor": "acceptance-synthesis",
+      "occurredAt": "2026-09-12T11:58:00+08:00",
+      "revision": {
+        "design": "design-20260912",
+        "code": "code-p1-final-20260912"
+      },
+      "evidenceRef": ".ai/docs/20260912-stcore-security-consistency/testreport.md"
+    }
+  ]
+}

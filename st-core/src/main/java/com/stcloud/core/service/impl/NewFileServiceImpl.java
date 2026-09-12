@@ -100,7 +100,9 @@ public class NewFileServiceImpl implements NewFileService {
         }
 
         // 2. 父目录路径 + 重名自动序号（复用 FileService.resolveNameConflict，TC-04）
-        String parentPath = fileService.validateAndGetParentPath(effectiveParentId);
+        String parentPath = (spaceId != null && spaceId > 0)
+                ? fileService.validateTeamParentPath(spaceId, effectiveParentId)
+                : fileService.validateAndGetParentPath(effectiveParentId);
         String baseName = normalizeFileName(fileName, suffix);
         String nodeName = fileService.resolveNameConflict(effectiveParentId, baseName);
 

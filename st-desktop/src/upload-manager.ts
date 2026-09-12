@@ -26,7 +26,8 @@ function makeTaskId(): string {
   return crypto.randomUUID();
 }
 
-export async function startUpload(filePath: string, parentId: string, replaceFileId?: string): Promise<string> {
+export async function startUpload(filePath: string, parentId: string, replaceFileId?: string,
+  spaceId?: string): Promise<string> {
   const fileName = path.basename(filePath);
   const stat = fs.statSync(filePath);
   const fileSize = stat.size;
@@ -45,6 +46,7 @@ export async function startUpload(filePath: string, parentId: string, replaceFil
     createdAt: new Date().toISOString(),
     filePath,
     parentId,
+    spaceId,
   };
 
   if (replaceFileId) {
@@ -72,6 +74,7 @@ async function doUpload(taskId: string): Promise<void> {
 
   try {
     const task = getTask(taskId)!;
+    const uploadBase = task.spaceId ? `/team/${task.spaceId}/files/upload` : '/file/upload';
 
     // 1. 计算 MD5
     const md5 = await calculateSampledMd5(task.filePath!, task.fileSize);
@@ -83,11 +86,12 @@ async function doUpload(taskId: string): Promise<void> {
 
     // 2. 秒传检查（替换上传跳过秒传，始终生成新版本）
     if (!replaceFileId) {
-      const checkRes = await apiClient.post('/file/upload/check', {
+      const checkRes = await apiClient.post(`${uploadBase}/check`, {
         fileMd5: md5,
         fileName: task.fileName,
         fileSize: task.fileSize,
         parentId: task.parentId,
+        ...(task.spaceId ? { spaceId: task.spaceId } : {}),
       });
       const checkData: UploadCheckResponse = checkRes.data?.data;
 
@@ -103,11 +107,12 @@ async function doUpload(taskId: string): Promise<void> {
     // 3. 初始化分片上传
     const totalChunks = getTotalChunks(task.fileSize);
     const clientUploadLimit = getTransferSettings().uploadSpeedLimit;
-    const initRes = await apiClient.post('/file/upload/init', {
+    const initRes = await apiClient.post(`${uploadBase}/init`, {
       fileMd5: md5,
       fileName: task.fileName,
       fileSize: task.fileSize,
       parentId: task.parentId,
+      ...(task.spaceId ? { spaceId: task.spaceId } : {}),
       totalChunks,
       chunkSize: CHUNK_SIZE,
       ...(replaceFileId ? { replaceFileId: replaceFileId } : {}),
@@ -137,14 +142,14 @@ async function doUpload(taskId: string): Promise<void> {
       // 中转模式：限速 < 分片下限时走服务端中转，小块顺序 POST + pacing 节流
       updateTask(taskId, { status: 'uploading', transferredBytes: 0, speed: 0 });
       emitTaskUpdate(getTask(taskId)!);
-      await relayUploadChunks(taskId, task.filePath!, initData.uploadId, initData.s3UploadId,
+      await relayUploadChunks(taskId, uploadBase, task.filePath!, initData.uploadId, initData.s3UploadId,
         initData.relayChunkSize, task.fileSize, state);
       if (state.cancelled) return;
       if (state.paused) return;
       // 中转完成：调用 relay-finalize
       updateTask(taskId, { status: 'merging', speed: 0 });
       emitTaskUpdate(getTask(taskId)!);
-      const finalizeRes = await apiClient.post('/file/upload/relay-finalize', null, {
+      const finalizeRes = await apiClient.post(`${uploadBase}/relay-finalize`, null, {
         params: { uploadId: initData.uploadId, s3UploadId: initData.s3UploadId },
       });
       if (finalizeRes.data?.code === 200 || finalizeRes.data?.code === 0) {
@@ -157,7 +162,8 @@ async function doUpload(taskId: string): Promise<void> {
     // 4. 分片上传（逐片向服务端申请URL，服务端门控限速）
     let uploadedChunks: number[] = [];
 
-    await uploadChunks(taskId, task.filePath!, initData.uploadId, initData.s3UploadId, uploadedChunks, totalChunks, state);
+    await uploadChunks(taskId, uploadBase, task.filePath!, initData.uploadId, initData.s3UploadId,
+      uploadedChunks, totalChunks, state);
 
     if (state.cancelled) return;
     if (state.paused) return; // 用户暂停，释放槽位，不合并
@@ -167,7 +173,7 @@ async function doUpload(taskId: string): Promise<void> {
     updateTask(taskId, { status: 'merging', speed: 0 });
     emitTaskUpdate(getTask(taskId)!);
 
-    const mergeRes = await apiClient.post('/file/upload/merge', {
+    const mergeRes = await apiClient.post(`${uploadBase}/merge`, {
       uploadId: currentTask.uploadId,
       s3UploadId: currentTask.s3UploadId,
       fileId: currentTask.fileId,
@@ -188,6 +194,7 @@ async function doUpload(taskId: string): Promise<void> {
 // 中转模式上传：按 relayChunkSize 切小块顺序 POST 到服务端，服务端 pacing 节流接收
 async function relayUploadChunks(
   taskId: string,
+  uploadBase: string,
   filePath: string,
   uploadId: string,
   s3UploadId: string,
@@ -213,7 +220,7 @@ async function relayUploadChunks(
     for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
       if (state.cancelled) return;
       try {
-        await apiClient.post('/file/upload/relay-chunk', chunkData, {
+        await apiClient.post(`${uploadBase}/relay-chunk`, chunkData, {
           params: { uploadId, s3UploadId, seq },
           headers: { 'Content-Type': 'application/octet-stream' },
           timeout: 300000,
@@ -247,6 +254,7 @@ async function relayUploadChunks(
 
 async function uploadChunks(
   taskId: string,
+  uploadBase: string,
   filePath: string,
   uploadId: string,
   s3UploadId: string,
@@ -283,7 +291,7 @@ async function uploadChunks(
       while (!url) {
         if (state.cancelled) return;
         if (state.paused) return;
-        const res = await apiClient.get('/file/upload/chunk-url', {
+        const res = await apiClient.get(`${uploadBase}/chunk-url`, {
           params: { uploadId, s3UploadId, chunkIndex, clientLimit: getTransferSettings().uploadSpeedLimit },
         });
         const data = res.data?.data;
@@ -327,7 +335,7 @@ async function uploadChunks(
 
       // 确认分片上传完成，释放服务端限速配额（失败不阻断上传，令牌到期自动回收）
       try {
-        await apiClient.post('/file/upload/chunk-confirm', null, {
+        await apiClient.post(`${uploadBase}/chunk-confirm`, null, {
           params: { uploadId, s3UploadId, chunkIndex },
         });
       } catch {
@@ -403,11 +411,12 @@ async function doResumeUpload(taskId: string): Promise<void> {
 
   try {
     const task = getTask(taskId)!;
+    const uploadBase = task.spaceId ? `/team/${task.spaceId}/files/upload` : '/file/upload';
     // 如果在排队期间被暂停或取消，直接返回
     if (task.status === 'paused' || task.status === 'cancelled') return;
 
     // 恢复上传：查询后端已上传分片 + 获取新鲜预签名 URL
-    const statusRes = await apiClient.get('/file/upload/status', {
+    const statusRes = await apiClient.get(`${uploadBase}/status`, {
       params: { uploadId: task.uploadId, s3UploadId: task.s3UploadId },
     });
     const statusData: UploadStatusResponse = statusRes.data?.data;
@@ -423,7 +432,8 @@ async function doResumeUpload(taskId: string): Promise<void> {
     emitTaskUpdate(getTask(taskId)!);
 
     // 继续上传（逐片向服务端申请URL，服务端门控限速）
-    await uploadChunks(taskId, task.filePath!, task.uploadId!, task.s3UploadId!, uploadedChunks, totalChunks, state);
+    await uploadChunks(taskId, uploadBase, task.filePath!, task.uploadId!, task.s3UploadId!,
+      uploadedChunks, totalChunks, state);
 
     if (state.cancelled) return;
     if (state.paused) return; // 用户暂停了，不合并
@@ -434,7 +444,7 @@ async function doResumeUpload(taskId: string): Promise<void> {
     updateTask(taskId, { status: 'merging', speed: 0 });
     emitTaskUpdate(getTask(taskId)!);
 
-    const mergeRes = await apiClient.post('/file/upload/merge', {
+    const mergeRes = await apiClient.post(`${uploadBase}/merge`, {
       uploadId: currentTask.uploadId,
       s3UploadId: currentTask.s3UploadId,
       fileId: currentTask.fileId,
@@ -463,7 +473,8 @@ export async function cancelUpload(taskId: string): Promise<void> {
   const task = getTask(taskId);
   if (task?.uploadId && task?.s3UploadId && task?.fileId) {
     try {
-      await apiClient.delete('/file/upload/abort', {
+      const uploadBase = task.spaceId ? `/team/${task.spaceId}/files/upload` : '/file/upload';
+      await apiClient.delete(`${uploadBase}/abort`, {
         params: { uploadId: task.uploadId, s3UploadId: task.s3UploadId, fileId: task.fileId },
       });
     } catch {

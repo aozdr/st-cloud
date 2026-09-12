@@ -54,8 +54,8 @@ const api: ElectronAPI = {
   },
 
   // 上传
-  startUpload: (filePath: string, parentId: string, replaceFileId?: string) => {
-    return ipcRenderer.invoke('upload:start', filePath, parentId, replaceFileId);
+  startUpload: (filePath: string, parentId: string, replaceFileId?: string, spaceId?: string) => {
+    return ipcRenderer.invoke('upload:start', filePath, parentId, replaceFileId, spaceId);
   },
   pauseUpload: (taskId: string) => {
     return ipcRenderer.invoke('upload:pause', taskId);

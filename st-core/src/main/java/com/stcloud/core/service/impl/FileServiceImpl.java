@@ -37,8 +37,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -79,6 +81,8 @@ public class FileServiceImpl implements FileService {
     /** 引用计数：复制文件时对源 file_object 的初始引用 */
     private static final int REF_COUNT_INITIAL = 1;
     private static final int MAX_FOLDER_DEPTH = 20;
+    /** 目录遍历安全上限：异常树超过上限时明确失败，不静默返回不完整结果。 */
+    private static final int MAX_TRAVERSAL_NODES = 500_000;
 
     // ==================== 目录管理 ====================
 
@@ -87,9 +91,10 @@ public class FileServiceImpl implements FileService {
     public FileNodeVO createFolder(Long parentId, String folderName) {
         validateFileName(folderName);
         Long userId = UserContext.getUserId();
-        String parentPath = validateAndGetParentPath(parentId);
+        // 通用文件接口只能在个人空间写入，团队目录必须经显式团队入口和 ACL 校验。
+        String parentPath = validatePersonalParentPath(parentId);
 
-        if (fileNodeMapper.countByParentAndName(parentId, folderName) > 0) {
+        if (fileNodeMapper.countByParentAndName(UserContext.getTenantId(), parentId, folderName) > 0) {
             throw new BusinessException(ResultCode.FILE_ALREADY_EXISTS);
         }
 
@@ -121,7 +126,7 @@ public class FileServiceImpl implements FileService {
     @Override
     public IPage<FileNodeVO> listDirectory(Long parentId, int page, int size) {
         if (parentId != null && parentId != 0) {
-            validateAccessible(parentId);
+            getNodeByIdAndOwner(parentId);
         }
         Long userId = UserContext.getUserId();
         Page<FileNode> pageParam = new Page<>(page, size);
@@ -131,6 +136,7 @@ public class FileServiceImpl implements FileService {
                 .eq(FileNode::getHidden, 0)
                 // 个人目录：无条件只返回当前用户自己的文件（单一租户、无租户切换，不因 dataScope 放行他人文件）
                 .eq(FileNode::getOwnerId, userId)
+                .and(w -> w.isNull(FileNode::getSpaceId).or().le(FileNode::getSpaceId, 0))
                 .and(w -> w.eq(FileNode::getNodeType, NodeType.FOLDER.getCode())
                         .or().eq(FileNode::getUploadStatus, UploadStatus.COMPLETED.getCode()))
                 .orderByDesc(FileNode::getNodeType)
@@ -144,14 +150,9 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public FolderSizeVO getFolderSize(Long nodeId) {
-        FileNode node = fileNodeMapper.selectById(nodeId);
-        if (node == null || !node.isNormal() || !node.isFolder()) {
+        FileNode node = getNodeByIdAndOwner(nodeId);
+        if (!node.isNormal() || !node.isFolder()) {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
-        }
-        Long userId = UserContext.getUserId();
-        // 个人文件夹大小：仅属主可查询；团队文件夹由团队权限前置校验
-        if ((node.getSpaceId() == null || node.getSpaceId() <= 0) && !node.getOwnerId().equals(userId)) {
-            throw new BusinessException(ResultCode.FORBIDDEN);
         }
         Cache cache = buildFolderSizeCache();
         String key = FOLDER_SIZE_KEY_PREFIX + nodeId;
@@ -170,30 +171,44 @@ public class FileServiceImpl implements FileService {
         vo.setSize(0L);
         vo.setFileCount(0L);
         vo.setFolderCount(0L);
-        java.util.Deque<Long> queue = new java.util.ArrayDeque<>();
-        queue.add(root.getId());
-        int processed = 0;
-        while (!queue.isEmpty()) {
-            Long parentId = queue.poll();
+        Set<Long> visited = new HashSet<>();
+        visited.add(root.getId());
+        List<Long> frontier = List.of(root.getId());
+        int depth = 0;
+        while (!frontier.isEmpty()) {
             List<FileNode> children = fileNodeMapper.selectList(new LambdaQueryWrapper<FileNode>()
-                    .eq(FileNode::getParentId, parentId)
+                    .in(FileNode::getParentId, frontier)
                     .eq(FileNode::getStatus, NodeStatus.NORMAL.getCode())
-                    .eq(FileNode::getUploadStatus, UploadStatus.COMPLETED.getCode()));
+                    .eq(FileNode::getUploadStatus, UploadStatus.COMPLETED.getCode())
+                    .eq(FileNode::getOwnerId, root.getOwnerId())
+                    .and(w -> w.isNull(FileNode::getSpaceId).or().le(FileNode::getSpaceId, 0)));
+            List<Long> next = new ArrayList<>();
             for (FileNode child : children) {
+                if (child.getId() == null || !visited.add(child.getId())) {
+                    throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "目录树存在循环或重复引用");
+                }
                 if (child.isFolder()) {
                     vo.setFolderCount(vo.getFolderCount() + 1);
-                    queue.add(child.getId());
+                    if (depth >= MAX_FOLDER_DEPTH) {
+                        throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(),
+                                "目录层级超过最大限制(" + MAX_FOLDER_DEPTH + "层)");
+                    }
+                    next.add(child.getId());
                 } else {
                     vo.setFileCount(vo.getFileCount() + 1);
                     vo.setSize(vo.getSize() + (child.getFileSize() != null ? child.getFileSize() : 0L));
                 }
             }
-            // 防御上限：单次聚合最多遍历 50 万节点，防止异常超大目录拖垮 DB
-            processed += children.size();
-            if (processed > 500_000) {
-                break;
+            // 防御上限：单次聚合最多遍历 50 万节点，超过即失败，避免返回静默不完整的统计结果。
+            if (visited.size() > MAX_TRAVERSAL_NODES) {
+                throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(),
+                        "目录节点数量超过限制(" + MAX_TRAVERSAL_NODES + ")");
             }
+            frontier = next;
+            depth++;
         }
+        vo.setComplete(true);
+        vo.setCalculatedAt(LocalDateTime.now());
         return vo;
     }
 
@@ -211,6 +226,7 @@ public class FileServiceImpl implements FileService {
                 .eq(FileNode::getOwnerId, userId)
                 .eq(FileNode::getStatus, NodeStatus.NORMAL.getCode())
                 .eq(FileNode::getHidden, 0)
+                .and(w -> w.isNull(FileNode::getSpaceId).or().le(FileNode::getSpaceId, 0))
                 .like(FileNode::getName, keyword)
                 .orderByDesc(FileNode::getNodeType)
                 .orderByDesc(FileNode::getUpdatedAt)
@@ -246,10 +262,10 @@ public class FileServiceImpl implements FileService {
         String newPath = parentPath + "/" + newName;
         node.setName(newName);
         node.setPath(newPath);
-        fileNodeMapper.updateById(node);
+        updateNodeOrThrow(node);
 
         if (node.isFolder()) {
-            fileNodeMapper.updateChildrenPath(oldPath, newPath);
+            fileNodeMapper.updateChildrenPath(oldPath, newPath, node.getOwnerId(), node.getSpaceId(), node.getTenantId());
         }
         publishMetaUpdate(node, newPath);
         reliableEventPublisher.publishSyncChange(node, SyncChangeEvent.ChangeType.RENAME, oldPath);
@@ -259,7 +275,8 @@ public class FileServiceImpl implements FileService {
     @Override
     @Transactional
     public void move(List<Long> nodeIds, Long targetParentId) {
-        String targetPath = validateAndGetParentPath(targetParentId);
+        // 个人移动的目标也必须是个人节点，避免把个人文件写入团队树。
+        String targetPath = validatePersonalParentPath(targetParentId);
         for (Long nodeId : nodeIds) {
             FileNode node = getNodeByIdAndOwner(nodeId);
             // 编辑保护：文件正在编辑时禁止移动（TC-18）
@@ -271,13 +288,10 @@ public class FileServiceImpl implements FileService {
             if (targetParentId != null && targetParentId.equals(node.getParentId())) {
                 continue;
             }
-            if (targetParentId != 0) {
-                FileNode target = getNodeByIdAndOwner(targetParentId);
-                if (target.getPath().startsWith(node.getPath() + "/")) {
-                    throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "不能将文件夹移动到其子目录中");
-                }
+            if (targetParentId != null && targetParentId != 0) {
+                assertMoveTargetIsSafe(nodeId, targetParentId);
             }
-            if (fileNodeMapper.countByParentAndName(targetParentId, node.getName()) > 0) {
+            if (fileNodeMapper.countByParentAndName(UserContext.getTenantId(), targetParentId, node.getName()) > 0) {
                 throw new BusinessException(ResultCode.FILE_ALREADY_EXISTS.getCode(),
                         "目标目录已存在同名: " + node.getName());
             }
@@ -285,11 +299,11 @@ public class FileServiceImpl implements FileService {
             String newPath = targetPath + "/" + node.getName();
             node.setParentId(targetParentId);
             node.setPath(newPath);
-            fileNodeMapper.updateById(node);
+            updateNodeOrThrow(node);
             // 移动后祖先链变化：失效该节点可访问性缓存（子孙由 TTL 兜底）
             invalidateAccessible(nodeId);
             if (node.isFolder()) {
-                fileNodeMapper.updateChildrenPath(oldPath, newPath);
+                fileNodeMapper.updateChildrenPath(oldPath, newPath, node.getOwnerId(), node.getSpaceId(), node.getTenantId());
             }
             publishMetaUpdate(node, newPath);
             reliableEventPublisher.publishSyncChange(node, SyncChangeEvent.ChangeType.MOVE, oldPath);
@@ -299,7 +313,8 @@ public class FileServiceImpl implements FileService {
     @Override
     @Transactional
     public void copy(List<Long> nodeIds, Long targetParentId) {
-        String targetPath = validateAndGetParentPath(targetParentId);
+        // 个人复制的目标也必须是个人节点，避免把个人文件写入团队树。
+        String targetPath = validatePersonalParentPath(targetParentId);
         for (Long nodeId : nodeIds) {
             FileNode node = getNodeByIdAndOwner(nodeId);
             copyNodeRecursive(node, targetParentId, targetPath);
@@ -307,6 +322,17 @@ public class FileServiceImpl implements FileService {
     }
 
     private void copyNodeRecursive(FileNode source, Long targetParentId, String targetPath) {
+        copyNodeRecursive(source, targetParentId, targetPath, new HashSet<>(), 0);
+    }
+
+    private void copyNodeRecursive(FileNode source, Long targetParentId, String targetPath,
+                                   Set<Long> visited, int depth) {
+        if (source == null || source.getId() == null || !visited.add(source.getId())) {
+            throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "目录树存在循环或重复引用");
+        }
+        if (depth > MAX_FOLDER_DEPTH || visited.size() > MAX_TRAVERSAL_NODES) {
+            throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "目录树超过处理上限");
+        }
         Long userId = UserContext.getUserId();
         String newName = resolveNameConflict(targetParentId, source.getName());
         String newPath = targetPath + "/" + newName;
@@ -363,7 +389,7 @@ public class FileServiceImpl implements FileService {
                     .eq(FileNode::getStatus, NodeStatus.NORMAL.getCode());
             List<FileNode> children = fileNodeMapper.selectList(wrapper);
             for (FileNode child : children) {
-                copyNodeRecursive(child, copy.getId(), newPath);
+                copyNodeRecursive(child, copy.getId(), newPath, visited, depth + 1);
             }
         }
     }
@@ -371,7 +397,15 @@ public class FileServiceImpl implements FileService {
     private void publishMetaUpdate(FileNode node, String newPath) {
         LambdaQueryWrapper<FileNode> fileQuery = new LambdaQueryWrapper<FileNode>()
                 .and(w -> w.eq(FileNode::getId, node.getId())
-                        .or().likeRight(FileNode::getPath, newPath + "/"));
+                        .or().likeRight(FileNode::getPath, newPath + "/"))
+                .and(w -> {
+                    if (node.getSpaceId() != null && node.getSpaceId() > 0) {
+                        w.eq(FileNode::getSpaceId, node.getSpaceId());
+                    } else {
+                        w.and(s -> s.isNull(FileNode::getSpaceId).or().le(FileNode::getSpaceId, 0))
+                                .eq(FileNode::getOwnerId, node.getOwnerId());
+                    }
+                });
         List<FileNode> affectedFiles = fileNodeMapper.selectList(fileQuery);
         for (FileNode file : affectedFiles) {
             reliableEventPublisher.publishFileIndex(file, FileIndexEvent.ActionType.UPDATE_META);
@@ -392,7 +426,7 @@ public class FileServiceImpl implements FileService {
             // 只置被删节点自身为回收态；子孙 status 不动，访问时由祖先链校验拦截
             node.setStatus(NodeStatus.RECYCLED.getCode());
             node.setUpdatedAt(LocalDateTime.now());
-            fileNodeMapper.updateById(node);
+            updateNodeOrThrow(node);
             // 回收后该节点立即不可访问：失效可访问性缓存
             invalidateAccessible(nodeId);
             // ES/同步：仅移除被删节点自身（子孙由搜索侧祖先链过滤、同步端递归删除兜底）
@@ -419,6 +453,7 @@ public class FileServiceImpl implements FileService {
     @Override
     public List<FileTreeNodeVO> getFolderTree() {
         Long userId = UserContext.getUserId();
+        Long tenantId = UserContext.getTenantId();
         LambdaQueryWrapper<FileNode> wrapper = new LambdaQueryWrapper<FileNode>()
                 .eq(FileNode::getNodeType, NodeType.FOLDER.getCode())
                 .eq(FileNode::getStatus, NodeStatus.NORMAL.getCode())
@@ -434,16 +469,32 @@ public class FileServiceImpl implements FileService {
     }
 
     private List<FileTreeNodeVO> buildTreeNode(Map<Long, List<FileNode>> parentIdMap, Long parentId) {
+        return buildTreeNode(parentIdMap, parentId, new HashSet<>(), 0);
+    }
+
+    private List<FileTreeNodeVO> buildTreeNode(Map<Long, List<FileNode>> parentIdMap, Long parentId,
+                                               Set<Long> visited, int depth) {
         List<FileNode> children = parentIdMap.get(parentId);
         if (children == null || children.isEmpty()) {
             return new ArrayList<>();
         }
+        if (depth >= MAX_FOLDER_DEPTH) {
+            throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(),
+                    "目录层级超过最大限制(" + MAX_FOLDER_DEPTH + "层)");
+        }
         return children.stream().map(node -> {
+            if (node.getId() == null || !visited.add(node.getId())) {
+                throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "目录树存在循环或重复引用");
+            }
+            if (visited.size() > MAX_TRAVERSAL_NODES) {
+                throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(),
+                        "目录节点数量超过限制(" + MAX_TRAVERSAL_NODES + ")");
+            }
             FileTreeNodeVO vo = new FileTreeNodeVO();
             vo.setId(node.getId());
             vo.setName(node.getName());
             vo.setPath(node.getPath());
-            vo.setChildren(buildTreeNode(parentIdMap, node.getId()));
+            vo.setChildren(buildTreeNode(parentIdMap, node.getId(), visited, depth + 1));
             return vo;
         }).collect(Collectors.toList());
     }
@@ -501,7 +552,7 @@ public class FileServiceImpl implements FileService {
             // 引用计数归零，需要删除S3物理文件（由调用方处理）
         }
         node.setRefCount(Math.max(0, newRefCount));
-        fileNodeMapper.updateById(node);
+        updateNodeOrThrow(node);
     }
 
     // ==================== 辅助方法 ====================
@@ -524,6 +575,16 @@ public class FileServiceImpl implements FileService {
         editorLockService.assertNotEditing(ids);
     }
 
+    /**
+     * 所有文件节点关键写入统一检查乐观锁影响行数；返回 0 表示版本已被并发请求更新，
+     * 此时不得继续发布事件或执行依赖本次写入成功的副作用。
+     */
+    private void updateNodeOrThrow(FileNode node) {
+        if (fileNodeMapper.updateById(node) != 1) {
+            throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "文件已被其他请求修改，请刷新后重试");
+        }
+    }
+
     void validateFileName(String name) {
         if (name == null || name.trim().isEmpty()) {
             throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "名称不能为空");
@@ -538,12 +599,44 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public String validateAndGetParentPath(Long parentId) {
+        // 兼容旧的 generic 调用方，但语义固定为个人父目录；团队父目录必须显式带 spaceId。
+        return validatePersonalParentPath(parentId);
+    }
+
+    /**
+     * 校验 generic personal API 的父目录，个人节点必须属于当前用户。
+     */
+    private String validatePersonalParentPath(Long parentId) {
         if (parentId == null || parentId == 0) {
             return "";
         }
-        FileNode parent = fileNodeMapper.selectById(parentId);
+        FileNode parent = getNodeByIdAndOwner(parentId);
+        if (!parent.isFolder()) {
+            throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "目标不是文件夹");
+        }
+        if (parent.getStatus() != NodeStatus.NORMAL.getCode()) {
+            throw new BusinessException(ResultCode.FILE_IN_RECYCLE);
+        }
+        validateAccessible(parentId);
+        return parent.getPath();
+    }
+
+    /**
+     * 校验显式团队 API 的父目录。团队 scope 必须由调用方明确传入，不能从当前用户或 path 推断。
+     */
+    public String validateTeamParentPath(Long spaceId, Long parentId) {
+        if (parentId == null || parentId == 0) {
+            return "";
+        }
+        if (spaceId == null || spaceId <= 0) {
+            throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "团队空间参数无效");
+        }
+        FileNode parent = fileNodeMapper.selectOne(new LambdaQueryWrapper<FileNode>()
+                .eq(FileNode::getId, parentId)
+                .eq(FileNode::getSpaceId, spaceId)
+                .eq(FileNode::getStatus, NodeStatus.NORMAL.getCode()));
         if (parent == null) {
-            throw new BusinessException(ResultCode.FILE_NOT_FOUND.getCode(), "父文件夹不存在");
+            throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "父文件夹不属于该团队空间");
         }
         if (!parent.isFolder()) {
             throw new BusinessException(ResultCode.BAD_REQUEST.getCode(), "目标不是文件夹");
@@ -562,12 +655,19 @@ public class FileServiceImpl implements FileService {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
         }
         Long userId = UserContext.getUserId();
-        // 个人文件（spaceId 空/0）：仅属主可操作，不因 dataScope 放行他人个人文件；
-        // 团队文件（spaceId>0）由团队权限前置校验（TeamController），此处不拦截。
-        if ((node.getSpaceId() == null || node.getSpaceId() <= 0) && !node.getOwnerId().equals(userId)) {
+        Long tenantId = UserContext.getTenantId();
+        // 这是 generic personal API 的最终权限边界：团队节点即使 owner 恰好相同也必须拒绝；
+        // 团队资源只能经显式 spaceId + ACL 的团队方法访问，不能依赖外层 Controller 放行。
+        if (tenantId == null || !tenantId.equals(node.getTenantId())
+                || !isPersonalNode(node) || userId == null || !userId.equals(node.getOwnerId())) {
             throw new BusinessException(ResultCode.FORBIDDEN);
         }
         return node;
+    }
+
+    private boolean isPersonalNode(FileNode node) {
+        Long spaceId = node == null ? null : node.getSpaceId();
+        return spaceId == null || spaceId <= 0;
     }
 
     @PostConstruct
@@ -611,11 +711,36 @@ public class FileServiceImpl implements FileService {
     @Override
     public List<FileNode> collectDescendants(Long nodeId) {
         List<FileNode> result = new ArrayList<>();
-        List<FileNode> children = fileNodeMapper.selectList(
-                new LambdaQueryWrapper<FileNode>().eq(FileNode::getParentId, nodeId));
-        for (FileNode child : children) {
-            result.add(child);
-            result.addAll(collectDescendants(child.getId()));
+        Set<Long> visited = new HashSet<>();
+        if (nodeId == null) {
+            return result;
+        }
+        visited.add(nodeId);
+        List<Long> frontier = List.of(nodeId);
+        int depth = 0;
+        while (!frontier.isEmpty()) {
+            List<FileNode> children = fileNodeMapper.selectList(
+                    new LambdaQueryWrapper<FileNode>().in(FileNode::getParentId, frontier));
+            List<Long> next = new ArrayList<>();
+            for (FileNode child : children) {
+                if (child.getId() == null || !visited.add(child.getId())) {
+                    throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "目录树存在循环或重复引用");
+                }
+                result.add(child);
+                if (result.size() > MAX_TRAVERSAL_NODES) {
+                    throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(),
+                            "目录节点数量超过限制(" + MAX_TRAVERSAL_NODES + ")");
+                }
+                if (child.isFolder()) {
+                    if (depth >= MAX_FOLDER_DEPTH) {
+                        throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(),
+                                "目录层级超过最大限制(" + MAX_FOLDER_DEPTH + "层)");
+                    }
+                    next.add(child.getId());
+                }
+            }
+            frontier = next;
+            depth++;
         }
         return result;
     }
@@ -623,7 +748,7 @@ public class FileServiceImpl implements FileService {
     @Override
     public String resolveNameConflict(Long parentId, String name) {
         Long effectiveParentId = parentId == null ? 0L : parentId;
-        if (fileNodeMapper.countByParentAndName(effectiveParentId, name) == 0) {
+        if (fileNodeMapper.countByParentAndName(UserContext.getTenantId(), effectiveParentId, name) == 0) {
             return name;
         }
         return generateUniqueName(effectiveParentId, name);
@@ -644,7 +769,7 @@ public class FileServiceImpl implements FileService {
         do {
             newName = baseName + "(" + suffix + ")" + ext;
             suffix++;
-        } while (fileNodeMapper.countByParentAndName(parentId, newName) > 0);
+        } while (fileNodeMapper.countByParentAndName(UserContext.getTenantId(), parentId, newName) > 0);
         return newName;
     }
 
@@ -726,10 +851,10 @@ public class FileServiceImpl implements FileService {
     public FileNodeVO createTeamFolder(Long spaceId, Long parentId, String folderName) {
         validateFileName(folderName);
         Long userId = UserContext.getUserId();
-        String parentPath = validateAndGetParentPath(parentId);
+        String parentPath = validateTeamParentPath(spaceId, parentId);
 
         Long effectiveParentId = (parentId == null) ? 0L : parentId;
-        if (fileNodeMapper.countByParentAndName(effectiveParentId, folderName) > 0) {
+        if (fileNodeMapper.countByParentAndName(UserContext.getTenantId(), effectiveParentId, folderName) > 0) {
             throw new BusinessException(ResultCode.FILE_ALREADY_EXISTS);
         }
 
@@ -789,9 +914,9 @@ public class FileServiceImpl implements FileService {
         String newPath = parentPath + "/" + newName;
         node.setName(newName);
         node.setPath(newPath);
-        fileNodeMapper.updateById(node);
+        updateNodeOrThrow(node);
         if (node.isFolder()) {
-            fileNodeMapper.updateChildrenPath(oldPath, newPath);
+            fileNodeMapper.updateChildrenPath(oldPath, newPath, node.getOwnerId(), node.getSpaceId(), node.getTenantId());
         }
         publishMetaUpdate(node, newPath);
         reliableEventPublisher.publishSyncChange(node, SyncChangeEvent.ChangeType.RENAME, oldPath);
@@ -812,7 +937,7 @@ public class FileServiceImpl implements FileService {
             // 只置被删节点自身为回收态；子孙 status 不动，访问时由祖先链校验拦截
             node.setStatus(NodeStatus.RECYCLED.getCode());
             node.setUpdatedAt(LocalDateTime.now());
-            fileNodeMapper.updateById(node);
+            updateNodeOrThrow(node);
             // 回收后该节点立即不可访问：失效可访问性缓存
             invalidateAccessible(nodeId);
             // ES/同步：仅移除被删节点自身（子孙由搜索侧祖先链过滤、同步端递归删除兜底）
@@ -833,7 +958,7 @@ public class FileServiceImpl implements FileService {
         if (targetParentId != null && targetParentId > 0) {
             validateTeamNode(spaceId, targetParentId);
         }
-        String targetPath = validateAndGetParentPath(targetParentId);
+        String targetPath = validateTeamParentPath(spaceId, targetParentId);
         for (Long nodeId : nodeIds) {
             validateTeamNode(spaceId, nodeId);
             FileNode node = fileNodeMapper.selectById(nodeId);
@@ -843,7 +968,10 @@ public class FileServiceImpl implements FileService {
             if (nodeId.equals(targetParentId)) {
                 throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "不能将文件移动到自身");
             }
-            if (fileNodeMapper.countByParentAndName(targetParentId, node.getName()) > 0) {
+            if (targetParentId != null && targetParentId != 0) {
+                assertMoveTargetIsSafe(nodeId, targetParentId);
+            }
+            if (fileNodeMapper.countByParentAndName(UserContext.getTenantId(), targetParentId, node.getName()) > 0) {
                 throw new BusinessException(ResultCode.FILE_ALREADY_EXISTS.getCode(),
                         "目标目录已存在同名: " + node.getName());
             }
@@ -851,11 +979,11 @@ public class FileServiceImpl implements FileService {
             String newPath = targetPath + "/" + node.getName();
             node.setParentId(targetParentId);
             node.setPath(newPath);
-            fileNodeMapper.updateById(node);
+            updateNodeOrThrow(node);
             // 移动后祖先链变化：失效该节点可访问性缓存（子孙由 TTL 兜底）
             invalidateAccessible(nodeId);
             if (node.isFolder()) {
-                fileNodeMapper.updateChildrenPath(oldPath, newPath);
+                fileNodeMapper.updateChildrenPath(oldPath, newPath, node.getOwnerId(), node.getSpaceId(), node.getTenantId());
             }
             publishMetaUpdate(node, newPath);
             reliableEventPublisher.publishSyncChange(node, SyncChangeEvent.ChangeType.MOVE, oldPath);
@@ -868,7 +996,7 @@ public class FileServiceImpl implements FileService {
         if (targetParentId != null && targetParentId > 0) {
             validateTeamNode(spaceId, targetParentId);
         }
-        String targetPath = validateAndGetParentPath(targetParentId);
+        String targetPath = validateTeamParentPath(spaceId, targetParentId);
         for (Long nodeId : nodeIds) {
             validateTeamNode(spaceId, nodeId);
             FileNode node = fileNodeMapper.selectById(nodeId);
@@ -954,6 +1082,9 @@ public class FileServiceImpl implements FileService {
             }
             if (spaceId != null) {
                 wrapper.eq(FileNode::getSpaceId, spaceId);
+            } else if (ownerId != null) {
+                // personal path 解析不能仅按 owner 命中同 owner 的团队目录。
+                wrapper.and(w -> w.isNull(FileNode::getSpaceId).or().le(FileNode::getSpaceId, 0));
             }
             current = fileNodeMapper.selectOne(wrapper);
             if (current == null) {
@@ -970,6 +1101,17 @@ public class FileServiceImpl implements FileService {
     }
 
     private void copyTeamNodeRecursive(FileNode source, Long targetParentId, String targetPath) {
+        copyTeamNodeRecursive(source, targetParentId, targetPath, new HashSet<>(), 0);
+    }
+
+    private void copyTeamNodeRecursive(FileNode source, Long targetParentId, String targetPath,
+                                       Set<Long> visited, int depth) {
+        if (source == null || source.getId() == null || !visited.add(source.getId())) {
+            throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "目录树存在循环或重复引用");
+        }
+        if (depth > MAX_FOLDER_DEPTH || visited.size() > MAX_TRAVERSAL_NODES) {
+            throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "目录树超过处理上限");
+        }
         Long userId = UserContext.getUserId();
         String newName = resolveNameConflict(targetParentId, source.getName());
         String newPath = targetPath + "/" + newName;
@@ -1027,11 +1169,35 @@ public class FileServiceImpl implements FileService {
                     .eq(FileNode::getStatus, NodeStatus.NORMAL.getCode());
             List<FileNode> children = fileNodeMapper.selectList(wrapper);
             for (FileNode child : children) {
-                copyTeamNodeRecursive(child, copy.getId(), newPath);
+                copyTeamNodeRecursive(child, copy.getId(), newPath, visited, depth + 1);
             }
         }
     }
-
+    /**
+     * 按 parentId 祖先链判断移动目标，避免依赖可被污染的 path 前缀；同时识别历史 parent 环。
+     */
+    private void assertMoveTargetIsSafe(Long sourceNodeId, Long targetParentId) {
+        Set<Long> visited = new HashSet<>();
+        Long currentId = targetParentId;
+        int depth = 0;
+        while (currentId != null && currentId != 0) {
+            if (!visited.add(currentId)) {
+                throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "目录树存在循环");
+            }
+            if (sourceNodeId.equals(currentId)) {
+                throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "不能将文件夹移动到其子目录中");
+            }
+            if (++depth > MAX_FOLDER_DEPTH) {
+                throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(),
+                        "目录层级超过最大限制(" + MAX_FOLDER_DEPTH + "层)");
+            }
+            FileNode current = fileNodeMapper.selectById(currentId);
+            if (current == null) {
+                throw new BusinessException(ResultCode.FILE_NOT_FOUND);
+            }
+            currentId = current.getParentId();
+        }
+    }
 
     @Override
     public List<Map<String, Object>> storageByType() {
@@ -1092,6 +1258,8 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public int versionCount(Long nodeId) {
+        // 版本数量也是 generic personal API，不能仅按 nodeId 直接查询版本元数据。
+        getNodeByIdAndOwner(nodeId);
         return fileNodeMapper.countVersions(nodeId);
     }
 
@@ -1132,7 +1300,7 @@ public class FileServiceImpl implements FileService {
             // 其余无历史版本的文件移入回收站
             node.setStatus(NodeStatus.RECYCLED.getCode());
             node.setUpdatedAt(java.time.LocalDateTime.now());
-            fileNodeMapper.updateById(node);
+            updateNodeOrThrow(node);
             // 回收后立即不可访问：失效可访问性缓存
             invalidateAccessible(node.getId());
             // 从搜索索引移除
@@ -1148,18 +1316,12 @@ public class FileServiceImpl implements FileService {
     @Override
     @Transactional
     public void setHidden(Long nodeId, boolean hidden) {
-        FileNode node = fileNodeMapper.selectById(nodeId);
-        if (node == null || !node.isNormal()) {
+        FileNode node = getNodeByIdAndOwner(nodeId);
+        if (!node.isNormal()) {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
         }
-        // 权限校验
-        Long userId = UserContext.getUserId();
-        // 个人文件：仅属主可设置隐藏；团队文件由团队权限前置校验
-        if ((node.getSpaceId() == null || node.getSpaceId() <= 0) && !node.getOwnerId().equals(userId)) {
-            throw new BusinessException(ResultCode.FORBIDDEN);
-        }
         node.setHidden(hidden ? 1 : 0);
-        fileNodeMapper.updateById(node);
+        updateNodeOrThrow(node);
     }
 
     @Override
@@ -1169,6 +1331,7 @@ public class FileServiceImpl implements FileService {
         LambdaQueryWrapper<FileNode> wrapper = new LambdaQueryWrapper<FileNode>()
                 .eq(FileNode::getOwnerId, userId)
                 .eq(FileNode::getTenantId, tenantId)
+                .and(w -> w.isNull(FileNode::getSpaceId).or().le(FileNode::getSpaceId, 0))
                 .eq(FileNode::getStatus, NodeStatus.NORMAL.getCode())
                 .eq(FileNode::getHidden, 1)
                 .orderByDesc(FileNode::getUpdatedAt);

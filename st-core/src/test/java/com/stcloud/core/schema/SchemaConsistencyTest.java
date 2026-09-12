@@ -7,6 +7,7 @@ import com.stcloud.core.entity.FileFavorite;
 import com.stcloud.core.entity.FileNode;
 import com.stcloud.core.entity.FileObject;
 import com.stcloud.core.entity.FileVersion;
+import com.stcloud.core.entity.UploadSession;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import org.junit.jupiter.api.DisplayName;
@@ -43,7 +44,7 @@ class SchemaConsistencyTest {
     /** 待校验的实体类列表（st-core 全部实体） */
     private static final List<Class<?>> ENTITIES = List.of(
             FileNode.class, FileObject.class, FileChunk.class,
-            FileFavorite.class, FileVersion.class, EventLog.class
+            FileFavorite.class, FileVersion.class, EventLog.class, UploadSession.class
     );
 
     /** BaseEntity 的列：id / tenant_id / created_at / updated_at / deleted */

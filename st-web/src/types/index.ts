@@ -469,7 +469,7 @@ export interface ElectronAPI {
   pauseAllTransfers: () => Promise<void>;
   resumeAllTransfers: () => Promise<void>;
   quitApp: () => Promise<void>;
-  startUpload: (filePath: string, parentId: string, replaceFileId?: string) => Promise<string>;
+  startUpload: (filePath: string, parentId: string, replaceFileId?: string, spaceId?: string) => Promise<string>;
   pauseUpload: (taskId: string) => Promise<void>;
   resumeUpload: (taskId: string) => Promise<void>;
   cancelUpload: (taskId: string) => Promise<void>;

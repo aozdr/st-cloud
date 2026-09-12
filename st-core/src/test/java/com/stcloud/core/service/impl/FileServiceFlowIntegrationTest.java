@@ -208,6 +208,15 @@ class FileServiceFlowIntegrationTest extends AbstractIntegrationTest {
         assertThrows(BusinessException.class, () -> fileService.move(List.of(folderA.getId()), folderB.getId()));
     }
 
+    @Test
+    void collectDescendants_rejectsHistoricalParentCycle() {
+        FileNode folderA = folder("cycle-a", 0L, "/cycle-a");
+        FileNode folderB = folder("cycle-b", folderA.getId(), "/cycle-a/cycle-b");
+        jdbcTemplate.update("UPDATE file_node SET parent_id = ? WHERE id = ?", folderB.getId(), folderA.getId());
+
+        assertThrows(BusinessException.class, () -> fileService.collectDescendants(folderA.getId()));
+    }
+
     // ---- 复制 / 秒传引用 ----
 
     @Test

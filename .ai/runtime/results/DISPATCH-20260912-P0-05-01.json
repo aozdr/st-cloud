@@ -1,0 +1,23 @@
+{
+  "dispatchId": "DISPATCH-20260912-P0-05-01",
+  "taskId": "TASK-20260912-stcore-security-consistency-P0-05",
+  "status": "completed",
+  "artifactRefs": [
+    "st-core/src/main/java/com/stcloud/core/service/impl/VersionServiceImpl.java",
+    "st-core/src/main/java/com/stcloud/core/service/impl/upload/UploadManager.java",
+    "st-core/src/main/java/com/stcloud/core/mapper/FileNodeMapper.java"
+  ],
+  "criterionProposal": {
+    "id": "IMPLEMENTED",
+    "outcome": "pass",
+    "by": "codex-main",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260912-P0-05-01.json",
+    "validatedRevision": "code-p1-final-20260912"
+  },
+  "blockerProposals": [],
+  "validation": {
+    "tests": "st-core full suite: 159 passed",
+    "concurrency": "merge claim、状态更新、版本号分配和唯一冲突均检查 affected rows 并映射为可重试冲突",
+    "scope": "不删除存量冲突数据；数据库唯一性由 41_file_node_version_uniqueness.sql 提供最终兜底"
+  }
+}

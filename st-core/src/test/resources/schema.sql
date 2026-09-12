@@ -32,7 +32,10 @@ CREATE TABLE IF NOT EXISTS file_node (
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted         TINYINT         NOT NULL DEFAULT 0,
-    PRIMARY KEY (id)
+    active_scope_key VARCHAR(80) AS (CASE WHEN space_id IS NOT NULL AND space_id > 0 THEN CONCAT('T:', space_id) ELSE CONCAT('P:', owner_id) END),
+    active_name     VARCHAR(300) AS (CASE WHEN deleted = 0 AND status = 0 THEN name ELSE NULL END),
+    PRIMARY KEY (id),
+    CONSTRAINT uk_file_node_active UNIQUE (tenant_id, parent_id, active_scope_key, active_name)
 );
 
 CREATE TABLE IF NOT EXISTS file_favorite (
@@ -125,6 +128,28 @@ CREATE TABLE IF NOT EXISTS file_chunk (
     CONSTRAINT uk_upload_chunk UNIQUE (upload_id, chunk_index)
 );
 
+CREATE TABLE IF NOT EXISTS upload_session (
+    id              BIGINT       NOT NULL AUTO_INCREMENT,
+    tenant_id       BIGINT       NOT NULL,
+    upload_id       VARCHAR(200) NOT NULL,
+    user_id         BIGINT       NOT NULL,
+    file_node_id    BIGINT       NOT NULL,
+    space_id        BIGINT       DEFAULT NULL,
+    storage_path    VARCHAR(500) NOT NULL,
+    s3_upload_id    VARCHAR(500) NOT NULL,
+    file_size       BIGINT       NOT NULL,
+    file_md5        VARCHAR(64)  NOT NULL,
+    total_chunks    INT          NOT NULL,
+    chunk_size      BIGINT       NOT NULL,
+    client_limit    INT          DEFAULT NULL,
+    status          TINYINT      NOT NULL DEFAULT 0,
+    expires_at      DATETIME     NOT NULL,
+    created_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    CONSTRAINT uk_upload_session_upload_id UNIQUE (upload_id)
+);
+
 CREATE TABLE IF NOT EXISTS file_version (
     id              BIGINT       NOT NULL AUTO_INCREMENT,
     tenant_id       BIGINT       NOT NULL,
@@ -137,7 +162,8 @@ CREATE TABLE IF NOT EXISTS file_version (
     modifier_name   VARCHAR(100) DEFAULT NULL,
     source          TINYINT      NOT NULL DEFAULT 0 COMMENT '0-上传覆盖 1-编辑器保存',
     created_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id)
+    PRIMARY KEY (id),
+    CONSTRAINT uk_file_version_node_num UNIQUE (tenant_id, file_node_id, version_num)
 );
 
 CREATE TABLE IF NOT EXISTS team_space (

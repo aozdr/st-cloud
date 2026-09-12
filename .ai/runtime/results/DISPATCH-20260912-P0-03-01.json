@@ -1,0 +1,25 @@
+{
+  "dispatchId": "DISPATCH-20260912-P0-03-01",
+  "taskId": "TASK-20260912-stcore-security-consistency-P0-03",
+  "status": "completed",
+  "artifactRefs": [
+    "st-core/src/main/java/com/stcloud/core/mapper/FileNodeMapper.java",
+    "st-core/src/main/java/com/stcloud/core/service/impl/RecycleBinServiceImpl.java",
+    "st-core/src/main/java/com/stcloud/core/service/impl/NewFileServiceImpl.java",
+    "docker/mysql/init/41_file_node_version_uniqueness.sql",
+    "st-core/src/test/resources/schema.sql"
+  ],
+  "criterionProposal": {
+    "id": "IMPLEMENTED",
+    "outcome": "pass",
+    "by": "codex-main",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260912-P0-03-01.json",
+    "validatedRevision": "code-p1-final-20260912"
+  },
+  "blockerProposals": [],
+  "validation": {
+    "tests": "SchemaConsistencyTest: 3 passed; st-core full suite: 159 passed",
+    "schema": "file_node active-name uniqueness and file_version tenant/node/version uniqueness are represented in migration and H2 schema",
+    "scope": "同名检查、回收站和路径级联更新带 tenant/scope 条件；未清理存量冲突数据"
+  }
+}

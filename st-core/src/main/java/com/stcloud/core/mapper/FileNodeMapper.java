@@ -14,6 +14,12 @@ import java.util.List;
 public interface FileNodeMapper extends BaseMapper<FileNode> {
 
     /**
+     * 锁定文件节点行，供版本号分配和覆盖上传串行化使用；必须在数据库事务内调用。
+     */
+    @Select("SELECT * FROM file_node WHERE id = #{id} AND deleted = 0 FOR UPDATE")
+    FileNode selectByIdForUpdate(@Param("id") Long id);
+
+    /**
      * 根据MD5查找已完成的文件（秒传检查）
      */
     // SQL 状态含义：node_type = 1 文件；upload_status = 2 已完成；status = 0 正常；deleted = 0 未删除
@@ -24,17 +30,25 @@ public interface FileNodeMapper extends BaseMapper<FileNode> {
      * 统计同级目录下同名节点数量（重名校验）
      */
     // SQL 状态含义：status = 0 正常（排除回收站/已删除）；deleted = 0 未删除
-    @Select("SELECT COUNT(*) FROM file_node WHERE parent_id = #{parentId} AND name = #{name} AND status = 0 AND deleted = 0")
-    int countByParentAndName(@Param("parentId") Long parentId, @Param("name") String name);
+    @Select("SELECT COUNT(*) FROM file_node WHERE tenant_id = #{tenantId} AND parent_id = #{parentId} AND name = #{name} AND status = 0 AND deleted = 0")
+    int countByParentAndName(@Param("tenantId") Long tenantId, @Param("parentId") Long parentId,
+                             @Param("name") String name);
 
     /**
      * 批量更新子节点路径（移动/重命名时）
      * @param oldPath 旧路径前缀
      * @param newPath 新路径前缀
+     * @param ownerId 个人节点 owner；团队节点仅作为个人 scope 的兜底参数
+     * @param spaceId 团队空间 ID；非空时按 space scope 更新
      */
-    // SQL 状态含义：deleted = 0 未删除（移动/重命名仅作用于未删除节点）
-    @Update("UPDATE file_node SET path = CONCAT(#{newPath}, SUBSTRING(path, CHAR_LENGTH(#{oldPath}) + 1)) WHERE path LIKE CONCAT(#{oldPath}, '/%') AND deleted = 0")
-    int updateChildrenPath(@Param("oldPath") String oldPath, @Param("newPath") String newPath);
+    // SQL 状态含义：deleted = 0 未删除；团队按 space_id、个人按 owner_id+personal scope 隔离，禁止裸 path 前缀误更新。
+    @Update("UPDATE file_node SET path = CONCAT(#{newPath}, SUBSTRING(path, CHAR_LENGTH(#{oldPath}) + 1)) " +
+            "WHERE tenant_id = #{tenantId} AND path LIKE CONCAT(#{oldPath}, '/%') AND deleted = 0 " +
+            "AND ((#{spaceId} IS NOT NULL AND space_id = #{spaceId}) " +
+            "OR (#{spaceId} IS NULL AND (space_id IS NULL OR space_id <= 0) AND owner_id = #{ownerId}))")
+    int updateChildrenPath(@Param("oldPath") String oldPath, @Param("newPath") String newPath,
+                           @Param("ownerId") Long ownerId, @Param("spaceId") Long spaceId,
+                           @Param("tenantId") Long tenantId);
 
     /**
      * 统计共享同一 S3 物理对象（storage_path）的其他已完成文件引用数（排除指定节点）。

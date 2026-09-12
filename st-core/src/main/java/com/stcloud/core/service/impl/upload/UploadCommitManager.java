@@ -171,7 +171,9 @@ public class UploadCommitManager {
         }
 
         uploadManager.markCompleted(node);
-        fileNodeMapper.updateById(node);
+        if (fileNodeMapper.updateById(node) != 1) {
+            throw new BusinessException(ResultCode.CONFLICT, "合并提交时文件已被其他操作更新，请重试");
+        }
         versionService.snapshotCurrentVersion(node);
         uploadEventPublisher.publishUpdated(node);
 

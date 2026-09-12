@@ -1,11 +1,13 @@
 package com.stcloud.core.service.impl;
 
+import cn.hutool.crypto.digest.DigestUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.stcloud.common.ratelimit.SpeedLimitResult;
 import com.stcloud.common.ratelimit.UserTransferLimiter;
 import com.stcloud.core.AbstractIntegrationTest;
 import com.stcloud.core.config.UploadRelayConfig;
 import com.stcloud.core.dto.FileNodeVO;
+import com.stcloud.core.dto.UploadCheckRequest;
 import com.stcloud.core.dto.UploadInitRequest;
 import com.stcloud.core.dto.UploadInitResponse;
 import com.stcloud.core.dto.UploadMergeRequest;
@@ -202,12 +204,23 @@ class UploadStateMachineIntegrationTest extends AbstractIntegrationTest {
     private UploadInitResponse init(String name, int totalChunks, String md5) {
         UploadInitRequest req = new UploadInitRequest();
         req.setFileName(name);
-        req.setFileSize(1024L * totalChunks);
-        req.setFileMd5(md5);
+        req.setFileSize(5L * 1024 * 1024 * totalChunks);
+        req.setFileMd5(DigestUtil.md5Hex(md5));
         req.setTotalChunks(totalChunks);
-        req.setChunkSize(1024L);
+        req.setChunkSize(5L * 1024 * 1024);
         req.setParentId(0L);
         return uploadService.initChunkedUpload(req);
+    }
+
+    private UploadInitRequest validInitRequest() {
+        UploadInitRequest request = new UploadInitRequest();
+        request.setFileName("valid.txt");
+        request.setFileSize(5L * 1024 * 1024);
+        request.setFileMd5(DigestUtil.md5Hex("valid"));
+        request.setTotalChunks(1);
+        request.setChunkSize(5L * 1024 * 1024);
+        request.setParentId(0L);
+        return request;
     }
 
     private void confirmAll(String uploadId, int totalChunks) {
@@ -232,11 +245,76 @@ class UploadStateMachineIntegrationTest extends AbstractIntegrationTest {
         FileNode node = fileNodeMapper.selectById(resp.getFileId());
         assertNotNull(node);
         assertEquals(UploadStatus.UPLOADING.getCode(), node.getUploadStatus());
-        assertEquals("md5-stm-init", node.getFileMd5());
+        assertEquals(DigestUtil.md5Hex("md5-stm-init"), node.getFileMd5());
 
         List<FileChunk> list = chunks(resp.getUploadId());
         assertEquals(3, list.size());
         assertTrue(list.stream().allMatch(c -> c.getStatus() == 0), "初始化后全部分片应为待上传(0)");
+    }
+
+    @Test
+    void genericUploadRejectsTeamScopeBeforeAnyStorageWork() {
+        UploadCheckRequest request = new UploadCheckRequest();
+        request.setFileMd5("team-md5");
+        request.setFileSize(1024L);
+        request.setFileName("team.txt");
+        request.setParentId(0L);
+        request.setSpaceId(99L);
+
+        assertThrows(com.stcloud.common.exception.BusinessException.class,
+                () -> uploadService.checkInstantUpload(request));
+        verifyNoInteractions(storageService);
+    }
+
+    @Test
+    void leakedUploadIdCannotBeUsedByAnotherUser() {
+        UploadInitResponse response = init("owner-only.txt", 2, "md5-owner-only");
+        setUpUser(2002L, 1L);
+
+        com.stcloud.common.exception.BusinessException exception = assertThrows(
+                com.stcloud.common.exception.BusinessException.class,
+                () -> uploadService.getUploadStatus(response.getUploadId(), response.getS3UploadId()));
+        assertEquals(com.stcloud.common.response.ResultCode.PERMISSION_DENIED.getCode(), exception.getCode());
+    }
+
+    @Test
+    void initRejectsInvalidChunkParametersBeforeStorageOrDbWrite() {
+        UploadInitRequest request = validInitRequest();
+        request.setClientLimit(1_048_577);
+
+        assertThrows(com.stcloud.common.exception.BusinessException.class,
+                () -> uploadService.initChunkedUpload(request));
+        verifyNoInteractions(storageService);
+        assertEquals(0L, jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM upload_session WHERE user_id = 1001", Long.class));
+    }
+
+    @Test
+    void initRejectsMalformedMd5AndCeilMismatchBeforeStorage() {
+        UploadInitRequest md5Request = validInitRequest();
+        md5Request.setFileMd5("not-a-md5");
+        assertThrows(com.stcloud.common.exception.BusinessException.class,
+                () -> uploadService.initChunkedUpload(md5Request));
+
+        UploadInitRequest ceilRequest = validInitRequest();
+        ceilRequest.setTotalChunks(2);
+        assertThrows(com.stcloud.common.exception.BusinessException.class,
+                () -> uploadService.initChunkedUpload(ceilRequest));
+
+        UploadInitRequest sizeRequest = validInitRequest();
+        sizeRequest.setFileSize(4L * 1024 * 1024);
+        sizeRequest.setChunkSize(4L * 1024 * 1024);
+        assertThrows(com.stcloud.common.exception.BusinessException.class,
+                () -> uploadService.initChunkedUpload(sizeRequest));
+        verifyNoInteractions(storageService);
+    }
+
+    @Test
+    void initWritesLargeChunkSetInBatches() {
+        UploadInitResponse response = init("stm-batch.txt", 1001, "md5-stm-batch");
+
+        assertEquals(1001L, jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM file_chunk WHERE upload_id = ?", Long.class, response.getUploadId()));
     }
 
     @Test

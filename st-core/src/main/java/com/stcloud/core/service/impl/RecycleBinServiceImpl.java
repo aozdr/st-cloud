@@ -48,7 +48,9 @@ public class RecycleBinServiceImpl implements RecycleBinService {
         Long userId = UserContext.getUserId();
         LambdaQueryWrapper<FileNode> wrapper = new LambdaQueryWrapper<FileNode>()
                 .eq(FileNode::getStatus, NodeStatus.RECYCLED.getCode())
+                .eq(FileNode::getTenantId, UserContext.getTenantId())
                 .eq(FileNode::getOwnerId, userId)
+                .and(w -> w.isNull(FileNode::getSpaceId).or().le(FileNode::getSpaceId, 0))
                 .orderByDesc(FileNode::getUpdatedAt);
 
         List<FileNode> nodes = fileNodeMapper.selectList(wrapper);
@@ -83,7 +85,10 @@ public class RecycleBinServiceImpl implements RecycleBinService {
             // 父目录校验：父不存在或非正常态则回归根目录
             if (targetParentId != 0L) {
                 FileNode parent = fileNodeMapper.selectById(targetParentId);
-                if (parent == null || parent.getStatus() != NodeStatus.NORMAL.getCode()) {
+                if (parent == null || parent.getStatus() != NodeStatus.NORMAL.getCode()
+                        || !java.util.Objects.equals(parent.getTenantId(), node.getTenantId())
+                        || !java.util.Objects.equals(parent.getOwnerId(), node.getOwnerId())
+                        || parent.getSpaceId() != null && parent.getSpaceId() > 0) {
                     targetParentId = 0L;
                 } else {
                     parentPath = parent.getPath();
@@ -92,7 +97,7 @@ public class RecycleBinServiceImpl implements RecycleBinService {
 
             // 重名冲突处理
             String name = node.getName();
-            if (fileNodeMapper.countByParentAndName(targetParentId, name) > 0) {
+            if (fileNodeMapper.countByParentAndName(node.getTenantId(), targetParentId, name) > 0) {
                 name = fileService.resolveNameConflict(targetParentId, name);
             }
 
@@ -104,13 +109,17 @@ public class RecycleBinServiceImpl implements RecycleBinService {
             node.setPath(targetPath);
             node.setStatus(NodeStatus.NORMAL.getCode());
             node.setUpdatedAt(LocalDateTime.now());
-            fileNodeMapper.updateById(node);
+            if (fileNodeMapper.updateById(node) != 1) {
+                throw new com.stcloud.common.exception.BusinessException(
+                        com.stcloud.common.response.ResultCode.CONFLICT,
+                        "回收站文件已被其他操作更新，请重试");
+            }
             // 恢复后重新可访问：失效可访问性缓存，避免残留的不可访问判定
             fileService.invalidateAccessible(nodeId);
 
             // 路径变更时同步子孙 path（状态判定已改为祖先链校验）
             if (!oldPath.equals(targetPath) && node.isFolder()) {
-                fileNodeMapper.updateChildrenPath(oldPath, targetPath);
+                fileNodeMapper.updateChildrenPath(oldPath, targetPath, node.getOwnerId(), node.getSpaceId(), node.getTenantId());
             }
 
             // ES：重新索引恢复节点及正常态子孙（独立回收的子孙保持不可搜）
@@ -139,7 +148,14 @@ public class RecycleBinServiceImpl implements RecycleBinService {
     private void permanentDeleteNodeAndChildren(FileNode node) {
         if (node.isFolder()) {
             LambdaQueryWrapper<FileNode> wrapper = new LambdaQueryWrapper<FileNode>()
-                    .eq(FileNode::getParentId, node.getId());
+                    .eq(FileNode::getParentId, node.getId())
+                    .eq(FileNode::getTenantId, node.getTenantId())
+                    .eq(FileNode::getOwnerId, node.getOwnerId());
+            if (node.getSpaceId() != null && node.getSpaceId() > 0) {
+                wrapper.eq(FileNode::getSpaceId, node.getSpaceId());
+            } else {
+                wrapper.and(w -> w.isNull(FileNode::getSpaceId).or().le(FileNode::getSpaceId, 0));
+            }
             List<FileNode> children = fileNodeMapper.selectList(wrapper);
             for (FileNode child : children) {
                 permanentDeleteNodeAndChildren(child);
@@ -183,7 +199,9 @@ public class RecycleBinServiceImpl implements RecycleBinService {
         Long userId = UserContext.getUserId();
         LambdaQueryWrapper<FileNode> wrapper = new LambdaQueryWrapper<FileNode>()
                 .eq(FileNode::getStatus, NodeStatus.RECYCLED.getCode())
-                .eq(FileNode::getOwnerId, userId);
+                .eq(FileNode::getTenantId, UserContext.getTenantId())
+                .eq(FileNode::getOwnerId, userId)
+                .and(w -> w.isNull(FileNode::getSpaceId).or().le(FileNode::getSpaceId, 0));
         List<FileNode> nodes = fileNodeMapper.selectList(wrapper);
         for (FileNode node : nodes) {
             permanentDeleteNodeAndChildren(node);

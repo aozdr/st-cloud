@@ -30,4 +30,7 @@ public interface DownloadService {
      * 将多个文件/文件夹打包为 ZIP 下载
      */
     void downloadAsZip(List<Long> nodeIds, OutputStream outputStream);
+
+    /** 在写响应头和 ZIP 内容前完成权限、条目和总大小预检。 */
+    void preflightZipDownload(List<Long> nodeIds);
 }

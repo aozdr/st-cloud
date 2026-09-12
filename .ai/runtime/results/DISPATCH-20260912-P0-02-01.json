@@ -1,0 +1,23 @@
+{
+  "dispatchId": "DISPATCH-20260912-P0-02-01",
+  "taskId": "TASK-20260912-stcore-security-consistency-P0-02",
+  "status": "completed",
+  "artifactRefs": [
+    "st-core/src/main/java/com/stcloud/core/service/impl/FileServiceImpl.java",
+    "st-core/src/main/java/com/stcloud/core/service/impl/DownloadServiceImpl.java",
+    "st-core/src/test/java/com/stcloud/core/service/impl/FileServiceFlowIntegrationTest.java"
+  ],
+  "criterionProposal": {
+    "id": "IMPLEMENTED",
+    "outcome": "pass",
+    "by": "codex-main",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260912-P0-02-01.json",
+    "validatedRevision": "code-p1-final-20260912"
+  },
+  "blockerProposals": [],
+  "validation": {
+    "tests": "FileServiceFlowIntegrationTest: 7 passed; full st-core suite: 159 passed",
+    "scope": "个人/团队父节点、树 scope、cycle guard、批量目录遍历及路径更新均在允许文件范围内完成",
+    "note": "更新和查询均增加 tenant、owner、space scope 校验；未做无关模块重构"
+  }
+}

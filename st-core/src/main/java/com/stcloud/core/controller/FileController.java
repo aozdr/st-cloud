@@ -274,6 +274,8 @@ public class FileController {
     public void downloadAsZip(@Valid @RequestBody BatchIdsRequest request,
                               HttpServletResponse response) {
         try {
+            // 先预检，超限/无权时不要向响应输出 ZIP 头或半个压缩包。
+            downloadService.preflightZipDownload(request.getNodeIds());
             response.setContentType("application/zip");
             String fileName = URLEncoder.encode("download.zip", StandardCharsets.UTF_8);
             response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");

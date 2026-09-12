@@ -1,0 +1,26 @@
+{
+  "dispatchId": "DISPATCH-20260912-P0-04-01",
+  "taskId": "TASK-20260912-stcore-security-consistency-P0-04",
+  "status": "completed",
+  "artifactRefs": [
+    "st-core/src/main/java/com/stcloud/core/entity/UploadSession.java",
+    "st-core/src/main/java/com/stcloud/core/service/impl/UploadServiceImpl.java",
+    "st-team/src/main/java/com/stcloud/team/controller/TeamUploadController.java",
+    "docker/mysql/init/40_upload_session.sql",
+    "st-core/src/test/resources/schema.sql"
+  ],
+  "criterionProposal": {
+    "id": "IMPLEMENTED",
+    "outcome": "pass",
+    "by": "codex-main",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260912-P0-04-01.json",
+    "validatedRevision": "code-p1-final-20260912"
+  },
+  "blockerProposals": [],
+  "validation": {
+    "tests": "RelayUploadIntegrationTest 13、UploadStateMachineIntegrationTest 12、UploadTransactionBoundaryTest 4 均通过",
+    "schema": "upload_session 迁移已在本地 MySQL 执行并登记；H2/MySQL compare-schema PASS",
+    "security": "session 以 tenant/user/node/space/S3/status/expiry 为服务端权威；generic API 拒绝 team scope，team API 使用显式路由与 ACL",
+    "networkBoundary": "S3 multipart 初始化在数据库写入外执行；失败路径进行 FAILED、节点、session 和 multipart abort 补偿"
+  }
+}

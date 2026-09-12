@@ -29,6 +29,7 @@ export interface TransferTask {
   // 上传专属
   filePath?: string;
   parentId?: string;
+  spaceId?: string;
   replaceFileId?: string;
   uploadId?: string;
   s3UploadId?: string;
@@ -71,7 +72,7 @@ export interface ElectronAPI {
   // 退出整个应用
   quitApp: () => Promise<void>;
   // 上传
-  startUpload: (filePath: string, parentId: string, replaceFileId?: string) => Promise<string>;
+  startUpload: (filePath: string, parentId: string, replaceFileId?: string, spaceId?: string) => Promise<string>;
   pauseUpload: (taskId: string) => Promise<void>;
   resumeUpload: (taskId: string) => Promise<void>;
   cancelUpload: (taskId: string) => Promise<void>;

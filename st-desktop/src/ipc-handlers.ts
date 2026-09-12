@@ -127,9 +127,10 @@ export function registerIpcHandlers(): void {
   });
 
   // ==================== 上传 ====================
-  ipcMain.handle('upload:start', (_event, filePath: string, parentId: string, replaceFileId?: string) => {
+  ipcMain.handle('upload:start', (_event, filePath: string, parentId: string,
+    replaceFileId?: string, spaceId?: string) => {
     if (!isAllowedPath(filePath)) throw new Error('Unauthorized path');
-    return startUpload(filePath, parentId, replaceFileId);
+    return startUpload(filePath, parentId, replaceFileId, spaceId);
   });
 
   ipcMain.handle('upload:pause', (_event, taskId: string) => {

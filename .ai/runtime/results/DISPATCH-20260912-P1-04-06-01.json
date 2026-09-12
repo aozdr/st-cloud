@@ -1,0 +1,24 @@
+{
+  "dispatchId": "DISPATCH-20260912-P1-04-06-01",
+  "taskId": "TASK-20260912-stcore-security-consistency-P1-04-06",
+  "status": "completed",
+  "artifactRefs": [
+    "st-core/src/main/java/com/stcloud/core/service/impl/DownloadServiceImpl.java",
+    "st-core/src/main/java/com/stcloud/core/service/impl/ArchiveServiceImpl.java",
+    "st-core/src/main/java/com/stcloud/core/controller/ArchiveController.java",
+    "st-core/src/main/java/com/stcloud/core/dto/FolderSizeVO.java"
+  ],
+  "criterionProposal": {
+    "id": "IMPLEMENTED",
+    "outcome": "pass",
+    "by": "codex-main",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260912-P1-04-06-01.json",
+    "validatedRevision": "code-p1-final-20260912"
+  },
+  "blockerProposals": [],
+  "validation": {
+    "tests": "ArchiveServiceIntegrationTest 9、ArchiveExtractTransactionBoundaryTest 2、st-core full suite 159 均通过",
+    "resourceControls": "ZIP 条目/总量/单条、Archive 临时文件、压缩比、深度和有界 executor 均有服务端限制",
+    "security": "ZIP fail-fast、路径规范化、tenant/scope 及 controller 权限门禁已覆盖"
+  }
+}

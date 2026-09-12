@@ -1,0 +1,25 @@
+{
+  "dispatchId": "DISPATCH-20260912-P1-07-08-01",
+  "taskId": "TASK-20260912-stcore-security-consistency-P1-07-08",
+  "status": "completed",
+  "artifactRefs": [
+    "st-core/src/main/java/com/stcloud/core/config/ArchiveSafetyProperties.java",
+    "st-core/src/main/java/com/stcloud/core/config/UploadProperties.java",
+    "st-core/src/main/java/com/stcloud/core/service/impl/UploadServiceImpl.java",
+    "st-web/src/hooks/useUpload.tsx",
+    "st-desktop/src/utils/file-utils.ts"
+  ],
+  "criterionProposal": {
+    "id": "IMPLEMENTED",
+    "outcome": "pass",
+    "by": "codex-main",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260912-P1-07-08-01.json",
+    "validatedRevision": "code-p1-final-20260912"
+  },
+  "blockerProposals": [],
+  "validation": {
+    "tests": "UploadStateMachineIntegrationTest 12、RelayUploadIntegrationTest 13、st-core full suite 159 均通过；Web build、Desktop lint/test/build:main 均通过",
+    "limits": "上传文件、分片数、分片大小、clientLimit、MD5、ceil 关系服务端校验；maxTotalChunks 默认 20000",
+    "compatibility": "空文件统一至少一个分片；Web/Desktop startUpload 签名统一包含可选 spaceId"
+  }
+}

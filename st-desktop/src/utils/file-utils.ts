@@ -26,7 +26,8 @@ export function readChunk(filePath: string, chunkIndex: number, chunkSize: numbe
  * 计算文件分片总数
  */
 export function getTotalChunks(fileSize: number, chunkSize: number = CHUNK_SIZE): number {
-  return Math.ceil(fileSize / chunkSize);
+  // 空文件仍创建一个逻辑分片，保证断点续传协议不会提交 totalChunks=0。
+  return Math.max(1, Math.ceil(fileSize / chunkSize));
 }
 
 /**

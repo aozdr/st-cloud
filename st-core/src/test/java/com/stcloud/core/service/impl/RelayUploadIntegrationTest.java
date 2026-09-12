@@ -1,5 +1,6 @@
 package com.stcloud.core.service.impl;
 
+import cn.hutool.crypto.digest.DigestUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.stcloud.common.exception.BusinessException;
 import com.stcloud.common.ratelimit.SpeedLimitResult;
@@ -212,7 +213,7 @@ class RelayUploadIntegrationTest extends AbstractIntegrationTest {
         UploadInitRequest req = new UploadInitRequest();
         req.setFileName(name);
         req.setFileSize(fileSize);
-        req.setFileMd5("md5-" + name);
+        req.setFileMd5(DigestUtil.md5Hex(name));
         req.setTotalChunks(totalChunks);
         req.setChunkSize(5L * 1024 * 1024);
         req.setParentId(0L);
@@ -281,7 +282,7 @@ class RelayUploadIntegrationTest extends AbstractIntegrationTest {
         long partMin = relayConfig.getPartMinSize(); // 5MB
         long chunkSize = 1024L * 1024L;
         long fileSize = partMin + chunkSize; // 6MB
-        UploadInitResponse resp = init("tc005.txt", fileSize, 6, null);
+        UploadInitResponse resp = init("tc005.txt", fileSize, 2, null);
         byte[] chunk = new byte[(int) chunkSize];
         // 前 5 块累计 5MB：第 5 块触发 part1
         for (int seq = 1; seq <= 5; seq++) {
@@ -399,7 +400,7 @@ class RelayUploadIntegrationTest extends AbstractIntegrationTest {
         setServerLimit(4096);
         long partMin = relayConfig.getPartMinSize();
         long fileSize = partMin + 1024L * 1024L; // 6MB
-        UploadInitResponse resp = init("mark.txt", fileSize, 6, null);
+        UploadInitResponse resp = init("mark.txt", fileSize, 2, null);
         byte[] chunk = new byte[1024 * 1024];
         for (int seq = 1; seq <= 5; seq++) {
             postChunk(resp.getUploadId(), chunk, seq);

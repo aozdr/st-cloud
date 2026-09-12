@@ -1,6 +1,5 @@
 package com.stcloud.core.service.impl;
 
-import cn.hutool.crypto.digest.DigestUtil;
 import com.stcloud.common.context.UserContext;
 import com.stcloud.common.enums.NodeType;
 import com.stcloud.common.exception.BusinessException;
@@ -8,24 +7,28 @@ import com.stcloud.common.response.ResultCode;
 import com.stcloud.core.dto.StorageInfoVO;
 import com.stcloud.core.entity.FileObject;
 import com.stcloud.core.entity.FileNode;
+import com.stcloud.core.config.ArchiveSafetyProperties;
 import com.stcloud.core.mapper.FileNodeMapper;
 import com.stcloud.core.mapper.UserQuotaMapper;
 import com.stcloud.core.service.ArchiveService;
 import com.stcloud.core.service.ArchiveProgressReporter;
 import com.stcloud.core.service.FileObjectService;
+import com.stcloud.core.service.FileService;
 import com.stcloud.core.service.StorageService;
 import com.stcloud.core.service.impl.upload.UploadCommitManager;
 import com.stcloud.core.service.impl.upload.UploadStorageManager;
+import com.stcloud.core.util.FileNameSanitizer;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 import com.stcloud.common.context.TenantContext;
@@ -40,6 +43,8 @@ public class ArchiveServiceImpl implements ArchiveService {
     @Resource
     private FileNodeMapper fileNodeMapper;
     @Resource
+    private FileService fileService;
+    @Resource
     private StorageService storageService;
     @Resource
     private FileObjectService fileObjectService;
@@ -49,9 +54,10 @@ public class ArchiveServiceImpl implements ArchiveService {
     private UploadCommitManager uploadCommitManager;
     @Resource
     private UploadStorageManager uploadStorageManager;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private ArchiveSafetyProperties archiveSafetyProperties = new ArchiveSafetyProperties();
 
     private static final String ZIP_SUFFIX = "zip";
-
     @Override
     public List<Map<String, Object>> listArchiveContents(Long nodeId) {
         FileNode node = getAccessibleFileNode(nodeId);
@@ -62,15 +68,22 @@ public class ArchiveServiceImpl implements ArchiveService {
         try (InputStream s3Stream = storageService.downloadObject(node.getStoragePath());
              java.util.zip.ZipInputStream zis = new java.util.zip.ZipInputStream(s3Stream)) {
             java.util.zip.ZipEntry entry;
+            long totalSize = 0L;
+            int entryCount = 0;
             while ((entry = zis.getNextEntry()) != null) {
                 // 跳过 macOS 系统文件
                 if (entry.getName().startsWith("__MACOSX") || entry.getName().endsWith(".DS_Store")) {
                     zis.closeEntry();
                     continue;
                 }
+                validateZipEntry(entry);
                 Map<String, Object> item = new LinkedHashMap<>();
-                item.put("name", entry.getName());
-                item.put("size", entry.getSize());
+                long actualSize = entry.isDirectory() ? 0L : readEntrySize(zis);
+                validateCompressionRatio(entry, actualSize);
+                totalSize += actualSize;
+                validateZipBudget(++entryCount, actualSize, totalSize);
+                item.put("name", safeEntryName(entry.getName()));
+                item.put("size", actualSize);
                 item.put("isDirectory", entry.isDirectory());
                 String[] parts = entry.getName().split("/");
                 item.put("fileName", parts[parts.length - 1]);
@@ -138,12 +151,13 @@ public class ArchiveServiceImpl implements ArchiveService {
                     item.put("zipPath", entry.getName());
                     item.put("directory", entry.isDirectory());
                     if (!entry.isDirectory()) {
-                        // 读取条目内容（整块入内存，用于 MD5 计算与上传）
-                        byte[] content = readEntryContent(zis);
-                        String[] parts = entry.getName().split("/");
+                        // 单条内容先落临时文件并流式计算 MD5，不把 ZIP 条目整体读入内存。
+                        EntryContent content = readEntryContent(zis);
+                        try {
+                        String[] parts = safeEntryName(entry.getName()).split("/");
                         String fileName = parts[parts.length - 1];
                         String suffix = getSuffix(fileName);
-                        String md5 = DigestUtil.md5Hex(content);
+                        String md5 = content.md5();
                         String contentType = guessContentType(suffix);
 
                         // 去重预查（事务外）：同租户同 md5 复用物理对象（秒传），否则上传到规范路径 {tenantId}/{md5}
@@ -154,17 +168,21 @@ public class ArchiveServiceImpl implements ArchiveService {
                             storagePath = existing.getStoragePath();
                         } else {
                             storagePath = tenantId + "/" + md5;
-                            storageService.uploadObject(storagePath,
-                                    new ByteArrayInputStream(content),
-                                    content.length, contentType);
+                            try (InputStream contentStream = Files.newInputStream(content.path())) {
+                                storageService.uploadObject(storagePath, contentStream,
+                                        content.size(), contentType);
+                            }
                             uploadedNew = true;
                         }
-                        item.put("size", (long) content.length);
+                        item.put("size", content.size());
                         item.put("md5", md5);
                         item.put("storagePath", storagePath);
                         item.put("contentType", contentType);
                         item.put("suffix", suffix);
                         item.put("uploadedNew", uploadedNew);
+                        } finally {
+                        Files.deleteIfExists(content.path());
+                        }
                     }
                     entries.add(item);
                     zis.closeEntry();
@@ -207,6 +225,7 @@ public class ArchiveServiceImpl implements ArchiveService {
     private static final class ArchiveSummary {
         long totalSize;
         int totalFiles;
+        int totalEntries;
     }
 
     private ArchiveSummary summarizeArchive(Path zipFile) {
@@ -216,17 +235,41 @@ public class ArchiveServiceImpl implements ArchiveService {
             java.util.zip.ZipEntry entry;
             byte[] buffer = new byte[8192];
             while ((entry = zis.getNextEntry()) != null) {
+                if (entry.getName().startsWith("__MACOSX") || entry.getName().endsWith(".DS_Store")) {
+                    zis.closeEntry();
+                    continue;
+                }
+                validateZipEntry(entry);
+                summary.totalEntries++;
+                if (summary.totalEntries > archiveSafetyProperties.getMaxEntries()) {
+                    throw new BusinessException(ResultCode.FILE_TOO_LARGE.getCode(), "ZIP 条目数量超过限制");
+                }
                 if (!entry.isDirectory()
                         && !entry.getName().startsWith("__MACOSX")
                         && !entry.getName().endsWith(".DS_Store")) {
                     int len;
+                    long entrySize = 0L;
                     while ((len = zis.read(buffer)) > 0) {
+                        entrySize += len;
+                        if (entrySize > archiveSafetyProperties.getMaxEntrySize()) {
+                            throw new BusinessException(ResultCode.FILE_TOO_LARGE.getCode(), "ZIP 单条展开大小超过限制");
+                        }
                         summary.totalSize += len;
+                        if (summary.totalSize > archiveSafetyProperties.getMaxTotalSize()) {
+                            throw new BusinessException(ResultCode.FILE_TOO_LARGE.getCode(), "ZIP 解压总展开大小超过限制");
+                        }
+                        if (summary.totalSize > archiveSafetyProperties.getMaxEntrySize()
+                                * (long) archiveSafetyProperties.getMaxEntries()) {
+                            throw new BusinessException(ResultCode.FILE_TOO_LARGE.getCode(), "ZIP 解压资源超过限制");
+                        }
                     }
                     summary.totalFiles++;
+                    validateCompressionRatio(entry, entrySize);
                 }
                 zis.closeEntry();
             }
+        } catch (BusinessException e) {
+            throw e;
         } catch (Exception e) {
             log.error("统计压缩包大小失败: {}", e.getMessage());
             throw new BusinessException(ResultCode.BUSINESS_ERROR);
@@ -249,15 +292,109 @@ public class ArchiveServiceImpl implements ArchiveService {
         }
     }
 
-    /** 读取 ZIP 条目完整内容（整块入内存，用于 MD5 计算与上传） */
-    private byte[] readEntryContent(java.util.zip.ZipInputStream zis) throws IOException {
-        java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+    /** ZIP 条目落到临时文件并同步计算 MD5，避免使用无界 ByteArrayOutputStream。 */
+    private EntryContent readEntryContent(java.util.zip.ZipInputStream zis) throws IOException {
+        Path temp = Files.createTempFile("archive-entry-", ".bin");
+        MessageDigest digest;
+        try {
+            digest = MessageDigest.getInstance("MD5");
+        } catch (NoSuchAlgorithmException e) {
+            Files.deleteIfExists(temp);
+            throw new IllegalStateException("MD5 算法不可用", e);
+        }
+        boolean success = false;
+        long total = 0L;
         byte[] buffer = new byte[8192];
+        try (OutputStream out = Files.newOutputStream(temp)) {
+            int len;
+            while ((len = zis.read(buffer)) > 0) {
+                total += len;
+                if (total > archiveSafetyProperties.getMaxEntrySize()) {
+                    throw new BusinessException(ResultCode.FILE_TOO_LARGE.getCode(), "ZIP 单条展开大小超过限制");
+                }
+                digest.update(buffer, 0, len);
+                out.write(buffer, 0, len);
+            }
+            success = true;
+            return new EntryContent(temp, total, java.util.HexFormat.of().formatHex(digest.digest()));
+        } finally {
+            if (!success) {
+                Files.deleteIfExists(temp);
+            }
+        }
+    }
+
+    private long readEntrySize(java.util.zip.ZipInputStream zis) throws IOException {
+        byte[] buffer = new byte[8192];
+        long total = 0L;
         int len;
         while ((len = zis.read(buffer)) > 0) {
-            baos.write(buffer, 0, len);
+            total += len;
+            if (total > archiveSafetyProperties.getMaxEntrySize()) {
+                throw new BusinessException(ResultCode.FILE_TOO_LARGE.getCode(), "ZIP 单条展开大小超过限制");
+            }
         }
-        return baos.toByteArray();
+        return total;
+    }
+
+    private void validateZipEntry(java.util.zip.ZipEntry entry) {
+        String name = safeEntryName(entry.getName());
+        int depth = (int) java.util.Arrays.stream(name.split("/"))
+                .filter(part -> !part.isEmpty()).count();
+        if (depth > archiveSafetyProperties.getMaxDepth()) {
+            throw new BusinessException(ResultCode.FILE_TOO_LARGE.getCode(), "ZIP 目录深度超过限制");
+        }
+    }
+
+    private String safeEntryName(String rawName) {
+        if (rawName == null || rawName.isBlank()) {
+            throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "ZIP 条目名称不能为空");
+        }
+        String name = rawName.replace('\\', '/');
+        if (name.startsWith("/") || name.matches("^[A-Za-z]:.*")) {
+            throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "ZIP 条目路径非法");
+        }
+        String[] parts = name.split("/", -1);
+        boolean trailingSlash = name.endsWith("/");
+        StringBuilder normalized = new StringBuilder(name.length());
+        for (int i = 0; i < parts.length; i++) {
+            String part = parts[i];
+            if (part.isEmpty() && !(trailingSlash && i == parts.length - 1)) {
+                throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "ZIP 条目存在空路径段");
+            }
+            if (part.equals("..") || part.equals(".")) {
+                throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "ZIP 条目存在路径穿越");
+            }
+            if (!part.isEmpty()) {
+                String safePart = FileNameSanitizer.sanitize(part);
+                if (safePart == null) {
+                    throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "ZIP 条目名称非法");
+                }
+                if (normalized.length() > 0) normalized.append('/');
+                normalized.append(safePart);
+            }
+        }
+        if (trailingSlash) normalized.append('/');
+        return normalized.toString();
+    }
+
+    private void validateZipBudget(int entries, long entrySize, long totalSize) {
+        if (entries > archiveSafetyProperties.getMaxEntries()
+                || entrySize > archiveSafetyProperties.getMaxEntrySize()
+                || totalSize > archiveSafetyProperties.getMaxTotalSize()) {
+            throw new BusinessException(ResultCode.FILE_TOO_LARGE.getCode(), "ZIP 解压资源超过限制");
+        }
+    }
+
+    private void validateCompressionRatio(java.util.zip.ZipEntry entry, long actualSize) {
+        long compressedSize = entry.getCompressedSize();
+        boolean exceedsRatio = compressedSize > 0
+                && (compressedSize <= Long.MAX_VALUE / archiveSafetyProperties.getMaxCompressionRatio()
+                ? actualSize > compressedSize * archiveSafetyProperties.getMaxCompressionRatio()
+                : false);
+        if (exceedsRatio) {
+            throw new BusinessException(ResultCode.FILE_TOO_LARGE.getCode(), "ZIP 压缩比超过安全上限");
+        }
     }
 
     /** 解压失败时尽力清理本次新上传且无记录/引用归零的对象（残留交由定时任务兜底） */
@@ -311,10 +448,17 @@ public class ArchiveServiceImpl implements ArchiveService {
         if (folder.getNodeType() != NodeType.FOLDER.getCode()) {
             throw new BusinessException(ResultCode.FILE_TYPE_NOT_ALLOWED);
         }
+        if (!java.util.Objects.equals(folder.getTenantId(), TenantContext.getTenantId())) {
+            throw new BusinessException(ResultCode.FORBIDDEN);
+        }
+        if (folder.getSpaceId() != null && folder.getSpaceId() > 0) {
+            throw new BusinessException(ResultCode.FORBIDDEN);
+        }
         Long userId = UserContext.getUserId();
         if ((folder.getSpaceId() == null || folder.getSpaceId() <= 0) && !folder.getOwnerId().equals(userId)) {
             throw new BusinessException(ResultCode.FORBIDDEN);
         }
+        fileService.validateAccessible(folder.getId());
     }
 
     /** 获取文件节点并校验访问权限 */
@@ -324,9 +468,17 @@ public class ArchiveServiceImpl implements ArchiveService {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
         }
         Long userId = UserContext.getUserId();
-        if ((node.getSpaceId() == null || node.getSpaceId() <= 0) && !node.getOwnerId().equals(userId)) {
+        if (!java.util.Objects.equals(node.getTenantId(), TenantContext.getTenantId())) {
             throw new BusinessException(ResultCode.FORBIDDEN);
         }
+        // generic archive API 只服务个人空间；团队压缩包必须从显式 team ACL 入口访问。
+        if (node.getSpaceId() != null && node.getSpaceId() > 0) {
+            throw new BusinessException(ResultCode.FORBIDDEN);
+        }
+        if (!node.getOwnerId().equals(userId)) {
+            throw new BusinessException(ResultCode.FORBIDDEN);
+        }
+        fileService.validateAccessible(node.getId());
         return node;
     }
 
@@ -358,5 +510,8 @@ public class ArchiveServiceImpl implements ArchiveService {
             case "mp3" -> "audio/mpeg";
             default -> "application/octet-stream";
         };
+    }
+
+    private record EntryContent(Path path, long size, String md5) {
     }
 }

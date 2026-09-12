@@ -67,6 +67,7 @@ export async function initDatabase(): Promise<void> {
       error TEXT,
       file_path TEXT,
       parent_id TEXT,
+      space_id TEXT,
       upload_id TEXT,
       s3_upload_id TEXT,
       file_id TEXT,
@@ -78,6 +79,8 @@ export async function initDatabase(): Promise<void> {
       updated_at TEXT NOT NULL
     )
   `);
+  // 迁移：为团队上传任务保存显式 spaceId，应用重启后恢复仍走团队专用接口。
+  try { getDb().run('ALTER TABLE transfer_tasks ADD COLUMN space_id TEXT'); } catch { /* 列已存在 */ }
 
   // 同步状态表
   getDb().run(`

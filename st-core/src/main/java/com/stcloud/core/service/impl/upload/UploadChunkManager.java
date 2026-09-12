@@ -1,12 +1,14 @@
 package com.stcloud.core.service.impl.upload;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.stcloud.common.context.TenantContext;
 import com.stcloud.core.entity.FileChunk;
 import com.stcloud.core.enums.FileChunkStatus;
 import com.stcloud.core.mapper.FileChunkMapper;
 import jakarta.annotation.Resource;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -16,13 +18,18 @@ import java.util.List;
 @Component
 public class UploadChunkManager {
 
+    private static final int INSERT_BATCH_SIZE = 500;
+
     @Resource
     private FileChunkMapper fileChunkMapper;
 
     /** 初始化上传时批量创建分片记录（状态 0-待上传） */
     public void createChunkRecords(String uploadId, Long fileNodeId, int totalChunks, Long chunkSize, Long originalSize) {
+        Long tenantId = TenantContext.getTenantId();
+        List<FileChunk> batch = new ArrayList<>(INSERT_BATCH_SIZE);
         for (int i = 1; i <= totalChunks; i++) {
             FileChunk chunk = new FileChunk();
+            chunk.setTenantId(tenantId);
             chunk.setUploadId(uploadId);
             chunk.setFileNodeId(fileNodeId);
             chunk.setChunkIndex(i);
@@ -30,7 +37,14 @@ public class UploadChunkManager {
             chunk.setOriginalSize(originalSize);
             // 新建分片记录状态为待上传
             chunk.setStatus(FileChunkStatus.PENDING.getCode());
-            fileChunkMapper.insert(chunk);
+            batch.add(chunk);
+            if (batch.size() == INSERT_BATCH_SIZE) {
+                fileChunkMapper.insertBatch(batch);
+                batch.clear();
+            }
+        }
+        if (!batch.isEmpty()) {
+            fileChunkMapper.insertBatch(batch);
         }
     }
 

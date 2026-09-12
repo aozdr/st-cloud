@@ -3,6 +3,7 @@ package com.stcloud.core.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.stcloud.core.entity.FileChunk;
 import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -12,6 +13,19 @@ import java.util.List;
 
 @Mapper
 public interface FileChunkMapper extends BaseMapper<FileChunk> {
+
+    /** 分批插入待上传分片；id/时间字段交由数据库默认值生成。 */
+    @Insert({
+            "<script>",
+            "INSERT INTO file_chunk (tenant_id, upload_id, file_node_id, chunk_index, chunk_size, original_size, status)",
+            "VALUES",
+            "<foreach collection='chunks' item='chunk' separator=','>",
+            "(#{chunk.tenantId}, #{chunk.uploadId}, #{chunk.fileNodeId}, #{chunk.chunkIndex},",
+            " #{chunk.chunkSize}, #{chunk.originalSize}, #{chunk.status})",
+            "</foreach>",
+            "</script>"
+    })
+    int insertBatch(@Param("chunks") List<FileChunk> chunks);
 
     /**
      * 查询已上传的分片序号（断点续传）

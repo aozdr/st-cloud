@@ -1,0 +1,21 @@
+{
+  "dispatchId": "DIRECT-20260912-TESTCASES-01",
+  "taskId": "TASK-20260912-stcore-security-consistency-TESTCASES",
+  "status": "completed",
+  "artifactRefs": [
+    ".ai/docs/20260912-stcore-security-consistency/testcases.md"
+  ],
+  "criterionProposal": {
+    "id": "TESTCASES",
+    "outcome": "pass",
+    "by": "codex-main",
+    "evidenceRef": ".ai/docs/20260912-stcore-security-consistency/testcases.md",
+    "validatedRevision": "design-20260912"
+  },
+  "blockerProposals": [],
+  "validation": {
+    "method": "static repository cross-check",
+    "status": "completed",
+    "note": "测试用例已覆盖8项Goal完成标准、P0-01～P0-05、P1-01～P1-08及数据库迁移；具体执行留待实现后按编号进行。"
+  }
+}

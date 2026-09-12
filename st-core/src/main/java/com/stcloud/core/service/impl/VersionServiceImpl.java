@@ -17,6 +17,7 @@ import com.stcloud.core.service.VersionService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.dao.DuplicateKeyException;
 import com.stcloud.core.event.FileIndexEvent;
 import com.stcloud.core.event.ReliableEventPublisher;
 import org.springframework.transaction.annotation.Transactional;
@@ -113,7 +114,7 @@ public class VersionServiceImpl implements VersionService {
         node.setStoragePath(target.getStoragePath());
         node.setFileMd5(target.getFileMd5());
         node.setFileSize(target.getFileSize());
-        fileNodeMapper.updateById(node);
+        updateNodeOrThrow(node);
 
         // 按归属调整配额（大小不变时 delta=0 不影响）
         // 恢复到更大版本时并发超配额 -> 条件更新返回 0，抛异常回滚（恢复更小版本仅退还，0 行忽略）
@@ -146,7 +147,7 @@ public class VersionServiceImpl implements VersionService {
         if (oldObjectId != null && !oldObjectId.equals(node.getObjectId())) {
             fileObjectService.release(oldObjectId);
         }
-        fileNodeMapper.updateById(node);
+        updateNodeOrThrow(node);
 
         snapshotCurrentVersion(node);
 
@@ -162,29 +163,52 @@ public class VersionServiceImpl implements VersionService {
     }
 
     @Override
+    @Transactional
     public void snapshotCurrentVersion(FileNode node, Integer source) {
         if (node == null || node.getId() == null) {
             return;
         }
-        FileVersion latest = getLatestVersion(node.getId());
-        int nextNum = (latest == null ? 0 : latest.getVersionNum()) + 1;
+        // 同一 file_node 的版本号在事务内按行锁分配，避免并发 snapshot 读取相同 max(version_num)。
+        FileNode lockedNode = fileNodeMapper.selectByIdForUpdate(node.getId());
+        if (lockedNode != null) {
+            node = lockedNode;
+        }
+        for (int attempt = 0; attempt < 3; attempt++) {
+            FileVersion latest = getLatestVersion(node.getId());
+            int nextNum = (latest == null ? 0 : latest.getVersionNum()) + 1;
 
-        FileVersion version = new FileVersion();
-        version.setTenantId(node.getTenantId());
-        version.setFileNodeId(node.getId());
-        version.setVersionNum(nextNum);
-        version.setFileSize(node.getFileSize());
-        version.setFileMd5(node.getFileMd5());
-        version.setStoragePath(node.getStoragePath());
-        // 保存回调为匿名请求（OnlyOffice 服务端回调，无登录态），UserContext 可能为空；
-        // modifier_id 兜底为文件 owner，避免 NOT NULL 约束失败导致保存 500（20260815 实测）
-        Long modifierId = UserContext.getUserId();
-        version.setModifierId(modifierId != null ? modifierId : node.getOwnerId());
-        version.setModifierName(UserContext.getUsername());
-        // 版本来源：0-上传覆盖 / 1-编辑器保存（D1：仅 source=1 参与 20 条上限裁剪）
-        version.setSource(source != null ? source : 0);
-        version.setCreatedAt(LocalDateTime.now());
-        fileVersionMapper.insert(version);
+            FileVersion version = new FileVersion();
+            version.setTenantId(node.getTenantId());
+            version.setFileNodeId(node.getId());
+            version.setVersionNum(nextNum);
+            version.setFileSize(node.getFileSize());
+            version.setFileMd5(node.getFileMd5());
+            version.setStoragePath(node.getStoragePath());
+            // 保存回调为匿名请求（OnlyOffice 服务端回调，无登录态），UserContext 可能为空；
+            // modifier_id 兜底为文件 owner，避免 NOT NULL 约束失败导致保存 500（20260815 实测）
+            Long modifierId = UserContext.getUserId();
+            version.setModifierId(modifierId != null ? modifierId : node.getOwnerId());
+            version.setModifierName(UserContext.getUsername());
+            // 版本来源：0-上传覆盖 / 1-编辑器保存（D1：仅 source=1 参与 20 条上限裁剪）
+            version.setSource(source != null ? source : 0);
+            version.setCreatedAt(LocalDateTime.now());
+            try {
+                fileVersionMapper.insert(version);
+                return;
+            } catch (DuplicateKeyException duplicate) {
+                if (attempt == 2) {
+                    throw new BusinessException(ResultCode.CONFLICT.getCode(),
+                            "文件版本号分配冲突，请重试");
+                }
+                log.warn("版本号并发冲突，重新分配: fileNodeId={}, attempt={}", node.getId(), attempt + 1);
+            }
+        }
+    }
+
+    private void updateNodeOrThrow(FileNode node) {
+        if (fileNodeMapper.updateById(node) != 1) {
+            throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "文件已被其他请求修改，请刷新后重试");
+        }
     }
 
     @Override

@@ -320,10 +320,10 @@ class UploadTransactionBoundaryTest {
 
         UploadInitRequest initReq = new UploadInitRequest();
         initReq.setFileName("tb-merge.txt");
-        initReq.setFileSize(1024L);
-        initReq.setFileMd5("tb-merge-md5");
+        initReq.setFileSize(5L * 1024 * 1024);
+        initReq.setFileMd5(DigestUtil.md5Hex("tb-merge-md5"));
         initReq.setTotalChunks(1);
-        initReq.setChunkSize(1024L);
+        initReq.setChunkSize(5L * 1024 * 1024);
         initReq.setParentId(0L);
         UploadInitResponse initResp = uploadService.initChunkedUpload(initReq);
         uploadService.confirmChunk(initResp.getUploadId(), "s3-tb-id", 1);
