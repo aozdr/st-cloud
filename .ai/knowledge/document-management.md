@@ -5,9 +5,9 @@
 
 ## 核心原则
 
-- **必产出**：中大型任务必须产出需求文档与程序设计文档；小型任务可直接执行但鼓励补记
-- **必落盘**：文档必须写入项目目录 `.ai/docs/`，不得仅停留在对话中或临时文件
-- **必可见**：产出后必须在对话中向用户告知文档路径，确保用户能在编辑器中打开查看
+- **按需产出**：以 `.ai/loop/exit-criteria.yaml` 当前规模的 artifacts 为准；小型任务和只读任务不因流程而补写文档
+- **必落盘**：作为 Loop 产物的文档必须写入项目目录 `.ai/docs/`，临时咨询结论可直接留在对话中
+- **按需可见**：需要用户裁决或用户要求查看的产物必须告知路径，其余产物在最终报告列出即可
 - **必留存**：文档作为项目资产长期保留，供后续回顾、复盘、知识库同步，不得删除
 
 ## 文件编码规范
@@ -21,7 +21,7 @@
 | 文档 | 产出 Agent | 归属 exitCriteria | 输出标准 | 模板 |
 |------|-----------|-------------------|---------|------|
 | 需求文档（PRD） | executor（taskType=requirement） | REQ_ANALYSIS（大型）/ DESIGN（中型含需求时） | `docs/newList/ai-requirement-document-standard.md` | `.ai/templates/requirement-template.md` |
-| UI 设计文档（uiSpec） | executor（taskType=ui-design） | REQ_ANALYSIS / EXP_DESIGN | `docs/newList/ai-ui-design-document-standard.md` | `.ai/templates/ui-design-template.md` |
+| UI 设计文档（uiSpec，按 UI 范围触发） | executor（taskType=ui-design） | REQ_ANALYSIS / EXP_DESIGN | `docs/newList/ai-ui-design-document-standard.md` | `.ai/templates/ui-design-template.md` |
 | 需求发现报告 | executor（taskType=discovery） | 可选上游（不进 Loop 强制门禁） | `docs/newList/ai-requirement-discovery-agent-standard.md` | `.ai/templates/discovery-template.md` |
 | 架构设计评审 | executor（taskType=architecture） | TECH_DESIGN（大型任务前置） | `docs/newList/ai-architecture-review-standard.md` | `.ai/templates/architecture-review-template.md` |
 | 程序设计文档 | executor（taskType=design） | TECH_DESIGN（大型）/ DESIGN（中型） | `docs/newList/ai-design-document-standard.md` | `.ai/templates/design-template.md` |
@@ -78,19 +78,21 @@
 
 ## 用户可见性
 
-文档落盘后，产出 Agent 或编排器**必须**在对话中：
+需要用户裁决或用户要求查看时，文档落盘后由产出 Agent 或编排器在对话中：
 
 1. 明确告知文档的相对路径（如 `.ai/docs/<task-id>/requirement.md`，具体命名见上节）
 2. 简述文档核心内容（背景、范围、验收标准 / 架构、接口、数据设计）
-3. 列出「遗留问题点」（Grill Me 拷打收敛，≤3 个），请用户逐项拍板
+3. 存在未决范围、兼容性或风险时列出「遗留问题点」（≤3 个）并请求裁决
 
-> 文档对用户不可见 = 未完成产出。不得在用户无法查看文档的情况下推进到下游阶段。
+无需用户裁决的产物在最终报告集中列出路径即可，不要求单独暂停或逐段复述。
+
+> 需要用户裁决的需求/设计文档必须可供用户查看后再推进依赖该裁决的下游阶段；测试、评审和 Change Report 等无需确认的文档不因未在对话中逐段复述而阻塞流程。
 
 ## 需求/设计文档确认门禁（20260815 起）
 
 - **需求文档**（`requirement.md`）与**程序设计文档**（`design.md`）是确认型产出：
-  产出后必须暂停，经用户确认（含遗留问题点逐项拍板）后才可进入下一步
-- 未经用户确认，REQ_ANALYSIS / DESIGN / TECH_DESIGN 不得标 done，编排器不得派发下游 TASK
+  只有对应 exit criterion 设置 `confirmationRequired: true` 时，才需确认影响范围、兼容性或风险方面的未决事项；当前请求或 State 已明确确认时可复用，不重复暂停
+- 未确认的实质决策不能使 REQ_ANALYSIS / DESIGN / TECH_DESIGN 标 done，也不能驱动下游 TASK
 - 用户裁决结果回写文档（在对应章节补「用户决策」记录），并记入 Loop State `userConfirmedAt`
 - 其余文档（测试用例、评审记录、测试报告、Change Report）按既有流程产出即可，无需确认门禁
 
@@ -110,14 +112,14 @@
 ## 与 Loop State 的关系
 
 - `artifacts.prd.ref` 必须指向 `.ai/docs/<task-id>/requirement.md` 的真实路径
-- `artifacts.uiSpec.ref` 必须指向 `.ai/docs/<task-id>/uispec.md` 的真实路径
+- 若任务涉及 UI，`artifacts.uiSpec.ref` 必须指向 `.ai/docs/<task-id>/uispec.md` 的真实路径；无 UI 时不要求该产物
 - `artifacts.design.ref` 必须指向 `.ai/docs/<task-id>/design.md` 的真实路径
 - `artifacts.archReview.ref`（大型任务）指向 `.ai/docs/<task-id>/architecture-review.md`
 - 编排器在 Evaluate 段校验 ref 指向的文件真实存在，否则对应 exitCriteria 不得标 done
 
 ## 大型任务设计阶段顺序
 
-大型任务的 TECH_DESIGN 阶段分为两步，均须落盘：
+大型任务的 TECH_DESIGN 阶段分为两步，均须落盘；EXP_DESIGN/EXP_ACCEPT 仅在涉及 UI 时要求体验文档：
 
 1. **架构设计评审**（`architecture-review.md`）：Architect 主笔，评估整体技术方案、影响范围、性能/安全/扩展性，评审通过后才进入程序设计
 2. **程序设计文档**（`design.md`）：前后端工程师基于架构评审结论产出详细设计

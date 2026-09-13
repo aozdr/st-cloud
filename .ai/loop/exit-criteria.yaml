@@ -20,6 +20,8 @@ scales:
         dependsOn: [REQ_ANALYSIS]
       - id: EXP_DESIGN
         dependsOn: [REQ_ANALYSIS]
+        skippable: true
+        conditional: true
       - id: TECH_DESIGN
         dependsOn: [IMPACT_ANALYSIS, EXP_DESIGN]
       - id: TESTCASES
@@ -32,6 +34,8 @@ scales:
         dependsOn: [IMPLEMENTED]
       - id: EXP_ACCEPT
         dependsOn: [IMPLEMENTED]
+        skippable: true
+        conditional: true
       - id: TEST_PASS
         dependsOn: [CODE_REVIEW, SECURITY_REVIEW]
       - id: KNOWLEDGE
@@ -81,13 +85,16 @@ scales:
         dependsOn: [KNOWLEDGE]
 
 # 标准目录：desc / owner（产物 owner，非执行者）/ taskType / artifacts（必需产物）/ 门禁标记
+# conditional: true 表示该标准按 State 的适用性或 confirmationRequired 字段触发；不适用时必须留下跳过证据。
 catalog:
   REQ_ANALYSIS:
-    desc: "需求已分析（requirement.md + uispec.md），经 Grill Me 收敛（遗留问题点 ≤3）并经用户确认"
+    desc: "需求已分析（requirement.md；涉及 UI 时加 uispec.md）；存在未决范围或风险时经 Grill Me 收敛（遗留问题点 ≤3），必要的用户决策已确认"
     owner: executor
     taskType: requirement
-    artifacts: [requirement.md, uispec.md]
+    artifacts: [requirement.md]  # 涉及 UI 时由 State 另登记 uiSpec 产物
+    conditionalArtifacts: [uispec.md]  # 仅当 UI 条件标准 applicable=true 时要求
     grill: true
+    conditional: true
     userConfirm: true
   IMPACT_ANALYSIS:
     desc: "影响范围已分析（前端/后端/数据模型/权限/测试/文档）"
@@ -95,16 +102,18 @@ catalog:
     taskType: impact
     artifacts: [impact.md]
   EXP_DESIGN:
-    desc: "体验评审已通过（技术方案覆盖 uiSpec 全部页面与状态）"
+    desc: "涉及 UI 时体验评审已通过（技术方案覆盖 uiSpec 全部页面与状态）；无 UI 时记录不适用原因"
     owner: reviewer
     taskType: exp-review
     artifacts: [exp-review.md]
+    conditional: true
   TECH_DESIGN:
-    desc: "技术设计已评审：大型先 architecture-review.md，再 design.md；design.md 经 Grill Me 收敛并经用户确认"
+    desc: "技术设计已评审：大型先 architecture-review.md，再 design.md；存在未决范围或风险时对 design.md 使用 Grill Me，必要的用户决策已确认"
     owner: executor
     taskType: design
     artifacts: [architecture-review.md, design.md]
     grill: true
+    conditional: true
     userConfirm: true
   TESTCASES:
     desc: "测试用例已编写（每个验收标准至少一条用例）"
@@ -127,17 +136,18 @@ catalog:
     taskType: security
     artifacts: [security.md]
   EXP_ACCEPT:
-    desc: "体验验收通过（严格按定版 uiSpec 实现）"
+    desc: "涉及 UI 时体验验收通过（按定版 uiSpec 实现）；无 UI 时记录不适用原因"
     owner: reviewer
     taskType: exp-review
     artifacts: [exp-review.md]
+    conditional: true
   TEST_PASS:
     desc: "测试执行通过（按用例逐项执行并记录）"
     owner: tester
     taskType: test
     artifacts: [testreport.md]
   KNOWLEDGE:
-    desc: "知识库已同步（架构/数据模型/接口/业务规则与代码一致）"
+    desc: "知识库已同步（架构/数据模型/接口/业务规则与代码一致）；无相关变化时记录无需更新"
     owner: executor
     taskType: knowledge
     artifacts: []
@@ -147,14 +157,15 @@ catalog:
     taskType: accept
     artifacts: []
   DESIGN:
-    desc: "设计已定；design.md 经 Grill Me 收敛（遗留问题点 ≤3）并经用户确认"
+    desc: "设计已定；存在未决范围或风险时对 design.md 使用 Grill Me（遗留问题点 ≤3），必要的用户决策已确认"
     owner: executor
     taskType: design
     artifacts: [design.md]
     grill: true
+    conditional: true
     userConfirm: true
   VERIFIED:
-    desc: "编译/测试通过"
+    desc: "按变更风险完成编译、测试或相称的静态验证"
     owner: tester
     taskType: test
     artifacts: []
@@ -169,6 +180,6 @@ separationOfDuty:
 # State 生命周期状态取值（.ai/state/<task-id>.yaml 的顶层 status）
 stateStatus:
   allowed: [running, blocked_escalation, done, incomplete, abandoned]
-  doneRequires: "全部 exitCriteria=done 且所有 done 产物的 ref 指向真实文件"
-  incomplete: "曾标 done 但产物缺失/门禁不实，回填后保留"
+  doneRequires: "全部适用 exitCriteria=done；不适用的条件标准为 skipped 且有 skip 证据；每个 done 标准的 catalog.artifacts 均有真实 ref"
+  incomplete: "当前 State 曾标 done 但校验发现产物或门禁缺口，按当前流程补齐"
   abandoned: "中途放弃或长期停滞未收敛"

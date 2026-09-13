@@ -2,7 +2,7 @@
 
 > 当前格式以 `.ai/schema/dispatch.schema.json` 为准；运行规则见 `.ai/knowledge/agent-dispatch-protocol.md`。
 
-每个 TASK 单独复制本模板，完成 schema 校验后，把整段内容直接传入 `spawn_agent.message`。
+每个已派发 TASK 单独复制本模板，完成 schema 校验后，把整段内容直接传入 `spawn_agent.message`；small 直接路径不使用本模板。
 
 ```text
 DISPATCH_ENVELOPE
@@ -20,7 +20,7 @@ stateRef: <Loop State 文件>
 artifactRefs:
   - <输入或预期产物>
 skillRefs:
-  - <SKILL.md；无额外技能填 "-">
+  - <运行时技能标识；无额外技能填 "-">
 scope:
   include:
     - <允许写入路径>

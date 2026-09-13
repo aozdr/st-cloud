@@ -27,7 +27,7 @@
 
 ### 何时必须编写集成测试
 
-- Service 方法涉及 Mapper 调用（INSERT/UPDATE/DELETE/SELECT）的，至少有一个集成测试覆盖主路径
+- 只有变更真实 SQL、表结构、租户隔离或关键数据写路径时，才要求至少一个集成测试覆盖主路径；纯业务分支可用单元测试验证
 - 新增数据库表/字段的迭代，集成测试启动即验证 schema 完整性
 - 使用自定义 `@Select` SQL（含 JOIN）的 Mapper 方法，必须通过集成测试验证 SQL 正确性
 - 涉及租户隔离的查询，必须通过集成测试验证 `TenantLineInnerInterceptor` 生效
@@ -133,7 +133,7 @@ mvn test -pl st-core -Dsurefire.failIfNoSpecifiedTests=false
 1. **`SchemaConsistencyTest`**（`mvn test` 自动运行）：三层校验实体字段 ↔ schema.sql ↔ MySQL init SQL 的列覆盖
 2. **`compare-schema.ps1`**（`.ai/scripts/compare-schema.ps1`）：对比 H2 schema.sql 与运行中 MySQL 的实际列集差异
 
-### 每次迭代强制流程
+### 每次数据库变更的强制流程
 
 按 AGENTS.md「数据库版本管理」章节执行（H2 测试通过后必须运行 `compare-schema.ps1`）：
 
@@ -142,7 +142,7 @@ mvn test -pl st-core -Dsurefire.failIfNoSpecifiedTests=false
 2. 同步 H2 schema (st-core/src/test/resources/schema.sql)
 3. mvn test 全绿（含 SchemaConsistencyTest）
 4. .ai/scripts/compare-schema.ps1  ← 对比 MySQL，确认无差异
-5. 执行迁移到 MySQL
+5. 在已授权的开发/测试 MySQL 执行迁移
 6. INSERT schema_version 记录（版本号 + SQL 文件清单）
 7. 再次 compare-schema.ps1 确认 PASS
 ```
@@ -157,7 +157,7 @@ mvn test -pl st-core -Dsurefire.failIfNoSpecifiedTests=false
 
 ### 版本表 schema_version
 
-每次迭代执行迁移后，向 `schema_version` 表 INSERT 记录：
+每次迁移执行后，向 `schema_version` 表 INSERT 记录：
 ```sql
 INSERT INTO schema_version (version_tag, iteration_name, applied_sql_files, applied_by, notes)
 VALUES ('YYYYMMDD.N', '迭代名称', 'NN_xxx.sql,NN_yyy.sql', 'agent/user', '变更摘要');

@@ -86,7 +86,7 @@ foreach ($raw in $defLines) {
         $scales[$curScale].docs[$Matches[1]] = $Matches[2]; continue
       }
       if ($curScale -and $line -match '^      - id:\s*(\S+)\s*$') {
-        $curCrit = @{ id = $Matches[1]; deps = @(); skippable = $false }
+        $curCrit = @{ id = $Matches[1]; deps = @(); skippable = $false; conditional = $false }
         $scales[$curScale].criteria += , $curCrit
         continue
       }
@@ -95,6 +95,9 @@ foreach ($raw in $defLines) {
       }
       if ($curScale -and $curCrit -and $line -match '^        skippable:\s*(true|false)\s*$') {
         $curCrit.skippable = ($Matches[1] -eq 'true'); continue
+      }
+      if ($curScale -and $curCrit -and $line -match '^        conditional:\s*(true|false)\s*$') {
+        $curCrit.conditional = ($Matches[1] -eq 'true'); continue
       }
     }
     'catalog' {
@@ -182,6 +185,11 @@ foreach ($s in $scales.Keys) {
   # 条件项统计
   $cond = @($crits | Where-Object { $_.skippable })
   if ($cond.Count -gt 0) { Write-Pass "$s 含条件项 $($cond.Count) 项：$(($cond | ForEach-Object { $_.id }) -join ', ')" }
+  $conditional = @($crits | Where-Object { $_.conditional -eq $true })
+  $notSkippable = @($conditional | Where-Object { -not $_.skippable })
+  if ($notSkippable.Count -eq 0) {
+    if ($conditional.Count -gt 0) { Write-Pass "$s 条件标准均允许记录不适用：$(($conditional | ForEach-Object { $_.id }) -join ', ')" }
+  } else { Write-Fail "$s 条件标准必须标记 skippable：$(($notSkippable | ForEach-Object { $_.id }) -join ', ')" }
 }
 
 $largeSecurity = @($scales['large'].criteria | Where-Object id -eq 'SECURITY_REVIEW')

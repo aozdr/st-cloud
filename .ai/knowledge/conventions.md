@@ -155,7 +155,7 @@ public Result<FileNodeVO> getNode(@PathVariable Long nodeId) {
 
 - **单元测试**（*Test）：JUnit 5 + Mockito，Mock Mapper 测试纯业务逻辑分支
 - **集成测试**（*IntegrationTest）：Spring Boot Test + H2 内存库，验证真实 SQL/表结构/Mapper 映射/租户隔离
-- Service 方法涉及 Mapper 调用的，必须有集成测试覆盖主路径
+- 只有变更真实 SQL、表结构、租户隔离或关键数据写路径时，才要求集成测试覆盖主路径；纯业务分支可用单元测试验证
 - 新增数据库表/字段的迭代，集成测试启动即验证 schema 完整性（表缺失则启动失败）
 
 ## 事务边界
@@ -181,11 +181,11 @@ public Result<FileNodeVO> getNode(@PathVariable Long nodeId) {
 
 ### 任务入口（Workflow Manager）
 
-所有用户请求首先经 Workflow Manager 分类，再决定路径：
+需要落地的修改请求先经 Workflow Manager 分类，再决定路径；只读咨询、诊断和审查直接交付结论：
 
 - 小型任务（Bug 修复、配置调整、样式微调）直接执行，不走开发流程
-- 中型任务（单模块增强、新增 API）走精简流程（设计->编码->Review->测试）
-- 大型任务（跨模块、新业务模块、数据模型变更）走完整开发流程（一至九阶段）
+- 中型任务（单模块增强、新增 API）按 `.ai/loop/exit-criteria.yaml` 走精简流程
+- 大型任务（跨模块、新业务模块、数据模型变更）按 `.ai/loop/exit-criteria.yaml` 走完整流程
 - 用户显式声明不走开发流程时，直接执行
 
 详见 .ai/agents/workflow-manager.md 和 .ai/workflows/feature-development.md。
@@ -195,15 +195,12 @@ public Result<FileNodeVO> getNode(@PathVariable Long nodeId) {
 遵循星云盘 AI 研发总规则，采用 **Loop 编排 + 退出标准**，按任务规模选择标准集：
 
 - **小型任务**：实现 → 验证 → 知识库检查 → 验收（ACCEPT）
-- **中型任务**：设计 → 测试用例 → 实现 → Code Review → 安全审查（条件项）→ 测试 → 知识库 → 验收
-- **大型任务**（12 项）：需求分析 → 影响分析 → 体验评审 → 技术设计 → 测试用例 → 实现 →
-  Code Review → Security Review → 体验验收 → 测试执行 → 知识库 → 验收
+- **中型任务**：顺序和条件以 `.ai/loop/exit-criteria.yaml` 为准
+- **大型任务**（12 项）：顺序和条件以 `.ai/loop/exit-criteria.yaml` 为准
 
 门禁依赖（不可降级）：
 
-- 体验评审先于技术设计；未完成技术设计不得进入开发
-- 大型任务未编写测试用例不得开发
-- 未通过 Code Review 与 Security Review 不得测试
+- 体验评审、测试和评审门禁按 canonical `dependsOn` 执行；测试可在实现后提前运行，最终证据需绑定当前 revision
 - 未通过验收（ACCEPT）不得标记 done；验收不通过打回 IMPLEMENTED 级联重跑
 
 每轮 Loop 四段：Observe（读 State）→ Plan（最高价值动作）→ Act（派发 Agent）→ Evaluate（应用 Delta + 门禁检查）。
@@ -215,8 +212,8 @@ public Result<FileNodeVO> getNode(@PathVariable Long nodeId) {
 |-------|------|---------|
 | Workflow Manager | 统一入口，任务分类与调度 | 必须（入口） |
 | executor（执行者） | 需求/需求发现/影响分析/架构/设计/UI设计/编码实现/知识库（按 taskType 切换，核心逻辑加中文注释） | 涉及对应职责时必须 |
-| reviewer（审查者） | 代码评审/安全审查/UI评审/体验评审/质量门禁（按 taskType 切换） | 完整/精简流程必须 |
-| tester（测试者） | 测试用例编写与测试执行，全部通过才算迭代完成 | 完整/精简流程必须 |
+| reviewer（审查者） | 代码评审/安全审查/UI评审/体验评审/质量门禁（按 taskType 切换） | 由当前 exitCriteria 或验收标准触发 |
+| tester（测试者） | 测试用例编写与测试执行，全部通过才算迭代完成 | 由当前 exitCriteria 或验收标准触发 |
 
 > 职责要点见 `.ai/knowledge/role-context.md`。
 
@@ -226,7 +223,7 @@ public Result<FileNodeVO> getNode(@PathVariable Long nodeId) {
 - 需求文档使用 .ai/templates/requirement-template.md，**产出后落盘到 `.ai/docs/<task-id>/requirement.md`**
 - 设计文档使用 .ai/templates/design-template.md，**产出后落盘到 `.ai/docs/<task-id>/design.md`**
 - 测试用例使用 .ai/templates/test-case-template.md，产出后落盘到 `.ai/docs/<task-id>/testcases.md`
-- 文档落盘后必须在对话中告知用户路径，确保可审阅；文档长期留存供回顾，不得删除
+- 需用户裁决或用户要求查看时在对话中告知文档路径；其余产物在最终报告集中列出，文档长期留存供回顾
 - 文档命名、存放、可见性、留存细则见 `.ai/knowledge/document-management.md`
 - 开发流程参考 .ai/workflows/feature-development.md
 - 测试分层规范参考 .ai/knowledge/testing.md

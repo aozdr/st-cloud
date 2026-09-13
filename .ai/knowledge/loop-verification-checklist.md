@@ -38,15 +38,15 @@ pwsh -NoProfile -File .ai\scripts\run-loop-gate.ps1
 - [ ] **C7** Workflow Manager Evaluate 校验并应用 proposal 后更新 State（含 exitCriteria）
 
 ### 门禁依赖
-- [ ] **C8** TECH_DESIGN 等 IMPACT_ANALYSIS + EXP_DESIGN 都 done 才推进；大型任务 TECH_DESIGN 分两步--先架构评审（`architecture-review.md`）通过再程序设计（`design.md`）
+- [ ] **C8** TECH_DESIGN 等 IMPACT_ANALYSIS + 体验标准收敛后推进：涉及 UI 时 EXP_DESIGN done，无 UI 时 EXP_DESIGN skipped 且有证据；大型任务 TECH_DESIGN 分两步--先架构评审（`architecture-review.md`）通过再程序设计（`design.md`）
 - [ ] **C9** IMPLEMENTED 等 TECH_DESIGN + TESTCASES 都 done 才编码
 - [ ] **C10** CODE_REVIEW/SECURITY_REVIEW 等 IMPLEMENTED done 才审查
-- [ ] **C11** TEST_PASS 等 CODE_REVIEW + SECURITY_REVIEW 都 done 才测试
+- [ ] **C11** TEST_PASS 等 CODE_REVIEW + SECURITY_REVIEW 都 done 才能标 done；测试执行可提前进行，代码修复后按当前 revision 重跑
 - [ ] **C12** 编排器不跳过未满足 dependsOn 的标准
 
 ### 并行派发
 - [ ] **C13** 无依赖的 Agent 被并行派发（如前后端编码、三路审查）
-- [ ] **C13.1** 每个 TASK 使用独立 Envelope/child，完整消息只通过 `spawn_agent.message` 传递
+- [ ] **C13.1** 每个已派发 TASK 使用独立 Envelope/child，完整消息只通过 `spawn_agent.message` 传递；小型主线程任务可不派发
 - [ ] **C13.2** Envelope 符合 `.ai/schema/dispatch.schema.json`；同一 TASK 重派保持 `idempotencyKey`、更换 `dispatchId`
 - [ ] **C13.3** ACK 只校验 `dispatchId/taskId/role`；错配、超时和 ACK_ONLY 均记为 failed，不进入 Evaluate
 - [ ] **C13.4** 子 Agent 只返回独立结果和 `criterionProposal`；仅 Workflow Manager 可 Evaluate/写 State
@@ -55,7 +55,7 @@ pwsh -NoProfile -File .ai\scripts\run-loop-gate.ps1
 ### Rework Cascade（关键）
 - [ ] **C14** Review/测试/验收发现问题 -> 记 blocker，不退格
 - [ ] **C15** 修复改代码 -> IMPLEMENTED 重开
-- [ ] **C16** IMPLEMENTED 重开 -> 下游 CODE_REVIEW/SECURITY_REVIEW/EXP_ACCEPT/TEST_PASS/KNOWLEDGE/ACCEPT 自动回退 pending
+- [ ] **C16** IMPLEMENTED 重开 -> 适用下游 CODE_REVIEW/SECURITY_REVIEW/EXP_ACCEPT/TEST_PASS/KNOWLEDGE/ACCEPT 自动回退 pending；`applicable: false` 的条件标准保留 skipped
 - [ ] **C17** 回退后的标准被重新派发 Agent 复检（非沿用旧结论）
 
 ### 死循环防护
@@ -63,9 +63,9 @@ pwsh -NoProfile -File .ai\scripts\run-loop-gate.ps1
 - [ ] **C19** 超轮次上限（large=40/medium=15/small=5）-> 暂停
 
 ### 收敛退出
-- [ ] **C20** 所有 exitCriteria done 才 status:done（非走完阶段清单）
+- [ ] **C20** 所有适用 exitCriteria done、不适用条件标准 skipped 才 status:done（非走完阶段清单）
 - [ ] **C21** ACCEPT 是最后完成项（终态唯一，KNOWLEDGE 为其前置）
-- [ ] **C22** 退出前 State 完整（无 pending 项遗留）
+- [ ] **C22** 退出前 State 完整（无 pending 项遗留；条件标准可有合规 skipped）
 
 ### Agent 输出
 - [ ] **C23** 每个子 Agent 输出独立结果和 `criterionProposal`，不得直接写 State
@@ -74,12 +74,13 @@ pwsh -NoProfile -File .ai\scripts\run-loop-gate.ps1
 ### 文档输出标准
 - [ ] **C25** 落盘文档内容结构遵循 `docs/newList/` 对应输出标准，基于 `.ai/templates/` 模板填写
 - [ ] **C26** 大型任务先产出架构评审（`architecture-review.md`）再产出程序设计文档（`design.md`），未通过架构评审不得标 TECH_DESIGN done
-- [ ] **C27** artifacts 的 ref 指向 `.ai/docs/<task-id>/` 下真实存在的文件，产出后在对话中告知用户路径
-- [ ] **C28** `requirement.md` / `design.md` 含「遗留问题点」章节（Grill Me 拷打收敛 ≤3），
-  并经用户确认（逐项拍板）后才标 REQ_ANALYSIS / DESIGN / TECH_DESIGN done；State 记录 `userConfirmedAt`
+- [ ] **C27** catalog 声明的 artifacts ref 指向真实存在的文件；需要用户裁决或用户要求查看时告知路径
+- [ ] **C28** 存在未决范围或风险时，`requirement.md` / `design.md` 使用 Grill Me 收敛 ≤3 个问题并在 criterion 设置 `confirmationRequired: true`，
+  相关事项经用户确认后才标 REQ_ANALYSIS / DESIGN / TECH_DESIGN done；
+  无未决事项时不强制补写「遗留问题点」章节；已有确认可复用，State 记录 `userConfirmedAt`
 - [ ] **C29** 文档简洁：无空话套话与互联网黑话（赋能/抓手/闭环/颗粒度 等）
-- [ ] **C30** 标 `done` 前：全部 exitCriteria 已 done，且所有标记 done 的产物 ref 指向真实文件（`verify-loop.ps1` 第 4 段强制）
-- [ ] **C31** 历史回填：曾标 done 但产物缺失的 State 已回填 `incomplete` + `backfill` 记录；长期停滞任务回填 `abandoned`
+- [ ] **C30** 标 `done` 前：所有适用 exitCriteria 已 done、不适用条件标准已 skipped，且 catalog 声明的必需产物 ref 指向真实文件（`loopctl.ps1` 完成门禁强制）
+- [ ] **C31** 历史任务若需继续，已按当前定义新建 State、TASK 和产物；旧 State 只作审计依据，不进入当前门禁
 
 ## 四、预提交门禁
 

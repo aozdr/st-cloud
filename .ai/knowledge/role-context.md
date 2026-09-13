@@ -14,11 +14,11 @@
 ## 2. executor 职责上下文（按 taskType 切换）
 
 ### requirement（需求分析，原 product-manager）
-- Grill Me 拷打：用户是谁、真实痛点、现有方案为何不够、最小可用范围；不接受未经质疑的需求。
-- 与 ui-design 协作产出 PRD（requirement-template.md）与 uiSpec（ui-design-template.md），缺一不可；
-  **经 Grill Me 拷打收敛：遗留问题点 ≤3 个并写入文档「遗留问题点」章节**，交用户逐项拍板；
-  用户确认后定版，作为实现唯一依据。
-- 规则：未经拷打收敛（问题点 >3）/ 未经 UI 协作 / **未经用户确认**，不得标 REQ_ANALYSIS done；
+- 需求存在未决范围或风险时使用 Grill Me：用户是谁、真实痛点、现有方案为何不够、最小可用范围；不接受未经质疑的需求。
+- 需要结构化需求时产出 PRD；只有 scope 涉及页面、交互或视觉验收时才与 ui-design 协作产出 uiSpec；
+  存在未决范围或风险时用 Grill Me 收敛，遗留问题点 ≤3 个并写入文档「遗留问题点」章节；无未决事项时不强制补写该章节。仅对影响范围、兼容性或风险的未决问题请求用户裁决；
+  必要的范围、兼容性或风险决策确认后定版，作为实现唯一依据。
+- 规则：存在未决事项且问题点 >3、涉及 UI 却未完成 UI 协作，或必要的范围、兼容性或风险决策未确认时，不得标 REQ_ANALYSIS done；
   验收标准必须可测试；文档简洁，禁止空话套话与互联网黑话。
 
 ### discovery（需求发现，可选上游，原 requirement-discovery）
@@ -36,8 +36,8 @@
 
 ### design（程序设计，原 frontend/backend-engineer 设计职责）
 - 前后端共用 `.ai/docs/<task-id>/design.md` 分章节：后端含 API/Service/数据模型/迁移脚本；前端含页面/路由/状态管理/接口调用（uiSpec 是唯一设计依据，不得自行发挥）。
-- 产出前经 Grill Me 拷打收敛：遗留问题点 ≤3 个并写入文档「遗留问题点」章节；
-  产出后告知用户路径并**等待用户确认/拍板**，未确认不得标 DESIGN/TECH_DESIGN done；
+- 存在未决范围或风险时用 Grill Me 收敛：遗留问题点 ≤3 个并写入文档「遗留问题点」章节；无未决事项时不强制补写该章节；
+  产出后告知用户路径，影响范围、兼容性或风险的未决事项须确认，未确认不得标 DESIGN/TECH_DESIGN done；
   与协作方确认接口契约；遵循 docs/newList/ai-design-document-standard.md。
 - 文档简洁：直说方案与决策，禁止空话套话与互联网黑话。
 
@@ -64,8 +64,8 @@
 - 涉及权限、分享、文件访问时必须参与。
 
 ### ui-review（UI 评审，原 ui-reviewer 评审职责）
-- EXP_DESIGN：技术方案是否覆盖 uiSpec 全部页面/状态/交互、组件选型是否一致、有无遗漏 UI 状态。
-- EXP_ACCEPT：是否严格按定版 uiSpec 实现、交互状态完整、组件一致、不影响操作效率；偏离定版文档即 blocker。
+- 仅在任务涉及页面、交互或视觉验收时执行：EXP_DESIGN 检查技术方案是否覆盖 uiSpec 全部页面/状态/交互、组件选型是否一致；EXP_ACCEPT 检查是否按定版 uiSpec 实现、交互状态完整且组件一致。
+- 无 UI 范围时不派发 UI 评审；由编排器将 EXP_DESIGN/EXP_ACCEPT 标记 `applicable: false`，写明原因并保留跳过证据。
 
 ### exp-review（体验评审/验收，原 experience-reviewer）
 - 关注用户路径清晰度、交互顺畅、操作效率、状态反馈（loading/empty/error/success/disabled）；云盘重点：文件管理效率、上传下载体验、分享流程、权限提示。
@@ -82,14 +82,14 @@
 - 大型任务用例须在 IMPLEMENTED 前完成。
 
 ### test（测试执行）
-- 前置检查：数据库迁移已执行（对比 docker/mysql/init/ 与运行中 MySQL schema）、Schema 一致性（实体 / H2 schema.sql / 自定义 SQL）、编译启动（mvn compile / npm run build）。
+- 按变更范围选择前置检查：涉及数据库迁移时对比 `docker/mysql/init/` 与授权的开发/测试 MySQL schema；涉及实体、schema 或自定义 SQL 时运行 Schema 一致性检查；受影响模块需要时再编译或构建，不要求每个任务运行全套检查。
 - 按用例逐项执行，记录通过/失败/阻塞；全部通过才 TEST_PASS done；失败反馈 executor 修复后回归。
-- 分层：单元测试（Mockito）与集成测试（H2）；Service 涉及 Mapper 必须有集成测试覆盖主路径。
+- 分层：单元测试（Mockito）与集成测试（H2）；只有变更真实 SQL、表结构、租户隔离或关键数据写路径时，才要求集成测试覆盖主路径。
 
 ## 5. 通用规则（所有角色）
 
 - 派发消息 = 角色声明 + taskType + Dispatch Envelope；消息即任务，禁止读上下文猜任务、禁止等待用户。
-- 输出必须含 State Delta（背景/输入/分析/决策/State Delta/风险/下一步/变更影响）。
+- 正式派发的 child 结果包含 State Delta（背景/输入/分析/决策/State Delta/风险/下一步/变更影响）；只读咨询和小型直接路径按需返回简洁结论。
 - 禁止：等待用户分配任务、重新定义任务、自行创建同级 Agent、未验证即声称完成。
 - 高危操作未定版 → `confirmationRequest` 返回主线程；需额外专业能力 → `delegationRequest`（suggestedRole 用四类角色名）。
-- 文档落盘 UTF-8 无 BOM；产出后必须告知用户路径。
+- 文档落盘 UTF-8 无 BOM；需用户裁决或用户要求查看时告知路径，其余产物在最终报告集中列出。

@@ -26,6 +26,8 @@
 
 ## Workflow Manager 自动完成
 
+中型及以上落地任务由 Workflow Manager 自动完成完整 Loop；小型低风险修改直接说明范围并执行相称验证，不创建 TASK、Dispatch 或持久化 State。中型及以上任务的内部步骤为：
+
 ```text
 理解需求
 → Goal
@@ -100,6 +102,6 @@ Validation:
 
 ## Dispatch 对用户完全透明
 
-用户只描述业务需求。Workflow Manager 内部自动生成 TASK、Dispatch Message 并把完整 message 传入 child 创建动作。
+用户只描述业务需求。中型及以上任务由 Workflow Manager 内部生成 TASK、Dispatch Message 并把完整 message 传入 child 创建动作；小型直接路径不生成这些内部产物。
 
 如果 child 返回 `DISPATCH_INVALID`，这是 Workflow Manager 的内部运行时错误，自动修复，不要求用户重新描述需求。

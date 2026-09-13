@@ -40,13 +40,13 @@ Workflow Manager Evaluate
 - `scope.include` 是写入白名单，`scope.exclude` 优先级更高；
 - `stateRef` 供定位，child 只读取与 TASK 相关的最小 State 快照，不得写 State；
 - `forbidSpawn` 必须为 `true`；
-- `skillRefs` 中列出的技能在 ACK 后、执行前完整读取；`-` 表示无额外技能。
+- `skillRefs` 使用运行时技能注册表标识；列出的技能在 ACK 后、执行前完整读取，`-` 表示无额外技能。它不是仓库文件引用，不用 `taskRefs` 的路径规则校验。
 
 推荐以 `.ai/templates/dispatch-template.md` 构建消息。
 
 ## 4. 创建与并行
 
-一 TASK / 一 Envelope / 一 child：
+仅对已派发 TASK 适用“一 TASK / 一 Envelope / 一 child”；small 直接路径不创建 Dispatch：
 
 ```text
 TASK-A → envelope-A → child-A
@@ -152,4 +152,4 @@ child 返回后，主线程应立即：
 5. 调用状态迁移工具执行 Evaluate；
 6. 更新 ledger/history 并重新 Plan。
 
-阶段切换前必须回收上一阶段的全部 child。最终状态是否完成只由 Workflow Manager 根据当前 State 与 Goal completionCriteria 判定。
+阶段切换前只需回收会阻塞当前依赖、共享资源或最终收敛的 child；无关 child 不阻塞当前阶段。最终状态是否完成只由 Workflow Manager 根据当前 State 与 Goal completionCriteria 判定。

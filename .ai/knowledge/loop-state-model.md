@@ -4,7 +4,7 @@
 
 ## 设计原则
 
-- **单一事实源**：一份 State 描述任务的全量进度，任何 Agent 都读它、只追加增量（Delta）
+- **单一事实源**：一份 State 描述任务的全量进度；Workflow Manager 读取全量 State，child 只读取 Envelope 携带的最小相关快照并返回增量（Delta）
 - **状态驱动而非位置驱动**：下一步动作由当前 State 推导，不由"流水线第 N 步"决定
 - **退出标准驱动收敛**：循环持续到所有 exitCriteria 满足，而非走完阶段清单
 - **历史可追溯**：每轮记录 agent/action/delta，形成审计链
@@ -22,8 +22,9 @@ scale: large | medium | small   # 任务规模，决定 exitCriteria 集
 
 exitCriteria:                    # 质量门禁清单，编排器在 Evaluate 段勾选
   - id: REQ_ANALYSIS
-    desc: "需求已分析 + UI/UX 设计文档已产出（executor 的 requirement+ui-design 协作），经 Grill Me 拷打收敛（遗留问题点 ≤3 写入文档）并经用户确认"
-    status: pending | in_progress | done | blocked | stale
+    desc: "需求已分析；涉及 UI 时补充 UI/UX 设计文档；存在未决范围或风险时经 Grill Me 收敛（遗留问题点 ≤3 写入文档），必要的用户决策已确认"
+    status: pending | in_progress | done | blocked | stale | skipped
+    applicable: true             # UI 条件标准涉及 UI 时设 true；不涉及 UI 时设 false，并以 skipReason/approvedBy/evidenceRef 跳过
     dependsOn: []                # 依赖哪些其他标准先满足
   - id: IMPACT_ANALYSIS
     desc: "影响范围已分析"
@@ -33,7 +34,7 @@ exitCriteria:                    # 质量门禁清单，编排器在 Evaluate �
 artifacts:                       # 产出物，Agent 写入
   discovery:  { status: pending, ref: ".ai/docs/<task-id>/discovery.md", owner: "executor" }  # 可选上游需求发现报告（taskType=discovery）
   prd:        { status: pending|in_progress|done, ref: ".ai/docs/<task-id>/requirement.md", owner: "executor" }  # ref 必须为已落盘真实路径（taskType=requirement）
-  uiSpec:     { status: pending, ref: ".ai/docs/<task-id>/uispec.md", owner: "executor" }  # UI/UX 设计文档，REQ_ANALYSIS 阶段与 requirement 协作产出（taskType=ui-design）
+  uiSpec:     { status: pending, ref: ".ai/docs/<task-id>/uispec.md", owner: "executor" }  # 涉及 UI 且对应条件标准 applicable=true 时产出（taskType=ui-design）
   design:     { status: pending, ref: ".ai/docs/<task-id>/design.md", owner: "executor" }  # 前后端合用同一份，分章节（taskType=design）
   archReview: { status: pending, ref: ".ai/docs/<task-id>/architecture-review.md", owner: "executor" }  # 架构设计评审，大型任务 TECH_DESIGN 前置（先于 design，taskType=architecture）
   testcases:  { status: pending, ref: ".ai/docs/<task-id>/testcases.md", owner: "tester" }
@@ -41,7 +42,7 @@ artifacts:                       # 产出物，Agent 写入
   review:     { status: pending, ref: ".ai/docs/<task-id>/codereview.md", owner: "reviewer" }
   security:   { status: pending, ref: ".ai/docs/<task-id>/security.md", owner: "reviewer" }
   testReport: { status: pending, ref: ".ai/docs/<task-id>/testreport.md", owner: "tester" }
-  knowledge:  { status: pending, ref: "", owner: "" }
+  knowledge:  { status: pending, ref: "", owner: "" }  # 无架构/数据模型/接口/业务规则变化时记录“无需更新”即可
   task:       { status: pending, ref: ".ai/tasks/TASK-xxx.md", owner: "workflow-manager" }  # 开发前置产物：中型以上 IMPLEMENTED 前必须落盘（xxx 为任务内序号）
   changereport: { status: pending, ref: ".ai/docs/<task-id>/changereport.md", owner: "executor" }  # 编码完成后的变更汇总（taskType=implement）
 
@@ -65,7 +66,7 @@ iteration: 6                     # 当前轮次
 status: running | blocked_escalation | done | incomplete | abandoned   # 取值定义见 .ai/loop/exit-criteria.yaml
 ```
 
-### 状态取值与回填记录
+### 状态取值与缺口处理
 
 State 顶层 `status` 取值（与 `.ai/loop/exit-criteria.yaml` 的 `stateStatus` 一致）：
 
@@ -73,22 +74,11 @@ State 顶层 `status` 取值（与 `.ai/loop/exit-criteria.yaml` 的 `stateStatu
 |------|------|
 | `running` | 循环进行中 |
 | `blocked_escalation` | 触发升级条件，暂停待人工裁决 |
-| `done` | 全部 exitCriteria done **且** 所有标记 done 的产物 ref 均指向真实文件 |
-| `incomplete` | 曾标 done 但产物缺失/门禁不实，回填后保留 |
+| `done` | 全部适用 exitCriteria done，不适用的条件标准 skipped，且所有必需产物 ref 均指向真实文件 |
+| `incomplete` | 当前 State 曾标 done 但校验发现产物或门禁缺口，按当前流程补齐 |
 | `abandoned` | 中途放弃或长期停滞（默认 14 天）未收敛 |
 
 产物状态取值：`pending` / `in_progress` / `done` / `stale` / `missing`。`missing` 表示**曾声称完成但文件不存在**，与从未开始的 `pending` 区分。
-
-回填记录固定格式（置于顶层 `status` 之后）：
-
-```yaml
-backfill:
-  date: "YYYY-MM-DD"
-  from: "done"
-  reason: "产物未落盘，done 前置不成立，回填为 incomplete"
-  missing:
-    - ".ai/docs/<task-id>/testreport.md"
-```
 
 ### 用户确认状态（需求/设计门禁）
 
@@ -102,12 +92,13 @@ artifacts:
              grillPoints: ["P1:..."], userConfirmedAt: null }
 ```
 
-- `grillPoints`：Grill Me 拷打后遗留问题点（≤3 个），与文档「遗留问题点」章节一致
-- `userConfirmedAt`：用户确认时间；为 null 时对应 exitCriteria 不得标 done
+- `grillPoints`：使用 Grill Me 收敛后保留的遗留问题点（≤3 个），与文档「遗留问题点」章节一致
+- `confirmationRequired: true`：仅当存在需要用户决定的范围、兼容性或风险事项时设置；条件型标准未设置时不要求确认凭证
+- `userConfirmedAt`：用户确认时间；仅当 `confirmationRequired: true` 时为空才不得将对应 exitCriteria 标 done。当前请求或既有 State 已明确确认的决策可复用并记录在 history，不要求重复询问。
 
 ## State 持久化与加载
 
-> 配置驱动型 Loop 无运行时代码，AI 即运行时。State 必须落盘为文件，保证每轮 Observe 能重读全量进度，跨会话/换任务后可从断点恢复，避免上下文丢失导致状态漂移。
+> 配置驱动型 Loop 无运行时代码，AI 即运行时。中型及以上任务的 State 落盘为文件，保证 Workflow Manager 每轮 Observe 能重读全量进度；child 只接收相关快照，避免无关上下文造成截断和漂移。历史任务若需继续处理，按当前定义重新建立 State、TASK 和产物，旧 State 仅作审计依据。
 
 ### 存储位置
 
@@ -158,15 +149,15 @@ status: running
 
 ### 大型任务（12 项）
 
-具体 ID、依赖和是否可跳过只从 `.ai/loop/exit-criteria.yaml` 读取。本节不复制 DAG，避免文档与机器定义分叉。
+具体 ID、依赖和是否可跳过只从 `.ai/loop/exit-criteria.yaml` 读取。本节不复制 DAG，避免文档与机器定义分叉。涉及 UI 时执行 EXP_DESIGN/EXP_ACCEPT；无 UI 时由编排器将两项标记 `applicable: false` 并记录跳过证据。
 
-> `status: done` 仅当该规模下**所有 exitCriteria 均 done**（ACCEPT 为最后一项，是最终收敛点）。
+> `status: done` 仅当该规模下所有适用 exitCriteria 均 done，不适用的条件标准必须 skipped 并保留证据（ACCEPT 为最后一项，是最终收敛点）。
 
 ### 中型任务（8 项，含 1 项条件标准）
 
-具体 ID 与依赖只引用 canonical 定义。`SECURITY_REVIEW` 是唯一条件项；只有 `.ai/loop/exit-criteria.yaml` 声明可跳过且具备 skip 证据时，Evaluate 才可接受。
+具体 ID 与依赖只引用 canonical 定义。条件标准只有在 canonical 允许且具备 `skipReason`、`approvedBy`、`evidenceRef` 时才能跳过；UI 条件标准另须在 State 标记 `applicable: false`，其他标准仍需 done。
 
-> **SECURITY_REVIEW 为条件项**：仅当本次变更涉及权限校验、分享访问控制、文件操作、配额计算等云盘安全敏感逻辑时启用。编排器在初始化 State 时根据变更范围判断是否激活；不涉及安全敏感逻辑的纯展示/排序类中型任务可跳过此标准（在 State 中标注 `skipReason`）。
+> **SECURITY_REVIEW 为条件项**：仅当本次变更涉及权限校验、分享访问控制、文件操作、配额计算等云盘安全敏感逻辑时启用。编排器根据变更范围判断是否激活；不涉及安全敏感逻辑的纯展示/排序类中型任务可跳过此标准，并在 State 中记录 `skipReason`、`approvedBy`、`evidenceRef`。
 
 ### 小型任务（4 项）
 
@@ -177,16 +168,16 @@ status: running
 Evaluate 段必须强制检查 dependsOn：
 
 - 依赖未满足的标准不得标记 done（例：CODE_REVIEW 依赖 IMPLEMENTED，代码没实现完不能算 Review 通过）
-- REQ_ANALYSIS 要求 PRD 与 UI/UX 设计文档（uiSpec）**均产出且落盘到 `.ai/docs/<task-id>/`**（ref 指向真实文件）、
-  经 Grill Me 拷打收敛（遗留问题点 ≤3 写入文档）并**经用户确认**，缺一不可（executor 的 requirement+ui-design 协作，实现以此为唯一依据）
+- REQ_ANALYSIS 按任务需要产出并落盘 PRD；只有 scope 涉及页面、交互或视觉验收时才要求 UI/UX 设计文档（uiSpec）。涉及 UI 时 EXP_DESIGN/EXP_ACCEPT 必须完成；无 UI 时在对应标准写 `applicable: false`、跳过原因和证据。
+  文档 ref 必须指向 `.ai/docs/<task-id>/` 下的真实文件，并完成目标、边界和风险检查；存在未决范围或风险时经 Grill Me 收敛（遗留问题点 ≤3 写入文档），只有会改变范围、兼容性或风险的事项才须经用户确认。
 - **需求/设计确认门禁（20260815 起）**：`requirement.md`（大型 REQ_ANALYSIS）与 `design.md`
-  （大型 TECH_DESIGN / 中型 DESIGN）必须经用户确认才能标 done；未确认不得推进任何下游标准，
-  编排器在 State 中记录 `userConfirmedAt`
+  （大型 TECH_DESIGN / 中型 DESIGN）仅在 criterion 设置 `confirmationRequired: true` 时要求相关范围、兼容性或风险事项经用户确认才能标 done；
+  未设置时不要求确认凭证。当前请求或 State 已明确确认时可复用，不重复询问，编排器在 State 中记录 `userConfirmedAt`
 - TECH_DESIGN 依赖 IMPACT_ANALYSIS 与 EXP_DESIGN（体验评审必须先于技术设计，V3 原顺序保留）
 - 大型任务 TECH_DESIGN 分两步：先产出架构设计评审（`architecture-review.md`，executor 主笔，taskType=architecture，输出标准 `docs/newList/ai-architecture-review-standard.md`），评审通过后再产出程序设计文档（`design.md`）；架构评审为程序设计前置条件
 - IMPLEMENTED 依赖 TECH_DESIGN 与 TESTCASES（大型任务未编写测试用例不得进入开发）
 - 中型以上任务 IMPLEMENTED 前必须存在对应 Task 文件（`artifacts.task.ref` 指向 `.ai/tasks/` 真实路径），未落盘不得标 IMPLEMENTED done（小型直接执行除外）
-- TEST_PASS 依赖 CODE_REVIEW 与 SECURITY_REVIEW（安全审查须先于测试，安全修复改代码后测试才有意义）
+- TEST_PASS 依赖 CODE_REVIEW 与 SECURITY_REVIEW 才能标 done；测试执行可提前进行，代码修复后按当前 revision 重跑
 - ACCEPT 是最终收敛点，未通过不得 `status: done`
 
 这些规则取代旧版"未完成 X 进入 Y"的线性禁止项，但约束力等价。
@@ -195,9 +186,11 @@ Evaluate 段必须强制检查 dependsOn：
 
 **核心规则**：当代码因 rework 发生变更（如 Code Review / Security Review / 体验验收 / 测试发现问题，导致工程师修改代码），`IMPLEMENTED` 被重开，其全部下游标准自动级联回退为 `pending`。
 
-级联范围由 `.ai/loop/exit-criteria.yaml` 的反向依赖图计算，不在文档或脚本中维护第二份列表。以大型任务为例，IMPLEMENTED 变化会先使 CODE_REVIEW、SECURITY_REVIEW、EXP_ACCEPT 失效，再沿 DAG 传递到 TEST_PASS、KNOWLEDGE，最终到 ACCEPT。
+级联范围由 `.ai/loop/exit-criteria.yaml` 的反向依赖图计算，不在文档或脚本中维护第二份列表。以大型任务为例，IMPLEMENTED 变化会先使 CODE_REVIEW、SECURITY_REVIEW、以及适用时的 EXP_ACCEPT 失效，再沿 DAG 传递到 TEST_PASS、KNOWLEDGE，最终到 ACCEPT。
 
 编排器在 Evaluate 段执行级联回退后，下一轮 Plan 重新派发对应 Agent 复检所有回退标准。这确保 rework 后所有质量门重新验证，而非沿用针对旧代码的 stale 结论。
+
+已明确 `applicable: false` 的条件标准在代码 revision stale 时保留 `skipped`，不因无关变更重复派发；设计或产物 revision 变化仍会使其重新评估，其下游按依赖图重新验证。
 
 > 这是 Loop 的关键正确性保证：rework 改了代码，就必须重走所有受影响的质量门，而非只复检发现问题的那一个。
 

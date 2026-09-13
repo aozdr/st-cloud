@@ -1,12 +1,20 @@
 # Agent Loop V5 操作手册
 
-## 主线程激活规则\n\n当前会话只要收到真实用户需求，就立即按 Workflow Manager 执行 Observe → Goal → Scale → Plan → Dispatch/Act；不得回复“待命”“尚未收到具体需求”或“请直接描述任务”。\n\n`当前没有收到具体任务`只允许作为已经创建的 child 的 Dispatch 异常。\n\n## 用户只需要做什么？
+> 本手册只在中型及以上落地任务或用户明确要求持久化 Loop 时按需读取；小型直接任务、只读咨询和审查不加载完整手册。
+
+## 主线程激活规则
+
+需要落地的中型及以上修改需求，按 Workflow Manager 执行 Observe → Goal → Scale → Plan → Dispatch/Act；只读咨询、诊断和审查直接交付结论。小型低风险修改说明目标、范围和相称验证后直接完成，不初始化持久化 State。
+
+`当前没有收到具体任务`只允许作为已经创建的 child 的 Dispatch 异常；没有真实用户需求时按 AGENTS.md 返回 `DISPATCH_MISSING`，不扫描项目猜任务。
+
+## 用户只需要做什么？
 
 正常开发场景下，用户只描述目标：
 
 > 增加文件分享密码功能
 
-Workflow Manager 应自动完成：
+对中型及以上任务，Workflow Manager 应自动完成：
 
 ```text
 Goal
@@ -56,14 +64,13 @@ Agent Definition
 
 ## 子 Agent 正常启动后的第一句话
 
-不要求固定文案，但必须体现：
+必须严格输出：
 
 ```text
-已读取 TASK
-已读取 State
-已确认 Scope
-我是 <role>，任务类型 <type>
-开始执行
+DISPATCH_ACK
+dispatchId: <Envelope.dispatchId>
+taskId: <Envelope.taskId>
+role: <Envelope.role>
 ```
 
 不能出现：
@@ -74,7 +81,7 @@ Agent Definition
 等待任务
 ```
 
-> V2：首条消息必须同时声明角色身份与任务类型（backend/frontend/review/security/test/doc），让调度方与用户能立即确认“谁在做、做什么类型的事”。
+ACK 后再校验 Envelope、读取选定的 skillRefs 和最小 State 快照并执行；ACK 前不得调用工具。
 
 ## 调度失败处理
 
@@ -93,29 +100,29 @@ Observe
 → 重新 Dispatch
 ```
 
-而不是要求用户重新描述需求。
+而不是要求用户重新描述需求；若异常来自缺少真实用户需求，则按 AGENTS.md 的 `DISPATCH_MISSING` 处理。
 
 ## 调度检查清单（Workflow Manager 每轮派发时）
 
 派发前：
 
-- [ ] **环节串行**：当前环节对应的上一环节全部子线程已关闭（list_agents 无残留），才开启本环节新线程
-- [ ] Envelope 六必填齐全：`taskRef` / `stateRef` / `objective` / `scope` / `acceptance` / `validation`
+- [ ] **依赖就绪**：启动 TASK 前只检查其声明依赖已 Evaluate 且不存在 scope/构建资源冲突；无关 child 不阻塞当前 TASK
+- [ ] Envelope 已通过 `.ai/schema/dispatch.schema.json` 校验；不在本手册复制必填字段列表
 - [ ] Envelope 含 `forbidSpawn: true`
 - [ ] 派发消息 = Role Definition + Dispatch Envelope，未只贴角色定义
-- [ ] **自包含派发**：消息含角色声明 + 任务类型 + 技能 SKILL.md 路径 + scope 白/黑名单
+- [ ] **自包含派发**：消息含角色声明 + 任务类型 + 当前任务所需 skillRefs + scope 白/黑名单；技能标识由运行时注册表解析
 - [ ] **上下文隔离已裁剪**：未携带编排器主会话历史（最小 fork）
 - [ ] **fork 运行时约束**：项目不固定 `fork_turns`；以当前 Codex Runtime 实际可用参数为准。无论上下文继承策略如何，任务来源只能是 child 实际收到的 Dispatch Message，不得从父线程历史猜任务
 - [ ] **任务类型匹配**：前端/后端任务派 executor（taskType=implement，scope 隔离目录）、评审派 reviewer、测试派 tester，未交叉
-- [ ] **关联任务已合并**：有依赖/强关联的多个 TASK 合并给同一 Agent（taskRefs 列出全部），未拆成多个并行 Agent
+- [ ] 每个 Envelope 的 `taskRefs` 只服务一个可独立验收的 TASK；独立 TASK 保持分开并按依赖并行
 
 派发后：
 
 - [ ] `list_agents` 校验层级 = 1（WM -> 专业 Agent）；出现两级以上立即 interrupt 并重派
-- [ ] 用 `wait_agent` 等待该 Agent 单次返回；子 Agent 之间不互等、不互相派发
-- [ ] 子 Agent 首条消息已声明角色/任务类型，未出现“等待任务”类回复
+- [ ] 仅对当前阶段依赖、共享资源或最终收敛所需的 child 使用 `wait_agent`；超时只表示本次等待结束，需按状态继续等待，不把超时当作完成；无关 child 不阻塞阶段推进，子 Agent 之间不互等、不互相派发
+- [ ] 子 Agent 首条消息严格为 `DISPATCH_ACK` 三元组，未出现“等待任务”类回复
 - [ ] **子 Agent 未发起确认请求**：未调用 request_user_input / 未向用户提问 / 未返回“请确认”类交互；需要用户决策时只返回 confirmationRequest / delegationRequest / BLOCKED / DISPATCH_INVALID
-- [ ] 子 Agent 全程未读取 scope 白名单之外的目录（抽查其读取范围）
+- [ ] 子 Agent 的写入不超出 `scope.include`，`scope.exclude` 始终禁止；读取仅限完成 TASK 所需的相关文件
 
 返回后处理（高危确认）：
 
@@ -133,37 +140,17 @@ Observe
 
 派发 REQ_ANALYSIS / DESIGN / TECH_DESIGN 相关 TASK 时额外检查：
 
-- [ ] `requirement.md` / `design.md` 已含「遗留问题点」章节（Grill Me 拷打收敛，≤3 个）
-- [ ] 文档路径已呈现给用户，用户已逐项拍板（State 记录 `userConfirmedAt`）
-- [ ] 未确认前未派发任何下游 TASK（IMPACT_ANALYSIS / TESTCASES / IMPLEMENTED 等）
+- [ ] 存在未决范围、兼容性或风险时，`requirement.md` / `design.md` 含「遗留问题点」章节（Grill Me 收敛，≤3 个）；无未决事项时不强制补写该章节
+- [ ] 仅当 criterion 设置 `confirmationRequired: true` 时，才需向用户呈现文档并确认影响范围、兼容性或风险方面的未决问题（State 记录 `userConfirmedAt`）
+- [ ] 涉及 UI 才派发 EXP_DESIGN/EXP_ACCEPT；无 UI 时在 State 标记 `applicable: false` 并保存 skip 证据
+- [ ] 未确认的实质决策未被用于下游 TASK（已明确确认的决策可复用）
 - [ ] 文档未出现空话套话/互联网黑话（简洁性检查）
 
 用户确认动作只由 Workflow Manager 向用户发起；子 Agent 不得发起文档确认请求。
 
-## 最小可执行 Dispatch
+## Dispatch 示例
 
-```yaml
-dispatch:
-  dispatchId: "DISPATCH-20260813-demo-01"
-  taskId: "20260813-demo"
-  role: "executor"
-  taskRefs: [".ai/tasks/TASK-20260813-demo-xxx.md"]
-  stateRef: ".ai/state/20260813-demo.yaml"
-  objective: "实现分享密码校验"
-  exitCriterion: "IMPLEMENTED"
-  forbidSpawn: true
-  scope:
-    include: ["st-share/**", "docker/mysql/init/**"]
-    exclude: ["st-web/**", "st-desktop/**", ".ai/**"]
-  acceptance:
-    - "错误密码拒绝访问"
-    - "正确密码允许访问"
-  validation:
-    - "mvn test"
-  output:
-    changereportRef: ".ai/docs/20260813-demo-xxx/changereport.md"
-  mode: "execute"
-```
+不要在本手册复制 Envelope 字段或示例；使用 [Dispatch 模板](../templates/dispatch-template.md)，并以 `.ai/schema/dispatch.schema.json` 校验后的结果为准。
 
 ## 一个健康的 Rework
 

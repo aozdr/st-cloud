@@ -69,6 +69,8 @@
         "id": { "type": "string", "pattern": "^[A-Z][A-Z_]*$" },
         "status": { "enum": ["pending", "in_progress", "done", "stale", "blocked", "skipped"] },
         "dependsOn": { "type": "array", "items": { "type": "string" }, "uniqueItems": true },
+        "applicable": { "type": "boolean" },
+        "confirmationRequired": { "type": "boolean" },
         "by": { "type": "string", "minLength": 1 },
         "dispatchId": { "type": "string", "minLength": 1 },
         "evidenceRef": { "type": "string", "minLength": 1 },

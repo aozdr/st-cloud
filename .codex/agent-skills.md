@@ -1,47 +1,22 @@
 # Agent 技能配置规范
 
-> 本文件集中定义四类角色可用的技能（Skill）清单。2026-08-14 起：**派发强制携带**——主线程按 `.ai/knowledge/skill-mapping.md` 将 `skillRefs`（SKILL.md 绝对路径）写入 Dispatch Envelope，child 执行前必须读取对应 SKILL.md。技能不改变阶段门禁，仅增强执行质量。
-
-## 总则
-
-- 技能以 `skillRefs`（绝对路径）形式随派发信封强制携带
-- 技能清单由 `skill-mapping.md` 统一维护，本文件为四类角色视角的同步说明
-- 技能不改变标准开发流程的阶段门禁，仅增强 Agent 在各环节的执行质量
-- 需发现新技能时使用 `find-skills`（`npx skills find`）
-
-## 技能清单
-
-### executor（执行者）
-
-| 技能 | 用途 | 调用时机 |
-|------|------|----------|
-| `prd-development` | 构建结构化 PRD | 需求文档输出 |
-| `user-story` | 用户故事 + Gherkin 验收标准 | 需求细化 |
-| `java-spring-boot` | Spring Boot 架构设计 | 复杂架构设计 |
-| `mysql` | MySQL 数据库架构与调优 | 数据库设计/调优 |
-| `vercel-react-best-practices` | React/Next.js 性能最佳实践 | 编码/审查 |
-| `vercel-composition-patterns` | React 组件组合模式 | 组件设计 |
-| `design-guide` | 设计系统规范 | UI 组件开发 |
-| `frontend-design-ui-ux` | 设计语言 + UX/UI 规范 | 新功能 UI 设计 |
-| `competitive-analysis` / `company-research` | 竞品分析 | 需求发现 |
-
-### reviewer（审查者）
-
-| 技能 | 用途 | 调用时机 |
-|------|------|----------|
-| `code-review` | 两轴代码审查（标准符合度 + 需求符合度） | Code Review / 安全审查 |
-| `web-design-guidelines` | Web 界面规范审查 | UI 审查 |
-| `frontend-design-ui-ux` | 设计语言 + UX/UI 规范 | 新功能 UI 设计 |
-
-### tester（测试者）
-
-| 技能 | 用途 | 调用时机 |
-|------|------|----------|
-| `webapp-testing` | Playwright Web 应用测试 | 测试执行 |
-| `web-design-guidelines` | Web 界面规范审查 | UI 验收 |
+> 本文件是技能路由入口；具体触发条件唯一维护在 `.ai/knowledge/skill-mapping.md`。技能只在当前任务确实需要时加载，不改变 Loop 门禁。
 
 ## 调用约定
 
-- 技能以 `skillRefs` 随派发信封强制携带（绝对路径），child 执行前必须读取对应 SKILL.md
-- 完整映射见 `.ai/knowledge/skill-mapping.md`；本文件与映射保持同步
-- 技能产出作为 Agent 工作的辅助，最终决策仍由 Agent 职责决定
+- 主线程按 `skill-mapping.md` 选择最小 `skillRefs` 集合，写入 Dispatch Envelope。
+- child 只读取 Envelope 列出的技能和任务所需的最小 State 快照；没有适用技能时填 `skillRefs: ["-"]`。
+- 技能标识由运行时注册表解析，不在项目文档写死用户目录；缺少非必要技能时报告并继续。
+- 同一任务默认只选一个 UI 主技能和一个测试主技能；验收标准明确覆盖独立维度时才组合。
+
+## 角色边界
+
+- `executor`：需求、设计、实现和知识库更新。
+- `reviewer`：代码、安全、体验和最终验收。
+- `tester`：测试用例和测试执行。
+- `workflow-manager`：选择技能、派发任务和 Evaluate；不把技能选择交给 child 自行扫描。
+
+## 维护规则
+
+- 新增技能前先确认现有映射无法覆盖当前任务，再补充最短的适用条件。
+- 技能描述只写“何时使用”，不要把通用工程流程复制到技能路由。

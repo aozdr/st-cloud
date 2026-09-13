@@ -15,6 +15,10 @@ New-Item -ItemType Directory -Path $EvidenceDir | Out-Null
 foreach ($name in @('DESIGN','TESTCASES','IMPLEMENTED','CODE_REVIEW','TEST_PASS','KNOWLEDGE','ACCEPT','security-skip','skip','ac-1','ac-2','proposal')) {
   Set-Content -LiteralPath (Join-Path $EvidenceDir "$name.json") -Value '{}' -Encoding utf8NoBOM
 }
+$ArtifactDocNames = @('design.md','testcases.md','changereport.md','codereview.md','testreport.md')
+foreach ($name in $ArtifactDocNames) {
+  Set-Content -LiteralPath (Join-Path $Work $name) -Value '{}' -Encoding utf8NoBOM
+}
 $script:Failed = 0
 $Now = '2026-09-11T00:00:00Z'
 
@@ -67,6 +71,21 @@ function Complete-State($State) {
       $criterion | Add-Member approvedBy 'security-reviewer' -Force; $criterion | Add-Member evidenceRef "$EvidenceRefRoot/security-skip.json" -Force
     } else { Complete-Criterion $criterion $(if ($criterion.id -eq 'IMPLEMENTED') { 'executor' } else { 'reviewer' }) }
   }
+  $artifactMap = [ordered]@{}
+  $artifactDocByCriterion = @{
+    DESIGN = 'design.md'
+    TESTCASES = 'testcases.md'
+    IMPLEMENTED = 'changereport.md'
+    CODE_REVIEW = 'codereview.md'
+    TEST_PASS = 'testreport.md'
+  }
+  foreach ($criterion in $State.exitCriteria | Where-Object status -eq 'done') {
+    $artifactRef = if ($artifactDocByCriterion.ContainsKey([string]$criterion.id)) { "$WorkRef/$($artifactDocByCriterion[[string]$criterion.id])" } else { [string]$criterion.evidenceRef }
+    $artifactMap[('artifact-' + $criterion.id)] = [pscustomobject][ordered]@{
+      status = 'done'; ref = $artifactRef; provides = @([string]$criterion.id)
+    }
+  }
+  $State.artifacts = [pscustomobject]$artifactMap
   $State.acceptanceEvidence = @(
     [pscustomobject]@{ criterion = 'AC-1'; evidenceRef = "$EvidenceRefRoot/ac-1.json"; validatedRevision = 'code-r1' },
     [pscustomobject]@{ criterion = 'AC-2'; evidenceRef = "$EvidenceRefRoot/ac-2.json"; validatedRevision = 'code-r1' }
@@ -107,9 +126,14 @@ try {
   $r = Invoke-Loop @('validate', (Save-Fixture 'TC-FG-03.yaml' $s))
   Expect 'TC-FG-03 错误依赖' ($r.ExitCode -ne 0 -and $r.Text -match 'DEPENDENCY_MISMATCH') $r.Text
 
-  $s = New-MediumState; $design = $s.exitCriteria | Where-Object id -eq DESIGN; Complete-Criterion $design; $design.PSObject.Properties.Remove('confirmedBy')
+  $s = New-MediumState; $design = $s.exitCriteria | Where-Object id -eq DESIGN; $design | Add-Member confirmationRequired $true -Force; Complete-Criterion $design; $design.PSObject.Properties.Remove('confirmedBy')
   $r = Invoke-Loop @('validate', (Save-Fixture 'TC-FG-04.yaml' $s))
   Expect 'TC-FG-04 缺用户确认' ($r.ExitCode -ne 0 -and $r.Text -match 'CONFIRMATION_EVIDENCE_MISSING') $r.Text
+
+  $s = New-MediumState; $design = $s.exitCriteria | Where-Object id -eq DESIGN; $design | Add-Member confirmationRequired $false -Force; Complete-Criterion $design
+  foreach ($field in @('userConfirmedAt','confirmedBy','confirmationArtifact')) { $design.PSObject.Properties.Remove($field) }
+  $r = Invoke-Loop @('validate', (Save-Fixture 'TC-FG-04B.yaml' $s))
+  Expect 'TC-FG-04B 条件确认关闭' ($r.ExitCode -eq 0) $r.Text
 
   $s = Complete-State (New-MediumState); ($s.exitCriteria | Where-Object id -eq ACCEPT).by = 'executor'
   $r = Invoke-Loop @('validate', (Save-Fixture 'TC-FG-05.yaml' $s))
@@ -123,6 +147,92 @@ try {
   $sec.status='skipped'; $sec | Add-Member skipReason '无安全敏感面'; $sec | Add-Member approvedBy 'security'; $sec | Add-Member evidenceRef "$EvidenceRefRoot/skip.json"
   $r = Invoke-Loop @('validate', (Save-Fixture 'TC-SCH-06.yaml' $s))
   Expect 'TC-SCH-06 medium 安全审查有证据跳过' ($r.ExitCode -eq 0) $r.Text
+
+  $uiState = Get-Content -LiteralPath (Join-Path $RepoRoot '.ai\state\20260912-stcore-security-consistency.yaml') -Raw | ConvertFrom-Json
+  $uiState.status = 'done'
+  $uiState.artifacts.PSObject.Properties.Remove('uiSpec')
+  foreach ($id in @('EXP_DESIGN','EXP_ACCEPT')) {
+    $criterion = $uiState.exitCriteria | Where-Object id -eq $id
+    $criterion | Add-Member applicable $false -Force
+    $criterion.status = 'skipped'
+    $criterion | Add-Member skipReason '任务不涉及页面、交互或视觉验收' -Force
+    $criterion | Add-Member approvedBy 'workflow-manager' -Force
+    $criterion | Add-Member evidenceRef '.ai/docs/20260912-stcore-security-consistency/exp-review.md' -Force
+  }
+  $r = Invoke-Loop @('validate', (Save-Fixture 'TC-UI-01-no-ui.yaml' $uiState))
+  Expect 'TC-UI-01 无 UI 时跳过体验标准并保留证据' ($r.ExitCode -eq 0) $r.Text
+
+  $uiState = Get-Content -LiteralPath (Join-Path $RepoRoot '.ai\state\20260912-stcore-security-consistency.yaml') -Raw | ConvertFrom-Json
+  $uiState.status = 'done'; $uiState.artifacts.PSObject.Properties.Remove('uiSpec')
+  $r = Invoke-Loop @('validate', (Save-Fixture 'TC-UI-03-ui-spec-required.yaml' $uiState))
+  Expect 'TC-UI-03 UI 任务缺 uiSpec 产物被拒绝（缺省 applicable=true）' ($r.ExitCode -ne 0 -and $r.Text -match 'CATALOG_ARTIFACT_MISSING') $r.Text
+
+  $uiState = Get-Content -LiteralPath (Join-Path $RepoRoot '.ai\state\20260912-stcore-security-consistency.yaml') -Raw | ConvertFrom-Json
+  $uiState.status = 'done'
+  foreach ($id in @('EXP_DESIGN','EXP_ACCEPT')) {
+    $criterion = $uiState.exitCriteria | Where-Object id -eq $id
+    $criterion | Add-Member applicable $false -Force; $criterion.status = 'skipped'
+    $criterion | Add-Member skipReason '任务不涉及页面、交互或视觉验收' -Force
+    $criterion | Add-Member approvedBy 'workflow-manager' -Force
+    $criterion | Add-Member evidenceRef '.ai/docs/20260912-stcore-security-consistency/exp-review.md' -Force
+  }
+  $path = Save-Fixture 'TC-UI-04-stale-preserves-skip.yaml' $uiState
+  $r = Invoke-Loop @('stale', $path, '-RevisionKind', 'code', '-RevisionValue', 'code-next')
+  $after = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+  $expAccept = $after.exitCriteria | Where-Object id -eq EXP_ACCEPT
+  $knowledge = $after.exitCriteria | Where-Object id -eq KNOWLEDGE
+  Expect 'TC-UI-04 非适用体验标准在代码 stale 后保留 skipped' ($r.ExitCode -eq 0 -and $expAccept.status -eq 'skipped' -and $knowledge.status -eq 'stale') $r.Text
+
+  $designStaleState = Get-Content -LiteralPath (Join-Path $RepoRoot '.ai\state\20260912-stcore-security-consistency.yaml') -Raw | ConvertFrom-Json
+  $designStaleState.status = 'done'
+  foreach ($id in @('EXP_DESIGN','EXP_ACCEPT')) {
+    $criterion = $designStaleState.exitCriteria | Where-Object id -eq $id
+    $criterion | Add-Member applicable $false -Force; $criterion.status = 'skipped'
+    $criterion | Add-Member skipReason '任务不涉及页面、交互或视觉验收' -Force
+    $criterion | Add-Member approvedBy 'workflow-manager' -Force
+    $criterion | Add-Member evidenceRef '.ai/docs/20260912-stcore-security-consistency/exp-review.md' -Force
+  }
+  $path = Save-Fixture 'TC-UI-05-design-revision-rechecks-skip.yaml' $designStaleState
+  $r = Invoke-Loop @('stale', $path, '-RevisionKind', 'design', '-RevisionValue', 'design-next')
+  $after = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+  $expAccept = $after.exitCriteria | Where-Object id -eq EXP_ACCEPT
+  Expect 'TC-UI-05 设计 revision 会重新评估非适用体验标准' ($r.ExitCode -eq 0 -and $expAccept.status -eq 'stale' -and $after.status -eq 'running') $r.Text
+
+  $uiState = Get-Content -LiteralPath (Join-Path $RepoRoot '.ai\state\20260912-stcore-security-consistency.yaml') -Raw | ConvertFrom-Json
+  $uiState.status = 'running'; $criterion = $uiState.exitCriteria | Where-Object id -eq EXP_DESIGN
+  $criterion | Add-Member applicable $true -Force; $criterion.status = 'skipped'
+  $criterion | Add-Member skipReason '错误跳过' -Force; $criterion | Add-Member approvedBy 'workflow-manager' -Force
+  $criterion | Add-Member evidenceRef '.ai/docs/20260912-stcore-security-consistency/exp-review.md' -Force
+  $r = Invoke-Loop @('validate', (Save-Fixture 'TC-UI-02-applicable-skip.yaml' $uiState))
+  Expect 'TC-UI-02 适用的体验标准不得跳过' ($r.ExitCode -ne 0 -and $r.Text -match 'SKIP_NOT_ALLOWED') $r.Text
+
+  $duplicateState = Get-Content -LiteralPath (Join-Path $RepoRoot '.ai\state\20260912-stcore-security-consistency.yaml') -Raw | ConvertFrom-Json
+  $duplicateState.status = 'done'
+  $duplicateState.artifacts.archReview.ref = '.ai/docs/20260912-stcore-security-consistency/design.md'
+  $duplicateState.artifacts.archReview.provides = @('TECH_DESIGN')
+  $r = Invoke-Loop @('validate', (Save-Fixture 'TC-ART-03-duplicate-ref.yaml' $duplicateState))
+  Expect 'TC-ART-03 两个设计标准不得由同一 ref 充数' ($r.ExitCode -ne 0 -and $r.Text -match 'CATALOG_ARTIFACT_MISSING') $r.Text
+
+  $wrongTypeState = Get-Content -LiteralPath (Join-Path $RepoRoot '.ai\state\20260912-stcore-security-consistency.yaml') -Raw | ConvertFrom-Json
+  $wrongTypeState.status = 'done'
+  $wrongTypeState.artifacts.archReview.ref = 'AGENTS.md'
+  $wrongTypeState.artifacts.archReview.provides = @('TECH_DESIGN')
+  $wrongTypeState.artifacts.design.ref = 'README.md'
+  $wrongTypeState.artifacts.design.provides = @('TECH_DESIGN')
+  $r = Invoke-Loop @('validate', (Save-Fixture 'TC-ART-04-multi-artifact-wrong-type.yaml' $wrongTypeState))
+  Expect 'TC-ART-04 多产物标准不得由无关文件替代' ($r.ExitCode -ne 0 -and $r.Text -match 'CATALOG_ARTIFACT_MISSING') $r.Text
+
+  $singleWrongTypeState = Complete-State (New-MediumState)
+  $singleWrongTypeState.status = 'done'
+  $singleWrongTypeState.artifacts.PSObject.Properties.Remove('artifact-DESIGN')
+  $singleWrongTypeState.artifacts | Add-Member unrelated ([pscustomobject][ordered]@{ status = 'done'; ref = 'AGENTS.md'; provides = @('DESIGN') }) -Force
+  $r = Invoke-Loop @('validate', (Save-Fixture 'TC-ART-05-single-nonlegacy-wrong-type.yaml' $singleWrongTypeState))
+  Expect 'TC-ART-05 单产物标准不得由无关文件替代' ($r.ExitCode -ne 0 -and $r.Text -match 'CATALOG_ARTIFACT_MISSING') $r.Text
+
+  $legacyState = New-MediumState
+  $legacyState | Add-Member legacy $true -Force
+  $r = Invoke-Loop @('validate', (Save-Fixture 'TC-LEGACY-01-requires-reinit.yaml' $legacyState))
+  Expect 'TC-LEGACY-01 历史 State 必须重新建立' ($r.ExitCode -ne 0 -and $r.Text -match 'LEGACY_STATE_REQUIRES_REINIT') $r.Text
 
   $s = Complete-State (New-MediumState); $s.status = 'done'; $path = Save-Fixture 'TC-REV-01.yaml' $s
   $r = Invoke-Loop @('stale', $path, '-RevisionKind', 'code', '-RevisionValue', 'code-r2')
@@ -150,6 +260,14 @@ try {
   $r = Invoke-Loop @('validate-dispatch','-DispatchPath',(Save-Fixture 'TC-DSP-PATH.json' $envelope))
   Expect 'TC-DSP-12 Dispatch 路径逃逸拒绝' ($r.ExitCode -ne 0 -and $r.Text -match 'DISPATCH_PATH_INVALID') $r.Text
 
+  $envelope.stateRef='state.yaml'; $envelope | Add-Member skillRefs @('mysql/SKILL.md') -Force
+  $r = Invoke-Loop @('validate-dispatch','-DispatchPath',(Save-Fixture 'TC-DSP-SKILL-01.json' $envelope))
+  Expect 'TC-DSP-SKILL-01 技能注册表标识允许' ($r.ExitCode -eq 0) $r.Text
+
+  $envelope.skillRefs=@('../outside/SKILL.md')
+  $r = Invoke-Loop @('validate-dispatch','-DispatchPath',(Save-Fixture 'TC-DSP-SKILL-02.json' $envelope))
+  Expect 'TC-DSP-SKILL-02 技能路径穿越拒绝' ($r.ExitCode -ne 0 -and $r.Text -match 'DISPATCH_PATH_INVALID') $r.Text
+
   $s = New-MediumState; $s.dispatchLedger = @(New-DesignAttempt 'bad-outcome'); $path = Save-Fixture 'TC-EVAL-OUTCOME.yaml' $s
   $proposal = [pscustomobject]@{ taskId='design-task'; dispatchId='bad-outcome'; criterionProposal=[pscustomobject]@{ id='DESIGN'; outcome='anything'; by='executor'; dispatchId='bad-outcome'; evidenceRef="$EvidenceRefRoot/proposal.json"; validatedRevision='design-r1' } }
   $r = Invoke-Loop @('evaluate', $path, '-ProposalPath', (Save-Fixture 'TC-EVAL-OUTCOME-proposal.json' $proposal))
@@ -173,6 +291,10 @@ try {
 
   $s = New-MediumState; $s.artifacts=[pscustomobject]@{ report=[pscustomobject]@{status='done'} }; $r=Invoke-Loop @('validate',(Save-Fixture 'TC-ART-01.yaml' $s))
   Expect 'TC-ART-01 done artifact 必须有真实 ref' ($r.ExitCode -ne 0 -and $r.Text -match 'ARTIFACT_REF_MISSING') $r.Text
+
+  $s = Complete-State (New-MediumState); $s.artifacts.PSObject.Properties.Remove('artifact-DESIGN')
+  $r = Invoke-Loop @('complete', (Save-Fixture 'TC-ART-02-missing-required.yaml' $s))
+  Expect 'TC-ART-02 完成前缺必需产物被拒绝' ($r.ExitCode -ne 0 -and $r.Text -match 'CATALOG_ARTIFACT_MISSING') $r.Text
 
   $s = New-MediumState; $s.dispatchLedger = @(
     (New-DesignAttempt 'old-attempt' 'returned'),

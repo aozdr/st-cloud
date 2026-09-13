@@ -14,17 +14,17 @@
 
 ## 1. 用户入口
 
-收到非空用户需求后立即启动：
+收到需要落地的修改需求后启动；只读咨询、诊断和审查直接交付结论：
 
 ```text
 Observe → Goal → Scale → Plan → Act → Evaluate
 ```
 
-“尚未生成 TASK”是编排器的待办，不是用户缺少需求。除非用户明确要求待命，不得让用户学习或填写 Agent Loop 协议。
+“尚未生成 TASK”是编排器的待办，不是用户缺少需求。低风险 small 任务可走直接路径，完成修改和相称验证后结束，不创建持久化 Loop 或伪造 dispatch。除非用户明确要求待命，不得让用户学习或填写 Agent Loop 协议。
 
 ## 2. Observe
 
-读取或初始化当前 State，并核对：
+中型及以上任务读取或初始化当前 State，并核对：
 
 - Goal、规模、iteration、未满足 exitCriteria；
 - open/escalated blockers；
@@ -33,20 +33,24 @@ Observe → Goal → Scale → Plan → Act → Evaluate
 - dispatchLedger 中未结束的 attempt；
 - 活跃 child、worktree、branch 与 State 是否一致。
 
+小型直接路径不写持久化 State；只在对话中保留目标、范围和验证记录。
+
 State 不可信时先修复真实性，不能在错误基线上继续推进。
 
 ## 3. Goal 与 Scale
 
-Goal 必须包含：
+中型及以上任务的 Goal 必须包含：
 
 - `objective`：客观目标；
 - `scope`：影响和禁止范围；
 - `completionCriteria`：可逐项验证的完成标准。
 
+小型直接路径只保留必要的目标、范围和验证记录，不初始化完整 State。
+
 规模判断：
 
-- small：单文件 Bug、配置或样式微调；
-- medium：单模块功能、新接口、超过 3 个文件；
+- small：低风险、局部 Bug、配置或样式微调；
+- medium：单模块功能、新接口或具有明显行为影响的变更；
 - large：跨模块、数据模型或上传/下载/分享/权限/配额等核心流程。
 
 从 `.ai/loop/exit-criteria.yaml` 加载完整标准集，不在本文手写第二份 DAG。
@@ -62,16 +66,16 @@ Goal 必须包含：
 
 以下情况必须暂停并等待用户确认：
 
-- 中型 `design.md`；
-- 大型 `requirement.md`/`uispec.md`；
-- 大型 `architecture-review.md`/`design.md`；
+- 中型 `design.md` 存在范围、兼容性或风险未决事项时；
+- 大型 `requirement.md`（涉及 UI 时包含 `uispec.md`）存在范围、兼容性或风险未决事项时；
+- 大型 `architecture-review.md`/`design.md` 存在范围、兼容性或风险未决事项时；
 - 数据库、API 契约、跨模块或不可逆方案尚未定版。
 
-确认门禁满足后才创建下游 TASK。
+确认门禁满足后才创建依赖该决策的下游 TASK；已确认或无未决事项时不暂停。
 
 ## 5. TASK 与角色
 
-中型及以上任务在执行前必须有 `.ai/tasks/TASK-*.md`。TASK 应包含唯一目标、输入、scope、验收、验证、产物和禁止事项。
+中型及以上任务在执行前必须有 `.ai/tasks/TASK-*.md`。TASK 应包含唯一目标、输入、scope、验收、验证、产物和禁止事项；small 直接路径不创建 TASK。
 
 | role | taskType 示例 | 边界 |
 |---|---|---|
@@ -81,20 +85,22 @@ Goal 必须包含：
 
 子 Agent 不定义 Goal、不互相派发、不直接修改 State。实现者与评审/验收者遵守 `.ai/loop/exit-criteria.yaml` 的职责分离。
 
+大型任务只有在 scope 涉及页面、交互或视觉验收时才派发 EXP_DESIGN/EXP_ACCEPT 并将两项标记 `applicable: true`；无 UI 时将两项标记 `applicable: false`，写入跳过原因与证据，不为满足项数额外派发评审。
+
 ## 6. Dispatch
 
-每个 TASK 生成一个符合 `.ai/schema/dispatch.schema.json` 的 Envelope，并把完整 Envelope 作为 `spawn_agent` 的 `message` 直接传入一个独立 child。
+每个已派发 TASK 生成一个符合 `.ai/schema/dispatch.schema.json` 的 Envelope，并把完整 Envelope 作为 `spawn_agent` 的 `message` 直接传入一个独立 child。
 
 硬规则：
 
-- 一 TASK / 一 Envelope / 一 child；
+- 一已派发 TASK / 一 Envelope / 一 child；
 - TASK 的 `idempotencyKey` 跨 attempt 稳定；
 - 每次 attempt 使用新的 `dispatchId`；
 - `taskCode` 如保留，仅是可读标签，不作为身份或唯一键；
 - ACK 只核对 `dispatchId`、`taskId`、`role`；
 - spawn 前完成 schema 校验，spawn 后登记 childId；
 - 无依赖任务可并行派发；同一批次先完整构建并验证所有 Envelope；
-- child 返回后立刻核对产物并关闭线程，阶段切换前不得残留旧阶段 child。
+- child 返回后立刻核对产物并关闭线程；阶段切换前只清理会阻塞当前依赖、共享资源或最终收敛的旧 child。
 
 重试和错误恢复完全遵循 `.ai/knowledge/agent-dispatch-protocol.md`。禁止添加文件投递、备用通道或共享结果追加。
 
@@ -124,7 +130,7 @@ blockerProposals: []
 1. 核对返回的 `dispatchId/taskId`、独立结果文件和 TASK 约定产物；
 2. 拒绝旧 attempt、错 revision、缺证据或 scope 越界的 proposal；
 3. 调用状态迁移工具应用 proposal；
-4. 强制检查 canonical DAG、确认门禁、职责分离、blocker 和 artifact；
+4. 强制检查 canonical DAG、确认门禁、职责分离、blocker 和 artifact；每个 done 标准的 catalog.artifacts 均须登记并指向真实文件，不适用的条件标准须 skipped 且有证据；
 5. design/code revision 改变时，从 DAG 自动计算并应用 stale cascade；
 6. 更新 dispatchLedger、结构化 history 和 iteration；
 7. 重新 Observe 并选择下一轮动作。

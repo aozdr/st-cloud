@@ -185,6 +185,15 @@ function Assert-RepoRelativeReference([string]$Reference, [string]$Field) {
   if ([IO.Path]::IsPathRooted($Reference) -or (($normalized -split '/') -contains '..')) { Stop-Loop 'DISPATCH_PATH_INVALID' "$Field 必须是仓库内相对路径：$Reference" }
 }
 
+function Assert-SkillReference([string]$Reference) {
+  if ([string]::IsNullOrWhiteSpace($Reference)) { Stop-Loop 'DISPATCH_PATH_INVALID' 'skillRefs 不能包含空引用' }
+  if ($Reference -eq '-') { return }
+  $normalized = $Reference.Replace('\','/')
+  if ([IO.Path]::IsPathRooted($Reference) -or (($normalized -split '/') -contains '..') -or $Reference -match '[\r\n]') {
+    Stop-Loop 'DISPATCH_PATH_INVALID' "skillRefs 必须是运行时注册表标识：$Reference"
+  }
+}
+
 function Split-InlineList([string]$Text) {
   if ([string]::IsNullOrWhiteSpace($Text)) { return @() }
   return @($Text -split ',' | ForEach-Object { $_.Trim().Trim('"').Trim("'") } | Where-Object { $_ })
@@ -206,17 +215,21 @@ function Read-Definition([string]$Path) {
         $scaleName = $Matches[1]; $result.scales[$scaleName] = @(); $criterion = $null; continue
       }
       if ($scaleName -and $line -match '^      - id:\s*([A-Z][A-Z_]*)') {
-        $criterion = [pscustomobject][ordered]@{ id = $Matches[1]; dependsOn = @(); skippable = $false }
+        $criterion = [pscustomobject][ordered]@{ id = $Matches[1]; dependsOn = @(); skippable = $false; conditional = $false }
         $result.scales[$scaleName] += $criterion; continue
       }
       if ($criterion -and $line -match '^        dependsOn:\s*\[(.*)\]') { $criterion.dependsOn = @(Split-InlineList $Matches[1]); continue }
       if ($criterion -and $line -match '^        skippable:\s*(true|false)') { $criterion.skippable = $Matches[1] -eq 'true'; continue }
+      if ($criterion -and $line -match '^        conditional:\s*(true|false)') { $criterion.conditional = $Matches[1] -eq 'true'; continue }
     }
     if ($section -eq 'catalog') {
       if ($line -match '^  ([A-Z][A-Z_]*):\s*$') {
-        $catalogName = $Matches[1]; $result.catalog[$catalogName] = [ordered]@{ userConfirm = $false; owner = ''; taskType = '' }; continue
+        $catalogName = $Matches[1]; $result.catalog[$catalogName] = [ordered]@{ userConfirm = $false; conditional = $false; owner = ''; taskType = ''; artifacts = @(); conditionalArtifacts = @() }; continue
       }
       if ($catalogName -and $line -match '^    userConfirm:\s*(true|false)') { $result.catalog[$catalogName].userConfirm = $Matches[1] -eq 'true'; continue }
+      if ($catalogName -and $line -match '^    conditional:\s*(true|false)') { $result.catalog[$catalogName].conditional = $Matches[1] -eq 'true'; continue }
+      if ($catalogName -and $line -match '^    artifacts:\s*\[(.*)\]') { $result.catalog[$catalogName].artifacts = @(Split-InlineList $Matches[1]); continue }
+      if ($catalogName -and $line -match '^    conditionalArtifacts:\s*\[(.*)\]') { $result.catalog[$catalogName].conditionalArtifacts = @(Split-InlineList $Matches[1]); continue }
       if ($catalogName -and $line -match '^    owner:\s*(\S+)') { $result.catalog[$catalogName].owner = $Matches[1].Trim('"',"'"); continue }
       if ($catalogName -and $line -match '^    taskType:\s*(\S+)') { $result.catalog[$catalogName].taskType = $Matches[1].Trim('"',"'"); continue }
     }
@@ -244,6 +257,66 @@ function Test-SameSet($Left, $Right) {
   return $a.Count -eq $b.Count -and (@(Compare-Object $a $b).Count -eq 0)
 }
 
+function Test-ConfirmationRequired($Definition, $Criterion) {
+  $id = [string]$Criterion.id
+  if (-not $Definition.catalog.Contains($id) -or -not $Definition.catalog[$id].userConfirm) { return $false }
+  if ($Definition.catalog[$id].conditional -eq $true) {
+    $hasFlag = Test-Field $Criterion 'confirmationRequired'
+    return $hasFlag -and ([bool]$Criterion.confirmationRequired)
+  }
+  return $true
+}
+
+# 条件标准默认适用；只有编排器明确写入 applicable=false 才能走跳过路径。
+function Test-CriterionApplicable($Criterion) {
+  if (-not (Test-Field $Criterion 'applicable')) { return $true }
+  return [bool]$Criterion.applicable
+}
+
+function Test-CriterionSkipAllowed($State, $Canonical, $Criterion) {
+  if (-not $Canonical.skippable) { return $false }
+  if ($Canonical.conditional) { return -not (Test-CriterionApplicable $Criterion) }
+  return $State.scale -eq 'medium' -and [string]$Criterion.id -eq 'SECURITY_REVIEW'
+}
+
+# 完成门禁按 catalog 逐项核对 State，并拒绝同一 ref 重复充数；每个必需产物都必须匹配 catalog 指定文件名。
+function Assert-CriterionArtifacts($State, $Definition, $Criterion) {
+  if ([string]$Criterion.status -ne 'done') { return }
+  if (-not $Definition.catalog.Contains([string]$Criterion.id)) { return }
+  $expected = @(ConvertTo-Array $Definition.catalog[[string]$Criterion.id].artifacts)
+  if ([string]$Criterion.id -eq 'REQ_ANALYSIS') {
+    $uiActive = @($State.exitCriteria | Where-Object { [string]$_.id -in @('EXP_DESIGN','EXP_ACCEPT') -and (Test-CriterionApplicable $_) }).Count -gt 0
+    if ($uiActive) { $expected += @(ConvertTo-Array $Definition.catalog[[string]$Criterion.id].conditionalArtifacts) }
+  }
+  if ($expected.Count -eq 0) { return }
+  $candidates = @()
+  foreach ($property in $State.artifacts.PSObject.Properties) {
+    $artifact = $property.Value
+    if (-not (Test-Field $artifact 'status') -or [string]$artifact.status -notin @('done','ready')) { continue }
+    $refText = if (Test-Field $artifact 'ref') { [string]$artifact.ref } else { '' }
+    $fileName = if (-not [string]::IsNullOrWhiteSpace($refText)) { [IO.Path]::GetFileName($refText.Replace('\','/')) } else { '' }
+    $refKey = if ([string]::IsNullOrWhiteSpace($refText)) { 'property:' + [string]$property.Name } else {
+      $refPath = if ([IO.Path]::IsPathRooted($refText)) { $refText } else { Join-Path $script:RepoRoot $refText }
+      ([IO.Path]::GetFullPath($refPath)).ToLowerInvariant()
+    }
+    $candidates += [pscustomobject]@{ property = [string]$property.Name; artifact = $artifact; fileName = $fileName; refKey = $refKey }
+  }
+  $usedRefs = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+  $missing = @()
+  foreach ($requirement in $expected) {
+    $requiredName = [IO.Path]::GetFileName(([string]$requirement).Replace('\','/'))
+    $selected = @($candidates | Where-Object { -not $usedRefs.Contains([string]$_.refKey) -and $_.fileName -eq $requiredName } | Select-Object -First 1)
+    if ($selected.Count -eq 0) { $missing += [string]$requirement; continue }
+    $chosen = $selected[0]
+    Require-Text $chosen.artifact 'ref' 'ARTIFACT_REF_MISSING'
+    Assert-EvidenceExists ([string]$chosen.artifact.ref) 'ARTIFACT_NOT_FOUND'
+    [void]$usedRefs.Add([string]$chosen.refKey)
+  }
+  if ($missing.Count -gt 0) {
+    Stop-Loop 'CATALOG_ARTIFACT_MISSING' "$($Criterion.id) 缺少必需产物：$($missing -join ', ')"
+  }
+}
+
 function Get-ExpectedRevision($State, [string]$CriterionId) {
   $codeBound = @('IMPLEMENTED','CODE_REVIEW','SECURITY_REVIEW','EXP_ACCEPT','TEST_PASS','VERIFIED','KNOWLEDGE','ACCEPT')
   if ($codeBound -contains $CriterionId -and -not [string]::IsNullOrWhiteSpace([string]$State.revision.code)) { return [string]$State.revision.code }
@@ -264,9 +337,8 @@ function Assert-Dispatch($Envelope) {
   if ($Envelope.forbidSpawn -ne $true) { Stop-Loop 'DISPATCH_SCHEMA_INVALID' 'forbidSpawn 必须为 true' }
   foreach ($ref in ConvertTo-Array $Envelope.taskRefs) { Assert-RepoRelativeReference ([string]$ref) 'taskRefs' }
   Assert-RepoRelativeReference ([string]$Envelope.stateRef) 'stateRef'
-  foreach ($field in @('artifactRefs','skillRefs')) {
-    if (Test-Field $Envelope $field) { foreach ($ref in ConvertTo-Array $Envelope.$field) { if ([string]$ref -ne '-') { Assert-RepoRelativeReference ([string]$ref) $field } } }
-  }
+  if (Test-Field $Envelope 'artifactRefs') { foreach ($ref in ConvertTo-Array $Envelope.artifactRefs) { Assert-RepoRelativeReference ([string]$ref) 'artifactRefs' } }
+  if (Test-Field $Envelope 'skillRefs') { foreach ($ref in ConvertTo-Array $Envelope.skillRefs) { Assert-SkillReference ([string]$ref) } }
 }
 
 function Assert-State($State, $Definition, [switch]$ForCompletion) {
@@ -277,8 +349,7 @@ function Assert-State($State, $Definition, [switch]$ForCompletion) {
   if ([int]$State.schemaVersion -ne 2) { Stop-Loop 'SCHEMA_VERSION_UNSUPPORTED' "schemaVersion 必须为 2" }
   if ([int]$State.definitionVersion -ne $Definition.version) { Stop-Loop 'DEFINITION_VERSION_MISMATCH' "State=$($State.definitionVersion)，定义=$($Definition.version)" }
   if ((Test-Field $State 'legacy') -and $State.legacy -eq $true) {
-    if ($ForCompletion) { Stop-Loop 'LEGACY_READ_ONLY' 'legacy State 只读' }
-    return
+    Stop-Loop 'LEGACY_STATE_REQUIRES_REINIT' '历史 State 仅作审计依据；请按当前流程重新建立 State、TASK 和产物'
   }
   if (-not $Definition.scales.Contains([string]$State.scale)) { Stop-Loop 'SCALE_INVALID' "未知 scale：$($State.scale)" }
   Require-Text $State 'taskId'
@@ -302,8 +373,11 @@ function Assert-State($State, $Definition, [switch]$ForCompletion) {
       Stop-Loop 'DEPENDENCY_MISMATCH' "$id dependsOn 应为 [$($canonical.dependsOn -join ', ')]，实际为 [$($criterion.dependsOn -join ', ')]"
     }
     if ($allowedCriterionStatus -notcontains [string]$criterion.status) { Stop-Loop 'CRITERION_STATUS_INVALID' "$id status=$($criterion.status)" }
+    if ($canonical.conditional -and (Test-Field $criterion 'applicable') -and -not (Test-CriterionApplicable $criterion) -and $criterion.status -eq 'done') {
+      Stop-Loop 'CRITERION_NOT_APPLICABLE' "$id 已标记为不适用，不得标记 done"
+    }
     if ($criterion.status -eq 'skipped') {
-      if (-not $canonical.skippable -or $State.scale -ne 'medium' -or $id -ne 'SECURITY_REVIEW') { Stop-Loop 'SKIP_NOT_ALLOWED' "$($State.scale) 的 $id 不允许 skipped" }
+      if (-not (Test-CriterionSkipAllowed $State $canonical $criterion)) { Stop-Loop 'SKIP_NOT_ALLOWED' "$($State.scale) 的 $id 不允许 skipped" }
       foreach ($field in @('skipReason','approvedBy','evidenceRef')) { Require-Text $criterion $field 'SKIP_EVIDENCE_MISSING' }
       Assert-EvidenceExists ([string]$criterion.evidenceRef)
     }
@@ -319,10 +393,11 @@ function Assert-State($State, $Definition, [switch]$ForCompletion) {
       if (-not [string]::IsNullOrWhiteSpace($expectedRevision) -and [string]$criterion.validatedRevision -ne $expectedRevision) {
         Stop-Loop 'REVISION_MISMATCH' "$id 期望 revision '$expectedRevision'，证据为 '$($criterion.validatedRevision)'"
       }
-      if ($Definition.catalog.Contains($id) -and $Definition.catalog[$id].userConfirm) {
+      if (Test-ConfirmationRequired $Definition $criterion) {
         foreach ($field in @('userConfirmedAt','confirmedBy','confirmationArtifact')) { Require-Text $criterion $field 'CONFIRMATION_EVIDENCE_MISSING' }
         Assert-EvidenceExists ([string]$criterion.confirmationArtifact) 'CONFIRMATION_ARTIFACT_NOT_FOUND'
       }
+      if ($ForCompletion -or $State.status -eq 'done') { Assert-CriterionArtifacts $State $Definition $criterion }
     }
   }
 
@@ -435,7 +510,6 @@ try {
   $state = Read-Document $StatePath
   Assert-State $state $definition
   if ($Command -eq 'validate') { Write-Output 'PASS'; exit 0 }
-  if ((Test-Field $state 'legacy') -and $state.legacy -eq $true) { Stop-Loop 'LEGACY_READ_ONLY' 'legacy State 只读' }
 
   if ($Command -eq 'propose') {
     $proposal = Read-Document $ProposalPath
@@ -485,14 +559,15 @@ try {
       $criterion.status = 'blocked'
       foreach ($field in @('by','dispatchId','evidenceRef','validatedRevision')) { $criterion | Add-Member $field $body.$field -Force }
     } elseif ($body.outcome -eq 'skip') {
-      if ($state.scale -ne 'medium' -or $criterion.id -ne 'SECURITY_REVIEW') { Stop-Loop 'SKIP_NOT_ALLOWED' "$($criterion.id) 不允许跳过" }
+      $canonical = (Get-PropertyMap $definition.scales[[string]$state.scale])[[string]$criterion.id]
+      if (-not (Test-CriterionSkipAllowed $state $canonical $criterion)) { Stop-Loop 'SKIP_NOT_ALLOWED' "$($criterion.id) 不允许跳过，或未标记为不适用" }
       foreach ($field in @('skipReason','approvedBy')) { Require-Text $body $field 'SKIP_EVIDENCE_MISSING' }
       $criterion.status = 'skipped'; $criterion | Add-Member skipReason $body.skipReason -Force; $criterion | Add-Member approvedBy $body.approvedBy -Force; $criterion | Add-Member evidenceRef $body.evidenceRef -Force
     } else {
       $criterion.status = 'done'
       foreach ($field in @('by','dispatchId','evidenceRef','validatedRevision')) { $criterion | Add-Member $field $body.$field -Force }
       $criterion | Add-Member completedAt $(if (Test-Field $body 'completedAt') { $body.completedAt } else { [DateTime]::UtcNow.ToString('o') }) -Force
-      if ($definition.catalog[$criterion.id].userConfirm) { foreach ($field in @('userConfirmedAt','confirmedBy','confirmationArtifact')) { Require-Text $body $field 'CONFIRMATION_EVIDENCE_MISSING'; $criterion | Add-Member $field $body.$field -Force } }
+      if (Test-ConfirmationRequired $definition $criterion) { foreach ($field in @('userConfirmedAt','confirmedBy','confirmationArtifact')) { Require-Text $body $field 'CONFIRMATION_EVIDENCE_MISSING'; $criterion | Add-Member $field $body.$field -Force } }
       if ($criterion.id -eq 'ACCEPT') {
         if (-not (Test-Field $proposal 'acceptanceEvidence')) { Stop-Loop 'ACCEPTANCE_EVIDENCE_INCOMPLETE' 'ACCEPT proposal 缺 acceptanceEvidence' }
         $state.acceptanceEvidence = @(ConvertTo-Array $proposal.acceptanceEvidence)
@@ -521,7 +596,14 @@ try {
     }
     $validRoots = @($roots | Where-Object { (Get-PropertyMap $state.exitCriteria).Contains($_) })
     $affected = Get-Descendants $definition $state.scale $validRoots
-    foreach ($criterion in ConvertTo-Array $state.exitCriteria) { if ($affected -contains $criterion.id -and $criterion.status -in @('done','skipped')) { $criterion.status = 'stale' } }
+    $canonicalMap = Get-PropertyMap $definition.scales[[string]$state.scale]
+    # 不适用的条件标准不因无关 code revision 反复 stale，避免重复派发和等待。
+    foreach ($criterion in ConvertTo-Array $state.exitCriteria) {
+      if ($affected -notcontains $criterion.id -or $criterion.status -notin @('done','skipped')) { continue }
+      $canonical = $canonicalMap[[string]$criterion.id]
+      if ($RevisionKind -eq 'code' -and $criterion.status -eq 'skipped' -and $canonical.conditional -and -not (Test-CriterionApplicable $criterion)) { continue }
+      $criterion.status = 'stale'
+    }
     if ($affected.Count -gt 0 -and $state.status -eq 'done') { $state.status = 'running' }
     $key = if ($EventId) { $EventId } else { "stale:${RevisionKind}:$RevisionValue$ArtifactId" }
     Add-History $state (New-HistoryEvent 'stale-cascade' ([pscustomobject]@{ roots = $validRoots }) ([pscustomobject]@{ affected = $affected; revision = $state.revision }) $key)
