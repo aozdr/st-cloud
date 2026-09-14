@@ -31,6 +31,10 @@ public interface ShareService {
     void streamShareFile(String shareCode, Long nodeId, String password,
                          String captchaId, String captchaCode, HttpServletResponse response);
 
+    /** 公开分享胶卷缩略图：复用分享授权，但输出预览桶 JPEG，不计原文件下载次数。 */
+    void streamShareThumbnail(String shareCode, Long nodeId, String size, String password,
+                              String captchaId, String captchaCode, HttpServletResponse response);
+
     /**
      * 当前用户对文件的有效权限集（个人/团队分支，未授权返回空集），供分享权限点选择/禁用。
      */

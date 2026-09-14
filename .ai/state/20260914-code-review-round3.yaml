@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 2,
+  "definitionVersion": 2,
+  "taskId": "TASK-20260914-code-review-round3",
+  "scale": "large",
+  "status": "done",
+  "goal": {
+    "objective": "修复第三轮代码复核中确认的规范对象清理、Relay 序号、桌面端中转恢复和分享缩略图授权问题。",
+    "scope": "st-core、st-desktop、st-share、st-web、数据库 schema、测试和交付文档。",
+    "completionCriteria": [
+      "规范对象失败清理不再立即删除，候选回收满足宽限期及三重安全检查。",
+      "Relay 序号只在完整请求成功后提交，失败、跳号、重复行为有测试证据。",
+      "Desktop relay 恢复不绕回直传，SQLite 元数据迁移可验证。",
+      "Share 胶卷使用授权缩略图接口且原下载契约不变。",
+      "核心测试、schema 对比、桌面端检查和独立复核完成。"
+    ]
+  },
+  "revision": {
+    "design": "20260914-code-review-round3-design-v1",
+    "code": "20260914-code-review-round3-working-tree"
+  },
+  "exitCriteria": [
+    {"id":"REQ_ANALYSIS","status":"done","dependsOn":[],"applicable":true,"by":"workflow-manager","dispatchId":"MAIN-20260914-code-review-round3","evidenceRef":".ai/docs/20260914-code-review-round3/requirement.md","validatedRevision":"20260914-code-review-round3-design-v1","completedAt":"2026-09-14T00:00:00+08:00"},
+    {"id":"IMPACT_ANALYSIS","status":"done","dependsOn":["REQ_ANALYSIS"],"applicable":true,"by":"workflow-manager","dispatchId":"MAIN-20260914-code-review-round3","evidenceRef":".ai/docs/20260914-code-review-round3/impact.md","validatedRevision":"20260914-code-review-round3-design-v1","completedAt":"2026-09-14T00:00:00+08:00"},
+    {"id":"EXP_DESIGN","status":"done","dependsOn":["REQ_ANALYSIS"],"applicable":true,"by":"workflow-manager","dispatchId":"MAIN-20260914-code-review-round3","evidenceRef":".ai/docs/20260914-code-review-round3/exp-review.md","validatedRevision":"20260914-code-review-round3-design-v1","completedAt":"2026-09-14T00:00:00+08:00"},
+    {"id":"TECH_DESIGN","status":"done","dependsOn":["IMPACT_ANALYSIS","EXP_DESIGN"],"applicable":true,"by":"workflow-manager","dispatchId":"MAIN-20260914-code-review-round3","evidenceRef":".ai/docs/20260914-code-review-round3/design.md","validatedRevision":"20260914-code-review-round3-design-v1","completedAt":"2026-09-14T00:00:00+08:00"},
+    {"id":"TESTCASES","status":"done","dependsOn":["TECH_DESIGN"],"applicable":true,"by":"test-designer","dispatchId":"MAIN-20260914-code-review-round3","evidenceRef":".ai/docs/20260914-code-review-round3/testcases.md","validatedRevision":"20260914-code-review-round3-design-v1","completedAt":"2026-09-14T00:00:00+08:00"},
+    {"id":"IMPLEMENTED","status":"done","dependsOn":["TECH_DESIGN","TESTCASES"],"applicable":true,"by":"executor","dispatchId":"MAIN-20260914-code-review-round3-IMPLEMENT","evidenceRef":".ai/docs/20260914-code-review-round3/changereport.md","validatedRevision":"20260914-code-review-round3-working-tree","completedAt":"2026-09-14T10:00:00+08:00"},
+    {"id":"CODE_REVIEW","status":"done","dependsOn":["IMPLEMENTED"],"applicable":true,"by":"reviewer","dispatchId":"MAIN-20260914-code-review-round3-REVIEW","evidenceRef":".ai/docs/20260914-code-review-round3/codereview.md","validatedRevision":"20260914-code-review-round3-working-tree","completedAt":"2026-09-14T10:00:00+08:00"},
+    {"id":"SECURITY_REVIEW","status":"done","dependsOn":["IMPLEMENTED"],"applicable":true,"by":"security-reviewer","dispatchId":"MAIN-20260914-code-review-round3-SECURITY","evidenceRef":".ai/docs/20260914-code-review-round3/security.md","validatedRevision":"20260914-code-review-round3-working-tree","completedAt":"2026-09-14T10:00:00+08:00"},
+    {"id":"EXP_ACCEPT","status":"done","dependsOn":["IMPLEMENTED"],"applicable":true,"by":"ux-reviewer","dispatchId":"MAIN-20260914-code-review-round3-UX","evidenceRef":".ai/docs/20260914-code-review-round3/exp-review.md","validatedRevision":"20260914-code-review-round3-working-tree","completedAt":"2026-09-14T10:00:00+08:00"},
+    {"id":"TEST_PASS","status":"done","dependsOn":["CODE_REVIEW","SECURITY_REVIEW"],"applicable":true,"by":"tester","dispatchId":"MAIN-20260914-code-review-round3-TEST","evidenceRef":".ai/docs/20260914-code-review-round3/testreport.md","validatedRevision":"20260914-code-review-round3-working-tree","completedAt":"2026-09-14T10:00:00+08:00"},
+    {"id":"KNOWLEDGE","status":"done","dependsOn":["TEST_PASS","SECURITY_REVIEW","EXP_ACCEPT"],"applicable":true,"by":"knowledge-manager","dispatchId":"MAIN-20260914-code-review-round3-KNOWLEDGE","evidenceRef":".ai/decisions/ADR/ADR-010-code-review-round3-safety.md","validatedRevision":"20260914-code-review-round3-working-tree","completedAt":"2026-09-14T10:00:00+08:00"},
+    {"id":"ACCEPT","status":"done","dependsOn":["KNOWLEDGE"],"applicable":true,"by":"workflow-manager","dispatchId":"MAIN-20260914-code-review-round3-ACCEPT","evidenceRef":".ai/docs/20260914-code-review-round3/testreport.md","validatedRevision":"20260914-code-review-round3-working-tree","completedAt":"2026-09-14T10:00:00+08:00"}
+  ],
+  "artifacts": {
+    "requirement":{"status":"done","ref":".ai/docs/20260914-code-review-round3/requirement.md"},
+    "impact":{"status":"done","ref":".ai/docs/20260914-code-review-round3/impact.md"},
+    "uispec":{"status":"done","ref":".ai/docs/20260914-code-review-round3/uispec.md"},
+    "exp-review":{"status":"done","ref":".ai/docs/20260914-code-review-round3/exp-review.md"},
+    "architecture-review":{"status":"done","ref":".ai/docs/20260914-code-review-round3/architecture-review.md"},
+    "design":{"status":"done","ref":".ai/docs/20260914-code-review-round3/design.md"},
+    "testcases":{"status":"done","ref":".ai/docs/20260914-code-review-round3/testcases.md"},
+    "task-01":{"status":"done","ref":".ai/tasks/TASK-20260914-code-review-round3-01.md"},
+    "task-02":{"status":"done","ref":".ai/tasks/TASK-20260914-code-review-round3-02.md"},
+    "task-03":{"status":"done","ref":".ai/tasks/TASK-20260914-code-review-round3-03.md"},
+    "task-04":{"status":"done","ref":".ai/tasks/TASK-20260914-code-review-round3-04.md"},
+    "task-05":{"status":"done","ref":".ai/tasks/TASK-20260914-code-review-round3-05.md"},
+    "changereport":{"status":"done","ref":".ai/docs/20260914-code-review-round3/changereport.md"},
+    "testreport":{"status":"done","ref":".ai/docs/20260914-code-review-round3/testreport.md"},
+    "codereview":{"status":"done","ref":".ai/docs/20260914-code-review-round3/codereview.md"},
+    "security":{"status":"done","ref":".ai/docs/20260914-code-review-round3/security.md"},
+    "adr-010":{"status":"done","ref":".ai/decisions/ADR/ADR-010-code-review-round3-safety.md"}
+  },
+  "blockers": [],
+  "acceptanceEvidence": [
+    {"criterion":"规范对象失败清理不再立即删除，候选回收满足宽限期及三重安全检查。","evidenceRef":".ai/docs/20260914-code-review-round3/changereport.md","validatedRevision":"20260914-code-review-round3-working-tree"},
+    {"criterion":"Relay 序号只在完整请求成功后提交，失败、跳号、重复行为有测试证据。","evidenceRef":".ai/docs/20260914-code-review-round3/testreport.md","validatedRevision":"20260914-code-review-round3-working-tree"},
+    {"criterion":"Desktop relay 恢复不绕回直传，SQLite 元数据迁移可验证。","evidenceRef":".ai/docs/20260914-code-review-round3/testreport.md","validatedRevision":"20260914-code-review-round3-working-tree"},
+    {"criterion":"Share 胶卷使用授权缩略图接口且原下载契约不变。","evidenceRef":".ai/docs/20260914-code-review-round3/exp-review.md","validatedRevision":"20260914-code-review-round3-working-tree"},
+    {"criterion":"核心测试、schema 对比、桌面端检查和独立复核完成。","evidenceRef":".ai/docs/20260914-code-review-round3/codereview.md","validatedRevision":"20260914-code-review-round3-working-tree"}
+  ],
+  "dispatchLedger": [],
+  "history": [
+    {"eventId":"EVT-20260914-001","action":"initialize","actor":"workflow-manager","occurredAt":"2026-09-14T00:00:00+08:00","revision":{"design":"20260914-code-review-round3-design-v1","code":null}},
+    {"eventId":"EVT-20260914-002","action":"evaluate-and-accept","actor":"workflow-manager","occurredAt":"2026-09-14T10:00:00+08:00","revision":{"design":"20260914-code-review-round3-design-v1","code":"20260914-code-review-round3-working-tree"}}
+  ]
+}

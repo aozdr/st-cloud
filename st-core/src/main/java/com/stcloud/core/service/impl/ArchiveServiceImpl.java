@@ -55,6 +55,8 @@ public class ArchiveServiceImpl implements ArchiveService {
     @Resource
     private UploadStorageManager uploadStorageManager;
     @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private OrphanObjectCleanupService orphanObjectCleanupService;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
     private ArchiveSafetyProperties archiveSafetyProperties = new ArchiveSafetyProperties();
 
     private static final String ZIP_SUFFIX = "zip";
@@ -168,11 +170,24 @@ public class ArchiveServiceImpl implements ArchiveService {
                             storagePath = existing.getStoragePath();
                         } else {
                             storagePath = tenantId + "/" + md5;
+                            if (orphanObjectCleanupService != null) {
+                                orphanObjectCleanupService.beginUpload(tenantId, md5, storagePath);
+                            }
                             try (InputStream contentStream = Files.newInputStream(content.path())) {
                                 storageService.uploadObject(storagePath, contentStream,
                                         content.size(), contentType);
+                                uploadedNew = true;
+                            } catch (IOException e) {
+                                if (orphanObjectCleanupService != null) {
+                                    orphanObjectCleanupService.markFailed(tenantId, storagePath);
+                                }
+                                throw new BusinessException(ResultCode.FILE_UPLOAD_FAILED);
+                            } catch (RuntimeException e) {
+                                if (orphanObjectCleanupService != null) {
+                                    orphanObjectCleanupService.markFailed(tenantId, storagePath);
+                                }
+                                throw e;
                             }
-                            uploadedNew = true;
                         }
                         item.put("size", content.size());
                         item.put("md5", md5);
@@ -203,9 +218,16 @@ public class ArchiveServiceImpl implements ArchiveService {
                 count = uploadCommitManager.commitExtract(userId, tenantId, targetFolderId,
                         targetFolderPath, entries);
             } catch (RuntimeException e) {
-                // 事务失败清理：仅删除本次新上传且无记录/引用归零的对象；残留交由定时任务兜底
+                // 事务失败只释放候选活动计数，禁止立即删除规范对象。
                 cleanupUploadedEntries(tenantId, entries);
                 throw e;
+            }
+            for (Map<String, Object> item : entries) {
+                if (Boolean.TRUE.equals(item.get("uploadedNew"))) {
+                    if (orphanObjectCleanupService != null) {
+                        orphanObjectCleanupService.markCommitted(tenantId, (String) item.get("storagePath"));
+                    }
+                }
             }
             // 进度回调在全部落库成功后按文件数触发（语义与改造前一致：成功才计数）
             for (int i = 0; i < count; i++) {
@@ -418,7 +440,7 @@ public class ArchiveServiceImpl implements ArchiveService {
         }
     }
 
-    /** 解压失败时尽力清理本次新上传且无记录/引用归零的对象（残留交由定时任务兜底） */
+    /** 解压失败时登记本次新上传对象候选，残留由宽限期回收任务处理。 */
     private void cleanupUploadedEntries(Long tenantId, List<Map<String, Object>> entries) {
         for (Map<String, Object> item : entries) {
             if (Boolean.TRUE.equals(item.get("uploadedNew"))) {
@@ -427,24 +449,9 @@ public class ArchiveServiceImpl implements ArchiveService {
         }
     }
 
-    /**
-     * 孤儿对象清理（与简单上传口径一致）：仅当当前无对象记录（本次 insertIgnore 已随事务回滚）
-     * 或记录引用归零且路径一致时才删除物理对象；删除失败不阻断主流程，交由定时任务兜底。
-     */
     private void cleanupOrphanUpload(Long tenantId, String md5, String storagePath) {
-        try {
-            FileObject current = fileObjectService.findByTenantAndMd5(tenantId, md5);
-            boolean noRecord = current == null;
-            boolean unreferenced = current != null
-                    && current.getRefCount() != null && current.getRefCount() <= 0
-                    && storagePath.equals(current.getStoragePath());
-            if (noRecord || unreferenced) {
-                uploadStorageManager.deleteObjectQuietly(storagePath);
-                log.warn("已尽力清理解压失败产生的孤儿对象: md5={}, storagePath={}", md5, storagePath);
-            }
-        } catch (Exception e) {
-            // 清理失败不阻断主流程，交由定时任务兜底
-            log.warn("解压失败清理孤儿对象异常（交由定时任务兜底）: md5={}", md5, e);
+        if (orphanObjectCleanupService != null) {
+            orphanObjectCleanupService.markFailed(tenantId, storagePath);
         }
     }
 

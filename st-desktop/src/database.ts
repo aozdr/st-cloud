@@ -3,6 +3,7 @@ import { app } from 'electron';
 import path from 'path';
 import fs from 'fs';
 import { ensureIdColumnsText } from './db-migrate';
+import { ensureTransferTaskColumns } from './db/transfer-schema';
 import { setDb, getDb, persist } from './db/db-core';
 
 // ==================== 初始化与连接管理（域实现在 ./db/） ====================
@@ -73,6 +74,9 @@ export async function initDatabase(): Promise<void> {
       file_id TEXT,
       total_chunks INTEGER,
       uploaded_chunks TEXT,
+      transfer_mode TEXT,
+      relay_chunk_size INTEGER,
+      relay_limit_kb INTEGER,
       node_id TEXT,
       save_path TEXT,
       created_at TEXT NOT NULL,
@@ -81,6 +85,8 @@ export async function initDatabase(): Promise<void> {
   `);
   // 迁移：为团队上传任务保存显式 spaceId，应用重启后恢复仍走团队专用接口。
   try { getDb().run('ALTER TABLE transfer_tasks ADD COLUMN space_id TEXT'); } catch { /* 列已存在 */ }
+  // 迁移：中转任务必须持久化模式和服务端实际参数，恢复时禁止绕回普通直传。
+  ensureTransferTaskColumns(getDb());
 
   // 同步状态表
   getDb().run(`

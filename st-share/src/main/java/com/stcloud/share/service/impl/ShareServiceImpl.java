@@ -8,6 +8,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.stcloud.common.context.UserContext;
+import com.stcloud.common.config.S3StorageConfig;
 import com.stcloud.common.enums.NodeStatus;
 import com.stcloud.common.exception.BusinessException;
 import com.stcloud.common.response.Result;
@@ -40,6 +41,7 @@ import com.stcloud.share.service.ShareCaptchaService;
 import com.stcloud.team.service.TeamService;
 import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,6 +49,7 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.io.IOException;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URLEncoder;
@@ -65,6 +68,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
+import javax.imageio.ImageIO;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 
 @Slf4j
 @Service
@@ -80,6 +93,8 @@ public class ShareServiceImpl implements ShareService {
 
     // S-09 分享流式传输默认限速：5MB/s
     private static final long STREAM_RATE_BYTES_PER_SEC = 5 * 1024 * 1024L;
+    private static final Set<String> SHARE_IMAGE_TYPES = Set.of(
+            "jpg", "jpeg", "png", "gif", "webp", "bmp", "svg");
     /** 复制/保存文件时对 file_object 的初始引用计数 */
     private static final int REF_COUNT_INITIAL = 1;
 
@@ -120,6 +135,13 @@ public class ShareServiceImpl implements ShareService {
 
     @Resource
     private ReliableEventPublisher reliableEventPublisher;
+
+    /** 分享测试上下文不装配 S3；生产环境由核心存储配置提供。 */
+    @Autowired(required = false)
+    private S3Client s3Client;
+
+    @Autowired(required = false)
+    private S3StorageConfig s3StorageConfig;
 
     @Override
     @Transactional
@@ -586,6 +608,113 @@ public class ShareServiceImpl implements ShareService {
                 log.warn("分享流式下载次数已达上限: shareCode={}, nodeId={}", shareCode, targetNodeId);
                 throw new BusinessException(ResultCode.SHARE_ACCESS_DENIED, "下载次数已达上限");
             }
+        }
+    }
+
+    @Override
+    public void streamShareThumbnail(String shareCode, Long nodeId, String size, String password,
+                                     String captchaId, String captchaCode, HttpServletResponse response) {
+        // 缩略图与原流共享提取码、过期、下载开关和分享范围校验，防止新增接口成为权限旁路。
+        FileShare share = validateShareAccess(shareCode, password, captchaId, captchaCode);
+        if (share.getAllowDownload() == null || share.getAllowDownload() == 0 || !shareAllowsDownload(share)) {
+            throw new BusinessException(ResultCode.SHARE_ACCESS_DENIED, "该分享不可下载");
+        }
+        if (size == null || !"sm".equalsIgnoreCase(size)) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "暂只支持 sm 缩略图");
+        }
+
+        Long targetNodeId = nodeId != null ? nodeId : share.getFileNodeId();
+        FileNode targetNode = fileNodeMapper.selectById(targetNodeId);
+        if (targetNode == null || targetNode.getStatus() != NodeStatus.NORMAL.getCode()
+                || targetNode.getNodeType() != 1) {
+            throw new BusinessException(ResultCode.FILE_NOT_FOUND);
+        }
+        fileService.validateAccessible(targetNodeId);
+        if (nodeId != null) {
+            FileNode root = fileNodeMapper.selectById(share.getFileNodeId());
+            if (root == null || !isWithinShare(root, targetNode)) {
+                throw new BusinessException(ResultCode.SHARE_ACCESS_DENIED, "无权访问该文件");
+            }
+        }
+        String suffix = targetNode.getSuffix() == null ? "" : targetNode.getSuffix().toLowerCase();
+        if (!SHARE_IMAGE_TYPES.contains(suffix)) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "仅图片支持分享缩略图");
+        }
+
+        String thumbKey = "thumbnails/" + targetNodeId + "/sm.jpg";
+        ensureShareThumbnail(targetNode, thumbKey);
+        response.setContentType("image/jpeg");
+        response.setHeader("Cache-Control", "private, max-age=300");
+        try (InputStream is = s3Client.getObject(GetObjectRequest.builder()
+                     .bucket(s3StorageConfig.getPreviewBucket()).key(thumbKey).build());
+             OutputStream os = response.getOutputStream()) {
+            byte[] buffer = new byte[8192];
+            int len;
+            while ((len = is.read(buffer)) != -1) {
+                os.write(buffer, 0, len);
+            }
+            os.flush();
+        } catch (IOException | RuntimeException e) {
+            log.warn("分享缩略图流式传输失败: shareCode={}, nodeId={}", shareCode, targetNodeId, e);
+            throw new BusinessException(ResultCode.STORAGE_SERVICE_ERROR, "读取分享缩略图失败");
+        }
+        // 缩略图是胶卷 UI 资源，不把每次图片导航请求计入原文件下载次数；下载开关仍已在上方强制校验。
+    }
+
+    private void ensureShareThumbnail(FileNode node, String thumbKey) {
+        if (s3Client == null || s3StorageConfig == null) {
+            throw new BusinessException(ResultCode.STORAGE_SERVICE_ERROR, "缩略图存储未配置");
+        }
+        if (doesSharePreviewObjectExist(thumbKey)) {
+            return;
+        }
+        int maxDim = 150;
+        try (InputStream is = storageService.downloadObject(node.getStoragePath())) {
+            BufferedImage original = ImageIO.read(is);
+            if (original == null) {
+                throw new BusinessException(ResultCode.BAD_REQUEST, "无法读取图片");
+            }
+            int w = original.getWidth();
+            int h = original.getHeight();
+            if (w > maxDim || h > maxDim) {
+                double scale = (double) maxDim / Math.max(w, h);
+                w = Math.max(1, (int) (w * scale));
+                h = Math.max(1, (int) (h * scale));
+            }
+            BufferedImage thumbnail = new BufferedImage(Math.max(1, w), Math.max(1, h), BufferedImage.TYPE_INT_RGB);
+            Graphics2D graphics = thumbnail.createGraphics();
+            graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            graphics.drawImage(original, 0, 0, thumbnail.getWidth(), thumbnail.getHeight(), null);
+            graphics.dispose();
+
+            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+            if (!ImageIO.write(thumbnail, "jpg", bytes)) {
+                throw new BusinessException(ResultCode.STORAGE_SERVICE_ERROR, "图片格式不支持缩略图");
+            }
+            s3Client.putObject(PutObjectRequest.builder()
+                            .bucket(s3StorageConfig.getPreviewBucket())
+                            .key(thumbKey)
+                            .contentType("image/jpeg")
+                            .build(), RequestBody.fromBytes(bytes.toByteArray()));
+        } catch (IOException | RuntimeException e) {
+            if (e instanceof BusinessException businessException) {
+                throw businessException;
+            }
+            log.error("生成分享缩略图失败: key={}", thumbKey, e);
+            throw new BusinessException(ResultCode.STORAGE_SERVICE_ERROR, "生成分享缩略图失败");
+        }
+    }
+
+    private boolean doesSharePreviewObjectExist(String key) {
+        try {
+            s3Client.headObject(HeadObjectRequest.builder()
+                    .bucket(s3StorageConfig.getPreviewBucket()).key(key).build());
+            return true;
+        } catch (S3Exception e) {
+            if (e.statusCode() == 404) {
+                return false;
+            }
+            throw e;
         }
     }
 

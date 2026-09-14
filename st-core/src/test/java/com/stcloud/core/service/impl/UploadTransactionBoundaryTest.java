@@ -40,7 +40,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -140,6 +139,11 @@ class UploadTransactionBoundaryTest {
         @Bean
         UploadStorageManager uploadStorageManager() {
             return new UploadStorageManager();
+        }
+
+        @Bean
+        OrphanObjectCleanupService orphanObjectCleanupService() {
+            return new OrphanObjectCleanupService();
         }
 
         @Bean
@@ -266,6 +270,7 @@ class UploadTransactionBoundaryTest {
         jdbcTemplate.update("DELETE FROM upload_session WHERE file_node_id IN (SELECT id FROM file_node WHERE name LIKE 'tb-%')");
         jdbcTemplate.update("DELETE FROM file_chunk WHERE file_node_id IN (SELECT id FROM file_node WHERE name LIKE 'tb-%')");
         jdbcTemplate.update("DELETE FROM file_node WHERE name LIKE 'tb-%'");
+        jdbcTemplate.update("DELETE FROM file_orphan_candidate WHERE tenant_id = 1 AND (md5 LIKE 'tb-%' OR md5 = ?)", lastMd5);
         jdbcTemplate.update("DELETE FROM file_object WHERE tenant_id = 1 AND (md5 LIKE 'tb-%' OR md5 = ?)", lastMd5);
         jdbcTemplate.update("DELETE FROM sys_user WHERE id = 1001");
         UserContext.clear();
@@ -400,11 +405,14 @@ class UploadTransactionBoundaryTest {
         MockMultipartFile file = new MockMultipartFile("file", "tb-simple.txt", "text/plain", data);
         assertThrows(RuntimeException.class, () -> uploadService.simpleUpload(0L, file, null));
 
-        // 本次上传的对象应被尽力清理（记录已回滚、无引用），且不误删被引用对象
-        ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
-        verify(storageService).uploadObject(keyCaptor.capture(), any(InputStream.class),
+        // DB 失败后对象暂不直接删除，先进入待回收候选，避免并发重建同一规范对象时误删。
+        verify(storageService).uploadObject(anyString(), any(InputStream.class),
                 eq((long) data.length), anyString());
-        verify(storageService).deleteObject(keyCaptor.getValue());
+        verify(storageService, never()).deleteObject(anyString());
+        assertEquals(1L, jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM file_orphan_candidate WHERE tenant_id = 1 AND md5 = ? "
+                        + "AND active_uploads = 0 AND status = 1",
+                Long.class, lastMd5));
         // 事务回滚：file_object / file_node 均无本次记录
         assertEquals(0L, fileObjectMapper.selectCount(new LambdaQueryWrapper<FileObject>()
                 .eq(FileObject::getTenantId, 1L).eq(FileObject::getMd5, lastMd5)).longValue(),

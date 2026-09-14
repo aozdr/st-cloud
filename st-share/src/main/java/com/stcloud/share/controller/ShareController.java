@@ -113,6 +113,19 @@ public class ShareController {
         shareService.streamShareFile(shareCode, nodeId, password, captchaId, captchaCode, response);
     }
 
+    @Operation(summary = "流式输出分享图片缩略图")
+    @GetMapping("/api/share/access/thumbnail/{shareCode}")
+    public void streamShareThumbnail(
+            @PathVariable String shareCode,
+            @RequestParam(required = false) Long nodeId,
+            @RequestParam(defaultValue = "sm") String size,
+            @RequestParam(required = false) String password,
+            @RequestParam(required = false) String captchaId,
+            @RequestParam(required = false) String captchaCode,
+            HttpServletResponse response) {
+        shareService.streamShareThumbnail(shareCode, nodeId, size, password, captchaId, captchaCode, response);
+    }
+
     @Operation(summary = "分享文件在线编辑配置（分享权限含 upload 可编辑，否则只读）")
     @GetMapping("/api/share/access/editor-config/{shareCode}")
     public Result<EditorConfigResponse> shareEditorConfig(

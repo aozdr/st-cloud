@@ -142,6 +142,11 @@ class ArchiveExtractTransactionBoundaryTest {
         }
 
         @Bean
+        OrphanObjectCleanupService orphanObjectCleanupService() {
+            return new OrphanObjectCleanupService();
+        }
+
+        @Bean
         ArchiveService archiveService() {
             return new ArchiveServiceImpl();
         }
@@ -180,6 +185,7 @@ class ArchiveExtractTransactionBoundaryTest {
         archiveSafetyProperties.setMaxArchiveInputSize(1024L * 1024 * 1024);
         jdbcTemplate.update("DELETE FROM file_node WHERE name IN ('a.txt', 'b.txt', 'folder') "
                 + "OR name LIKE 'tx-archive%'");
+        jdbcTemplate.update("DELETE FROM file_orphan_candidate WHERE tenant_id = 1");
         jdbcTemplate.update("DELETE FROM file_object WHERE tenant_id = 1");
         jdbcTemplate.update("DELETE FROM sys_user WHERE id = 100");
         UserContext.clear();
@@ -309,10 +315,16 @@ class ArchiveExtractTransactionBoundaryTest {
 
         assertThrows(RuntimeException.class, () -> archiveService.extractArchive(zip.getId(), 0L));
 
-        // 两个条目均已上传 S3，事务回滚后按引用归零规则尽力删除
+        // 两个条目均已上传 S3，事务回滚后进入候选，等待宽限期 GC 复核删除
         verify(storageService, times(2))
                 .uploadObject(anyString(), any(InputStream.class), anyLong(), anyString());
-        verify(storageService, times(2)).deleteObject(anyString());
+        verify(storageService, org.mockito.Mockito.never()).deleteObject(anyString());
+        assertEquals(2L, jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM file_orphan_candidate WHERE tenant_id = 1 "
+                        + "AND md5 IN (?, ?) AND active_uploads = 0 AND status = 1",
+                Long.class,
+                DigestUtil.md5Hex("hello".getBytes(StandardCharsets.UTF_8)),
+                DigestUtil.md5Hex("world".getBytes(StandardCharsets.UTF_8))));
         assertEquals(0L, fileNodeMapper.selectCount(new LambdaQueryWrapper<FileNode>()
                         .eq(FileNode::getName, "a.txt")), "DB 失败后节点应随事务回滚");
         assertEquals(0L, userQuotaMapper.getUserQuota(USER_ID).getUsed(), "DB 失败后配额不应扣减");

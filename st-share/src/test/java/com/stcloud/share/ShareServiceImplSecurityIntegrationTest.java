@@ -316,13 +316,13 @@ class ShareServiceImplSecurityIntegrationTest extends AbstractShareIntegrationTe
     // ==================== S-06 分享码生成 ====================
 
     @Test
-    @DisplayName("S-06 新分享 shareCode 为 4 位且字符集合规（排除 0/O/1/I）")
-    void createShareGenerates4CharSafeShareCode() {
+    @DisplayName("S-06 新分享 shareCode 默认 12 位且字符集合规（排除 0/O/1/I/l）")
+    void createShareGeneratesConfiguredSafeShareCode() {
         FileNode file = insertFileNode(TENANT_ID, USER_ID, "code.txt", 0);
         ShareVO vo = createShare(file.getId(), 1, null);
         assertNotNull(vo.getShareCode());
-        assertEquals(4, vo.getShareCode().length());
-        assertTrue(vo.getShareCode().matches("[23456789ABCDEFGHJKLMNPQRSTUVWXYZ]{4}"));
+        assertEquals(12, vo.getShareCode().length());
+        assertTrue(vo.getShareCode().matches("[23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz]{12}"));
     }
 
     // ==================== S-07 下载计数原子条件更新 ====================

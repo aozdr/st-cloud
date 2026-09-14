@@ -432,6 +432,34 @@ class RelayUploadIntegrationTest extends AbstractIntegrationTest {
     }
 
     @Test
+    void tc014_uploadPartFailureDoesNotConfirmSeq_andExplicitlyAborts() {
+        setServerLimit(4096);
+        UploadInitResponse resp = init("tc014.txt", 5L * 1024 * 1024, 1, null);
+        doThrow(new RuntimeException("uploadPart boom"))
+                .when(storageService).uploadPart(anyString(), anyString(), eq(1), any(InputStream.class), anyLong());
+        byte[] chunk = new byte[1024 * 1024];
+        for (int seq = 1; seq <= 4; seq++) {
+            postChunk(resp.getUploadId(), chunk, seq);
+        }
+
+        assertThrows(RuntimeException.class, () -> postChunk(resp.getUploadId(), chunk, 5));
+        assertEquals(0L, relayBufferManager.getRate(resp.getUploadId()));
+        // 失败请求不能被错误确认；本实现选择显式 abort，因此同 seq 重试得到会话终止错误。
+        assertThrows(BusinessException.class, () -> postChunk(resp.getUploadId(), chunk, 5));
+    }
+
+    @Test
+    void tc015_seqJumpIsRejectedWithoutAdvancingCommittedSeq() {
+        setServerLimit(100);
+        UploadInitResponse resp = init("tc015.txt", 16 * 1024L, 1, null);
+        BusinessException jump = assertThrows(BusinessException.class,
+                () -> postChunk(resp.getUploadId(), new byte[8192], 2));
+        assertEquals(ResultCode.CONFLICT.getCode(), jump.getCode());
+        postChunk(resp.getUploadId(), new byte[8192], 1);
+        uploadService.relayFinalize(resp.getUploadId(), "s3-test-upload-id");
+    }
+
+    @Test
     void tc012_clientSelfLimit_triggersRelay() {
         setServerLimit(0); // 服务端不限速
         UploadInitResponse resp = init("tc012.txt", 6L * 1024 * 1024, 2, 100); // clientLimit=100KB/s

@@ -70,6 +70,22 @@ CREATE TABLE IF NOT EXISTS file_object (
     PRIMARY KEY (id),
     CONSTRAINT uk_tenant_md5 UNIQUE (tenant_id, md5)
 );
+
+CREATE TABLE IF NOT EXISTS file_orphan_candidate (
+    id              BIGINT       NOT NULL AUTO_INCREMENT,
+    tenant_id       BIGINT       NOT NULL,
+    md5             VARCHAR(64)  NOT NULL,
+    storage_path    VARCHAR(500) NOT NULL,
+    active_uploads  INT          NOT NULL DEFAULT 0,
+    status          TINYINT      NOT NULL DEFAULT 0,
+    candidate_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_active_at  DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    created_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted         TINYINT      NOT NULL DEFAULT 0,
+    PRIMARY KEY (id),
+    CONSTRAINT uk_orphan_tenant_path UNIQUE (tenant_id, storage_path)
+);
 -- ============================================================
 -- 上传状态机/配额/版本 测试所需表（TASK-002）
 -- 从 docker/mysql/init/02_create_tables.sql 转换（去除 COMMENT/ENGINE/CHARSET/COLLATE）

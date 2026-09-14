@@ -18,6 +18,7 @@ import com.stcloud.core.service.FileService;
 import com.stcloud.core.service.StorageService;
 import com.stcloud.core.service.VersionService;
 import com.stcloud.core.service.impl.FileObjectServiceImpl;
+import com.stcloud.core.service.impl.OrphanObjectCleanupService;
 import com.stcloud.core.service.impl.upload.UploadChunkManager;
 import com.stcloud.core.service.impl.upload.UploadCommitManager;
 import com.stcloud.core.service.impl.upload.UploadEventPublisher;
@@ -32,7 +33,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -152,6 +152,11 @@ class EditorCallbackTransactionBoundaryTest {
         }
 
         @Bean
+        OrphanObjectCleanupService orphanObjectCleanupService() {
+            return new OrphanObjectCleanupService();
+        }
+
+        @Bean
         RocketMQTemplate rocketMQTemplate() {
             return Mockito.mock(RocketMQTemplate.class);
         }
@@ -220,6 +225,7 @@ class EditorCallbackTransactionBoundaryTest {
     @AfterEach
     void cleanup() {
         jdbcTemplate.update("DELETE FROM file_node WHERE name = '报告.docx'");
+        jdbcTemplate.update("DELETE FROM file_orphan_candidate WHERE tenant_id = 1");
         jdbcTemplate.update("DELETE FROM file_object WHERE tenant_id = 1");
         jdbcTemplate.update("DELETE FROM event_log");
         jdbcTemplate.update("DELETE FROM sys_user WHERE id = 1");
@@ -321,11 +327,15 @@ class EditorCallbackTransactionBoundaryTest {
         assertThrows(RuntimeException.class,
                 () -> editorCallbackService.handleCallback(node.getId(), req));
 
-        // 本次上传的对象应被尽力清理（记录已回滚、无引用）
-        ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
-        verify(storageService).uploadObject(keyCaptor.capture(), any(InputStream.class),
+        // DB 失败后对象暂不直接删除，先进入待回收候选，交由 GC 做删除前复核。
+        verify(storageService).uploadObject(anyString(), any(InputStream.class),
                 eq((long) callbackContent.length), anyString());
-        verify(storageService).deleteObject(keyCaptor.getValue());
+        verify(storageService, org.mockito.Mockito.never()).deleteObject(anyString());
+        String md5 = cn.hutool.crypto.digest.DigestUtil.md5Hex(callbackContent);
+        assertEquals(1L, jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM file_orphan_candidate WHERE tenant_id = 1 AND md5 = ? "
+                        + "AND active_uploads = 0 AND status = 1",
+                Long.class, md5));
         FileNode after = fileNodeMapper.selectById(node.getId());
         assertEquals(1024L, after.getFileSize(), "DB 失败后节点内容不应变化");
     }

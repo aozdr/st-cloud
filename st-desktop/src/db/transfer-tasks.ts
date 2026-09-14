@@ -22,6 +22,9 @@ interface TaskRow {
   file_id: string | null;
   total_chunks: number | null;
   uploaded_chunks: string | null;
+  transfer_mode: string | null;
+  relay_chunk_size: number | null;
+  relay_limit_kb: number | null;
   node_id: string | null;
   save_path: string | null;
   created_at: string;
@@ -50,6 +53,9 @@ function rowToTask(row: Record<string, unknown>): TransferTask {
     uploadedChunks: row.uploaded_chunks
       ? (JSON.parse(row.uploaded_chunks as string) as number[])
       : undefined,
+    transferMode: (row.transfer_mode as 'direct' | 'relay' | null) ?? undefined,
+    relayChunkSize: (row.relay_chunk_size as number | null) ?? undefined,
+    relayLimitKb: (row.relay_limit_kb as number | null) ?? undefined,
     nodeId: (row.node_id as string | null) ?? undefined,
     savePath: (row.save_path as string | null) ?? undefined,
   };
@@ -61,9 +67,9 @@ export function createTask(task: TransferTask): void {
     `INSERT INTO transfer_tasks
       (id, type, status, file_name, file_size, transferred_bytes, progress, error,
        file_path, parent_id, space_id, upload_id, s3_upload_id, file_id, total_chunks, uploaded_chunks,
-       node_id, save_path, created_at, updated_at)
+       transfer_mode, relay_chunk_size, relay_limit_kb, node_id, save_path, created_at, updated_at)
     VALUES
-      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       task.id,
       task.type,
@@ -81,6 +87,9 @@ export function createTask(task: TransferTask): void {
       task.fileId ?? null,
       task.totalChunks ?? null,
       task.uploadedChunks ? JSON.stringify(task.uploadedChunks) : null,
+      task.transferMode ?? null,
+      task.relayChunkSize ?? null,
+      task.relayLimitKb ?? null,
       task.nodeId ?? null,
       task.savePath ?? null,
       task.createdAt || now,
@@ -110,6 +119,9 @@ export function updateTask(id: string, fields: Partial<TransferTask>): void {
     fileId: 'file_id',
     totalChunks: 'total_chunks',
     uploadedChunks: 'uploaded_chunks',
+    transferMode: 'transfer_mode',
+    relayChunkSize: 'relay_chunk_size',
+    relayLimitKb: 'relay_limit_kb',
   };
 
   for (const [key, value] of Object.entries(fields)) {

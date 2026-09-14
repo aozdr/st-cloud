@@ -14,6 +14,7 @@
     "package:win:clean": "powershell -NoProfile -ExecutionPolicy Bypass -File package.ps1 -Clean",
     "package:win:force": "powershell -NoProfile -ExecutionPolicy Bypass -File package.ps1 -ForceClose",
     "lint": "tsc --noEmit",
+    "test:round3": "tsc src/sync-retry.ts src/sync-retry.test.ts src/db-migrate.ts src/db-migrate.test.ts src/db/transfer-schema.ts src/db/transfer-schema.test.ts src/sync-utils.ts src/sync-utils.test.ts src/upload-resume.ts src/upload-resume.test.ts src/transfer-tasks.test.ts --outDir .test-dist --module commonjs --target ES2020 --skipLibCheck --esModuleInterop && node --test \".test-dist/*.test.js\"",
     "test": "tsc src/sync-retry.ts src/sync-retry.test.ts src/db-migrate.ts src/db-migrate.test.ts src/sync-utils.ts src/sync-utils.test.ts src/transfer-tasks.test.ts --outDir .test-dist --module commonjs --target ES2020 --skipLibCheck --esModuleInterop && node --test \".test-dist/*.test.js\""
   },
   "dependencies": {

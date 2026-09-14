@@ -64,16 +64,18 @@ public class UploadStorageManager {
         storageService.uploadObject(key, inputStream, size, contentType);
     }
 
-    /** 删除对象（尽力而为，失败不阻断主流程） */
-    public void deleteObjectQuietly(String storagePath) {
+    /** 删除对象（尽力而为，失败时返回 false 保留孤儿候选供后续重试） */
+    public boolean deleteObjectQuietly(String storagePath) {
         if (storagePath == null || storagePath.isEmpty()) {
-            return;
+            return true;
         }
         try {
             storageService.deleteObject(storagePath);
+            return true;
         } catch (Exception e) {
             // 尽力清理：失败必须留下可检索日志，不影响主流程。
             log.warn("上传对象补偿删除失败: storagePath={}", storagePath, e);
+            return false;
         }
     }
 }

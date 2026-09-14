@@ -8,6 +8,7 @@ import { createTask, updateTask, getTask, deleteTask, getPendingTasks } from './
 import { calculateFileMd5 } from './utils/md5';
 import { readChunk, getTotalChunks, CHUNK_SIZE, CONCURRENCY } from './utils/file-utils';
 import { scheduleTask, releaseTask, cancelPendingTask } from './task-scheduler';
+import { RELAY_RESTART_REQUIRED, resolveUploadResumePlan } from './upload-resume';
 import type { TransferTask, UploadCheckResponse, UploadInitResponse, UploadStatusResponse } from './types';
 
 const activeUploads = new Map<string, { paused: boolean; cancelled: boolean }>();
@@ -134,6 +135,7 @@ async function doUpload(taskId: string): Promise<void> {
       totalChunks,
       uploadedChunks: [],
       transferMode,
+      relayChunkSize: initData.relayChunkSize,
       relayLimitKb: initData.relayRateKb ?? clientUploadLimit,
     });
     emitTaskUpdate(getTask(taskId)!);
@@ -200,13 +202,16 @@ async function relayUploadChunks(
   s3UploadId: string,
   relayChunkSize: number,
   fileSize: number,
-  state: { paused: boolean; cancelled: boolean }
+  state: { paused: boolean; cancelled: boolean },
+  startOffset = 0,
 ): Promise<void> {
   const totalRelayChunks = Math.ceil(fileSize / relayChunkSize);
+  const safeOffset = Math.min(Math.max(0, startOffset), fileSize);
+  const startSeq = Math.floor(safeOffset / relayChunkSize) + 1;
   let lastUpdate = Date.now();
-  let lastBytes = 0;
+  let lastBytes = safeOffset;
 
-  for (let seq = 1; seq <= totalRelayChunks; seq++) {
+  for (let seq = startSeq; seq <= totalRelayChunks; seq++) {
     if (state.cancelled) return;
     if (state.paused) return;
 
@@ -415,6 +420,34 @@ async function doResumeUpload(taskId: string): Promise<void> {
     // 如果在排队期间被暂停或取消，直接返回
     if (task.status === 'paused' || task.status === 'cancelled') return;
 
+    const resumePlan = resolveUploadResumePlan(task);
+    if (resumePlan === 'restart-required') {
+      throw new Error(RELAY_RESTART_REQUIRED);
+    }
+
+    if (resumePlan === 'relay') {
+      // Relay 恢复只允许继续 relay-chunk；服务端 JVM 状态丢失时由错误处理终止，绝不切换直传。
+      if (!task.relayChunkSize || !task.uploadId || !task.s3UploadId) {
+        throw new Error('中转任务缺少恢复参数，请重新开始上传');
+      }
+      await relayUploadChunks(taskId, uploadBase, task.filePath!, task.uploadId, task.s3UploadId,
+        task.relayChunkSize, task.fileSize, state, task.transferredBytes);
+      if (state.cancelled || state.paused) return;
+      const currentRelayTask = getTask(taskId)!;
+      updateTask(taskId, { status: 'merging', speed: 0 });
+      emitTaskUpdate(getTask(taskId)!);
+      const finalizeRes = await apiClient.post(`${uploadBase}/relay-finalize`, null, {
+        params: { uploadId: currentRelayTask.uploadId, s3UploadId: currentRelayTask.s3UploadId },
+      });
+      if (finalizeRes.data?.code === 200 || finalizeRes.data?.code === 0) {
+        updateTask(taskId, { status: 'completed', progress: 100, speed: 0 });
+        emitTaskUpdate(getTask(taskId)!);
+      } else {
+        throw new Error(finalizeRes.data?.message || '中转合并失败');
+      }
+      return;
+    }
+
     // 恢复上传：查询后端已上传分片 + 获取新鲜预签名 URL
     const statusRes = await apiClient.get(`${uploadBase}/status`, {
       params: { uploadId: task.uploadId, s3UploadId: task.s3UploadId },
@@ -493,8 +526,11 @@ export async function resumePendingUploads(): Promise<void> {
   const pending = getPendingTasks().filter((t) => t.type === 'upload' && t.status === 'uploading');
 
   for (const task of pending) {
-    // 标记为 paused，等用户手动恢复
-    updateTask(task.id, { status: 'paused' });
+    // Relay 缓冲仅在服务端 JVM 内存中；应用重启后不能安全推断已提交 seq，禁止降级直传。
+    const fields = task.transferMode === 'relay'
+      ? { status: 'failed' as const, error: RELAY_RESTART_REQUIRED }
+      : { status: 'paused' as const };
+    updateTask(task.id, fields);
     emitTaskUpdate(getTask(task.id)!);
   }
 }

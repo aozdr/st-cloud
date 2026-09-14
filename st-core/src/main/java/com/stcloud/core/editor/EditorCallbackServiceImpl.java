@@ -68,6 +68,8 @@ public class EditorCallbackServiceImpl implements EditorCallbackService {
     private final TeamStorageMapper teamStorageMapper;
     private final VersionService versionService;
     private final ReliableEventPublisher reliableEventPublisher;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.stcloud.core.service.impl.OrphanObjectCleanupService orphanObjectCleanupService;
     @Resource
     private UploadCommitManager uploadCommitManager;
     @Resource
@@ -188,10 +190,21 @@ public class EditorCallbackServiceImpl implements EditorCallbackService {
                 storagePath = existing.getStoragePath();
             } else {
                 storagePath = tenantId + "/" + md5;
+                if (orphanObjectCleanupService != null) {
+                    orphanObjectCleanupService.beginUpload(tenantId, md5, storagePath);
+                }
                 try (InputStream is = Files.newInputStream(tempFile)) {
                     storageService.uploadObject(storagePath, is, newSize, contentType);
                 } catch (IOException e) {
+                    if (orphanObjectCleanupService != null) {
+                        orphanObjectCleanupService.markFailed(tenantId, storagePath);
+                    }
                     throw new BusinessException(ResultCode.FILE_UPLOAD_FAILED, "回调内容上传失败");
+                } catch (RuntimeException e) {
+                    if (orphanObjectCleanupService != null) {
+                        orphanObjectCleanupService.markFailed(tenantId, storagePath);
+                    }
+                    throw e;
                 }
                 uploadedNew = true;
             }
@@ -201,11 +214,18 @@ public class EditorCallbackServiceImpl implements EditorCallbackService {
                 uploadCommitManager.commitEditorSave(node, status, md5, newSize, storagePath, delta,
                         editorProperties.getEditorVersionLimit());
             } catch (RuntimeException e) {
-                // 事务失败清理：仅当本次实际上传过新对象且无记录/引用归零时才删除，避免误删并发复用对象
+                // 事务失败只登记候选，避免 current == null 竞态误删并发成功对象。
                 if (uploadedNew) {
-                    cleanupOrphanUpload(tenantId, md5, storagePath);
+                    if (orphanObjectCleanupService != null) {
+                        orphanObjectCleanupService.markFailed(tenantId, storagePath);
+                    }
                 }
                 throw e;
+            }
+            if (uploadedNew) {
+                if (orphanObjectCleanupService != null) {
+                    orphanObjectCleanupService.markCommitted(tenantId, storagePath);
+                }
             }
 
             // 关闭/强制保存：提交成功后移除编辑标记（Redis 调用，事务外，TC-08/20）
@@ -231,25 +251,10 @@ public class EditorCallbackServiceImpl implements EditorCallbackService {
         }
     }
 
-    /**
-     * 回调落库事务失败后的孤儿对象清理（F5，与简单上传口径一致）：
-     * 仅当当前无对象记录（本次 insertIgnore 已随事务回滚）或记录引用归零且路径一致时才删除物理对象；
-     * 删除失败不阻断主流程，交由定时任务兜底。
-     */
+    /** 回调落库失败只登记规范对象候选，由定时任务在宽限期后做安全复核。 */
     private void cleanupOrphanUpload(Long tenantId, String md5, String storagePath) {
-        try {
-            FileObject current = fileObjectService.findByTenantAndMd5(tenantId, md5);
-            boolean noRecord = current == null;
-            boolean unreferenced = current != null
-                    && current.getRefCount() != null && current.getRefCount() <= 0
-                    && storagePath.equals(current.getStoragePath());
-            if (noRecord || unreferenced) {
-                uploadStorageManager.deleteObjectQuietly(storagePath);
-                log.warn("已尽力清理回调落库失败产生的孤儿对象: md5={}, storagePath={}", md5, storagePath);
-            }
-        } catch (Exception e) {
-            // 清理失败不阻断主流程，交由定时任务兜底
-            log.warn("回调落库失败清理孤儿对象异常（交由定时任务兜底）: md5={}", md5, e);
+        if (orphanObjectCleanupService != null) {
+            orphanObjectCleanupService.markFailed(tenantId, storagePath);
         }
     }
 

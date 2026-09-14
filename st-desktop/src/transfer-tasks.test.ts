@@ -20,7 +20,8 @@ test('上传和下载任务可通过真实 SQLite 创建并在重载后完整读
       file_name TEXT NOT NULL, file_size INTEGER NOT NULL,
       transferred_bytes INTEGER DEFAULT 0, progress INTEGER DEFAULT 0, error TEXT,
       file_path TEXT, parent_id TEXT, space_id TEXT, upload_id TEXT, s3_upload_id TEXT,
-      file_id TEXT, total_chunks INTEGER, uploaded_chunks TEXT, node_id TEXT,
+      file_id TEXT, total_chunks INTEGER, uploaded_chunks TEXT,
+      transfer_mode TEXT, relay_chunk_size INTEGER, relay_limit_kb INTEGER, node_id TEXT,
       save_path TEXT, created_at TEXT NOT NULL, updated_at TEXT NOT NULL
     )`);
     setDb(db, databasePath);
@@ -34,6 +35,7 @@ test('上传和下载任务可通过真实 SQLite 创建并在重载后完整读
       parentId: '9223372036854775800', spaceId: '9223372036854775801',
       uploadId: 'upload-session', s3UploadId: 'multipart-session',
       fileId: '9223372036854775802', totalChunks: 3, uploadedChunks: [0, 2],
+      transferMode: 'relay', relayChunkSize: 204800, relayLimitKb: 100,
     };
     const download: TransferTask = {
       ...common, id: 'download-test', type: 'download',

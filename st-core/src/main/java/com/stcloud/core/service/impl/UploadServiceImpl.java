@@ -80,6 +80,8 @@ public class UploadServiceImpl implements UploadService {
     @Resource
     private RelayBufferManager relayBufferManager;
     @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private OrphanObjectCleanupService orphanObjectCleanupService;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
     private UploadProperties uploadProperties = new UploadProperties();
     /** 编辑保护锁服务：生产必有；测试上下文手工装配时缺失，保护检查跳过（保持既有测试兼容） */
     @org.springframework.beans.factory.annotation.Autowired(required = false)
@@ -181,22 +183,40 @@ public class UploadServiceImpl implements UploadService {
             storagePath = existing.getStoragePath();
         } else {
             storagePath = tenantId + "/" + md5;
-            storageManager.uploadObject(storagePath, pacedInputStream(getInputStream(file), rateBytes, userId),
-                    fileSize, file.getContentType());
-            uploadedNew = true;
+            if (orphanObjectCleanupService != null) {
+                orphanObjectCleanupService.beginUpload(tenantId, md5, storagePath);
+            }
+            try {
+                storageManager.uploadObject(storagePath, pacedInputStream(getInputStream(file), rateBytes, userId),
+                        fileSize, file.getContentType());
+                uploadedNew = true;
+            } catch (RuntimeException e) {
+                if (orphanObjectCleanupService != null) {
+                    orphanObjectCleanupService.markFailed(tenantId, storagePath);
+                }
+                throw e;
+            }
         }
+        FileNodeVO result;
         try {
             // 事务内落库：acquireByPath（对象记录/引用）+ 节点 + 配额 + 事件
-            return uploadCommitManager.commitSimpleUpload(userId, tenantId, spaceId, parentId,
+            result = uploadCommitManager.commitSimpleUpload(userId, tenantId, spaceId, parentId,
                     parentPath, fileName, md5, fileSize, storagePath, file.getContentType());
         } catch (RuntimeException e) {
-            // 事务失败清理（F2-1）：仅当本次请求创建过对象记录且引用归零时才删除已上传对象，
-            // 避免误删并发请求正在复用的对象；无法确定时交由定时任务兜底
+            // 事务失败只登记候选，不能在 current == null 的竞态窗口立即删除规范对象。
             if (uploadedNew) {
-                cleanupOrphanUpload(tenantId, md5, storagePath);
+                if (orphanObjectCleanupService != null) {
+                    orphanObjectCleanupService.markFailed(tenantId, storagePath);
+                }
             }
             throw e;
         }
+        if (uploadedNew) {
+            if (orphanObjectCleanupService != null) {
+                orphanObjectCleanupService.markCommitted(tenantId, storagePath);
+            }
+        }
+        return result;
     }
 
     @Override
@@ -601,13 +621,20 @@ public class UploadServiceImpl implements UploadService {
         if (chunkBytes < 0 || relayChunkSize > 0 && chunkBytes > relayChunkSize) {
             throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "中转小块超过 relayChunkSize");
         }
-        // seq 幂等：已确认过的 seq（客户端同 seq 重试）直接返回，不重复写字节
-        if (!relayBufferManager.tryAcquireSeq(uploadId, seq)) {
+        // seq 只有在完整 body/append/uploadPart 成功后才提交；已提交重复请求才可直接确认。
+        RelayBufferManager.SeqDecision seqDecision = relayBufferManager.tryAcquireSeq(uploadId, seq);
+        if (seqDecision == RelayBufferManager.SeqDecision.DUPLICATE_COMMITTED) {
             return RelayChunkResponse.builder()
                     .confirmed(true)
                     .partUploaded(false)
                     .partNumber(0)
                     .build();
+        }
+        if (seqDecision != RelayBufferManager.SeqDecision.ACQUIRED) {
+            throw new BusinessException(ResultCode.CONFLICT.getCode(),
+                    seqDecision == RelayBufferManager.SeqDecision.IN_FLIGHT
+                            ? "中转小块正在处理中，请勿并发提交同一 seq"
+                            : "中转 seq 必须严格连续提交");
         }
         // 从会话获取有效限速，pacing 阻塞接收（瞬时速率不超限）
         long rateBytes = relayBufferManager.getRate(uploadId);
@@ -627,12 +654,33 @@ public class UploadServiceImpl implements UploadService {
             }
         } catch (java.io.IOException e) {
             log.error("中转接收失败: uploadId={}, seq={}", uploadId, seq, e);
+            relayBufferManager.releaseSeq(uploadId, seq);
             abortUploadInternal(session);
             throw new BusinessException(ResultCode.FILE_UPLOAD_FAILED);
+        } catch (RuntimeException e) {
+            // uploadPart/限速/大小校验失败不得被当成已确认；为避免部分字节重放，显式中止本次中转。
+            relayBufferManager.releaseSeq(uploadId, seq);
+            try {
+                abortUploadInternal(session);
+            } catch (RuntimeException abortError) {
+                e.addSuppressed(abortError);
+            }
+            throw e;
         }
-        // 本次触发 uploadPart：同步 file_chunk 状态（0-待上传 -> 1-已上传，幂等，impact.md 遗留）
-        if (partNumber > 0) {
-            chunkManager.markChunkUploaded(uploadId, partNumber);
+        try {
+            // 本次触发 uploadPart：同步 file_chunk 状态（0-待上传 -> 1-已上传，幂等）。
+            if (partNumber > 0) {
+                chunkManager.markChunkUploaded(uploadId, partNumber);
+            }
+            relayBufferManager.commitSeq(uploadId, seq);
+        } catch (RuntimeException e) {
+            relayBufferManager.releaseSeq(uploadId, seq);
+            try {
+                abortUploadInternal(session);
+            } catch (RuntimeException abortError) {
+                e.addSuppressed(abortError);
+            }
+            throw e;
         }
         return RelayChunkResponse.builder()
                 .confirmed(true)
@@ -909,28 +957,10 @@ public class UploadServiceImpl implements UploadService {
         }
     }
 
-    /**
-     * 上传事务失败后的孤儿对象清理（F2-1）：
-     * 仅当本次请求实际上传了新对象（uploadedNew），且当前无对象记录（本次 insertIgnore 已随事务回滚）
-     * 或记录引用归零时才删除物理对象，避免误删并发请求正在复用的对象；删除失败不阻断主流程，交由定时任务兜底。
-     */
+    /** 上传事务失败只登记规范对象候选，由定时任务在宽限期后做安全复核。 */
     private void cleanupOrphanUpload(Long tenantId, String md5, String storagePath) {
-        try {
-            FileObject current = fileObjectService.findByTenantAndMd5(tenantId, md5);
-            boolean noRecord = current == null;
-            boolean unreferenced = current != null
-                    && current.getRefCount() != null && current.getRefCount() <= 0
-                    && storagePath.equals(current.getStoragePath());
-            if (noRecord || unreferenced) {
-                storageManager.deleteObjectQuietly(storagePath);
-                log.warn("已尽力清理上传失败产生的孤儿对象: md5={}, storagePath={}", md5, storagePath);
-            } else {
-                log.warn("上传事务失败但对象仍被引用，跳过物理删除: md5={}, refCount={}",
-                        md5, current.getRefCount());
-            }
-        } catch (Exception e) {
-            // 清理失败不阻断主流程，交由定时任务兜底
-            log.warn("上传失败清理孤儿对象异常（交由定时任务兜底）: md5={}", md5, e);
+        if (orphanObjectCleanupService != null) {
+            orphanObjectCleanupService.markFailed(tenantId, storagePath);
         }
     }
 

@@ -63,6 +63,13 @@ public interface FileNodeMapper extends BaseMapper<FileNode> {
     @Select("SELECT COUNT(*) FROM file_node WHERE storage_path = #{storagePath} AND id <> #{nodeId} AND node_type = 1 AND upload_status = 2 AND deleted = 0")
     long countOtherRefsByStoragePath(@Param("storagePath") String storagePath, @Param("nodeId") Long nodeId);
 
+    /** 候选对象删除前复核租户内有效文件节点引用。 */
+    @Select("SELECT COUNT(*) FROM file_node WHERE tenant_id = #{tenantId} AND file_md5 = #{md5} "
+            + "AND storage_path = #{storagePath} AND node_type = 1 AND upload_status = 2 "
+            + "AND status = 0 AND deleted = 0")
+    long countValidRefsByTenantAndPath(@Param("tenantId") Long tenantId, @Param("md5") String md5,
+                                       @Param("storagePath") String storagePath);
+
     /**
      * 按 MD5 重算引用计数：将该 MD5 下所有已完成文件节点的 ref_count 置为当前节点总数。
      * 在新增（秒传/复制）或删除引用后调用，使 ref_count 与实际引用数保持一致。

@@ -32,6 +32,14 @@ import java.util.List;
 @Component
 public class RelayBufferManager {
 
+    /** seq 处理决策：提交序号只能由完整请求成功路径产生。 */
+    public enum SeqDecision {
+        ACQUIRED,
+        DUPLICATE_COMMITTED,
+        OUT_OF_ORDER,
+        IN_FLIGHT
+    }
+
     @Resource
     private UploadRelayConfig config;
 
@@ -57,7 +65,8 @@ public class RelayBufferManager {
         long accumulated;
         int nextPartNumber = 1;
         long lastActiveMs;
-        int lastSeq;
+        int committedSeq;
+        int inFlightSeq;
 
         RelaySession(String uploadId, Path tempFile, long rateBytes,
                      String storagePath, String s3UploadId, long relayChunkSize) throws IOException {
@@ -125,16 +134,40 @@ public class RelayBufferManager {
     }
 
     /**
-     * 请求级 seq 原子认领（幂等）：同一 uploadId 的 seq 单调递增，客户端顺序发送。
-     * 已确认过的 seq（<= lastSeq）返回 false，调用方跳过整个请求，不重复写字节。
+     * 请求级 seq 原子认领：严格要求 seq == committedSeq + 1；认领本身不推进 committedSeq。
+     * 只有调用方在 body、追加和远端分片均成功后调用 commitSeq，失败则 releaseSeq 或显式中止。
      */
-    public synchronized boolean tryAcquireSeq(String uploadId, int seq) {
+    public synchronized SeqDecision tryAcquireSeq(String uploadId, int seq) {
         RelaySession session = getSession(uploadId);
-        if (seq <= session.lastSeq) {
-            return false;
+        if (seq > 0 && seq <= session.committedSeq) {
+            return SeqDecision.DUPLICATE_COMMITTED;
         }
-        session.lastSeq = seq;
-        return true;
+        if (seq != session.committedSeq + 1) {
+            return SeqDecision.OUT_OF_ORDER;
+        }
+        if (session.inFlightSeq != 0) {
+            return SeqDecision.IN_FLIGHT;
+        }
+        session.inFlightSeq = seq;
+        return SeqDecision.ACQUIRED;
+    }
+
+    /** 完整请求成功后提交 seq；提交前的异常不会污染已确认进度。 */
+    public synchronized void commitSeq(String uploadId, int seq) {
+        RelaySession session = getSession(uploadId);
+        if (session.inFlightSeq != seq) {
+            throw new BusinessException(ResultCode.CONFLICT.getCode(), "中转 seq 未处于处理中");
+        }
+        session.committedSeq = seq;
+        session.inFlightSeq = 0;
+    }
+
+    /** 失败请求释放 in-flight；会话已因显式 abort 清理时允许幂等返回。 */
+    public synchronized void releaseSeq(String uploadId, int seq) {
+        RelaySession session = sessions.get(uploadId);
+        if (session != null && session.inFlightSeq == seq) {
+            session.inFlightSeq = 0;
+        }
     }
 
     /** finalize：上传末片（余量，无 5MB 下限），返回末片 partNumber（0=无余量） */
@@ -166,10 +199,11 @@ public class RelayBufferManager {
         try {
             session.out.flush();
             session.out.close();
-            int partNumber = session.nextPartNumber++;
+            int partNumber = session.nextPartNumber;
             try (InputStream in = Files.newInputStream(session.tempFile)) {
                 storageManager.uploadPart(storagePath, s3UploadId, partNumber, in, session.accumulated);
             }
+            session.nextPartNumber++;
             log.debug("中转 flushPart: uploadId={}, part={}, size={}", uploadId, partNumber, session.accumulated);
             // 截断临时文件，继续累积下一 part
             session.out = new BufferedOutputStream(
@@ -180,6 +214,11 @@ public class RelayBufferManager {
             log.error("中转 flushPart 失败: uploadId={}", uploadId, e);
             abortSession(uploadId);
             throw new BusinessException(ResultCode.FILE_UPLOAD_FAILED);
+        } catch (RuntimeException e) {
+            // uploadPart 失败时无法证明远端 part 状态，显式中止会话，避免重试造成不确定拼接。
+            log.error("中转 uploadPart 失败，显式中止会话: uploadId={}", uploadId, e);
+            abortSession(uploadId);
+            throw e;
         }
     }
 

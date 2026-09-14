@@ -47,6 +47,8 @@ public class TextFileServiceImpl implements TextFileService {
     private UploadCommitManager uploadCommitManager;
     @Resource
     private UploadStorageManager uploadStorageManager;
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    private com.stcloud.core.service.impl.OrphanObjectCleanupService orphanObjectCleanupService;
 
     @Override
     public void overwriteContent(Long nodeId, byte[] content) {
@@ -87,42 +89,43 @@ public class TextFileServiceImpl implements TextFileService {
             storagePath = existing.getStoragePath();
         } else {
             storagePath = tenantId + "/" + md5;
-            storageService.uploadObject(storagePath, new ByteArrayInputStream(content), newSize, contentType);
-            uploadedNew = true;
+            if (orphanObjectCleanupService != null) {
+                orphanObjectCleanupService.beginUpload(tenantId, md5, storagePath);
+            }
+            try {
+                storageService.uploadObject(storagePath, new ByteArrayInputStream(content), newSize, contentType);
+                uploadedNew = true;
+            } catch (RuntimeException e) {
+                if (orphanObjectCleanupService != null) {
+                    orphanObjectCleanupService.markFailed(tenantId, storagePath);
+                }
+                throw e;
+            }
         }
 
         try {
             // 5. 事务内落库：对象归属 + 节点更新（@Version 乐观锁）+ 差值配额 + 事件
             uploadCommitManager.commitTextOverwrite(node, md5, newSize, storagePath, delta);
         } catch (RuntimeException e) {
-            // 6. 事务失败清理：仅当本次实际上传过新对象且无记录/引用归零时才删除，避免误删并发复用对象
+            // 6. 事务失败只登记候选，避免 current == null 竞态误删并发成功对象。
             if (uploadedNew) {
-                cleanupOrphanUpload(tenantId, md5, storagePath);
+                if (orphanObjectCleanupService != null) {
+                    orphanObjectCleanupService.markFailed(tenantId, storagePath);
+                }
             }
             throw e;
+        }
+        if (uploadedNew) {
+            if (orphanObjectCleanupService != null) {
+                orphanObjectCleanupService.markCommitted(tenantId, storagePath);
+            }
         }
         log.info("文本内容保存成功: nodeId={}, size={}", nodeId, newSize);
     }
 
-    /**
-     * 文本覆盖事务失败后的孤儿对象清理（F5，与简单上传口径一致）：
-     * 仅当当前无对象记录（本次 insertIgnore 已随事务回滚）或记录引用归零且路径一致时才删除物理对象；
-     * 删除失败不阻断主流程，交由定时任务兜底。
-     */
     private void cleanupOrphanUpload(Long tenantId, String md5, String storagePath) {
-        try {
-            FileObject current = fileObjectService.findByTenantAndMd5(tenantId, md5);
-            boolean noRecord = current == null;
-            boolean unreferenced = current != null
-                    && current.getRefCount() != null && current.getRefCount() <= 0
-                    && storagePath.equals(current.getStoragePath());
-            if (noRecord || unreferenced) {
-                uploadStorageManager.deleteObjectQuietly(storagePath);
-                log.warn("已尽力清理文本覆盖失败产生的孤儿对象: md5={}, storagePath={}", md5, storagePath);
-            }
-        } catch (Exception e) {
-            // 清理失败不阻断主流程，交由定时任务兜底
-            log.warn("文本覆盖失败清理孤儿对象异常（交由定时任务兜底）: md5={}", md5, e);
+        if (orphanObjectCleanupService != null) {
+            orphanObjectCleanupService.markFailed(tenantId, storagePath);
         }
     }
 

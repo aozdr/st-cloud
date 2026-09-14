@@ -518,10 +518,10 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
                         {shareContext ? (
                           <img
                             src={(() => {
-                              const params = new URLSearchParams({ nodeId: String(img.id) });
+                              const params = new URLSearchParams({ nodeId: String(img.id), size: 'sm' });
                               if (shareContext.password) params.set('password', shareContext.password);
                               const base = isElectron() ? getServerUrlSync() : '';
-                              return `${base}/api/share/access/stream/${shareContext.shareCode}?${params.toString()}`;
+                              return `${base}/api/share/access/thumbnail/${shareContext.shareCode}?${params.toString()}`;
                             })()}
                             alt={img.name}
                             className="w-full h-full object-cover"

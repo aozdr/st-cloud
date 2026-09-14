@@ -19,6 +19,7 @@ import com.stcloud.core.service.FileService;
 import com.stcloud.core.service.StorageService;
 import com.stcloud.core.service.VersionService;
 import com.stcloud.core.service.impl.FileObjectServiceImpl;
+import com.stcloud.core.service.impl.OrphanObjectCleanupService;
 import com.stcloud.core.service.impl.upload.UploadChunkManager;
 import com.stcloud.core.service.impl.upload.UploadCommitManager;
 import com.stcloud.core.service.impl.upload.UploadEventPublisher;
@@ -27,7 +28,6 @@ import com.stcloud.core.service.impl.upload.UploadStorageManager;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -136,6 +136,11 @@ class TextFileOverwriteTransactionBoundaryTest {
         }
 
         @Bean
+        OrphanObjectCleanupService orphanObjectCleanupService() {
+            return new OrphanObjectCleanupService();
+        }
+
+        @Bean
         TextFileService textFileService(FileNodeMapper fileNodeMapper,
                                         FileObjectService fileObjectService,
                                         StorageService storageService,
@@ -176,6 +181,7 @@ class TextFileOverwriteTransactionBoundaryTest {
     @AfterEach
     void cleanup() {
         jdbcTemplate.update("DELETE FROM file_node WHERE name LIKE 'tx-text%'");
+        jdbcTemplate.update("DELETE FROM file_orphan_candidate WHERE tenant_id = 1");
         jdbcTemplate.update("DELETE FROM file_object WHERE tenant_id = 1");
         jdbcTemplate.update("DELETE FROM sys_user WHERE id = 1001");
         UserContext.clear();
@@ -268,11 +274,14 @@ class TextFileOverwriteTransactionBoundaryTest {
         assertThrows(RuntimeException.class,
                 () -> textFileService.overwriteContent(node.getId(), newContent));
 
-        // 本次上传的对象应被尽力清理（记录已回滚、无引用）
-        ArgumentCaptor<String> keyCaptor = ArgumentCaptor.forClass(String.class);
-        verify(storageService).uploadObject(keyCaptor.capture(), any(InputStream.class),
+        // DB 失败后对象暂不直接删除，先进入待回收候选，交由 GC 做删除前复核。
+        verify(storageService).uploadObject(anyString(), any(InputStream.class),
                 eq((long) newContent.length), anyString());
-        verify(storageService).deleteObject(keyCaptor.getValue());
+        verify(storageService, org.mockito.Mockito.never()).deleteObject(anyString());
+        assertEquals(1L, jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM file_orphan_candidate WHERE tenant_id = 1 AND md5 = ? "
+                        + "AND active_uploads = 0 AND status = 1",
+                Long.class, newMd5));
         assertEquals(0L, fileObjectMapper.selectCount(new LambdaQueryWrapper<FileObject>()
                         .eq(FileObject::getTenantId, 1L).eq(FileObject::getMd5, newMd5)).longValue(),
                 "DB 失败后新对象记录应随事务回滚");

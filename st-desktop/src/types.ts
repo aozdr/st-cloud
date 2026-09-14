@@ -37,6 +37,7 @@ export interface TransferTask {
   totalChunks?: number;
   uploadedChunks?: number[];
   transferMode?: 'direct' | 'relay';
+  relayChunkSize?: number; // 中转模式小块大小(字节)，用于同进程暂停恢复
   relayLimitKb?: number; // 中转模式实际生效限速(KB/s)，用于限速徽标
   // 下载专属
   nodeId?: string;
