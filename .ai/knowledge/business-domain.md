@@ -19,9 +19,13 @@
 | 团队邀请 TeamInvite | `TeamInvite` | st-team | 空间邀请链接 |
 | 团队活动 TeamActivity | `TeamActivity` | st-team | 空间级操作动态流 |
 | 团队评论 TeamComment | `TeamComment` | st-team | 文件评论与 @提及 |
-| 文件夹权限 TeamFolderPermission | `TeamFolderPermission` | st-team | 文件夹级授权（role/member） |
+| 文件夹权限 TeamFolderPermission | `TeamFolderPermission` | st-team | 文件夹及空间虚拟根目录（folder_node_id=0）的授权规则，按 space_id 隔离 |
+
+团队内容接口省略 `parentId` 时表示空间虚拟根目录，权限校验按节点 `0` 执行；正数节点的普通及 fresh 权限解析均需先核实父链归属本空间。
 | 团队自定义角色 TeamRole | `TeamRole` | st-team | 空间级自定义角色（9 项权限矩阵） |
-| 站内通知 Notification | `Notification` | st-team | 提及/邀请/变更通知 |
+| 站内通知 Notification | `Notification` | st-team | 提及/邀请/变更通知；文件关注提醒按事件幂等并在读取/跳转时核权 |
+| 文件关注 FileWatch | `FileWatch` | st-team | 用户对个人或团队文件/目录的关注关系；以订阅 ID 区分取消后重订阅代际 |
+| 文件关注投递 FileWatchDelivery | `FileWatchDelivery` | st-team | 与核心文件事务同源的持久提醒队列，按租户/事件/收件人去重并支持重试 |
 | 同步根 SyncRoot | `SyncRoot` | st-sync | 本地文件夹与云端文件夹的同步绑定 |
 | 同步排除 SyncExclusion | `SyncExclusion` | st-sync | 选择性同步排除路径 |
 | 同步冲突 SyncConflict | `SyncConflict` | st-sync | 冲突记录（pending/resolved） |
@@ -33,6 +37,15 @@
 | 事件日志 EventLog | `EventLog` | st-core | 事务性 Outbox 事件（FILE_INDEX/SYNC_CHANGE） |
 
 ## 业务规则
+
+### 团队全文搜索与文件关注
+
+- 团队全文搜索从 `GET /api/search/team` 进入。Elasticsearch 只召回候选；最终结果按当前租户、空间成员有效期、节点状态、祖先链、文件夹权限及当前索引元数据复核。旧索引缺少身份字段或与数据库 MD5/元数据不一致时不返回。
+- 团队搜索游标签名绑定用户、租户、空间、目录与筛选条件，不暴露 ES total；候选扫描有配置上限。ES 或授权依赖故障返回可识别错误，不伪装成空结果。
+- 搜索扫描只在当前请求内缓存成员、祖先和权限规则；返回前重新核验，撤权后的旧缓存不能授权结果。游标必须使用规范 Base64URL 文本，等价的非规范编码也被拒绝。
+- 文件关注为本人订阅。取消关注只删除当前租户/用户自己的订阅，重复关注幂等；取消后重新关注产生新的 watchId，旧队列不能借新订阅代际投递。
+- 文件变更的 watch 捕获随事务写入数据库队列；通知插入与队列完成状态同事务提交。实际投递时重新核对订阅仍存在、用户和文件仍可见及操作主体，异常按退避重试。
+- 新关注通知在列表和目标解析时读取当前节点并重新核权；失权或删除只返回通用不可用状态，不透出旧名称、路径或链接。通知列表 size 限制为 1～100。
 
 ### 1. 文件上传（分片 + 秒传）
 

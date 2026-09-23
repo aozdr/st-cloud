@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260921-TSW-SEARCH-A2",
+  "taskId": "TASK-20260921-team-search-watch-search",
+  "idempotencyKey": "TSW-SEARCH",
+  "role": "executor",
+  "taskType": "implement",
+  "objective": "在E:/code/st-cloud补齐团队搜索验收测试，必须Luna max。现有57测试通过，但缺少跨用户/过期/换条件游标、首批100无权后续有权、连续页不重复、超预算与参数边界、缺失密钥。用现有fixture补实质测试，不改生产接口。首条ACK，主线程串行Maven。",
+  "taskRefs": [
+    ".ai/tasks/TASK-20260921-team-search-watch-search.md",
+    ".ai/docs/20260921-team-search-watch/design.md",
+    ".ai/docs/20260921-team-search-watch/testcases.md"
+  ],
+  "stateRef": ".ai/state/20260921-team-search-watch.yaml",
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      "st-search/**",
+      "st-common/src/main/java/com/stcloud/common/access/TeamFileAccessPolicy.java",
+      "st-team/src/main/java/com/stcloud/team/service/TeamFileAccessPolicyImpl.java",
+      "st-team/src/main/java/com/stcloud/team/service/FolderPermissionService.java",
+      "st-team/src/test/**/TeamFileAccessPolicyTest*",
+      "st-team/src/test/**/FolderPermissionFreshTest*",
+      ".ai/docs/20260921-team-search-watch/search-changereport.md",
+      ".ai/runtime/results/DISPATCH-20260921-TSW-SEARCH-A2.json"
+    ],
+    "exclude": [
+      "st-web/**",
+      "docker/**",
+      ".ai/state/**"
+    ]
+  },
+  "acceptance": [
+    "TASK验收全部满足，严格既定接口与权限可靠性边界",
+    "代码由Luna max执行，独立结果真实记录测试或未执行项"
+  ],
+  "validation": [
+    "准备后端测试，不运行Maven/迁移，主线程串行验证"
+  ],
+  "forbidSpawn": true,
+  "output": {
+    "resultRef": ".ai/runtime/results/DISPATCH-20260921-TSW-SEARCH-A2.json",
+    "by": "/root/luna_search_0921b",
+    "validatedRevision": "tsw-code-r1"
+  }
+}

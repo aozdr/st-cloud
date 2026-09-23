@@ -59,6 +59,22 @@ CREATE TABLE IF NOT EXISTS file_node (
 
 CREATE INDEX IF NOT EXISTS idx_fn_owner ON file_node (owner_id, deleted);
 
+-- 事件 Outbox 表（文件关注可靠发布集成测试使用真实发布器）
+CREATE TABLE IF NOT EXISTS event_log (
+    id            BIGINT       NOT NULL,
+    tenant_id     BIGINT       DEFAULT NULL,
+    event_type    VARCHAR(32)  NOT NULL,
+    payload       CLOB         NOT NULL,
+    status        TINYINT      NOT NULL DEFAULT 0,
+    retry_count   INT          NOT NULL DEFAULT 0,
+    created_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    processed_at  DATETIME     DEFAULT NULL,
+    updated_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted       TINYINT      NOT NULL DEFAULT 0,
+    PRIMARY KEY (id)
+);
+CREATE INDEX IF NOT EXISTS idx_event_log_status ON event_log (status, retry_count, created_at);
+
 -- 团队空间表
 CREATE TABLE IF NOT EXISTS team_space (
     id              BIGINT          NOT NULL AUTO_INCREMENT,
@@ -139,9 +155,14 @@ CREATE TABLE IF NOT EXISTS notification (
     content         VARCHAR(500)    DEFAULT NULL,
     ref_type        VARCHAR(20)     DEFAULT NULL,
     ref_id          BIGINT          DEFAULT NULL,
+    event_id        BIGINT          DEFAULT NULL,
+    node_id         BIGINT          DEFAULT NULL,
+    space_id        BIGINT          DEFAULT NULL,
+    change_type     VARCHAR(16)     DEFAULT NULL,
     `read`          TINYINT         NOT NULL DEFAULT 0,
     created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    PRIMARY KEY (id)
+    PRIMARY KEY (id),
+    CONSTRAINT uk_notification_tenant_user_event UNIQUE (tenant_id, user_id, event_id)
 );
 
 -- 评论表（20 号脚本）
@@ -201,3 +222,46 @@ CREATE TABLE IF NOT EXISTS team_external_config (
     PRIMARY KEY (id),
     CONSTRAINT uk_space UNIQUE (space_id)
 );
+
+-- 文件关注订阅（43_file_watch.sql）
+CREATE TABLE IF NOT EXISTS file_watch (
+    id          BIGINT      NOT NULL AUTO_INCREMENT,
+    tenant_id   BIGINT      NOT NULL,
+    user_id     BIGINT      NOT NULL,
+    node_id     BIGINT      NOT NULL,
+    created_at  DATETIME(3) NOT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT uk_file_watch_tenant_user_node UNIQUE (tenant_id, user_id, node_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_file_watch_tenant_node_user
+    ON file_watch (tenant_id, node_id, user_id);
+CREATE INDEX IF NOT EXISTS idx_file_watch_user_created
+    ON file_watch (tenant_id, user_id, created_at, id);
+
+-- 文件关注持久投递队列（43_file_watch.sql）
+CREATE TABLE IF NOT EXISTS file_watch_delivery (
+    id            BIGINT       NOT NULL AUTO_INCREMENT,
+    tenant_id     BIGINT       NOT NULL,
+    event_id      BIGINT       NOT NULL,
+    user_id       BIGINT       NOT NULL,
+    node_id       BIGINT       NOT NULL,
+    space_id      BIGINT       DEFAULT NULL,
+    actor_id      BIGINT       DEFAULT NULL,
+    change_type   VARCHAR(16)  NOT NULL,
+    watch_ids     CLOB         NOT NULL,
+    payload       CLOB         NOT NULL,
+    status        TINYINT      NOT NULL DEFAULT 0,
+    retry_count   INT          NOT NULL DEFAULT 0,
+    next_retry_at DATETIME(3)  NOT NULL,
+    last_error    VARCHAR(500) DEFAULT NULL,
+    created_at    DATETIME(3)  NOT NULL,
+    updated_at    DATETIME(3)  NOT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT uk_file_watch_delivery_event_user UNIQUE (tenant_id, event_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_file_watch_delivery_due
+    ON file_watch_delivery (status, next_retry_at, id);
+CREATE INDEX IF NOT EXISTS idx_file_watch_delivery_user_node
+    ON file_watch_delivery (tenant_id, user_id, node_id);

@@ -12,6 +12,7 @@ const AppLayout = lazy(() => import('./components/layout/AppLayout'));
 const FileManager = lazy(() => import('./pages/FileManager'));
 const RecycleBin = lazy(() => import('./pages/RecycleBin'));
 const SearchPage = lazy(() => import('./pages/SearchPage'));
+const FollowingPage = lazy(() => import('./pages/FollowingPage'));
 const FavoritesPage = lazy(() => import('./pages/FavoritesPage'));
 const DuplicateFilesPage = lazy(() => import('./pages/DuplicateFilesPage'));
 const HiddenFilesPage = lazy(() => import('./pages/HiddenFilesPage'));
@@ -29,9 +30,15 @@ const TextEditorPage = lazy(() => import('./pages/TextEditorPage'));
 
 function ProtectedRoute({ children }: { children: ReactNode }) {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const authReady = useAuthStore((s) => s.authReady);
+  const restoreSession = useAuthStore((s) => s.restoreSession);
   useEffect(() => {
-    if (isAuthenticated) syncAuthToElectron();
-  }, [isAuthenticated]);
+    void restoreSession();
+  }, [restoreSession]);
+  useEffect(() => {
+    if (authReady && isAuthenticated) syncAuthToElectron();
+  }, [authReady, isAuthenticated]);
+  if (!authReady) return <SuspenseProgressBar />;
   if (!isAuthenticated) return <Navigate to="/login" replace />;
   return <>{children}</>;
 }
@@ -87,6 +94,7 @@ export default function App() {
           <Route path="files/:parentId?" element={<FileManager />} />
           <Route path="files/category/:type" element={<CategoryPage />} />
           <Route path="search" element={<SearchPage />} />
+          <Route path="following" element={<FollowingPage />} />
           <Route path="recycle" element={<RecycleBin />} />
           <Route path="favorites" element={<FavoritesPage />} />
           <Route path="duplicates" element={<DuplicateFilesPage />} />

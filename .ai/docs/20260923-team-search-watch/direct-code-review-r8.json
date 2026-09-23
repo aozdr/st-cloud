@@ -1,0 +1,11 @@
+{
+  "taskId": "20260923-team-search-watch",
+  "eventId": "tsw-r8-solo-code_review",
+  "criterionProposal": {
+    "id": "CODE_REVIEW",
+    "outcome": "pass",
+    "by": "main-gpt6",
+    "evidenceRef": ".ai/docs/20260923-team-search-watch/codereview.md",
+    "validatedRevision": "tsw-code-r8"
+  }
+}

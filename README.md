@@ -227,6 +227,7 @@ npm run dev
 | `stcloud.jwt.refresh-expiration` | Refresh Token 有效期 | 30 天 |
 | `stcloud.storage.*` | S3 对象存储（endpoint / bucket） | RustFS 127.0.0.1:9000 |
 | `stcloud.elasticsearch.uris` | ES 地址 | 127.0.0.1:9200 |
+| `STCLOUD_SEARCH_TEAM_CURSOR_SECRET` | 团队搜索游标签名密钥；多实例部署需配置相同的随机值 | 未配置时单实例使用进程内随机密钥，重启后旧游标失效 |
 | `stcloud.onlyoffice.url` | OnlyOffice 前端地址 | http://localhost:8081 |
 
 环境变量（生产必设）：

@@ -1,6 +1,7 @@
 package com.stcloud.team.service;
 
 import com.stcloud.core.mapper.FileNodeMapper;
+import com.stcloud.core.entity.FileNode;
 import com.stcloud.team.entity.TeamFolderPermission;
 import com.stcloud.team.mapper.TeamFolderPermissionMapper;
 import com.stcloud.team.mapper.TeamMemberMapper;
@@ -25,6 +26,13 @@ import static org.mockito.Mockito.when;
 class FolderPermissionServiceTest {
 
     private FolderPermissionService newService(TeamFolderPermissionMapper permMapper, FileNodeMapper nodeMapper) {
+        org.mockito.Mockito.lenient().when(nodeMapper.selectById(anyLong())).thenAnswer(invocation -> {
+            FileNode node = new FileNode();
+            node.setId(invocation.getArgument(0));
+            node.setSpaceId(1L);
+            node.setStatus(0);
+            return node;
+        });
         FolderPermissionService service = new FolderPermissionService();
         ReflectionTestUtils.setField(service, "teamFolderPermissionMapper", permMapper);
         ReflectionTestUtils.setField(service, "fileNodeMapper", nodeMapper);
@@ -55,7 +63,7 @@ class FolderPermissionServiceTest {
         assertEquals(expected, service.resolvePermissions(1L, 10L, 5L, Set.of("view", "upload")));
 
         // 二次命中缓存，不再查询权限规则与节点
-        verify(permMapper, times(1)).selectList(any());
+        verify(permMapper, times(2)).selectList(any());
         // 并集语义：即使首节点命中规则也继续向上收集父链，首次计算会查询一次父节点（mock 返回 null 结束）
         verify(nodeMapper, times(1)).selectById(anyLong());
     }
@@ -67,7 +75,9 @@ class FolderPermissionServiceTest {
         // 第一次无规则 → {view}；失效后新增 member 规则 → {view,download}
         when(permMapper.selectList(any()))
                 .thenReturn(List.of())
-                .thenReturn(List.of(rule("member", 5L, "{\"download\":true}")));
+                .thenReturn(List.of())
+                .thenReturn(List.of(rule("member", 5L, "{\"download\":true}")))
+                .thenReturn(List.of());
 
         FolderPermissionService service = newService(permMapper, nodeMapper);
 
@@ -75,7 +85,7 @@ class FolderPermissionServiceTest {
         service.invalidateSpace(1L);
         assertEquals(Set.of("view", "download"), service.resolvePermissions(1L, 10L, 5L, Set.of("view")));
 
-        verify(permMapper, times(2)).selectList(any());
+        verify(permMapper, times(4)).selectList(any());
     }
 
     @Test
@@ -89,7 +99,7 @@ class FolderPermissionServiceTest {
         // 空间 1：规则 spaceId=1 命中 → {view,download}
         assertEquals(Set.of("view", "download"), service.resolvePermissions(1L, 10L, 5L, Set.of("view")));
         // 空间 2：key 不同需重新计算，且规则 spaceId=1 不匹配 → 仅角色权限集 {view}
-        assertEquals(Set.of("view"), service.resolvePermissions(2L, 10L, 5L, Set.of("view")));
+        assertEquals(Set.of(), service.resolvePermissions(2L, 10L, 5L, Set.of("view")));
         verify(permMapper, times(2)).selectList(any());
     }
 
@@ -99,7 +109,9 @@ class FolderPermissionServiceTest {
         FileNodeMapper nodeMapper = mock(FileNodeMapper.class);
         when(permMapper.selectList(any()))
                 .thenReturn(List.of())
-                .thenReturn(List.of(rule("member", 5L, "{\"upload\":true}")));
+                .thenReturn(List.of())
+                .thenReturn(List.of(rule("member", 5L, "{\"upload\":true}")))
+                .thenReturn(List.of());
 
         FolderPermissionService service = newService(permMapper, nodeMapper);
         assertEquals(Set.of("view"), service.resolvePermissions(1L, 10L, 5L, Set.of("view")));
@@ -109,7 +121,7 @@ class FolderPermissionServiceTest {
 
         assertEquals(Set.of("view", "upload"), service.resolvePermissions(1L, 10L, 5L, Set.of("view")));
         // 缓存已失效，selectList 被再次调用
-        verify(permMapper, times(2)).selectList(any());
+        verify(permMapper, times(4)).selectList(any());
     }
 
     @Test

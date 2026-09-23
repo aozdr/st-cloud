@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260923-TSW-EXP-ACCEPT-A1",
+  "taskId": "TASK-20260923-team-search-watch-exp-accept",
+  "idempotencyKey": "20260923-TSW-EXP-ACCEPT",
+  "role": "reviewer",
+  "taskType": "exp-review",
+  "objective": "独立验收 tsw-code-r7 的搜索、关注和通知 UI 与定版 uiSpec 的一致性，提出 EXP_ACCEPT 结论",
+  "stateRef": ".ai/state/20260923-team-search-watch.yaml",
+  "taskRefs": [".ai/tasks/TASK-20260923-team-search-watch-exp-accept.md", ".ai/docs/20260923-team-search-watch/uispec.md", ".ai/docs/20260923-team-search-watch/design.md", ".ai/docs/20260923-team-search-watch/browser-verification.md"],
+  "skillRefs": ["-"],
+  "scope": {
+    "include": [".ai/docs/20260923-team-search-watch/exp-review.md", ".ai/docs/20260923-team-search-watch/exp-accept-independent.md", ".ai/runtime/results/DISPATCH-20260923-TSW-EXP-ACCEPT-A1.json"],
+    "exclude": ["st-*/**", "docker/**", ".ai/state/**"]
+  },
+  "acceptance": ["对 uiSpec 的入口、各状态、键盘、焦点和窄屏逐项说明证据与结论", "明确真实端到端环境边界，未验证场景不得冒充通过"],
+  "validation": ["只读前端代码和浏览器证据，可用本地浏览器复核；不运行构建；结论绑定 tsw-code-r7"],
+  "output": {"resultRef": ".ai/runtime/results/DISPATCH-20260923-TSW-EXP-ACCEPT-A1.json", "by": "/root/tsw_exp_accept", "validatedRevision": "tsw-code-r7"},
+  "forbidSpawn": true
+}

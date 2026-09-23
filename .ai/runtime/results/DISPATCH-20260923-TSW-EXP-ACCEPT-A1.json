@@ -1,0 +1,83 @@
+{
+  "dispatchId": "DISPATCH-20260923-TSW-EXP-ACCEPT-A1",
+  "taskId": "TASK-20260923-team-search-watch-exp-accept",
+  "role": "reviewer",
+  "status": "completed",
+  "by": "/root/tsw_exp_accept",
+  "validatedRevision": "tsw-code-r7",
+  "background": "独立验收团队搜索、文件关注与通知 UI 对定版 uiSpec 的覆盖，并区分源码证据、既有浏览器记录和未验证场景。",
+  "input": [
+    ".ai/tasks/TASK-20260923-team-search-watch-exp-accept.md",
+    ".ai/state/20260923-team-search-watch.yaml（最小相关快照）",
+    ".ai/docs/20260923-team-search-watch/uispec.md",
+    ".ai/docs/20260923-team-search-watch/design.md",
+    ".ai/docs/20260923-team-search-watch/browser-verification.md",
+    ".ai/docs/20260923-team-search-watch/changereport.md",
+    ".ai/docs/20260923-team-search-watch/exp-review.md（保留既有 EXP_DESIGN A1/A2 结论）",
+    "st-web/src/pages/SearchPage.tsx、TeamSpacePage.tsx、FollowingPage.tsx",
+    "st-web/src/components/file/FileDetailPanel.tsx、st-web/src/hooks/useFileWatch.ts",
+    "st-web/src/components/team/NotificationBell.tsx、st-web/src/components/layout/Sidebar.tsx、st-web/src/App.tsx"
+  ],
+  "analysis": "静态检查显示，搜索/关注入口、搜索范围与结果定位、加载/空/错误/失权/游标状态、关注列表状态、通知不可用目标、键盘原生控件语义、Escape 后焦点返回、窄屏通知边界、请求代次及团队目标再次核权均有源码对应；A1 记录的游标恢复和通知 target 乱序问题在当前源码中有修复。既有 browser-verification.md 是主线程自检，记录了 375×812 下 scrollWidth=375、筛选 Space 操作、通知按钮可达、弹层 left=12px/right=363.2px、Escape 后焦点返回及空通知状态。本轮 Codex 内嵌浏览器无已打开页面，访问 http://127.0.0.1:5173/ 返回 net::ERR_CONNECTION_REFUSED。故搜索切换乱序、游标过期、权限撤销刷新、团队子目录通知跳转、通知项 Enter/Space、关注详情/列表完整窄屏和桌面布局等仍没有本轮动态证据。现有记录明确不证明文件服务、MySQL、Elasticsearch、对象存储组成的真实端到端链路。State/changereport 声明代码为 tsw-code-r7，但该字符串不是可解析 Git ref；当前 HEAD 为 3ef1ad0cee6ed03c30410a5cd1a6feb1f615dc7f，相关前端源文件处于修改状态，本复核按 State 标签检查当前工作树，不能证明其对应不可变 Git 对象。",
+  "decision": [
+    "静态 UI 与 uiSpec 大体一致，本轮未发现新的明确源码缺陷；EXP_DESIGN A1/A2 历史结论保持不变。",
+    "建议 EXP_ACCEPT outcome=blocked：动态验收范围和不可变 revision 证据尚未闭合。此结论表示证据不足，不表示未验证行为已通过或已确认失败。",
+    "主线程应在应用可访问的浏览器环境补齐未验证交互，并确认 tsw-code-r7 对应的代码快照后再执行 Evaluate。"
+  ],
+  "artifactRefs": [
+    ".ai/docs/20260923-team-search-watch/exp-review.md",
+    ".ai/docs/20260923-team-search-watch/exp-accept-independent.md"
+  ],
+  "validation": [
+    {
+      "method": "只读核对定版 uiSpec、design、changereport、State 最小快照、既有 EXP_DESIGN 记录及搜索/关注/通知前端源码",
+      "outcome": "completed",
+      "evidence": ".ai/docs/20260923-team-search-watch/exp-accept-independent.md 按 uiSpec 条款列出源码位置和逐项结论；本轮没有修改产品代码或 State。"
+    },
+    {
+      "method": "检查既有浏览器验证记录",
+      "outcome": "partial",
+      "evidence": ".ai/docs/20260923-team-search-watch/browser-verification.md 仅记录主线程自检的移动筛选、通知可达/弹层边界与 Escape 焦点返回、通知空状态；记录未保存截图且明确不构成真实后端端到端证据。"
+    },
+    {
+      "method": "检查本轮本地浏览器可达性",
+      "outcome": "blocked",
+      "evidence": "Codex 内嵌浏览器没有打开的标签页；http://127.0.0.1:5173/ 返回 net::ERR_CONNECTION_REFUSED，因此无法执行动态复核。"
+    },
+    {
+      "method": "确认代码 revision 绑定",
+      "outcome": "partial",
+      "evidence": "State 与 changereport 均声明 tsw-code-r7；git rev-parse HEAD 返回 3ef1ad0cee6ed03c30410a5cd1a6feb1f615dc7f，git 无法解析 tsw-code-r7，工作树相关前端文件有未提交修改。"
+    }
+  ],
+  "stateDelta": {
+    "proposalOnly": true,
+    "proposals": [
+      {
+        "id": "EXP_ACCEPT",
+        "outcome": "blocked",
+        "dispatchId": "DISPATCH-20260923-TSW-EXP-ACCEPT-A1",
+        "evidenceRef": ".ai/runtime/results/DISPATCH-20260923-TSW-EXP-ACCEPT-A1.json",
+        "validatedRevision": "tsw-code-r7",
+        "reason": "本地浏览器服务不可达，且既有浏览器证据没有覆盖全部交互验收范围；当前 revision 标签也不能解析为不可变 Git ref。"
+      }
+    ]
+  },
+  "risks": [
+    "不能将静态源码覆盖或主线程有限浏览器自检表述为搜索/通知完整交互验收通过。",
+    "搜索请求乱序、失权刷新、通知目标定位与异步乱序、关注操作状态及多个窄屏页面均未动态复核。",
+    "未验证真实文件服务、MySQL、Elasticsearch 与对象存储组成的端到端链路。",
+    "tsw-code-r7 不是 Git ref，当前检查对象仅能关联 State 声明的工作树标签。"
+  ],
+  "nextStep": "主线程在可访问且使用对应修订的浏览器/服务环境补测桌面与 375px 入口、状态、键盘 Enter/Space/Escape 和焦点、搜索切换及游标过期、撤权刷新、关注页操作、通知团队子目录定位与延迟响应；随后追加真实证据并执行 EXP_ACCEPT Evaluate。",
+  "changeImpact": "仅追加 EXP_ACCEPT 独立验收记录并新增本 dispatch 结果；未修改产品代码、Loop State 或 EXP_DESIGN A1/A2 历史结论。",
+  "criterionProposal": {
+    "id": "EXP_ACCEPT",
+    "outcome": "blocked",
+    "by": "/root/tsw_exp_accept",
+    "dispatchId": "DISPATCH-20260923-TSW-EXP-ACCEPT-A1",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260923-TSW-EXP-ACCEPT-A1.json",
+    "validatedRevision": "tsw-code-r7"
+  },
+  "blockerProposals": []
+}

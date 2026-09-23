@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260922-TSW-SEC-A1",
+  "taskId": "TASK-20260922-team-search-watch-security",
+  "idempotencyKey": "TSW-SEC",
+  "role": "reviewer",
+  "taskType": "security",
+  "objective": "独立安全审查当前团队全文搜索与文件关注提醒所有已跟踪及未跟踪实现：租户/成员/目录权限/游标/索引陈旧/通知归属与撤权/事件事务/幂等重试。只报告可复现具体问题或明确通过依据，不修改代码、不运行构建、不访问浏览器。读取requirement和design，当前代码变化用git diff HEAD及git ls-files --others --exclude-standard发现。",
+  "stateRef": ".ai/state/20260922-team-search-watch.yaml",
+  "taskRefs": [
+    ".ai/tasks/TASK-20260922-team-search-watch-security.md",
+    ".ai/docs/20260922-team-search-watch/design.md",
+    ".ai/docs/20260922-team-search-watch/requirement.md"
+  ],
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      ".ai/docs/20260922-team-search-watch/security.md",
+      ".ai/runtime/results/DISPATCH-20260922-TSW-SEC-A1.json"
+    ],
+    "exclude": [
+      "st-*/**",
+      "docker/**",
+      ".ai/state/**"
+    ]
+  },
+  "acceptance": [
+    "审查结果逐项有源文件证据",
+    "未解决高风险缺陷不得建议通过"
+  ],
+  "validation": [
+    "只读代码与已有测试证据；不运行构建"
+  ],
+  "output": {
+    "resultRef": ".ai/runtime/results/DISPATCH-20260922-TSW-SEC-A1.json",
+    "by": "/root/terra_security_a1",
+    "validatedRevision": "tsw-code-r2"
+  },
+  "forbidSpawn": true
+}

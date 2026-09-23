@@ -264,6 +264,75 @@ class TeamServicePermissionIntegrationTest extends AbstractTeamIntegrationTest {
     }
 
     @Test
+    void rootPermissionsSaveReadAndStayWithinSpace() {
+        insertUser(100L, 1L, "owner-a");
+        insertUser(200L, 1L, "owner-b");
+        insertUser(300L, 1L, "viewer");
+        Long spaceA = createSpaceAs(100L);
+        Long spaceB = createSpaceAs(200L);
+        inviteMemberAs(spaceA, 100L, 300L);
+        inviteMemberAs(spaceB, 200L, 300L);
+        FileNode nodeA = insertNode(1L, 100L, spaceA, "a.txt");
+        FileNode nodeB = insertNode(1L, 200L, spaceB, "b.txt");
+
+        setUpUser(100L, 1L);
+        assertDoesNotThrow(() -> teamService.setFolderPermissions(spaceA, 0L,
+                ruleRequest("all", "0", "{\"upload\":true}")));
+        assertEquals(1, teamService.getFolderPermissions(spaceA, 0L).getData().size());
+        assertEquals(spaceA, teamService.getFolderPermissions(spaceA, 0L).getData().get(0).getSpaceId());
+
+        setUpUser(200L, 1L);
+        assertDoesNotThrow(() -> teamService.setFolderPermissions(spaceB, 0L,
+                ruleRequest("all", "0", "{\"download\":true}")));
+        assertEquals(1, teamService.getFolderPermissions(spaceB, 0L).getData().size());
+
+        setUpUser(300L, 1L);
+        // 控制器创建文件夹/空白文件时 parentId 可为 null，授权必须读取虚拟根规则。
+        assertDoesNotThrow(() -> teamService.requirePermissions(spaceA, null, "upload"));
+        assertDoesNotThrow(() -> teamService.requirePermissions(spaceA, 0L, "upload"));
+        assertThrows(BusinessException.class,
+                () -> teamService.requirePermissions(spaceB, null, "upload"));
+        assertTrue(teamService.resolveMyPermissions(spaceA, nodeA.getId()).contains("upload"));
+        assertFalse(teamService.resolveMyPermissions(spaceA, nodeA.getId()).contains("download"));
+        assertTrue(teamService.resolveMyPermissions(spaceB, nodeB.getId()).contains("download"));
+        assertFalse(teamService.resolveMyPermissions(spaceB, nodeB.getId()).contains("upload"));
+        // 传入其他空间的节点 ID 时，即使本空间根规则允许上传，也不能跨空间授权。
+        assertEquals(Set.of(), teamService.resolveMyPermissions(spaceA, nodeB.getId()));
+        assertThrows(BusinessException.class,
+                () -> teamService.requirePermissions(spaceA, nodeB.getId(), "upload"));
+        assertThrows(BusinessException.class, () -> teamService.setFolderPermissions(spaceA, 0L,
+                ruleRequest("all", "0", "{\"download\":true}")));
+
+        setUpUser(100L, 1L);
+        FolderPermissionRequest empty = new FolderPermissionRequest();
+        empty.setRules(List.of());
+        teamService.setFolderPermissions(spaceA, 0L, empty);
+        assertEquals(0, teamService.getFolderPermissions(spaceA, 0L).getData().size());
+        setUpUser(200L, 1L);
+        assertEquals(1, teamService.getFolderPermissions(spaceB, 0L).getData().size());
+    }
+
+    @Test
+    void recycledNodeLosesInheritedRootPermissionImmediately() {
+        insertUser(100L, 1L, "owner");
+        insertUser(300L, 1L, "viewer");
+        Long spaceId = createSpaceAs(100L);
+        inviteMemberAs(spaceId, 100L, 300L);
+        FileNode node = insertNode(1L, 100L, spaceId, "recycled.txt");
+        teamService.setFolderPermissions(spaceId, 0L,
+                ruleRequest("all", "0", "{\"upload\":true}"));
+
+        setUpUser(300L, 1L);
+        assertDoesNotThrow(() -> teamService.requirePermissions(spaceId, node.getId(), "upload"));
+
+        node.setStatus(1);
+        assertEquals(1, fileNodeMapper.updateById(node));
+        assertEquals(Set.of(), teamService.resolveMyPermissions(spaceId, node.getId()));
+        assertThrows(BusinessException.class,
+                () -> teamService.requirePermissions(spaceId, node.getId(), "upload"));
+    }
+
+    @Test
     void setFolderPermissions_allRuleManagePermissionRejected() {
         insertUser(100L, 1L, "owner");
         Long spaceId = createSpaceAs(100L);

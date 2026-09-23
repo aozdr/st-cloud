@@ -291,6 +291,7 @@ public class FileServiceImpl implements FileService {
                         "目标目录已存在同名: " + node.getName());
             }
             String oldPath = node.getPath();
+            Long oldParentId = node.getParentId();
             String newPath = targetPath + "/" + node.getName();
             node.setParentId(targetParentId);
             node.setPath(newPath);
@@ -301,7 +302,7 @@ public class FileServiceImpl implements FileService {
                 fileNodeMapper.updateChildrenPath(oldPath, newPath, node.getOwnerId(), node.getSpaceId(), node.getTenantId());
             }
             publishMetaUpdate(node, newPath);
-            reliableEventPublisher.publishSyncChange(node, SyncChangeEvent.ChangeType.MOVE, oldPath);
+            reliableEventPublisher.publishSyncChange(node, SyncChangeEvent.ChangeType.MOVE, oldPath, oldParentId);
         }
     }
 
@@ -985,6 +986,7 @@ public class FileServiceImpl implements FileService {
                         "目标目录已存在同名: " + node.getName());
             }
             String oldPath = node.getPath();
+            Long oldParentId = node.getParentId();
             String newPath = targetPath + "/" + node.getName();
             node.setParentId(targetParentId);
             node.setPath(newPath);
@@ -995,7 +997,7 @@ public class FileServiceImpl implements FileService {
                 fileNodeMapper.updateChildrenPath(oldPath, newPath, node.getOwnerId(), node.getSpaceId(), node.getTenantId());
             }
             publishMetaUpdate(node, newPath);
-            reliableEventPublisher.publishSyncChange(node, SyncChangeEvent.ChangeType.MOVE, oldPath);
+            reliableEventPublisher.publishSyncChange(node, SyncChangeEvent.ChangeType.MOVE, oldPath, oldParentId);
         }
     }
 

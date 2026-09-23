@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260921-TSW-WATCH-A3",
+  "taskId": "TASK-20260921-team-search-watch-watch",
+  "idempotencyKey": "TSW-WATCH",
+  "status": "completed",
+  "ack": {
+    "dispatchId": "DISPATCH-20260921-TSW-WATCH-A3",
+    "taskId": "TASK-20260921-team-search-watch-watch",
+    "role": "executor"
+  },
+  "artifactRefs": [
+    "st-team/src/main/java/com/stcloud/team/service/FileWatchCaptureListener.java",
+    "st-team/src/test/java/com/stcloud/team/service/FileWatchAccessServiceTest.java",
+    "st-team/src/test/java/com/stcloud/team/service/FileWatchDeliveryProcessorTest.java",
+    ".ai/runtime/results/DISPATCH-20260921-TSW-WATCH-A3.json"
+  ],
+  "criterionProposal": {
+    "id": "IMPLEMENTED",
+    "outcome": "pass",
+    "by": "/root/luna_watch_0921c",
+    "dispatchId": "DISPATCH-20260921-TSW-WATCH-A3",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260921-TSW-WATCH-A3.json",
+    "validatedRevision": "tsw-code-r1"
+  },
+  "summary": {
+    "background": "修复 watch-tests-r2.log 中关注单元测试失败，并修正捕获路径对不可变查询结果的生产兼容性。",
+    "input": [
+      ".ai/tasks/TASK-20260921-team-search-watch-watch.md",
+      ".ai/docs/20260921-team-search-watch/design.md",
+      ".ai/docs/20260921-team-search-watch/testcases.md",
+      ".ai/docs/20260921-team-search-watch/watch-tests-r2.log",
+      ".ai/state/20260921-team-search-watch.yaml（只读）"
+    ],
+    "analysis": {
+      "facts": [
+        "SysUser 关注主体单测的 Mockito answer 主动调用 LambdaQueryWrapper.getSqlSegment()，但单测没有 MyBatis-Plus SysUser lambda cache，因此在断言前抛出 MybatisPlusException。",
+        "FileWatchCaptureListener 首次 findMatches 可能返回 List.of()；目录 MOVE/DELETE 后续将 descendantMatches addAll 到该列表，实际生产 mapper/测试 fixture 返回不可变集合时抛 UnsupportedOperationException。",
+        "FileWatchDeliveryProcessor 按 delivery.eventId 查询 notification；两个单测却按 delivery.id（9001/9003）进行 stub，导致严格 Mockito 参数不匹配；对应实际 eventId 为 19001/19003。"
+      ],
+      "changes": [
+        "SysUser 单测改为只检查 LambdaQueryWrapper 已绑定参数，不在无实体元数据缓存的 Mockito 环境解析 SQL 片段；生产授权查询与租户、用户、deleted、status 条件保持不变。",
+        "FileWatchCaptureListener 在合并目录后代匹配前复制首次查询结果为 ArrayList，保留空/null 语义并支持 addAll。",
+        "FileWatchDeliveryProcessor 单测按 delivery.getEventId() stub 通知幂等查询，保持生产按事件 ID 去重的契约。"
+      ]
+    },
+    "decision": "仅修改派发 scope 内的关注捕获生产代码及两个关注单元测试；可靠性集成测试保持排除，未修改授权实现、State、TASK 或共享 changereport。",
+    "stateDelta": "proposal only; 未修改 Loop State。",
+    "risk": [
+      "本 dispatch 严禁运行 Maven，未执行 testCompile、单元测试、SchemaConsistencyTest 或数据库迁移；主线程需串行验证。",
+      "本次只复制 mapper 返回列表，不改变匹配、聚合、去重或事务边界；真实 MySQL mapper 行为仍需主线程验证。"
+    ],
+    "nextStep": "主线程串行运行关注白名单单测与必要编译检查，并将可靠性测试的排除项按独立 dispatch 结果处理。",
+    "changeImpact": "目录移动/删除在 mapper 返回不可变集合时仍可合并后代订阅；SysUser 单测不再依赖未初始化 lambda cache；通知幂等单测匹配真实 eventId。"
+  },
+  "validation": {
+    "executed": [
+      "静态核对 watch-tests-r2.log 失败调用参数与修复点。",
+      "确认捕获首个 findMatches 结果在任何 descendantMatches.addAll 前复制为 ArrayList。",
+      "确认两个投递单测 stubbing 使用 delivery.getEventId()，与生产 findByTenantUserEvent 参数一致。",
+      "git diff --check（现有跟踪改动范围）无空白错误；未修改排除的可靠性集成测试。"
+    ],
+    "notExecuted": [
+      "Maven testCompile/tests/build：按派发要求禁止，本次不运行。",
+      "数据库迁移、SchemaConsistencyTest、compare-schema.ps1、真实 MQ/ES/S3 和浏览器 E2E：不属于本次验证。"
+    ]
+  }
+}

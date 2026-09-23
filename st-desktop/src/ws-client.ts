@@ -19,6 +19,7 @@ export class SyncWsClient {
   private readonly MAX_RECONNECT_DELAY = 60_000;
   private readonly HEARTBEAT_INTERVAL = 25_000;
   private running = false;
+  private outageLogged = false;
   private onChangeCallback: (() => void) | null = null;
   private onStatusCallback: ((connected: boolean) => void) | null = null;
 
@@ -36,6 +37,7 @@ export class SyncWsClient {
   start(): void {
     if (this.running) return;
     this.running = true;
+    this.outageLogged = false;
     this.connect();
   }
 
@@ -63,7 +65,6 @@ export class SyncWsClient {
 
     const token = getToken();
     if (!token) {
-      console.log('[ws] no token, retrying in 3s');
       this.scheduleReconnect(3000);
       return;
     }
@@ -71,18 +72,19 @@ export class SyncWsClient {
     const httpUrl = getServerUrl();
     const wsUrl = httpUrl.replace(/^http/, 'ws') + '/api/sync/ws';
 
-    console.log('[ws] connecting to', wsUrl);
-
+    let opened = false;
     try {
       this.ws = new WebSocket(wsUrl, { headers: { Authorization: `Bearer ${token}` } });
     } catch (err) {
-      console.error('[ws] create failed:', err);
+      this.logOutage(wsUrl, err instanceof Error ? err.message : String(err));
       this.scheduleReconnect(this.reconnectDelay);
       return;
     }
 
     this.ws.on('open', () => {
+      opened = true;
       console.log('[ws] connected');
+      this.outageLogged = false;
       this.reconnectDelay = 1000; // 重置退避
       this.onStatusCallback?.(true);
       this.startHeartbeat();
@@ -105,18 +107,28 @@ export class SyncWsClient {
     });
 
     this.ws.on('close', (code: number, reason: Buffer) => {
-      console.log(`[ws] closed: code=${code}, reason=${reason?.toString() || ''}`);
       this.onStatusCallback?.(false);
       this.stopHeartbeat();
       if (this.running) {
+        if (opened) {
+          this.logOutage(wsUrl, `closed: code=${code}, reason=${reason?.toString() || ''}`);
+        } else {
+          this.logOutage(wsUrl, `closed: code=${code}`);
+        }
         this.scheduleReconnect(this.reconnectDelay);
       }
     });
 
     this.ws.on('error', (err: Error) => {
-      console.error('[ws] error:', err.message);
+      this.logOutage(wsUrl, err.message);
       // close 事件会随后触发，由 close 处理重连
     });
+  }
+
+  private logOutage(wsUrl: string, reason: string): void {
+    if (this.outageLogged) return;
+    this.outageLogged = true;
+    console.warn(`[ws] disconnected from ${wsUrl}: ${reason}; retrying in background`);
   }
 
   private startHeartbeat(): void {
@@ -141,7 +153,6 @@ export class SyncWsClient {
 
   private scheduleReconnect(delay: number): void {
     this.clearReconnectTimer();
-    console.log(`[ws] reconnecting in ${delay / 1000}s`);
     this.reconnectTimer = setTimeout(() => {
       this.reconnectDelay = Math.min(this.reconnectDelay * 2, this.MAX_RECONNECT_DELAY);
       this.connect();

@@ -436,6 +436,14 @@
 
 ## 实体关系
 
+### 文件关注模型（43_file_watch.sql）
+
+`file_watch` 保存本人订阅：`id`、`tenant_id`、`user_id`、`node_id`、`created_at`；唯一键 `(tenant_id,user_id,node_id)` 保证同一时刻不重复订阅。取消时删除当前用户记录，重订阅使用新 ID，队列用捕获时的 watch ID 验证订阅代际。
+
+`file_watch_delivery` 持久保存候选提醒：`tenant_id/event_id/user_id` 唯一；记录变更根、空间、actor、类型、匹配 watch ID、必要快照、状态、重试次数和下次处理时间。通知插入与队列变为已发送在同一事务中完成。状态：0 待处理、1 处理中、2 重试、3 已发送、4 抑制、5 失败待排查。
+
+`notification` 增加可空 `event_id`、`node_id`、`space_id`、`change_type`；唯一键 `(tenant_id,user_id,event_id)` 对新关注提醒幂等，旧通知 `event_id=NULL` 保持兼容。
+
 ```
 sys_tenant 1───* sys_user          (租户包含多用户)
 sys_user   *───* sys_role           (通过 sys_user_role 关联)
@@ -446,6 +454,9 @@ file_node  1───* file_chunk         (一个文件多个分片)
 file_node  1───* file_version       (一个文件多个历史版本)
 file_node  1───* file_block         (一个文件每个版本的分块布局)
 file_node  1───* file_share         (一个文件可创建多个分享)
+file_node  1───* file_watch         (节点可被多个用户关注)
+file_watch 1───* file_watch_delivery (捕获时的订阅 ID 关联到待投递变更)
+file_watch_delivery 1───0..1 notification (同租户、事件、收件人幂等产生新通知)
 file_node  *───1 file_object        (file_node.object_id 引用物理对象)
 file_favorite *───1 file_node       (收藏指向文件节点)
 file_favorite *───1 sys_user        (收藏属于用户)

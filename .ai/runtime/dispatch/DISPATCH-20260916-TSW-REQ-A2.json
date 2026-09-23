@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260916-TSW-REQ-A2",
+  "taskId": "TASK-20260916-team-search-watch-requirement",
+  "idempotencyKey": "TSW-REQ",
+  "role": "executor",
+  "taskType": "requirement",
+  "objective": "以 GPT-5.6-Luna max 完成团队全文搜索与文件关注变更提醒的需求分析及交互文档，严格按 TASK 执行。先 ACK，之后读取 TASK、当前 AGENTS.md 和最小 State。使用 prd-development 技能，向主线程汇报技能使用。不得写代码或 State。 工作目录 E:/code/st-cloud；prd-development 技能位于 C:/Users/Administrator/.agents/skills/prd-development/SKILL.md。用户禁止 GPT-6 执行；所有工作限本 TASK，不得派生 Agent。",
+  "taskRefs": [
+    ".ai/tasks/TASK-20260916-team-search-watch-requirement.md"
+  ],
+  "stateRef": ".ai/state/20260916-team-search-watch.yaml",
+  "skillRefs": [
+    "prd-development"
+  ],
+  "scope": {
+    "include": [
+      ".ai/docs/20260916-team-search-watch/requirement.md",
+      ".ai/docs/20260916-team-search-watch/uispec.md",
+      ".ai/runtime/results/DISPATCH-20260916-TSW-REQ-A2.json"
+    ],
+    "exclude": [
+      "st-*",
+      "docker",
+      ".ai/state",
+      ".ai/tasks"
+    ]
+  },
+  "acceptance": [
+    "完成 TASK 全部验收项，真实源码证据及中文需求文档",
+    "返回独立结果与 REQ_ANALYSIS proposal，revision tsw-design-r1"
+  ],
+  "validation": [
+    "核对源码与验收编号；仅白名单文件变化"
+  ],
+  "forbidSpawn": true,
+  "output": {
+    "resultRef": ".ai/runtime/results/DISPATCH-20260916-TSW-REQ-A2.json"
+  }
+}

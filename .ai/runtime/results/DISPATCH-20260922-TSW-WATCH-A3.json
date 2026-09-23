@@ -1,0 +1,63 @@
+{
+  "dispatchId": "DISPATCH-20260922-TSW-WATCH-A3",
+  "taskId": "TASK-20260922-team-search-watch-watch",
+  "role": "executor",
+  "by": "/root/terra_watch_a3",
+  "validatedRevision": "tsw-code-r2",
+  "status": "completed",
+  "ack": {
+    "dispatchId": "DISPATCH-20260922-TSW-WATCH-A3",
+    "taskId": "TASK-20260922-team-search-watch-watch",
+    "role": "executor"
+  },
+  "artifactRefs": [
+    "st-core/src/main/java/com/stcloud/core/event/ReliableEventPublisher.java",
+    "st-core/src/main/java/com/stcloud/core/mapper/FileNodeMapper.java",
+    "st-core/src/test/java/com/stcloud/core/service/impl/EventOutboxIntegrationTest.java",
+    "st-team/src/main/java/com/stcloud/team/service/FileWatchCaptureListener.java",
+    "st-team/src/main/java/com/stcloud/team/service/FileWatchNotificationService.java",
+    "st-team/src/test/java/com/stcloud/team/service/FileWatchReliabilityIntegrationTest.java",
+    ".ai/docs/20260922-team-search-watch/watch-changereport.md",
+    ".ai/runtime/results/DISPATCH-20260922-TSW-WATCH-A3.json"
+  ],
+  "background": "修复团队新建节点内存 tenantId 未回填时被关注捕获拒绝，并补齐通知归属与撤权读取回归测试。",
+  "facts": [
+    "ReliableEventPublisher 使用 UserContext 中已认证的 tenantId 补齐缺失的内存节点租户，并拒绝与认证租户不一致的节点。",
+    "FileWatchCaptureListener 按事件 tenantId 读取同一事务可见的 file_node 数据库快照，再执行订阅匹配。",
+    "通知 target 查询 tenantId、userId 和 notificationId；撤权后的新版文件变更通知清空所有可定位字段。"
+  ],
+  "changedFiles": [
+    "st-core/src/test/java/com/stcloud/core/service/impl/EventOutboxIntegrationTest.java",
+    "st-team/src/test/resources/schema.sql",
+    "st-team/src/test/java/com/stcloud/team/service/FileWatchReliabilityIntegrationTest.java",
+    ".ai/docs/20260922-team-search-watch/watch-changereport.md"
+  ],
+  "validation": [
+    {
+      "command": "git diff --check -- st-core st-team st-sync",
+      "result": "passed",
+      "evidence": "exit code 0"
+    },
+    {
+      "command": "Maven/H2 tests",
+      "result": "not_run",
+      "reason": "Dispatch validation 明确要求不运行 Maven，由主线程串行验证。"
+    }
+  ],
+  "criterionProposal": {
+    "id": "IMPLEMENTED",
+    "outcome": "pass",
+    "by": "/root/terra_watch_a3",
+    "dispatchId": "DISPATCH-20260922-TSW-WATCH-A3",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260922-TSW-WATCH-A3.json",
+    "validatedRevision": "tsw-code-r2"
+  },
+  "blockerProposals": [],
+  "risks": [
+    "主线程复跑确认 st-core 的 SchemaConsistencyTest 与 EventOutboxIntegrationTest 共 11 项通过。",
+    "st-team 首次 testCompile 在 FileWatchCaptureListenerTest 的可空 spaceId 传入 primitive long 时失败；已将测试辅助方法参数改为 Long，修复后仍待主线程重跑确认。",
+    "主线程 r3 运行的 39 项 team 测试中，其余 38 项通过；真实 ReliableEventPublisher 集成测试缺少 event_log H2 表。已按 st-core 测试 schema 补齐该 Outbox 表与普通状态索引，仍待主线程重跑确认。",
+    "新增与既有捕获测试均待主线程执行 Maven/H2 验证；本 child 未将其宣称为通过。"
+  ],
+  "nextStep": "主线程串行运行相关 st-core、st-team H2 测试与 schema 验证。"
+}

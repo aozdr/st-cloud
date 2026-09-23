@@ -107,6 +107,7 @@ export default function FileBrowserDialogs(props: FileBrowserDialogsProps) {
     <>
       {contextMenu && (
         <ContextMenu
+          key={contextMenu.node.id}
           x={contextMenu.x}
           y={contextMenu.y}
           node={contextMenu.node}
@@ -297,7 +298,7 @@ export default function FileBrowserDialogs(props: FileBrowserDialogsProps) {
       )}
 
       {zipProgress !== null && (
-        <div className="fixed top-16 right-4 z-[110] w-64 bg-surface rounded-md border border-border shadow-md p-3">
+        <div className="fixed left-1/2 top-[calc(env(safe-area-inset-top)+3rem)] z-[110] w-64 max-w-[calc(100vw-1.5rem)] -translate-x-1/2 bg-surface-2 rounded-md border border-border shadow-float p-3">
           <p className="text-xs font-medium text-fg mb-1.5 flex items-center gap-1.5">
             <Loader2 className="w-3.5 h-3.5 text-primary-600 animate-spin" aria-hidden />
             正在打包下载

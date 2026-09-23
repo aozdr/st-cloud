@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260921-TSW-RELIABILITY-A2",
+  "taskId": "TASK-20260921-team-search-watch-reliability",
+  "idempotencyKey": "TSW-RELIABILITY",
+  "status": "completed",
+  "ack": {
+    "dispatchId": "DISPATCH-20260921-TSW-RELIABILITY-A2",
+    "taskId": "TASK-20260921-team-search-watch-reliability",
+    "role": "executor"
+  },
+  "artifactRefs": [
+    "st-team/src/test/java/com/stcloud/team/service/FileWatchReliabilityIntegrationTest.java",
+    ".ai/docs/20260921-team-search-watch/reliability-changereport.md",
+    ".ai/runtime/results/DISPATCH-20260921-TSW-RELIABILITY-A2.json"
+  ],
+  "criterionProposal": {
+    "id": "IMPLEMENTED",
+    "outcome": "pass",
+    "by": "/root/luna_reliability_0921b",
+    "dispatchId": "DISPATCH-20260921-TSW-RELIABILITY-A2",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260921-TSW-RELIABILITY-A2.json",
+    "validatedRevision": "tsw-code-r1"
+  },
+  "summary": {
+    "background": "继续关注提醒 H2 可靠性集成测试任务，修复 watch-tests.log 指出的 JsonProcessingException 编译阻塞，并补全生产用户有效性检查所需的 H2 正常用户夹具。",
+    "input": [
+      ".ai/tasks/TASK-20260921-team-search-watch-reliability.md",
+      ".ai/docs/20260921-team-search-watch/design.md",
+      ".ai/docs/20260921-team-search-watch/testcases.md",
+      ".ai/state/20260921-team-search-watch.yaml（只读）",
+      "st-team/src/test/java/com/stcloud/team/service/FileWatchReliabilityIntegrationTest.java"
+    ],
+    "analysis": {
+      "facts": [
+        "两个测试方法直接调用 ObjectMapper.readTree，却未声明 JsonProcessingException；同类重叠订阅测试已声明 throws Exception。",
+        "回滚场景事件操作者 41013、边界场景事件操作者 44013/44014 原先未写入 H2 sys_user；其余投递用户和团队成员用户已有 insertUser 夹具。",
+        "真实事务、捕获监听器、投递处理器和 MyBatis-Plus Mapper 保持在测试中；本 dispatch 未将可靠性主链路整体 mock 化。"
+      ],
+      "changes": [
+        "为 cancelledWatch_thenResubscribe_doesNotConsumeOldDeliveryGeneration 和 deletedDirectory_matchesParentAndDescendantWatches_oncePerUser 补充 throws Exception。",
+        "为 41013、44013、44014 补充正常 sys_user H2 fixture。",
+        "新增 reliability-changereport.md 和本 A2 结果 JSON。"
+      ]
+    }
+  },
+  "decision": "仅完成白名单中的测试编译适配、H2 正常用户夹具和 dispatch 记录；不修改生产代码、不修改 State、不宣称整体任务完成。",
+  "stateDelta": {
+    "proposalOnly": true,
+    "changes": [],
+    "note": "未修改 .ai/state/20260921-team-search-watch.yaml；由主线程 Evaluate。"
+  },
+  "validation": [
+    {
+      "command": "git diff --check -- st-team/src/test/java/com/stcloud/team/service/FileWatchReliabilityIntegrationTest.java",
+      "status": "passed",
+      "evidence": "无空白错误输出。"
+    },
+    {
+      "command": "rg 静态检查 readTree、测试签名和 insertUser 夹具",
+      "status": "passed",
+      "evidence": "三个 readTree 调用均位于已声明异常的测试方法；所有投递用户与新增事件操作者均有 insertUser 记录。"
+    },
+    {
+      "command": "Maven testCompile/tests/build",
+      "status": "not_run",
+      "evidence": "按 dispatch 约束由主线程串行执行。"
+    }
+  ],
+  "risk": [
+    "未执行 Maven，不能据此宣称 H2 集成测试通过。",
+    "watchAgent 的生产用户校验集成仍需主线程在真实代码 revision 上验证。"
+  ],
+  "nextStep": "主线程串行运行 st-team 相关 testCompile/H2 测试，并以真实退出码 Evaluate。",
+  "changeImpact": "仅影响可靠性集成测试的 checked-exception 编译适配、H2 用户 fixture 和报告记录；生产代码、State 与其他模块未改动。"
+}

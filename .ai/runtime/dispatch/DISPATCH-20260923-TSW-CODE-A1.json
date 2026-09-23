@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260923-TSW-CODE-A1",
+  "taskId": "TASK-20260923-team-search-watch-code-review",
+  "idempotencyKey": "20260923-TSW-CODE-REVIEW",
+  "role": "reviewer",
+  "taskType": "review",
+  "objective": "独立评审 tsw-code-r7 的团队搜索与文件关注提醒实现，提出 CODE_REVIEW 结论",
+  "stateRef": ".ai/state/20260923-team-search-watch.yaml",
+  "taskRefs": [".ai/tasks/TASK-20260923-team-search-watch-code-review.md", ".ai/docs/20260923-team-search-watch/requirement.md", ".ai/docs/20260923-team-search-watch/design.md", ".ai/docs/20260923-team-search-watch/testcases.md", ".ai/docs/20260923-team-search-watch/changereport.md"],
+  "skillRefs": ["-"],
+  "scope": {
+    "include": [".ai/docs/20260923-team-search-watch/codereview.md", ".ai/runtime/results/DISPATCH-20260923-TSW-CODE-A1.json"],
+    "exclude": ["st-*/**", "docker/**", ".ai/state/**"]
+  },
+  "acceptance": ["逐项审查需求和设计与代码的符合性，并给出可定位的代码证据", "未解决高/中等级问题不得建议通过"],
+  "validation": ["只读代码和现有测试证据；不运行构建；结论绑定 tsw-code-r7"],
+  "output": {"resultRef": ".ai/runtime/results/DISPATCH-20260923-TSW-CODE-A1.json", "by": "/root/tsw_code_review", "validatedRevision": "tsw-code-r7"},
+  "forbidSpawn": true
+}

@@ -38,6 +38,10 @@ public class SearchIndexInitializer {
     public static final String FIELD_NODE_TYPE = "nodeType";
     public static final String FIELD_CREATED_AT = "createdAt";
     public static final String FIELD_UPDATED_AT = "updatedAt";
+    public static final String FIELD_TENANT_ID = "tenantId";
+    public static final String FIELD_SPACE_ID = "spaceId";
+    public static final String FIELD_PARENT_ID = "parentId";
+    public static final String FIELD_FILE_MD5 = "fileMd5";
     public static final String ANALYZER_INDEX = "ik_max_word";
     public static final String ANALYZER_SEARCH = "ik_smart";
     public static final String ANALYZER_STANDARD = "standard";
@@ -97,6 +101,10 @@ public class SearchIndexInitializer {
                         .properties(FIELD_FILE_ID, p -> p.keyword(k -> k))
                         .properties(FIELD_FILE_NAME, ikWithSubFields())
                         .properties(FIELD_OWNER_ID, p -> p.long_(l -> l))
+                        .properties(FIELD_TENANT_ID, p -> p.long_(l -> l))
+                        .properties(FIELD_SPACE_ID, p -> p.long_(l -> l))
+                        .properties(FIELD_PARENT_ID, p -> p.long_(l -> l))
+                        .properties(FIELD_FILE_MD5, p -> p.keyword(k -> k))
                         .properties(FIELD_STORAGE_PATH, p -> p.keyword(k -> k))
                         .properties(FIELD_CONTENT_TYPE, p -> p.keyword(k -> k))
                         .properties(FIELD_SUFFIX, p -> p.keyword(k -> k))
@@ -153,6 +161,10 @@ public class SearchIndexInitializer {
     private void putSubFieldMapping() throws Exception {
         client.indices().putMapping(m -> m
                 .index(INDEX_NAME)
+                .properties(FIELD_TENANT_ID, p -> p.long_(l -> l))
+                .properties(FIELD_SPACE_ID, p -> p.long_(l -> l))
+                .properties(FIELD_PARENT_ID, p -> p.long_(l -> l))
+                .properties(FIELD_FILE_MD5, p -> p.keyword(k -> k))
                 .properties(FIELD_FILE_NAME, ikWithSubFields())
                 .properties(FIELD_ATTACHMENT, p -> p.object(o -> o
                         .properties(FIELD_CONTENT, ikWithSubFields())

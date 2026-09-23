@@ -1,0 +1,42 @@
+{
+  "scope": {
+    "include": [
+      "st-team/src/test/java/com/stcloud/team/service/FileWatchReliabilityIntegrationTest.java",
+      ".ai/docs/20260921-team-search-watch/reliability-changereport.md",
+      ".ai/runtime/results/DISPATCH-20260921-TSW-RELIABILITY-A3.json"
+    ],
+    "exclude": [
+      "st-team/src/main/**",
+      "st-core/**",
+      ".ai/state/**"
+    ]
+  },
+  "idempotencyKey": "TSW-RELIABILITY",
+  "stateRef": ".ai/state/20260921-team-search-watch.yaml",
+  "role": "executor",
+  "dispatchId": "DISPATCH-20260921-TSW-RELIABILITY-A3",
+  "output": {
+    "by": "/root/luna_reliability_0921c",
+    "resultRef": ".ai/runtime/results/DISPATCH-20260921-TSW-RELIABILITY-A3.json",
+    "validatedRevision": "tsw-code-r1"
+  },
+  "taskId": "TASK-20260921-team-search-watch-reliability",
+  "objective": "分析并修复 watch-tests-r2.log 中可靠性集成测试两处失败：actorSelf 场景租户上下文不一致、teamMemberPermission 撤权后期望抑制4实际发送3。不得降低权限断言；生产缺陷返回主线程，不越界改生产。修复测试夹具真实缺陷，禁止Maven。",
+  "validation": [
+    "不运行Maven，主线程串行"
+  ],
+  "skillRefs": [
+    "-"
+  ],
+  "taskRefs": [
+    ".ai/tasks/TASK-20260921-team-search-watch-reliability.md",
+    ".ai/docs/20260921-team-search-watch/design.md",
+    ".ai/docs/20260921-team-search-watch/testcases.md"
+  ],
+  "taskType": "implement",
+  "acceptance": [
+    "真实事务和Mapper验证可靠性，不虚报通过"
+  ],
+  "forbidSpawn": true,
+  "schemaVersion": 2
+}

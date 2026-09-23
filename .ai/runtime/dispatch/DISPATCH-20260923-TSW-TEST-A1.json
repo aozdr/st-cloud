@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260923-TSW-TEST-A1",
+  "taskId": "TASK-20260923-team-search-watch-test-pass",
+  "idempotencyKey": "20260923-TSW-TEST-PASS",
+  "role": "tester",
+  "taskType": "test",
+  "objective": "独立执行当前 tsw-code-r7 的后端、schema、前端回归并提出 TEST_PASS 结论",
+  "stateRef": ".ai/state/20260923-team-search-watch.yaml",
+  "taskRefs": [".ai/tasks/TASK-20260923-team-search-watch-test-pass.md", ".ai/docs/20260923-team-search-watch/testcases.md", ".ai/docs/20260923-team-search-watch/testreport.md", ".ai/docs/20260923-team-search-watch/changereport.md"],
+  "skillRefs": ["-"],
+  "scope": {
+    "include": [".ai/docs/20260923-team-search-watch/testreport.md", ".ai/docs/20260923-team-search-watch/test-pass-*.log", ".ai/runtime/results/DISPATCH-20260923-TSW-TEST-A1.json"],
+    "exclude": ["st-*/src/**", "docker/**", ".ai/state/**"]
+  },
+  "acceptance": ["core/team/search 后端测试、打包、schema 对比及前端 build/lint 记录真实命令与退出码", "严格区分当前运行和历史证据，未解决失败不得建议通过"],
+  "validation": ["构建和测试串行执行，不争用缓存；结果绑定 tsw-code-r7"],
+  "output": {"resultRef": ".ai/runtime/results/DISPATCH-20260923-TSW-TEST-A1.json", "by": "/root/tsw_test_pass", "validatedRevision": "tsw-code-r7"},
+  "forbidSpawn": true
+}

@@ -1,0 +1,454 @@
+{
+  "schemaVersion": 2,
+  "definitionVersion": 2,
+  "taskId": "20260922-team-search-watch",
+  "scale": "large",
+  "status": "running",
+  "goal": {
+    "objective": "由 GPT-6 负责需求设计与验收，GPT-5.6 Terra high 编码完成团队全文搜索和文件关注提醒",
+    "scope": "团队搜索、关注通知及前后端数据库测试知识库",
+    "completionCriteria": [
+      "需求设计覆盖权限异常兼容与验收场景",
+      "团队搜索只返回当前有权访问结果",
+      "关注取消及可靠通知完整且防越权重复",
+      "当前代码构建测试数据库对比及评审通过",
+      "编码仅由GPT-5.6 Terra high执行"
+    ]
+  },
+  "revision": {
+    "design": "tsw-design-r2",
+    "code": "tsw-code-r4"
+  },
+  "exitCriteria": [
+    {
+      "id": "REQ_ANALYSIS",
+      "status": "done",
+      "dependsOn": [],
+      "by": "workflow-manager-gpt6",
+      "evidenceRef": ".ai/docs/20260922-team-search-watch/documentation-evidence.json",
+      "validatedRevision": "tsw-design-r2",
+      "completedAt": "2026-09-22T00:30:46.94309Z",
+      "dispatchId": "PRIMARY-0922-REQ_ANALYSIS"
+    },
+    {
+      "id": "IMPACT_ANALYSIS",
+      "status": "done",
+      "dependsOn": [
+        "REQ_ANALYSIS"
+      ],
+      "by": "workflow-manager-gpt6",
+      "evidenceRef": ".ai/docs/20260922-team-search-watch/documentation-evidence.json",
+      "validatedRevision": "tsw-design-r2",
+      "completedAt": "2026-09-22T00:30:46.9505687Z",
+      "dispatchId": "PRIMARY-0922-IMPACT_ANALYSIS"
+    },
+    {
+      "id": "EXP_DESIGN",
+      "status": "done",
+      "dependsOn": [
+        "REQ_ANALYSIS"
+      ],
+      "by": "workflow-manager-gpt6",
+      "evidenceRef": ".ai/docs/20260922-team-search-watch/documentation-evidence.json",
+      "validatedRevision": "tsw-design-r2",
+      "completedAt": "2026-09-22T00:30:46.9513129Z",
+      "dispatchId": "PRIMARY-0922-EXP_DESIGN",
+      "applicable": true
+    },
+    {
+      "id": "TECH_DESIGN",
+      "status": "done",
+      "dependsOn": [
+        "IMPACT_ANALYSIS",
+        "EXP_DESIGN"
+      ],
+      "by": "workflow-manager-gpt6",
+      "evidenceRef": ".ai/docs/20260922-team-search-watch/documentation-evidence.json",
+      "validatedRevision": "tsw-design-r2",
+      "completedAt": "2026-09-22T00:30:46.9523655Z",
+      "dispatchId": "PRIMARY-0922-TECH_DESIGN"
+    },
+    {
+      "id": "TESTCASES",
+      "status": "done",
+      "dependsOn": [
+        "TECH_DESIGN"
+      ],
+      "by": "workflow-manager-gpt6",
+      "evidenceRef": ".ai/docs/20260922-team-search-watch/documentation-evidence.json",
+      "validatedRevision": "tsw-design-r2",
+      "completedAt": "2026-09-22T00:30:46.9531875Z",
+      "dispatchId": "PRIMARY-0922-TESTCASES"
+    },
+    {
+      "id": "IMPLEMENTED",
+      "status": "in_progress",
+      "dependsOn": [
+        "TECH_DESIGN",
+        "TESTCASES"
+      ]
+    },
+    {
+      "id": "CODE_REVIEW",
+      "status": "pending",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ]
+    },
+    {
+      "id": "SECURITY_REVIEW",
+      "status": "pending",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ]
+    },
+    {
+      "id": "EXP_ACCEPT",
+      "status": "pending",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ],
+      "applicable": true
+    },
+    {
+      "id": "TEST_PASS",
+      "status": "pending",
+      "dependsOn": [
+        "CODE_REVIEW",
+        "SECURITY_REVIEW"
+      ]
+    },
+    {
+      "id": "KNOWLEDGE",
+      "status": "pending",
+      "dependsOn": [
+        "TEST_PASS",
+        "SECURITY_REVIEW",
+        "EXP_ACCEPT"
+      ]
+    },
+    {
+      "id": "ACCEPT",
+      "status": "pending",
+      "dependsOn": [
+        "KNOWLEDGE"
+      ]
+    }
+  ],
+  "artifacts": {
+    "architecture": {
+      "status": "ready",
+      "ref": ".ai/docs/20260922-team-search-watch/architecture-review.md"
+    },
+    "impact": {
+      "status": "ready",
+      "ref": ".ai/docs/20260922-team-search-watch/impact.md"
+    },
+    "testcases": {
+      "status": "ready",
+      "ref": ".ai/docs/20260922-team-search-watch/testcases.md"
+    },
+    "experience": {
+      "status": "ready",
+      "ref": ".ai/docs/20260922-team-search-watch/exp-review.md"
+    },
+    "uiSpec": {
+      "status": "ready",
+      "ref": ".ai/docs/20260922-team-search-watch/uispec.md"
+    },
+    "design": {
+      "status": "ready",
+      "ref": ".ai/docs/20260922-team-search-watch/design.md"
+    },
+    "requirement": {
+      "status": "ready",
+      "ref": ".ai/docs/20260922-team-search-watch/requirement.md"
+    }
+  },
+  "blockers": [],
+  "acceptanceEvidence": [],
+  "dispatchLedger": [
+    {
+      "dispatchId": "DISPATCH-20260922-TSW-WATCH-A1",
+      "taskId": "TASK-20260922-team-search-watch-watch",
+      "idempotencyKey": "TSW-WATCH",
+      "role": "executor",
+      "taskType": "implement",
+      "criterionId": "IMPLEMENTED",
+      "childId": "/root/luna_watch_0922",
+      "status": "failed",
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "max",
+      "failureReason": "Child stopped without changes: unable to confirm requested model remains available; no result file"
+    },
+    {
+      "dispatchId": "DISPATCH-20260922-TSW-SEARCH-A1",
+      "taskId": "TASK-20260922-team-search-watch-search",
+      "idempotencyKey": "TSW-SEARCH",
+      "role": "executor",
+      "taskType": "implement",
+      "criterionId": "IMPLEMENTED",
+      "childId": "/root/luna_search_0922",
+      "status": "failed",
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "max",
+      "failureReason": "DISPATCH_RUNTIME_INJECTION_FAILED: Unknown model gpt-5.6-luna; no child created"
+    },
+    {
+      "dispatchId": "DISPATCH-20260922-TSW-WATCH-A2",
+      "taskId": "TASK-20260922-team-search-watch-watch",
+      "idempotencyKey": "TSW-WATCH",
+      "role": "executor",
+      "taskType": "implement",
+      "criterionId": "IMPLEMENTED",
+      "childId": "/root/terra_watch_0922",
+      "status": "failed",
+      "model": "gpt-5.6-terra",
+      "reasoningEffort": "high",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260922-TSW-WATCH-A2.json",
+      "updatedAt": "2026-09-22T00:38:45.1152174Z",
+      "failureReason": "Runtime interrupted; no result returned"
+    },
+    {
+      "dispatchId": "DISPATCH-20260922-TSW-SEARCH-A2",
+      "taskId": "TASK-20260922-team-search-watch-search",
+      "idempotencyKey": "TSW-SEARCH",
+      "role": "executor",
+      "taskType": "implement",
+      "criterionId": "IMPLEMENTED",
+      "childId": "/root/terra_search_0922",
+      "status": "failed",
+      "model": "gpt-5.6-terra",
+      "reasoningEffort": "high",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260922-TSW-SEARCH-A2.json",
+      "updatedAt": "2026-09-22T00:38:45.5249122Z",
+      "failureReason": "Returned tests did not compile; superseded by A3"
+    },
+    {
+      "dispatchId": "DISPATCH-20260922-TSW-FE-A2",
+      "taskId": "TASK-20260922-team-search-watch-frontend",
+      "idempotencyKey": "TSW-FE",
+      "role": "executor",
+      "taskType": "implement",
+      "criterionId": "IMPLEMENTED",
+      "childId": "/root/terra_frontend_0922",
+      "status": "failed",
+      "model": "gpt-5.6-terra",
+      "reasoningEffort": "high",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260922-TSW-FE-A2.json",
+      "updatedAt": "2026-09-22T00:38:45.9642353Z",
+      "failureReason": "UI validation found mobile notification panel outside viewport; rework A3"
+    },
+    {
+      "dispatchId": "DISPATCH-20260922-TSW-SEARCH-A3",
+      "taskId": "TASK-20260922-team-search-watch-search",
+      "idempotencyKey": "TSW-SEARCH",
+      "role": "executor",
+      "taskType": "implement",
+      "criterionId": "IMPLEMENTED",
+      "childId": "/root/terra_search_a3",
+      "status": "spawned",
+      "model": "gpt-5.6-terra",
+      "reasoningEffort": "high",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260922-TSW-SEARCH-A3.json"
+    },
+    {
+      "dispatchId": "DISPATCH-20260922-TSW-WATCH-A3",
+      "taskId": "TASK-20260922-team-search-watch-watch",
+      "idempotencyKey": "TSW-WATCH",
+      "role": "executor",
+      "taskType": "implement",
+      "criterionId": "IMPLEMENTED",
+      "childId": "/root/terra_watch_a3",
+      "status": "spawned",
+      "model": "gpt-5.6-terra",
+      "reasoningEffort": "high",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260922-TSW-WATCH-A3.json"
+    },
+    {
+      "dispatchId": "DISPATCH-20260922-TSW-FE-A3",
+      "taskId": "TASK-20260922-team-search-watch-frontend",
+      "idempotencyKey": "TSW-FE",
+      "role": "executor",
+      "taskType": "implement",
+      "criterionId": "IMPLEMENTED",
+      "childId": "/root/terra_frontend_a3",
+      "status": "spawned",
+      "model": "gpt-5.6-terra",
+      "reasoningEffort": "high",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260922-TSW-FE-A3.json"
+    },
+    {
+      "dispatchId": "DISPATCH-20260922-TSW-SEC-A1",
+      "taskId": "TASK-20260922-team-search-watch-security",
+      "idempotencyKey": "TSW-SEC",
+      "role": "reviewer",
+      "taskType": "security",
+      "criterionId": "SECURITY_REVIEW",
+      "childId": "/root/terra_security_a1",
+      "status": "spawned",
+      "model": "gpt-5.6-terra",
+      "reasoningEffort": "high",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260922-TSW-SEC-A1.json"
+    }
+  ],
+  "proposals": [],
+  "history": [
+    {
+      "eventId": "0922-model-unavailable",
+      "action": "record-runtime-block",
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-22T00:33:42.7759102Z",
+      "revision": {
+        "design": "tsw-design-r2",
+        "code": "tsw-code-r2"
+      },
+      "detail": "用户指定Luna模型不可用；保留未完成状态，未替换编码模型。证据见当日testreport.md"
+    },
+    {
+      "eventId": "0922-authorized-terra",
+      "action": "resume-model-change",
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-22T00:37:02.713Z",
+      "revision": {
+        "design": "tsw-design-r2",
+        "code": "tsw-code-r2"
+      },
+      "detail": "用户撤销当前模型直接编码指令，新子 agent 使用 GPT-5.6 Terra high。"
+    },
+    {
+      "eventId": "4eb91529-56a7-4169-9496-42e6da527dc5",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260922-TSW-WATCH-A2",
+        "status": "planned"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260922-TSW-WATCH-A2",
+        "status": "spawned",
+        "revision": {
+          "design": "tsw-design-r2",
+          "code": "tsw-code-r2"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-22T00:38:45.1250409Z",
+      "revision": {
+        "design": "tsw-design-r2",
+        "code": "tsw-code-r2"
+      }
+    },
+    {
+      "eventId": "db6f2539-4d4f-4b8d-a229-ab93d28d52d5",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260922-TSW-SEARCH-A2",
+        "status": "planned"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260922-TSW-SEARCH-A2",
+        "status": "spawned",
+        "revision": {
+          "design": "tsw-design-r2",
+          "code": "tsw-code-r2"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-22T00:38:45.5252484Z",
+      "revision": {
+        "design": "tsw-design-r2",
+        "code": "tsw-code-r2"
+      }
+    },
+    {
+      "eventId": "054d6591-fdab-4479-a01e-a2a2e6a76cf6",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260922-TSW-FE-A2",
+        "status": "planned"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260922-TSW-FE-A2",
+        "status": "spawned",
+        "revision": {
+          "design": "tsw-design-r2",
+          "code": "tsw-code-r2"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-22T00:38:45.9646409Z",
+      "revision": {
+        "design": "tsw-design-r2",
+        "code": "tsw-code-r2"
+      }
+    },
+    {
+      "eventId": "0923-index-tenant-normalization",
+      "action": "stale-cascade",
+      "before": {
+        "roots": [
+          "CODE_REVIEW",
+          "SECURITY_REVIEW",
+          "EXP_ACCEPT",
+          "TEST_PASS",
+          "KNOWLEDGE",
+          "ACCEPT"
+        ]
+      },
+      "after": {
+        "affected": [
+          "CODE_REVIEW",
+          "SECURITY_REVIEW",
+          "EXP_ACCEPT",
+          "TEST_PASS",
+          "KNOWLEDGE",
+          "ACCEPT"
+        ],
+        "revision": {
+          "design": "tsw-design-r2",
+          "code": "tsw-code-r3"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-23T00:48:09.4529838Z",
+      "revision": {
+        "design": "tsw-design-r2",
+        "code": "tsw-code-r3"
+      }
+    },
+    {
+      "eventId": "0923-notification-page-limit",
+      "action": "stale-cascade",
+      "before": {
+        "roots": [
+          "CODE_REVIEW",
+          "SECURITY_REVIEW",
+          "EXP_ACCEPT",
+          "TEST_PASS",
+          "KNOWLEDGE",
+          "ACCEPT"
+        ]
+      },
+      "after": {
+        "affected": [
+          "CODE_REVIEW",
+          "SECURITY_REVIEW",
+          "EXP_ACCEPT",
+          "TEST_PASS",
+          "KNOWLEDGE",
+          "ACCEPT"
+        ],
+        "revision": {
+          "design": "tsw-design-r2",
+          "code": "tsw-code-r4"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-23T00:50:23.4013260Z",
+      "revision": {
+        "design": "tsw-design-r2",
+        "code": "tsw-code-r4"
+      }
+    }
+  ]
+}

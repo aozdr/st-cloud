@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Users, X, UserPlus, Crown, Pencil, Eye, Upload, Settings, HardDrive, Link2, Copy, Trash2, Activity, LogOut, Send } from 'lucide-react';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
+import { ArrowLeft, Users, X, UserPlus, Crown, Pencil, Eye, Upload, Settings, HardDrive, Link2, Copy, Trash2, Activity, LogOut, Send, Search } from 'lucide-react';
 import api from '../lib/api';
 import FileBrowser from '../components/file/FileBrowser';
 import FileDetailPanel from '../components/file/FileDetailPanel';
@@ -57,9 +57,20 @@ function activeDotColor(iso: string | null): string {
   return 'bg-gray-300';
 }
 
+/** 目标定位只使用团队 source 解析后的当前节点，路径仅用于补齐已授权面包屑。 */
+async function resolveTeamBreadcrumbs(source: ReturnType<typeof teamFileSource>, path: string | null | undefined, fallback: FileNode) {
+  const segments = (path || '').split('/').filter(Boolean);
+  if (segments.length === 0) return [] as { id: string; name: string }[];
+  const prefixes = segments.map((_, index) => `/${segments.slice(0, index + 1).join('/')}`);
+  const resolved = await Promise.all(prefixes.map((prefix) => source.resolveByPath(prefix).catch(() => null)));
+  const breadcrumbs = resolved.filter((node): node is FileNode => !!node && node.nodeType === 0).map((node) => ({ id: node.id, name: node.name }));
+  return breadcrumbs.length > 0 ? breadcrumbs : [{ id: fallback.id, name: fallback.name }];
+}
+
 export default function TeamSpacePage() {
   const { spaceId } = useParams<{ spaceId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { showToast } = useToast();
   const { addFiles } = useUpload();
   const { has } = usePermission();
@@ -94,10 +105,14 @@ export default function TeamSpacePage() {
   const [permissionNode, setPermissionNode] = useState<FileNode | null>(null);
   // 页面级详情视图：detailFile 非空时右侧渲染 w-80 全高侧边栏；detailTab 控制「详情/权限」两个 tab
   const [detailFile, setDetailFile] = useState<FileNode | null>(null);
+  const [focusId, setFocusId] = useState<string | null>(null);
   const [detailTab, setDetailTab] = useState<'info' | 'permission'>('info');
   const [showRoleManage, setShowRoleManage] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [transferTarget, setTransferTarget] = useState<string | null>(null);
+  const targetResolvedKeyRef = useRef<string | null>(null);
+  const targetFolderId = searchParams.get('folderId');
+  const targetNodeId = searchParams.get('nodeId');
 
   const fetchSpace = useCallback(async () => {
     try { const data: TeamSpace = await api.get(`/team/${spaceId}`); setSpace(data); } catch { /* ignore */ }
@@ -119,6 +134,50 @@ export default function TeamSpacePage() {
   useEffect(() => { fetchSpace(); fetchMembers(); }, [fetchSpace, fetchMembers]);
   useEffect(() => { if (showMembers) fetchMembers(); }, [sortBy, fetchMembers, showMembers]);
   useEffect(() => { if (activeTab === 'activity') { setActivityPage(1); fetchActivities(1, false); } }, [activeTab, fetchActivities]);
+
+  // 通知/搜索进入团队空间时，先通过团队 source 实时核权，再决定目录和定位节点。
+  useEffect(() => {
+    const targetKey = `${spaceId || ''}|${targetFolderId || ''}|${targetNodeId || ''}`;
+    if (targetResolvedKeyRef.current === targetKey) return;
+    if (!spaceId || (!targetFolderId && !targetNodeId)) {
+      targetResolvedKeyRef.current = targetKey;
+      setFocusId(null);
+      return;
+    }
+
+    let cancelled = false;
+    const resolveTarget = async () => {
+      try {
+        const target = targetNodeId ? await source.getNodeById(targetNodeId) : null;
+        if (targetNodeId && !target) throw new Error('target-unavailable');
+        const requestedFolder = targetFolderId ? await source.getNodeById(targetFolderId) : null;
+        if (targetFolderId && (!requestedFolder || requestedFolder.nodeType !== 0)) throw new Error('folder-unavailable');
+        if (target && targetFolderId && target.parentId && target.parentId !== targetFolderId) throw new Error('target-outside-folder');
+
+        const parent = target
+          ? target.nodeType === 0
+            ? target
+            : (target.parentId && target.parentId !== '0' ? await source.getNodeById(target.parentId) : null)
+          : requestedFolder;
+        if (parent && parent.nodeType !== 0) throw new Error('parent-unavailable');
+        const nextBreadcrumbs = parent ? await resolveTeamBreadcrumbs(source, parent.path, parent) : [];
+        if (cancelled) return;
+        targetResolvedKeyRef.current = targetKey;
+        setParentId(parent?.id || null);
+        setBreadcrumbs(nextBreadcrumbs);
+        setFocusId(target && target.nodeType !== 0 ? target.id : null);
+      } catch {
+        if (cancelled) return;
+        setParentId(null);
+        setBreadcrumbs([]);
+        setFocusId(null);
+        showToast('无权访问该空间或空间已不存在', 'error');
+        navigate(`/team/${encodeURIComponent(spaceId)}`, { replace: true });
+      }
+    };
+    void resolveTarget();
+    return () => { cancelled = true; };
+  }, [navigate, showToast, source, spaceId, targetFolderId, targetNodeId]);
 
   const handleUserSearch = (keyword: string) => {
     setInviteKeyword(keyword);
@@ -202,10 +261,10 @@ export default function TeamSpacePage() {
     e.target.value = '';
   };
 
-  const navigateToFolder = (node: FileNode) => { if (!node.id || node.id === '0') { setBreadcrumbs([]); setParentId(null); return; } setBreadcrumbs((prev) => [...prev, { id: node.id, name: node.name }]); setParentId(node.id); };
+  const navigateToFolder = (node: FileNode) => { setFocusId(null); if (!node.id || node.id === '0') { setBreadcrumbs([]); setParentId(null); return; } setBreadcrumbs((prev) => [...prev, { id: node.id, name: node.name }]); setParentId(node.id); };
   // 打开页面级详情：始终从「详情」tab 开始
   const handleOpenDetail = (node: FileNode) => { setDetailFile(node); setDetailTab('info'); };
-  const navigateToCrumb = (idx: number) => { if (idx === -1) { setBreadcrumbs([]); setParentId(null); } else { setBreadcrumbs(breadcrumbs.slice(0, idx + 1)); setParentId(breadcrumbs[idx].id); } };
+  const navigateToCrumb = (idx: number) => { setFocusId(null); if (idx === -1) { setBreadcrumbs([]); setParentId(null); } else { setBreadcrumbs(breadcrumbs.slice(0, idx + 1)); setParentId(breadcrumbs[idx].id); } };
   const handleBack = () => { if (breadcrumbs.length > 0) navigateToCrumb(breadcrumbs.length - 2); else navigate('/team'); };
   const loadMoreActivities = () => { const next = activityPage + 1; setActivityPage(next); fetchActivities(next, true); };
   const usedPercent = space ? (Number(space.storageQuota) > 0 ? Math.min(100, (Number(space.storageUsed) / Number(space.storageQuota)) * 100) : 0) : 0;
@@ -225,6 +284,7 @@ export default function TeamSpacePage() {
           <div className="min-w-0"><h1 className="text-lg font-semibold text-fg truncate">{space?.spaceName || '加载中…'}</h1>{space?.description && <p className="text-xs text-muted truncate">{space.description}</p>}</div>
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end flex-shrink-0">
+          <button onClick={() => { const params = new URLSearchParams({ scope: 'team' }); if (spaceId) params.set('spaceId', spaceId); if (parentId) params.set('folderId', parentId); navigate(`/search?${params.toString()}`); }} className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted bg-surface-2 rounded-md hover:bg-surface-2 transition-colors cursor-pointer" title="搜索团队文件"><Search className="w-4 h-4" /><span className="hidden sm:inline">搜索</span></button>
           <button onClick={() => { setShowMembers(true); fetchMembers(); fetchInvites(); }} className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted bg-surface-2 rounded-md hover:bg-surface-2 transition-colors cursor-pointer"><Users className="w-4 h-4" /><span className="hidden sm:inline">成员</span>{space?.memberCount !== undefined && <span className="text-xs text-muted">{space.memberCount}</span>}</button>
           <button onClick={openSettings} className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted bg-surface-2 rounded-md hover:bg-surface-2 transition-colors cursor-pointer" title="空间设置"><Settings className="w-4 h-4" /><span className="hidden sm:inline">设置</span></button>
           {isSpaceAdmin && <button onClick={() => setPermissionNode({ id: parentId || '0', name: parentId ? (currentFolderName || '当前文件夹') : (space?.spaceName || '空间根目录') } as FileNode)} className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-muted bg-surface-2 rounded-md hover:bg-surface-2 transition-colors cursor-pointer" title={permissionButtonText}><Shield className="w-4 h-4" /><span className="hidden sm:inline">{permissionButtonText}</span></button>}
@@ -240,7 +300,7 @@ export default function TeamSpacePage() {
         <div className="h-full flex">
           {/* 文件列表：始终渲染在左侧 flex-1，与右侧详情侧边栏并存，不受详情打开影响 */}
           <div className="flex-1 min-h-0 min-w-0">
-            <FileBrowser key={parentId || "root"} source={source} parentId={parentId} onNavigateFolder={navigateToFolder} onBack={handleBack} uploadSpaceId={spaceId} enableShare={false} enableVersions={false} onOpenDetail={handleOpenDetail} onCloseDetail={() => setDetailFile(null)} detailOpen={!!detailFile} onToggleLock={(action, node) => action === 'lock' ? handleLock(node.id, 24) : handleUnlock(node.id)} />
+            <FileBrowser key={parentId || "root"} source={source} parentId={parentId} focusId={focusId} onNavigateFolder={navigateToFolder} onBack={handleBack} uploadSpaceId={spaceId} enableShare={false} enableVersions={false} onOpenDetail={handleOpenDetail} onCloseDetail={() => setDetailFile(null)} detailOpen={!!detailFile} onToggleLock={(action, node) => action === 'lock' ? handleLock(node.id, 24) : handleUnlock(node.id)} />
           </div>
           {/* 右侧详情侧边栏：w-80 全高（父级 flex-col h-full 链保证延伸到页面内容区底部），保留详情/权限双 tab */}
           {detailFile && (

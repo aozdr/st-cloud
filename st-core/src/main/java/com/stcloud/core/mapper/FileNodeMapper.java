@@ -6,12 +6,30 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
+import com.baomidou.mybatisplus.annotation.InterceptorIgnore;
 
 import java.util.Collection;
 import java.util.List;
 
 @Mapper
 public interface FileNodeMapper extends BaseMapper<FileNode> {
+
+    /** 关注/通知链路按事件租户读取节点，避免异步线程继承默认租户。 */
+    @InterceptorIgnore(tenantLine = "1")
+    @Select("SELECT * FROM file_node WHERE tenant_id = #{tenantId} AND id = #{nodeId} "
+            + "AND deleted = 0")
+    FileNode selectByTenantAndId(@Param("tenantId") Long tenantId, @Param("nodeId") Long nodeId);
+
+    /** 按租户和空间批量读取下一层节点，供关注事件构建祖先/后代集合。 */
+    @InterceptorIgnore(tenantLine = "1")
+    @Select("<script>SELECT * FROM file_node WHERE tenant_id = #{tenantId} AND parent_id IN "
+            + "<foreach collection='parentIds' item='parentId' open='(' separator=',' close=')'>#{parentId}</foreach> "
+            + "AND deleted = 0 AND ((#{spaceId} IS NOT NULL AND #{spaceId} &gt; 0 AND space_id = #{spaceId}) "
+            + "OR ((#{spaceId} IS NULL OR #{spaceId} &lt;= 0) AND (space_id IS NULL OR space_id &lt;= 0)))"
+            + "</script>")
+    List<FileNode> selectChildrenByTenantSpace(@Param("tenantId") Long tenantId,
+                                               @Param("spaceId") Long spaceId,
+                                               @Param("parentIds") Collection<Long> parentIds);
 
     /**
      * 锁定文件节点行，供版本号分配和覆盖上传串行化使用；必须在数据库事务内调用。

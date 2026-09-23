@@ -1,0 +1,6 @@
+{
+  "revision": "tsw-design-r2",
+  "by": "workflow-manager-gpt6",
+  "date": "2026-09-22",
+  "decision": "重新核查目标、权限、可靠性、API与UI设计；未决范围风险为零；修复新建租户快照及已定位测试UI问题；当前状态由新流程建立，历史结果仅作定位依据"
+}

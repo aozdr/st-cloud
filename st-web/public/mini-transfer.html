@@ -7,48 +7,51 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-user-select: none; user-select: none; }
 
-    /* ===== 传输悬浮窗 Design Token（对齐 DESIGN_SYSTEM / core theme）=====
-       Light：白底 + 轻雾蓝主色 + 低对比边框
-       Dark ：仅转换 Background / Surface / Border / Text / Shadow / Primary，结构不变 */
+    /* 沿用主应用的中性色与品牌蓝，借浅蓝轮廓区分悬浮层 */
     :root {
-      --bg: #ffffff;
-      --bg-soft: #f4f6fb;
-      --border: #e7ecf3;
-      --text: #2b2f3a;
-      --text-2: #8b90a0;
+      --bg: #f7f8fc;
+      --bg-soft: #f4f6fa;
+      --border: #e8ebf1;
+      --widget-border: #b3c4ff;
+      --text: #1f2430;
+      --text-2: #697386;
       --primary: #4f6ef7;
-      --primary-weak: #eaf0ff;
+      --primary-weak: #eef2ff;
+      --bar-bg: #eef2ff;
+      --bar-text: #1f2430;
+      --bar-muted: #697386;
+      --micro-fill: #4f6ef7;
+      --chip-bg: #eef2ff;
+      --logo-bg: #dbe3ff;
       --up: #4f6ef7;        /* 上传方向 */
       --down: #1bbf73;      /* 下载方向 */
       --danger: #f04747;
       --danger-weak: #ffecec;
       --warning: #f2a738;
       --track: #eef1f6;
-      /* 微型模式：悬浮窗自身为进度条（轨道用中等蓝灰，填充用深主蓝，白字可读） */
-      --micro-track: #16181f;
-      --micro-fill: #4f6ef7;
-      --shadow: 0 10px 28px rgba(30, 40, 80, 0.18);
-      --shadow-hover: 0 12px 32px rgba(30, 40, 80, 0.24);
       color-scheme: light;
     }
     :root.dark {
       --bg: #16161a;
       --bg-soft: #1f1f26;
       --border: #2a2a30;
+      --widget-border: #5264a7;
       --text: #e6e7eb;
       --text-2: #969ba6;
       --primary: #6c8cff;
       --primary-weak: #1c2647;
+      --bar-bg: #202026;
+      --bar-text: #e6e7eb;
+      --bar-muted: #969ba6;
+      --micro-fill: #4f6ef7;
+      --chip-bg: #202026;
+      --logo-bg: #1c2647;
       --up: #6c8cff;
       --down: #34d399;
       --danger: #f87171;
       --danger-weak: #3a1d1d;
       --warning: #fbbf24;
       --track: #2a2a30;
-      --micro-track: #0b0b0d;
-      --micro-fill: #6c8cff;
-      --shadow: 0 10px 28px rgba(0, 0, 0, 0.4);
-      --shadow-hover: 0 12px 32px rgba(0, 0, 0, 0.5);
       color-scheme: dark;
     }
 
@@ -66,7 +69,7 @@
       position: absolute; left: 0; right: 0; top: 0; bottom: 0;
       display: flex; flex-direction: column;
       background: var(--bg);
-      border: 1px solid var(--border);
+      border: 1px solid var(--widget-border);
       border-radius: 12px;
       overflow: hidden;
       cursor: default;
@@ -77,18 +80,19 @@
       will-change: initial;
     }
     /* 微型模式：悬浮窗即总任务进度条 —— 卡片背景为进度轨道，进度色填充整卡 */
-    [data-mode="micro"] .widget { background: var(--bg); border-color: transparent; border-radius: 6px; }
+    [data-mode="micro"] .widget { background: var(--bar-bg); border-radius: 7px; }
 
-    /* ===== 顶部条（三种模式共用）===== */
+    /* ===== 顶部条（两种模式共用）===== */
     .bar {
       height: 40px; flex: 0 0 40px;
       display: flex; align-items: center; gap: 8px;
       padding: 0 8px;
       position: relative; z-index: 1;
       border-bottom: 1px solid transparent;
+      background: var(--bar-bg); color: var(--bar-text);
     }
     /* 微型模式：logo 独立左侧区，进度条只填右侧；速度靠左 */
-    [data-mode="micro"] .bar { height: 34px; flex-basis: 34px; gap: 0; padding: 0; border-bottom: none; }
+    [data-mode="micro"] .bar { height: 34px; flex-basis: 34px; gap: 0; padding: 0; border-bottom: none; background: transparent; }
 
     /* 云朵 logo 芯片 */
     .logo {
@@ -100,7 +104,7 @@
     .logo svg { width: 14px; height: 14px; stroke: var(--primary); pointer-events: none; }
     [data-mode="micro"] .logo {
       width: 34px; height: 34px; border-radius: 0; flex-shrink: 0;
-      background: var(--surface); border-right: 1px solid var(--border);
+      background: var(--logo-bg); border-right: 1px solid var(--widget-border);
     }
     [data-mode="micro"] .logo svg { width: 16px; height: 16px; }
 
@@ -121,7 +125,7 @@
       gap: 6px;
       font-size: 11px;
       font-weight: 600;
-      color: var(--fg);
+      color: var(--bar-text);
     }
     .sp-item { display: inline-flex; align-items: center; gap: 3px; flex-shrink: 0; }
     .sp-item + .sp-item { margin-left: 2px; }
@@ -131,16 +135,18 @@
     /* 速度/状态放在小圆角标签芯片上（浅色底 + 主题前景色），落在进度色或轨道上都可读 */
     [data-mode="micro"] .sp-item,
     [data-mode="micro"] .status-label {
-      background: var(--surface-2);
-      color: var(--fg);
+      background: var(--chip-bg);
+      color: var(--text);
       border-radius: 999px;
       padding: 1px 5px;
       font-weight: 600;
     }
     [data-mode="micro"] .sp-item { gap: 2px; }
     [data-mode="micro"] .sp-item + .sp-item { margin-left: 0; }
-    .status-label { color: var(--text-2); font-weight: 500; }
+    [data-mode="micro"][data-state="idle"] .status-label { background: transparent; }
+    .status-label { color: var(--bar-muted); font-weight: 500; }
     .status-label.error { color: var(--danger); font-weight: 600; }
+    [data-mode="micro"] .status-label.error { color: var(--danger); }
 
     /* 错误徽标：存在失败任务时显示（不过度、可一眼识别） */
     .err-badge {
@@ -158,10 +164,10 @@
     .icon-btn {
       width: 24px; height: 24px; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
-      border-radius: 6px; color: var(--text-2);
+      border-radius: 6px; color: var(--bar-muted);
       transition: background 0.14s ease, color 0.14s ease;
     }
-    .icon-btn:hover { background: var(--bg-soft); color: var(--text); }
+    .icon-btn:hover { background: var(--primary-weak); color: var(--primary); }
     .icon-btn svg { width: 13px; height: 13px; }
     [data-mode="micro"] .toggle-btn { display: none; }
     [data-mode="micro"] .icon-btn { width: 20px; height: 20px; }
@@ -169,7 +175,7 @@
     /* 总任务进度条：悬浮窗自身即进度条，填充进度色（微型模式显示） */
     .progress-fill {
       position: absolute; left: 0; top: 0; bottom: 0; width: 0%;
-      background: var(--primary); z-index: 0;
+      background: var(--micro-fill); z-index: 0;
       transition: width 0.4s ease;
     }
     [data-mode="micro"] .progress-fill { left: 34px; }
@@ -745,8 +751,8 @@
         startDrag(e);
       });
 
-      // 点击非拖拽 → 模式切换；微型点击即展开，展开点击收起回微型
-      widget.addEventListener('click', function (e) {
+      // 只有状态栏点击才切换模式，任务列表的空白区域不会误收起
+      $('bar').addEventListener('click', function (e) {
         if (widget.dataset.dragged === '1') { widget.dataset.dragged = '0'; return; }
         widget.dataset.dragged = '0';
         if (e.target.closest('button')) return; // 按钮自行处理

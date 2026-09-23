@@ -1,0 +1,852 @@
+{
+  "schemaVersion": 2,
+  "definitionVersion": 2,
+  "taskId": "20260921-team-search-watch",
+  "scale": "large",
+  "status": "running",
+  "goal": {
+    "objective": "由 GPT-6 编写团队全文搜索、文件关注与变更提醒的需求及程序设计文档，再由 GPT-5.6-Luna max 编码并完成验证",
+    "scope": "团队全文搜索、文件和文件夹关注、站内变更通知，以及必要的前后端、数据库、测试与知识库",
+    "completionCriteria": [
+      "需求与程序设计文档覆盖权限、异常、兼容性及可验收场景",
+      "团队全文搜索仅返回当前有权访问的结果与摘要",
+      "文件关注与变更提醒形成可订阅可取消且防越权重复通知的完整流程",
+      "前后端验证与数据库双对比完成，独立评审通过",
+      "需求与程序设计文档由 GPT-6 编写，编码由 GPT-5.6-Luna max 执行"
+    ]
+  },
+  "revision": {
+    "design": "tsw-design-r1",
+    "code": "tsw-code-r1"
+  },
+  "exitCriteria": [
+    {
+      "id": "REQ_ANALYSIS",
+      "status": "done",
+      "dependsOn": [],
+      "by": "workflow-manager-gpt6",
+      "evidenceRef": ".ai/docs/20260921-team-search-watch/documentation-evidence.json",
+      "validatedRevision": "tsw-design-r1",
+      "completedAt": "2026-09-21T01:21:30.7115315Z",
+      "dispatchId": "PRIMARY-DOC-REQ_ANALYSIS-R1"
+    },
+    {
+      "id": "IMPACT_ANALYSIS",
+      "status": "done",
+      "dependsOn": [
+        "REQ_ANALYSIS"
+      ],
+      "by": "workflow-manager-gpt6",
+      "evidenceRef": ".ai/docs/20260921-team-search-watch/documentation-evidence.json",
+      "validatedRevision": "tsw-design-r1",
+      "completedAt": "2026-09-21T01:21:30.7144665Z",
+      "dispatchId": "PRIMARY-DOC-IMPACT_ANALYSIS-R1"
+    },
+    {
+      "id": "EXP_DESIGN",
+      "status": "done",
+      "dependsOn": [
+        "REQ_ANALYSIS"
+      ],
+      "applicable": true,
+      "by": "workflow-manager-gpt6",
+      "evidenceRef": ".ai/docs/20260921-team-search-watch/documentation-evidence.json",
+      "validatedRevision": "tsw-design-r1",
+      "completedAt": "2026-09-21T01:21:30.7144852Z",
+      "dispatchId": "PRIMARY-DOC-EXP_DESIGN-R1"
+    },
+    {
+      "id": "TECH_DESIGN",
+      "status": "done",
+      "dependsOn": [
+        "IMPACT_ANALYSIS",
+        "EXP_DESIGN"
+      ],
+      "by": "workflow-manager-gpt6",
+      "evidenceRef": ".ai/docs/20260921-team-search-watch/documentation-evidence.json",
+      "validatedRevision": "tsw-design-r1",
+      "completedAt": "2026-09-21T01:21:30.7144933Z",
+      "dispatchId": "PRIMARY-DOC-TECH_DESIGN-R1"
+    },
+    {
+      "id": "TESTCASES",
+      "status": "done",
+      "dependsOn": [
+        "TECH_DESIGN"
+      ],
+      "by": "workflow-manager-gpt6",
+      "evidenceRef": ".ai/docs/20260921-team-search-watch/documentation-evidence.json",
+      "validatedRevision": "tsw-design-r1",
+      "completedAt": "2026-09-21T01:21:30.7144978Z",
+      "dispatchId": "PRIMARY-DOC-TESTCASES-R1"
+    },
+    {
+      "id": "IMPLEMENTED",
+      "status": "in_progress",
+      "dependsOn": [
+        "TECH_DESIGN",
+        "TESTCASES"
+      ]
+    },
+    {
+      "id": "CODE_REVIEW",
+      "status": "pending",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ]
+    },
+    {
+      "id": "SECURITY_REVIEW",
+      "status": "pending",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ]
+    },
+    {
+      "id": "EXP_ACCEPT",
+      "status": "pending",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ],
+      "applicable": true
+    },
+    {
+      "id": "TEST_PASS",
+      "status": "pending",
+      "dependsOn": [
+        "CODE_REVIEW",
+        "SECURITY_REVIEW"
+      ]
+    },
+    {
+      "id": "KNOWLEDGE",
+      "status": "pending",
+      "dependsOn": [
+        "TEST_PASS",
+        "SECURITY_REVIEW",
+        "EXP_ACCEPT"
+      ]
+    },
+    {
+      "id": "ACCEPT",
+      "status": "pending",
+      "dependsOn": [
+        "KNOWLEDGE"
+      ]
+    }
+  ],
+  "artifacts": {
+    "architecture": {
+      "status": "ready",
+      "ref": ".ai/docs/20260921-team-search-watch/architecture-review.md"
+    },
+    "experience": {
+      "status": "ready",
+      "ref": ".ai/docs/20260921-team-search-watch/exp-review.md"
+    },
+    "design": {
+      "status": "ready",
+      "ref": ".ai/docs/20260921-team-search-watch/design.md"
+    },
+    "impact": {
+      "status": "ready",
+      "ref": ".ai/docs/20260921-team-search-watch/impact.md"
+    },
+    "requirement": {
+      "status": "ready",
+      "ref": ".ai/docs/20260921-team-search-watch/requirement.md"
+    },
+    "testcases": {
+      "status": "ready",
+      "ref": ".ai/docs/20260921-team-search-watch/testcases.md"
+    },
+    "uiSpec": {
+      "status": "ready",
+      "ref": ".ai/docs/20260921-team-search-watch/uispec.md"
+    }
+  },
+  "blockers": [],
+  "acceptanceEvidence": [],
+  "dispatchLedger": [
+    {
+      "taskType": "implement",
+      "childId": "/root/luna_search_0921",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260921-TSW-SEARCH-A1.json",
+      "dispatchId": "DISPATCH-20260921-TSW-SEARCH-A1",
+      "model": "gpt-5.6-luna",
+      "status": "returned",
+      "role": "executor",
+      "idempotencyKey": "TSW-SEARCH",
+      "reasoningEffort": "max",
+      "criterionId": "IMPLEMENTED",
+      "taskId": "TASK-20260921-team-search-watch-search",
+      "updatedAt": "2026-09-21T01:26:32.1401657Z",
+      "scopeVerified": true
+    },
+    {
+      "taskType": "implement",
+      "childId": "/root/luna_watch_0921",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260921-TSW-WATCH-A1.json",
+      "dispatchId": "DISPATCH-20260921-TSW-WATCH-A1",
+      "model": "gpt-5.6-luna",
+      "status": "failed",
+      "role": "executor",
+      "idempotencyKey": "TSW-WATCH",
+      "reasoningEffort": "max",
+      "criterionId": "IMPLEMENTED",
+      "taskId": "TASK-20260921-team-search-watch-watch",
+      "reason": "Runtime usage limit interrupted prior attempt; preserve files, no completed result accepted."
+    },
+    {
+      "taskType": "implement",
+      "childId": "/root/luna_frontend_0921",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260921-TSW-FE-A1.json",
+      "dispatchId": "DISPATCH-20260921-TSW-FE-A1",
+      "model": "gpt-5.6-luna",
+      "status": "failed",
+      "role": "executor",
+      "idempotencyKey": "TSW-FE",
+      "reasoningEffort": "max",
+      "criterionId": "IMPLEMENTED",
+      "taskId": "TASK-20260921-team-search-watch-frontend",
+      "reason": "Runtime usage limit interrupted prior attempt; preserve files, no completed result accepted."
+    },
+    {
+      "dispatchId": "DISPATCH-20260921-TSW-RELIABILITY-A1",
+      "taskType": "implement",
+      "idempotencyKey": "TSW-RELIABILITY",
+      "status": "failed",
+      "childId": "/root/luna_reliability_0921",
+      "criterionId": "IMPLEMENTED",
+      "taskId": "TASK-20260921-team-search-watch-reliability",
+      "role": "executor",
+      "reasoningEffort": "max",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260921-TSW-RELIABILITY-A1.json",
+      "model": "gpt-5.6-luna",
+      "reason": "Runtime usage limit interrupted prior attempt; preserve files, no completed result accepted."
+    },
+    {
+      "childId": "/root/luna_watch_0921b",
+      "idempotencyKey": "TSW-WATCH",
+      "taskType": "implement",
+      "model": "gpt-5.6-luna",
+      "dispatchId": "DISPATCH-20260921-TSW-WATCH-A2",
+      "criterionId": "IMPLEMENTED",
+      "role": "executor",
+      "status": "returned",
+      "taskId": "TASK-20260921-team-search-watch-watch",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260921-TSW-WATCH-A2.json",
+      "reasoningEffort": "max",
+      "scopeVerified": true,
+      "updatedAt": "2026-09-21T06:10:48.7706346Z"
+    },
+    {
+      "childId": "/root/luna_reliability_0921b",
+      "idempotencyKey": "TSW-RELIABILITY",
+      "taskType": "implement",
+      "model": "gpt-5.6-luna",
+      "dispatchId": "DISPATCH-20260921-TSW-RELIABILITY-A2",
+      "criterionId": "IMPLEMENTED",
+      "role": "executor",
+      "status": "returned",
+      "taskId": "TASK-20260921-team-search-watch-reliability",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260921-TSW-RELIABILITY-A2.json",
+      "reasoningEffort": "max",
+      "scopeVerified": true,
+      "updatedAt": "2026-09-21T06:06:48.0873532Z"
+    },
+    {
+      "childId": "/root/luna_search_0921b",
+      "idempotencyKey": "TSW-SEARCH",
+      "taskType": "implement",
+      "model": "gpt-5.6-luna",
+      "dispatchId": "DISPATCH-20260921-TSW-SEARCH-A2",
+      "criterionId": "IMPLEMENTED",
+      "role": "executor",
+      "status": "failed",
+      "taskId": "TASK-20260921-team-search-watch-search",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260921-TSW-SEARCH-A2.json",
+      "reasoningEffort": "max",
+      "updatedAt": "2026-09-21T06:05:51.924524Z",
+      "failureReason": "DISPATCH_RUNTIME_INJECTION_FAILED: agent thread limit reached; child not created"
+    },
+    {
+      "dispatchId": "DISPATCH-20260921-TSW-WATCH-A3",
+      "taskId": "TASK-20260921-team-search-watch-watch",
+      "idempotencyKey": "TSW-WATCH",
+      "role": "executor",
+      "taskType": "implement",
+      "criterionId": "IMPLEMENTED",
+      "childId": "/root/luna_watch_0921c",
+      "status": "returned",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260921-TSW-WATCH-A3.json",
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "max",
+      "scopeVerified": true,
+      "updatedAt": "2026-09-21T06:16:00.5041208Z"
+    },
+    {
+      "dispatchId": "DISPATCH-20260921-TSW-RELIABILITY-A3",
+      "taskId": "TASK-20260921-team-search-watch-reliability",
+      "idempotencyKey": "TSW-RELIABILITY",
+      "role": "executor",
+      "taskType": "implement",
+      "criterionId": "IMPLEMENTED",
+      "childId": "/root/luna_reliability_0921c",
+      "status": "returned",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260921-TSW-RELIABILITY-A3.json",
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "max",
+      "scopeVerified": true,
+      "updatedAt": "2026-09-21T06:16:02.0813773Z"
+    },
+    {
+      "dispatchId": "DISPATCH-20260921-TSW-SEARCH-A3",
+      "taskId": "TASK-20260921-team-search-watch-search",
+      "idempotencyKey": "TSW-SEARCH",
+      "role": "executor",
+      "taskType": "implement",
+      "criterionId": "IMPLEMENTED",
+      "childId": "/root/luna_search_0921c",
+      "status": "failed",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260921-TSW-SEARCH-A3.json",
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "max"
+    },
+    {
+      "dispatchId": "DISPATCH-20260921-TSW-WATCH-A4",
+      "taskId": "TASK-20260921-team-search-watch-watch",
+      "idempotencyKey": "TSW-WATCH",
+      "role": "executor",
+      "taskType": "implement",
+      "criterionId": "IMPLEMENTED",
+      "childId": "/root/luna_watch_0921d",
+      "status": "returned",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260921-TSW-WATCH-A4.json",
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "max",
+      "scopeVerified": true,
+      "updatedAt": "2026-09-21T12:55:45.0469034Z"
+    },
+    {
+      "dispatchId": "DISPATCH-20260921-TSW-SEARCH-A4",
+      "taskId": "TASK-20260921-team-search-watch-search",
+      "idempotencyKey": "TSW-SEARCH",
+      "role": "executor",
+      "taskType": "implement",
+      "criterionId": "IMPLEMENTED",
+      "childId": "/root/luna_search_0921d",
+      "status": "failed",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260921-TSW-SEARCH-A4.json",
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "max"
+    },
+    {
+      "dispatchId": "DISPATCH-20260921-TSW-SEARCH-A5",
+      "taskId": "TASK-20260921-team-search-watch-search",
+      "idempotencyKey": "TSW-SEARCH",
+      "role": "executor",
+      "taskType": "implement",
+      "criterionId": "IMPLEMENTED",
+      "childId": "/root/luna_search_0921e",
+      "status": "failed",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260921-TSW-SEARCH-A5.json",
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "max"
+    },
+    {
+      "dispatchId": "DISPATCH-20260921-TSW-SEARCH-A6",
+      "taskId": "TASK-20260921-team-search-watch-search",
+      "idempotencyKey": "TSW-SEARCH",
+      "role": "executor",
+      "taskType": "implement",
+      "criterionId": "IMPLEMENTED",
+      "childId": "/root/luna_search_0921f",
+      "status": "failed",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260921-TSW-SEARCH-A6.json",
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "max",
+      "failureReason": "Runtime agent absent after resumed user turn; no result exists"
+    },
+    {
+      "dispatchId": "DISPATCH-20260921-TSW-SEARCH-A7",
+      "taskId": "TASK-20260921-team-search-watch-search",
+      "idempotencyKey": "TSW-SEARCH",
+      "role": "executor",
+      "taskType": "implement",
+      "criterionId": "IMPLEMENTED",
+      "childId": "/root/luna_search_0921g",
+      "status": "spawned",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260921-TSW-SEARCH-A7.json",
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "max"
+    },
+    {
+      "dispatchId": "DISPATCH-20260921-TSW-WATCH-A5",
+      "taskId": "TASK-20260921-team-search-watch-watch",
+      "idempotencyKey": "TSW-WATCH",
+      "role": "executor",
+      "taskType": "implement",
+      "criterionId": "IMPLEMENTED",
+      "childId": "/root/luna_watch_0921e",
+      "status": "spawned",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260921-TSW-WATCH-A5.json",
+      "model": "gpt-5.6-luna",
+      "reasoningEffort": "max"
+    }
+  ],
+  "proposals": [],
+  "history": [
+    {
+      "actor": "workflow-manager-gpt6",
+      "revision": {
+        "design": "tsw-design-r1",
+        "code": "tsw-code-r1"
+      },
+      "action": "reestablish-current-workflow",
+      "eventId": "resume-0921",
+      "occurredAt": "2026-09-21T01:22:48.4038444Z",
+      "detail": "用户继续，当前协议重新建立TASK/State/产物；三个Luna max补完已有代码。历史测试仅作审计，当前实现未验收。"
+    },
+    {
+      "eventId": "ffea00c9-cb9f-4202-8cc5-08e0fac89a5e",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260921-TSW-SEARCH-A1",
+        "status": "spawned"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260921-TSW-SEARCH-A1",
+        "status": "acked",
+        "revision": {
+          "design": "tsw-design-r1",
+          "code": "tsw-code-r1"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-21T01:26:31.3034532Z",
+      "revision": {
+        "design": "tsw-design-r1",
+        "code": "tsw-code-r1"
+      }
+    },
+    {
+      "eventId": "ec2b811b-2a49-4852-97f4-7e1d04d9320a",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260921-TSW-SEARCH-A1",
+        "status": "acked"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260921-TSW-SEARCH-A1",
+        "status": "running",
+        "revision": {
+          "design": "tsw-design-r1",
+          "code": "tsw-code-r1"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-21T01:26:32.1412236Z",
+      "revision": {
+        "design": "tsw-design-r1",
+        "code": "tsw-code-r1"
+      }
+    },
+    {
+      "eventId": "5f578131-06d4-4f8a-beb9-9bb958864787",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260921-TSW-WATCH-A2",
+        "status": "planned"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260921-TSW-WATCH-A2",
+        "status": "spawned",
+        "revision": {
+          "design": "tsw-design-r1",
+          "code": "tsw-code-r1"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-21T06:05:50.8588096Z",
+      "revision": {
+        "design": "tsw-design-r1",
+        "code": "tsw-code-r1"
+      }
+    },
+    {
+      "eventId": "f6a70ea5-a464-40b6-90ec-af0f9895bd71",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260921-TSW-RELIABILITY-A2",
+        "status": "planned"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260921-TSW-RELIABILITY-A2",
+        "status": "spawned",
+        "revision": {
+          "design": "tsw-design-r1",
+          "code": "tsw-code-r1"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-21T06:05:51.3200831Z",
+      "revision": {
+        "design": "tsw-design-r1",
+        "code": "tsw-code-r1"
+      }
+    },
+    {
+      "eventId": "93bbf3e7-ded5-49b6-8c3f-ad63d1891324",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260921-TSW-SEARCH-A2",
+        "status": "planned"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260921-TSW-SEARCH-A2",
+        "status": "failed",
+        "revision": {
+          "design": "tsw-design-r1",
+          "code": "tsw-code-r1"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-21T06:05:51.9250354Z",
+      "revision": {
+        "design": "tsw-design-r1",
+        "code": "tsw-code-r1"
+      }
+    },
+    {
+      "eventId": "5366b305-101a-409f-ad36-0b88c8b47eb9",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260921-TSW-RELIABILITY-A2",
+        "status": "spawned"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260921-TSW-RELIABILITY-A2",
+        "status": "acked",
+        "revision": {
+          "design": "tsw-design-r1",
+          "code": "tsw-code-r1"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-21T06:06:16.927576Z",
+      "revision": {
+        "design": "tsw-design-r1",
+        "code": "tsw-code-r1"
+      }
+    },
+    {
+      "eventId": "4034ff24-36be-42fb-a203-e090ae3d71b7",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260921-TSW-RELIABILITY-A2",
+        "status": "acked"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260921-TSW-RELIABILITY-A2",
+        "status": "running",
+        "revision": {
+          "design": "tsw-design-r1",
+          "code": "tsw-code-r1"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-21T06:06:17.4578213Z",
+      "revision": {
+        "design": "tsw-design-r1",
+        "code": "tsw-code-r1"
+      }
+    },
+    {
+      "eventId": "7ec70e2c-9157-4e68-8eca-681a9b00421e",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260921-TSW-RELIABILITY-A2",
+        "status": "running"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260921-TSW-RELIABILITY-A2",
+        "status": "returned",
+        "revision": {
+          "design": "tsw-design-r1",
+          "code": "tsw-code-r1"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-21T06:06:48.0925142Z",
+      "revision": {
+        "design": "tsw-design-r1",
+        "code": "tsw-code-r1"
+      }
+    },
+    {
+      "eventId": "e1a849d7-508b-45d5-8979-3fd18dc0893c",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260921-TSW-WATCH-A2",
+        "status": "spawned"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260921-TSW-WATCH-A2",
+        "status": "acked",
+        "revision": {
+          "design": "tsw-design-r1",
+          "code": "tsw-code-r1"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-21T06:10:47.4228385Z",
+      "revision": {
+        "design": "tsw-design-r1",
+        "code": "tsw-code-r1"
+      }
+    },
+    {
+      "eventId": "8cd20e6f-4a00-4031-b40f-bd5566eeb25c",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260921-TSW-WATCH-A2",
+        "status": "acked"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260921-TSW-WATCH-A2",
+        "status": "running",
+        "revision": {
+          "design": "tsw-design-r1",
+          "code": "tsw-code-r1"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-21T06:10:48.0494017Z",
+      "revision": {
+        "design": "tsw-design-r1",
+        "code": "tsw-code-r1"
+      }
+    },
+    {
+      "eventId": "7cbc78b1-470d-4572-be55-7de1560c6472",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260921-TSW-WATCH-A2",
+        "status": "running"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260921-TSW-WATCH-A2",
+        "status": "returned",
+        "revision": {
+          "design": "tsw-design-r1",
+          "code": "tsw-code-r1"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-21T06:10:48.7711384Z",
+      "revision": {
+        "design": "tsw-design-r1",
+        "code": "tsw-code-r1"
+      }
+    },
+    {
+      "eventId": "53b8468a-e3c7-47c7-b83e-6e2f674c6b9e",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260921-TSW-WATCH-A3",
+        "status": "spawned"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260921-TSW-WATCH-A3",
+        "status": "acked",
+        "revision": {
+          "design": "tsw-design-r1",
+          "code": "tsw-code-r1"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-21T06:15:59.1434313Z",
+      "revision": {
+        "design": "tsw-design-r1",
+        "code": "tsw-code-r1"
+      }
+    },
+    {
+      "eventId": "3a8b9bb9-d600-47b3-b315-1041e9c97d89",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260921-TSW-WATCH-A3",
+        "status": "acked"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260921-TSW-WATCH-A3",
+        "status": "running",
+        "revision": {
+          "design": "tsw-design-r1",
+          "code": "tsw-code-r1"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-21T06:15:59.8512137Z",
+      "revision": {
+        "design": "tsw-design-r1",
+        "code": "tsw-code-r1"
+      }
+    },
+    {
+      "eventId": "a3f6abf9-e0ee-4864-8cf3-06efae364539",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260921-TSW-WATCH-A3",
+        "status": "running"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260921-TSW-WATCH-A3",
+        "status": "returned",
+        "revision": {
+          "design": "tsw-design-r1",
+          "code": "tsw-code-r1"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-21T06:16:00.5045821Z",
+      "revision": {
+        "design": "tsw-design-r1",
+        "code": "tsw-code-r1"
+      }
+    },
+    {
+      "eventId": "8b0cdba2-7248-42e3-b838-bcb2a25e2d6b",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260921-TSW-RELIABILITY-A3",
+        "status": "spawned"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260921-TSW-RELIABILITY-A3",
+        "status": "acked",
+        "revision": {
+          "design": "tsw-design-r1",
+          "code": "tsw-code-r1"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-21T06:16:01.0741288Z",
+      "revision": {
+        "design": "tsw-design-r1",
+        "code": "tsw-code-r1"
+      }
+    },
+    {
+      "eventId": "79de0d22-bc3c-4573-8f41-faa34cac72c2",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260921-TSW-RELIABILITY-A3",
+        "status": "acked"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260921-TSW-RELIABILITY-A3",
+        "status": "running",
+        "revision": {
+          "design": "tsw-design-r1",
+          "code": "tsw-code-r1"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-21T06:16:01.5731714Z",
+      "revision": {
+        "design": "tsw-design-r1",
+        "code": "tsw-code-r1"
+      }
+    },
+    {
+      "eventId": "d8d6859d-aefc-42e9-8aed-05d372b21d84",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260921-TSW-RELIABILITY-A3",
+        "status": "running"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260921-TSW-RELIABILITY-A3",
+        "status": "returned",
+        "revision": {
+          "design": "tsw-design-r1",
+          "code": "tsw-code-r1"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-21T06:16:02.0817803Z",
+      "revision": {
+        "design": "tsw-design-r1",
+        "code": "tsw-code-r1"
+      }
+    },
+    {
+      "eventId": "4c662695-528b-4452-954d-8a31078438ad",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260921-TSW-WATCH-A4",
+        "status": "spawned"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260921-TSW-WATCH-A4",
+        "status": "acked",
+        "revision": {
+          "design": "tsw-design-r1",
+          "code": "tsw-code-r1"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-21T12:55:43.5530686Z",
+      "revision": {
+        "design": "tsw-design-r1",
+        "code": "tsw-code-r1"
+      }
+    },
+    {
+      "eventId": "7c048eed-561f-4d12-90cf-15e64ca58b66",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260921-TSW-WATCH-A4",
+        "status": "acked"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260921-TSW-WATCH-A4",
+        "status": "running",
+        "revision": {
+          "design": "tsw-design-r1",
+          "code": "tsw-code-r1"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-21T12:55:44.3014707Z",
+      "revision": {
+        "design": "tsw-design-r1",
+        "code": "tsw-code-r1"
+      }
+    },
+    {
+      "eventId": "86db713f-a563-4666-892d-2789640308f0",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260921-TSW-WATCH-A4",
+        "status": "running"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260921-TSW-WATCH-A4",
+        "status": "returned",
+        "revision": {
+          "design": "tsw-design-r1",
+          "code": "tsw-code-r1"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-21T12:55:45.047296Z",
+      "revision": {
+        "design": "tsw-design-r1",
+        "code": "tsw-code-r1"
+      }
+    }
+  ]
+}

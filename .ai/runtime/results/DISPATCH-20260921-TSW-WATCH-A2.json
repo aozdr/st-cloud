@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260921-TSW-WATCH-A2",
+  "taskId": "TASK-20260921-team-search-watch-watch",
+  "idempotencyKey": "TSW-WATCH",
+  "status": "completed",
+  "ack": {
+    "dispatchId": "DISPATCH-20260921-TSW-WATCH-A2",
+    "taskId": "TASK-20260921-team-search-watch-watch",
+    "role": "executor"
+  },
+  "artifactRefs": [
+    "st-team/src/main/java/com/stcloud/team/service/FileWatchAccessService.java",
+    "st-team/src/main/java/com/stcloud/team/service/FileWatchDeliveryProcessor.java",
+    "st-team/src/test/java/com/stcloud/team/service/FileWatchCaptureListenerTest.java",
+    "st-team/src/test/java/com/stcloud/team/service/FileWatchDeliveryProcessorTest.java",
+    "st-team/src/test/java/com/stcloud/team/service/FileWatchAccessServiceTest.java",
+    ".ai/runtime/results/DISPATCH-20260921-TSW-WATCH-A2.json"
+  ],
+  "criterionProposal": {
+    "id": "IMPLEMENTED",
+    "outcome": "pass",
+    "by": "/root/luna_watch_0921b",
+    "dispatchId": "DISPATCH-20260921-TSW-WATCH-A2",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260921-TSW-WATCH-A2.json",
+    "validatedRevision": "tsw-code-r1"
+  },
+  "summary": {
+    "background": "继续收敛文件关注投递链路的测试编译阻塞与异步接收主体校验，保持既有订阅代际、权限核验和重试语义。",
+    "input": [
+      ".ai/tasks/TASK-20260921-team-search-watch-watch.md",
+      ".ai/docs/20260921-team-search-watch/design.md",
+      ".ai/docs/20260921-team-search-watch/testcases.md",
+      ".ai/state/20260921-team-search-watch.yaml（只读）",
+      ".ai/docs/20260921-team-search-watch/watch-tests.log"
+    ],
+    "analysis": {
+      "facts": [
+        "watch-tests.log 显示 FileWatchCaptureListenerTest 第 67、125 行对 BaseMapper.insert(any()) 的重载解析歧义；可靠性集成测试的 JSON checked exception 位于本 dispatch 明确排除文件。",
+        "FileWatchDeliveryProcessor 原流程在查询候选订阅前没有查询 sys_user；仅有 delivery、订阅、成员和节点权限核验。",
+        "SysUser 使用 BaseEntity 的 tenantId/deleted 字段，UserStatus.NORMAL 的代码为 1；st-team 已依赖 st-auth，可复用 SysUserMapper。"
+      ],
+      "changes": [
+        "将监听器测试的两个 never(insert(any())) matcher 收窄为 any(FileWatchDelivery.class)，消除 BaseMapper.insert(T)/insert(Collection<T>) 重载歧义。",
+        "FileWatchAccessService 新增 isActiveUser(tenantId,userId)，显式查询同租户、同用户、deleted=0、status=正常的持久用户记录；非法 ID fail closed，查询异常保留给上层重试。",
+        "FileWatchDeliveryProcessor 在解析 watchIds 和读取订阅前调用 isActiveUser；主体不存在、被禁用或逻辑删除时标记 suppressed，不插入通知。",
+        "新增处理器无效主体负例和授权服务查询条件/空结果测试。"
+      ]
+    },
+    "decision": "只修改本 dispatch 白名单内的关注生产代码与测试；不修改可靠性集成测试、授权排除文件、Loop State 或共享 changereport。",
+    "stateDelta": "proposal only; 未修改 Loop State。",
+    "risk": [
+      "本 dispatch 未运行 Maven；构造器、测试编译和运行结果需由主线程串行确认。",
+      "新增用户查询位于投递事务内，查询异常会沿现有 retry 路径传播；失效用户按设计抑制且不泄漏通知细节。",
+      "数据库迁移、H2/MySQL schema 双对比、真实 MQ/ES/S3 和浏览器验证未执行。"
+    ],
+    "nextStep": "主线程串行运行 st-team testCompile/相关测试，并将本结果与可靠性任务结果合并后 Evaluate；按现有 changereport 规则补充用户有效性覆盖。",
+    "changeImpact": "关注投递发送前增加同租户有效用户门禁；测试 matcher 编译可解析；未改变 HTTP 契约、订阅数据模型、通知唯一键、权限接口或外部写路径。"
+  },
+  "validation": {
+    "executed": [
+      "读取并核对 watch-tests.log 的失败行与排除边界。",
+      "rg 静态检查：isActiveUser 的生产调用、测试覆盖、st-auth 依赖和构造器引用；未发现其他 FileWatchAccessService 直接构造。",
+      "MyBatis-Plus API 静态确认：LambdaQueryWrapper 暴露 getParamNameValuePairs，用于查询条件测试。",
+      "git diff --check（针对已跟踪改动范围）；未发现本次补丁空白错误。"
+    ],
+    "notExecuted": [
+      "Maven testCompile/tests/build：按 TASK 由主线程串行执行。",
+      "数据库迁移、SchemaConsistencyTest、compare-schema.ps1 和可靠性集成测试：由主线程/独立可靠性任务执行。",
+      "真实 MQ、ES、S3、多实例并发与浏览器 E2E：本 dispatch 未启动相关环境。"
+    ]
+  }
+}

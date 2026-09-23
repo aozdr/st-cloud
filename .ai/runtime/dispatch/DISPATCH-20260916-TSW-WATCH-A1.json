@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260916-TSW-WATCH-A1",
+  "taskId": "TASK-20260916-team-search-watch-watch",
+  "idempotencyKey": "TSW-WATCH",
+  "role": "executor",
+  "taskType": "implement",
+  "objective": "在 E:/code/st-cloud 按 TASK 和 GPT-6 定版设计实现watch任务。模型必须 GPT-5.6-Luna max。首条输出 DISPATCH_ACK 三元组，随后读 AGENTS.md/当前协议、TASK、最小 State 和定版文档。不得修改 State、派生或指挥 Agent。每约60秒给主线程进度；源码仅按 scope 修改，保留其他并行任务改动。",
+  "taskRefs": [
+    ".ai/tasks/TASK-20260916-team-search-watch-watch.md",
+    ".ai/docs/20260916-team-search-watch/design.md",
+    ".ai/docs/20260916-team-search-watch/testcases.md"
+  ],
+  "stateRef": ".ai/state/20260916-team-search-watch.yaml",
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      "st-core/**",
+      "st-team/**",
+      "st-sync/**",
+      "docker/mysql/init/43_file_watch.sql",
+      ".ai/docs/20260916-team-search-watch/watch-changereport.md",
+      ".ai/runtime/results/DISPATCH-20260916-TSW-WATCH-A1.json"
+    ],
+    "exclude": [
+      "st-common/**",
+      "st-search/**",
+      "st-web/**",
+      "st-team/src/main/java/com/stcloud/team/service/TeamFileAccessPolicyImpl.java",
+      "st-team/src/main/java/com/stcloud/team/service/FolderPermissionService.java",
+      "st-team/src/test/**/TeamFileAccessPolicyTest*",
+      "st-team/src/test/**/FolderPermissionFreshTest*",
+      ".ai/state/**"
+    ]
+  },
+  "acceptance": [
+    "TASK验收全部满足，严格既定接口与权限可靠性边界",
+    "代码由Luna max执行，独立结果真实记录测试或未执行项"
+  ],
+  "validation": [
+    "准备后端测试，不运行Maven/迁移，主线程串行验证"
+  ],
+  "forbidSpawn": true,
+  "output": {
+    "resultRef": ".ai/runtime/results/DISPATCH-20260916-TSW-WATCH-A1.json",
+    "by": "/root/luna_watch",
+    "validatedRevision": "tsw-code-r1"
+  }
+}

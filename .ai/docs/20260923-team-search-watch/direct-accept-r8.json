@@ -1,0 +1,38 @@
+{
+  "taskId": "20260923-team-search-watch",
+  "eventId": "tsw-r8-solo-accept",
+  "criterionProposal": {
+    "id": "ACCEPT",
+    "outcome": "pass",
+    "by": "main-gpt6",
+    "evidenceRef": ".ai/docs/20260923-team-search-watch/approval-evidence.md",
+    "validatedRevision": "tsw-code-r8"
+  },
+  "acceptanceEvidence": [
+    {
+      "criterion": "需求设计含边界、权限、异常、兼容和验收",
+      "evidenceRef": ".ai/docs/20260923-team-search-watch/requirement.md",
+      "validatedRevision": "tsw-code-r8"
+    },
+    {
+      "criterion": "搜索只返回当前可访问结果",
+      "evidenceRef": ".ai/docs/20260923-team-search-watch/codereview.md",
+      "validatedRevision": "tsw-code-r8"
+    },
+    {
+      "criterion": "关注取消与通知可靠且防越权重复",
+      "evidenceRef": ".ai/docs/20260923-team-search-watch/testreport.md",
+      "validatedRevision": "tsw-code-r8"
+    },
+    {
+      "criterion": "当前代码构建、测试、schema对比和评审通过",
+      "evidenceRef": ".ai/docs/20260923-team-search-watch/testreport.md",
+      "validatedRevision": "tsw-code-r8"
+    },
+    {
+      "criterion": "主线程完成实现与自检，当前修订的正式评审、测试和验收只使用真实证据，不伪造派发或独立结果",
+      "evidenceRef": ".ai/docs/20260923-team-search-watch/approval-evidence.md",
+      "validatedRevision": "tsw-code-r8"
+    }
+  ]
+}

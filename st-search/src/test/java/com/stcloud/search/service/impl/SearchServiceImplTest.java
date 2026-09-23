@@ -6,6 +6,7 @@ import co.elastic.clients.elasticsearch.core.*;
 import co.elastic.clients.elasticsearch.core.search.Hit;
 import co.elastic.clients.elasticsearch.core.search.TotalHitsRelation;
 import co.elastic.clients.util.ApiTypeHelper;
+import co.elastic.clients.util.ObjectBuilder;
 import com.stcloud.common.enums.NodeStatus;
 import com.stcloud.common.enums.NodeType;
 import com.stcloud.core.entity.FileNode;
@@ -26,6 +27,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.io.ByteArrayInputStream;
 import java.util.*;
 import java.util.function.Function;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -145,6 +147,13 @@ class SearchServiceImplTest {
     private IndexResponse mockIndexResponse(String id) {
         return IndexResponse.of(r -> r.index("file_content").id(id).version(1L).primaryTerm(1L).seqNo(0L)
                 .shards(sh -> sh.total(1).successful(1).failed(0)).result(Result.Created));
+    }
+
+    private List<SearchResultVO> searchRecords(String keyword, Long ownerId, int page, int size,
+                                               Integer nodeType, List<String> suffixes,
+                                               Long sizeMin, Long sizeMax, Long dateFrom, Long dateTo) {
+        return searchService.searchContent(keyword, ownerId, page, size, nodeType, suffixes,
+                sizeMin, sizeMax, dateFrom, dateTo).getRecords();
     }
 
     // ==================== isIndexable 测试 ====================
@@ -328,7 +337,7 @@ class SearchServiceImplTest {
 
             doReturn(mockResponse).when(client).search(any(Function.class), eq(Map.class));
 
-            List<SearchResultVO> results = searchService.searchContent("Hello", 1L, 1, 20, null, null, null, null, null, null);
+            List<SearchResultVO> results = searchRecords("Hello", 1L, 1, 20, null, null, null, null, null, null);
 
             assertEquals(1, results.size());
             SearchResultVO vo = results.get(0);
@@ -358,7 +367,7 @@ class SearchServiceImplTest {
 
             doReturn(mockResponse).when(client).search(any(Function.class), eq(Map.class));
 
-            List<SearchResultVO> results = searchService.searchContent("test", null, 1, 10, null, null, null, null, null, null);
+            List<SearchResultVO> results = searchRecords("test", null, 1, 10, null, null, null, null, null, null);
 
             assertEquals(1, results.size());
             SearchResultVO vo = results.get(0);
@@ -384,7 +393,7 @@ class SearchServiceImplTest {
 
             doReturn(mockResponse).when(client).search(any(Function.class), eq(Map.class));
 
-            List<SearchResultVO> results = searchService.searchContent("keyword", 1L, 1, 10, null, null, null, null, null, null);
+            List<SearchResultVO> results = searchRecords("keyword", 1L, 1, 10, null, null, null, null, null, null);
 
             assertEquals(3, results.size());
             assertEquals(1L, results.get(0).getFileId());
@@ -400,7 +409,7 @@ class SearchServiceImplTest {
 
             doReturn(mockResponse).when(client).search(any(Function.class), eq(Map.class));
 
-            List<SearchResultVO> results = searchService.searchContent("nothing", 1L, 1, 10, null, null, null, null, null, null);
+            List<SearchResultVO> results = searchRecords("nothing", 1L, 1, 10, null, null, null, null, null, null);
 
             assertNotNull(results);
             assertTrue(results.isEmpty());
@@ -412,7 +421,7 @@ class SearchServiceImplTest {
             when(client.search(any(Function.class), eq(Map.class)))
                     .thenThrow(new RuntimeException("ES connection refused"));
 
-            List<SearchResultVO> results = searchService.searchContent("test", 1L, 1, 10, null, null, null, null, null, null);
+            List<SearchResultVO> results = searchRecords("test", 1L, 1, 10, null, null, null, null, null, null);
 
             assertNotNull(results);
             assertTrue(results.isEmpty(), "ES 异常时应返回空列表");
@@ -438,7 +447,7 @@ class SearchServiceImplTest {
             doReturn(mockResponse).when(client).search(any(Function.class), eq(Map.class));
 
             // "services" 是 microservices 的词中子串，依赖新增的 .ngram 子字段召回
-            List<SearchResultVO> results = searchService.searchContent("services", 1L, 1, 10, null, null, null, null, null, null);
+            List<SearchResultVO> results = searchRecords("services", 1L, 1, 10, null, null, null, null, null, null);
 
             assertEquals(1, results.size());
             SearchResultVO vo = results.get(0);
@@ -471,7 +480,7 @@ class SearchServiceImplTest {
 
             doReturn(mockResponse).when(client).search(any(Function.class), eq(Map.class));
 
-            List<SearchResultVO> results = searchService.searchContent("test", 1L, 1, 10, null, null, null, null, null, null);
+            List<SearchResultVO> results = searchRecords("test", 1L, 1, 10, null, null, null, null, null, null);
 
             assertEquals(1, results.size(), "source 为 null 的 hit 应被跳过");
             assertEquals(2L, results.get(0).getFileId());
@@ -499,7 +508,7 @@ class SearchServiceImplTest {
             doReturn(mockResponse).when(client).search(any(Function.class), eq(Map.class));
             when(fileNodeMapper.findIdsWithInaccessibleAncestor(anyCollection())).thenReturn(List.of(100L));
 
-            List<SearchResultVO> results = searchService.searchContent("leak", 1L, 1, 10, null, null, null, null, null, null);
+            List<SearchResultVO> results = searchRecords("leak", 1L, 1, 10, null, null, null, null, null, null);
 
             assertTrue(results.isEmpty(), "回收子树中的节点不应出现在搜索结果");
         }
@@ -515,7 +524,7 @@ class SearchServiceImplTest {
             doReturn(mockResponse).when(client).search(any(Function.class), eq(Map.class));
             when(fileNodeMapper.selectBatchIds(anyCollection())).thenReturn(List.of());
 
-            List<SearchResultVO> results = searchService.searchContent("gone", 1L, 1, 10, null, null, null, null, null, null);
+            List<SearchResultVO> results = searchRecords("gone", 1L, 1, 10, null, null, null, null, null, null);
 
             assertTrue(results.isEmpty(), "已删除节点不应出现在搜索结果");
         }
@@ -573,6 +582,31 @@ class SearchServiceImplTest {
             searchService.updateMeta(node);
 
             verify(client).update(any(Function.class), eq(Map.class));
+        }
+
+        @Test
+        @DisplayName("元数据更新不覆盖正文版本 MD5 - 防止旧正文被误放行")
+        @SuppressWarnings("unchecked")
+        void testUpdateMetaPreservesIndexedContentMd5() throws Exception {
+            FileNode node = buildFileNode(101L, "renamed.txt", "txt", 1024L);
+            node.setFileMd5("db-version-b");
+            node.setPath("/new/path/renamed.txt");
+            UpdateResponse<Map> mockResp = UpdateResponse.of(r -> r.index("file_content").id("101")
+                    .version(1L).primaryTerm(1L).seqNo(0L)
+                    .shards(sh -> sh.total(1).successful(1).failed(0)).result(Result.Updated));
+            AtomicReference<UpdateRequest<Map, Map>> captured = new AtomicReference<>();
+            doAnswer(invocation -> {
+                Function<UpdateRequest.Builder<Map, Map>, ObjectBuilder<UpdateRequest<Map, Map>>> builder =
+                        invocation.getArgument(0);
+                captured.set(builder.apply(new UpdateRequest.Builder<Map, Map>()).build());
+                return mockResp;
+            }).when(client).update(any(Function.class), eq(Map.class));
+
+            searchService.updateMeta(node);
+
+            assertNotNull(captured.get());
+            assertFalse(captured.get().doc().containsKey(SearchIndexInitializer.FIELD_FILE_MD5),
+                    "rename/move metadata event must not change the MD5 of indexed正文");
         }
 
         @Test
@@ -661,7 +695,7 @@ class SearchServiceImplTest {
 
             doReturn(mockResponse).when(client).search(any(Function.class), eq(Map.class));
 
-            List<SearchResultVO> results = searchService.searchContent("test", 1L, 1, 10, null, null, null, null, null, null);
+            List<SearchResultVO> results = searchRecords("test", 1L, 1, 10, null, null, null, null, null, null);
 
             assertEquals(1, results.size());
             assertNull(results.get(0).getFileId(), "非数字 fileId 应返回 null");
@@ -680,7 +714,7 @@ class SearchServiceImplTest {
 
             doReturn(mockResponse).when(client).search(any(Function.class), eq(Map.class));
 
-            List<SearchResultVO> results = searchService.searchContent("test", 1L, 1, 10, null, null, null, null, null, null);
+            List<SearchResultVO> results = searchRecords("test", 1L, 1, 10, null, null, null, null, null, null);
 
             assertEquals(1, results.size());
             assertNull(results.get(0).getFileId());
@@ -702,7 +736,7 @@ class SearchServiceImplTest {
 
             doReturn(mockResponse).when(client).search(any(Function.class), eq(Map.class));
 
-            List<SearchResultVO> results = searchService.searchContent("test", 1L, 1, 10, null, null, null, null, null, null);
+            List<SearchResultVO> results = searchRecords("test", 1L, 1, 10, null, null, null, null, null, null);
 
             assertEquals("<em>foo</em> ... <em>bar</em> ... <em>baz</em>",
                     results.get(0).getHighlight());
@@ -723,7 +757,7 @@ class SearchServiceImplTest {
 
             doReturn(mockResponse).when(client).search(any(Function.class), eq(Map.class));
 
-            List<SearchResultVO> results = searchService.searchContent("test", 1L, 1, 10, null, null, null, null, null, null);
+            List<SearchResultVO> results = searchRecords("test", 1L, 1, 10, null, null, null, null, null, null);
 
             assertEquals(1, results.size());
             assertEquals("<em>test</em>.txt", results.get(0).getHighlight());

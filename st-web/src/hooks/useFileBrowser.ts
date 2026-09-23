@@ -563,6 +563,18 @@ export function useFileBrowser({
         showToast(added ? '已收藏' : '已取消收藏');
         break;
       }
+      case 'watch':
+      case 'unwatch': {
+        try {
+          if (action === 'watch') await api.put(`/file-watches/${encodeURIComponent(node.id)}`);
+          else await api.delete(`/file-watches/${encodeURIComponent(node.id)}`);
+          window.dispatchEvent(new CustomEvent('file-watch-changed', { detail: { nodeId: node.id } }));
+          showToast(action === 'watch' ? '已关注，后续变更将在站内通知中提醒' : '已取消关注', 'success');
+        } catch (error) {
+          showToast(error instanceof Error && error.message ? error.message : action === 'watch' ? '关注失败' : '取消关注失败', 'error');
+        }
+        break;
+      }
       case 'hide': {
         await api.put(`/file/${node.id}/hide`);
         showToast('已隐藏');

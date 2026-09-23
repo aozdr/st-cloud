@@ -40,6 +40,19 @@
     "blockers": { "type": "array", "items": { "$ref": "#/$defs/blocker" } },
     "acceptanceEvidence": { "type": "array", "items": { "$ref": "#/$defs/acceptance" } },
     "dispatchLedger": { "type": "array", "items": { "$ref": "#/$defs/dispatchAttempt" } },
+    "singleAgentAuthorization": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["taskId", "actor", "authorizedBy", "authorizationQuote", "evidenceRef", "criteria"],
+      "properties": {
+        "taskId": { "type": "string", "minLength": 1 },
+        "actor": { "type": "string", "minLength": 1 },
+        "authorizedBy": { "const": "user" },
+        "authorizationQuote": { "type": "string", "minLength": 1 },
+        "evidenceRef": { "type": "string", "minLength": 1 },
+        "criteria": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["CODE_REVIEW", "SECURITY_REVIEW", "EXP_ACCEPT", "TEST_PASS", "ACCEPT"] } }
+      }
+    },
     "proposals": { "type": "array", "items": { "type": "object" } },
     "history": { "type": "array", "items": { "$ref": "#/$defs/history" } }
   },
@@ -73,6 +86,8 @@
         "confirmationRequired": { "type": "boolean" },
         "by": { "type": "string", "minLength": 1 },
         "dispatchId": { "type": "string", "minLength": 1 },
+        "executionKind": { "enum": ["direct", "dispatch"] },
+        "executionId": { "type": "string", "minLength": 1 },
         "evidenceRef": { "type": "string", "minLength": 1 },
         "validatedRevision": { "type": "string", "minLength": 1 },
         "completedAt": { "type": "string", "format": "date-time" },

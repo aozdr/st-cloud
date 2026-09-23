@@ -76,6 +76,7 @@ export default function FolderPermissionDialog({ spaceId, node, onClose, variant
   const { showToast } = useToast();
   const isPanel = variant === 'panel';
   const [rules, setRules] = useState<FolderPermissionItem[]>([]);
+  const [loadError, setLoadError] = useState(false);
   const [roles, setRoles] = useState<TeamRoleInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [newSubjectType, setNewSubjectType] = useState<SubjectType>('all');
@@ -84,14 +85,21 @@ export default function FolderPermissionDialog({ spaceId, node, onClose, variant
   const [selectedUser, setSelectedUser] = useState<UserSearch | null>(null);
   const [newRoleId, setNewRoleId] = useState('2');
   const [newPerms, setNewPerms] = useState<Record<string, boolean>>({ view: true });
+  const [newRuleTouched, setNewRuleTouched] = useState(false);
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editPerms, setEditPerms] = useState<Record<string, boolean>>({});
+  const ruleLoadId = useRef(0);
 
   const fetchRules = useCallback(async () => {
+    const requestId = ++ruleLoadId.current;
+    setLoading(true);
     try {
       const res = await api.get<FolderPermissionItem[]>(`/team/${spaceId}/folder/${node.id}/permissions`);
+      if (requestId !== ruleLoadId.current) return;
       setRules(res || []);
-    } catch { /* ignore */ } finally { setLoading(false); }
+      setLoadError(false);
+    } catch { if (requestId === ruleLoadId.current) setLoadError(true); }
+    finally { if (requestId === ruleLoadId.current) setLoading(false); }
   }, [spaceId, node.id]);
 
   const fetchRoles = useCallback(async () => {
@@ -118,12 +126,13 @@ export default function FolderPermissionDialog({ spaceId, node, onClose, variant
       return next;
     });
   };
-  const toggleNewPerm = makeToggle(setNewPerms);
+  const toggleNewPerm = (key: string) => { setNewRuleTouched(true); makeToggle(setNewPerms)(key); };
   const toggleEditPerm = makeToggle(setEditPerms);
 
   // 用户搜索：300ms debounce，避免每键一次请求；失败给出提示（后端要求管理员权限，非管理员会被拒）
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const handleSearch = (kw: string) => {
+    setNewRuleTouched(true);
     setNewKeyword(kw); setSelectedUser(null);
     if (searchTimer.current) clearTimeout(searchTimer.current);
     if (!kw.trim()) { setSearchResults([]); return; }
@@ -138,6 +147,7 @@ export default function FolderPermissionDialog({ spaceId, node, onClose, variant
   useEffect(() => () => { if (searchTimer.current) clearTimeout(searchTimer.current); }, []);
 
   const handleSubjectTypeChange = (t: SubjectType) => {
+    setNewRuleTouched(true);
     setNewSubjectType(t); setNewKeyword(''); setSelectedUser(null); setSearchResults([]);
   };
 
@@ -165,6 +175,7 @@ export default function FolderPermissionDialog({ spaceId, node, onClose, variant
     }
     setNewKeyword(''); setSelectedUser(null); setSearchResults([]);
     setNewPerms({ view: true });
+    setNewRuleTouched(false);
   };
 
   const handleRemoveRule = (idx: number) => {
@@ -187,13 +198,40 @@ export default function FolderPermissionDialog({ spaceId, node, onClose, variant
   };
 
   const handleSave = async () => {
+    if (loading || loadError) { showToast('权限规则尚未加载，请重试', 'warning'); return; }
+    let nextRules = rules;
+    // 正在编辑的规则和下方尚未点“添加”的新规则，都随“保存”一起提交。
+    if (editingIdx !== null) {
+      nextRules = nextRules.map((r, i) => i === editingIdx ? { ...r, permissions: { ...editPerms } } : r);
+    }
+    if (newRuleTouched) {
+      if (newSubjectType === 'member' && !selectedUser) {
+        showToast('请先搜索并选择成员', 'warning');
+        return;
+      }
+      const subjectId = newSubjectType === 'member' ? selectedUser!.userId : newSubjectType === 'role' ? newRoleId : '0';
+      const subjectName = newSubjectType === 'member'
+        ? (selectedUser!.nickname || selectedUser!.username)
+        : newSubjectType === 'role' ? roleNameById(newRoleId) : '全体成员';
+      const pending: FolderPermissionItem = {
+        id: '', spaceId, folderNodeId: node.id, subjectType: newSubjectType,
+        subjectId, subjectName, permission: 2, permissions: { ...newPerms }, createdAt: '',
+      };
+      const existingIdx = nextRules.findIndex(r => r.subjectType === newSubjectType && String(r.subjectId) === String(subjectId));
+      nextRules = existingIdx < 0 ? [...nextRules, pending]
+        : nextRules.map((r, i) => i === existingIdx ? { ...r, permissions: { ...newPerms } } : r);
+    }
     try {
-      const payload = rules.map(r => ({
+      const payload = nextRules.map(r => ({
         subjectType: r.subjectType,
         subjectId: r.subjectType === 'all' ? '0' : String(r.subjectId),
         permissions: JSON.stringify(rulePermissions(r)),
       }));
       await api.put(`/team/${spaceId}/folder/${node.id}/permissions`, { rules: payload });
+      setRules(nextRules);
+      setEditingIdx(null);
+      setNewRuleTouched(false);
+      setNewPerms({ view: true });
       showToast('权限已保存', 'success');
       // 面板模式：保存后停留在权限 tab 并回显已保存规则；弹窗模式：保存后关闭
       if (variant === 'dialog') onClose();
@@ -233,7 +271,7 @@ export default function FolderPermissionDialog({ spaceId, node, onClose, variant
           {/* 权限规则列表 */}
           <div>
             <p className="text-xs font-medium text-muted mb-2">权限规则</p>
-            {loading ? <p className="text-sm text-muted">加载中...</p> : rules.length === 0 ? <p className="text-sm text-muted">暂无规则，继承父文件夹权限</p> : (
+            {loading ? <p className="text-sm text-muted">加载中...</p> : loadError ? <button onClick={fetchRules} className="text-sm text-primary-600 cursor-pointer">加载失败，点击重试</button> : rules.length === 0 ? <p className="text-sm text-muted">暂无规则，继承父文件夹权限</p> : (
               <div className="space-y-1.5">
                 {rules.map((r, idx) => {
                   const badge = subjectBadge(r.subjectType);
@@ -287,12 +325,12 @@ export default function FolderPermissionDialog({ spaceId, node, onClose, variant
                   <input type="text" value={newKeyword} onChange={(e) => handleSearch(e.target.value)} placeholder="搜索用户..." aria-label="搜索用户" className="w-full px-3 py-2 text-sm bg-surface-2 rounded-md border border-border outline-none focus:border-primary-400" />
                   {searchResults.length > 0 && !selectedUser && (
                     <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-surface rounded-md border border-border shadow-lg max-h-40 overflow-auto">
-                      {searchResults.map(u => <button key={u.userId} onClick={() => { setSelectedUser(u); setNewKeyword(u.nickname || u.username); setSearchResults([]); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-surface-2 cursor-pointer text-left"><div className="w-6 h-6 bg-primary-600 rounded-full flex items-center justify-center text-white text-xs">{u.nickname?.[0] || u.username[0]}</div><span>{u.nickname || u.username}</span><span className="text-xs text-muted">@{u.username}</span></button>)}
+                      {searchResults.map(u => <button key={u.userId} onClick={() => { setNewRuleTouched(true); setSelectedUser(u); setNewKeyword(u.nickname || u.username); setSearchResults([]); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-surface-2 cursor-pointer text-left"><div className="w-6 h-6 bg-primary-600 rounded-full flex items-center justify-center text-white text-xs">{u.nickname?.[0] || u.username[0]}</div><span>{u.nickname || u.username}</span><span className="text-xs text-muted">@{u.username}</span></button>)}
                     </div>
                   )}
                 </div>
               ) : newSubjectType === 'role' ? (
-                <select value={newRoleId} onChange={(e) => setNewRoleId(e.target.value)} aria-label="选择角色" className={cn('px-3 py-2 text-sm bg-surface-2 rounded-md border border-border outline-none cursor-pointer', isPanel ? 'w-full' : '')}>
+                <select value={newRoleId} onChange={(e) => { setNewRuleTouched(true); setNewRoleId(e.target.value); }} aria-label="选择角色" className={cn('px-3 py-2 text-sm bg-surface-2 rounded-md border border-border outline-none cursor-pointer', isPanel ? 'w-full' : '')}>
                   {PRESET_ROLES.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                   {customRoles.map(r => <option key={r.id} value={String(r.id)}>{r.name}（自定义）</option>)}
                 </select>
@@ -307,7 +345,7 @@ export default function FolderPermissionDialog({ spaceId, node, onClose, variant
                   <PermissionToggle key={p.key} label={p.label} checked={newPerms[p.key] || false} onToggle={() => toggleNewPerm(p.key)} />
                 ))}
               </div>
-              <p className="text-[11px] text-muted mt-1.5">勾选「上传/下载」会自动补上「查看」；取消「查看」会同步取消「上传/下载」（与后端隐含规则一致）。</p>
+              <p className="text-[11px] text-muted mt-1.5">勾选「上传/下载」会自动补上「查看」；选择后可直接点「保存」，也可点「添加」继续设置其他规则。</p>
             </div>
             <div className="mt-2 flex justify-end">
               <button onClick={handleAddRule} className="flex items-center gap-1 px-3 py-2 text-sm text-white bg-primary-600 rounded-md hover:bg-primary-700 cursor-pointer"><Plus className="w-4 h-4" />添加</button>

@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260919-TSW-FE-A1",
+  "taskId": "TASK-20260919-team-search-watch-frontend",
+  "idempotencyKey": "TSW-FE",
+  "role": "executor",
+  "taskType": "implement",
+  "objective": "在 E:/code/st-cloud 按 TASK 和 GPT-6 定版设计实现frontend任务。模型必须 GPT-5.6-Luna max。首条输出 DISPATCH_ACK 三元组，随后读 AGENTS.md/当前协议、TASK、最小 State 和定版文档。不得修改 State、派生或指挥 Agent。每约60秒给主线程进度；源码仅按 scope 修改，保留其他并行任务改动。 续做：上次实例因额度中断。保留工作区已有部分实现，先核对后继续；不得回滚其他Agent改动。 本次先核对已存在的部分代码和设计，修复缺口。首条ACK同时用send_message发给主线程以便确认。不要等待主线程催促才交付。",
+  "taskRefs": [
+    ".ai/tasks/TASK-20260919-team-search-watch-frontend.md",
+    ".ai/docs/20260919-team-search-watch/design.md",
+    ".ai/docs/20260919-team-search-watch/testcases.md"
+  ],
+  "stateRef": ".ai/state/20260919-team-search-watch.yaml",
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      "st-web/**",
+      ".ai/docs/20260919-team-search-watch/frontend-changereport.md",
+      ".ai/runtime/results/DISPATCH-20260919-TSW-FE-A1.json"
+    ],
+    "exclude": [
+      "st-core/**",
+      "st-team/**",
+      "st-search/**",
+      "st-common/**",
+      "docker/**",
+      ".ai/state/**"
+    ]
+  },
+  "acceptance": [
+    "TASK验收全部满足，严格既定接口与权限可靠性边界",
+    "代码由Luna max执行，独立结果真实记录测试或未执行项"
+  ],
+  "validation": [
+    "运行现有前端类型/构建/必要测试；不运行Maven"
+  ],
+  "forbidSpawn": true,
+  "output": {
+    "resultRef": ".ai/runtime/results/DISPATCH-20260919-TSW-FE-A1.json",
+    "by": "/root/luna_frontend_0919",
+    "validatedRevision": "tsw-code-r1"
+  }
+}

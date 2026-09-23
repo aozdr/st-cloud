@@ -1,0 +1,51 @@
+{
+  "role": "executor",
+  "stateRef": ".ai/state/20260922-team-search-watch.yaml",
+  "validation": [
+    "后端不运行Maven；前端可build/lint；主线程串行集成"
+  ],
+  "schemaVersion": 2,
+  "skillRefs": [
+    "-"
+  ],
+  "taskId": "TASK-20260922-team-search-watch-watch",
+  "dispatchId": "DISPATCH-20260922-TSW-WATCH-A1",
+  "idempotencyKey": "TSW-WATCH",
+  "acceptance": [
+    "既定接口和权限可靠性边界保持",
+    "修复实际缺陷并提供真实验证证据"
+  ],
+  "objective": "修复真实团队新建文件夹因内存node缺tenantId而被关注捕获拒绝的回归。检查可信事务上下文与DB快照，不能跳过捕获或弱化租户校验。覆盖个人/团队新建、无订阅正常创建、有订阅正确捕获及跨租户拒绝。仅必要改动。",
+  "scope": {
+    "include": [
+      "st-core/**",
+      "st-team/**",
+      "st-sync/**",
+      ".ai/docs/20260922-team-search-watch/watch-changereport.md",
+      ".ai/runtime/results/DISPATCH-20260922-TSW-WATCH-A1.json"
+    ],
+    "exclude": [
+      "st-common/**",
+      "st-search/**",
+      "st-web/**",
+      "docker/**",
+      ".ai/state/**",
+      "st-team/src/main/java/com/stcloud/team/service/TeamFileAccessPolicyImpl.java",
+      "st-team/src/main/java/com/stcloud/team/service/FolderPermissionService.java",
+      "st-team/src/test/**/TeamFileAccessPolicyTest*",
+      "st-team/src/test/**/FolderPermissionFreshTest*"
+    ]
+  },
+  "taskType": "implement",
+  "output": {
+    "validatedRevision": "tsw-code-r2",
+    "resultRef": ".ai/runtime/results/DISPATCH-20260922-TSW-WATCH-A1.json",
+    "by": "/root/luna_watch_0922"
+  },
+  "forbidSpawn": true,
+  "taskRefs": [
+    ".ai/tasks/TASK-20260922-team-search-watch-watch.md",
+    ".ai/docs/20260922-team-search-watch/design.md",
+    ".ai/docs/20260922-team-search-watch/testcases.md"
+  ]
+}

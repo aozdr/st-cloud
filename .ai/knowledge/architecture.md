@@ -133,6 +133,14 @@ st-api
 - **Retry**：`EventRetryTask` 定时扫描 `status=2`（投递失败）的 Outbox 行重投
 - **本地兜底**：未配置 RocketMQ 时走 Spring ApplicationEvent 同进程异步，链路与 MQ 并存
 
+### 团队搜索权限与文件关注提醒（2026-09）
+
+- `st-search` 通过 `st-common` 的 `TeamFileAccessPolicy` 显式传入 tenant/user/space/node；`st-team` 基于当前成员、节点祖先和文件夹授权实现策略。搜索不把 ACL 复制进 ES 作为最终授权依据，结果和通知均在读取时复核。
+- 团队搜索候选扫描使用单请求 `ReadContext` 复用成员、祖先和权限规则读取；组装响应前重新读取当前节点并调用无共享缓存的 `canView`。请求缓存只降低扫描阶段的重复 SQL，不能代替最终即时核权。签名游标还拒绝非规范 Base64URL 表示。
+- `ReliableEventPublisher` 在索引与同步 Outbox 序列化前校验/补齐认证租户快照。索引事件先发布，不能只在后续同步事件补 tenantId；请求主体租户与节点已有租户冲突时拒绝写事件。
+- `FileWatchCaptureEvent` 仅做数据库写入并参与核心写事务；`file_watch_delivery` 为独立持久队列，定时器逐条短事务核权、插入通知并完成队列状态。MQ 开关不改变关注通知捕获语义。
+- 通知列表和安全目标解析仅允许当前 tenant/user；新关注通知依据当前节点及 ACL 生成 DTO，不直接信任存储的历史名称或 URL。列表最大 100 条，限制每行核权读取的成本。
+
 ### 文件索引事件（core → search）
 
 ```

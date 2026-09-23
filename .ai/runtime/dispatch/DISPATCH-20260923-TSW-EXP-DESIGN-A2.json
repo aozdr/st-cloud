@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260923-TSW-EXP-DESIGN-A2",
+  "taskId": "TASK-20260923-team-search-watch-exp-design",
+  "idempotencyKey": "20260923-TSW-EXP-DESIGN",
+  "role": "reviewer",
+  "taskType": "exp-review",
+  "objective": "独立复核 tsw-design-r4 的游标过期恢复与通知目标乱序保护是否填补 A1 缺口，提出 EXP_DESIGN 结论",
+  "stateRef": ".ai/state/20260923-team-search-watch.yaml",
+  "taskRefs": [".ai/tasks/TASK-20260923-team-search-watch-exp-design.md", ".ai/docs/20260923-team-search-watch/requirement.md", ".ai/docs/20260923-team-search-watch/uispec.md", ".ai/docs/20260923-team-search-watch/design.md", ".ai/docs/20260923-team-search-watch/exp-review.md"],
+  "skillRefs": ["-"],
+  "scope": {
+    "include": [".ai/docs/20260923-team-search-watch/exp-review.md", ".ai/runtime/results/DISPATCH-20260923-TSW-EXP-DESIGN-A2.json"],
+    "exclude": ["st-*/**", "docker/**", ".ai/state/**"]
+  },
+  "acceptance": ["核对 A1 两项缺口在设计和当前前端实现中确已修复", "保留 A1 失败审计记录并明确当前 r4 结论，未解决问题不得建议通过"],
+  "validation": ["只读检查当前设计与前端代码；不运行构建；结果绑定 tsw-design-r4"],
+  "output": {"resultRef": ".ai/runtime/results/DISPATCH-20260923-TSW-EXP-DESIGN-A2.json", "by": "/root/tsw_exp_design_a2", "validatedRevision": "tsw-design-r4"},
+  "forbidSpawn": true
+}

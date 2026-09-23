@@ -1,0 +1,59 @@
+{
+  "dispatchId": "DISPATCH-20260923-TSW-CODE-A1",
+  "taskId": "TASK-20260923-team-search-watch-code-review",
+  "role": "reviewer",
+  "status": "completed",
+  "by": "/root/tsw_code_review",
+  "validatedRevision": "tsw-code-r7",
+  "background": "独立评审 tsw-code-r7 的团队搜索与文件关注提醒实现，核对当前需求、设计、测试用例和变更报告。",
+  "input": [
+    ".ai/tasks/TASK-20260923-team-search-watch-code-review.md",
+    ".ai/state/20260923-team-search-watch.yaml（只读 revision 快照）",
+    ".ai/docs/20260923-team-search-watch/requirement.md",
+    ".ai/docs/20260923-team-search-watch/design.md",
+    ".ai/docs/20260923-team-search-watch/testcases.md",
+    ".ai/docs/20260923-team-search-watch/changereport.md",
+    "团队搜索、关注投递、通知控制器与权限策略源码及现有测试记录"
+  ],
+  "analysis": "发现一项中等级问题：TeamSearchServiceImpl 对逐个 ES 候选执行 accessPolicy.canView；TeamFileAccessPolicyImpl.canView 每次重新查空间、成员、节点/祖先及 fresh 权限。候选预算为 2000，但没有请求级祖先/权限缓存；分页 lookahead 与响应前还会分别重复对可见候选核权。design.md §3.3 第 3 步明确要求维护本请求祖先与权限缓存。宽范围或 ACL 过滤较多时会产生按候选数和祖先深度放大的 SQL 查询量，增加数据库负载与延迟。详细代码定位和复现条件见 codereview.md 的 CR-01。其余权限、游标、索引租户/元数据复核、关注事件事务幂等、通知读取脱敏与分页上限均完成静态核对；未发现其他阻止项。",
+  "decision": [
+    "建议当前 tsw-code-r7 的 CODE_REVIEW outcome=fail；未解决的 CR-01 中等级问题阻止通过。",
+    "建议增加有界请求级祖先/权限缓存，保留返回前即时核权，并用 mapper 查询数或受控数据集验证预算；主线程完成修复后以新 revision 重新评审。"
+  ],
+  "artifactRefs": [
+    ".ai/docs/20260923-team-search-watch/codereview.md"
+  ],
+  "validation": [
+    {
+      "method": "只读核对 TASK、需求/设计/测试用例/变更报告、最小 State revision、相关源码与已有测试记录",
+      "outcome": "completed",
+      "evidence": ".ai/docs/20260923-team-search-watch/codereview.md 记录了 CR-01 的触发条件、设计条款、代码文件行号和静态验证边界；未运行构建或测试。"
+    }
+  ],
+  "stateDelta": {
+    "proposalOnly": true,
+    "proposals": [
+      {
+        "id": "CODE_REVIEW",
+        "outcome": "fail",
+        "dispatchId": "DISPATCH-20260923-TSW-CODE-A1",
+        "evidenceRef": ".ai/runtime/results/DISPATCH-20260923-TSW-CODE-A1.json",
+        "validatedRevision": "tsw-code-r7"
+      }
+    ]
+  },
+  "risks": [
+    "宽范围搜索的候选级 ACL 检查缺少请求级缓存，会造成数据库查询放大；当前修订不建议通过 CODE_REVIEW。"
+  ],
+  "nextStep": "主线程评估本结果并修复 CR-01；修复后按新代码修订派发复核。",
+  "changeImpact": "仅写入 scope.include 指定的 codereview.md 与本 Dispatch 独立结果文件；未修改产品代码或 Loop State。",
+  "criterionProposal": {
+    "id": "CODE_REVIEW",
+    "outcome": "fail",
+    "by": "/root/tsw_code_review",
+    "dispatchId": "DISPATCH-20260923-TSW-CODE-A1",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260923-TSW-CODE-A1.json",
+    "validatedRevision": "tsw-code-r7"
+  },
+  "blockerProposals": []
+}

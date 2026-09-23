@@ -1,0 +1,48 @@
+{
+  "role": "executor",
+  "stateRef": ".ai/state/20260922-team-search-watch.yaml",
+  "validation": [
+    "后端不运行Maven；前端可build/lint；主线程串行集成"
+  ],
+  "schemaVersion": 2,
+  "skillRefs": [
+    "-"
+  ],
+  "taskId": "TASK-20260922-team-search-watch-search",
+  "dispatchId": "DISPATCH-20260922-TSW-SEARCH-A1",
+  "idempotencyKey": "TSW-SEARCH",
+  "acceptance": [
+    "既定接口和权限可靠性边界保持",
+    "修复实际缺陷并提供真实验证证据"
+  ],
+  "objective": "保留7个新增团队搜索边界测试，修复TeamSearchServiceTest约448/452/455/468/469的参数编译错误，严格search十三参数顺序。检查过期/跨用户游标、首批100无权后有权、连续分页、预算与参数和缺密钥用例，不能弱化断言或修改接口掩盖问题。",
+  "scope": {
+    "include": [
+      "st-search/**",
+      "st-common/src/main/java/com/stcloud/common/access/TeamFileAccessPolicy.java",
+      "st-team/src/main/java/com/stcloud/team/service/TeamFileAccessPolicyImpl.java",
+      "st-team/src/main/java/com/stcloud/team/service/FolderPermissionService.java",
+      "st-team/src/test/**/TeamFileAccessPolicyTest*",
+      "st-team/src/test/**/FolderPermissionFreshTest*",
+      ".ai/docs/20260922-team-search-watch/search-changereport.md",
+      ".ai/runtime/results/DISPATCH-20260922-TSW-SEARCH-A1.json"
+    ],
+    "exclude": [
+      "st-web/**",
+      "docker/**",
+      ".ai/state/**"
+    ]
+  },
+  "taskType": "implement",
+  "output": {
+    "validatedRevision": "tsw-code-r2",
+    "resultRef": ".ai/runtime/results/DISPATCH-20260922-TSW-SEARCH-A1.json",
+    "by": "/root/luna_search_0922"
+  },
+  "forbidSpawn": true,
+  "taskRefs": [
+    ".ai/tasks/TASK-20260922-team-search-watch-search.md",
+    ".ai/docs/20260922-team-search-watch/design.md",
+    ".ai/docs/20260922-team-search-watch/testcases.md"
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "taskId": "TASK-20260923-team-root-permission",
+  "criterionProposal": {
+    "id": "DESIGN",
+    "outcome": "pass",
+    "by": "workflow-manager",
+    "evidenceRef": ".ai/docs/20260923-team-root-permission/design.md",
+    "validatedRevision": "root-permission-design-r2"
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "dispatchId": "DISPATCH-20260919-TSW-FE-A1",
+  "taskId": "TASK-20260919-team-search-watch-frontend",
+  "status": "completed",
+  "artifactRefs": [
+    ".ai/docs/20260919-team-search-watch/frontend-changereport.md",
+    "st-web/src/pages/SearchPage.tsx",
+    "st-web/src/hooks/useFileWatch.ts",
+    "st-web/src/pages/FollowingPage.tsx",
+    "st-web/src/components/file/FileDetailPanel.tsx",
+    "st-web/src/components/team/NotificationBell.tsx",
+    "st-web/src/pages/TeamSpacePage.tsx",
+    "st-web/src/lib/api.ts"
+  ],
+  "criterionProposal": {
+    "id": "IMPLEMENTED",
+    "outcome": "pass",
+    "by": "/root/luna_frontend_0919",
+    "dispatchId": "DISPATCH-20260919-TSW-FE-A1",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260919-TSW-FE-A1.json",
+    "validatedRevision": "tsw-code-r1"
+  },
+  "background": "当前 st-web 已有团队搜索、关注、通知和团队定位的部分实现，本次按 TASK-20260919-team-search-watch-frontend 与 tsw-design-r1 核查并补齐。",
+  "input": [
+    ".ai/tasks/TASK-20260919-team-search-watch-frontend.md",
+    ".ai/docs/20260919-team-search-watch/design.md",
+    ".ai/docs/20260919-team-search-watch/testcases.md",
+    ".ai/state/20260919-team-search-watch.yaml（只读）"
+  ],
+  "analysis": {
+    "facts": [
+      "团队搜索使用 GET /api/search/team，接口字段与设计 DTO 一致，个人搜索仍使用 GET /api/search。",
+      "关注列表在删除后会发生分页 offset 位移；旧实现仅重读当前页或直接保留旧页，存在漏项风险。",
+      "空响应体会在 api response interceptor 中访问 result.code，DELETE/204 成功响应可能被误判为失败。",
+      "个人文件通知和关注列表目标使用 focusId；团队目标通过 TeamSpacePage 的团队 source 解析。"
+    ],
+    "changes": [
+      "补充个人/团队搜索模式切换、团队空间和目录范围、筛选、游标加载更多、错误提示和请求代际/取消处理。",
+      "关注 hook 按 nodeId 绑定请求并将 DELETE 空结果规范化为取消成功；详情按钮读取/保存期间禁用。",
+      "关注列表严格要求 available === true 才渲染名称、路径和跳转目标；取消后重读已展开页，避免分页漏项。",
+      "通知跳转调用服务端安全 target，个人 focusId 和团队目录定位均保留；TeamSpacePage 仅在当前异步请求有效时提交解析结果。",
+      "api interceptor 对无响应体成功结果安全返回。"
+    ]
+  },
+  "decision": "在既定路由、组件和 token 体系上完成前端实现；不新增依赖、不修改全站视觉系统、不改变后端 API 契约。",
+  "stateDelta": {
+    "proposalOnly": true,
+    "changes": [],
+    "note": "未修改 .ai/state/20260919-team-search-watch.yaml；由主线程 Evaluate。"
+  },
+  "validation": [
+    {
+      "command": "npm run build",
+      "status": "passed",
+      "evidence": "TypeScript 编译和 Vite 生产构建退出码 0。"
+    },
+    {
+      "command": "npm run lint",
+      "status": "passed_with_warnings",
+      "evidence": "退出码 0；11 条仓库既有 Fast Refresh/Hook 警告，无错误。"
+    },
+    {
+      "command": "npm run test:hash",
+      "status": "passed",
+      "evidence": "6/6 用例通过。"
+    },
+    {
+      "command": "Maven、真实后端联调、浏览器 E2E",
+      "status": "not_run",
+      "evidence": "按 TASK 约束未运行 Maven；本 dispatch 未启动后端服务，TC-U01/TC-U02 需主线程在真实环境完成。"
+    }
+  ],
+  "risk": [
+    "未执行真实后端和浏览器 E2E，API 返回、权限撤销和 375px 布局仍需主线程验证。",
+    "工作树包含其他已存在的后端改动，本 dispatch 未修改或重置这些文件。"
+  ],
+  "nextStep": "主线程读取本结果并核对当前 attempt、scope 和 revision，串行执行浏览器验收及集成验证。",
+  "changeImpact": "仅影响 st-web 团队搜索、文件关注、我的关注、通知安全跳转及相关路由；个人搜索和旧通知兼容路径保留。"
+}

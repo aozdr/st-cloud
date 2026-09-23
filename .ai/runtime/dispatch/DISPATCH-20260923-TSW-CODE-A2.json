@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260923-TSW-CODE-A2",
+  "taskId": "TASK-20260923-team-search-watch-code-review",
+  "idempotencyKey": "20260923-TSW-CODE-REVIEW",
+  "role": "reviewer",
+  "taskType": "review",
+  "objective": "独立复核 tsw-code-r8 对 CR-01 的修复、最终即时核权与游标规范化，提出 CODE_REVIEW 结论",
+  "stateRef": ".ai/state/20260923-team-search-watch.yaml",
+  "taskRefs": [".ai/tasks/TASK-20260923-team-search-watch-code-review-r8.md", ".ai/docs/20260923-team-search-watch/design.md", ".ai/docs/20260923-team-search-watch/codereview.md", ".ai/docs/20260923-team-search-watch/changereport.md", ".ai/docs/20260923-team-search-watch/testreport.md"],
+  "skillRefs": ["-"],
+  "scope": {
+    "include": [".ai/docs/20260923-team-search-watch/codereview.md", ".ai/runtime/results/DISPATCH-20260923-TSW-CODE-A2.json"],
+    "exclude": ["st-*/**", "docker/**", ".ai/state/**"]
+  },
+  "acceptance": ["CR-01 的重复查询确已受请求级缓存约束且返回前独立 fresh 核权", "游标非规范编码拒绝且原签名契约不破坏；未解决高/中等级问题不得建议通过"],
+  "validation": ["只读代码与现有定向测试证据；不运行构建；结果绑定 tsw-code-r8"],
+  "output": {"resultRef": ".ai/runtime/results/DISPATCH-20260923-TSW-CODE-A2.json", "by": "/root/tsw_code_review_a2", "validatedRevision": "tsw-code-r8"},
+  "forbidSpawn": true
+}

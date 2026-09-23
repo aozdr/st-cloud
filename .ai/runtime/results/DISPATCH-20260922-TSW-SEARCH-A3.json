@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260922-TSW-SEARCH-A3",
+  "taskId": "TASK-20260922-team-search-watch-search",
+  "idempotencyKey": "TSW-SEARCH",
+  "status": "completed",
+  "ack": {
+    "dispatchId": "DISPATCH-20260922-TSW-SEARCH-A3",
+    "taskId": "TASK-20260922-team-search-watch-search",
+    "role": "executor"
+  },
+  "artifactRefs": [
+    "st-search/src/test/java/com/stcloud/search/service/impl/TeamSearchServiceTest.java",
+    ".ai/runtime/results/DISPATCH-20260922-TSW-SEARCH-A3.json"
+  ],
+  "criterionProposal": {
+    "id": "IMPLEMENTED",
+    "outcome": "pass",
+    "by": "/root/terra_search_a3",
+    "dispatchId": "DISPATCH-20260922-TSW-SEARCH-A3",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260922-TSW-SEARCH-A3.json",
+    "validatedRevision": "tsw-code-r2"
+  },
+  "blockerProposals": [],
+  "summary": {
+    "background": "团队搜索边界测试中的 Mockito verify(client.search) 声明 IOException；参数边界测试方法未声明或处理该受检异常，导致 testCompile 在第 470 行失败。",
+    "input": [
+      ".ai/tasks/TASK-20260922-team-search-watch-search.md",
+      ".ai/docs/20260922-team-search-watch/design.md",
+      ".ai/docs/20260922-team-search-watch/testcases.md",
+      ".ai/docs/20260922-team-search-watch/search-tests.log"
+    ],
+    "analysis": {
+      "facts": [
+        "日志记录的唯一当前编译错误为 TeamSearchServiceTest.java:470 未处理 java.io.IOException。",
+        "同一测试类中其余含 verify(client.search) 的测试均已声明 throws Exception。",
+        "该测试保留所有参数边界断言及 never 调用 ES 的断言。"
+      ],
+      "changes": [
+        "为 validatesParameterBoundariesBeforeCallingEs 增加 throws Exception。",
+        "移除 setUp 中对 active member 的公共桩，并仅在实际执行成员校验的 13 个测试中显式设置该桩。"
+      ]
+    },
+    "decision": "采用最小测试签名修复，使 Mockito 对 ElasticsearchClient.search 的受检异常声明可通过编译；并将成员桩限定到实际使用它的测试，维持 Mockito 严格模式。未改变生产接口、权限逻辑或测试断言。",
+    "stateDelta": "proposal only；未修改 Loop State。",
+    "risk": [
+      "未修改任何生产搜索、权限或 API 代码。"
+    ],
+    "nextStep": "本 dispatch 完成；主线程可将 search-tests-a3-r2.log 作为当前搜索模块验证证据纳入统一验收。",
+    "changeImpact": "仅调整一个测试方法的异常声明；保留既有七个新增团队搜索边界测试及全部断言。"
+  },
+  "validation": {
+    "executed": [
+      "静态核对：第 470 行 verify(client, never()).search(...) 的 IOException 声明由测试方法 throws Exception 覆盖。",
+      "静态核对：参数边界的 assertThrows 和 ES never 断言未修改。",
+      "主线程首次 Maven 验证：64 个测试中 0 个断言失败，2 个 UnnecessaryStubbing 错误均指向旧 setUp 公共桩；实 Elasticsearch 2 个测试通过。",
+      "主线程复跑 .ai/docs/20260922-team-search-watch/search-tests-a3-r2.log：64 tests，0 failures/errors/skipped，BUILD SUCCESS，包含真实 Elasticsearch 2 个集成测试。"
+    ],
+    "notExecuted": []
+  }
+}

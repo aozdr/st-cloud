@@ -33,7 +33,7 @@ mybatis-plus:
       logic-not-delete-value: 0
   configuration:
     map-underscore-to-camel-case: true
-    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    log-impl: org.apache.ibatis.logging.slf4j.Slf4jImpl
 
 # 星云盘 自定义配置
 stcloud:
@@ -94,5 +94,5 @@ rocketmq:
 
 logging:
   level:
-    com.stcloud: debug
+    com.stcloud: info
     org.springframework.security: info

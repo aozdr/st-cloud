@@ -36,6 +36,12 @@ public class SearchResultVO implements Serializable {
      */
     private Integer nodeType;
 
+    /** 团队空间 ID；个人搜索保持 null。 */
+    private Long spaceId;
+
+    /** 父目录节点 ID；个人搜索保持原有语义。 */
+    private Long parentId;
+
     /**
      * 文件后缀
      */

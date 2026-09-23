@@ -2,9 +2,13 @@ package com.stcloud.team.util;
 
 import com.stcloud.team.entity.Notification;
 import com.stcloud.team.mapper.NotificationMapper;
+import com.stcloud.common.context.TenantContext;
+import com.stcloud.common.context.UserContext;
+import com.stcloud.common.event.NotificationUnreadChangedEvent;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.time.LocalDateTime;
 
@@ -18,6 +22,9 @@ public class NotificationHelper {
 
     @Resource
     private NotificationMapper notificationMapper;
+
+    @Resource
+    private ApplicationEventPublisher eventPublisher;
 
     /**
      * 创建站内通知
@@ -33,6 +40,7 @@ public class NotificationHelper {
                        String content, String refType, Long refId) {
         try {
             Notification n = new Notification();
+            n.setTenantId(resolveTenantId());
             n.setUserId(userId);
             n.setType(type);
             n.setTitle(title);
@@ -42,8 +50,15 @@ public class NotificationHelper {
             n.setRead(0);
             n.setCreatedAt(LocalDateTime.now());
             notificationMapper.insert(n);
+            // 事务提交后才由 WebSocket 监听器推送，客户端随后查询最新未读数。
+            eventPublisher.publishEvent(new NotificationUnreadChangedEvent(n.getTenantId(), userId));
         } catch (Exception e) {
             log.error("创建通知失败: userId={}, type={}", userId, type, e);
         }
+    }
+
+    private Long resolveTenantId() {
+        Long tenantId = UserContext.getTenantId();
+        return tenantId != null ? tenantId : TenantContext.getTenantId();
     }
 }

@@ -1,0 +1,65 @@
+{
+  "dispatchId": "DISPATCH-20260923-TSW-EXP-DESIGN-A1",
+  "taskId": "TASK-20260923-team-search-watch-exp-design",
+  "role": "reviewer",
+  "status": "completed",
+  "by": "/root/tsw_exp_design",
+  "validatedRevision": "tsw-design-r3",
+  "background": "独立核对 tsw-design-r3 的 UI 规格覆盖，并只读交叉检查当前前端实现。",
+  "input": [
+    ".ai/tasks/TASK-20260923-team-search-watch-exp-design.md",
+    ".ai/state/20260923-team-search-watch.yaml",
+    ".ai/docs/20260923-team-search-watch/requirement.md",
+    ".ai/docs/20260923-team-search-watch/uispec.md",
+    ".ai/docs/20260923-team-search-watch/design.md",
+    ".ai/docs/20260923-team-search-watch/architecture-review.md",
+    "st-web/src/pages/SearchPage.tsx",
+    "st-web/src/pages/FollowingPage.tsx",
+    "st-web/src/hooks/useFileWatch.ts",
+    "st-web/src/components/team/NotificationBell.tsx",
+    "st-web/src/components/layout/Sidebar.tsx"
+  ],
+  "analysis": "入口、键盘、窄屏的静态布局、权限以及规格明确列出的搜索和关注请求竞态均有覆盖。发现两个未解决的体验问题：追加页游标过期且已有结果时，页面只显示无操作的错误横幅；通知 target 异步请求可乱序完成并触发过时通知的导航。后者由代码路径静态推断，尚未动态复现。",
+  "decision": [
+    "建议 EXP_DESIGN outcome=fail；当前 UI 状态、通知 target 并发行为尚未完全覆盖。",
+    "建议增加已有结果情况下的游标过期恢复按钮，并在 NotificationBell 设计及实现中串行化 target 点击或忽略过时响应。",
+    "静态代码表明 375px 与键盘设计有相应布局和语义实现；本次未运行浏览器验收。"
+  ],
+  "artifactRefs": [
+    ".ai/docs/20260923-team-search-watch/exp-review.md"
+  ],
+  "validation": [
+    {
+      "method": "只读检查需求、交互规格、技术设计、架构评审、最小 State 快照及当前 UI 源代码",
+      "outcome": "completed",
+      "evidence": "证据和逐项结论见 .ai/docs/20260923-team-search-watch/exp-review.md；未运行构建、测试或浏览器。"
+    }
+  ],
+  "stateDelta": {
+    "proposalOnly": true,
+    "proposals": [
+      {
+        "id": "EXP_DESIGN",
+        "outcome": "fail",
+        "dispatchId": "DISPATCH-20260923-TSW-EXP-DESIGN-A1",
+        "evidenceRef": ".ai/runtime/results/DISPATCH-20260923-TSW-EXP-DESIGN-A1.json",
+        "validatedRevision": "tsw-design-r3"
+      }
+    ]
+  },
+  "risks": [
+    "375px 实际渲染和键盘流程未通过浏览器验证。",
+    "通知 target 乱序导航为静态推断，尚未动态复现。"
+  ],
+  "nextStep": "主线程处理游标过期恢复按钮及通知目标请求乱序问题，随后完成浏览器验收并按当前 revision 评估 EXP_DESIGN。",
+  "changeImpact": "只新增 EXP_DESIGN 评审文档和本次 Dispatch 独立结果；未修改代码或 Loop State。",
+  "criterionProposal": {
+    "id": "EXP_DESIGN",
+    "outcome": "fail",
+    "by": "/root/tsw_exp_design",
+    "dispatchId": "DISPATCH-20260923-TSW-EXP-DESIGN-A1",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260923-TSW-EXP-DESIGN-A1.json",
+    "validatedRevision": "tsw-design-r3"
+  },
+  "blockerProposals": []
+}

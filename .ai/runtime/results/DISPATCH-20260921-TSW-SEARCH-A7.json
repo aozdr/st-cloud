@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260921-TSW-SEARCH-A7",
+  "taskId": "TASK-20260921-team-search-watch-search",
+  "idempotencyKey": "TSW-SEARCH",
+  "status": "completed",
+  "ack": {
+    "dispatchId": "DISPATCH-20260921-TSW-SEARCH-A7",
+    "taskId": "TASK-20260921-team-search-watch-search",
+    "role": "executor"
+  },
+  "artifactRefs": [
+    "st-search/src/test/java/com/stcloud/search/service/impl/TeamSearchServiceTest.java",
+    ".ai/runtime/results/DISPATCH-20260921-TSW-SEARCH-A7.json"
+  ],
+  "criterionProposal": {
+    "id": "IMPLEMENTED",
+    "outcome": "pass",
+    "by": "/root/luna_search_0921g",
+    "dispatchId": "DISPATCH-20260921-TSW-SEARCH-A7",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260921-TSW-SEARCH-A7.json",
+    "validatedRevision": "tsw-code-r1"
+  },
+  "summary": {
+    "background": "按 TASK-20260921-team-search-watch-search 续补团队搜索既定验收测试；生产搜索接口和授权实现未修改。",
+    "input": [
+      ".ai/tasks/TASK-20260921-team-search-watch-search.md",
+      ".ai/docs/20260921-team-search-watch/design.md",
+      ".ai/docs/20260921-team-search-watch/testcases.md",
+      ".ai/state/20260921-team-search-watch.yaml（只读最小快照）",
+      "st-search/src/main/java/com/stcloud/search/service/impl/TeamSearchServiceImpl.java"
+    ],
+    "analysis": {
+      "facts": [
+        "既有 TeamSearchServiceTest 原有 9 个团队搜索单测，已覆盖成员拒绝、候选过滤、MD5 复核、目录父链、lookahead、篡改游标和 ES 异常。",
+        "新增测试使用现有 Mockito/ES response fixture，未引入生产接口、数据库 schema、前端或迁移改动。",
+        "新增覆盖主体与查询条件绑定游标、过期游标、首批 100 个无权候选后续有权候选、连续页无重复、候选预算、请求参数边界和缺失游标密钥。"
+      ],
+      "changes": [
+        "扩展 response fixture 支持独立 total，用于模拟 100+ 候选跨批扫描和预算上限。",
+        "新增批量节点夹具及固定测试密钥签名的过期游标夹具。",
+        "新增 7 个验收单测，断言无效游标和参数在 ES 调用前拒绝，预算不足返回 SEARCH_SCOPE_TOO_LARGE，缺失密钥返回 SEARCH_UNAVAILABLE。"
+      ]
+    },
+    "decision": "仅在白名单内补充团队搜索测试；未修改生产搜索接口、授权策略、State 或共享 changereport。",
+    "stateDelta": "proposal only; 未修改 Loop State。",
+    "risk": [
+      "按 Dispatch validation 约束未运行 Maven/testCompile 或共享缓存构建；Java 编译与运行结果需主线程串行确认。",
+      "缺失密钥用例依赖测试进程未设置 STCLOUD_SEARCH_TEAM_CURSOR_SECRET；若主线程环境设置该变量，应在隔离环境运行该用例。",
+      "真实 Elasticsearch fixture、数据库迁移/schema 对比和浏览器 E2E 不在本 dispatch 范围。"
+    ],
+    "nextStep": "主线程串行运行 st-search testCompile 与 TeamSearchServiceTest；若运行失败，依据真实编译/测试输出定向修正。主线程将本结果合并到 search-changereport。",
+    "changeImpact": "仅增加 st-search 团队搜索验收测试和本 dispatch 结果记录；无生产行为变化。"
+  },
+  "validation": {
+    "executed": [
+      "静态读取核对 TeamSearchServiceImpl 与 TeamSearchServiceTest：新增测试均调用现有 search 契约和 fixture，未越界生产 API。",
+      "新增测试与结果文件 trailing-whitespace 静态扫描：通过，无行尾空白。",
+      "rg 静态核对：TeamSearchServiceTest 共 16 个 @Test，新增用例名称与验收边界对应。"
+    ],
+    "notExecuted": [
+      "Maven testCompile/tests/build：按 TASK 由主线程串行执行。",
+      "真实 Elasticsearch fixture：本 dispatch 未启动 ES。",
+      "数据库迁移、schema 对比、浏览器 E2E：不在本 dispatch scope。"
+    ]
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260916-TSW-SEARCH-A2",
+  "taskId": "TASK-20260916-team-search-watch-search",
+  "idempotencyKey": "TSW-SEARCH",
+  "status": "completed",
+  "ack": {
+    "dispatchId": "DISPATCH-20260916-TSW-SEARCH-A2",
+    "taskId": "TASK-20260916-team-search-watch-search",
+    "role": "executor"
+  },
+  "artifactRefs": [
+    "st-common/src/main/java/com/stcloud/common/access/TeamFileAccessPolicy.java",
+    "st-team/src/main/java/com/stcloud/team/service/TeamFileAccessPolicyImpl.java",
+    "st-team/src/main/java/com/stcloud/team/service/FolderPermissionService.java",
+    "st-team/src/test/java/com/stcloud/team/service/TeamFileAccessPolicyTest.java",
+    "st-team/src/test/java/com/stcloud/team/service/FolderPermissionFreshTest.java",
+    "st-search/src/main/java/com/stcloud/search/controller/SearchController.java",
+    "st-search/src/main/java/com/stcloud/search/service/TeamSearchService.java",
+    "st-search/src/main/java/com/stcloud/search/service/impl/TeamSearchServiceImpl.java",
+    "st-search/src/main/java/com/stcloud/search/dto/TeamSearchResultPage.java",
+    "st-search/src/main/java/com/stcloud/search/dto/SearchResultVO.java",
+    "st-search/src/main/java/com/stcloud/search/init/SearchIndexInitializer.java",
+    "st-search/src/main/java/com/stcloud/search/service/impl/SearchServiceImpl.java",
+    "st-search/src/test/java/com/stcloud/search/service/impl/TeamSearchServiceTest.java",
+    ".ai/docs/20260916-team-search-watch/search-changereport.md"
+  ],
+  "criterionProposal": {
+    "id": "IMPLEMENTED",
+    "outcome": "pass",
+    "by": "/root/luna_search_resume",
+    "dispatchId": "DISPATCH-20260916-TSW-SEARCH-A2",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260916-TSW-SEARCH-A2.json",
+    "validatedRevision": "tsw-code-r1"
+  },
+  "summary": {
+    "background": "按 tsw-design-r1 实现团队全文搜索和共用显式主体授权，个人搜索契约保持不变。",
+    "input": [
+      ".ai/tasks/TASK-20260916-team-search-watch-search.md",
+      ".ai/docs/20260916-team-search-watch/design.md",
+      ".ai/docs/20260916-team-search-watch/testcases.md",
+      ".ai/state/20260916-team-search-watch.yaml"
+    ],
+    "analysis": "保留原 resolvePermissions 缓存路径；新链路使用带租户条件且遇到父链异常 fail closed 的 fresh 解析。团队搜索先 ES 租户/空间及目录路径初筛，再进行 DB 元数据、父链和显式主体复核，授权后才构造 VO/高亮，并对 size+1 结果做最终即时核权。",
+    "decision": "新增 TeamFileAccessPolicyImpl、TeamSearchService、HMAC 游标与团队结果 DTO；索引增量补充 tenantId/spaceId/parentId/fileMd5；ES 密钥仅接受配置或环境变量，缺失即 SEARCH_UNAVAILABLE。",
+    "stateDelta": "proposal only; 未修改 Loop State。",
+    "risk": [
+      "未执行 Maven、共享缓存构建、数据库迁移、ES 实例或端到端验证，需主线程串行验证。",
+      "聚合应用必须提供 STCLOUD_SEARCH_TEAM_CURSOR_SECRET 或等价 stcloud.search.team-cursor-secret 配置；旧 ES 文档缺少身份字段时会安全排除，需受控 reindex。"
+    ],
+    "nextStep": "主线程核对 scope 与结果文件后，串行运行 st-common/st-team/st-search 相关测试及 ES/Schema 集成检查。",
+    "changeImpact": "仅修改 TASK 白名单内 common access、team 权限与独立测试、search 模块及搜索报告/结果；未修改 State、TASK、SQL/H2、前端或 TeamServiceImpl。"
+  },
+  "validation": {
+    "executed": [
+      "git diff --check"
+    ],
+    "notExecuted": [
+      "Maven tests/build: TASK explicitly reserves backend build/test for主线程串行验证",
+      "数据库迁移/schema 对比: excluded by TASK",
+      "真实 Elasticsearch/浏览器 E2E: 本阶段无执行"
+    ]
+  }
+}

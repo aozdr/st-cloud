@@ -160,10 +160,17 @@ class SchemaConsistencyTest {
                 schema.computeIfAbsent(entry.getKey(), k -> new TreeSet<>(String.CASE_INSENSITIVE_ORDER))
                         .addAll(entry.getValue());
             }
-            Matcher m = Pattern.compile("ALTER\\s+TABLE\\s+(\\w+)\\s+ADD\\s+COLUMN\\s+(\\w+)", Pattern.CASE_INSENSITIVE).matcher(sql);
-            while (m.find()) {
-                schema.computeIfAbsent(m.group(1), k -> new TreeSet<>(String.CASE_INSENSITIVE_ORDER))
-                        .add(m.group(2));
+            // 一个 ALTER TABLE 可连续声明多个 ADD COLUMN；逐个解析，避免把 H2 已同步的后续列误报为漂移。
+            Matcher alter = Pattern.compile("ALTER\\s+TABLE\\s+(\\w+)\\s+([\\s\\S]*?);",
+                    Pattern.CASE_INSENSITIVE).matcher(sql);
+            while (alter.find()) {
+                Set<String> columns = schema.computeIfAbsent(alter.group(1),
+                        k -> new TreeSet<>(String.CASE_INSENSITIVE_ORDER));
+                Matcher addedColumn = Pattern.compile("\\bADD\\s+COLUMN\\s+(\\w+)",
+                        Pattern.CASE_INSENSITIVE).matcher(alter.group(2));
+                while (addedColumn.find()) {
+                    columns.add(addedColumn.group(1));
+                }
             }
         }
         return schema;

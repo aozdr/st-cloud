@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260921-TSW-WATCH-A4",
+  "taskId": "TASK-20260921-team-search-watch-watch",
+  "idempotencyKey": "TSW-WATCH",
+  "status": "completed",
+  "ack": {
+    "dispatchId": "DISPATCH-20260921-TSW-WATCH-A4",
+    "taskId": "TASK-20260921-team-search-watch-watch",
+    "role": "executor"
+  },
+  "artifactRefs": [
+    "st-team/src/test/java/com/stcloud/team/service/FileWatchAccessServiceTest.java",
+    ".ai/runtime/results/DISPATCH-20260921-TSW-WATCH-A4.json"
+  ],
+  "criterionProposal": {
+    "id": "IMPLEMENTED",
+    "outcome": "pass",
+    "by": "/root/luna_watch_0921d",
+    "dispatchId": "DISPATCH-20260921-TSW-WATCH-A4",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260921-TSW-WATCH-A4.json",
+    "validatedRevision": "tsw-code-r1"
+  },
+  "summary": {
+    "background": "修复 watch-tests-r3.log 中 FileWatchAccessServiceTest 的 SysUser Mockito 查询断言失败。",
+    "input": [
+      ".ai/tasks/TASK-20260921-team-search-watch-watch.md",
+      ".ai/docs/20260921-team-search-watch/design.md",
+      ".ai/docs/20260921-team-search-watch/testcases.md",
+      ".ai/docs/20260921-team-search-watch/watch-tests-r3.log",
+      ".ai/state/20260921-team-search-watch.yaml（只读）"
+    ],
+    "analysis": {
+      "facts": [
+        "r3 日志中唯一失败为 FileWatchAccessServiceTest.activeUserQueryIsTenantScopedAndRequiresNormalUndeletedRecord，测试在参数 map 尚未 materialize 时直接断言，首个租户值断言为 false。",
+        "此前仅移除 getSqlSegment 会让测试失去对真实 lambda SQL 列解析和参数绑定的验证，不符合本次派发目标。"
+      ],
+      "changes": [
+        "在测试 setUp 中通过 MapperBuilderAssistant、独立 Configuration 和 TableInfoHelper 初始化 SysUser 的 MyBatis-Plus TableInfo/lambda 元数据。",
+        "在 Mockito answer 中先调用 getSqlSegment，再断言 tenant_id、id、deleted、status SQL 列及 tenant、user、deleted、status 四个绑定参数。",
+        "未修改 FileWatchAccessService 生产查询、权限分支或其他测试。"
+      ]
+    },
+    "decision": "采用测试级 MyBatis-Plus 元数据初始化恢复真实 SQL 解析与参数绑定断言，保持生产契约和权限断言不变。",
+    "stateDelta": "proposal only; 未修改 Loop State。",
+    "risk": [
+      "按派发要求未运行 Maven、testCompile 或测试；主线程需串行复验 watch-tests-r3 对应测试。",
+      "TableInfoHelper 使用进程级缓存；本测试只在 SysUser 元数据缺失时初始化，已有缓存不被替换。"
+    ],
+    "nextStep": "主线程串行运行 st-team 关注测试及其必要集成验证，并按当前 dispatch 结果执行 Evaluate。",
+    "changeImpact": "SysUser 关注主体 Mockito 测试重新覆盖真实 MyBatis-Plus SQL 列映射和四个参数值，生产代码行为无变化。"
+  },
+  "validation": {
+    "executed": [
+      "读取并核对 watch-tests-r3.log，确认失败位置和唯一失败项。",
+      "静态检查测试初始化顺序：TableInfoHelper 初始化发生在构造 LambdaQueryWrapper/getSqlSegment 前。",
+      "静态检查断言同时覆盖 tenant_id、id、deleted、status SQL 列和四个参数值。",
+      "结果 JSON 已通过 PowerShell ConvertFrom-Json 解析，测试文件通过静态行级核对。"
+    ],
+    "notExecuted": [
+      "Maven testCompile/tests/build：按派发要求禁止。",
+      "数据库迁移、SchemaConsistencyTest、compare-schema.ps1、真实 MQ/ES/S3 和浏览器 E2E：不属于本次修复。"
+    ]
+  }
+}

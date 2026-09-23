@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260921-TSW-SEARCH-A1",
+  "taskId": "TASK-20260921-team-search-watch-search",
+  "idempotencyKey": "TSW-SEARCH",
+  "status": "completed",
+  "ack": {
+    "dispatchId": "DISPATCH-20260921-TSW-SEARCH-A1",
+    "taskId": "TASK-20260921-team-search-watch-search",
+    "role": "executor"
+  },
+  "artifactRefs": [
+    "st-search/src/test/java/com/stcloud/search/service/impl/TeamSearchServiceTest.java",
+    "st-search/src/test/java/com/stcloud/search/service/impl/SearchServiceImplTest.java",
+    ".ai/docs/20260921-team-search-watch/search-changereport.md",
+    ".ai/runtime/results/DISPATCH-20260921-TSW-SEARCH-A1.json"
+  ],
+  "criterionProposal": {
+    "id": "IMPLEMENTED",
+    "outcome": "pass",
+    "by": "/root/luna_search_0921",
+    "dispatchId": "DISPATCH-20260921-TSW-SEARCH-A1",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260921-TSW-SEARCH-A1.json",
+    "validatedRevision": "tsw-code-r1"
+  },
+  "summary": {
+    "background": "按 TASK-20260921-team-search-watch-search 收敛团队搜索 testCompile 阻塞，并保持既有团队搜索安全实现与个人搜索契约。",
+    "input": [
+      ".ai/tasks/TASK-20260921-team-search-watch-search.md",
+      ".ai/docs/20260921-team-search-watch/design.md",
+      ".ai/docs/20260921-team-search-watch/testcases.md",
+      ".ai/state/20260921-team-search-watch.yaml（只读）",
+      ".ai/docs/20260921-team-search-watch/compile-initial.log"
+    ],
+    "analysis": {
+      "facts": [
+        "修复前 st-search testCompile 仅报告 3 个错误：TeamSearchServiceTest 第 150 行 IOException 未处理，以及 SearchServiceImplTest 第 739、760 行把 SearchResultPage 赋给 List。",
+        "TeamSearchServiceTest 的非成员用例现在声明 throws Exception；SearchServiceImplTest 两处高亮用例现在通过 searchRecords(...).getRecords() 读取结果。",
+        "既有 TeamSearchServiceImpl 保持 600 秒默认 HMAC 游标、MD5/元数据最终复核、授权 lookahead 和 folder path exact/prefix 初筛；个人 SearchService 接口未改。"
+      ],
+      "changes": [
+        "修复团队搜索 Mockito checked exception 测试声明。",
+        "修复个人搜索测试的 SearchResultPage.records 适配。",
+        "新增本 dispatch 变更报告与结果记录。"
+      ]
+    },
+    "decision": "仅修改测试适配和本任务报告产物，不修改个人搜索接口、不放宽授权、不改变游标或索引安全逻辑。",
+    "stateDelta": "proposal only; 未修改 Loop State。",
+    "risk": [
+      "本阶段未执行 Maven，修复后 testCompile 和测试通过状态需由主线程串行确认。",
+      "真实 Elasticsearch fixture、数据库迁移/schema 对比和浏览器验证未执行。"
+    ],
+    "nextStep": "主线程串行运行 st-search testCompile/相关测试，并在可用环境执行独立真实 ES fixture；根据真实退出码 Evaluate。",
+    "changeImpact": "仅影响 st-search 测试编译适配与本任务报告；生产代码和个人/团队搜索 HTTP 契约无变化。"
+  },
+  "validation": {
+    "executed": [
+      "rg 静态检查：旧 SearchResultPage/List 赋值与 TeamSearchServiceTest 遗漏 IOException 均无结果",
+      "git diff --check"
+    ],
+    "notExecuted": [
+      "Maven testCompile/tests/build：按 TASK 由主线程串行执行",
+      "真实 Elasticsearch fixture：本 dispatch 未启动 ES",
+      "数据库迁移、schema 对比、浏览器 E2E：不在本 dispatch scope"
+    ]
+  }
+}

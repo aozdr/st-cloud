@@ -1,0 +1,42 @@
+{
+  "scope": {
+    "include": [
+      "st-team/src/test/java/com/stcloud/team/service/FileWatchReliabilityIntegrationTest.java",
+      ".ai/docs/20260921-team-search-watch/reliability-changereport.md",
+      ".ai/runtime/results/DISPATCH-20260921-TSW-RELIABILITY-A1.json"
+    ],
+    "exclude": [
+      "st-team/src/main/**",
+      "st-core/**",
+      ".ai/state/**"
+    ]
+  },
+  "idempotencyKey": "TSW-RELIABILITY",
+  "stateRef": ".ai/state/20260921-team-search-watch.yaml",
+  "role": "executor",
+  "dispatchId": "DISPATCH-20260921-TSW-RELIABILITY-A1",
+  "output": {
+    "by": "/root/luna_reliability_0921",
+    "resultRef": ".ai/runtime/results/DISPATCH-20260921-TSW-RELIABILITY-A1.json",
+    "validatedRevision": "tsw-code-r1"
+  },
+  "taskId": "TASK-20260921-team-search-watch-reliability",
+  "objective": "在E:/code/st-cloud按TASK编写H2可靠性集成测试，必须Luna max。先ACK并继续执行，不改生产/State，不派生Agent。",
+  "validation": [
+    "不运行Maven，主线程串行"
+  ],
+  "skillRefs": [
+    "-"
+  ],
+  "taskRefs": [
+    ".ai/tasks/TASK-20260921-team-search-watch-reliability.md",
+    ".ai/docs/20260921-team-search-watch/design.md",
+    ".ai/docs/20260921-team-search-watch/testcases.md"
+  ],
+  "taskType": "implement",
+  "acceptance": [
+    "真实事务和Mapper验证可靠性，不虚报通过"
+  ],
+  "forbidSpawn": true,
+  "schemaVersion": 2
+}

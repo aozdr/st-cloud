@@ -1,0 +1,42 @@
+{
+  "scope": {
+    "include": [
+      "st-team/src/test/java/com/stcloud/team/service/FileWatchReliabilityIntegrationTest.java",
+      ".ai/docs/20260921-team-search-watch/reliability-changereport.md",
+      ".ai/runtime/results/DISPATCH-20260921-TSW-RELIABILITY-A2.json"
+    ],
+    "exclude": [
+      "st-team/src/main/**",
+      "st-core/**",
+      ".ai/state/**"
+    ]
+  },
+  "idempotencyKey": "TSW-RELIABILITY",
+  "stateRef": ".ai/state/20260921-team-search-watch.yaml",
+  "role": "executor",
+  "dispatchId": "DISPATCH-20260921-TSW-RELIABILITY-A2",
+  "output": {
+    "by": "/root/luna_reliability_0921b",
+    "resultRef": ".ai/runtime/results/DISPATCH-20260921-TSW-RELIABILITY-A2.json",
+    "validatedRevision": "tsw-code-r1"
+  },
+  "taskId": "TASK-20260921-team-search-watch-reliability",
+  "objective": "继续E:/code/st-cloud现有TASK，Luna max。上次额度中断，保留代码。先ACK再修复watch-tests.log中当前scope的编译/测试错误；不运行Maven主线程串行；产物写A2独立结果。",
+  "validation": [
+    "不运行Maven，主线程串行"
+  ],
+  "skillRefs": [
+    "-"
+  ],
+  "taskRefs": [
+    ".ai/tasks/TASK-20260921-team-search-watch-reliability.md",
+    ".ai/docs/20260921-team-search-watch/design.md",
+    ".ai/docs/20260921-team-search-watch/testcases.md"
+  ],
+  "taskType": "implement",
+  "acceptance": [
+    "真实事务和Mapper验证可靠性，不虚报通过"
+  ],
+  "forbidSpawn": true,
+  "schemaVersion": 2
+}

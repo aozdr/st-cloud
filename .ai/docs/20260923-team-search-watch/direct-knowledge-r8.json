@@ -1,0 +1,11 @@
+{
+  "taskId": "20260923-team-search-watch",
+  "eventId": "tsw-r8-solo-knowledge",
+  "criterionProposal": {
+    "id": "KNOWLEDGE",
+    "outcome": "pass",
+    "by": "main-gpt6",
+    "evidenceRef": ".ai/docs/20260923-team-search-watch/documentation-evidence.json",
+    "validatedRevision": "tsw-code-r8"
+  }
+}

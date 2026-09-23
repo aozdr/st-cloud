@@ -1,0 +1,7 @@
+# 团队搜索的游标密钥必须由部署环境注入，源码不提供可用默认值。
+stcloud:
+  search:
+    team-max-candidates: ${STCLOUD_SEARCH_TEAM_MAX_CANDIDATES:2000}
+    team-index: ${STCLOUD_SEARCH_TEAM_INDEX:file_content}
+    team-cursor-secret: ${STCLOUD_SEARCH_TEAM_CURSOR_SECRET:}
+    team-cursor-ttl-seconds: ${STCLOUD_SEARCH_TEAM_CURSOR_TTL_SECONDS:600}

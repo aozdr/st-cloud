@@ -1,0 +1,62 @@
+{
+  "dispatchId": "DISPATCH-20260923-TSW-EXP-DESIGN-A2",
+  "taskId": "TASK-20260923-team-search-watch-exp-design",
+  "role": "reviewer",
+  "status": "completed",
+  "by": "/root/tsw_exp_design_a2",
+  "validatedRevision": "tsw-design-r4",
+  "background": "独立复核 A1 对 tsw-design-r3 提出的游标过期恢复与通知 target 乱序两项缺口，核对 r4 设计及当前前端代码。",
+  "input": [
+    ".ai/tasks/TASK-20260923-team-search-watch-exp-design.md",
+    ".ai/state/20260923-team-search-watch.yaml（只读最小快照）",
+    ".ai/docs/20260923-team-search-watch/requirement.md",
+    ".ai/docs/20260923-team-search-watch/uispec.md",
+    ".ai/docs/20260923-team-search-watch/design.md",
+    ".ai/docs/20260923-team-search-watch/exp-review.md（A1 历史记录）",
+    "st-web/src/pages/SearchPage.tsx",
+    "st-web/src/components/team/NotificationBell.tsx"
+  ],
+  "analysis": "当前 State revision 为 tsw-design-r4 / tsw-code-r7。design.md §7.1 要求追加页游标过期时即使已有结果也显示重新搜索；SearchPage.tsx 在 cursor 错误时清空 cursor、停止加载更多并保留 append 前已有结果，非空结果错误横幅中提供重新搜索按钮，该按钮改变 _t 并触发空游标第一页请求。design.md §7.5 要求只有最后选择的通知 target 响应可以提示或导航；NotificationBell 为每次选择递增 selectionRef，target 返回后比较代际，组件卸载时也递增代际，因此较早请求的成功、失效或错误响应均不会覆盖较新选择。A1 的其余静态设计覆盖在当前设计中仍成立。未运行构建、测试或浏览器。",
+  "decision": [
+    "建议当前 tsw-design-r4 的 EXP_DESIGN outcome=pass；A1 对 tsw-design-r3 的 FAIL 保持为历史有效审计，不覆盖其 revision 结论。",
+    "游标恢复与通知 target 乱序两项缺口均有设计条款和当前前端实现证据；本次没有发现阻止设计门禁通过的未解决项。",
+    "375px 布局、键盘流程和异步延迟运行时行为没有实测，应在后续 EXP_ACCEPT 或集成验收中验证。"
+  ],
+  "artifactRefs": [
+    ".ai/docs/20260923-team-search-watch/exp-review.md"
+  ],
+  "validation": [
+    {
+      "method": "只读检查 A1 复核记录、需求、交互规格、r4 设计、最小 State 快照及 SearchPage/NotificationBell 当前源码",
+      "outcome": "completed",
+      "evidence": "exp-review.md 的 A2 独立复核段落记录了两个缺口的设计条款、当前代码行为与源文件行号；未运行构建、测试或浏览器。"
+    }
+  ],
+  "stateDelta": {
+    "proposalOnly": true,
+    "proposals": [
+      {
+        "id": "EXP_DESIGN",
+        "outcome": "pass",
+        "dispatchId": "DISPATCH-20260923-TSW-EXP-DESIGN-A2",
+        "evidenceRef": ".ai/runtime/results/DISPATCH-20260923-TSW-EXP-DESIGN-A2.json",
+        "validatedRevision": "tsw-design-r4"
+      }
+    ]
+  },
+  "risks": [
+    "375px 实际布局与完整键盘流程未通过浏览器实测。",
+    "通知 target 请求乱序保护通过静态源码核对，未通过人为延迟的动态场景复现。"
+  ],
+  "nextStep": "主线程根据 A2 建议对 tsw-design-r4 执行 EXP_DESIGN Evaluate；浏览器验收由后续 EXP_ACCEPT/集成验收覆盖。",
+  "changeImpact": "仅追加 A2 独立复核记录并新增本 dispatch 的结果文件；未修改产品代码、Loop State 或 A1 历史审计内容。",
+  "criterionProposal": {
+    "id": "EXP_DESIGN",
+    "outcome": "pass",
+    "by": "/root/tsw_exp_design_a2",
+    "dispatchId": "DISPATCH-20260923-TSW-EXP-DESIGN-A2",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260923-TSW-EXP-DESIGN-A2.json",
+    "validatedRevision": "tsw-design-r4"
+  },
+  "blockerProposals": []
+}

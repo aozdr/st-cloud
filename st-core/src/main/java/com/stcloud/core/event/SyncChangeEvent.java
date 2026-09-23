@@ -3,6 +3,8 @@ package com.stcloud.core.event;
 import com.stcloud.core.entity.FileNode;
 import org.springframework.context.ApplicationEvent;
 
+import java.time.LocalDateTime;
+
 /**
  * 文件同步变更事件
  * <p>
@@ -16,16 +18,29 @@ public class SyncChangeEvent extends ApplicationEvent {
     private final FileNode fileNode;
     private final ChangeType changeType;
     private final String oldPath;
+    private final Long eventId;
+    private final Long actorId;
+    private final Long oldParentId;
+    private final LocalDateTime occurredAt;
 
     public SyncChangeEvent(Object source, FileNode fileNode, ChangeType changeType) {
         this(source, fileNode, changeType, null);
     }
 
     public SyncChangeEvent(Object source, FileNode fileNode, ChangeType changeType, String oldPath) {
+        this(source, fileNode, changeType, oldPath, null, null, null, LocalDateTime.now());
+    }
+
+    public SyncChangeEvent(Object source, FileNode fileNode, ChangeType changeType, String oldPath,
+                           Long eventId, Long actorId, Long oldParentId, LocalDateTime occurredAt) {
         super(source);
         this.fileNode = fileNode;
         this.changeType = changeType;
         this.oldPath = oldPath;
+        this.eventId = eventId;
+        this.actorId = actorId;
+        this.oldParentId = oldParentId;
+        this.occurredAt = occurredAt == null ? LocalDateTime.now() : occurredAt;
     }
 
     public FileNode getFileNode() {
@@ -38,6 +53,22 @@ public class SyncChangeEvent extends ApplicationEvent {
 
     public String getOldPath() {
         return oldPath;
+    }
+
+    public Long getEventId() {
+        return eventId;
+    }
+
+    public Long getActorId() {
+        return actorId;
+    }
+
+    public Long getOldParentId() {
+        return oldParentId;
+    }
+
+    public LocalDateTime getOccurredAt() {
+        return occurredAt;
     }
 
     /**

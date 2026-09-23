@@ -1,0 +1,37 @@
+{
+  "dispatchId": "DISPATCH-20260923-TSW-SEC-A1",
+  "taskId": "TASK-20260923-team-search-watch-security-review",
+  "status": "completed",
+  "artifactRefs": [
+    ".ai/docs/20260923-team-search-watch/security.md",
+    ".ai/runtime/results/DISPATCH-20260923-TSW-SEC-A1.json"
+  ],
+  "background": "独立审查 tsw-code-r7 的团队搜索、关注投递和通知安全边界。",
+  "input": [
+    ".ai/tasks/TASK-20260923-team-search-watch-security-review.md",
+    ".ai/docs/20260923-team-search-watch/requirement.md",
+    ".ai/docs/20260923-team-search-watch/design.md",
+    ".ai/docs/20260923-team-search-watch/testcases.md",
+    ".ai/docs/20260923-team-search-watch/changereport.md",
+    ".ai/docs/20260923-team-search-watch/testreport.md"
+  ],
+  "analysis": "静态检查确认主体和租户从已验证 JWT 上下文取得；搜索与关注通知使用数据库当前成员、祖先状态和 ACL 复核；旧索引需与当前节点身份及文件 MD5 匹配；游标为 HMAC-SHA256 签名并绑定主体、查询和时效；通知读取在失权时清空目标和内容。未发现未解决的高风险绕过。已有后端测试日志由 testreport 标注为 r6，不能当作 r7 复测证据。",
+  "decision": "SECURITY_REVIEW 建议通过；由主线程核验证据并执行 State Evaluate。",
+  "stateDeltaProposal": {
+    "criterionId": "SECURITY_REVIEW",
+    "outcome": "pass",
+    "validatedRevision": "tsw-code-r7"
+  },
+  "risk": "未运行构建或测试。现有后端日志版本对应关系存在 r6/r7 不一致，部署级 MySQL/ES/MQ/S3 联调未由本次复核验证。",
+  "next": "主线程读取 security.md 与本结果，核对 dispatch、scope、版本证据后决定 SECURITY_REVIEW 状态。",
+  "changeImpact": "仅新增 security.md 和本 dispatch 独立结果；没有修改产品代码或 State。",
+  "criterionProposal": {
+    "id": "SECURITY_REVIEW",
+    "outcome": "pass",
+    "by": "/root/tsw_security_review",
+    "dispatchId": "DISPATCH-20260923-TSW-SEC-A1",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260923-TSW-SEC-A1.json",
+    "validatedRevision": "tsw-code-r7"
+  },
+  "blockerProposals": []
+}

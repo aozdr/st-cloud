@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260921-TSW-RELIABILITY-A3",
+  "taskId": "TASK-20260921-team-search-watch-reliability",
+  "idempotencyKey": "TSW-RELIABILITY",
+  "status": "completed",
+  "ack": {
+    "dispatchId": "DISPATCH-20260921-TSW-RELIABILITY-A3",
+    "taskId": "TASK-20260921-team-search-watch-reliability",
+    "role": "executor"
+  },
+  "artifactRefs": [
+    "st-team/src/test/java/com/stcloud/team/service/FileWatchReliabilityIntegrationTest.java",
+    ".ai/docs/20260921-team-search-watch/reliability-changereport.md",
+    ".ai/runtime/results/DISPATCH-20260921-TSW-RELIABILITY-A3.json"
+  ],
+  "criterionProposal": {
+    "id": "IMPLEMENTED",
+    "outcome": "pass",
+    "by": "/root/luna_reliability_0921c",
+    "dispatchId": "DISPATCH-20260921-TSW-RELIABILITY-A3",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260921-TSW-RELIABILITY-A3.json",
+    "validatedRevision": "tsw-code-r1"
+  },
+  "summary": {
+    "background": "修复 watch-tests-r2.log 中可靠性 H2 集成测试的两处夹具失败：异租户查询后未恢复租户上下文，以及撤权夹具未可靠验证逻辑删除。",
+    "input": [
+      ".ai/tasks/TASK-20260921-team-search-watch-reliability.md",
+      ".ai/docs/20260921-team-search-watch/design.md",
+      ".ai/docs/20260921-team-search-watch/testcases.md",
+      ".ai/docs/20260921-team-search-watch/watch-tests-r2.log",
+      "st-team/src/test/java/com/stcloud/team/service/FileWatchReliabilityIntegrationTest.java",
+      "st-team/src/main/java/com/stcloud/team/service/FileWatchDeliveryProcessor.java（只读）",
+      "st-team/src/main/java/com/stcloud/team/service/TeamFileAccessPolicyImpl.java（只读）"
+    ],
+    "analysis": {
+      "facts": [
+        "actorSelf 测试的 deliveries(otherTenantId, ...) helper 设置了异租户 ThreadLocal；随后 processOne(tenantId, ...) 命中生产租户一致性保护。",
+        "teamMemberPermission 测试原先以 setDeleted(1)+updateById 模拟撤权，却未断言受影响行或真实逻辑删除状态；r2 日志中撤权后 delivery 状态为 3。",
+        "TeamMember 继承 BaseEntity 的 @TableLogic，真实 deleteById 后 selectById 应被逻辑删除过滤。"
+      ],
+      "changes": [
+        "异租户隔离查询后恢复 setTenant(tenantId)，并对 owner 更新断言影响行数为 1、当前 owner 为新 owner。",
+        "改用 TeamMemberMapper.deleteById(member.getId()) 触发真实逻辑删除，断言影响行数为 1 且 selectById 返回 null；保留撤权后状态 4 与无通知断言。",
+        "未修改生产源码、State 或 schema，未降低权限断言。"
+      ]
+    }
+  },
+  "decision": "测试夹具已在白名单内修复；两处权限/租户断言保持严格，运行时测试留由主线程串行验证。",
+  "stateDelta": {
+    "proposalOnly": true,
+    "changes": [],
+    "note": "未修改 .ai/state/20260921-team-search-watch.yaml；由主线程 Evaluate。"
+  },
+  "validation": [
+    {
+      "command": "静态核对 FileWatchReliabilityIntegrationTest.java 修复片段",
+      "status": "passed",
+      "evidence": "边界测试在异租户 deliveries 查询后调用 setTenant(tenantId)，owner Mapper 更新断言影响行数与 owner；团队撤权使用 deleteById 并断言 selectById 为空。"
+    },
+    {
+      "command": "git diff --check（工作树白名单文件为未跟踪文件，Git 无基线 diff）",
+      "status": "not_applicable",
+      "evidence": "未发现可供 git diff --check 比较的已跟踪基线；通过逐行读取确认补丁无额外空白行。"
+    },
+    {
+      "command": "Maven testCompile/tests/build",
+      "status": "not_run",
+      "evidence": "按 dispatch validation 约束禁止运行，由主线程串行执行。"
+    }
+  ],
+  "risk": [
+    "未运行 Maven，不能声称本轮 H2 测试已通过；主线程必须依据真实退出码 Evaluate。",
+    "若 test profile 的 MyBatis-Plus 逻辑删除配置或 schema 与当前工作树不一致，主线程运行时可能暴露环境差异。"
+  ],
+  "nextStep": "主线程串行执行 st-team 相关 testCompile/H2 测试，核对两处失败已消失后再进行后续门禁。",
+  "changeImpact": "仅影响可靠性集成测试夹具的租户上下文恢复、owner 更新确认和成员逻辑删除确认；生产服务、State、schema 与其他模块未修改。"
+}

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260923-root-permission-code-review-2",
+  "taskId": "TASK-20260923-team-root-permission-review",
+  "idempotencyKey": "TASK-20260923-team-root-permission-review",
+  "role": "reviewer",
+  "taskType": "review",
+  "objective": "独立审阅空间根目录权限修复的实现与测试，给出 CODE_REVIEW 结论",
+  "taskRefs": [
+    ".ai/tasks/TASK-20260923-team-root-permission-review.md"
+  ],
+  "stateRef": ".ai/state/20260923-team-root-permission.yaml",
+  "artifactRefs": [
+    ".ai/docs/20260923-team-root-permission/design.md",
+    ".ai/docs/20260923-team-root-permission/testcases.md",
+    ".ai/docs/20260923-team-root-permission/changereport.md"
+  ],
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      ".ai/docs/20260923-team-root-permission/codereview.md",
+      ".ai/runtime/results/DISPATCH-20260923-root-permission-code-review-2.json"
+    ],
+    "exclude": [
+      "st-team/**",
+      ".ai/state/**"
+    ]
+  },
+  "acceptance": [
+    "评审根规则读写、继承及深目录边界",
+    "指出具体文件行和可复现问题或说明无阻断问题",
+    "产出独立结果和 CODE_REVIEW proposal"
+  ],
+  "validation": [
+    "只读查看主 TASK、设计、实现与测试差异",
+    "不得运行共享 Maven 构建或修改产品代码"
+  ],
+  "forbidSpawn": true,
+  "forbidGitMvn": false,
+  "output": {
+    "artifactRef": ".ai/runtime/results/DISPATCH-20260923-root-permission-code-review-2.json"
+  }
+}

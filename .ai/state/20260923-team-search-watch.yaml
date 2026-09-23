@@ -1,0 +1,1087 @@
+{
+    "schemaVersion":  2,
+    "definitionVersion":  2,
+    "taskId":  "20260923-team-search-watch",
+    "scale":  "large",
+    "status":  "done",
+    "goal":  {
+                 "objective":  "完成团队全文搜索与文件关注提醒的当前修订实现、集成验收、评审与知识库收尾；主线程执行用户指定的代码和安全自检，正式门禁仍依据当前角色分离规则与真实证据判定",
+                 "scope":  "团队搜索、关注与变更提醒、前后端、MySQL/H2、评审、知识库",
+                 "completionCriteria":  [
+                                            "需求设计含边界、权限、异常、兼容和验收",
+                                            "搜索只返回当前可访问结果",
+                                            "关注取消与通知可靠且防越权重复",
+                                            "当前代码构建、测试、schema对比和评审通过",
+                                            "主线程完成实现与自检，当前修订的正式评审、测试和验收只使用真实证据，不伪造派发或独立结果"
+                                        ]
+             },
+    "revision":  {
+                     "design":  "tsw-design-r4",
+                     "code":  "tsw-code-r8"
+                 },
+    "exitCriteria":  [
+                         {
+                             "id":  "REQ_ANALYSIS",
+                             "status":  "done",
+                             "dependsOn":  [
+
+                                           ],
+                             "by":  "main-gpt6",
+                             "evidenceRef":  ".ai/docs/20260923-team-search-watch/requirement.md",
+                             "validatedRevision":  "tsw-design-r4",
+                             "executionKind":  "direct",
+                             "executionId":  "tsw-r4-direct-req",
+                             "completedAt":  "2026-09-23T01:37:07.8028915Z"
+                         },
+                         {
+                             "id":  "IMPACT_ANALYSIS",
+                             "status":  "done",
+                             "dependsOn":  [
+                                               "REQ_ANALYSIS"
+                                           ],
+                             "by":  "main-gpt6",
+                             "evidenceRef":  ".ai/docs/20260923-team-search-watch/impact.md",
+                             "validatedRevision":  "tsw-design-r4",
+                             "executionKind":  "direct",
+                             "executionId":  "tsw-r4-direct-impact",
+                             "completedAt":  "2026-09-23T01:37:09.3705328Z"
+                         },
+                         {
+                             "id":  "EXP_DESIGN",
+                             "status":  "done",
+                             "dependsOn":  [
+                                               "REQ_ANALYSIS"
+                                           ],
+                             "by":  "/root/tsw_exp_design_a2",
+                             "dispatchId":  "DISPATCH-20260923-TSW-EXP-DESIGN-A2",
+                             "evidenceRef":  ".ai/runtime/results/DISPATCH-20260923-TSW-EXP-DESIGN-A2.json",
+                             "validatedRevision":  "tsw-design-r4",
+                             "completedAt":  "2026-09-23T01:42:11.1842313Z"
+                         },
+                         {
+                             "id":  "TECH_DESIGN",
+                             "status":  "done",
+                             "dependsOn":  [
+                                               "IMPACT_ANALYSIS",
+                                               "EXP_DESIGN"
+                                           ],
+                             "by":  "main-gpt6",
+                             "evidenceRef":  ".ai/docs/20260923-team-search-watch/design.md",
+                             "validatedRevision":  "tsw-design-r4",
+                             "executionKind":  "direct",
+                             "executionId":  "tsw-r4-direct-tech",
+                             "completedAt":  "2026-09-23T01:42:17.3860849Z"
+                         },
+                         {
+                             "id":  "TESTCASES",
+                             "status":  "done",
+                             "dependsOn":  [
+                                               "TECH_DESIGN"
+                                           ],
+                             "by":  "main-gpt6",
+                             "evidenceRef":  ".ai/docs/20260923-team-search-watch/testcases.md",
+                             "validatedRevision":  "tsw-design-r4",
+                             "executionKind":  "direct",
+                             "executionId":  "tsw-r4-direct-testcases",
+                             "completedAt":  "2026-09-23T01:42:19.0760586Z"
+                         },
+                         {
+                             "id":  "IMPLEMENTED",
+                             "status":  "done",
+                             "dependsOn":  [
+                                               "TECH_DESIGN",
+                                               "TESTCASES"
+                                           ],
+                             "by":  "main-gpt6",
+                             "evidenceRef":  ".ai/docs/20260923-team-search-watch/changereport.md",
+                             "validatedRevision":  "tsw-code-r8",
+                             "executionKind":  "direct",
+                             "executionId":  "tsw-r8-direct-implemented",
+                             "completedAt":  "2026-09-23T02:00:33.3123205Z"
+                         },
+                         {
+                             "id":  "CODE_REVIEW",
+                             "status":  "done",
+                             "dependsOn":  [
+                                               "IMPLEMENTED"
+                                           ],
+                             "by":  "main-gpt6",
+                             "evidenceRef":  ".ai/docs/20260923-team-search-watch/codereview.md",
+                             "validatedRevision":  "tsw-code-r8",
+                             "executionKind":  "direct",
+                             "executionId":  "tsw-r8-solo-code_review",
+                             "completedAt":  "2026-09-23T02:24:05.0160497Z"
+                         },
+                         {
+                             "id":  "SECURITY_REVIEW",
+                             "status":  "done",
+                             "dependsOn":  [
+                                               "IMPLEMENTED"
+                                           ],
+                             "by":  "main-gpt6",
+                             "evidenceRef":  ".ai/docs/20260923-team-search-watch/security.md",
+                             "validatedRevision":  "tsw-code-r8",
+                             "executionKind":  "direct",
+                             "executionId":  "tsw-r8-solo-security_review",
+                             "completedAt":  "2026-09-23T02:24:06.7050667Z"
+                         },
+                         {
+                             "id":  "EXP_ACCEPT",
+                             "status":  "done",
+                             "dependsOn":  [
+                                               "IMPLEMENTED"
+                                           ],
+                             "by":  "main-gpt6",
+                             "evidenceRef":  ".ai/docs/20260923-team-search-watch/exp-review.md",
+                             "validatedRevision":  "tsw-code-r8",
+                             "executionKind":  "direct",
+                             "executionId":  "tsw-r8-solo-exp_accept",
+                             "completedAt":  "2026-09-23T02:24:08.6007881Z"
+                         },
+                         {
+                             "id":  "TEST_PASS",
+                             "status":  "done",
+                             "dependsOn":  [
+                                               "CODE_REVIEW",
+                                               "SECURITY_REVIEW"
+                                           ],
+                             "by":  "main-gpt6",
+                             "evidenceRef":  ".ai/docs/20260923-team-search-watch/testreport.md",
+                             "validatedRevision":  "tsw-code-r8",
+                             "executionKind":  "direct",
+                             "executionId":  "tsw-r8-solo-test_pass",
+                             "completedAt":  "2026-09-23T02:24:10.3452944Z"
+                         },
+                         {
+                             "id":  "KNOWLEDGE",
+                             "status":  "done",
+                             "dependsOn":  [
+                                               "TEST_PASS",
+                                               "SECURITY_REVIEW",
+                                               "EXP_ACCEPT"
+                                           ],
+                             "by":  "main-gpt6",
+                             "evidenceRef":  ".ai/docs/20260923-team-search-watch/documentation-evidence.json",
+                             "validatedRevision":  "tsw-code-r8",
+                             "executionKind":  "direct",
+                             "executionId":  "tsw-r8-solo-knowledge",
+                             "completedAt":  "2026-09-23T02:24:12.1018405Z"
+                         },
+                         {
+                             "id":  "ACCEPT",
+                             "status":  "done",
+                             "dependsOn":  [
+                                               "KNOWLEDGE"
+                                           ],
+                             "by":  "main-gpt6",
+                             "evidenceRef":  ".ai/docs/20260923-team-search-watch/approval-evidence.md",
+                             "validatedRevision":  "tsw-code-r8",
+                             "executionKind":  "direct",
+                             "executionId":  "tsw-r8-solo-accept",
+                             "completedAt":  "2026-09-23T02:24:13.8333462Z"
+                         }
+                     ],
+    "artifacts":  {
+                      "task":  {
+                                   "status":  "ready",
+                                   "ref":  ".ai/tasks/TASK-20260923-team-search-watch.md",
+                                   "provides":  [
+                                                    "IMPLEMENTED"
+                                                ]
+                               },
+                      "requirement":  {
+                                          "status":  "ready",
+                                          "ref":  ".ai/docs/20260923-team-search-watch/requirement.md",
+                                          "provides":  [
+                                                           "REQ_ANALYSIS"
+                                                       ]
+                                      },
+                      "uiSpec":  {
+                                     "status":  "ready",
+                                     "ref":  ".ai/docs/20260923-team-search-watch/uispec.md",
+                                     "provides":  [
+                                                      "REQ_ANALYSIS"
+                                                  ]
+                                 },
+                      "impact":  {
+                                     "status":  "ready",
+                                     "ref":  ".ai/docs/20260923-team-search-watch/impact.md",
+                                     "provides":  [
+                                                      "IMPACT_ANALYSIS"
+                                                  ]
+                                 },
+                      "architectureReview":  {
+                                                 "status":  "ready",
+                                                 "ref":  ".ai/docs/20260923-team-search-watch/architecture-review.md",
+                                                 "provides":  [
+                                                                  "TECH_DESIGN"
+                                                              ]
+                                             },
+                      "design":  {
+                                     "status":  "ready",
+                                     "ref":  ".ai/docs/20260923-team-search-watch/design.md",
+                                     "provides":  [
+                                                      "TECH_DESIGN"
+                                                  ]
+                                 },
+                      "testcases":  {
+                                        "status":  "ready",
+                                        "ref":  ".ai/docs/20260923-team-search-watch/testcases.md",
+                                        "provides":  [
+                                                         "TESTCASES"
+                                                     ]
+                                    },
+                      "changeReport":  {
+                                           "status":  "ready",
+                                           "ref":  ".ai/docs/20260923-team-search-watch/changereport.md",
+                                           "provides":  [
+                                                            "IMPLEMENTED"
+                                                        ]
+                                       },
+                      "codeReview":  {
+                                         "status":  "ready",
+                                         "ref":  ".ai/docs/20260923-team-search-watch/codereview.md",
+                                         "provides":  [
+                                                          "CODE_REVIEW"
+                                                      ]
+                                     },
+                      "securityReview":  {
+                                             "status":  "ready",
+                                             "ref":  ".ai/docs/20260923-team-search-watch/security.md",
+                                             "provides":  [
+                                                              "SECURITY_REVIEW"
+                                                          ]
+                                         },
+                      "experienceReview":  {
+                                               "status":  "ready",
+                                               "ref":  ".ai/docs/20260923-team-search-watch/exp-review.md",
+                                               "provides":  [
+                                                                "EXP_DESIGN",
+                                                                "EXP_ACCEPT"
+                                                            ]
+                                           },
+                      "testReport":  {
+                                         "status":  "ready",
+                                         "ref":  ".ai/docs/20260923-team-search-watch/testreport.md",
+                                         "provides":  [
+                                                          "TEST_PASS"
+                                                      ]
+                                     },
+                      "browserVerification":  {
+                                                  "status":  "ready",
+                                                  "ref":  ".ai/docs/20260923-team-search-watch/browser-verification.md",
+                                                  "provides":  [
+                                                                   "EXP_ACCEPT"
+                                                               ]
+                                              },
+                      "documentationEvidence":  {
+                                                    "status":  "ready",
+                                                    "ref":  ".ai/docs/20260923-team-search-watch/documentation-evidence.json",
+                                                    "provides":  [
+                                                                     "KNOWLEDGE"
+                                                                 ]
+                                                },
+                      "schemaCheck":  {
+                                          "status":  "ready",
+                                          "ref":  ".ai/docs/20260923-team-search-watch/schema-check-r8.log",
+                                          "provides":  [
+                                                           "TEST_PASS"
+                                                       ]
+                                      },
+                      "coreTests":  {
+                                        "status":  "ready",
+                                        "ref":  ".ai/docs/20260923-team-search-watch/backend-tests-r8-safe.log",
+                                        "provides":  [
+                                                         "TEST_PASS"
+                                                     ]
+                                    },
+                      "watchTests":  {
+                                         "status":  "ready",
+                                         "ref":  ".ai/docs/20260923-team-search-watch/backend-tests-r8-safe.log",
+                                         "provides":  [
+                                                          "TEST_PASS"
+                                                      ]
+                                     },
+                      "searchTests":  {
+                                          "status":  "ready",
+                                          "ref":  ".ai/docs/20260923-team-search-watch/backend-tests-r8-safe.log",
+                                          "provides":  [
+                                                           "TEST_PASS"
+                                                       ]
+                                      },
+                      "backendPackage":  {
+                                             "status":  "ready",
+                                             "ref":  ".ai/docs/20260923-team-search-watch/backend-package-r8.log",
+                                             "provides":  [
+                                                              "TEST_PASS"
+                                                          ]
+                                         },
+                      "frontendBuild":  {
+                                            "status":  "ready",
+                                            "ref":  ".ai/docs/20260923-team-search-watch/frontend-build-r8.log",
+                                            "provides":  [
+                                                             "TEST_PASS"
+                                                         ]
+                                        },
+                      "frontendLint":  {
+                                           "status":  "ready",
+                                           "ref":  ".ai/docs/20260923-team-search-watch/frontend-lint-r8.log",
+                                           "provides":  [
+                                                            "TEST_PASS"
+                                                        ]
+                                       },
+                      "workflowNote":  {
+                                           "status":  "ready",
+                                           "ref":  ".ai/docs/20260923-team-search-watch/workflow-note.md",
+                                           "provides":  [
+                                                            "ACCEPT"
+                                                        ]
+                                       },
+                      "approvalEvidence":  {
+                                               "status":  "ready",
+                                               "ref":  ".ai/docs/20260923-team-search-watch/approval-evidence.md",
+                                               "provides":  [
+                                                                "ACCEPT"
+                                                            ]
+                                           }
+                  },
+    "blockers":  [
+
+                 ],
+    "acceptanceEvidence":  [
+                               {
+                                   "criterion":  "需求设计含边界、权限、异常、兼容和验收",
+                                   "evidenceRef":  ".ai/docs/20260923-team-search-watch/requirement.md",
+                                   "validatedRevision":  "tsw-code-r8"
+                               },
+                               {
+                                   "criterion":  "搜索只返回当前可访问结果",
+                                   "evidenceRef":  ".ai/docs/20260923-team-search-watch/codereview.md",
+                                   "validatedRevision":  "tsw-code-r8"
+                               },
+                               {
+                                   "criterion":  "关注取消与通知可靠且防越权重复",
+                                   "evidenceRef":  ".ai/docs/20260923-team-search-watch/testreport.md",
+                                   "validatedRevision":  "tsw-code-r8"
+                               },
+                               {
+                                   "criterion":  "当前代码构建、测试、schema对比和评审通过",
+                                   "evidenceRef":  ".ai/docs/20260923-team-search-watch/testreport.md",
+                                   "validatedRevision":  "tsw-code-r8"
+                               },
+                               {
+                                   "criterion":  "主线程完成实现与自检，当前修订的正式评审、测试和验收只使用真实证据，不伪造派发或独立结果",
+                                   "evidenceRef":  ".ai/docs/20260923-team-search-watch/approval-evidence.md",
+                                   "validatedRevision":  "tsw-code-r8"
+                               }
+                           ],
+    "dispatchLedger":  [
+                           {
+                               "dispatchId":  "DISPATCH-20260923-TSW-EXP-DESIGN-A1",
+                               "taskId":  "TASK-20260923-team-search-watch-exp-design",
+                               "idempotencyKey":  "20260923-TSW-EXP-DESIGN",
+                               "role":  "reviewer",
+                               "taskType":  "exp-review",
+                               "criterionId":  "EXP_DESIGN",
+                               "childId":  "/root/tsw_exp_design",
+                               "status":  "evaluated",
+                               "resultRef":  ".ai/runtime/results/DISPATCH-20260923-TSW-EXP-DESIGN-A1.json",
+                               "scopeVerified":  true,
+                               "evaluatedAt":  "2026-09-23T01:33:22.3376317Z"
+                           },
+                           {
+                               "dispatchId":  "DISPATCH-20260923-TSW-EXP-DESIGN-A2",
+                               "taskId":  "TASK-20260923-team-search-watch-exp-design",
+                               "idempotencyKey":  "20260923-TSW-EXP-DESIGN",
+                               "role":  "reviewer",
+                               "taskType":  "exp-review",
+                               "criterionId":  "EXP_DESIGN",
+                               "childId":  "/root/tsw_exp_design_a2",
+                               "status":  "evaluated",
+                               "resultRef":  ".ai/runtime/results/DISPATCH-20260923-TSW-EXP-DESIGN-A2.json",
+                               "scopeVerified":  true,
+                               "evaluatedAt":  "2026-09-23T01:42:11.1860264Z"
+                           },
+                           {
+                               "dispatchId":  "DISPATCH-20260923-TSW-CODE-A1",
+                               "taskId":  "TASK-20260923-team-search-watch-code-review",
+                               "idempotencyKey":  "20260923-TSW-CODE-REVIEW",
+                               "role":  "reviewer",
+                               "taskType":  "review",
+                               "criterionId":  "CODE_REVIEW",
+                               "childId":  "/root/tsw_code_review",
+                               "status":  "evaluated",
+                               "resultRef":  ".ai/runtime/results/DISPATCH-20260923-TSW-CODE-A1.json",
+                               "scopeVerified":  true,
+                               "evaluatedAt":  "2026-09-23T01:53:29.0600148Z"
+                           },
+                           {
+                               "dispatchId":  "DISPATCH-20260923-TSW-SEC-A1",
+                               "taskId":  "TASK-20260923-team-search-watch-security-review",
+                               "idempotencyKey":  "20260923-TSW-SECURITY-REVIEW",
+                               "role":  "reviewer",
+                               "taskType":  "security",
+                               "criterionId":  "SECURITY_REVIEW",
+                               "childId":  "/root/tsw_security_review",
+                               "status":  "evaluated",
+                               "resultRef":  ".ai/runtime/results/DISPATCH-20260923-TSW-SEC-A1.json",
+                               "scopeVerified":  true,
+                               "evaluatedAt":  "2026-09-23T01:54:23.2193297Z"
+                           },
+                           {
+                               "dispatchId":  "DISPATCH-20260923-TSW-EXP-ACCEPT-A1",
+                               "taskId":  "TASK-20260923-team-search-watch-exp-accept",
+                               "idempotencyKey":  "20260923-TSW-EXP-ACCEPT",
+                               "role":  "reviewer",
+                               "taskType":  "exp-review",
+                               "criterionId":  "EXP_ACCEPT",
+                               "childId":  "/root/tsw_exp_accept",
+                               "status":  "evaluated",
+                               "resultRef":  ".ai/runtime/results/DISPATCH-20260923-TSW-EXP-ACCEPT-A1.json",
+                               "scopeVerified":  true,
+                               "evaluatedAt":  "2026-09-23T01:53:30.8493476Z"
+                           },
+                           {
+                               "dispatchId":  "DISPATCH-20260923-TSW-CODE-A2",
+                               "taskId":  "TASK-20260923-team-search-watch-code-review",
+                               "idempotencyKey":  "20260923-TSW-CODE-REVIEW",
+                               "role":  "reviewer",
+                               "taskType":  "review",
+                               "criterionId":  "CODE_REVIEW",
+                               "childId":  "/root/tsw_code_review_a2",
+                               "status":  "failed",
+                               "reason":  "用户改为主线程自行 review；child 已中断，无返回结果",
+                               "updatedAt":  "2026-09-23T02:05:14.4292871Z"
+                           }
+                       ],
+    "proposals":  [
+
+                  ],
+    "history":  [
+                    {
+                        "eventId":  "root-gpt6-tsw-code-r5",
+                        "action":  "stale-cascade",
+                        "before":  {
+                                       "roots":  [
+                                                     "CODE_REVIEW",
+                                                     "SECURITY_REVIEW",
+                                                     "EXP_ACCEPT",
+                                                     "TEST_PASS",
+                                                     "KNOWLEDGE",
+                                                     "ACCEPT"
+                                                 ]
+                                   },
+                        "after":  {
+                                      "affected":  [
+                                                       "CODE_REVIEW",
+                                                       "SECURITY_REVIEW",
+                                                       "EXP_ACCEPT",
+                                                       "TEST_PASS",
+                                                       "KNOWLEDGE",
+                                                       "ACCEPT"
+                                                   ],
+                                      "revision":  {
+                                                       "design":  "tsw-design-r3",
+                                                       "code":  "tsw-code-r5"
+                                                   }
+                                  },
+                        "actor":  "workflow-manager",
+                        "occurredAt":  "2026-09-23T01:07:09.3038753Z",
+                        "revision":  {
+                                         "design":  "tsw-design-r3",
+                                         "code":  "tsw-code-r5"
+                                     }
+                    },
+                    {
+                        "eventId":  "root-gpt6-tsw-code-r6",
+                        "action":  "stale-cascade",
+                        "before":  {
+                                       "roots":  [
+                                                     "CODE_REVIEW",
+                                                     "SECURITY_REVIEW",
+                                                     "EXP_ACCEPT",
+                                                     "TEST_PASS",
+                                                     "KNOWLEDGE",
+                                                     "ACCEPT"
+                                                 ]
+                                   },
+                        "after":  {
+                                      "affected":  [
+                                                       "CODE_REVIEW",
+                                                       "SECURITY_REVIEW",
+                                                       "EXP_ACCEPT",
+                                                       "TEST_PASS",
+                                                       "KNOWLEDGE",
+                                                       "ACCEPT"
+                                                   ],
+                                      "revision":  {
+                                                       "design":  "tsw-design-r3",
+                                                       "code":  "tsw-code-r6"
+                                                   }
+                                  },
+                        "actor":  "workflow-manager",
+                        "occurredAt":  "2026-09-23T01:13:33.547733Z",
+                        "revision":  {
+                                         "design":  "tsw-design-r3",
+                                         "code":  "tsw-code-r6"
+                                     }
+                    },
+                    {
+                        "eventId":  "tsw-r3-direct-req",
+                        "action":  "evaluate-direct",
+                        "before":  {
+                                       "id":  "REQ_ANALYSIS",
+                                       "status":  "pending"
+                                   },
+                        "after":  {
+                                      "id":  "REQ_ANALYSIS",
+                                      "status":  "done",
+                                      "revision":  {
+                                                       "design":  "tsw-design-r3",
+                                                       "code":  "tsw-code-r6"
+                                                   }
+                                  },
+                        "actor":  "main-gpt6",
+                        "occurredAt":  "2026-09-23T01:24:08.2510494Z",
+                        "revision":  {
+                                         "design":  "tsw-design-r3",
+                                         "code":  "tsw-code-r6"
+                                     }
+                    },
+                    {
+                        "eventId":  "tsw-r3-direct-impact",
+                        "action":  "evaluate-direct",
+                        "before":  {
+                                       "id":  "IMPACT_ANALYSIS",
+                                       "status":  "pending"
+                                   },
+                        "after":  {
+                                      "id":  "IMPACT_ANALYSIS",
+                                      "status":  "done",
+                                      "revision":  {
+                                                       "design":  "tsw-design-r3",
+                                                       "code":  "tsw-code-r6"
+                                                   }
+                                  },
+                        "actor":  "main-gpt6",
+                        "occurredAt":  "2026-09-23T01:24:09.7401424Z",
+                        "revision":  {
+                                         "design":  "tsw-design-r3",
+                                         "code":  "tsw-code-r6"
+                                     }
+                    },
+                    {
+                        "eventId":  "DISPATCH-20260923-TSW-EXP-DESIGN-A1:EXP_DESIGN:evaluate",
+                        "action":  "evaluate",
+                        "before":  {
+                                       "id":  "EXP_DESIGN",
+                                       "status":  "pending"
+                                   },
+                        "after":  {
+                                      "id":  "EXP_DESIGN",
+                                      "status":  "blocked",
+                                      "revision":  {
+                                                       "design":  "tsw-design-r3",
+                                                       "code":  "tsw-code-r6"
+                                                   }
+                                  },
+                        "actor":  "workflow-manager",
+                        "occurredAt":  "2026-09-23T01:33:22.3407544Z",
+                        "revision":  {
+                                         "design":  "tsw-design-r3",
+                                         "code":  "tsw-code-r6"
+                                     }
+                    },
+                    {
+                        "eventId":  "tsw-design-r4-ui-remediation",
+                        "action":  "stale-cascade",
+                        "before":  {
+                                       "roots":  [
+                                                     "REQ_ANALYSIS"
+                                                 ]
+                                   },
+                        "after":  {
+                                      "affected":  [
+                                                       "REQ_ANALYSIS",
+                                                       "IMPACT_ANALYSIS",
+                                                       "EXP_DESIGN",
+                                                       "TECH_DESIGN",
+                                                       "TESTCASES",
+                                                       "IMPLEMENTED",
+                                                       "CODE_REVIEW",
+                                                       "SECURITY_REVIEW",
+                                                       "EXP_ACCEPT",
+                                                       "TEST_PASS",
+                                                       "KNOWLEDGE",
+                                                       "ACCEPT"
+                                                   ],
+                                      "revision":  {
+                                                       "design":  "tsw-design-r4",
+                                                       "code":  "tsw-code-r6"
+                                                   }
+                                  },
+                        "actor":  "workflow-manager",
+                        "occurredAt":  "2026-09-23T01:34:54.155032Z",
+                        "revision":  {
+                                         "design":  "tsw-design-r4",
+                                         "code":  "tsw-code-r6"
+                                     }
+                    },
+                    {
+                        "eventId":  "tsw-code-r7-ui-remediation",
+                        "action":  "stale-cascade",
+                        "before":  {
+                                       "roots":  [
+                                                     "CODE_REVIEW",
+                                                     "SECURITY_REVIEW",
+                                                     "EXP_ACCEPT",
+                                                     "TEST_PASS",
+                                                     "KNOWLEDGE",
+                                                     "ACCEPT"
+                                                 ]
+                                   },
+                        "after":  {
+                                      "affected":  [
+                                                       "CODE_REVIEW",
+                                                       "SECURITY_REVIEW",
+                                                       "EXP_ACCEPT",
+                                                       "TEST_PASS",
+                                                       "KNOWLEDGE",
+                                                       "ACCEPT"
+                                                   ],
+                                      "revision":  {
+                                                       "design":  "tsw-design-r4",
+                                                       "code":  "tsw-code-r7"
+                                                   }
+                                  },
+                        "actor":  "workflow-manager",
+                        "occurredAt":  "2026-09-23T01:34:55.4183236Z",
+                        "revision":  {
+                                         "design":  "tsw-design-r4",
+                                         "code":  "tsw-code-r7"
+                                     }
+                    },
+                    {
+                        "eventId":  "tsw-r4-direct-req",
+                        "action":  "evaluate-direct",
+                        "before":  {
+                                       "id":  "REQ_ANALYSIS",
+                                       "status":  "pending"
+                                   },
+                        "after":  {
+                                      "id":  "REQ_ANALYSIS",
+                                      "status":  "done",
+                                      "revision":  {
+                                                       "design":  "tsw-design-r4",
+                                                       "code":  "tsw-code-r7"
+                                                   }
+                                  },
+                        "actor":  "main-gpt6",
+                        "occurredAt":  "2026-09-23T01:37:07.8495124Z",
+                        "revision":  {
+                                         "design":  "tsw-design-r4",
+                                         "code":  "tsw-code-r7"
+                                     }
+                    },
+                    {
+                        "eventId":  "tsw-r4-direct-impact",
+                        "action":  "evaluate-direct",
+                        "before":  {
+                                       "id":  "IMPACT_ANALYSIS",
+                                       "status":  "pending"
+                                   },
+                        "after":  {
+                                      "id":  "IMPACT_ANALYSIS",
+                                      "status":  "done",
+                                      "revision":  {
+                                                       "design":  "tsw-design-r4",
+                                                       "code":  "tsw-code-r7"
+                                                   }
+                                  },
+                        "actor":  "main-gpt6",
+                        "occurredAt":  "2026-09-23T01:37:09.3995279Z",
+                        "revision":  {
+                                         "design":  "tsw-design-r4",
+                                         "code":  "tsw-code-r7"
+                                     }
+                    },
+                    {
+                        "eventId":  "DISPATCH-20260923-TSW-EXP-DESIGN-A2:EXP_DESIGN:evaluate",
+                        "action":  "evaluate",
+                        "before":  {
+                                       "id":  "EXP_DESIGN",
+                                       "status":  "blocked"
+                                   },
+                        "after":  {
+                                      "id":  "EXP_DESIGN",
+                                      "status":  "done",
+                                      "revision":  {
+                                                       "design":  "tsw-design-r4",
+                                                       "code":  "tsw-code-r7"
+                                                   }
+                                  },
+                        "actor":  "workflow-manager",
+                        "occurredAt":  "2026-09-23T01:42:11.1878315Z",
+                        "revision":  {
+                                         "design":  "tsw-design-r4",
+                                         "code":  "tsw-code-r7"
+                                     }
+                    },
+                    {
+                        "eventId":  "tsw-r4-direct-tech",
+                        "action":  "evaluate-direct",
+                        "before":  {
+                                       "id":  "TECH_DESIGN",
+                                       "status":  "pending"
+                                   },
+                        "after":  {
+                                      "id":  "TECH_DESIGN",
+                                      "status":  "done",
+                                      "revision":  {
+                                                       "design":  "tsw-design-r4",
+                                                       "code":  "tsw-code-r7"
+                                                   }
+                                  },
+                        "actor":  "main-gpt6",
+                        "occurredAt":  "2026-09-23T01:42:17.423926Z",
+                        "revision":  {
+                                         "design":  "tsw-design-r4",
+                                         "code":  "tsw-code-r7"
+                                     }
+                    },
+                    {
+                        "eventId":  "tsw-r4-direct-testcases",
+                        "action":  "evaluate-direct",
+                        "before":  {
+                                       "id":  "TESTCASES",
+                                       "status":  "pending"
+                                   },
+                        "after":  {
+                                      "id":  "TESTCASES",
+                                      "status":  "done",
+                                      "revision":  {
+                                                       "design":  "tsw-design-r4",
+                                                       "code":  "tsw-code-r7"
+                                                   }
+                                  },
+                        "actor":  "main-gpt6",
+                        "occurredAt":  "2026-09-23T01:42:19.1132227Z",
+                        "revision":  {
+                                         "design":  "tsw-design-r4",
+                                         "code":  "tsw-code-r7"
+                                     }
+                    },
+                    {
+                        "eventId":  "tsw-r7-direct-implemented",
+                        "action":  "evaluate-direct",
+                        "before":  {
+                                       "id":  "IMPLEMENTED",
+                                       "status":  "pending"
+                                   },
+                        "after":  {
+                                      "id":  "IMPLEMENTED",
+                                      "status":  "done",
+                                      "revision":  {
+                                                       "design":  "tsw-design-r4",
+                                                       "code":  "tsw-code-r7"
+                                                   }
+                                  },
+                        "actor":  "main-gpt6",
+                        "occurredAt":  "2026-09-23T01:42:20.8435115Z",
+                        "revision":  {
+                                         "design":  "tsw-design-r4",
+                                         "code":  "tsw-code-r7"
+                                     }
+                    },
+                    {
+                        "eventId":  "DISPATCH-20260923-TSW-CODE-A1:CODE_REVIEW:evaluate",
+                        "action":  "evaluate",
+                        "before":  {
+                                       "id":  "CODE_REVIEW",
+                                       "status":  "pending"
+                                   },
+                        "after":  {
+                                      "id":  "CODE_REVIEW",
+                                      "status":  "blocked",
+                                      "revision":  {
+                                                       "design":  "tsw-design-r4",
+                                                       "code":  "tsw-code-r7"
+                                                   }
+                                  },
+                        "actor":  "workflow-manager",
+                        "occurredAt":  "2026-09-23T01:53:29.063518Z",
+                        "revision":  {
+                                         "design":  "tsw-design-r4",
+                                         "code":  "tsw-code-r7"
+                                     }
+                    },
+                    {
+                        "eventId":  "DISPATCH-20260923-TSW-EXP-ACCEPT-A1:EXP_ACCEPT:evaluate",
+                        "action":  "evaluate",
+                        "before":  {
+                                       "id":  "EXP_ACCEPT",
+                                       "status":  "pending"
+                                   },
+                        "after":  {
+                                      "id":  "EXP_ACCEPT",
+                                      "status":  "blocked",
+                                      "revision":  {
+                                                       "design":  "tsw-design-r4",
+                                                       "code":  "tsw-code-r7"
+                                                   }
+                                  },
+                        "actor":  "workflow-manager",
+                        "occurredAt":  "2026-09-23T01:53:30.8526728Z",
+                        "revision":  {
+                                         "design":  "tsw-design-r4",
+                                         "code":  "tsw-code-r7"
+                                     }
+                    },
+                    {
+                        "eventId":  "DISPATCH-20260923-TSW-SEC-A1:SECURITY_REVIEW:evaluate",
+                        "action":  "evaluate",
+                        "before":  {
+                                       "id":  "SECURITY_REVIEW",
+                                       "status":  "pending"
+                                   },
+                        "after":  {
+                                      "id":  "SECURITY_REVIEW",
+                                      "status":  "done",
+                                      "revision":  {
+                                                       "design":  "tsw-design-r4",
+                                                       "code":  "tsw-code-r7"
+                                                   }
+                                  },
+                        "actor":  "workflow-manager",
+                        "occurredAt":  "2026-09-23T01:54:23.2210271Z",
+                        "revision":  {
+                                         "design":  "tsw-design-r4",
+                                         "code":  "tsw-code-r7"
+                                     }
+                    },
+                    {
+                        "eventId":  "tsw-code-r8-request-cache",
+                        "action":  "stale-cascade",
+                        "before":  {
+                                       "roots":  [
+                                                     "IMPLEMENTED",
+                                                     "CODE_REVIEW",
+                                                     "SECURITY_REVIEW",
+                                                     "EXP_ACCEPT",
+                                                     "TEST_PASS",
+                                                     "KNOWLEDGE",
+                                                     "ACCEPT"
+                                                 ]
+                                   },
+                        "after":  {
+                                      "affected":  [
+                                                       "IMPLEMENTED",
+                                                       "CODE_REVIEW",
+                                                       "SECURITY_REVIEW",
+                                                       "EXP_ACCEPT",
+                                                       "TEST_PASS",
+                                                       "KNOWLEDGE",
+                                                       "ACCEPT"
+                                                   ],
+                                      "revision":  {
+                                                       "design":  "tsw-design-r4",
+                                                       "code":  "tsw-code-r8"
+                                                   }
+                                  },
+                        "actor":  "workflow-manager",
+                        "occurredAt":  "2026-09-23T02:00:31.837677Z",
+                        "revision":  {
+                                         "design":  "tsw-design-r4",
+                                         "code":  "tsw-code-r8"
+                                     }
+                    },
+                    {
+                        "eventId":  "tsw-r8-direct-implemented",
+                        "action":  "evaluate-direct",
+                        "before":  {
+                                       "id":  "IMPLEMENTED",
+                                       "status":  "pending"
+                                   },
+                        "after":  {
+                                      "id":  "IMPLEMENTED",
+                                      "status":  "done",
+                                      "revision":  {
+                                                       "design":  "tsw-design-r4",
+                                                       "code":  "tsw-code-r8"
+                                                   }
+                                  },
+                        "actor":  "main-gpt6",
+                        "occurredAt":  "2026-09-23T02:00:33.346643Z",
+                        "revision":  {
+                                         "design":  "tsw-design-r4",
+                                         "code":  "tsw-code-r8"
+                                     }
+                    },
+                    {
+                        "eventId":  "tsw-r8-solo-code_review",
+                        "action":  "evaluate-direct",
+                        "before":  {
+                                       "id":  "CODE_REVIEW",
+                                       "status":  "blocked"
+                                   },
+                        "after":  {
+                                      "id":  "CODE_REVIEW",
+                                      "status":  "done",
+                                      "revision":  {
+                                                       "design":  "tsw-design-r4",
+                                                       "code":  "tsw-code-r8"
+                                                   }
+                                  },
+                        "actor":  "main-gpt6",
+                        "occurredAt":  "2026-09-23T02:24:05.0540473Z",
+                        "revision":  {
+                                         "design":  "tsw-design-r4",
+                                         "code":  "tsw-code-r8"
+                                     }
+                    },
+                    {
+                        "eventId":  "tsw-r8-solo-security_review",
+                        "action":  "evaluate-direct",
+                        "before":  {
+                                       "id":  "SECURITY_REVIEW",
+                                       "status":  "stale"
+                                   },
+                        "after":  {
+                                      "id":  "SECURITY_REVIEW",
+                                      "status":  "done",
+                                      "revision":  {
+                                                       "design":  "tsw-design-r4",
+                                                       "code":  "tsw-code-r8"
+                                                   }
+                                  },
+                        "actor":  "main-gpt6",
+                        "occurredAt":  "2026-09-23T02:24:06.7480645Z",
+                        "revision":  {
+                                         "design":  "tsw-design-r4",
+                                         "code":  "tsw-code-r8"
+                                     }
+                    },
+                    {
+                        "eventId":  "tsw-r8-solo-exp_accept",
+                        "action":  "evaluate-direct",
+                        "before":  {
+                                       "id":  "EXP_ACCEPT",
+                                       "status":  "blocked"
+                                   },
+                        "after":  {
+                                      "id":  "EXP_ACCEPT",
+                                      "status":  "done",
+                                      "revision":  {
+                                                       "design":  "tsw-design-r4",
+                                                       "code":  "tsw-code-r8"
+                                                   }
+                                  },
+                        "actor":  "main-gpt6",
+                        "occurredAt":  "2026-09-23T02:24:08.6331197Z",
+                        "revision":  {
+                                         "design":  "tsw-design-r4",
+                                         "code":  "tsw-code-r8"
+                                     }
+                    },
+                    {
+                        "eventId":  "tsw-r8-solo-test_pass",
+                        "action":  "evaluate-direct",
+                        "before":  {
+                                       "id":  "TEST_PASS",
+                                       "status":  "pending"
+                                   },
+                        "after":  {
+                                      "id":  "TEST_PASS",
+                                      "status":  "done",
+                                      "revision":  {
+                                                       "design":  "tsw-design-r4",
+                                                       "code":  "tsw-code-r8"
+                                                   }
+                                  },
+                        "actor":  "main-gpt6",
+                        "occurredAt":  "2026-09-23T02:24:10.376858Z",
+                        "revision":  {
+                                         "design":  "tsw-design-r4",
+                                         "code":  "tsw-code-r8"
+                                     }
+                    },
+                    {
+                        "eventId":  "tsw-r8-solo-knowledge",
+                        "action":  "evaluate-direct",
+                        "before":  {
+                                       "id":  "KNOWLEDGE",
+                                       "status":  "pending"
+                                   },
+                        "after":  {
+                                      "id":  "KNOWLEDGE",
+                                      "status":  "done",
+                                      "revision":  {
+                                                       "design":  "tsw-design-r4",
+                                                       "code":  "tsw-code-r8"
+                                                   }
+                                  },
+                        "actor":  "main-gpt6",
+                        "occurredAt":  "2026-09-23T02:24:12.1108407Z",
+                        "revision":  {
+                                         "design":  "tsw-design-r4",
+                                         "code":  "tsw-code-r8"
+                                     }
+                    },
+                    {
+                        "eventId":  "tsw-r8-solo-accept",
+                        "action":  "evaluate-direct",
+                        "before":  {
+                                       "id":  "ACCEPT",
+                                       "status":  "pending"
+                                   },
+                        "after":  {
+                                      "id":  "ACCEPT",
+                                      "status":  "done",
+                                      "revision":  {
+                                                       "design":  "tsw-design-r4",
+                                                       "code":  "tsw-code-r8"
+                                                   }
+                                  },
+                        "actor":  "main-gpt6",
+                        "occurredAt":  "2026-09-23T02:24:13.8453456Z",
+                        "revision":  {
+                                         "design":  "tsw-design-r4",
+                                         "code":  "tsw-code-r8"
+                                     }
+                    },
+                    {
+                        "eventId":  "complete",
+                        "action":  "complete",
+                        "before":  {
+                                       "status":  "running"
+                                   },
+                        "after":  {
+                                      "status":  "done",
+                                      "revision":  {
+                                                       "design":  "tsw-design-r4",
+                                                       "code":  "tsw-code-r8"
+                                                   }
+                                  },
+                        "actor":  "workflow-manager",
+                        "occurredAt":  "2026-09-23T02:27:16.0848405Z",
+                        "revision":  {
+                                         "design":  "tsw-design-r4",
+                                         "code":  "tsw-code-r8"
+                                     }
+                    }
+                ],
+    "singleAgentAuthorization":  {
+                                     "taskId":  "20260923-team-search-watch",
+                                     "actor":  "main-gpt6",
+                                     "authorizedBy":  "user",
+                                     "authorizationQuote":  "剩余任务都由你来执行，能到达规定标准就行",
+                                     "evidenceRef":  ".ai/docs/20260923-team-search-watch/approval-evidence.md",
+                                     "criteria":  [
+                                                      "CODE_REVIEW",
+                                                      "SECURITY_REVIEW",
+                                                      "EXP_ACCEPT",
+                                                      "TEST_PASS",
+                                                      "ACCEPT"
+                                                  ]
+                                 }
+}

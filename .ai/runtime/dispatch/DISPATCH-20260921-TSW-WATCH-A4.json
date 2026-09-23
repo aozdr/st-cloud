@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260921-TSW-WATCH-A4",
+  "taskId": "TASK-20260921-team-search-watch-watch",
+  "idempotencyKey": "TSW-WATCH",
+  "role": "executor",
+  "taskType": "implement",
+  "objective": "修复 watch-tests-r3.log 中剩余失败。SysUser Mockito测试必须初始化MyBatis-Plus TableInfo元数据再触发getSqlSegment后断言SQL列与参数；只删除getSqlSegment会令参数map为空，不是修复。保持其他权限断言及生产契约，禁止Maven。",
+  "taskRefs": [
+    ".ai/tasks/TASK-20260921-team-search-watch-watch.md",
+    ".ai/docs/20260921-team-search-watch/design.md",
+    ".ai/docs/20260921-team-search-watch/testcases.md"
+  ],
+  "stateRef": ".ai/state/20260921-team-search-watch.yaml",
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      "st-core/**",
+      "st-team/**",
+      "st-sync/**",
+      "docker/mysql/init/43_file_watch.sql",
+      ".ai/docs/20260921-team-search-watch/watch-changereport.md",
+      ".ai/runtime/results/DISPATCH-20260921-TSW-WATCH-A4.json",
+      ".ai/scripts/compare-schema.ps1"
+    ],
+    "exclude": [
+      "st-common/**",
+      "st-search/**",
+      "st-web/**",
+      "st-team/src/main/java/com/stcloud/team/service/TeamFileAccessPolicyImpl.java",
+      "st-team/src/main/java/com/stcloud/team/service/FolderPermissionService.java",
+      "st-team/src/test/**/TeamFileAccessPolicyTest*",
+      "st-team/src/test/**/FolderPermissionFreshTest*",
+      ".ai/state/**",
+      "st-team/src/test/java/com/stcloud/team/service/FileWatchReliabilityIntegrationTest.java"
+    ]
+  },
+  "acceptance": [
+    "TASK验收全部满足，严格既定接口与权限可靠性边界",
+    "代码由Luna max执行，独立结果真实记录测试或未执行项"
+  ],
+  "validation": [
+    "准备后端测试，不运行Maven/迁移，主线程串行验证"
+  ],
+  "forbidSpawn": true,
+  "output": {
+    "resultRef": ".ai/runtime/results/DISPATCH-20260921-TSW-WATCH-A4.json",
+    "by": "/root/luna_watch_0921d",
+    "validatedRevision": "tsw-code-r1"
+  }
+}

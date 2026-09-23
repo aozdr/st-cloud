@@ -152,6 +152,56 @@ export interface SearchResultPage {
   size: number;
 }
 
+/** 团队搜索结果：名称、路径和摘要均由服务端在实时权限核验后返回。 */
+export interface TeamSearchResultVO {
+  fileId: string;
+  fileName: string;
+  path: string;
+  nodeType: number | null;
+  fileSize: string | null;
+  suffix: string | null;
+  contentType: string | null;
+  highlight: string | null;
+  createdAt: string;
+  updatedAt: string;
+  spaceId: string;
+  parentId: string | null;
+}
+
+/** 团队搜索游标分页，不暴露 ES total。 */
+export interface TeamSearchResultPage {
+  records: TeamSearchResultVO[];
+  hasMore: boolean;
+  nextCursor: string | null;
+}
+
+// ==================== File Watch Types ====================
+export interface FileWatchState {
+  nodeId: string;
+  watching: boolean;
+  watchId: string | null;
+}
+
+export interface FileWatchRecord {
+  watchId: string;
+  nodeId: string;
+  nodeType: number | null;
+  spaceId: string | null;
+  name: string | null;
+  path: string | null;
+  parentId?: string | null;
+  createdAt: string;
+  available: boolean;
+}
+
+export interface FileWatchPage {
+  records: FileWatchRecord[];
+  total: number | string;
+  current: number | string;
+  size: number | string;
+  pages: number | string;
+}
+
 // ==================== Request Types ====================
 export interface CreateFolderRequest {
   parentId: string;
@@ -663,6 +713,22 @@ export interface NotificationItem {
   id: string; type: string; title: string; content: string | null;
   refType: string | null; refId: string | null;
   read: number; createdAt: string;
+  /** 新版文件变更通知才有 eventId；旧通知保持 null 以兼容旧映射。 */
+  eventId?: string | null;
+  nodeId?: string | null;
+  spaceId?: string | null;
+  parentId?: string | null;
+  available?: boolean;
+  changeType?: string | null;
+}
+
+/** 通知目标由服务端先验证通知归属，再实时核权后返回。 */
+export interface NotificationTarget {
+  available: boolean;
+  nodeId?: string | null;
+  parentId?: string | null;
+  spaceId?: string | null;
+  nodeType?: number | null;
 }
 
 export interface TeamCommentItem {

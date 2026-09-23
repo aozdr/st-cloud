@@ -1,0 +1,58 @@
+{
+  "dispatchId": "DISPATCH-20260923-root-permission-code-review-1",
+  "taskId": "TASK-20260923-team-root-permission-review",
+  "role": "reviewer",
+  "status": "completed",
+  "by": "/root/root_permission_code_review",
+  "validatedRevision": "root-permission-code-r1",
+  "background": "独立评审团队空间根目录权限保存失败的修复。",
+  "input": [
+    ".ai/tasks/TASK-20260923-team-root-permission-review.md",
+    ".ai/state/20260923-team-root-permission.yaml（只读最小 revision 与准则状态）",
+    ".ai/docs/20260923-team-root-permission/design.md",
+    ".ai/docs/20260923-team-root-permission/testcases.md",
+    ".ai/docs/20260923-team-root-permission/changereport.md",
+    "权限服务、团队控制器、前端根目录请求及相关测试源码"
+  ],
+  "analysis": "CR-01：根目录列表、新建文件夹和空白文件请求在前端省略 parentId，服务端收到 null；FolderPermissionService.resolvePermissions 在 nodeId=null 时直接返回角色权限，因此已保存的 folder_node_id=0 根规则无法授权根目录操作。正常正数节点继承、跨空间隔离、fresh 断链拒绝与 20 层边界经静态核对基本符合设计。定位和复现条件见 codereview.md。",
+  "decision": [
+    "建议 root-permission-code-r1 的 CODE_REVIEW outcome=fail，CR-01 阻断通过。",
+    "修复根目录 null/0 权限语义并补集成用例后，以新代码 revision 重新评审。"
+  ],
+  "artifactRefs": [
+    ".ai/docs/20260923-team-root-permission/codereview.md"
+  ],
+  "validation": [
+    {
+      "method": "只读核对 TASK、设计、测试用例、变更报告、最小 State、相关源码与既有测试报告",
+      "outcome": "completed",
+      "evidence": ".ai/docs/20260923-team-root-permission/codereview.md；未重跑共享 Maven 构建或修改产品代码。"
+    }
+  ],
+  "stateDelta": {
+    "proposalOnly": true,
+    "proposals": [
+      {
+        "id": "CODE_REVIEW",
+        "outcome": "fail",
+        "dispatchId": "DISPATCH-20260923-root-permission-code-review-1",
+        "evidenceRef": ".ai/runtime/results/DISPATCH-20260923-root-permission-code-review-1.json",
+        "validatedRevision": "root-permission-code-r1"
+      }
+    ]
+  },
+  "risks": [
+    "根目录缺省 parentId 对应的权限请求无法使用已保存根规则，用户可能继续遇到权限不足。"
+  ],
+  "nextStep": "主线程修复 CR-01，补充根目录缺省 parentId 用例并重新评审。",
+  "changeImpact": "仅写入 scope.include 指定的评审文档与独立结果 JSON；未修改产品代码或 Loop State。",
+  "criterionProposal": {
+    "id": "CODE_REVIEW",
+    "outcome": "fail",
+    "by": "/root/root_permission_code_review",
+    "dispatchId": "DISPATCH-20260923-root-permission-code-review-1",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260923-root-permission-code-review-1.json",
+    "validatedRevision": "root-permission-code-r1"
+  },
+  "blockerProposals": []
+}

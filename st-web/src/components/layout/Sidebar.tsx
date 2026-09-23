@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from 'react-router-dom';
-import { Cloud, FolderClosed, Trash2, Share2, Users, Settings, ArrowUpDown, Palette, FolderSync, Home, Upload, PanelLeftClose, PanelLeftOpen, X, Star, Copy, EyeOff, GripVertical } from 'lucide-react';
+import { Cloud, FolderClosed, Trash2, Share2, Users, Settings, ArrowUpDown, Palette, FolderSync, Home, Upload, PanelLeftClose, PanelLeftOpen, X, Star, Copy, EyeOff, GripVertical, Bell } from 'lucide-react';
 import { memo, useEffect, useState, useCallback } from 'react';
 import { formatSize, cn } from '../../lib/utils';
 import { isElectron } from '../../lib/electron';
@@ -37,6 +37,7 @@ function buildNavItems(isElectronEnv: boolean, canAdmin: boolean): NavItem[] {
         ]
       : []),
     { key: 'favorites', to: '/favorites', icon: Star, label: '我的收藏', end: false },
+    { key: 'following', to: '/following', icon: Bell, label: '我的关注', end: false },
     { key: 'shares', to: '/shares', icon: Share2, label: '我的分享', end: false },
     { key: 'team', to: '/team', icon: Users, label: '团队空间', end: false },
     { key: 'recycle', to: '/recycle', icon: Trash2, label: '回收站', end: false },

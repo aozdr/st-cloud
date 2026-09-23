@@ -1,0 +1,11 @@
+{
+  "taskId": "20260923-team-search-watch",
+  "eventId": "tsw-r8-direct-implemented",
+  "criterionProposal": {
+    "id": "IMPLEMENTED",
+    "outcome": "pass",
+    "by": "main-gpt6",
+    "evidenceRef": ".ai/docs/20260923-team-search-watch/changereport.md",
+    "validatedRevision": "tsw-code-r8"
+  }
+}

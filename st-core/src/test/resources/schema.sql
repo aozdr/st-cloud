@@ -320,3 +320,66 @@ MERGE INTO sys_config (tenant_id, config_key, config_value, config_group, remark
 (0, 'share.brute_force.captchaEnabled',  'true', 'share.brute_force.', 'captcha enabled', 1),
 (0, 'share.brute_force.captchaThreshold', '3', 'share.brute_force.', 'captcha trigger threshold', 1),
 (0, 'share.brute_force.captchaLockMs',   '1800000', 'share.brute_force.', 'captcha fail lock (ms)', 1);
+
+-- ============================================================
+-- 文件关注与可靠提醒（43_file_watch.sql；core H2 事务测试同步表结构）
+-- ============================================================
+CREATE TABLE IF NOT EXISTS notification (
+    id              BIGINT          NOT NULL AUTO_INCREMENT,
+    tenant_id       BIGINT          NOT NULL,
+    user_id         BIGINT          NOT NULL,
+    type            VARCHAR(20)     NOT NULL,
+    title           VARCHAR(200)    NOT NULL,
+    content         VARCHAR(500)    DEFAULT NULL,
+    ref_type        VARCHAR(20)     DEFAULT NULL,
+    ref_id          BIGINT          DEFAULT NULL,
+    event_id        BIGINT          DEFAULT NULL,
+    node_id         BIGINT          DEFAULT NULL,
+    space_id        BIGINT          DEFAULT NULL,
+    change_type     VARCHAR(16)     DEFAULT NULL,
+    `read`          TINYINT         NOT NULL DEFAULT 0,
+    created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    CONSTRAINT uk_notification_tenant_user_event UNIQUE (tenant_id, user_id, event_id)
+);
+
+CREATE TABLE IF NOT EXISTS file_watch (
+    id          BIGINT      NOT NULL AUTO_INCREMENT,
+    tenant_id   BIGINT      NOT NULL,
+    user_id     BIGINT      NOT NULL,
+    node_id     BIGINT      NOT NULL,
+    created_at  DATETIME(3) NOT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT uk_file_watch_tenant_user_node UNIQUE (tenant_id, user_id, node_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_file_watch_tenant_node_user
+    ON file_watch (tenant_id, node_id, user_id);
+CREATE INDEX IF NOT EXISTS idx_file_watch_user_created
+    ON file_watch (tenant_id, user_id, created_at, id);
+
+CREATE TABLE IF NOT EXISTS file_watch_delivery (
+    id            BIGINT       NOT NULL AUTO_INCREMENT,
+    tenant_id     BIGINT       NOT NULL,
+    event_id      BIGINT       NOT NULL,
+    user_id       BIGINT       NOT NULL,
+    node_id       BIGINT       NOT NULL,
+    space_id      BIGINT       DEFAULT NULL,
+    actor_id      BIGINT       DEFAULT NULL,
+    change_type   VARCHAR(16)  NOT NULL,
+    watch_ids     CLOB         NOT NULL,
+    payload       CLOB         NOT NULL,
+    status        TINYINT      NOT NULL DEFAULT 0,
+    retry_count   INT          NOT NULL DEFAULT 0,
+    next_retry_at DATETIME(3)  NOT NULL,
+    last_error    VARCHAR(500) DEFAULT NULL,
+    created_at    DATETIME(3)  NOT NULL,
+    updated_at    DATETIME(3)  NOT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT uk_file_watch_delivery_event_user UNIQUE (tenant_id, event_id, user_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_file_watch_delivery_due
+    ON file_watch_delivery (status, next_retry_at, id);
+CREATE INDEX IF NOT EXISTS idx_file_watch_delivery_user_node
+    ON file_watch_delivery (tenant_id, user_id, node_id);

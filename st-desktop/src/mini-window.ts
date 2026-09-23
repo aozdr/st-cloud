@@ -9,9 +9,8 @@ import type { WidgetMode } from './types';
  * 桌面传输悬浮小窗（类似百度网盘）：独立于主窗口、始终置顶、可拖动，
  * 实时展示上传/下载进度。任务数据通过 getAllWindows 广播的 task:update 自动接收。
  *
- * 支持三种显示模式：
- *  - micro    微型模式：只有云朵 + 上下行速度 + 关闭
- *  - compact  紧凑模式：云朵 + 上下行速度(带单位) + 展开按钮 + 关闭
+ * 支持两种显示模式：
+ *  - micro    微型模式：云朵 + 上下行速度
  *  - expanded 展开模式：完整任务列表（含筛选、进度、暂停/继续操作、打开传输列表）
  *
  * 窗口尺寸跟随当前模式变化；拖拽结束后自动吸附最近屏幕边缘；多显示器下始终钳制在
@@ -20,10 +19,10 @@ import type { WidgetMode } from './types';
 
 const isDev = !app.isPackaged;
 
-/** 三种模式的窗口尺寸（内容区，无边框透明窗口实际内容即整窗） */
+/** 两种模式的窗口尺寸（内容区，无边框透明窗口实际内容即整窗） */
 const WIDGET_SIZES: Record<WidgetMode, { width: number; height: number }> = {
-  micro: { width: 176, height: 40 },
-  expanded: { width: 352, height: 520 },
+  micro: { width: 176, height: 36 },
+  expanded: { width: 320, height: 400 },
 };
 /** 窗口四周透明留白：已移除阴影后无需留白，进度色直接铺满整窗（避免四周出现白色） */
 const WIDGET_PADDING = 0;

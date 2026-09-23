@@ -67,6 +67,10 @@ instance.interceptors.response.use(
       return response.data;
     }
     const result = response.data;
+    // DELETE/204 等成功响应可能没有响应体；按成功处理，避免访问 result.code 抛出异常。
+    if (result == null || result === '') {
+      return result;
+    }
     if (result.code === 200) {
       return result.data;
     }

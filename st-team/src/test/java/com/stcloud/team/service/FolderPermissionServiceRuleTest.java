@@ -28,6 +28,10 @@ class FolderPermissionServiceRuleTest {
     private FolderPermissionService newService(TeamFolderPermissionMapper permMapper,
                                                FileNodeMapper nodeMapper,
                                                TeamMemberMapper memberMapper) {
+        if (org.mockito.Mockito.mockingDetails(nodeMapper).getStubbings().isEmpty()) {
+            org.mockito.Mockito.lenient().when(nodeMapper.selectById(any()))
+                    .thenAnswer(invocation -> node(invocation.getArgument(0), null));
+        }
         FolderPermissionService service = new FolderPermissionService();
         ReflectionTestUtils.setField(service, "teamFolderPermissionMapper", permMapper);
         ReflectionTestUtils.setField(service, "fileNodeMapper", nodeMapper);
@@ -54,6 +58,8 @@ class FolderPermissionServiceRuleTest {
         FileNode n = new FileNode();
         n.setId(id);
         n.setParentId(parentId);
+        n.setSpaceId(1L);
+        n.setStatus(0);
         return n;
     }
 
@@ -121,6 +127,16 @@ class FolderPermissionServiceRuleTest {
 
         FolderPermissionService service = newService(permMapper, nodeMapper, mock(TeamMemberMapper.class));
         assertEquals(Set.of("view"), service.resolvePermissions(1L, 10L, 5L, Set.of("view")));
+    }
+
+    @Test
+    void missingNodeFailsClosed() {
+        TeamFolderPermissionMapper permMapper = mock(TeamFolderPermissionMapper.class);
+        FileNodeMapper nodeMapper = mock(FileNodeMapper.class);
+        when(nodeMapper.selectById(10L)).thenReturn(null);
+        FolderPermissionService service = newService(permMapper, nodeMapper, mock(TeamMemberMapper.class));
+
+        assertEquals(Set.of(), service.resolvePermissions(1L, 10L, 5L, Set.of("view", "upload")));
     }
 
     @Test

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260923-TSW-SEC-A1",
+  "taskId": "TASK-20260923-team-search-watch-security-review",
+  "idempotencyKey": "20260923-TSW-SECURITY-REVIEW",
+  "role": "reviewer",
+  "taskType": "security",
+  "objective": "独立审查 tsw-code-r7 的租户、权限、索引、游标、关注投递和通知安全边界，提出 SECURITY_REVIEW 结论",
+  "stateRef": ".ai/state/20260923-team-search-watch.yaml",
+  "taskRefs": [".ai/tasks/TASK-20260923-team-search-watch-security-review.md", ".ai/docs/20260923-team-search-watch/requirement.md", ".ai/docs/20260923-team-search-watch/design.md", ".ai/docs/20260923-team-search-watch/testcases.md", ".ai/docs/20260923-team-search-watch/changereport.md"],
+  "skillRefs": ["-"],
+  "scope": {
+    "include": [".ai/docs/20260923-team-search-watch/security.md", ".ai/runtime/results/DISPATCH-20260923-TSW-SEC-A1.json"],
+    "exclude": ["st-*/**", "docker/**", ".ai/state/**"]
+  },
+  "acceptance": ["逐项审查可信身份、当前 ACL、陈旧索引、游标、投递及通知失权，给出源文件依据", "未解决高风险问题不得建议通过"],
+  "validation": ["只读代码和现有测试证据；不运行构建；结论绑定 tsw-code-r7"],
+  "output": {"resultRef": ".ai/runtime/results/DISPATCH-20260923-TSW-SEC-A1.json", "by": "/root/tsw_security_review", "validatedRevision": "tsw-code-r7"},
+  "forbidSpawn": true
+}

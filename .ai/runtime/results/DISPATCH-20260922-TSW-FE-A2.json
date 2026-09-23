@@ -1,0 +1,39 @@
+{
+  "dispatchId": "DISPATCH-20260922-TSW-FE-A2",
+  "taskId": "TASK-20260922-team-search-watch-frontend",
+  "status": "completed",
+  "by": "/root/terra_frontend_0922",
+  "validatedRevision": "tsw-code-r2",
+  "artifactRefs": [
+    "st-web/src/pages/SearchPage.tsx",
+    "st-web/src/components/layout/TopBar.tsx",
+    ".ai/docs/20260922-team-search-watch/frontend-changereport.md"
+  ],
+  "summary": "修复团队搜索在375px下的类型筛选条文字逐字换行和压缩包标签溢出，并把既有通知铃接入全局顶栏。",
+  "validation": [
+    {
+      "command": "npm run lint",
+      "workdir": "st-web",
+      "outcome": "pass_with_existing_warnings",
+      "evidence": "退出码0；11条既有 React Fast Refresh / Hook 依赖警告，无错误。"
+    },
+    {
+      "command": "npm run build",
+      "workdir": "st-web",
+      "outcome": "pass",
+      "evidence": "tsc -b && vite build 退出码0。"
+    }
+  ],
+  "criterionProposal": {
+    "id": "IMPLEMENTED",
+    "outcome": "pass",
+    "by": "/root/terra_frontend_0922",
+    "dispatchId": "DISPATCH-20260922-TSW-FE-A2",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260922-TSW-FE-A2.json",
+    "validatedRevision": "tsw-code-r2"
+  },
+  "blockerProposals": [],
+  "risks": [
+    "375px浏览器实机布局、触控滚动及通知弹层由主线程串行验证；本任务未占用浏览器。"
+  ]
+}

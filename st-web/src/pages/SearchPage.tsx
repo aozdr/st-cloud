@@ -1,16 +1,17 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Search, ChevronRight, FolderOpen, SlidersHorizontal, FileText, Image as ImageIcon, Video, Music, Archive, ArrowDownUp, Calendar, HardDrive, RotateCcw, X } from 'lucide-react';
+import { Search, ChevronRight, FolderOpen, SlidersHorizontal, FileText, Image as ImageIcon, Video, Music, Archive, ArrowDownUp, Calendar, HardDrive, RotateCcw, X, Users, Loader2, AlertTriangle } from 'lucide-react';
 import { format } from 'date-fns';
 import { Calendar as CalendarPicker } from '../components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '../components/ui/popover';
 import api from '../lib/api';
-import type { SearchResultVO, SearchResultPage, FileNode } from '../types';
+import type { SearchResultVO, SearchResultPage, TeamSearchResultPage, TeamSearchResultVO, TeamSpace, FileNode, PageResult } from '../types';
 import { getFileTypeConfig, formatSize, formatDate, cn, sanitizeHighlight } from '../lib/utils';
 import { type FileTypeFilter, FILTER_SUFFIXES } from '../lib/fileTypes';
 import FileTypeIcon from '../components/file/FileTypeIcon';
 import PreviewModal from '../components/preview/PreviewModal';
 import { useMobile } from '../hooks/useMobile';
+import { teamFileSource } from '../lib/fileSource';
 
 type SortOption = 'relevance' | 'name' | 'size_desc' | 'size_asc' | 'date_desc' | 'date_asc';
 type SizeFilter = 'all' | 'small' | 'medium' | 'large';
@@ -164,7 +165,16 @@ function SkeletonCard() {
   );
 }
 
-export default function SearchPage() {
+type SearchScope = 'personal' | 'team';
+type SearchErrorKind = 'unavailable' | 'scope' | 'cursor' | 'generic';
+type SearchErrorState = { kind: SearchErrorKind; message: string };
+
+function isAbortError(error: unknown): boolean {
+  const value = error as { code?: string; name?: string } | null;
+  return value?.code === 'ERR_CANCELED' || value?.name === 'AbortError';
+}
+
+function PersonalSearchPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const isMobile = useMobile();
@@ -183,9 +193,21 @@ export default function SearchPage() {
   const [sortBy, setSortBy] = useState<SortOption>('relevance');
   const [sizeFilter, setSizeFilter] = useState<SizeFilter>('all');
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const requestSeqRef = useRef(0);
+  const controllerRef = useRef<AbortController | null>(null);
 
   const doSearch = useCallback(async (kw: string, ft: FileTypeFilter, sf: SizeFilter) => {
-    if (!kw.trim()) { setResults([]); setSearched(false); return; }
+    controllerRef.current?.abort();
+    const controller = new AbortController();
+    controllerRef.current = controller;
+    const requestSeq = ++requestSeqRef.current;
+    if (!kw.trim()) {
+      setResults([]);
+      setSearched(false);
+      setLoading(false);
+      controllerRef.current = null;
+      return;
+    }
     setLoading(true);
     setSearched(true);
     const t0 = Date.now();
@@ -196,10 +218,23 @@ export default function SearchPage() {
       const sr = getSizeParams(sf);
       if (sr.min !== undefined) params.sizeMin = sr.min;
       if (sr.max !== undefined) params.sizeMax = sr.max;
-      const res = await api.get<SearchResultPage>('/search', { params });
+      const res = await api.get<SearchResultPage>('/search', { params, signal: controller.signal });
+      if (requestSeq !== requestSeqRef.current) return;
       setResults(res?.records || []);
       setSearchTime(Date.now() - t0);
-    } catch { setResults([]); setSearchTime(Date.now() - t0); } finally { setLoading(false); }
+    } catch (error) {
+      if (isAbortError(error) || requestSeq !== requestSeqRef.current) return;
+      setResults([]);
+      setSearchTime(Date.now() - t0);
+    } finally {
+      if (requestSeq === requestSeqRef.current) setLoading(false);
+      if (controllerRef.current === controller) controllerRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => () => {
+    requestSeqRef.current += 1;
+    controllerRef.current?.abort();
   }, []);
 
   /* Triggered by URL changes (TopBar search, initial load, filter changes) */
@@ -229,6 +264,13 @@ export default function SearchPage() {
 
   const handleSearchSubmit = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') triggerSearch(keyword);
+  };
+
+  const switchToTeamSearch = () => {
+    const next = new URLSearchParams(searchParams);
+    next.set('scope', 'team');
+    next.set('_t', String(Date.now()));
+    setSearchParams(next, { replace: true });
   };
 
   /* Client-side date filtering */
@@ -270,6 +312,13 @@ export default function SearchPage() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted group-focus-within:text-primary-600 transition-colors" aria-hidden />
             <input type="text" value={keyword} onChange={(e) => setKeyword(e.target.value)} onKeyDown={handleSearchSubmit} placeholder="搜索文件名或文档内容…" autoFocus={!isMobile} className="w-full pl-12 pr-24 py-2.5 bg-surface-2 border border-border rounded-xl text-base text-fg placeholder-muted outline-none transition focus:bg-surface focus:border-primary-400 focus:ring-2 focus:ring-primary-100" />
             <button onClick={() => triggerSearch(keyword)} className="absolute right-2 top-1/2 -translate-y-1/2 px-3 py-1 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 active:bg-primary-800 cursor-pointer transition-colors">搜索</button>
+          </div>
+          <div className="mt-3 flex items-center gap-2" role="group" aria-label="搜索范围">
+            <span className="text-xs text-muted">搜索范围</span>
+            <div className="flex items-center gap-1 rounded-lg bg-surface-2 p-0.5">
+              <button type="button" className="cursor-pointer rounded-md bg-surface px-3 py-1.5 text-xs font-medium text-primary-600 shadow-sm" aria-pressed="true">个人文件</button>
+              <button type="button" onClick={switchToTeamSearch} className="cursor-pointer rounded-md px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:text-fg">团队文件</button>
+            </div>
           </div>
           {(searched || urlKeyword) && (
             <div className="flex items-center gap-2 mt-2.5 text-sm">
@@ -366,4 +415,332 @@ export default function SearchPage() {
       {preview && (<PreviewModal files={preview.files} currentIndex={preview.index} onClose={() => setPreview(null)} />)}
     </div>
   );
+}
+
+type TeamFolderState = 'none' | 'loading' | 'valid' | 'invalid';
+
+function classifyTeamSearchError(error: unknown): SearchErrorState {
+  const value = error as { code?: unknown; message?: unknown } | null;
+  const message = `${String(value?.code ?? '')} ${String(value?.message ?? (error instanceof Error ? error.message : ''))}`;
+  if (message.includes('SEARCH_UNAVAILABLE') || message.includes('搜索暂时不可用')) {
+    return { kind: 'unavailable', message: '搜索暂时不可用，请稍后重试' };
+  }
+  if (message.includes('SEARCH_SCOPE_TOO_LARGE') || message.includes('搜索范围较大')) {
+    return { kind: 'scope', message: '搜索范围较大，请选择文件夹或增加筛选条件' };
+  }
+  if (message.includes('SEARCH_CURSOR_EXPIRED') || message.includes('SEARCH_CURSOR_INVALID') || message.includes('搜索已过期')) {
+    return { kind: 'cursor', message: '搜索已过期，请重新搜索' };
+  }
+  if (message.includes('FORBIDDEN') || message.includes('无权') || message.includes('无权限') || message.includes('空间不存在')) {
+    return { kind: 'generic', message: '无权访问该空间或空间已不存在' };
+  }
+  return { kind: 'generic', message: error instanceof Error && error.message ? error.message : '搜索失败，请稍后重试' };
+}
+
+/** 团队搜索分支：独立游标和请求代际，避免个人分页契约与结果互相污染。 */
+function TeamSearchPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const isMobile = useMobile();
+  const rawFileType = searchParams.get('fileType') || '';
+  const urlFileType = FILE_TYPE_TABS.some((item) => item.value === rawFileType) ? rawFileType as FileTypeFilter : 'all';
+  const urlKeyword = searchParams.get('keyword') || '';
+  const urlNonce = searchParams.get('_t') || '';
+  const urlSpaceId = searchParams.get('spaceId') || '';
+  const urlFolderId = searchParams.get('folderId');
+
+  const [keyword, setKeyword] = useState(urlKeyword);
+  const [fileType, setFileType] = useState<FileTypeFilter>(urlFileType);
+  const [sizeFilter, setSizeFilter] = useState<SizeFilter>('all');
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [results, setResults] = useState<TeamSearchResultVO[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [searched, setSearched] = useState(Boolean(urlKeyword));
+  const [searchTime, setSearchTime] = useState(0);
+  const [searchError, setSearchError] = useState<SearchErrorState | null>(null);
+  const [spaces, setSpaces] = useState<TeamSpace[]>([]);
+  const [spacesLoading, setSpacesLoading] = useState(true);
+  const [spacesError, setSpacesError] = useState<string | null>(null);
+  const [folderState, setFolderState] = useState<TeamFolderState>('none');
+  const [folderName, setFolderName] = useState<string | null>(null);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [hasMore, setHasMore] = useState(false);
+
+  const requestSeqRef = useRef(0);
+  const controllerRef = useRef<AbortController | null>(null);
+  const loadingMoreRef = useRef(false);
+
+  useEffect(() => {
+    setKeyword(urlKeyword);
+    setFileType(urlFileType);
+  }, [urlFileType, urlKeyword, urlNonce]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let cancelled = false;
+    setSpacesLoading(true);
+    setSpacesError(null);
+    api.get<PageResult<TeamSpace>>('/team/spaces', { params: { page: 1, size: 50 }, signal: controller.signal })
+      .then((response) => { if (!cancelled) setSpaces(response?.records || []); })
+      .catch((error) => {
+        if (!cancelled && !isAbortError(error)) {
+          setSpaces([]);
+          setSpacesError(error instanceof Error && error.message ? error.message : '团队空间加载失败');
+        }
+      })
+      .finally(() => { if (!cancelled) setSpacesLoading(false); });
+    return () => { cancelled = true; controller.abort(); };
+  }, []);
+
+  // 先通过团队 source 读取 folderId，服务端核权后才允许提交搜索请求。
+  useEffect(() => {
+    if (!urlFolderId) {
+      setFolderState('none');
+      setFolderName(null);
+      return;
+    }
+    if (!urlSpaceId) {
+      setFolderState('invalid');
+      setFolderName(null);
+      return;
+    }
+    let cancelled = false;
+    setFolderState('loading');
+    setFolderName(null);
+    teamFileSource(urlSpaceId).getNodeById(urlFolderId)
+      .then((folder) => {
+        if (cancelled) return;
+        if (!folder || folder.nodeType !== 0) {
+          setFolderState('invalid');
+          return;
+        }
+        setFolderState('valid');
+        setFolderName(folder.name);
+      })
+      .catch(() => { if (!cancelled) setFolderState('invalid'); });
+    return () => { cancelled = true; };
+  }, [urlFolderId, urlSpaceId]);
+
+  const executeSearch = useCallback(async (append: boolean, nextCursor: string | null) => {
+    if (!urlKeyword.trim() || !urlSpaceId) return;
+    if (urlFolderId && folderState !== 'valid') return;
+    if (append && (!nextCursor || loadingMoreRef.current)) return;
+    if (!append) controllerRef.current?.abort();
+    const controller = new AbortController();
+    controllerRef.current = controller;
+    const requestSeq = ++requestSeqRef.current;
+    const t0 = Date.now();
+    if (append) {
+      loadingMoreRef.current = true;
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+      setSearchError(null);
+      setResults([]);
+      setCursor(null);
+      setHasMore(false);
+    }
+    try {
+      const params: Record<string, unknown> = { spaceId: urlSpaceId, keyword: urlKeyword.trim(), size: 20 };
+      if (urlFolderId) params.folderId = urlFolderId;
+      if (nextCursor) params.cursor = nextCursor;
+      if (urlFileType === 'folder') params.nodeType = 0;
+      else if (urlFileType !== 'all') params.suffixes = FILTER_SUFFIXES[urlFileType].join(',');
+      const sizeParams = getSizeParams(sizeFilter);
+      if (sizeParams.min !== undefined) params.sizeMin = sizeParams.min;
+      if (sizeParams.max !== undefined) params.sizeMax = sizeParams.max;
+      if (dateRange) {
+        params.dateFrom = dateRange.from.getTime();
+        params.dateTo = dateRange.to.getTime();
+      }
+      const response = await api.get<TeamSearchResultPage>('/search/team', { params, signal: controller.signal });
+      if (requestSeq !== requestSeqRef.current) return;
+      const incoming = response?.records || [];
+      setResults((previous) => {
+        if (!append) return incoming;
+        const seen = new Set(previous.map((item) => item.fileId));
+        return [...previous, ...incoming.filter((item) => !seen.has(item.fileId))];
+      });
+      setCursor(response?.nextCursor || null);
+      setHasMore(Boolean(response?.hasMore));
+      setSearchTime(Date.now() - t0);
+      setSearchError(null);
+    } catch (error) {
+      if (isAbortError(error) || requestSeq !== requestSeqRef.current) return;
+      const failure = classifyTeamSearchError(error);
+      setSearchError(failure);
+      if (failure.kind === 'cursor') {
+        setCursor(null);
+        setHasMore(false);
+      }
+      if (!append) setResults([]);
+      setSearchTime(Date.now() - t0);
+    } finally {
+      if (requestSeq === requestSeqRef.current) {
+        setLoading(false);
+        if (append) setLoadingMore(false);
+      }
+      if (append) loadingMoreRef.current = false;
+      if (controllerRef.current === controller) controllerRef.current = null;
+    }
+  }, [dateRange, folderState, sizeFilter, urlFileType, urlFolderId, urlKeyword, urlSpaceId]);
+
+  useEffect(() => {
+    controllerRef.current?.abort();
+    requestSeqRef.current += 1;
+    loadingMoreRef.current = false;
+    setLoadingMore(false);
+    setSearched(Boolean(urlKeyword.trim()));
+    if (!urlKeyword.trim() || !urlSpaceId || (urlFolderId && folderState !== 'valid')) {
+      setResults([]);
+      setCursor(null);
+      setHasMore(false);
+      setLoading(folderState === 'loading');
+      setSearchError(null);
+      return () => {
+        controllerRef.current?.abort();
+        requestSeqRef.current += 1;
+        loadingMoreRef.current = false;
+      };
+    }
+    void executeSearch(false, null);
+    return () => {
+      // 切换个人/团队范围或筛选条件时，取消未完成请求并使迟到响应失效。
+      controllerRef.current?.abort();
+      requestSeqRef.current += 1;
+      loadingMoreRef.current = false;
+    };
+  }, [executeSearch, folderState, urlFolderId, urlKeyword, urlNonce, urlSpaceId]);
+
+  const triggerSearch = (value: string) => {
+    const trimmed = value.trim();
+    if (!trimmed) return;
+    const next = new URLSearchParams(searchParams);
+    next.set('keyword', trimmed);
+    next.set('_t', String(Date.now()));
+    setSearchParams(next, { replace: trimmed === urlKeyword });
+  };
+
+  const changeScope = (scope: SearchScope) => {
+    const next = new URLSearchParams(searchParams);
+    if (scope === 'personal') {
+      next.delete('scope');
+      next.delete('spaceId');
+      next.delete('folderId');
+    } else {
+      next.set('scope', 'team');
+      if (!next.get('spaceId') && spaces[0]) next.set('spaceId', spaces[0].id);
+    }
+    next.delete('fileType');
+    next.set('_t', String(Date.now()));
+    setSearchParams(next, { replace: true });
+  };
+
+  const changeTeamSpace = (spaceId: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (spaceId) next.set('spaceId', spaceId); else next.delete('spaceId');
+    next.delete('folderId');
+    next.set('_t', String(Date.now()));
+    setSearchParams(next, { replace: true });
+    setResults([]);
+    setCursor(null);
+    setHasMore(false);
+  };
+
+  const clearFolderScope = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete('folderId');
+    next.set('_t', String(Date.now()));
+    setSearchParams(next, { replace: true });
+  };
+
+  const updateFileType = (value: FileTypeFilter) => {
+    setFileType(value);
+    const next = new URLSearchParams(searchParams);
+    if (value === 'all') next.delete('fileType'); else next.set('fileType', value);
+    next.set('_t', String(Date.now()));
+    setSearchParams(next, { replace: true });
+  };
+
+  const clearFilters = () => {
+    setFileType('all');
+    setSizeFilter('all');
+    setDateRange(undefined);
+    const next = new URLSearchParams(searchParams);
+    next.delete('fileType');
+    next.set('_t', String(Date.now()));
+    setSearchParams(next, { replace: true });
+  };
+
+  const loadMore = () => {
+    if (loading || loadingMore || !hasMore || !cursor) return;
+    void executeSearch(true, cursor);
+  };
+
+  const openResult = (item: TeamSearchResultVO) => {
+    const isFolder = item.nodeType === 0 || (item.nodeType == null && !item.suffix);
+    const targetSpaceId = item.spaceId || urlSpaceId;
+    if (!targetSpaceId) return;
+    if (isFolder) {
+      navigate(`/team/${encodeURIComponent(targetSpaceId)}?folderId=${encodeURIComponent(item.fileId)}`);
+      return;
+    }
+    const targetParams = new URLSearchParams();
+    if (item.parentId && item.parentId !== '0') targetParams.set('folderId', item.parentId);
+    targetParams.set('nodeId', item.fileId);
+    navigate(`/team/${encodeURIComponent(targetSpaceId)}?${targetParams.toString()}`);
+  };
+
+  const selectedSpace = spaces.find((space) => space.id === urlSpaceId);
+  const hasActiveFilters = fileType !== 'all' || sizeFilter !== 'all' || dateRange !== undefined;
+
+  return (
+    <div className="flex h-full flex-col bg-surface-2">
+      <div className="flex-shrink-0 border-b border-border bg-surface px-4 py-4 sm:px-6">
+        <div className="mx-auto max-w-4xl">
+          <div className="group relative">
+            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-muted transition-colors group-focus-within:text-primary-600" aria-hidden />
+            <input type="text" value={keyword} onChange={(e) => setKeyword(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') triggerSearch(keyword); }} placeholder="搜索团队文件名或文档内容…" autoFocus={!isMobile} aria-label="搜索团队文件" className="w-full rounded-xl border border-border bg-surface-2 py-2.5 pl-12 pr-24 text-base text-fg outline-none transition focus:border-primary-400 focus:bg-surface focus:ring-2 focus:ring-primary-100" />
+            <button type="button" onClick={() => triggerSearch(keyword)} className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer rounded-lg bg-primary-600 px-3 py-1 text-sm font-medium text-white transition-colors hover:bg-primary-700 active:bg-primary-800">搜索</button>
+          </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2" role="group" aria-label="搜索范围">
+            <div className="flex items-center gap-1 rounded-lg bg-surface-2 p-0.5">
+              <button type="button" onClick={() => changeScope('personal')} className="cursor-pointer rounded-md px-3 py-1.5 text-xs font-medium text-muted transition-colors hover:text-fg">个人文件</button>
+              <button type="button" className="cursor-pointer rounded-md bg-surface px-3 py-1.5 text-xs font-medium text-primary-600 shadow-sm" aria-pressed="true">团队文件</button>
+            </div>
+            <select value={urlSpaceId} onChange={(e) => changeTeamSpace(e.target.value)} disabled={spacesLoading} aria-label="选择团队空间" className="input-field h-8 w-auto min-w-[10rem] max-w-full py-1 text-xs disabled:cursor-not-allowed disabled:opacity-60">
+              <option value="">{spacesLoading ? '加载团队空间…' : '选择团队空间'}</option>
+              {spaces.map((space) => <option key={space.id} value={space.id}>{space.spaceName}</option>)}
+            </select>
+            {urlFolderId && <button type="button" onClick={clearFolderScope} className="flex max-w-full cursor-pointer items-center gap-1 rounded-lg border border-primary-200 bg-primary-500/10 px-2.5 py-1.5 text-xs text-primary-600 transition-colors hover:bg-primary-500/15" title="切换到整个空间"><FolderOpen className="h-3.5 w-3.5 flex-shrink-0" aria-hidden /><span className="max-w-[12rem] truncate">{folderName || '当前文件夹及子文件夹'}</span><X className="h-3 w-3 flex-shrink-0" aria-hidden /></button>}
+            {spacesError && <span className="text-xs text-danger">{spacesError}</span>}
+          </div>
+          {searched && <div className="mt-2.5 flex flex-wrap items-center gap-2 text-sm"><span className="text-muted">团队搜索</span><span className="font-medium text-fg">{urlKeyword === '*' ? '全部文件' : `“${urlKeyword}”`}</span>{selectedSpace && <><span className="text-muted/60">·</span><span className="text-muted">{selectedSpace.spaceName}</span></>}{urlFolderId && <><span className="text-muted/60">·</span><span className="text-muted">当前文件夹及子文件夹</span></>}{!loading && !searchError && <><span className="text-muted/60">·</span><span className="text-muted">已加载 {results.length} 项{searchTime > 0 ? ` · 耗时 ${searchTime}ms` : ''}</span>{hasActiveFilters && <button type="button" onClick={clearFilters} className="ml-2 flex cursor-pointer items-center gap-1 text-xs text-primary-600 hover:text-primary-700"><RotateCcw className="h-3 w-3" aria-hidden />清除筛选</button>}</>}</div>}
+        </div>
+      </div>
+
+      {searched && urlSpaceId && <div className="relative z-20 flex-shrink-0 overflow-visible border-b border-border bg-surface px-4 py-2.5 sm:px-6"><div className="mx-auto flex max-w-4xl flex-wrap items-center gap-2"><div className="w-full min-w-0 overflow-x-auto rounded-lg bg-surface-2 p-0.5 scrollbar-hide sm:w-auto" role="group" aria-label="文件类型"><div className="flex w-max min-w-full items-center gap-1">{FILE_TYPE_TABS.map((tab) => <button type="button" key={tab.value} onClick={() => updateFileType(tab.value)} aria-pressed={fileType === tab.value} className={cn('flex flex-none cursor-pointer items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium whitespace-nowrap transition-colors', fileType === tab.value ? 'bg-surface text-primary-600 shadow-sm' : 'text-muted hover:text-fg')}><tab.icon className="h-3.5 w-3.5 flex-shrink-0" aria-hidden /><span className="whitespace-nowrap">{tab.label}</span></button>)}</div></div><FilterDropdown icon={HardDrive} label="大小" options={SIZE_OPTIONS} value={sizeFilter} onChange={(value) => setSizeFilter(value as SizeFilter)} /><DateRangeFilter value={dateRange} onChange={setDateRange} /></div></div>}
+
+      <div className="min-h-0 flex-1 overflow-auto"><div className="mx-auto max-w-4xl px-4 py-4 sm:px-6">
+        {loading ? <div className="divide-y divide-stone-50 overflow-hidden rounded-xl bg-surface">{Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}</div>
+          : !urlSpaceId ? <div className="flex flex-col items-center justify-center py-20 text-center text-muted"><Users className="mb-4 h-12 w-12 text-muted/40" strokeWidth={1.3} aria-hidden /><p className="text-base font-medium text-fg">请选择团队空间</p><p className="mt-2 text-sm text-muted">选择已加入的空间后，搜索团队文件名和文档内容</p></div>
+          : folderState === 'invalid' ? <div className="flex flex-col items-center justify-center py-20 text-center text-muted"><AlertTriangle className="mb-4 h-12 w-12 text-amber-500/70" strokeWidth={1.3} aria-hidden /><p className="text-base font-medium text-fg">无权访问该文件夹</p><p className="mt-2 text-sm text-muted">请切换到整个空间或选择其他可访问文件夹</p></div>
+          : searchError && results.length === 0 ? <div className="flex flex-col items-center justify-center py-20 text-center text-muted"><AlertTriangle className="mb-4 h-12 w-12 text-amber-500/70" strokeWidth={1.3} aria-hidden /><p className="text-base font-medium text-fg">{searchError.kind === 'unavailable' ? '搜索暂时不可用' : searchError.kind === 'scope' ? '搜索范围较大' : searchError.kind === 'cursor' ? '搜索已过期' : '搜索失败'}</p><p className="mt-2 max-w-sm text-sm text-muted">{searchError.message}</p>{searchError.kind === 'cursor' && <button type="button" onClick={() => triggerSearch(urlKeyword)} className="btn-primary mt-4">重新搜索</button>}</div>
+          : !searched ? <div className="flex flex-col items-center justify-center py-20 text-center text-muted"><div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-surface-2"><Search className="h-8 w-8 text-muted/60" strokeWidth={1.2} aria-hidden /></div><p className="text-base font-medium text-fg">开始你的团队搜索</p><p className="mt-2 text-sm text-muted">输入关键词，搜索当前空间中有权访问的文件</p></div>
+          : results.length === 0 ? <div className="flex flex-col items-center justify-center py-20 text-center text-muted"><div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-surface-2"><SlidersHorizontal className="h-8 w-8 text-muted/60" strokeWidth={1.2} aria-hidden /></div><p className="text-base font-medium text-fg">未找到相关文件</p><p className="mt-2 text-sm text-muted">可调整关键词或搜索范围；新文件索引可能尚未完成</p></div>
+          : <>
+            {searchError && <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-amber-200 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300" role="alert"><AlertTriangle className="h-4 w-4 flex-shrink-0" aria-hidden /><span className="min-w-0 flex-1">{searchError.message}</span>{searchError.kind === 'cursor' && <button type="button" onClick={() => triggerSearch(urlKeyword)} className="btn-secondary flex-shrink-0">重新搜索</button>}</div>}
+            <div className="divide-y divide-stone-50 overflow-hidden rounded-xl bg-surface">{results.map((item) => { const isFolder = item.nodeType === 0 || (item.nodeType == null && !item.suffix); const config = getFileTypeConfig(isFolder ? 0 : 1, item.suffix); const parentPath = item.path ? (item.path.lastIndexOf('/') > 0 ? item.path.substring(0, item.path.lastIndexOf('/')) : '/') : ''; return <button type="button" key={item.fileId} onClick={() => openResult(item)} className="group flex w-full cursor-pointer items-start gap-3.5 px-4 py-3 text-left transition-colors hover:bg-surface-2/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"><div className="mt-0.5 flex-shrink-0"><FileTypeIcon config={config} size="lg" isFolder={isFolder} suffix={item.suffix} /></div><div className="min-w-0 flex-1"><h3 className="truncate text-sm font-medium text-fg transition-colors group-hover:text-primary-600"><span className="search-highlight" dangerouslySetInnerHTML={{ __html: sanitizeHighlight(item.fileName) }} /></h3>{item.path && <div className="mt-0.5 flex items-center gap-1 text-xs text-muted"><FolderOpen className="h-3 w-3 flex-shrink-0" aria-hidden /><span className="max-w-[34rem] truncate" title={item.path}>{parentPath || '/'}</span></div>}{item.highlight && <div className="search-highlight mt-1.5 line-clamp-2 text-sm leading-relaxed text-muted" dangerouslySetInnerHTML={{ __html: sanitizeHighlight(item.highlight) }} />}<div className="mt-1.5 flex items-center gap-2 text-xs text-muted"><span className={cn('inline-flex items-center rounded px-1.5 py-0.5 font-medium tabular-nums', isFolder ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' : 'bg-surface-2 text-muted')}>{config.label}</span>{item.fileSize && Number(item.fileSize) > 0 && <span className="tabular-nums">{formatSize(item.fileSize)}</span>}<span className="text-muted/60">·</span><span className="tabular-nums">{formatDate(item.updatedAt)}</span></div></div><ChevronRight className="mt-1 h-5 w-5 flex-shrink-0 text-muted/60 opacity-0 transition-opacity group-hover:opacity-100" aria-hidden /></button>; })}</div>
+            {hasMore && <button type="button" onClick={loadMore} disabled={loadingMore} className="btn-secondary mt-4 w-full">{loadingMore ? <><Loader2 className="h-4 w-4 animate-spin" aria-hidden />加载中…</> : '加载更多'}</button>}
+          </>
+        }
+      </div></div>
+    </div>
+  );
+}
+
+export default function SearchPage() {
+  const [searchParams] = useSearchParams();
+  return searchParams.get('scope') === 'team' ? <TeamSearchPage /> : <PersonalSearchPage />;
 }

@@ -49,7 +49,9 @@ foreach ($line in $sqlLines) {
         continue
     }
     if ($currentTable -and $currentCols) {
-        $col = ($trimmed -split '\s+')[0]
+        # MySQL/H2 schema may quote reserved identifiers (for example `read`).
+        # Normalize identifier quotes before comparing against INFORMATION_SCHEMA.
+        $col = (($trimmed -split '\s+')[0]).Trim('`', '"', '[', ']')
         $upper = $trimmed.ToUpper()
         if ($upper -match '^(PRIMARY|UNIQUE|KEY|INDEX|CONSTRAINT|FOREIGN|CHECK)') { continue }
         if ($col -match '^\w+$' -and $col -cnotin @('IF','NOT','EXISTS','ENGINE','DEFAULT','CHARSET','COLLATE','COMMENT')) {

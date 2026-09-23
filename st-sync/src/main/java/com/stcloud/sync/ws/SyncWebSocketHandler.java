@@ -100,6 +100,34 @@ public class SyncWebSocketHandler extends TextWebSocketHandler {
         return sent;
     }
 
+    /** 通知只能发给握手时认证为同租户、同用户的会话。 */
+    public int sendToTenantUser(Long tenantId, Long userId, String message) {
+        if (tenantId == null || userId == null) {
+            return 0;
+        }
+        Set<WebSocketSession> sessions = userSessions.get(userId);
+        if (sessions == null || sessions.isEmpty()) {
+            return 0;
+        }
+        int sent = 0;
+        TextMessage textMessage = new TextMessage(message);
+        for (WebSocketSession session : sessions) {
+            if (!tenantId.equals(session.getAttributes().get("tenantId")) || !session.isOpen()) {
+                continue;
+            }
+            try {
+                synchronized (session) {
+                    session.sendMessage(textMessage);
+                }
+                sent++;
+            } catch (Exception e) {
+                log.warn("推送通知事件失败：userId={}, sessionId={}, errorType={}",
+                        userId, session.getId(), e.getClass().getSimpleName());
+            }
+        }
+        return sent;
+    }
+
     /**
      * 获取指定用户当前在线的 WebSocket 会话数
      */

@@ -37,10 +37,10 @@ const ICONS = {
 };
 
 const ACCENTS = {
-  success: { border: 'border-green-500', icon: 'text-green-500' },
-  error: { border: 'border-red-500', icon: 'text-red-500' },
-  info: { border: 'border-primary-600', icon: 'text-primary-600' },
-  warning: { border: 'border-amber-500', icon: 'text-amber-500' },
+  success: { border: 'border-l-green-500', icon: 'text-green-500' },
+  error: { border: 'border-l-red-500', icon: 'text-red-500' },
+  info: { border: 'border-l-primary-600', icon: 'text-primary-600' },
+  warning: { border: 'border-l-amber-500', icon: 'text-amber-500' },
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
@@ -64,14 +64,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      <div className="fixed top-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none" role="status" aria-live="polite">
+      <div className="fixed left-1/2 top-[calc(env(safe-area-inset-top)+3rem)] z-[100] flex -translate-x-1/2 flex-col items-center gap-2 pointer-events-none" role="status" aria-live="polite">
         {toasts.map((toast) => {
           const Icon = ICONS[toast.type];
           const accent = ACCENTS[toast.type];
           return (
             <div
               key={toast.id}
-              className={`flex items-center gap-3 bg-surface rounded-lg border-l-4 ${accent.border} shadow-md pointer-events-auto animate-toast-slide-down w-[280px] max-w-[calc(100vw-1.5rem)] px-4 py-3`}
+              className={`flex items-center gap-3 bg-surface-2 rounded-lg border border-border border-l-4 ${accent.border} shadow-float pointer-events-auto animate-toast-slide-down w-[280px] max-w-[calc(100vw-1.5rem)] px-4 py-3`}
             >
               <Icon className={`w-4 h-4 flex-shrink-0 ${accent.icon}`} strokeWidth={2} aria-hidden />
 

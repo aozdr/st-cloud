@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260921-TSW-WATCH-A5",
+  "taskId": "TASK-20260921-team-search-watch-watch",
+  "idempotencyKey": "TSW-WATCH",
+  "role": "executor",
+  "taskType": "implement",
+  "objective": "修复浏览器真实新建团队文件夹回归：backend-runtime.log 2828起 FileWatchCaptureListener 报事件缺租户。createTeamFolder insert后内存节点tenantId可能为空，租户插件只改SQL。检查 ReliableEventPublisher/快照/所有创建写入口，使用可信事务主体与DB补齐租户，拒绝跨租户，不能跳过捕获或禁用安全校验。新增真实发布入口回归测试，验证无订阅也能正常创建且有订阅正确捕获；不运行Maven。",
+  "taskRefs": [
+    ".ai/tasks/TASK-20260921-team-search-watch-watch.md",
+    ".ai/docs/20260921-team-search-watch/design.md",
+    ".ai/docs/20260921-team-search-watch/testcases.md"
+  ],
+  "stateRef": ".ai/state/20260921-team-search-watch.yaml",
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      "st-core/**",
+      "st-team/**",
+      "st-sync/**",
+      "docker/mysql/init/43_file_watch.sql",
+      ".ai/docs/20260921-team-search-watch/watch-changereport.md",
+      ".ai/runtime/results/DISPATCH-20260921-TSW-WATCH-A5.json",
+      ".ai/scripts/compare-schema.ps1"
+    ],
+    "exclude": [
+      "st-common/**",
+      "st-search/**",
+      "st-web/**",
+      "st-team/src/main/java/com/stcloud/team/service/TeamFileAccessPolicyImpl.java",
+      "st-team/src/main/java/com/stcloud/team/service/FolderPermissionService.java",
+      "st-team/src/test/**/TeamFileAccessPolicyTest*",
+      "st-team/src/test/**/FolderPermissionFreshTest*",
+      ".ai/state/**",
+      "st-team/src/test/java/com/stcloud/team/service/FileWatchReliabilityIntegrationTest.java"
+    ]
+  },
+  "acceptance": [
+    "TASK验收全部满足，严格既定接口与权限可靠性边界",
+    "代码由Luna max执行，独立结果真实记录测试或未执行项"
+  ],
+  "validation": [
+    "准备后端测试，不运行Maven/迁移，主线程串行验证"
+  ],
+  "forbidSpawn": true,
+  "output": {
+    "resultRef": ".ai/runtime/results/DISPATCH-20260921-TSW-WATCH-A5.json",
+    "by": "/root/luna_watch_0921e",
+    "validatedRevision": "tsw-code-r1"
+  }
+}

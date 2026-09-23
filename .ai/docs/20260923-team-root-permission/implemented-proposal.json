@@ -1,0 +1,10 @@
+{
+  "taskId": "TASK-20260923-team-root-permission",
+  "criterionProposal": {
+    "id": "IMPLEMENTED",
+    "outcome": "pass",
+    "by": "workflow-manager",
+    "evidenceRef": ".ai/docs/20260923-team-root-permission/changereport.md",
+    "validatedRevision": "root-permission-code-r2"
+  }
+}

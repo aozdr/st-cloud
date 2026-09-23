@@ -1,0 +1,65 @@
+{
+  "dispatchId": "DISPATCH-20260922-TSW-FE-A3",
+  "taskId": "TASK-20260922-team-search-watch-frontend",
+  "role": "executor",
+  "status": "completed",
+  "by": "/root/terra_frontend_a3",
+  "validatedRevision": "tsw-code-r2",
+  "background": "主线程在 375px 浏览器中发现 NotificationBell 的 320px 绝对定位弹层会从居中的铃按钮向左越出视口；原列表请求失败也会错误显示为空列表。",
+  "input": [
+    ".ai/tasks/TASK-20260922-team-search-watch-frontend.md",
+    ".ai/docs/20260922-team-search-watch/design.md",
+    ".ai/docs/20260922-team-search-watch/testcases.md",
+    ".ai/state/20260922-team-search-watch.yaml"
+  ],
+  "analysis": "固定宽度的 right-0 弹层相对于顶栏内的铃按钮定位，窄屏时其左边界不受视口约束。将窄屏弹层改为 fixed 并使用 inset-x-3 可保证两侧可见；弹层顶部和最大高度应依据触发按钮实际位置计算，才能兼容顶栏布局与滚动。列表错误状态必须与空列表状态分开渲染。",
+  "decision": [
+    "小于 640px 时，NotificationBell 弹层使用 fixed inset-x-3，并以触发按钮底边计算 top 和 maxHeight；resize/scroll 时重新计算。",
+    "640px 及以上保留 absolute right-0 的桌面锚定。",
+    "通知列表请求加入加载、失败和重试 UI；失败状态不渲染暂无通知。"
+  ],
+  "artifactRefs": [
+    "st-web/src/components/team/NotificationBell.tsx",
+    ".ai/docs/20260922-team-search-watch/frontend-changereport.md"
+  ],
+  "validation": [
+    {
+      "command": "npm run build",
+      "workdir": "st-web",
+      "outcome": "pass",
+      "evidence": "退出码 0；tsc -b && vite build 成功。"
+    },
+    {
+      "command": "npm run lint",
+      "workdir": "st-web",
+      "outcome": "pass_with_existing_warnings",
+      "evidence": "退出码 0；11 条现有 React Fast Refresh / Hook 依赖警告，无错误。"
+    }
+  ],
+  "stateDelta": {
+    "proposalOnly": true,
+    "proposals": [
+      {
+        "id": "IMPLEMENTED",
+        "outcome": "pass",
+        "dispatchId": "DISPATCH-20260922-TSW-FE-A3",
+        "evidenceRef": ".ai/runtime/results/DISPATCH-20260922-TSW-FE-A3.json",
+        "validatedRevision": "tsw-code-r2"
+      }
+    ]
+  },
+  "risks": [
+    "375px 浏览器实机布局、触控滚动和请求失败交互须由主线程串行验证；本子任务按派发限制未占用浏览器。"
+  ],
+  "nextStep": "主线程在 375px 和桌面浏览器验证弹层边界、重试操作和已有通知跳转后，决定 IMPLEMENTED 退出标准。",
+  "changeImpact": "仅修改 st-web 的 NotificationBell 展示与请求状态；未改动 API、路由、权限判断、后端、数据库或业务数据。",
+  "criterionProposal": {
+    "id": "IMPLEMENTED",
+    "outcome": "pass",
+    "by": "/root/terra_frontend_a3",
+    "dispatchId": "DISPATCH-20260922-TSW-FE-A3",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260922-TSW-FE-A3.json",
+    "validatedRevision": "tsw-code-r2"
+  },
+  "blockerProposals": []
+}

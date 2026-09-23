@@ -4,6 +4,8 @@
 
 ## 1. 唯一传输路径
 
+主线程直接完成的非独立标准可使用 `loopctl evaluate-direct` 记账：提交真实任务、执行者、当前修订和产物证据，不创建或伪造 dispatch。reviewer 标准及角色分离名单中的标准默认禁止此路径，仍须按下方唯一 Dispatch 传输路径取得独立结果。若用户明确要求同一执行者完成当前任务的剩余评审与验收，可在 State 中逐项记录 `singleAgentAuthorization`（任务、执行者、用户原话、证据及标准），并将结果如实标为自检；该授权不能跨任务复用，也不能声称独立评审。`evaluate-direct` 只接受通过结果，并保持原有依赖、确认、产物和 State 校验。
+
 Dispatch 只通过当前 Codex Runtime 的子 Agent 创建消息传递：
 
 ```text

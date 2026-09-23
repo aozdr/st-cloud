@@ -531,7 +531,8 @@ public class TeamServiceImpl implements TeamService {
         if (perms == null || perms.length == 0) {
             return;
         }
-        Set<String> effective = resolveMyPermissions(spaceId, nodeId);
+        // 内容接口以 null 表示空间根目录；统一映射到虚拟根节点，保证根权限规则生效。
+        Set<String> effective = resolveMyPermissions(spaceId, nodeId == null ? 0L : nodeId);
         for (String perm : perms) {
             if (!effective.contains(perm)) {
                 throw new BusinessException(ResultCode.TEAM_PERMISSION_DENIED, "权限不足：" + perm);
@@ -556,7 +557,8 @@ public class TeamServiceImpl implements TeamService {
             return new LinkedHashSet<>(FolderPermissionService.ALL_PERMISSIONS);
         }
         // 4. 并集：角色权限 ∪ 沿父链收集的文件夹规则权限
-        return folderPermissionService.resolvePermissions(spaceId, nodeId, userId, rolePerms);
+        // 授权必须读取当前节点状态，避免共享缓存保留已移入回收站或已移动节点的旧权限。
+        return folderPermissionService.resolvePermissionsFresh(spaceId, nodeId, userId, rolePerms);
     }
 
     /**
@@ -597,15 +599,21 @@ public class TeamServiceImpl implements TeamService {
     }
 
     /**
-     * 校验文件夹节点归属（P1 安全修复）：节点必须存在、状态正常且属于指定空间。
+     * 校验文件夹节点归属（P1 安全修复）：0 为当前空间虚拟根，正数节点必须存在、状态正常且属于指定空间。
      * 防止任意空间管理员跨空间读取/写入其他团队文件夹的权限规则（跨空间 ACL 注入）。
      */
-    private FileNode requireFolderNodeInSpace(Long spaceId, Long folderNodeId) {
+    private void requireFolderNodeInSpace(Long spaceId, Long folderNodeId) {
+        // 0 是当前空间的虚拟根目录，不存在对应 file_node；调用方已先校验空间管理员身份。
+        if (Long.valueOf(0L).equals(folderNodeId)) {
+            return;
+        }
+        if (folderNodeId == null || folderNodeId < 0) {
+            throw new BusinessException(ResultCode.TEAM_PERMISSION_DENIED, "节点不属于该空间");
+        }
         FileNode node = fileNodeMapper.selectById(folderNodeId);
         if (node == null || !node.isNormal() || !spaceId.equals(node.getSpaceId())) {
             throw new BusinessException(ResultCode.TEAM_PERMISSION_DENIED, "节点不属于该空间");
         }
-        return node;
     }
 
     /**
@@ -644,7 +652,7 @@ public class TeamServiceImpl implements TeamService {
     public Result<List<FolderPermissionVO>> getFolderPermissions(Long spaceId, Long folderNodeId) {
         checkPermission(spaceId, 0);
         requireFolderNodeInSpace(spaceId, folderNodeId);
-        List<com.stcloud.team.entity.TeamFolderPermission> perms = folderPermissionService.listPermissions(folderNodeId);
+        List<com.stcloud.team.entity.TeamFolderPermission> perms = folderPermissionService.listPermissions(spaceId, folderNodeId);
         List<FolderPermissionVO> voList = perms.stream().map(p -> {
             FolderPermissionVO vo = new FolderPermissionVO();
             vo.setId(p.getId());

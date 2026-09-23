@@ -4,7 +4,8 @@ import api from '../../lib/api';
 import type { FolderSizeInfo } from '../../hooks/useFolderSizes';
 import { getFileTypeConfig, formatSize, formatDate, cn } from '../../lib/utils';
 import FileThumbnail from './FileThumbnail';
-import { X, FolderOpen, Clock, HardDrive, Calendar, Hash } from 'lucide-react';
+import { X, FolderOpen, Clock, HardDrive, Calendar, Hash, Bell, BellRing } from 'lucide-react';
+import { useFileWatch } from '../../hooks/useFileWatch';
 
 interface Props {
   file: FileNode;
@@ -17,6 +18,7 @@ export default function FileDetailPanel({ file, onClose, variant = 'sidebar' }: 
   const config = getFileTypeConfig(file.nodeType, file.suffix);
   const isPanel = variant === 'panel';
   const [folderSize, setFolderSize] = useState<FolderSizeInfo | null>(null);
+  const { watching, loading: watchLoading, saving: watchSaving, error: watchError, toggle: toggleWatch } = useFileWatch(file.id);
 
   useEffect(() => {
     setFolderSize(null);
@@ -56,6 +58,25 @@ export default function FileDetailPanel({ file, onClose, variant = 'sidebar' }: 
           </div>
           <span className={cn('text-fg text-center leading-snug break-words line-clamp-2 max-w-full mt-1', isPanel ? 'text-base font-semibold' : 'text-sm font-medium')}>{file.name}</span>
           <span className="mt-1.5 text-xs text-muted">{file.nodeType === 0 ? '文件夹' : config.label}</span>
+          <button
+            type="button"
+            onClick={() => void toggleWatch()}
+            disabled={watchLoading || watchSaving}
+            aria-pressed={watching}
+            className={cn(
+              'mt-4 inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60',
+              watching
+                ? 'border-primary-200 bg-primary-500/10 text-primary-600 hover:bg-primary-500/15'
+                : 'border-border bg-surface text-muted hover:border-primary-300 hover:bg-primary-500/5 hover:text-primary-600',
+            )}
+          >
+            {watching ? <BellRing className="h-3.5 w-3.5" aria-hidden /> : <Bell className="h-3.5 w-3.5" aria-hidden />}
+            <span>{watchLoading ? '读取中…' : watchSaving ? '保存中…' : watching ? '已关注' : '关注变更'}</span>
+          </button>
+          <p className="mt-2 max-w-[18rem] text-center text-[11px] leading-relaxed text-muted">
+            {file.nodeType === 0 ? '提醒此文件夹及子文件夹内的变更' : '他人修改时通知我'}
+          </p>
+          {watchError && <p className="mt-1 text-center text-[11px] text-danger">{watchError}</p>}
         </div>
 
         <div className={cn('space-y-3', isPanel ? 'px-4 py-6' : 'px-4 py-4')}>

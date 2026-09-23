@@ -153,6 +153,8 @@ public class VersionServiceImpl implements VersionService {
 
         // 恢复版本后重新索引到 ES（文件内容已变更）
         reliableEventPublisher.publishFileIndex(node, FileIndexEvent.ActionType.INDEX);
+        // 版本恢复是内容更新，不产生 CREATE，关注者按一次 UPDATE 事件接收提醒。
+        reliableEventPublisher.publishSyncChange(node, com.stcloud.core.event.SyncChangeEvent.ChangeType.UPDATE);
         log.info("恢复文件版本: nodeId={}, versionId={}, delta={}", fileNodeId, versionId, delta);
         return node;
     }

@@ -30,6 +30,12 @@ public class EventMessage {
     /** 变更前路径（仅 MOVE / RENAME 场景携带） */
     private String oldPath;
 
+    /** 变更前父节点 ID（仅 MOVE 场景携带） */
+    private Long oldParentId;
+
+    /** 已确认的操作主体；匿名回调时为空。 */
+    private Long actorId;
+
     /** 事件日志ID（Outbox 主键，消费者幂等键；本地兜底时无） */
     private Long eventLogId;
 
@@ -48,10 +54,18 @@ public class EventMessage {
 
     /** 由同步变更事件构建 */
     public static EventMessage fromSyncChange(FileNode node, SyncChangeEvent.ChangeType change, String oldPath, Long eventLogId) {
+        return fromSyncChange(node, change, oldPath, null, null, eventLogId);
+    }
+
+    /** 构建带旧父节点和主体快照的同步消息。 */
+    public static EventMessage fromSyncChange(FileNode node, SyncChangeEvent.ChangeType change, String oldPath,
+                                              Long oldParentId, Long actorId, Long eventLogId) {
         EventMessage message = new EventMessage();
         message.setEventType("SYNC_CHANGE");
         message.setChangeType(change.name());
         message.setOldPath(oldPath);
+        message.setOldParentId(oldParentId);
+        message.setActorId(actorId);
         message.setEventLogId(eventLogId);
         message.setFileNode(FileNodeSnapshot.from(node));
         return message;

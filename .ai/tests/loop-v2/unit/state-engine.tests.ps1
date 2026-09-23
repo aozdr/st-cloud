@@ -238,7 +238,7 @@ try {
   $r = Invoke-Loop @('stale', $path, '-RevisionKind', 'code', '-RevisionValue', 'code-r2')
   $after = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
   $staleIds = @($after.exitCriteria | Where-Object status -eq stale | ForEach-Object id)
-  $wanted = @('CODE_REVIEW','SECURITY_REVIEW','TEST_PASS','KNOWLEDGE','ACCEPT')
+  $wanted = @('IMPLEMENTED','CODE_REVIEW','SECURITY_REVIEW','TEST_PASS','KNOWLEDGE','ACCEPT')
   Expect 'TC-REV-01 code revision DAG stale' ($r.ExitCode -eq 0 -and @($wanted | Where-Object { $staleIds -notcontains $_ }).Count -eq 0 -and $after.status -eq 'running') ($r.Text + '; stale=' + ($staleIds -join ','))
 
   $s = New-MediumState; $s.revision.code = 'code-r2'; $s.dispatchLedger = @(New-DesignAttempt 'd1'); $path = Save-Fixture 'TC-REV-02.yaml' $s
@@ -308,6 +308,68 @@ try {
   $ok = $true; foreach ($next in @('spawned','acked','running','returned')) { $r = Invoke-Loop @('dispatch-transition',$path,'-DispatchId','lifecycle','-DispatchStatus',$next); if ($r.ExitCode -ne 0) { $ok=$false } }
   $rBad = Invoke-Loop @('dispatch-transition',$path,'-DispatchId','lifecycle','-DispatchStatus','acked')
   Expect 'TC-DSP-07 生命周期只允许合法前驱' ($ok -and $rBad.ExitCode -ne 0 -and $rBad.Text -match 'DISPATCH_TRANSITION_INVALID') $rBad.Text
+
+  $s = New-MediumState
+  $s.artifacts | Add-Member directDesign ([pscustomobject]@{status='ready';ref="$WorkRef/design.md";provides=@('DESIGN')})
+  $path = Save-Fixture 'TC-DIRECT-01.yaml' $s
+  $proposal = [pscustomobject]@{taskId='TEST-LOOP-V2';criterionProposal=[pscustomobject]@{id='DESIGN';outcome='pass';by='root';evidenceRef="$WorkRef/design.md";validatedRevision='design-r1'}}
+  $proposalPath = Save-Fixture 'TC-DIRECT-01-proposal.json' $proposal
+  $r = Invoke-Loop @('evaluate-direct',$path,'-ProposalPath',$proposalPath,'-Actor','root')
+  $after = Get-Content $path -Raw | ConvertFrom-Json
+  Expect 'TC-DIRECT-01 真实主线程证据通过且不伪造 dispatch' ($r.ExitCode -eq 0 -and $after.exitCriteria[0].status -eq 'done' -and $after.exitCriteria[0].executionKind -eq 'direct' -and -not $after.exitCriteria[0].dispatchId -and $after.dispatchLedger.Count -eq 0) $r.Text
+
+  $s = New-MediumState; $path = Save-Fixture 'TC-DIRECT-02.yaml' $s
+  $proposal.criterionProposal.id = 'CODE_REVIEW'; $proposal.criterionProposal.validatedRevision = 'code-r1'
+  $r = Invoke-Loop @('evaluate-direct',$path,'-ProposalPath',(Save-Fixture 'TC-DIRECT-02-proposal.json' $proposal),'-Actor','root')
+  Expect 'TC-DIRECT-02 独立评审不能由主线程直接通过' ($r.ExitCode -ne 0 -and $r.Text -match 'DIRECT_REVIEW_FORBIDDEN') $r.Text
+  $directPath = $path
+
+  $s = New-MediumState
+  foreach ($criterion in $s.exitCriteria | Where-Object { $_.id -in @('DESIGN','TESTCASES','IMPLEMENTED') }) { Complete-Criterion $criterion 'root' }
+  $s.artifacts | Add-Member review ([pscustomobject]@{status='ready';ref="$WorkRef/codereview.md";provides=@('CODE_REVIEW')})
+  $s | Add-Member singleAgentAuthorization ([pscustomobject]@{
+    taskId='TEST-LOOP-V2'; actor='root'; authorizedBy='user'; authorizationQuote='剩余任务都由你来执行'
+    evidenceRef="$EvidenceRefRoot/proposal.json"; criteria=@('CODE_REVIEW')
+  })
+  $oldReview = $s.exitCriteria | Where-Object id -eq CODE_REVIEW
+  $oldReview.status = 'blocked'; $oldReview | Add-Member dispatchId 'old-review' -Force
+  $path = Save-Fixture 'TC-DIRECT-SOLO.yaml' $s
+  $soloProposal = [pscustomobject]@{taskId='TEST-LOOP-V2';criterionProposal=[pscustomobject]@{id='CODE_REVIEW';outcome='pass';by='root';evidenceRef="$WorkRef/codereview.md";validatedRevision='code-r1'}}
+  $r = Invoke-Loop @('evaluate-direct',$path,'-ProposalPath',(Save-Fixture 'TC-DIRECT-SOLO-proposal.json' $soloProposal),'-Actor','root')
+  $after = Get-Content $path -Raw | ConvertFrom-Json
+  Expect 'TC-DIRECT-SOLO 用户授权自审清除历史派发身份' ($r.ExitCode -eq 0 -and ($after.exitCriteria | Where-Object id -eq CODE_REVIEW).status -eq 'done' -and ($after.exitCriteria | Where-Object id -eq CODE_REVIEW).executionKind -eq 'direct' -and -not ($after.exitCriteria | Where-Object id -eq CODE_REVIEW).dispatchId) $r.Text
+
+  $s = New-MediumState; $s | Add-Member singleAgentAuthorization ([pscustomobject]@{
+    taskId='other-task'; actor='root'; authorizedBy='user'; authorizationQuote='仅限其他任务'
+    evidenceRef="$EvidenceRefRoot/proposal.json"; criteria=@('CODE_REVIEW')
+  })
+  $r = Invoke-Loop @('validate',(Save-Fixture 'TC-DIRECT-SOLO-MISMATCH.yaml' $s))
+  Expect 'TC-DIRECT-SOLO-02 单人授权不得跨任务复用' ($r.ExitCode -ne 0 -and $r.Text -match 'SINGLE_AGENT_AUTHORIZATION_INVALID') $r.Text
+  $path = $directPath
+
+  $proposal.criterionProposal.id = 'DESIGN'; $proposal.criterionProposal.validatedRevision = 'old'
+  $r = Invoke-Loop @('evaluate-direct',$path,'-ProposalPath',(Save-Fixture 'TC-DIRECT-03-proposal.json' $proposal),'-Actor','root')
+  Expect 'TC-DIRECT-03 旧修订拒绝' ($r.ExitCode -ne 0 -and $r.Text -match 'REVISION_MISMATCH') $r.Text
+
+  $proposal.criterionProposal.validatedRevision = 'design-r1'; $proposal.criterionProposal.evidenceRef = "$WorkRef/missing.md"
+  $r = Invoke-Loop @('evaluate-direct',$path,'-ProposalPath',(Save-Fixture 'TC-DIRECT-04-proposal.json' $proposal),'-Actor','root')
+  Expect 'TC-DIRECT-04 缺失证据拒绝' ($r.ExitCode -ne 0 -and $r.Text -match 'EVIDENCE') $r.Text
+
+  $proposal.criterionProposal.evidenceRef = "$WorkRef/design.md"; $proposal.criterionProposal.id = 'TESTCASES'
+  $r = Invoke-Loop @('evaluate-direct',$path,'-ProposalPath',(Save-Fixture 'TC-DIRECT-05-proposal.json' $proposal),'-Actor','root')
+  Expect 'TC-DIRECT-05 未完成依赖拒绝' ($r.ExitCode -ne 0 -and $r.Text -match 'DEPENDENCY_NOT_SATISFIED') $r.Text
+
+  $proposal.criterionProposal.id = 'DESIGN'; $proposal.taskId = 'wrong'
+  $r = Invoke-Loop @('evaluate-direct',$path,'-ProposalPath',(Save-Fixture 'TC-DIRECT-06-proposal.json' $proposal),'-Actor','root')
+  Expect 'TC-DIRECT-06 错误任务身份拒绝' ($r.ExitCode -ne 0 -and $r.Text -match 'DIRECT_TASK_MISMATCH') $r.Text
+
+  $proposal.taskId = 'TEST-LOOP-V2'
+  $r = Invoke-Loop @('evaluate-direct',$path,'-ProposalPath',(Save-Fixture 'TC-DIRECT-07-proposal.json' $proposal),'-Actor','other')
+  Expect 'TC-DIRECT-07 错误执行者拒绝' ($r.ExitCode -ne 0 -and $r.Text -match 'DIRECT_ACTOR_MISMATCH') $r.Text
+
+  $s = New-MediumState; $s.exitCriteria[0].status = 'done'; $s.exitCriteria[0] | Add-Member by 'root'; $s.exitCriteria[0] | Add-Member evidenceRef "$WorkRef/design.md"; $s.exitCriteria[0] | Add-Member validatedRevision 'design-r1'; $s.exitCriteria[0] | Add-Member completedAt $Now
+  $r = Invoke-Loop @('validate',(Save-Fixture 'TC-DIRECT-08.yaml' $s))
+  Expect 'TC-DIRECT-08 无来源 done 拒绝' ($r.ExitCode -ne 0 -and $r.Text -match 'DONE_EVIDENCE_MISSING') $r.Text
 
   $s = New-MediumState; $path = Save-Fixture 'TC-BLK-01.yaml' $s
   $r = Invoke-Loop @('report-blocker',$path,'-Fingerprint','stable-fp'); $ok = $r.ExitCode -eq 0

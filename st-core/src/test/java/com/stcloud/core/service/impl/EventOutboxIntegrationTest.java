@@ -1,11 +1,13 @@
 package com.stcloud.core.service.impl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.stcloud.common.context.TenantContext;
 import com.stcloud.core.AbstractIntegrationTest;
 import com.stcloud.core.entity.EventLog;
 import com.stcloud.core.entity.FileNode;
 import com.stcloud.core.event.EventMessage;
 import com.stcloud.core.event.FileIndexEvent;
+import com.stcloud.core.event.FileWatchCaptureEvent;
 import com.stcloud.core.event.OutboxRelayEvent;
 import com.stcloud.core.event.ReliableEventPublisher;
 import com.stcloud.core.event.SyncChangeEvent;
@@ -180,6 +182,95 @@ class EventOutboxIntegrationTest extends AbstractIntegrationTest {
         assertEquals(2L, eventLogMapper.selectCount(null), "无论通道如何，Outbox 行都应写入");
         // 本地兜底模式下不应发布 OutboxRelayEvent（无投递器监听）
         assertNull(lastOutboxRelayEvent());
+    }
+
+    @Test
+    void syncCapture_fillsMissingInMemoryTenantFromAuthenticatedContext() throws Exception {
+        setMqEnabled(false);
+        setUpUser(9101L, 91L);
+        FileNode newNode = buildNode(9010L);
+        newNode.setTenantId(null);
+
+        reliableEventPublisher.publishSyncChange(newNode, SyncChangeEvent.ChangeType.CREATE);
+
+        FileWatchCaptureEvent capture = capturedEvents.stream()
+                .filter(FileWatchCaptureEvent.class::isInstance)
+                .map(FileWatchCaptureEvent.class::cast)
+                .findFirst()
+                .orElseThrow();
+        assertEquals(91L, newNode.getTenantId());
+        assertEquals(91L, capture.getTenantId());
+        EventLog outbox = eventLogMapper.selectById(capture.getEventId());
+        EventMessage payload = objectMapper.readValue(outbox.getPayload(), EventMessage.class);
+        assertEquals(91L, payload.getFileNode().getTenantId());
+    }
+
+    @Test
+    void fileIndex_fillsMissingInMemoryTenantBeforeOutboxSnapshot() throws Exception {
+        setMqEnabled(false);
+        setUpUser(9103L, 93L);
+        FileNode newNode = buildNode(9012L);
+        newNode.setTenantId(null);
+
+        reliableEventPublisher.publishFileIndex(newNode, FileIndexEvent.ActionType.INDEX);
+
+        FileIndexEvent indexEvent = capturedEvents.stream()
+                .filter(FileIndexEvent.class::isInstance)
+                .map(FileIndexEvent.class::cast)
+                .findFirst()
+                .orElseThrow();
+        assertEquals(93L, newNode.getTenantId());
+        assertEquals(93L, indexEvent.getFileNode().getTenantId());
+        List<EventLog> outboxes = eventLogMapper.selectList(null);
+        assertEquals(1, outboxes.size());
+        EventLog outbox = outboxes.get(0);
+        EventMessage payload = objectMapper.readValue(outbox.getPayload(), EventMessage.class);
+        assertEquals(93L, payload.getFileNode().getTenantId());
+    }
+
+    @Test
+    void fileIndex_rejectsTenantMismatchBeforeWritingOutbox() {
+        setMqEnabled(false);
+        setUpUser(9104L, 93L);
+        FileNode foreignNode = buildNode(9013L);
+        foreignNode.setTenantId(94L);
+
+        assertThrows(IllegalStateException.class,
+                () -> reliableEventPublisher.publishFileIndex(foreignNode, FileIndexEvent.ActionType.INDEX));
+        assertEquals(0L, eventLogMapper.selectCount(null));
+        assertTrue(capturedEvents.stream().noneMatch(event -> event instanceof FileIndexEvent
+                || event instanceof OutboxRelayEvent));
+    }
+
+    @Test
+    void fileIndex_rejectsMissingTenantWithoutAuthenticatedContext() {
+        setMqEnabled(false);
+        com.stcloud.common.context.UserContext.clear();
+        TenantContext.clear();
+        FileNode nodeWithoutTenant = buildNode(9014L);
+        nodeWithoutTenant.setTenantId(null);
+
+        assertThrows(IllegalStateException.class,
+                () -> reliableEventPublisher.publishFileIndex(nodeWithoutTenant, FileIndexEvent.ActionType.INDEX));
+        assertEquals(0L, eventLogMapper.selectCount(null));
+        assertTrue(capturedEvents.stream().noneMatch(event -> event instanceof FileIndexEvent
+                || event instanceof OutboxRelayEvent));
+    }
+
+    @Test
+    void syncCapture_rejectsNodeFromAnotherTenantBeforeWritingOutbox() {
+        setMqEnabled(false);
+        setUpUser(9102L, 91L);
+        FileNode foreignNode = buildNode(9011L);
+        foreignNode.setTenantId(92L);
+
+        assertThrows(IllegalStateException.class,
+                () -> reliableEventPublisher.publishSyncChange(foreignNode, SyncChangeEvent.ChangeType.CREATE));
+        assertEquals(0L, eventLogMapper.selectCount(null));
+        // 测试上下文也会发布与业务无关的 Spring 事件，不能把它们误判成同步事件。
+        // 此处严格断言跨租户拒绝发生在任何文件关注、同步或 Outbox 转发事件之前。
+        assertTrue(capturedEvents.stream().noneMatch(event -> event instanceof FileWatchCaptureEvent
+                || event instanceof SyncChangeEvent || event instanceof OutboxRelayEvent));
     }
 
     /** MQ 配置：仅落 Outbox 并发布 OutboxRelayEvent，不发布本地业务事件（避免双通道重复消费） */

@@ -1,0 +1,42 @@
+{
+  "taskId": "20260923-team-search-watch",
+  "revision": {
+    "design": "tsw-design-r4",
+    "code": "tsw-code-r8"
+  },
+  "execution": {
+    "model": "current GPT-6 main thread",
+    "subagentsCreated": true,
+    "singleAgentUserAuthorized": true,
+    "independentReview": false
+  },
+  "artifacts": [
+    ".ai/tasks/TASK-20260923-team-search-watch.md",
+    ".ai/docs/20260923-team-search-watch/requirement.md",
+    ".ai/docs/20260923-team-search-watch/uispec.md",
+    ".ai/docs/20260923-team-search-watch/impact.md",
+    ".ai/docs/20260923-team-search-watch/architecture-review.md",
+    ".ai/docs/20260923-team-search-watch/design.md",
+    ".ai/docs/20260923-team-search-watch/testcases.md",
+    ".ai/docs/20260923-team-search-watch/exp-review.md",
+    ".ai/docs/20260923-team-search-watch/changereport.md",
+    ".ai/docs/20260923-team-search-watch/browser-verification.md",
+    ".ai/docs/20260923-team-search-watch/workflow-note.md",
+    ".ai/docs/20260923-team-search-watch/approval-evidence.md",
+    ".ai/knowledge/api-reference.md",
+    ".ai/knowledge/architecture.md",
+    ".ai/knowledge/business-domain.md",
+    ".ai/knowledge/data-model.md",
+    ".ai/docs/20260923-team-search-watch/codereview.md",
+    ".ai/docs/20260923-team-search-watch/security.md",
+    ".ai/docs/20260923-team-search-watch/testreport.md",
+    "st-web/scripts/team-watch-ui-smoke.py",
+    ".ai/docs/20260923-team-search-watch/backend-tests-r8-safe.log",
+    ".ai/docs/20260923-team-search-watch/backend-package-r8.log",
+    ".ai/docs/20260923-team-search-watch/schema-check-r8.log",
+    ".ai/docs/20260923-team-search-watch/frontend-build-r8.log",
+    ".ai/docs/20260923-team-search-watch/frontend-lint-r8.log",
+    ".ai/docs/20260923-team-search-watch/state-engine-r8.log",
+    ".ai/docs/20260923-team-search-watch/verify-loop-r8.log"
+  ]
+}

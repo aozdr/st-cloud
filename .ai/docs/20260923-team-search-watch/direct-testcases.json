@@ -1,0 +1,11 @@
+{
+  "taskId": "20260923-team-search-watch",
+  "eventId": "tsw-r4-direct-testcases",
+  "criterionProposal": {
+    "id": "TESTCASES",
+    "outcome": "pass",
+    "by": "main-gpt6",
+    "evidenceRef": ".ai/docs/20260923-team-search-watch/testcases.md",
+    "validatedRevision": "tsw-design-r4"
+  }
+}

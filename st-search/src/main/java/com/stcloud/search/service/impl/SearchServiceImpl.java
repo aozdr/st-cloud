@@ -88,6 +88,10 @@ public class SearchServiceImpl implements SearchService {
             doc.put(SearchIndexInitializer.FIELD_FILE_ID, fileNode.getId());
             doc.put(SearchIndexInitializer.FIELD_FILE_NAME, fileNode.getName());
             doc.put(SearchIndexInitializer.FIELD_OWNER_ID, fileNode.getOwnerId());
+            doc.put(SearchIndexInitializer.FIELD_TENANT_ID, fileNode.getTenantId());
+            doc.put(SearchIndexInitializer.FIELD_SPACE_ID, fileNode.getSpaceId());
+            doc.put(SearchIndexInitializer.FIELD_PARENT_ID, fileNode.getParentId());
+            doc.put(SearchIndexInitializer.FIELD_FILE_MD5, fileNode.getFileMd5());
             doc.put(SearchIndexInitializer.FIELD_STORAGE_PATH, fileNode.getStoragePath());
             doc.put(SearchIndexInitializer.FIELD_CONTENT_TYPE, fileNode.getContentType());
             doc.put(SearchIndexInitializer.FIELD_SUFFIX, fileNode.getSuffix());
@@ -120,6 +124,10 @@ public class SearchServiceImpl implements SearchService {
             doc.put(SearchIndexInitializer.FIELD_FILE_ID, fileNode.getId());
             doc.put(SearchIndexInitializer.FIELD_FILE_NAME, fileNode.getName());
             doc.put(SearchIndexInitializer.FIELD_OWNER_ID, fileNode.getOwnerId());
+            doc.put(SearchIndexInitializer.FIELD_TENANT_ID, fileNode.getTenantId());
+            doc.put(SearchIndexInitializer.FIELD_SPACE_ID, fileNode.getSpaceId());
+            doc.put(SearchIndexInitializer.FIELD_PARENT_ID, fileNode.getParentId());
+            doc.put(SearchIndexInitializer.FIELD_FILE_MD5, fileNode.getFileMd5());
             doc.put(SearchIndexInitializer.FIELD_STORAGE_PATH, fileNode.getStoragePath());
             doc.put(SearchIndexInitializer.FIELD_CONTENT_TYPE, fileNode.getContentType());
             doc.put(SearchIndexInitializer.FIELD_SUFFIX, fileNode.getSuffix());
@@ -345,6 +353,11 @@ public class SearchServiceImpl implements SearchService {
             Map<String, Object> partialDoc = new HashMap<>();
             partialDoc.put(SearchIndexInitializer.FIELD_FILE_NAME, fileNode.getName());
             partialDoc.put(SearchIndexInitializer.FIELD_PATH, fileNode.getPath());
+            partialDoc.put(SearchIndexInitializer.FIELD_TENANT_ID, fileNode.getTenantId());
+            partialDoc.put(SearchIndexInitializer.FIELD_SPACE_ID, fileNode.getSpaceId());
+            partialDoc.put(SearchIndexInitializer.FIELD_PARENT_ID, fileNode.getParentId());
+            // 元数据事件可能先于正文重建到达；不能用当前 DB MD5 覆盖索引中仍对应旧正文的版本标记。
+            // 正文索引完成后由 indexFile 一并写入最新 fileMd5，团队搜索据此拒绝陈旧摘要。
 
             client.update(u -> u
                     .index(SearchIndexInitializer.INDEX_NAME)

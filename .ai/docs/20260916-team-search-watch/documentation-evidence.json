@@ -1,0 +1,26 @@
+{
+  "author": "GPT-6",
+  "revision": "tsw-design-r1",
+  "status": "documentation-ready",
+  "artifacts": [
+    "architecture-review.md",
+    "exp-review.md",
+    "design.md",
+    "impact.md",
+    "requirement.md",
+    "testcases.md",
+    "uispec.md"
+  ],
+  "checks": [
+    "需求验收编号映射到testcases",
+    "先架构评估再程序设计",
+    "明确权限、异常、兼容及迁移策略",
+    "编写者与Luna编码者分离"
+  ],
+  "unexecuted": [
+    "实现",
+    "运行测试",
+    "数据库迁移",
+    "浏览器验收"
+  ]
+}

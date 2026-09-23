@@ -1,7 +1,9 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Download, Pencil, FolderInput, Copy, Trash2, FolderOpen, Eye, Edit3, Scissors, ClipboardPaste, Share2, History, Info, Star, EyeOff, Lock, Unlock, FileInput, FileOutput, FileText, Archive, RefreshCw, Upload, type LucideIcon } from 'lucide-react';
+import { Download, Pencil, FolderInput, Copy, Trash2, FolderOpen, Eye, Edit3, Scissors, ClipboardPaste, Share2, History, Info, Star, EyeOff, Lock, Unlock, FileInput, FileOutput, FileText, Archive, RefreshCw, Upload, Bell, BellOff, type LucideIcon } from 'lucide-react';
 import type { FileNode } from '../../types';
+import type { FileWatchState } from '../../types';
+import api from '../../lib/api';
 import { usePermission } from '../../lib/permission';
 import { isText, isZip } from '../../lib/utils';
 import { isEditableOfficeSuffix } from '../../lib/editor';
@@ -36,6 +38,18 @@ export default function ContextMenu({ x, y, node, hasClipboard, showShare = true
   const ref = useRef<HTMLDivElement>(null);
   const { has } = usePermission();
   const [pos, setPos] = useState<{ left: number; top: number }>({ left: x, top: y });
+  const [watchState, setWatchState] = useState<{ watching: boolean; loading: boolean; error: boolean }>({ watching: false, loading: true, error: false });
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setWatchState({ watching: false, loading: true, error: false });
+    api.get<FileWatchState>('/file-watches/state', { params: { nodeId: node.id }, signal: controller.signal })
+      .then((state) => setWatchState({ watching: Boolean(state?.watching), loading: false, error: false }))
+      .catch(() => {
+        if (!controller.signal.aborted) setWatchState({ watching: false, loading: false, error: true });
+      });
+    return () => controller.abort();
+  }, [node.id]);
 
   // Word/PDF 文件且具备上传权限时显示转换入口（doc/docx -> PDF；pdf -> Word）
   const suffix = (node.suffix || '').toLowerCase();
@@ -96,6 +110,11 @@ export default function ContextMenu({ x, y, node, hasClipboard, showShare = true
     ...textEditItem,
     ...archiveItem,
     { action: 'favorite', label: isFav ? '取消收藏' : '收藏', icon: Star },
+    {
+      action: watchState.watching ? 'unwatch' : 'watch',
+      label: watchState.loading ? '读取关注状态…' : watchState.error ? '关注状态读取失败' : watchState.watching ? '取消关注' : '关注变更',
+      icon: watchState.watching ? BellOff : Bell,
+    },
     { action: 'hide', label: '隐藏', icon: EyeOff },
     ...(lockable ? [{ action: locked ? 'unlock' : 'lock', label: locked ? '解锁' : '锁定', icon: locked ? Unlock : Lock }] : []),
     ...(has('file:move') ? [{ action: 'cut', label: '剪切', icon: Scissors }] : []),
@@ -144,9 +163,10 @@ export default function ContextMenu({ x, y, node, hasClipboard, showShare = true
           <button
             key={idx}
             onClick={() => onAction(item.action!, node)}
+            disabled={(item.action === 'watch' || item.action === 'unwatch') && (watchState.loading || watchState.error)}
             className={`w-full flex items-center gap-2.5 px-2.5 h-9 text-sm cursor-pointer rounded-[7px] transition-colors ${
               item.danger ? 'text-danger hover:bg-danger-light' : 'text-fg hover:bg-surface-2'
-            }`}
+            } disabled:cursor-not-allowed disabled:opacity-50`}
           >
             <Icon className="w-4 h-4 flex-shrink-0" aria-hidden />
             <span>{item.label}</span>

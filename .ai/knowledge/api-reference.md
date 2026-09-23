@@ -220,8 +220,8 @@
 | POST | `/api/team/{spaceId}/files/copy` | 复制 |
 | POST | `/api/team/{spaceId}/files/{nodeId}/lock` | 锁定文件/文件夹（hours=0 永久） |
 | POST | `/api/team/{spaceId}/files/{nodeId}/unlock` | 解锁文件/文件夹 |
-| GET | `/api/team/{spaceId}/folder/{nodeId}/permissions` | 文件夹权限列表 |
-| PUT | `/api/team/{spaceId}/folder/{nodeId}/permissions` | 设置文件夹权限 |
+| GET | `/api/team/{spaceId}/folder/{nodeId}/permissions` | 文件夹权限列表；`nodeId=0` 表示空间虚拟根目录 |
+| PUT | `/api/team/{spaceId}/folder/{nodeId}/permissions` | 设置文件夹或空间根目录权限；根规则仅作用本空间 |
 | GET | `/api/team/{spaceId}/comments/{nodeId}` | 文件评论列表 |
 | POST | `/api/team/{spaceId}/comments` | 发表评论（支持 @提及） |
 | PUT | `/api/team/{spaceId}/comments/{commentId}` | 编辑评论 |
@@ -232,14 +232,26 @@
 | DELETE | `/api/team/{spaceId}/role/{roleId}` | 删除自定义角色 |
 | GET | `/api/team/{spaceId}/stats` | 空间统计（文件分类/活跃度/操作） |
 
+### 团队全文搜索与文件关注
+
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| GET | `/api/file-watches/state?nodeId=` | 查询当前用户对文件/文件夹的关注状态 |
+| PUT | `/api/file-watches/{nodeId}` | 关注当前可访问节点；主体只取登录上下文，重复请求幂等 |
+| DELETE | `/api/file-watches/{nodeId}` | 取消当前用户的节点关注；重复请求幂等 |
+| GET | `/api/file-watches?page=&size=` | 当前用户关注列表，分页且每页 size 限制 1～100；失效节点清空名称/路径等敏感字段 |
+
 ## 通知模块（st-team）
 
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | GET | `/api/notification/unread-count` | 未读通知数 |
 | GET | `/api/notification` | 通知列表（分页，page/size） |
+| GET | `/api/notification/{id}/target` | 解析当前用户通知的安全目标；新文件关注通知实时核权，不可用时仅返回 `available=false` |
 | PUT | `/api/notification/{id}/read` | 标记单条已读 |
 | PUT | `/api/notification/read-all` | 全部已读 |
+
+通知列表要求 page≥1、size 为 1～100。通知列表、已读和安全目标都限定当前 tenant/user；目标接口不采用数据库内可任意写入的 URL。
 
 ## 同步模块（st-sync）
 
@@ -266,7 +278,11 @@
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | GET | `/api/search?keyword=...` | 全文搜索（文件名+正文，支持类型/大小/日期过滤） |
+| GET | `/api/search/team?spaceId=&keyword=...` | 团队全文搜索（成员/ACL 实时复核、过滤、签名游标） |
 | POST | `/api/search/reindex` | 重建索引 |
+
+团队搜索 size 为 1～50；关键词必须为 1～200 个非空字符。游标绑定用户、租户、空间、目录和筛选条件并使用 HMAC 签名。部署需配置独立的 `STCLOUD_SEARCH_TEAM_CURSOR_SECRET`（或等价配置），不可使用代码默认密钥。
+游标需为规范 Base64URL 编码；篡改、等价非规范编码和条件不匹配返回 `SEARCH_CURSOR_INVALID`，过期返回 `SEARCH_CURSOR_EXPIRED`。
 
 ## 预览模块（st-preview）
 

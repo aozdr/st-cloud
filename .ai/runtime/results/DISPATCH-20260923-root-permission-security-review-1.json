@@ -1,0 +1,31 @@
+{
+  "dispatchId": "DISPATCH-20260923-root-permission-security-review-1",
+  "taskId": "TASK-20260923-team-root-permission-security",
+  "status": "completed",
+  "artifactRefs": [
+    ".ai/docs/20260923-team-root-permission/security.md"
+  ],
+  "criterionProposal": {
+    "id": "SECURITY_REVIEW",
+    "outcome": "fail",
+    "by": "/root/root_permission_security_review",
+    "dispatchId": "DISPATCH-20260923-root-permission-security-review-1",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260923-root-permission-security-review-1.json",
+    "validatedRevision": "root-permission-code-r1"
+  },
+  "blockerProposals": [
+    {
+      "summary": "常规权限解析未校验节点属于请求空间，空间 A 的根规则可对空间 B 的节点产生错误授权判断",
+      "evidenceRef": ".ai/docs/20260923-team-root-permission/security.md"
+    }
+  ],
+  "validation": {
+    "type": "static-review",
+    "evidence": [
+      "FolderPermissionService.java:237-266",
+      "TeamServiceImpl.java:530-559",
+      "TeamServicePermissionIntegrationTest.java:267-304"
+    ],
+    "sharedBuildRun": false
+  }
+}

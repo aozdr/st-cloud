@@ -6,6 +6,7 @@ import { useFolderFilterStore } from '../../store/folderFilter';
 import { useThemeStore } from '../../store/theme';
 import { isElectron } from '../../lib/electron';
 import { cn } from '../../lib/utils';
+import NotificationBell from '../team/NotificationBell';
 
 const SEARCH_HISTORY_KEY = 'searchHistory';
 const MAX_HISTORY = 8;
@@ -158,7 +159,19 @@ function TopBar({ onMenuClick }: TopBarProps) {
     setSearchHistory(saveHistory(trimmed));
     setFolderFilter('');
     setShowHistory(false);
-    navigate(`/search?keyword=${encodeURIComponent(trimmed)}&_t=${Date.now()}`);
+    const params = new URLSearchParams({ keyword: trimmed, _t: String(Date.now()) });
+    const teamSpaceId = location.pathname.match(/^\/team\/(\d+)$/)?.[1];
+    if (teamSpaceId) {
+      params.set('scope', 'team');
+      params.set('spaceId', teamSpaceId);
+    } else if (isSearchPage && searchParams.get('scope') === 'team') {
+      params.set('scope', 'team');
+      const spaceId = searchParams.get('spaceId');
+      const folderId = searchParams.get('folderId');
+      if (spaceId) params.set('spaceId', spaceId);
+      if (folderId) params.set('folderId', folderId);
+    }
+    navigate(`/search?${params.toString()}`);
   };
 
   const handleSearch = (e: React.KeyboardEvent) => {
@@ -320,6 +333,7 @@ function TopBar({ onMenuClick }: TopBarProps) {
 
       {/* Actions */}
       <div className="flex items-center gap-2 flex-shrink-0">
+        <NotificationBell />
         {/* 深色模式切换 */}
         <button
           onClick={() => setMode(isDark ? 'light' : 'dark')}

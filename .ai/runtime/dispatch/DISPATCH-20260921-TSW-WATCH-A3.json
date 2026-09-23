@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260921-TSW-WATCH-A3",
+  "taskId": "TASK-20260921-team-search-watch-watch",
+  "idempotencyKey": "TSW-WATCH",
+  "role": "executor",
+  "taskType": "implement",
+  "objective": "修复 watch-tests-r2.log 暴露的白名单关注单元测试失败及真实生产缺陷：SysUser lambda cache、捕获集合不可变、投递 Mockito 参数不匹配。不得降低断言掩盖权限问题；可靠性集成测试为排除范围。先ACK，禁止运行Maven。",
+  "taskRefs": [
+    ".ai/tasks/TASK-20260921-team-search-watch-watch.md",
+    ".ai/docs/20260921-team-search-watch/design.md",
+    ".ai/docs/20260921-team-search-watch/testcases.md"
+  ],
+  "stateRef": ".ai/state/20260921-team-search-watch.yaml",
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      "st-core/**",
+      "st-team/**",
+      "st-sync/**",
+      "docker/mysql/init/43_file_watch.sql",
+      ".ai/docs/20260921-team-search-watch/watch-changereport.md",
+      ".ai/runtime/results/DISPATCH-20260921-TSW-WATCH-A3.json",
+      ".ai/scripts/compare-schema.ps1"
+    ],
+    "exclude": [
+      "st-common/**",
+      "st-search/**",
+      "st-web/**",
+      "st-team/src/main/java/com/stcloud/team/service/TeamFileAccessPolicyImpl.java",
+      "st-team/src/main/java/com/stcloud/team/service/FolderPermissionService.java",
+      "st-team/src/test/**/TeamFileAccessPolicyTest*",
+      "st-team/src/test/**/FolderPermissionFreshTest*",
+      ".ai/state/**",
+      "st-team/src/test/java/com/stcloud/team/service/FileWatchReliabilityIntegrationTest.java"
+    ]
+  },
+  "acceptance": [
+    "TASK验收全部满足，严格既定接口与权限可靠性边界",
+    "代码由Luna max执行，独立结果真实记录测试或未执行项"
+  ],
+  "validation": [
+    "准备后端测试，不运行Maven/迁移，主线程串行验证"
+  ],
+  "forbidSpawn": true,
+  "output": {
+    "resultRef": ".ai/runtime/results/DISPATCH-20260921-TSW-WATCH-A3.json",
+    "by": "/root/luna_watch_0921c",
+    "validatedRevision": "tsw-code-r1"
+  }
+}

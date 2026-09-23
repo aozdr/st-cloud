@@ -50,6 +50,8 @@ public class SyncChangeLogListener {
             logEntry.setNodeType(node.getNodeType());
             logEntry.setFileMd5(node.getFileMd5());
             logEntry.setFileSize(node.getFileSize() != null ? node.getFileSize() : 0L);
+            // 本地兜底与 MQ 消费共用 Outbox 事件 ID，保证两种通道切换/重复投递时同步日志幂等。
+            logEntry.setEventLogId(event.getEventId());
 
             syncChangeLogMapper.insert(logEntry);
             log.debug("同步变更日志已写入: type={}, nodeId={}, path={}, logId={}",

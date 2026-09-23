@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260921-TSW-FE-A2",
+  "taskId": "TASK-20260921-team-search-watch-frontend",
+  "idempotencyKey": "TSW-FE",
+  "role": "executor",
+  "taskType": "implement",
+  "objective": "修复真实375px团队搜索筛选条：SearchPage.tsx约723行，全部/文件夹等标签被挤成逐字竖排且压缩包溢出。按现有设计做最小响应式修复，横向滚动或合理换行但标签不拆字，图标不压缩，所有类型可键盘访问；不改搜索接口。主线程已完成关注列表窄屏验证。运行前端build/lint并输出当前完整前端改动报告。",
+  "taskRefs": [
+    ".ai/tasks/TASK-20260921-team-search-watch-frontend.md",
+    ".ai/docs/20260921-team-search-watch/design.md",
+    ".ai/docs/20260921-team-search-watch/testcases.md"
+  ],
+  "stateRef": ".ai/state/20260921-team-search-watch.yaml",
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      "st-web/**",
+      ".ai/docs/20260921-team-search-watch/frontend-changereport.md",
+      ".ai/runtime/results/DISPATCH-20260921-TSW-FE-A2.json"
+    ],
+    "exclude": [
+      "st-core/**",
+      "st-team/**",
+      "st-search/**",
+      "st-common/**",
+      "docker/**",
+      ".ai/state/**"
+    ]
+  },
+  "acceptance": [
+    "TASK验收全部满足，严格既定接口与权限可靠性边界",
+    "代码由Luna max执行，独立结果真实记录测试或未执行项"
+  ],
+  "validation": [
+    "运行现有前端类型/构建/必要测试；不运行Maven"
+  ],
+  "forbidSpawn": true,
+  "output": {
+    "resultRef": ".ai/runtime/results/DISPATCH-20260921-TSW-FE-A2.json",
+    "by": "/root/luna_frontend_0921b",
+    "validatedRevision": "tsw-code-r1"
+  }
+}

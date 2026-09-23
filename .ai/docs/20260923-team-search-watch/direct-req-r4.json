@@ -1,0 +1,11 @@
+{
+  "taskId": "20260923-team-search-watch",
+  "eventId": "tsw-r4-direct-req",
+  "criterionProposal": {
+    "id": "REQ_ANALYSIS",
+    "outcome": "pass",
+    "by": "main-gpt6",
+    "evidenceRef": ".ai/docs/20260923-team-search-watch/requirement.md",
+    "validatedRevision": "tsw-design-r4"
+  }
+}

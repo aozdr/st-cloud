@@ -1,0 +1,46 @@
+{
+  "role": "executor",
+  "stateRef": ".ai/state/20260922-team-search-watch.yaml",
+  "validation": [
+    "后端不运行Maven；前端可build/lint；主线程串行集成"
+  ],
+  "schemaVersion": 2,
+  "skillRefs": [
+    "-"
+  ],
+  "taskId": "TASK-20260922-team-search-watch-frontend",
+  "dispatchId": "DISPATCH-20260922-TSW-FE-A2",
+  "idempotencyKey": "TSW-FE",
+  "acceptance": [
+    "既定接口和权限可靠性边界保持",
+    "修复实际缺陷并提供真实验证证据"
+  ],
+  "objective": "修复375px团队搜索筛选条逐字竖排和压缩包类型溢出问题：SearchPage约723行。保持既有设计，标签不拆字图标不压缩，可合理换行或局部横向滚动，所有类型键盘可达。不改接口及搜索业务。",
+  "scope": {
+    "include": [
+      "st-web/**",
+      ".ai/docs/20260922-team-search-watch/frontend-changereport.md",
+      ".ai/runtime/results/DISPATCH-20260922-TSW-FE-A2.json"
+    ],
+    "exclude": [
+      "st-core/**",
+      "st-team/**",
+      "st-search/**",
+      "st-common/**",
+      "docker/**",
+      ".ai/state/**"
+    ]
+  },
+  "taskType": "implement",
+  "output": {
+    "validatedRevision": "tsw-code-r2",
+    "resultRef": ".ai/runtime/results/DISPATCH-20260922-TSW-FE-A2.json",
+    "by": "/root/terra_frontend_0922"
+  },
+  "forbidSpawn": true,
+  "taskRefs": [
+    ".ai/tasks/TASK-20260922-team-search-watch-frontend.md",
+    ".ai/docs/20260922-team-search-watch/design.md",
+    ".ai/docs/20260922-team-search-watch/testcases.md"
+  ]
+}

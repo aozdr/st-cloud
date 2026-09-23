@@ -4,8 +4,9 @@ import com.stcloud.common.annotation.Auditable;
 import com.stcloud.common.context.UserContext;
 import com.stcloud.common.response.Result;
 import com.stcloud.search.dto.SearchResultPage;
-import com.stcloud.search.dto.SearchResultVO;
+import com.stcloud.search.dto.TeamSearchResultPage;
 import com.stcloud.search.service.SearchService;
+import com.stcloud.search.service.TeamSearchService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,7 @@ import java.util.List;
 public class SearchController {
 
     private final SearchService searchService;
+    private final TeamSearchService teamSearchService;
 
     @Operation(summary = "搜索文件内容", description = "通过关键词搜索文档内容，返回匹配的文件列表及高亮片段")
     @PreAuthorize("hasAuthority('search:file') or hasRole('ADMIN')")
@@ -45,6 +47,27 @@ public class SearchController {
         Long ownerId = UserContext.getUserId();
         SearchResultPage result = searchService.searchContent(keyword, ownerId, page, size,
                 nodeType, suffixes, sizeMin, sizeMax, dateFrom, dateTo);
+        return Result.success(result);
+    }
+
+    @Operation(summary = "团队全文搜索", description = "在指定团队空间内按显式主体权限搜索文件")
+    @PreAuthorize("hasAuthority('search:file') or hasRole('ADMIN')")
+    @GetMapping("/team")
+    public Result<TeamSearchResultPage> searchTeam(
+            @RequestParam Long spaceId,
+            @RequestParam(required = false) Long folderId,
+            @RequestParam String keyword,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String cursor,
+            @RequestParam(required = false) Integer nodeType,
+            @RequestParam(required = false) List<String> suffixes,
+            @RequestParam(required = false) Long sizeMin,
+            @RequestParam(required = false) Long sizeMax,
+            @RequestParam(required = false) Long dateFrom,
+            @RequestParam(required = false) Long dateTo) {
+        TeamSearchResultPage result = teamSearchService.search(
+                UserContext.getTenantId(), UserContext.getUserId(), spaceId, folderId, keyword, size,
+                cursor, nodeType, suffixes, sizeMin, sizeMax, dateFrom, dateTo);
         return Result.success(result);
     }
 

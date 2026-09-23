@@ -170,12 +170,13 @@ catalog:
     taskType: test
     artifacts: []
 
-# 角色分离（硬规则）：判定 IMPLEMENTED 的执行者不得同时判定评审/验收标准
+# 角色分离：默认硬规则。用户明确指定同一执行者完成剩余工作时，仅当前任务可用
+# State.singleAgentAuthorization 记录原话、执行者、标准和证据，保留自检身份；不能声称独立评审。
 separationOfDuty:
   producers: [IMPLEMENTED]
   verifiers: [CODE_REVIEW, SECURITY_REVIEW, EXP_ACCEPT, TEST_PASS, ACCEPT]
   field: "by"
-  rule: "同一执行者（exitCriteria[*].by）不得同时承担 IMPLEMENTED 与任何评审/验收标准"
+  rule: "同一执行者（exitCriteria[*].by）不得同时承担 IMPLEMENTED 与评审/验收标准；用户明确授权并在当前 State 逐项记录 singleAgentAuthorization 时例外，结果须标为自检"
 
 # State 生命周期状态取值（.ai/state/<task-id>.yaml 的顶层 status）
 stateStatus:

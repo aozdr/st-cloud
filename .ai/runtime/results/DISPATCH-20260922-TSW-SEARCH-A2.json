@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260922-TSW-SEARCH-A2",
+  "taskId": "TASK-20260922-team-search-watch-search",
+  "idempotencyKey": "TSW-SEARCH",
+  "status": "completed",
+  "ack": {
+    "dispatchId": "DISPATCH-20260922-TSW-SEARCH-A2",
+    "taskId": "TASK-20260922-team-search-watch-search",
+    "role": "executor"
+  },
+  "artifactRefs": [
+    "st-search/src/test/java/com/stcloud/search/service/impl/TeamSearchServiceTest.java",
+    ".ai/runtime/results/DISPATCH-20260922-TSW-SEARCH-A2.json"
+  ],
+  "criterionProposal": {
+    "id": "IMPLEMENTED",
+    "outcome": "pass",
+    "by": "/root/terra_search_0922",
+    "dispatchId": "DISPATCH-20260922-TSW-SEARCH-A2",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260922-TSW-SEARCH-A2.json",
+    "validatedRevision": "tsw-code-r2"
+  },
+  "blockerProposals": [],
+  "summary": {
+    "background": "团队搜索边界测试已存在，参数边界用例的实参顺序与固定的十三参数 search 契约不一致，造成编译错误或把断言落在错误的参数上。",
+    "input": [
+      ".ai/tasks/TASK-20260922-team-search-watch-search.md",
+      ".ai/docs/20260922-team-search-watch/design.md",
+      ".ai/docs/20260922-team-search-watch/testcases.md",
+      ".ai/state/20260922-team-search-watch.yaml",
+      "st-search/src/main/java/com/stcloud/search/service/TeamSearchService.java"
+    ],
+    "analysis": {
+      "facts": [
+        "TeamSearchService.search 的参数顺序为 tenantId、userId、spaceId、folderId、keyword、size、cursor、nodeType、suffixes、sizeMin、sizeMax、dateFrom、dateTo。",
+        "TeamSearchServiceTest 已保留游标跨主体/过期、首批 100 个无权候选后出现有权候选、连续页无重复、候选预算、参数边界和缺失游标密钥等边界测试。"
+      ],
+      "changes": [
+        "将无效 nodeType 用例的 99 移到 cursor=null 之后。",
+        "将负大小、反向大小范围、反向时间范围和过长 suffix 用例分别对齐到 sizeMin、sizeMin/sizeMax、dateFrom/dateTo、suffixes。",
+        "未放宽断言，未修改 TeamSearchService 接口、搜索实现或权限策略。"
+      ]
+    },
+    "decision": "仅修正测试调用实参，维持既定接口、权限可靠性边界和七类新增搜索测试。",
+    "stateDelta": "proposal only；未修改 Loop State。",
+    "risk": [
+      "按 Dispatch 要求未运行 Maven，因此 Java 编译和测试结果尚待主线程串行验证。",
+      "搜索实现、真实 Elasticsearch、数据库迁移和 schema 对比不在本 dispatch 的验证范围。"
+    ],
+    "nextStep": "主线程可串行运行 st-search 的 testCompile 与 TeamSearchServiceTest；如有编译或测试失败，请把输出回传本 child 继续定向修复。",
+    "changeImpact": "仅修改 st-search 团队搜索测试和独立 dispatch 结果；没有生产行为或接口变更。"
+  },
+  "validation": {
+    "executed": [
+      "静态核对 TeamSearchService 接口与 TeamSearchServiceTest 的参数边界调用：已按 cursor、nodeType、suffixes、sizeMin、sizeMax、dateFrom、dateTo 顺序修正。",
+      "静态检查修改段：保留原有 assertThrows、错误码断言和 ES never 调用断言。"
+    ],
+    "notExecuted": [
+      "Maven testCompile/tests：按 TASK 由主线程串行执行。",
+      "真实 Elasticsearch、数据库迁移/schema 对比和浏览器端到端验证：不在本 dispatch scope。"
+    ]
+  }
+}

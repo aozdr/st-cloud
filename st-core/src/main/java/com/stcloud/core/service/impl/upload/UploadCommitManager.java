@@ -178,7 +178,12 @@ public class UploadCommitManager {
             throw new BusinessException(ResultCode.CONFLICT, "合并提交时文件已被其他操作更新，请重试");
         }
         versionService.snapshotCurrentVersion(node);
-        uploadEventPublisher.publishUpdated(node);
+        // 新建分片上传在合并成功时才成为可见节点，应产生 CREATE；替换上传才是 UPDATE。
+        if (originalSize == null) {
+            uploadEventPublisher.publishCreated(node);
+        } else {
+            uploadEventPublisher.publishUpdated(node);
+        }
 
         // 按差值计费：替换上传仅补/退新旧大小差值，新建上传 delta = 全量 fileSize
         long newSize = node.getFileSize() == null ? 0 : node.getFileSize();
@@ -371,6 +376,7 @@ public class UploadCommitManager {
         folder.setRefCount(REF_COUNT_NONE);
         folder.setVersion(0);
         fileNodeMapper.insert(folder);
+        reliableEventPublisher.publishSyncChange(folder, SyncChangeEvent.ChangeType.CREATE);
         return folder.getId();
     }
 
@@ -398,5 +404,6 @@ public class UploadCommitManager {
         file.setRefCount(REF_COUNT_INITIAL);
         file.setVersion(0);
         fileNodeMapper.insert(file);
+        reliableEventPublisher.publishSyncChange(file, SyncChangeEvent.ChangeType.CREATE);
     }
 }

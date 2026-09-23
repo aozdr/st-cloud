@@ -9,7 +9,7 @@
 [CmdletBinding()]
 param(
   [Parameter(Position = 0, Mandatory = $true)]
-  [ValidateSet('init','validate','propose','evaluate','stale','complete','transition','reconcile','validate-dispatch','dispatch-transition','report-blocker','repair-blocker')]
+  [ValidateSet('init','validate','propose','evaluate','evaluate-direct','stale','complete','transition','reconcile','validate-dispatch','dispatch-transition','report-blocker','repair-blocker')]
   [string]$Command,
   [Parameter(Position = 1)] [string]$StatePath,
   [string]$DefinitionPath,
@@ -323,6 +323,17 @@ function Get-ExpectedRevision($State, [string]$CriterionId) {
   return [string]$State.revision.design
 }
 
+function Test-SingleAgentAuthorization($State, [string]$CriterionId, [string]$Actor) {
+  if (-not (Test-Field $State 'singleAgentAuthorization')) { return $false }
+  $authorization = $State.singleAgentAuthorization
+  $producer = @(ConvertTo-Array $State.exitCriteria | Where-Object id -eq 'IMPLEMENTED')
+  if ($producer.Count -ne 1 -or [string]$producer[0].by -ne $Actor) { return $false }
+  return [string]$authorization.taskId -eq [string]$State.taskId `
+    -and [string]$authorization.actor -eq $Actor `
+    -and [string]$authorization.authorizedBy -eq 'user' `
+    -and @(ConvertTo-Array $authorization.criteria) -contains $CriterionId
+}
+
 function Assert-Dispatch($Envelope) {
   Assert-JsonSchemaDocument $Envelope $script:DispatchSchemaPath 'DISPATCH_SCHEMA_INVALID'
   foreach ($name in @('schemaVersion','dispatchId','taskId','idempotencyKey','role','taskType','objective','taskRefs','stateRef','scope','acceptance','validation','forbidSpawn')) {
@@ -355,6 +366,13 @@ function Assert-State($State, $Definition, [switch]$ForCompletion) {
   Require-Text $State 'taskId'
   Require-Text $State.goal 'objective'
   if (@(ConvertTo-Array $State.goal.completionCriteria).Count -eq 0) { Stop-Loop 'SCHEMA_VALIDATION_FAILED' 'goal.completionCriteria 不能为空' }
+  if (Test-Field $State 'singleAgentAuthorization') {
+    $authorization = $State.singleAgentAuthorization
+    if ([string]$authorization.taskId -ne [string]$State.taskId -or [string]$authorization.authorizedBy -ne 'user') {
+      Stop-Loop 'SINGLE_AGENT_AUTHORIZATION_INVALID' '单人执行授权必须明确绑定当前任务和用户'
+    }
+    Assert-EvidenceExists ([string]$authorization.evidenceRef) 'SINGLE_AGENT_AUTHORIZATION_INVALID'
+  }
 
   $actual = @(ConvertTo-Array $State.exitCriteria)
   $ids = @($actual | ForEach-Object { [string]$_.id })
@@ -382,7 +400,14 @@ function Assert-State($State, $Definition, [switch]$ForCompletion) {
       Assert-EvidenceExists ([string]$criterion.evidenceRef)
     }
     if ($criterion.status -eq 'done') {
-      foreach ($field in @('by','dispatchId','evidenceRef','validatedRevision','completedAt')) { Require-Text $criterion $field 'DONE_EVIDENCE_MISSING' }
+      foreach ($field in @('by','evidenceRef','validatedRevision','completedAt')) { Require-Text $criterion $field 'DONE_EVIDENCE_MISSING' }
+      if ((Test-Field $criterion 'executionKind') -and [string]$criterion.executionKind -eq 'direct') {
+        Require-Text $criterion 'executionId' 'DONE_EVIDENCE_MISSING'
+        if ((Test-Field $criterion 'dispatchId') -and -not [string]::IsNullOrWhiteSpace([string]$criterion.dispatchId)) { Stop-Loop 'DIRECT_DISPATCH_CONFLICT' "$id 直接执行不能声明 dispatchId" }
+        if (($Definition.verifiers -contains $id -or [string]$Definition.catalog[$id].owner -eq 'reviewer') -and -not (Test-SingleAgentAuthorization $State $id ([string]$criterion.by))) { Stop-Loop 'DIRECT_REVIEW_FORBIDDEN' "$id 必须独立评审或有当前任务的用户单人授权" }
+      } else {
+        Require-Text $criterion 'dispatchId' 'DONE_EVIDENCE_MISSING'
+      }
       Assert-EvidenceExists ([string]$criterion.evidenceRef)
       foreach ($dependency in ConvertTo-Array $criterion.dependsOn) {
         if (@('done','skipped') -notcontains [string]$actualMap[[string]$dependency].status) {
@@ -419,7 +444,15 @@ function Assert-State($State, $Definition, [switch]$ForCompletion) {
   $producerActors = @($Definition.producers | ForEach-Object { if ($actualMap.Contains($_) -and $actualMap[$_].status -eq 'done') { [string]$actualMap[$_].by } } | Where-Object { $_ })
   $verifierActors = @($Definition.verifiers | ForEach-Object { if ($actualMap.Contains($_) -and $actualMap[$_].status -in @('done','skipped')) { [string]$(if ($actualMap[$_].status -eq 'skipped') { $actualMap[$_].approvedBy } else { $actualMap[$_].by }) } } | Where-Object { $_ })
   $overlap = @($producerActors | Where-Object { $verifierActors -contains $_ } | Sort-Object -Unique)
-  if ($overlap.Count -gt 0) { Stop-Loop 'ROLE_SEPARATION_VIOLATION' "执行与验收身份重叠：$($overlap -join ', ')" }
+  foreach ($actor in $overlap) {
+    $unapproved = @($Definition.verifiers | Where-Object {
+      $candidate = $actualMap[$_]
+      $candidate.status -in @('done','skipped') -and
+      [string]$(if ($candidate.status -eq 'skipped') { $candidate.approvedBy } else { $candidate.by }) -eq $actor -and
+      -not (Test-SingleAgentAuthorization $State $_ $actor)
+    })
+    if ($unapproved.Count -gt 0) { Stop-Loop 'ROLE_SEPARATION_VIOLATION' "执行与验收身份重叠且未经单人授权：$actor / $($unapproved -join ', ')" }
+  }
 
   $activeBlockers = @(ConvertTo-Array $State.blockers | Where-Object { $_.status -in @('open','escalated') })
   if ($activeBlockers.Count -gt 0 -and ($ForCompletion -or $State.status -eq 'done')) { Stop-Loop 'OPEN_BLOCKER' "存在 $($activeBlockers.Count) 个 open/escalated blocker" }
@@ -524,6 +557,46 @@ try {
     Save-State $StatePath $state -WhatIfOnly:$DryRun; Write-Output $(if ($DryRun) { 'DRY_RUN' } else { 'PROPOSED' }); exit 0
   }
 
+  if ($Command -eq 'evaluate-direct') {
+    $proposal = Read-Document $ProposalPath
+    Require-Text $proposal 'taskId' 'PROPOSAL_INVALID'
+    if ([string]$proposal.taskId -ne [string]$state.taskId) { Stop-Loop 'DIRECT_TASK_MISMATCH' '直接结果 taskId 与 State 不一致' }
+    $body = if (Test-Field $proposal 'criterionProposal') { $proposal.criterionProposal } else { $proposal }
+    foreach ($field in @('id','outcome','by','evidenceRef','validatedRevision')) { Require-Text $body $field 'PROPOSAL_INVALID' }
+    if ([string]$body.outcome -ne 'pass') { Stop-Loop 'DIRECT_OUTCOME_INVALID' '直接执行只允许 pass' }
+    if ([string]$body.by -ne $Actor) { Stop-Loop 'DIRECT_ACTOR_MISMATCH' 'proposal.by 必须与 -Actor 一致' }
+    if (-not $definition.catalog.Contains([string]$body.id)) { Stop-Loop 'CRITERION_UNKNOWN' "$($body.id) 不在 catalog" }
+    if (($definition.verifiers -contains [string]$body.id -or [string]$definition.catalog[[string]$body.id].owner -eq 'reviewer') -and -not (Test-SingleAgentAuthorization $state ([string]$body.id) $Actor)) { Stop-Loop 'DIRECT_REVIEW_FORBIDDEN' "$($body.id) 必须独立评审或有当前任务的用户单人授权" }
+    $map = Get-PropertyMap $state.exitCriteria
+    if (-not $map.Contains([string]$body.id)) { Stop-Loop 'CRITERION_UNKNOWN' "$($body.id) 不在当前 scale" }
+    $criterion = $map[[string]$body.id]
+    $eventKey = if (Test-Field $proposal 'eventId') { [string]$proposal.eventId } else { "direct:$($state.taskId):$($body.id):$($state.revision.design):$($state.revision.code)" }
+    if (@(ConvertTo-Array $state.history | Where-Object eventId -eq $eventKey).Count -gt 0) { Write-Output 'UNCHANGED'; exit 0 }
+    if ([string]$criterion.status -eq 'done') { Stop-Loop 'CRITERION_ALREADY_DONE' "$($body.id) 已完成；不得以新的直接结果覆盖" }
+    Assert-EvidenceExists ([string]$body.evidenceRef)
+    $expectedRevision = Get-ExpectedRevision $state ([string]$body.id)
+    if ([string]$body.validatedRevision -ne $expectedRevision) { Stop-Loop 'REVISION_MISMATCH' "期望 '$expectedRevision'，实际 '$($body.validatedRevision)'" }
+    foreach ($dependency in ConvertTo-Array $criterion.dependsOn) { if (@('done','skipped') -notcontains [string]$map[[string]$dependency].status) { Stop-Loop 'DEPENDENCY_NOT_SATISFIED' "$($body.id) 的依赖 $dependency 未完成" } }
+    if (Test-ConfirmationRequired $definition $criterion) { foreach ($field in @('userConfirmedAt','confirmedBy','confirmationArtifact')) { Require-Text $body $field 'CONFIRMATION_EVIDENCE_MISSING'; Assert-EvidenceExists ([string]$body.confirmationArtifact) 'CONFIRMATION_ARTIFACT_NOT_FOUND' } }
+    $beforeStatus = [string]$criterion.status
+    $criterion.status = 'done'
+    # 旧修订的 blocked/stale 评审可能带有历史 dispatchId；直接复核不能继承该派发身份。
+    if (Test-Field $criterion 'dispatchId') { $criterion.PSObject.Properties.Remove('dispatchId') }
+    foreach ($field in @('by','evidenceRef','validatedRevision')) { $criterion | Add-Member $field $body.$field -Force }
+    $criterion | Add-Member executionKind 'direct' -Force
+    $criterion | Add-Member executionId $eventKey -Force
+    $criterion | Add-Member completedAt ([DateTime]::UtcNow.ToString('o')) -Force
+    if (Test-ConfirmationRequired $definition $criterion) { foreach ($field in @('userConfirmedAt','confirmedBy','confirmationArtifact')) { $criterion | Add-Member $field $body.$field -Force } }
+    if ($criterion.id -eq 'ACCEPT') {
+      if (-not (Test-Field $proposal 'acceptanceEvidence')) { Stop-Loop 'ACCEPTANCE_EVIDENCE_INCOMPLETE' 'ACCEPT proposal 缺 acceptanceEvidence' }
+      $state.acceptanceEvidence = @(ConvertTo-Array $proposal.acceptanceEvidence)
+    }
+    Assert-CriterionArtifacts $state $definition $criterion
+    Add-History $state (New-HistoryEvent 'evaluate-direct' ([pscustomobject]@{ id=$criterion.id; status=$beforeStatus }) ([pscustomobject]@{ id=$criterion.id; status='done'; revision=$state.revision }) $eventKey)
+    Assert-State $state $definition
+    Save-State $StatePath $state -WhatIfOnly:$DryRun; Write-Output $(if ($DryRun) { 'DRY_RUN' } else { 'EVALUATED' }); exit 0
+  }
+
   if ($Command -eq 'evaluate') {
     $proposal = Read-Document $ProposalPath
     $body = if (Test-Field $proposal 'criterionProposal') { $proposal.criterionProposal } else { $proposal }
@@ -585,11 +658,10 @@ try {
     $roots = @()
     if ($RevisionKind -eq 'code') {
       if ([string]$state.revision.code -eq $RevisionValue) { Write-Output 'UNCHANGED'; exit 0 }
-      $state.revision.code = $RevisionValue; $roots = @('CODE_REVIEW','SECURITY_REVIEW','EXP_ACCEPT','TEST_PASS','VERIFIED','KNOWLEDGE','ACCEPT')
+      $state.revision.code = $RevisionValue; $roots = @('IMPLEMENTED','CODE_REVIEW','SECURITY_REVIEW','EXP_ACCEPT','TEST_PASS','VERIFIED','KNOWLEDGE','ACCEPT')
     } elseif ($RevisionKind -eq 'design') {
       if ([string]$state.revision.design -eq $RevisionValue) { Write-Output 'UNCHANGED'; exit 0 }
-      $state.revision.design = $RevisionValue; $roots = if ($state.scale -eq 'large') { @('TECH_DESIGN') } elseif ($state.scale -eq 'medium') { @('DESIGN') } else { @('IMPLEMENTED') }
-      $roots = @(Get-Descendants $definition $state.scale $roots | Where-Object { $_ -notin @('TECH_DESIGN','DESIGN') })
+      $state.revision.design = $RevisionValue; $roots = if ($state.scale -eq 'large') { @('REQ_ANALYSIS') } elseif ($state.scale -eq 'medium') { @('DESIGN') } else { @('IMPLEMENTED') }
     } else {
       if (-not (Test-Field $state.artifacts $ArtifactId)) { Stop-Loop 'ARTIFACT_UNKNOWN' "未知 artifact：$ArtifactId" }
       $artifact = $state.artifacts.$ArtifactId; $artifact.status = 'missing'; $roots = @(ConvertTo-Array $artifact.provides)
