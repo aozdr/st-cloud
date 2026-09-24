@@ -24,23 +24,29 @@ const PRESET_ROLES: { id: string; name: string }[] = [
 ];
 
 /** 防御式解析权限点：后端返回字符串 JSON，前端也可能直接拿到对象 */
-function parsePermissions(raw: unknown): Record<string, boolean> {
+function parsePermissions(raw: unknown): Record<string, boolean> | null {
   if (typeof raw === 'string' && raw.trim()) {
     try {
       const obj = JSON.parse(raw);
-      return obj && typeof obj === 'object' ? (obj as Record<string, boolean>) : {};
+      return obj && typeof obj === 'object' && !Array.isArray(obj) ? (obj as Record<string, boolean>) : null;
     } catch {
-      return {};
+      return null;
     }
   }
-  if (raw && typeof raw === 'object') return raw as Record<string, boolean>;
-  return {};
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) return raw as Record<string, boolean>;
+  return null;
 }
 
 /** 规则的有效权限集：优先 permissions，缺失时回退旧单值 */
 function rulePermissions(r: FolderPermissionItem): Record<string, boolean> {
   const parsed = parsePermissions(r.permissions);
-  return Object.keys(parsed).length > 0 ? parsed : legacyToPermissions(r.permission);
+  return parsed ?? legacyToPermissions(r.permission);
+}
+
+/** 选择已有主体时回显其规则；新主体默认仅勾选查看。 */
+function permissionsForSubject(items: FolderPermissionItem[], type: SubjectType, id: string): Record<string, boolean> {
+  const existing = items.find(r => r.subjectType === type && String(r.subjectId) === id);
+  return existing ? rulePermissions(existing) : { view: true };
 }
 
 /** 紧凑权限点开关：勾选态=主色填充+对勾，未勾选=次级面；窄栏下比 checkbox 卡片更省空间、更易扫读 */
@@ -96,7 +102,13 @@ export default function FolderPermissionDialog({ spaceId, node, onClose, variant
     try {
       const res = await api.get<FolderPermissionItem[]>(`/team/${spaceId}/folder/${node.id}/permissions`);
       if (requestId !== ruleLoadId.current) return;
-      setRules(res || []);
+      const loadedRules = res || [];
+      setRules(loadedRules);
+      setNewPerms(permissionsForSubject(loadedRules, 'all', '0'));
+      setNewSubjectType('all');
+      setSelectedUser(null);
+      setEditingIdx(null);
+      setNewRuleTouched(false);
       setLoadError(false);
     } catch { if (requestId === ruleLoadId.current) setLoadError(true); }
     finally { if (requestId === ruleLoadId.current) setLoading(false); }
@@ -149,6 +161,7 @@ export default function FolderPermissionDialog({ spaceId, node, onClose, variant
   const handleSubjectTypeChange = (t: SubjectType) => {
     setNewRuleTouched(true);
     setNewSubjectType(t); setNewKeyword(''); setSelectedUser(null); setSearchResults([]);
+    setNewPerms(t === 'member' ? { view: true } : permissionsForSubject(rules, t, t === 'all' ? '0' : newRoleId));
   };
 
   const handleAddRule = () => {
@@ -174,7 +187,7 @@ export default function FolderPermissionDialog({ spaceId, node, onClose, variant
       setRules(prev => [...prev, newRule]);
     }
     setNewKeyword(''); setSelectedUser(null); setSearchResults([]);
-    setNewPerms({ view: true });
+    if (newSubjectType === 'member') setNewPerms({ view: true });
     setNewRuleTouched(false);
   };
 
@@ -193,6 +206,12 @@ export default function FolderPermissionDialog({ spaceId, node, onClose, variant
 
   const applyEdit = () => {
     if (editingIdx === null) return;
+    const editedRule = rules[editingIdx];
+    const currentSubjectId = newSubjectType === 'member' ? selectedUser?.userId : newSubjectType === 'role' ? newRoleId : '0';
+    if (editedRule.subjectType === newSubjectType && String(editedRule.subjectId) === currentSubjectId) {
+      setNewPerms({ ...editPerms });
+      setNewRuleTouched(false);
+    }
     setRules(prev => prev.map((r, i) => i === editingIdx ? { ...r, permissions: { ...editPerms } } : r));
     setEditingIdx(null);
   };
@@ -231,7 +250,8 @@ export default function FolderPermissionDialog({ spaceId, node, onClose, variant
       setRules(nextRules);
       setEditingIdx(null);
       setNewRuleTouched(false);
-      setNewPerms({ view: true });
+      const currentSubjectId = newSubjectType === 'member' ? selectedUser?.userId : newSubjectType === 'role' ? newRoleId : '0';
+      setNewPerms(currentSubjectId ? permissionsForSubject(nextRules, newSubjectType, currentSubjectId) : { view: true });
       showToast('权限已保存', 'success');
       // 面板模式：保存后停留在权限 tab 并回显已保存规则；弹窗模式：保存后关闭
       if (variant === 'dialog') onClose();
@@ -257,6 +277,10 @@ export default function FolderPermissionDialog({ spaceId, node, onClose, variant
     const labels = PERMISSION_KEYS.filter(p => perms[p.key]).map(p => p.label);
     return labels.length > 0 ? labels : ['无权限'];
   };
+
+  const configuredSubjectId = newSubjectType === 'member' ? selectedUser?.userId : newSubjectType === 'role' ? newRoleId : '0';
+  const hasConfiguredRule = configuredSubjectId != null && rules.some(r =>
+    r.subjectType === newSubjectType && String(r.subjectId) === configuredSubjectId);
 
   // 内容主体：弹窗与面板（权限 tab）共用同一套规则列表、权限点勾选与保存逻辑
   const content = (
@@ -311,9 +335,9 @@ export default function FolderPermissionDialog({ spaceId, node, onClose, variant
               </div>
             )}
           </div>
-          {/* 添加规则 */}
+          {/* 选择已有主体时回显并更新规则；新主体则添加规则 */}
           <div className="pt-3 border-t border-border">
-            <p className="text-xs font-medium text-muted mb-2">添加规则</p>
+            <p className="text-xs font-medium text-muted mb-2">配置规则</p>
             <div className={cn('gap-2', isPanel ? 'flex flex-col' : 'flex flex-wrap')}>
               <select value={newSubjectType} onChange={(e) => handleSubjectTypeChange(e.target.value as SubjectType)} aria-label="规则主体类型" className={cn('px-2 py-2 text-sm bg-surface-2 rounded-md border border-border outline-none cursor-pointer', isPanel ? 'w-full' : '')}>
                 <option value="all">全体成员</option>
@@ -325,12 +349,12 @@ export default function FolderPermissionDialog({ spaceId, node, onClose, variant
                   <input type="text" value={newKeyword} onChange={(e) => handleSearch(e.target.value)} placeholder="搜索用户..." aria-label="搜索用户" className="w-full px-3 py-2 text-sm bg-surface-2 rounded-md border border-border outline-none focus:border-primary-400" />
                   {searchResults.length > 0 && !selectedUser && (
                     <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-surface rounded-md border border-border shadow-lg max-h-40 overflow-auto">
-                      {searchResults.map(u => <button key={u.userId} onClick={() => { setNewRuleTouched(true); setSelectedUser(u); setNewKeyword(u.nickname || u.username); setSearchResults([]); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-surface-2 cursor-pointer text-left"><div className="w-6 h-6 bg-primary-600 rounded-full flex items-center justify-center text-white text-xs">{u.nickname?.[0] || u.username[0]}</div><span>{u.nickname || u.username}</span><span className="text-xs text-muted">@{u.username}</span></button>)}
+                      {searchResults.map(u => <button key={u.userId} onClick={() => { setNewRuleTouched(true); setSelectedUser(u); setNewPerms(permissionsForSubject(rules, 'member', u.userId)); setNewKeyword(u.nickname || u.username); setSearchResults([]); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-surface-2 cursor-pointer text-left"><div className="w-6 h-6 bg-primary-600 rounded-full flex items-center justify-center text-white text-xs">{u.nickname?.[0] || u.username[0]}</div><span>{u.nickname || u.username}</span><span className="text-xs text-muted">@{u.username}</span></button>)}
                     </div>
                   )}
                 </div>
               ) : newSubjectType === 'role' ? (
-                <select value={newRoleId} onChange={(e) => { setNewRuleTouched(true); setNewRoleId(e.target.value); }} aria-label="选择角色" className={cn('px-3 py-2 text-sm bg-surface-2 rounded-md border border-border outline-none cursor-pointer', isPanel ? 'w-full' : '')}>
+                <select value={newRoleId} onChange={(e) => { setNewRuleTouched(true); setNewRoleId(e.target.value); setNewPerms(permissionsForSubject(rules, 'role', e.target.value)); }} aria-label="选择角色" className={cn('px-3 py-2 text-sm bg-surface-2 rounded-md border border-border outline-none cursor-pointer', isPanel ? 'w-full' : '')}>
                   {PRESET_ROLES.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                   {customRoles.map(r => <option key={r.id} value={String(r.id)}>{r.name}（自定义）</option>)}
                 </select>
@@ -345,10 +369,10 @@ export default function FolderPermissionDialog({ spaceId, node, onClose, variant
                   <PermissionToggle key={p.key} label={p.label} checked={newPerms[p.key] || false} onToggle={() => toggleNewPerm(p.key)} />
                 ))}
               </div>
-              <p className="text-[11px] text-muted mt-1.5">勾选「上传/下载」会自动补上「查看」；选择后可直接点「保存」，也可点「添加」继续设置其他规则。</p>
+              <p className="text-[11px] text-muted mt-1.5">勾选「上传/下载」会自动补上「查看」；选择后可直接点「保存」，也可点下方按钮继续设置其他规则。</p>
             </div>
             <div className="mt-2 flex justify-end">
-              <button onClick={handleAddRule} className="flex items-center gap-1 px-3 py-2 text-sm text-white bg-primary-600 rounded-md hover:bg-primary-700 cursor-pointer"><Plus className="w-4 h-4" />添加</button>
+              <button onClick={handleAddRule} className="flex items-center gap-1 px-3 py-2 text-sm text-white bg-primary-600 rounded-md hover:bg-primary-700 cursor-pointer"><Plus className="w-4 h-4" />{hasConfiguredRule ? '更新规则' : '添加规则'}</button>
             </div>
           </div>
         </div>

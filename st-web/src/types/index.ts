@@ -744,7 +744,7 @@ export interface FolderPermissionItem {
   subjectType: 'all' | 'member' | 'role'; // all=全体(管理员除外)
   subjectId: string; subjectName: string;
   permission: number;
-  permissions?: Record<string, boolean>; // 权限点集合（优先）
+  permissions?: string | Record<string, boolean>; // 后端返回 JSON 字符串，本地编辑时为对象
   createdAt: string;
 }
 // ==================== P2: Role, Stats, Lock ====================
