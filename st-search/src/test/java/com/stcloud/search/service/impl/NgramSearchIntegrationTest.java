@@ -15,6 +15,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -30,6 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * 前置：ES 8.x + IK 插件 + ingest-attachment 插件已运行。
  */
 @DisplayName("ES 搜索分词集成测试（真实 ES）")
+@EnabledIfSystemProperty(named = "test.es.port", matches = "[0-9]+")
 class NgramSearchIntegrationTest {
 
     private static final String TEMP_INDEX = "test_ngram_integration";
@@ -50,8 +52,11 @@ class NgramSearchIntegrationTest {
 
     @BeforeAll
     static void setup() throws Exception {
-        RestClient restClient = RestClient.builder(new HttpHost("127.0.0.1", 9200, "http")).build();
+        // 显式测试端口避免默认连接共享开发ES；索引与流水线只存在于任务隔离实例。
+        RestClient restClient = RestClient.builder(new HttpHost("127.0.0.1", Integer.parseInt(System.getProperty("test.es.port")), "http")).build();
         client = new ElasticsearchClient(new RestClientTransport(restClient, new JacksonJsonpMapper()));
+        client.ingest().putPipeline(p -> p.id(PIPELINE).processors(processor -> processor
+                .attachment(a -> a.field("data").targetField("attachment"))));
 
         try {
             client.indices().delete(d -> d.index(TEMP_INDEX));
@@ -96,6 +101,8 @@ class NgramSearchIntegrationTest {
                 client.indices().delete(d -> d.index(TEMP_INDEX));
             } catch (Exception ignored) {
             }
+            client.ingest().deletePipeline(p -> p.id(PIPELINE));
+            client._transport().close();
         }
     }
 

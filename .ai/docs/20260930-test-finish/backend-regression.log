@@ -1,0 +1,1038 @@
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+08:38:06.038 [main] INFO com.stcloud.common.sysconfig.SysConfigServiceImpl -- ����ȫ������: share.brute_force.maxFailPerCode=6
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+08:38:06.158 [main] INFO com.stcloud.common.utils.JwtUtils -- JWT ǩ����Կ��������ɲ��������
+08:38:06.428 [main] INFO com.stcloud.common.utils.JwtUtils -- JWT ǩ����Կ��������ɲ��������
+08:38:06.432 [main] INFO com.stcloud.common.utils.JwtUtils -- JWT ǩ����Կ��������ɲ��������
+08:38:06.436 [main] INFO com.stcloud.common.utils.JwtUtils -- JWT ǩ����Կ��������ɲ��������
+08:38:06.442 [main] INFO com.stcloud.common.utils.JwtUtils -- JWT ǩ����Կ��������ɲ��������
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-09-30T08:38:07.977+08:00  INFO 11992 --- [           main] c.s.auth.AuthServiceIntegrationTest      : Starting AuthServiceIntegrationTest using Java 17.0.14 with PID 11992 (started by Administrator in E:\code\st-cloud\st-auth)
+2026-09-30T08:38:07.982+08:00  INFO 11992 --- [           main] c.s.auth.AuthServiceIntegrationTest      : The following 1 profile is active: "test"
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-09-30T08:38:08.988+08:00  INFO 11992 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-09-30T08:38:09.160+08:00  INFO 11992 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:stauth-test user=SA
+2026-09-30T08:38:09.161+08:00  INFO 11992 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+2026-09-30T08:38:11.580+08:00  WARN 11992 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:11.585+08:00  INFO 11992 --- [           main] com.stcloud.common.utils.JwtUtils        : JWT ǩ����Կ��������ɲ��������
+2026-09-30T08:38:11.962+08:00  INFO 11992 --- [           main] c.s.auth.AuthServiceIntegrationTest      : Started AuthServiceIntegrationTest in 4.315 seconds (process running for 5.144)
+2026-09-30T08:38:12.363+08:00  INFO 11992 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=dave, userId=2105094826595721217
+2026-09-30T08:38:12.892+08:00  INFO 11992 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=alice, userId=2105094829544316929
+2026-09-30T08:38:13.050+08:00  INFO 11992 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=carol, userId=2105094830265737218
+2026-09-30T08:38:14.452+08:00  INFO 11992 --- [           main] com.stcloud.auth.service.AuthService     : �û�ע��ɹ�: username=newuser, userId=2105094836460724225, tenantId=1
+2026-09-30T08:38:14.475+08:00  WARN 11992 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:14.695+08:00  WARN 11992 --- [           main] c.s.a.security.JwtAuthenticationFilter   : editor ���Ʊ����ڷ���ʽ�˵㣬�ܾ���uri=/api/file/list
+2026-09-30T08:38:14.695+08:00  WARN 11992 --- [           main] c.s.a.security.JwtAuthenticationFilter   : editor ����δͨ���������ԣ��ܾ���uri=/api/file/list
+2026-09-30T08:38:14.698+08:00  WARN 11992 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:14.698+08:00  WARN 11992 --- [           main] c.s.a.security.JwtAuthenticationFilter   : editor ���� nodeId ��ƥ�䣺token=101, path=102
+2026-09-30T08:38:14.699+08:00  WARN 11992 --- [           main] c.s.a.security.JwtAuthenticationFilter   : editor ����δͨ���������ԣ��ܾ���uri=/api/file/102/stream
+2026-09-30T08:38:14.699+08:00  WARN 11992 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:14.702+08:00  WARN 11992 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:14.706+08:00  WARN 11992 --- [           main] c.s.a.security.JwtAuthenticationFilter   : JWT ��;��ȫ�汾��Ч���ܾ���֤
+2026-09-30T08:38:14.706+08:00  WARN 11992 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:14.706+08:00  WARN 11992 --- [           main] c.s.a.security.JwtAuthenticationFilter   : JWT ��;��ȫ�汾��Ч���ܾ���֤
+2026-09-30T08:38:14.706+08:00  WARN 11992 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:14.709+08:00  WARN 11992 --- [           main] c.s.a.security.JwtAuthenticationFilter   : download ���Ʊ����ڷ���ʽ�˵㣬�ܾ���uri=/api/file/list
+2026-09-30T08:38:14.709+08:00  WARN 11992 --- [           main] c.s.a.security.JwtAuthenticationFilter   : download ����δͨ���������ԣ��ܾ���uri=/api/file/list
+2026-09-30T08:38:14.709+08:00  WARN 11992 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:14.710+08:00  WARN 11992 --- [           main] c.s.a.security.JwtAuthenticationFilter   : download ���� nodeId ��ƥ�䣺token=101, path=102
+2026-09-30T08:38:14.710+08:00  WARN 11992 --- [           main] c.s.a.security.JwtAuthenticationFilter   : download ����δͨ���������ԣ��ܾ���uri=/api/file/102/stream
+2026-09-30T08:38:14.710+08:00  WARN 11992 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:14.711+08:00  WARN 11992 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:14.714+08:00  WARN 11992 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-09-30T08:38:17.324+08:00  INFO 36760 --- [           main] c.s.c.e.EditorCallbackIntegrationTest    : Starting EditorCallbackIntegrationTest using Java 17.0.14 with PID 36760 (started by Administrator in E:\code\st-cloud\st-core)
+2026-09-30T08:38:17.328+08:00  INFO 36760 --- [           main] c.s.c.e.EditorCallbackIntegrationTest    : The following 1 profile is active: "test"
+2026-09-30T08:38:18.357+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:18.359+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:18.429+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'createRocketMQMessageConverter' of type [org.apache.rocketmq.spring.support.RocketMQMessageConverter] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:18.438+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketmq-org.apache.rocketmq.spring.autoconfigure.RocketMQProperties' of type [org.apache.rocketmq.spring.autoconfigure.RocketMQProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:18.440+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketMQMessageListenerContainerRegistrar' of type [org.apache.rocketmq.spring.support.RocketMQMessageListenerContainerRegistrar] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-09-30T08:38:21.924+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-09-30T08:38:22.166+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:stcloud-test user=SA
+2026-09-30T08:38:22.168+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-09-30T08:38:23.109+08:00  WARN 36760 --- [           main] o.a.r.s.a.RocketMQAutoConfiguration      : The necessary spring property 'rocketmq.name-server' is not defined, all rockertmq beans creation are skipped!
+2026-09-30T08:38:23.399+08:00  INFO 36760 --- [           main] c.s.c.e.EditorCallbackIntegrationTest    : Started EditorCallbackIntegrationTest in 6.571 seconds (process running for 7.752)
+2026-09-30T08:38:23.515+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:23.588+08:00  WARN 36760 --- [           main] c.s.c.editor.EditorCallbackServiceImpl   : OnlyOffice �ص�ȱ��ǩ�����ƣ��ܾ�: nodeId=2105094874511564801
+2026-09-30T08:38:23.606+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:23.771+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:23.939+08:00  INFO 36760 --- [           main] c.s.c.editor.EditorCallbackServiceImpl   : OnlyOffice �ص����̳ɹ�: nodeId=2105094875543363585, status=2, size=31, md5=e33541e2f5c57c566bbfd3475d6543de
+2026-09-30T08:38:23.943+08:00  INFO 36760 --- [           main] c.s.c.editor.EditorCallbackServiceImpl   : OnlyOffice �ظ��ص�������: nodeId=2105094875543363585, status=2
+2026-09-30T08:38:23.958+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:23.962+08:00  WARN 36760 --- [           main] c.s.c.editor.EditorCallbackServiceImpl   : OnlyOffice �ص�ǩ��У��ʧ�ܣ��ܾ�: nodeId=2105094876323504130, err=JWT signature does not match locally computed signature. JWT validity cannot be asserted and should not be trusted.
+2026-09-30T08:38:23.967+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:24.003+08:00  INFO 36760 --- [           main] c.s.c.editor.EditorCallbackServiceImpl   : OnlyOffice �ص����̳ɹ�: nodeId=2105094876390612993, status=6, size=31, md5=e33541e2f5c57c566bbfd3475d6543de
+2026-09-30T08:38:24.015+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:24.041+08:00  INFO 36760 --- [           main] c.s.c.editor.EditorCallbackServiceImpl   : OnlyOffice �ص����̳ɹ�: nodeId=2105094876587745281, status=2, size=31, md5=e33541e2f5c57c566bbfd3475d6543de
+2026-09-30T08:38:24.051+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:24.077+08:00  INFO 36760 --- [           main] c.s.c.editor.EditorCallbackServiceImpl   : OnlyOffice �ص����̳ɹ�: nodeId=2105094876713574403, status=2, size=31, md5=e33541e2f5c57c566bbfd3475d6543de
+2026-09-30T08:38:24.093+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-09-30T08:38:24.156+08:00  INFO 36760 --- [           main] .e.EditorCallbackTransactionBoundaryTest : Starting EditorCallbackTransactionBoundaryTest using Java 17.0.14 with PID 36760 (started by Administrator in E:\code\st-cloud\st-core)
+2026-09-30T08:38:24.156+08:00  INFO 36760 --- [           main] .e.EditorCallbackTransactionBoundaryTest : The following 1 profile is active: "test"
+2026-09-30T08:38:24.368+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:24.369+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:24.369+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'createRocketMQMessageConverter' of type [org.apache.rocketmq.spring.support.RocketMQMessageConverter] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:24.372+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketmq-org.apache.rocketmq.spring.autoconfigure.RocketMQProperties' of type [org.apache.rocketmq.spring.autoconfigure.RocketMQProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:24.372+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketMQMessageListenerContainerRegistrar' of type [org.apache.rocketmq.spring.support.RocketMQMessageListenerContainerRegistrar] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-09-30T08:38:24.504+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Starting...
+2026-09-30T08:38:24.505+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-2 - Added connection conn10: url=jdbc:h2:mem:stcloud-test user=SA
+2026-09-30T08:38:24.505+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Start completed.
+2026-09-30T08:38:24.753+08:00  WARN 36760 --- [           main] o.a.r.s.a.RocketMQAutoConfiguration      : The necessary spring property 'rocketmq.name-server' is not defined, all rockertmq beans creation are skipped!
+2026-09-30T08:38:24.805+08:00  INFO 36760 --- [           main] .e.EditorCallbackTransactionBoundaryTest : Started EditorCallbackTransactionBoundaryTest in 0.682 seconds (process running for 9.159)
+2026-09-30T08:38:24.855+08:00  INFO 36760 --- [           main] c.s.c.editor.EditorCallbackServiceImpl   : OnlyOffice �ص����̳ɹ�: nodeId=2105094879913828354, status=6, size=31, md5=e33541e2f5c57c566bbfd3475d6543de
+2026-09-30T08:38:25.267+08:00  INFO 36760 --- [           main] c.s.core.editor.EditorConfigServiceImpl  : �������߱༭����: nodeId=100, canEdit=true, editorUser=1
+2026-09-30T08:38:25.274+08:00  INFO 36760 --- [           main] c.s.core.editor.EditorConfigServiceImpl  : �������߱༭����: nodeId=100, canEdit=false, editorUser=1
+2026-09-30T08:38:25.279+08:00  INFO 36760 --- [           main] c.s.core.editor.EditorConfigServiceImpl  : ������ʷ�汾ֻ��Ԥ������: nodeId=100, versionId=7
+2026-09-30T08:38:25.284+08:00  INFO 36760 --- [           main] c.s.core.editor.EditorConfigServiceImpl  : �������߱༭����: nodeId=100, canEdit=true, editorUser=1
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-09-30T08:38:25.328+08:00  INFO 36760 --- [           main] c.s.c.e.EditorPermissionIntegrationTest  : Starting EditorPermissionIntegrationTest using Java 17.0.14 with PID 36760 (started by Administrator in E:\code\st-cloud\st-core)
+2026-09-30T08:38:25.328+08:00  INFO 36760 --- [           main] c.s.c.e.EditorPermissionIntegrationTest  : The following 1 profile is active: "test"
+2026-09-30T08:38:25.485+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:25.485+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:25.485+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'createRocketMQMessageConverter' of type [org.apache.rocketmq.spring.support.RocketMQMessageConverter] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:25.488+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketmq-org.apache.rocketmq.spring.autoconfigure.RocketMQProperties' of type [org.apache.rocketmq.spring.autoconfigure.RocketMQProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:25.488+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketMQMessageListenerContainerRegistrar' of type [org.apache.rocketmq.spring.support.RocketMQMessageListenerContainerRegistrar] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-09-30T08:38:25.605+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Starting...
+2026-09-30T08:38:25.606+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-3 - Added connection conn20: url=jdbc:h2:mem:stcloud-test user=SA
+2026-09-30T08:38:25.606+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Start completed.
+2026-09-30T08:38:25.649+08:00  WARN 36760 --- [           main] o.a.r.s.a.RocketMQAutoConfiguration      : The necessary spring property 'rocketmq.name-server' is not defined, all rockertmq beans creation are skipped!
+2026-09-30T08:38:25.829+08:00  INFO 36760 --- [           main] c.s.c.e.EditorPermissionIntegrationTest  : Started EditorPermissionIntegrationTest in 0.524 seconds (process running for 10.183)
+2026-09-30T08:38:25.837+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:25.845+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:25.847+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:25.854+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:25.856+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:25.864+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:25.870+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:25.877+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:25.884+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-09-30T08:38:25.919+08:00  INFO 36760 --- [           main] c.s.c.e.EditorVersionIntegrationTest     : Starting EditorVersionIntegrationTest using Java 17.0.14 with PID 36760 (started by Administrator in E:\code\st-cloud\st-core)
+2026-09-30T08:38:25.919+08:00  INFO 36760 --- [           main] c.s.c.e.EditorVersionIntegrationTest     : The following 1 profile is active: "test"
+2026-09-30T08:38:26.044+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:26.045+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:26.045+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'createRocketMQMessageConverter' of type [org.apache.rocketmq.spring.support.RocketMQMessageConverter] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:26.047+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketmq-org.apache.rocketmq.spring.autoconfigure.RocketMQProperties' of type [org.apache.rocketmq.spring.autoconfigure.RocketMQProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:26.047+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketMQMessageListenerContainerRegistrar' of type [org.apache.rocketmq.spring.support.RocketMQMessageListenerContainerRegistrar] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-09-30T08:38:26.157+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-4 - Starting...
+2026-09-30T08:38:26.159+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-4 - Added connection conn30: url=jdbc:h2:mem:stcloud-test user=SA
+2026-09-30T08:38:26.159+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-4 - Start completed.
+2026-09-30T08:38:26.286+08:00  WARN 36760 --- [           main] o.a.r.s.a.RocketMQAutoConfiguration      : The necessary spring property 'rocketmq.name-server' is not defined, all rockertmq beans creation are skipped!
+2026-09-30T08:38:26.353+08:00  INFO 36760 --- [           main] c.s.c.e.EditorVersionIntegrationTest     : Started EditorVersionIntegrationTest in 0.457 seconds (process running for 10.707)
+2026-09-30T08:38:26.358+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:26.364+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:26.366+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:26.388+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:26.397+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:26.401+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:26.410+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:26.432+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:26.442+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:26.443+08:00  INFO 36760 --- [           main] c.s.c.service.impl.VersionServiceImpl    : �ü��༭������汾: fileNodeId=2105094886628909059, limit=20, deleted=5
+2026-09-30T08:38:26.455+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:26.463+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:26.468+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:26.471+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:26.481+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:26.483+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:26.531+08:00 ERROR 36760 --- [           main] c.s.c.event.PhysicalDeleteEventListener  : ���ض�������ɾ��ʧ��: nodeId=1, objectId=10, storagePath=t1/md5-a, error=s3 down
+2026-09-30T08:38:26.532+08:00  WARN 36760 --- [           main] c.s.c.event.PhysicalDeleteEventListener  : ����ɾ���¼�ȱ�� objectId/storagePath������: nodeId=1
+2026-09-30T08:38:26.539+08:00 ERROR 36760 --- [           main] c.s.c.e.PhysicalDeleteMessageConsumer    : ��������ɾ�� MQ ��Ϣʧ��: eventLogId=99, nodeId=1, objectId=10, storagePath=t1/md5-a, error=s3 down
+2026-09-30T08:38:26.540+08:00  WARN 36760 --- [           main] c.s.c.e.PhysicalDeleteMessageConsumer    : ����ɾ����Ϣȱ�� objectId/storagePath������: nodeId=1
+2026-09-30T08:38:26.541+08:00  WARN 36760 --- [           main] c.s.c.e.PhysicalDeleteMessageConsumer    : �յ�������ɾ����Ϣ������
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-09-30T08:38:26.726+08:00  INFO 36760 --- [           main] .i.ArchiveExtractTransactionBoundaryTest : Starting ArchiveExtractTransactionBoundaryTest using Java 17.0.14 with PID 36760 (started by Administrator in E:\code\st-cloud\st-core)
+2026-09-30T08:38:26.726+08:00  INFO 36760 --- [           main] .i.ArchiveExtractTransactionBoundaryTest : The following 1 profile is active: "test"
+2026-09-30T08:38:26.857+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:26.857+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:26.858+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'createRocketMQMessageConverter' of type [org.apache.rocketmq.spring.support.RocketMQMessageConverter] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:26.860+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketmq-org.apache.rocketmq.spring.autoconfigure.RocketMQProperties' of type [org.apache.rocketmq.spring.autoconfigure.RocketMQProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:26.860+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketMQMessageListenerContainerRegistrar' of type [org.apache.rocketmq.spring.support.RocketMQMessageListenerContainerRegistrar] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-09-30T08:38:26.988+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-5 - Starting...
+2026-09-30T08:38:26.989+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-5 - Added connection conn43: url=jdbc:h2:mem:stcloud-test user=SA
+2026-09-30T08:38:26.989+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-5 - Start completed.
+2026-09-30T08:38:27.128+08:00  WARN 36760 --- [           main] o.a.r.s.a.RocketMQAutoConfiguration      : The necessary spring property 'rocketmq.name-server' is not defined, all rockertmq beans creation are skipped!
+2026-09-30T08:38:27.227+08:00  INFO 36760 --- [           main] .i.ArchiveExtractTransactionBoundaryTest : Started ArchiveExtractTransactionBoundaryTest in 0.525 seconds (process running for 11.58)
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-09-30T08:38:27.573+08:00  INFO 36760 --- [           main] c.s.c.s.i.ArchiveServiceIntegrationTest  : Starting ArchiveServiceIntegrationTest using Java 17.0.14 with PID 36760 (started by Administrator in E:\code\st-cloud\st-core)
+2026-09-30T08:38:27.574+08:00  INFO 36760 --- [           main] c.s.c.s.i.ArchiveServiceIntegrationTest  : The following 1 profile is active: "test"
+2026-09-30T08:38:27.703+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:27.703+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:27.703+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'createRocketMQMessageConverter' of type [org.apache.rocketmq.spring.support.RocketMQMessageConverter] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:27.705+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketmq-org.apache.rocketmq.spring.autoconfigure.RocketMQProperties' of type [org.apache.rocketmq.spring.autoconfigure.RocketMQProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:27.705+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketMQMessageListenerContainerRegistrar' of type [org.apache.rocketmq.spring.support.RocketMQMessageListenerContainerRegistrar] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-09-30T08:38:27.818+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-6 - Starting...
+2026-09-30T08:38:27.819+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-6 - Added connection conn53: url=jdbc:h2:mem:stcloud-test user=SA
+2026-09-30T08:38:27.819+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-6 - Start completed.
+2026-09-30T08:38:27.896+08:00  WARN 36760 --- [           main] o.a.r.s.a.RocketMQAutoConfiguration      : The necessary spring property 'rocketmq.name-server' is not defined, all rockertmq beans creation are skipped!
+2026-09-30T08:38:27.997+08:00  INFO 36760 --- [           main] c.s.c.s.i.ArchiveServiceIntegrationTest  : Started ArchiveServiceIntegrationTest in 0.445 seconds (process running for 12.351)
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-09-30T08:38:28.268+08:00  INFO 36760 --- [           main] .s.c.s.i.ConcurrentUploadIntegrationTest : Starting ConcurrentUploadIntegrationTest using Java 17.0.14 with PID 36760 (started by Administrator in E:\code\st-cloud\st-core)
+2026-09-30T08:38:28.268+08:00  INFO 36760 --- [           main] .s.c.s.i.ConcurrentUploadIntegrationTest : The following 1 profile is active: "test"
+2026-09-30T08:38:28.384+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:28.384+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:28.385+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'createRocketMQMessageConverter' of type [org.apache.rocketmq.spring.support.RocketMQMessageConverter] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:28.386+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketmq-org.apache.rocketmq.spring.autoconfigure.RocketMQProperties' of type [org.apache.rocketmq.spring.autoconfigure.RocketMQProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:28.386+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketMQMessageListenerContainerRegistrar' of type [org.apache.rocketmq.spring.support.RocketMQMessageListenerContainerRegistrar] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-09-30T08:38:28.502+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-7 - Starting...
+2026-09-30T08:38:28.503+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-7 - Added connection conn63: url=jdbc:h2:mem:stcloud-test user=SA
+2026-09-30T08:38:28.503+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-7 - Start completed.
+2026-09-30T08:38:28.572+08:00  WARN 36760 --- [           main] o.a.r.s.a.RocketMQAutoConfiguration      : The necessary spring property 'rocketmq.name-server' is not defined, all rockertmq beans creation are skipped!
+2026-09-30T08:38:28.688+08:00  INFO 36760 --- [           main] .s.c.s.i.ConcurrentUploadIntegrationTest : Started ConcurrentUploadIntegrationTest in 0.44 seconds (process running for 13.042)
+2026-09-30T08:38:28.702+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:28.714+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-09-30T08:38:28.754+08:00  INFO 36760 --- [           main] c.s.c.s.impl.EventOutboxIntegrationTest  : Starting EventOutboxIntegrationTest using Java 17.0.14 with PID 36760 (started by Administrator in E:\code\st-cloud\st-core)
+2026-09-30T08:38:28.754+08:00  INFO 36760 --- [           main] c.s.c.s.impl.EventOutboxIntegrationTest  : The following 1 profile is active: "test"
+2026-09-30T08:38:28.864+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:28.864+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:28.864+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'createRocketMQMessageConverter' of type [org.apache.rocketmq.spring.support.RocketMQMessageConverter] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:28.866+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketmq-org.apache.rocketmq.spring.autoconfigure.RocketMQProperties' of type [org.apache.rocketmq.spring.autoconfigure.RocketMQProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:28.866+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketMQMessageListenerContainerRegistrar' of type [org.apache.rocketmq.spring.support.RocketMQMessageListenerContainerRegistrar] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-09-30T08:38:28.975+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-8 - Starting...
+2026-09-30T08:38:28.975+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-8 - Added connection conn73: url=jdbc:h2:mem:stcloud-test user=SA
+2026-09-30T08:38:28.975+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-8 - Start completed.
+2026-09-30T08:38:29.052+08:00  WARN 36760 --- [           main] o.a.r.s.a.RocketMQAutoConfiguration      : The necessary spring property 'rocketmq.name-server' is not defined, all rockertmq beans creation are skipped!
+2026-09-30T08:38:29.135+08:00  INFO 36760 --- [           main] c.s.c.s.impl.EventOutboxIntegrationTest  : Started EventOutboxIntegrationTest in 0.401 seconds (process running for 13.488)
+2026-09-30T08:38:29.157+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:29.179+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:29.183+08:00 ERROR 36760 --- [           main] com.stcloud.core.outbox.EventRetryTask   : �¼���Ͷʧ��: id=8001, type=FILE_INDEX, retry=2, error=broker down
+2026-09-30T08:38:29.187+08:00  INFO 36760 --- [           main] com.stcloud.core.outbox.EventRetryTask   : �¼���Ͷ�ɹ�: id=8001, type=FILE_INDEX, retry=3
+2026-09-30T08:38:29.201+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:29.203+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:29.212+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:29.214+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:29.224+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-09-30T08:38:29.318+08:00  INFO 36760 --- [           main] c.s.c.s.i.FavoriteServiceIntegrationTest : Starting FavoriteServiceIntegrationTest using Java 17.0.14 with PID 36760 (started by Administrator in E:\code\st-cloud\st-core)
+2026-09-30T08:38:29.318+08:00  INFO 36760 --- [           main] c.s.c.s.i.FavoriteServiceIntegrationTest : The following 1 profile is active: "test"
+2026-09-30T08:38:29.425+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:29.425+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:29.425+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'createRocketMQMessageConverter' of type [org.apache.rocketmq.spring.support.RocketMQMessageConverter] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:29.426+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketmq-org.apache.rocketmq.spring.autoconfigure.RocketMQProperties' of type [org.apache.rocketmq.spring.autoconfigure.RocketMQProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:29.427+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketMQMessageListenerContainerRegistrar' of type [org.apache.rocketmq.spring.support.RocketMQMessageListenerContainerRegistrar] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-09-30T08:38:29.534+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-9 - Starting...
+2026-09-30T08:38:29.535+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-9 - Added connection conn83: url=jdbc:h2:mem:stcloud-test user=SA
+2026-09-30T08:38:29.535+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-9 - Start completed.
+2026-09-30T08:38:29.562+08:00  WARN 36760 --- [           main] o.a.r.s.a.RocketMQAutoConfiguration      : The necessary spring property 'rocketmq.name-server' is not defined, all rockertmq beans creation are skipped!
+2026-09-30T08:38:29.673+08:00  INFO 36760 --- [           main] c.s.c.s.i.FavoriteServiceIntegrationTest : Started FavoriteServiceIntegrationTest in 0.374 seconds (process running for 14.027)
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-09-30T08:38:29.837+08:00  INFO 36760 --- [           main] c.s.c.s.impl.FileObjectIntegrationTest   : Starting FileObjectIntegrationTest using Java 17.0.14 with PID 36760 (started by Administrator in E:\code\st-cloud\st-core)
+2026-09-30T08:38:29.837+08:00  INFO 36760 --- [           main] c.s.c.s.impl.FileObjectIntegrationTest   : The following 1 profile is active: "test"
+2026-09-30T08:38:29.941+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:29.942+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:29.942+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'createRocketMQMessageConverter' of type [org.apache.rocketmq.spring.support.RocketMQMessageConverter] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:29.943+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketmq-org.apache.rocketmq.spring.autoconfigure.RocketMQProperties' of type [org.apache.rocketmq.spring.autoconfigure.RocketMQProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:29.943+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketMQMessageListenerContainerRegistrar' of type [org.apache.rocketmq.spring.support.RocketMQMessageListenerContainerRegistrar] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-09-30T08:38:30.052+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-10 - Starting...
+2026-09-30T08:38:30.052+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-10 - Added connection conn93: url=jdbc:h2:mem:stcloud-test user=SA
+2026-09-30T08:38:30.052+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-10 - Start completed.
+2026-09-30T08:38:30.089+08:00  WARN 36760 --- [           main] o.a.r.s.a.RocketMQAutoConfiguration      : The necessary spring property 'rocketmq.name-server' is not defined, all rockertmq beans creation are skipped!
+2026-09-30T08:38:30.208+08:00  INFO 36760 --- [           main] c.s.c.s.impl.FileObjectIntegrationTest   : Started FileObjectIntegrationTest in 0.387 seconds (process running for 14.561)
+2026-09-30T08:38:30.212+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.212+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.214+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.215+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.215+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.216+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.220+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.221+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.221+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.222+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.223+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.223+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.224+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.224+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.225+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.228+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.229+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.230+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.242+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.243+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.247+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.252+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.253+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.254+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.255+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.255+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.256+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.256+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.257+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.258+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.262+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.263+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.263+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.264+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.265+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.265+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:38:30.266+08:00  WARN 36760 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-09-30T08:38:30.290+08:00  INFO 36760 --- [           main] c.s.c.s.i.FileServiceFlowIntegrationTest : Starting FileServiceFlowIntegrationTest using Java 17.0.14 with PID 36760 (started by Administrator in E:\code\st-cloud\st-core)
+2026-09-30T08:38:30.290+08:00  INFO 36760 --- [           main] c.s.c.s.i.FileServiceFlowIntegrationTest : The following 1 profile is active: "test"
+2026-09-30T08:38:30.392+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:30.392+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:30.392+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'createRocketMQMessageConverter' of type [org.apache.rocketmq.spring.support.RocketMQMessageConverter] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:30.393+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketmq-org.apache.rocketmq.spring.autoconfigure.RocketMQProperties' of type [org.apache.rocketmq.spring.autoconfigure.RocketMQProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:30.393+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketMQMessageListenerContainerRegistrar' of type [org.apache.rocketmq.spring.support.RocketMQMessageListenerContainerRegistrar] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-09-30T08:38:30.501+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-11 - Starting...
+2026-09-30T08:38:30.501+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-11 - Added connection conn103: url=jdbc:h2:mem:stcloud-test user=SA
+2026-09-30T08:38:30.501+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-11 - Start completed.
+2026-09-30T08:38:30.553+08:00  WARN 36760 --- [           main] o.a.r.s.a.RocketMQAutoConfiguration      : The necessary spring property 'rocketmq.name-server' is not defined, all rockertmq beans creation are skipped!
+2026-09-30T08:38:30.644+08:00  INFO 36760 --- [           main] c.s.c.s.i.FileServiceFlowIntegrationTest : Started FileServiceFlowIntegrationTest in 0.37 seconds (process running for 14.998)
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-09-30T08:38:31.262+08:00  INFO 36760 --- [           main] s.i.FileServicePermissionIntegrationTest : Starting FileServicePermissionIntegrationTest using Java 17.0.14 with PID 36760 (started by Administrator in E:\code\st-cloud\st-core)
+2026-09-30T08:38:31.262+08:00  INFO 36760 --- [           main] s.i.FileServicePermissionIntegrationTest : The following 1 profile is active: "test"
+2026-09-30T08:38:31.365+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:31.365+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:31.365+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'createRocketMQMessageConverter' of type [org.apache.rocketmq.spring.support.RocketMQMessageConverter] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:31.367+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketmq-org.apache.rocketmq.spring.autoconfigure.RocketMQProperties' of type [org.apache.rocketmq.spring.autoconfigure.RocketMQProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:31.367+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketMQMessageListenerContainerRegistrar' of type [org.apache.rocketmq.spring.support.RocketMQMessageListenerContainerRegistrar] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-09-30T08:38:31.474+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-12 - Starting...
+2026-09-30T08:38:31.475+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-12 - Added connection conn113: url=jdbc:h2:mem:stcloud-test user=SA
+2026-09-30T08:38:31.475+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-12 - Start completed.
+2026-09-30T08:38:31.519+08:00  WARN 36760 --- [           main] o.a.r.s.a.RocketMQAutoConfiguration      : The necessary spring property 'rocketmq.name-server' is not defined, all rockertmq beans creation are skipped!
+2026-09-30T08:38:31.635+08:00  INFO 36760 --- [           main] s.i.FileServicePermissionIntegrationTest : Started FileServicePermissionIntegrationTest in 0.389 seconds (process running for 15.989)
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-09-30T08:38:31.712+08:00  INFO 36760 --- [           main] c.s.c.s.i.NewFileServiceIntegrationTest  : Starting NewFileServiceIntegrationTest using Java 17.0.14 with PID 36760 (started by Administrator in E:\code\st-cloud\st-core)
+2026-09-30T08:38:31.712+08:00  INFO 36760 --- [           main] c.s.c.s.i.NewFileServiceIntegrationTest  : The following 1 profile is active: "test"
+2026-09-30T08:38:31.841+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:31.841+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:31.841+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'createRocketMQMessageConverter' of type [org.apache.rocketmq.spring.support.RocketMQMessageConverter] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:31.843+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketmq-org.apache.rocketmq.spring.autoconfigure.RocketMQProperties' of type [org.apache.rocketmq.spring.autoconfigure.RocketMQProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:31.843+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketMQMessageListenerContainerRegistrar' of type [org.apache.rocketmq.spring.support.RocketMQMessageListenerContainerRegistrar] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-09-30T08:38:31.956+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-13 - Starting...
+2026-09-30T08:38:31.957+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-13 - Added connection conn123: url=jdbc:h2:mem:stcloud-test user=SA
+2026-09-30T08:38:31.957+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-13 - Start completed.
+2026-09-30T08:38:32.058+08:00  WARN 36760 --- [           main] o.a.r.s.a.RocketMQAutoConfiguration      : The necessary spring property 'rocketmq.name-server' is not defined, all rockertmq beans creation are skipped!
+2026-09-30T08:38:32.121+08:00  INFO 36760 --- [           main] c.s.c.s.i.NewFileServiceIntegrationTest  : Started NewFileServiceIntegrationTest in 0.426 seconds (process running for 16.474)
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-09-30T08:38:32.276+08:00  INFO 36760 --- [           main] s.c.s.i.ObjectCleanupRaceIntegrationTest : Starting ObjectCleanupRaceIntegrationTest using Java 17.0.14 with PID 36760 (started by Administrator in E:\code\st-cloud\st-core)
+2026-09-30T08:38:32.276+08:00  INFO 36760 --- [           main] s.c.s.i.ObjectCleanupRaceIntegrationTest : The following 1 profile is active: "test"
+2026-09-30T08:38:32.371+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:32.371+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:32.372+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'createRocketMQMessageConverter' of type [org.apache.rocketmq.spring.support.RocketMQMessageConverter] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:32.373+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketmq-org.apache.rocketmq.spring.autoconfigure.RocketMQProperties' of type [org.apache.rocketmq.spring.autoconfigure.RocketMQProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:32.373+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketMQMessageListenerContainerRegistrar' of type [org.apache.rocketmq.spring.support.RocketMQMessageListenerContainerRegistrar] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-09-30T08:38:32.488+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-14 - Starting...
+2026-09-30T08:38:32.489+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-14 - Added connection conn133: url=jdbc:h2:mem:stcloud-test user=SA
+2026-09-30T08:38:32.489+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-14 - Start completed.
+2026-09-30T08:38:32.547+08:00  WARN 36760 --- [           main] o.a.r.s.a.RocketMQAutoConfiguration      : The necessary spring property 'rocketmq.name-server' is not defined, all rockertmq beans creation are skipped!
+2026-09-30T08:38:32.633+08:00  INFO 36760 --- [           main] s.c.s.i.ObjectCleanupRaceIntegrationTest : Started ObjectCleanupRaceIntegrationTest in 0.371 seconds (process running for 16.987)
+2026-09-30T08:38:32.870+08:00  INFO 36760 --- [           main] c.s.c.s.impl.OrphanObjectCleanupService  : �ѻ��տ����ں�Ĺ淶����¶�: tenantId=1, md5=md5-b, storagePath=1/md5-b
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-09-30T08:38:32.893+08:00  INFO 36760 --- [           main] .s.c.s.i.QuotaConcurrencyIntegrationTest : Starting QuotaConcurrencyIntegrationTest using Java 17.0.14 with PID 36760 (started by Administrator in E:\code\st-cloud\st-core)
+2026-09-30T08:38:32.894+08:00  INFO 36760 --- [           main] .s.c.s.i.QuotaConcurrencyIntegrationTest : The following 1 profile is active: "test"
+2026-09-30T08:38:32.992+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:32.992+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:32.992+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'createRocketMQMessageConverter' of type [org.apache.rocketmq.spring.support.RocketMQMessageConverter] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:32.993+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketmq-org.apache.rocketmq.spring.autoconfigure.RocketMQProperties' of type [org.apache.rocketmq.spring.autoconfigure.RocketMQProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:32.993+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketMQMessageListenerContainerRegistrar' of type [org.apache.rocketmq.spring.support.RocketMQMessageListenerContainerRegistrar] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-09-30T08:38:33.094+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-15 - Starting...
+2026-09-30T08:38:33.094+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-15 - Added connection conn143: url=jdbc:h2:mem:stcloud-test user=SA
+2026-09-30T08:38:33.094+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-15 - Start completed.
+2026-09-30T08:38:33.133+08:00  WARN 36760 --- [           main] o.a.r.s.a.RocketMQAutoConfiguration      : The necessary spring property 'rocketmq.name-server' is not defined, all rockertmq beans creation are skipped!
+2026-09-30T08:38:33.214+08:00  INFO 36760 --- [           main] .s.c.s.i.QuotaConcurrencyIntegrationTest : Started QuotaConcurrencyIntegrationTest in 0.334 seconds (process running for 17.567)
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-09-30T08:38:33.259+08:00  INFO 36760 --- [           main] .RecycleBinPhysicalDeleteIntegrationTest : Starting RecycleBinPhysicalDeleteIntegrationTest using Java 17.0.14 with PID 36760 (started by Administrator in E:\code\st-cloud\st-core)
+2026-09-30T08:38:33.260+08:00  INFO 36760 --- [           main] .RecycleBinPhysicalDeleteIntegrationTest : The following 1 profile is active: "test"
+2026-09-30T08:38:33.387+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:33.388+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:33.388+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'createRocketMQMessageConverter' of type [org.apache.rocketmq.spring.support.RocketMQMessageConverter] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:33.390+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketmq-org.apache.rocketmq.spring.autoconfigure.RocketMQProperties' of type [org.apache.rocketmq.spring.autoconfigure.RocketMQProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:33.390+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketMQMessageListenerContainerRegistrar' of type [org.apache.rocketmq.spring.support.RocketMQMessageListenerContainerRegistrar] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-09-30T08:38:33.502+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-16 - Starting...
+2026-09-30T08:38:33.502+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-16 - Added connection conn153: url=jdbc:h2:mem:stcloud-test user=SA
+2026-09-30T08:38:33.502+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-16 - Start completed.
+2026-09-30T08:38:33.587+08:00  WARN 36760 --- [           main] o.a.r.s.a.RocketMQAutoConfiguration      : The necessary spring property 'rocketmq.name-server' is not defined, all rockertmq beans creation are skipped!
+2026-09-30T08:38:33.652+08:00  INFO 36760 --- [           main] .RecycleBinPhysicalDeleteIntegrationTest : Started RecycleBinPhysicalDeleteIntegrationTest in 0.412 seconds (process running for 18.005)
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-09-30T08:38:33.833+08:00  INFO 36760 --- [           main] c.s.c.s.impl.RelayUploadIntegrationTest  : Starting RelayUploadIntegrationTest using Java 17.0.14 with PID 36760 (started by Administrator in E:\code\st-cloud\st-core)
+2026-09-30T08:38:33.833+08:00  INFO 36760 --- [           main] c.s.c.s.impl.RelayUploadIntegrationTest  : The following 1 profile is active: "test"
+2026-09-30T08:38:33.962+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:33.963+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:33.963+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'createRocketMQMessageConverter' of type [org.apache.rocketmq.spring.support.RocketMQMessageConverter] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:33.964+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketmq-org.apache.rocketmq.spring.autoconfigure.RocketMQProperties' of type [org.apache.rocketmq.spring.autoconfigure.RocketMQProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:33.966+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketMQMessageListenerContainerRegistrar' of type [org.apache.rocketmq.spring.support.RocketMQMessageListenerContainerRegistrar] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-09-30T08:38:34.148+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-17 - Starting...
+2026-09-30T08:38:34.149+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-17 - Added connection conn163: url=jdbc:h2:mem:stcloud-test user=SA
+2026-09-30T08:38:34.149+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-17 - Start completed.
+2026-09-30T08:38:34.209+08:00  WARN 36760 --- [           main] o.a.r.s.a.RocketMQAutoConfiguration      : The necessary spring property 'rocketmq.name-server' is not defined, all rockertmq beans creation are skipped!
+2026-09-30T08:38:34.283+08:00  INFO 36760 --- [           main] c.s.c.s.impl.RelayUploadIntegrationTest  : Started RelayUploadIntegrationTest in 0.469 seconds (process running for 18.636)
+2026-09-30T08:38:34.308+08:00  INFO 36760 --- [           main] c.s.c.s.impl.upload.RelayBufferManager   : ��ת finalize ���: uploadId=cc06f8adce6843d6ac71cfc1e2331bf9, lastPart=1
+2026-09-30T08:38:35.055+08:00  INFO 36760 --- [           main] c.s.c.s.impl.upload.RelayBufferManager   : ��ת finalize ���: uploadId=5245867864f64745b134b85d4d91e5ae, lastPart=2
+2026-09-30T08:38:36.311+08:00  WARN 36760 --- [           main] c.s.c.s.impl.upload.RelayBufferManager   : ��ת�Ự��ʱ����: uploadId=61da65fa690b48bfaf129c1149f679e0
+2026-09-30T08:38:37.551+08:00 ERROR 36760 --- [           main] c.s.c.s.impl.upload.RelayBufferManager   : ��ת uploadPart ʧ�ܣ���ʽ��ֹ�Ự: uploadId=0ae8140013894580b56e06f80fa0312b
+
+java.lang.RuntimeException: uploadPart boom
+	at com.stcloud.core.service.impl.upload.UploadStorageManager.uploadPart(UploadStorageManager.java:44) ~[classes/:na]
+	at com.stcloud.core.service.impl.upload.RelayBufferManager.flushPart(RelayBufferManager.java:204) ~[classes/:na]
+	at com.stcloud.core.service.impl.upload.RelayBufferManager.appendChunk(RelayBufferManager.java:131) ~[classes/:na]
+	at com.stcloud.core.service.impl.UploadServiceImpl.relayChunkInternal(UploadServiceImpl.java:652) ~[classes/:na]
+	at com.stcloud.core.service.impl.UploadServiceImpl.relayChunk(UploadServiceImpl.java:592) ~[classes/:na]
+	at com.stcloud.core.service.impl.RelayUploadIntegrationTest.postChunk(RelayUploadIntegrationTest.java:234) ~[test-classes/:na]
+	at com.stcloud.core.service.impl.RelayUploadIntegrationTest.lambda$tc014_uploadPartFailureDoesNotConfirmSeq_andExplicitlyAborts$7(RelayUploadIntegrationTest.java:445) ~[test-classes/:na]
+	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:53) ~[junit-jupiter-api-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:35) ~[junit-jupiter-api-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.api.Assertions.assertThrows(Assertions.java:3115) ~[junit-jupiter-api-5.10.2.jar:5.10.2]
+	at com.stcloud.core.service.impl.RelayUploadIntegrationTest.tc014_uploadPartFailureDoesNotConfirmSeq_andExplicitlyAborts(RelayUploadIntegrationTest.java:445) ~[test-classes/:na]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[na:na]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[na:na]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569) ~[na:na]
+	at org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:728) ~[junit-platform-commons-1.10.2.jar:1.10.2]
+	at org.junit.jupiter.engine.execution.MethodInvocation.proceed(MethodInvocation.java:60) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$ValidatingInvocation.proceed(InvocationInterceptorChain.java:131) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.extension.TimeoutExtension.intercept(TimeoutExtension.java:156) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestableMethod(TimeoutExtension.java:147) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestMethod(TimeoutExtension.java:86) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker$ReflectiveInterceptorCall.lambda$ofVoidMethod$0(InterceptingExecutableInvoker.java:103) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.lambda$invoke$0(InterceptingExecutableInvoker.java:93) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$InterceptedInvocation.proceed(InvocationInterceptorChain.java:106) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.proceed(InvocationInterceptorChain.java:64) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.chainAndInvoke(InvocationInterceptorChain.java:45) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.invoke(InvocationInterceptorChain.java:37) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:92) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:86) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$invokeTestMethod$7(TestMethodTestDescriptor.java:218) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.invokeTestMethod(TestMethodTestDescriptor.java:214) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:139) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:69) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:151) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511) ~[na:na]
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511) ~[na:na]
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:198) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:169) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:93) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:58) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:141) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:57) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:103) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:85) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.apache.maven.surefire.junitplatform.LazyLauncher.execute(LazyLauncher.java:56) ~[surefire-junit-platform-3.1.2.jar:3.1.2]
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.execute(JUnitPlatformProvider.java:184) ~[surefire-junit-platform-3.1.2.jar:3.1.2]
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invokeAllTests(JUnitPlatformProvider.java:148) ~[surefire-junit-platform-3.1.2.jar:3.1.2]
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invoke(JUnitPlatformProvider.java:122) ~[surefire-junit-platform-3.1.2.jar:3.1.2]
+	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:385) ~[surefire-booter-3.1.2.jar:3.1.2]
+	at org.apache.maven.surefire.booter.ForkedBooter.execute(ForkedBooter.java:162) ~[surefire-booter-3.1.2.jar:3.1.2]
+	at org.apache.maven.surefire.booter.ForkedBooter.run(ForkedBooter.java:507) ~[surefire-booter-3.1.2.jar:3.1.2]
+	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:495) ~[surefire-booter-3.1.2.jar:3.1.2]
+
+2026-09-30T08:38:37.569+08:00  WARN 36760 --- [           main] c.s.c.s.impl.upload.RelayBufferManager   : ��ת�Ự��ʱ����: uploadId=9b3d7bcd55e64fa5a41ce43101452b85
+2026-09-30T08:38:53.358+08:00  WARN 36760 --- [           main] c.s.c.s.impl.upload.RelayBufferManager   : ��ת�Ự��ʱ����: uploadId=28ea2fedbf2141efa37c9d3b01a20e8c
+2026-09-30T08:38:53.360+08:00  WARN 36760 --- [           main] c.s.c.s.impl.upload.RelayBufferManager   : ��ת�Ự��ʱ����: uploadId=cc425725279b451f8d6ab981d5a562d4
+2026-09-30T08:38:53.439+08:00  INFO 36760 --- [           main] c.s.c.s.impl.upload.RelayBufferManager   : ��ת finalize ���: uploadId=56a04c47bb924afcb01d3e0b8dd7d538, lastPart=1
+2026-09-30T08:38:53.882+08:00  WARN 36760 --- [           main] c.s.c.s.impl.upload.RelayBufferManager   : ��ת�Ự��ʱ����: uploadId=94c89a3248f1490d9d341b1406d1febf
+2026-09-30T08:38:53.885+08:00  WARN 36760 --- [           main] c.s.c.s.impl.upload.RelayBufferManager   : ��ת�Ự��ʱ����: uploadId=a5b9d4180fdd404b9865e5f9681a5b84
+2026-09-30T08:38:53.886+08:00  WARN 36760 --- [           main] c.s.c.s.impl.upload.RelayBufferManager   : ��ת�Ự��ʱ����: uploadId=fb3d4962d42140b6ad301bbbc4e4e33e
+2026-09-30T08:38:54.300+08:00  WARN 36760 --- [           main] c.s.c.s.impl.upload.RelayBufferManager   : ��ת�Ự��ʱ����: uploadId=7e0792f6bd22427b8035580c51e067de
+2026-09-30T08:38:54.320+08:00  INFO 36760 --- [           main] c.s.c.s.impl.upload.RelayBufferManager   : ��ת finalize ���: uploadId=1fa26a6438a74d61af81688e1555f41d, lastPart=1
+2026-09-30T08:38:54.323+08:00 ERROR 36760 --- [           main] c.s.core.service.impl.UploadServiceImpl  : ��Ƭ�ϲ�ʧ��: uploadId=1fa26a6438a74d61af81688e1555f41d, error=s3 complete boom
+2026-09-30T08:38:54.325+08:00 ERROR 36760 --- [           main] c.s.core.service.impl.UploadServiceImpl  : ��ת finalize ʧ��: uploadId=1fa26a6438a74d61af81688e1555f41d, error=s3 complete boom
+2026-09-30T08:38:55.418+08:00 ERROR 36760 --- [           main] c.s.c.s.impl.upload.RelayBufferManager   : д����ת��ʱ�ļ�ʧ��: uploadId=5d3de1337caa4f9eb550e4d59496d829
+
+java.nio.channels.ClosedChannelException: null
+	at java.base/sun.nio.ch.FileChannelImpl.ensureOpen(FileChannelImpl.java:159) ~[na:na]
+	at java.base/sun.nio.ch.FileChannelImpl.write(FileChannelImpl.java:274) ~[na:na]
+	at java.base/java.nio.channels.Channels.writeFullyImpl(Channels.java:74) ~[na:na]
+	at java.base/java.nio.channels.Channels.writeFully(Channels.java:96) ~[na:na]
+	at java.base/java.nio.channels.Channels$1.write(Channels.java:171) ~[na:na]
+	at java.base/java.io.BufferedOutputStream.write(BufferedOutputStream.java:123) ~[na:na]
+	at com.stcloud.core.service.impl.upload.RelayBufferManager.appendChunk(RelayBufferManager.java:122) ~[classes/:na]
+	at com.stcloud.core.service.impl.UploadServiceImpl.relayChunkInternal(UploadServiceImpl.java:652) ~[classes/:na]
+	at com.stcloud.core.service.impl.UploadServiceImpl.relayChunk(UploadServiceImpl.java:592) ~[classes/:na]
+	at com.stcloud.core.service.impl.RelayUploadIntegrationTest.postChunk(RelayUploadIntegrationTest.java:234) ~[test-classes/:na]
+	at com.stcloud.core.service.impl.RelayUploadIntegrationTest.lambda$state_relayTempWriteFailureRollsBackNodeAndChunks$6(RelayUploadIntegrationTest.java:377) ~[test-classes/:na]
+	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:53) ~[junit-jupiter-api-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:35) ~[junit-jupiter-api-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.api.Assertions.assertThrows(Assertions.java:3115) ~[junit-jupiter-api-5.10.2.jar:5.10.2]
+	at com.stcloud.core.service.impl.RelayUploadIntegrationTest.state_relayTempWriteFailureRollsBackNodeAndChunks(RelayUploadIntegrationTest.java:377) ~[test-classes/:na]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[na:na]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[na:na]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569) ~[na:na]
+	at org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:728) ~[junit-platform-commons-1.10.2.jar:1.10.2]
+	at org.junit.jupiter.engine.execution.MethodInvocation.proceed(MethodInvocation.java:60) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$ValidatingInvocation.proceed(InvocationInterceptorChain.java:131) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.extension.TimeoutExtension.intercept(TimeoutExtension.java:156) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestableMethod(TimeoutExtension.java:147) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestMethod(TimeoutExtension.java:86) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker$ReflectiveInterceptorCall.lambda$ofVoidMethod$0(InterceptingExecutableInvoker.java:103) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.lambda$invoke$0(InterceptingExecutableInvoker.java:93) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$InterceptedInvocation.proceed(InvocationInterceptorChain.java:106) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.proceed(InvocationInterceptorChain.java:64) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.chainAndInvoke(InvocationInterceptorChain.java:45) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.invoke(InvocationInterceptorChain.java:37) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:92) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:86) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$invokeTestMethod$7(TestMethodTestDescriptor.java:218) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.invokeTestMethod(TestMethodTestDescriptor.java:214) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:139) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:69) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:151) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511) ~[na:na]
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511) ~[na:na]
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:198) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:169) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:93) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:58) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:141) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:57) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:103) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:85) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.apache.maven.surefire.junitplatform.LazyLauncher.execute(LazyLauncher.java:56) ~[surefire-junit-platform-3.1.2.jar:3.1.2]
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.execute(JUnitPlatformProvider.java:184) ~[surefire-junit-platform-3.1.2.jar:3.1.2]
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invokeAllTests(JUnitPlatformProvider.java:148) ~[surefire-junit-platform-3.1.2.jar:3.1.2]
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invoke(JUnitPlatformProvider.java:122) ~[surefire-junit-platform-3.1.2.jar:3.1.2]
+	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:385) ~[surefire-booter-3.1.2.jar:3.1.2]
+	at org.apache.maven.surefire.booter.ForkedBooter.execute(ForkedBooter.java:162) ~[surefire-booter-3.1.2.jar:3.1.2]
+	at org.apache.maven.surefire.booter.ForkedBooter.run(ForkedBooter.java:507) ~[surefire-booter-3.1.2.jar:3.1.2]
+	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:495) ~[surefire-booter-3.1.2.jar:3.1.2]
+
+2026-09-30T08:38:55.842+08:00  WARN 36760 --- [           main] c.s.c.s.impl.upload.RelayBufferManager   : ��ת�Ự��ʱ����: uploadId=ad3ebdc984fe4f388de1fe076ed3d86f
+2026-09-30T08:38:55.845+08:00  WARN 36760 --- [           main] c.s.c.s.impl.upload.RelayBufferManager   : ��ת�Ự��ʱ����: uploadId=2d9a2941c6ba49f69d6b5927c136f0f2
+2026-09-30T08:38:56.172+08:00  INFO 36760 --- [           main] c.s.c.s.impl.upload.RelayBufferManager   : ��ת finalize ���: uploadId=0340b214b49f484f8bb36a1da2dd2b0e, lastPart=1
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-09-30T08:38:56.202+08:00  INFO 36760 --- [           main] .UploadSessionConcurrencyIntegrationTest : Starting UploadSessionConcurrencyIntegrationTest using Java 17.0.14 with PID 36760 (started by Administrator in E:\code\st-cloud\st-core)
+2026-09-30T08:38:56.202+08:00  INFO 36760 --- [           main] .UploadSessionConcurrencyIntegrationTest : The following 1 profile is active: "test"
+2026-09-30T08:38:56.299+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:56.300+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:56.300+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'createRocketMQMessageConverter' of type [org.apache.rocketmq.spring.support.RocketMQMessageConverter] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:56.301+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketmq-org.apache.rocketmq.spring.autoconfigure.RocketMQProperties' of type [org.apache.rocketmq.spring.autoconfigure.RocketMQProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:56.301+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketMQMessageListenerContainerRegistrar' of type [org.apache.rocketmq.spring.support.RocketMQMessageListenerContainerRegistrar] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-09-30T08:38:56.413+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-18 - Starting...
+2026-09-30T08:38:56.414+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-18 - Added connection conn173: url=jdbc:h2:mem:stcloud-test user=SA
+2026-09-30T08:38:56.414+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-18 - Start completed.
+2026-09-30T08:38:56.461+08:00  WARN 36760 --- [           main] o.a.r.s.a.RocketMQAutoConfiguration      : The necessary spring property 'rocketmq.name-server' is not defined, all rockertmq beans creation are skipped!
+2026-09-30T08:38:56.529+08:00  INFO 36760 --- [           main] .UploadSessionConcurrencyIntegrationTest : Started UploadSessionConcurrencyIntegrationTest in 0.344 seconds (process running for 40.883)
+2026-09-30T08:38:56.617+08:00 ERROR 36760 --- [           main] c.s.core.service.impl.UploadServiceImpl  : ��Ƭ�ϲ�ʧ��: uploadId=bf3a2031c780430d8ce5859f1b7b5cad, error=first complete failed
+2026-09-30T08:38:56.670+08:00 ERROR 36760 --- [           main] c.s.core.service.impl.UploadServiceImpl  : ��Ƭ�ϲ�ʧ��: uploadId=ff6444ff535a4d4997cfa29188706853, error=s3 merge boom
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-09-30T08:38:56.850+08:00  INFO 36760 --- [           main] c.s.c.s.i.UploadTransactionBoundaryTest  : Starting UploadTransactionBoundaryTest using Java 17.0.14 with PID 36760 (started by Administrator in E:\code\st-cloud\st-core)
+2026-09-30T08:38:56.850+08:00  INFO 36760 --- [           main] c.s.c.s.i.UploadTransactionBoundaryTest  : The following 1 profile is active: "test"
+2026-09-30T08:38:56.944+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:56.944+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:56.945+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'createRocketMQMessageConverter' of type [org.apache.rocketmq.spring.support.RocketMQMessageConverter] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:56.946+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketmq-org.apache.rocketmq.spring.autoconfigure.RocketMQProperties' of type [org.apache.rocketmq.spring.autoconfigure.RocketMQProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:56.947+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketMQMessageListenerContainerRegistrar' of type [org.apache.rocketmq.spring.support.RocketMQMessageListenerContainerRegistrar] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-09-30T08:38:57.077+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-19 - Starting...
+2026-09-30T08:38:57.078+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-19 - Added connection conn183: url=jdbc:h2:mem:stcloud-test user=SA
+2026-09-30T08:38:57.078+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-19 - Start completed.
+2026-09-30T08:38:57.157+08:00  WARN 36760 --- [           main] o.a.r.s.a.RocketMQAutoConfiguration      : The necessary spring property 'rocketmq.name-server' is not defined, all rockertmq beans creation are skipped!
+2026-09-30T08:38:57.242+08:00  INFO 36760 --- [           main] c.s.c.s.i.UploadTransactionBoundaryTest  : Started UploadTransactionBoundaryTest in 0.407 seconds (process running for 41.596)
+2026-09-30T08:38:57.437+08:00  WARN 36760 --- [           main] c.s.core.service.impl.UploadServiceImpl  : �ϴ���ʼ��ʧ�ܺ�� S3 abort δ��ɣ����ɺ�̨����: storagePath=1/1001/2572f2eddb406739ec6f84c6ff4a268c_1790728737279, s3UploadId=s3-tb-id
+
+java.lang.RuntimeException: injected abort failure
+	at com.stcloud.core.service.impl.upload.UploadStorageManager.abortMultipart(UploadStorageManager.java:54) ~[classes/:na]
+	at com.stcloud.core.service.impl.UploadServiceImpl.initChunkedUploadInternal(UploadServiceImpl.java:310) ~[classes/:na]
+	at com.stcloud.core.service.impl.UploadServiceImpl.initChunkedUpload(UploadServiceImpl.java:225) ~[classes/:na]
+	at com.stcloud.core.service.impl.UploadTransactionBoundaryTest.lambda$initTx03_abortFailure_isLoggedWithoutMaskingDbFailure$12(UploadTransactionBoundaryTest.java:531) ~[test-classes/:na]
+	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:53) ~[junit-jupiter-api-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:35) ~[junit-jupiter-api-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.api.Assertions.assertThrows(Assertions.java:3115) ~[junit-jupiter-api-5.10.2.jar:5.10.2]
+	at com.stcloud.core.service.impl.UploadTransactionBoundaryTest.initTx03_abortFailure_isLoggedWithoutMaskingDbFailure(UploadTransactionBoundaryTest.java:530) ~[test-classes/:na]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[na:na]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[na:na]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569) ~[na:na]
+	at org.junit.platform.commons.util.ReflectionUtils.invokeMethod(ReflectionUtils.java:728) ~[junit-platform-commons-1.10.2.jar:1.10.2]
+	at org.junit.jupiter.engine.execution.MethodInvocation.proceed(MethodInvocation.java:60) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$ValidatingInvocation.proceed(InvocationInterceptorChain.java:131) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.extension.TimeoutExtension.intercept(TimeoutExtension.java:156) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestableMethod(TimeoutExtension.java:147) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.extension.TimeoutExtension.interceptTestMethod(TimeoutExtension.java:86) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker$ReflectiveInterceptorCall.lambda$ofVoidMethod$0(InterceptingExecutableInvoker.java:103) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.lambda$invoke$0(InterceptingExecutableInvoker.java:93) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain$InterceptedInvocation.proceed(InvocationInterceptorChain.java:106) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.proceed(InvocationInterceptorChain.java:64) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.chainAndInvoke(InvocationInterceptorChain.java:45) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InvocationInterceptorChain.invoke(InvocationInterceptorChain.java:37) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:92) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.execution.InterceptingExecutableInvoker.invoke(InterceptingExecutableInvoker.java:86) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.lambda$invokeTestMethod$7(TestMethodTestDescriptor.java:218) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.invokeTestMethod(TestMethodTestDescriptor.java:214) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:139) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.jupiter.engine.descriptor.TestMethodTestDescriptor.execute(TestMethodTestDescriptor.java:69) ~[junit-jupiter-engine-5.10.2.jar:5.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:151) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511) ~[na:na]
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511) ~[na:na]
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.invokeAll(SameThreadHierarchicalTestExecutorService.java:41) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$6(NodeTestTask.java:155) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$8(NodeTestTask.java:141) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.Node.around(Node.java:137) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.lambda$executeRecursively$9(NodeTestTask.java:139) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.ThrowableCollector.execute(ThrowableCollector.java:73) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.executeRecursively(NodeTestTask.java:138) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.NodeTestTask.execute(NodeTestTask.java:95) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.SameThreadHierarchicalTestExecutorService.submit(SameThreadHierarchicalTestExecutorService.java:35) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestExecutor.execute(HierarchicalTestExecutor.java:57) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.engine.support.hierarchical.HierarchicalTestEngine.execute(HierarchicalTestEngine.java:54) ~[junit-platform-engine-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:198) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:169) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:93) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.lambda$execute$0(EngineExecutionOrchestrator.java:58) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.withInterceptedStreams(EngineExecutionOrchestrator.java:141) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.EngineExecutionOrchestrator.execute(EngineExecutionOrchestrator.java:57) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:103) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.DefaultLauncher.execute(DefaultLauncher.java:85) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.junit.platform.launcher.core.DelegatingLauncher.execute(DelegatingLauncher.java:47) ~[junit-platform-launcher-1.10.2.jar:1.10.2]
+	at org.apache.maven.surefire.junitplatform.LazyLauncher.execute(LazyLauncher.java:56) ~[surefire-junit-platform-3.1.2.jar:3.1.2]
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.execute(JUnitPlatformProvider.java:184) ~[surefire-junit-platform-3.1.2.jar:3.1.2]
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invokeAllTests(JUnitPlatformProvider.java:148) ~[surefire-junit-platform-3.1.2.jar:3.1.2]
+	at org.apache.maven.surefire.junitplatform.JUnitPlatformProvider.invoke(JUnitPlatformProvider.java:122) ~[surefire-junit-platform-3.1.2.jar:3.1.2]
+	at org.apache.maven.surefire.booter.ForkedBooter.runSuitesInProcess(ForkedBooter.java:385) ~[surefire-booter-3.1.2.jar:3.1.2]
+	at org.apache.maven.surefire.booter.ForkedBooter.execute(ForkedBooter.java:162) ~[surefire-booter-3.1.2.jar:3.1.2]
+	at org.apache.maven.surefire.booter.ForkedBooter.run(ForkedBooter.java:507) ~[surefire-booter-3.1.2.jar:3.1.2]
+	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:495) ~[surefire-booter-3.1.2.jar:3.1.2]
+
+2026-09-30T08:38:58.134+08:00  WARN 36760 --- [           main] s.c.a.AnnotationConfigApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'thumbnailRenderer': Invocation of init method failed
+2026-09-30T08:38:58.146+08:00  WARN 36760 --- [           main] s.c.a.AnnotationConfigApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'thumbnailRenderer': Invocation of init method failed
+2026-09-30T08:38:58.150+08:00  WARN 36760 --- [           main] s.c.a.AnnotationConfigApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'thumbnailRenderer': Invocation of init method failed
+2026-09-30T08:38:58.153+08:00  WARN 36760 --- [           main] s.c.a.AnnotationConfigApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'thumbnailRenderer': Invocation of init method failed
+2026-09-30T08:38:58.157+08:00  WARN 36760 --- [           main] s.c.a.AnnotationConfigApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'thumbnailRenderer': Invocation of init method failed
+2026-09-30T08:38:58.162+08:00  WARN 36760 --- [           main] s.c.a.AnnotationConfigApplicationContext : Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'thumbnailRenderer': Invocation of init method failed
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-09-30T08:38:58.208+08:00  INFO 36760 --- [           main] TextFileOverwriteTransactionBoundaryTest : Starting TextFileOverwriteTransactionBoundaryTest using Java 17.0.14 with PID 36760 (started by Administrator in E:\code\st-cloud\st-core)
+2026-09-30T08:38:58.208+08:00  INFO 36760 --- [           main] TextFileOverwriteTransactionBoundaryTest : The following 1 profile is active: "test"
+2026-09-30T08:38:58.324+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:58.324+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:58.325+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'createRocketMQMessageConverter' of type [org.apache.rocketmq.spring.support.RocketMQMessageConverter] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:58.326+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketmq-org.apache.rocketmq.spring.autoconfigure.RocketMQProperties' of type [org.apache.rocketmq.spring.autoconfigure.RocketMQProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:38:58.326+08:00  WARN 36760 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketMQMessageListenerContainerRegistrar' of type [org.apache.rocketmq.spring.support.RocketMQMessageListenerContainerRegistrar] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-09-30T08:38:58.450+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-20 - Starting...
+2026-09-30T08:38:58.451+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-20 - Added connection conn1699: url=jdbc:h2:mem:stcloud-test user=SA
+2026-09-30T08:38:58.451+08:00  INFO 36760 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-20 - Start completed.
+2026-09-30T08:38:58.526+08:00  WARN 36760 --- [           main] o.a.r.s.a.RocketMQAutoConfiguration      : The necessary spring property 'rocketmq.name-server' is not defined, all rockertmq beans creation are skipped!
+2026-09-30T08:38:58.588+08:00  INFO 36760 --- [           main] TextFileOverwriteTransactionBoundaryTest : Started TextFileOverwriteTransactionBoundaryTest in 0.397 seconds (process running for 42.942)
+2026-09-30T08:38:58.599+08:00  INFO 36760 --- [           main] c.stcloud.core.text.TextFileServiceImpl  : �ı����ݱ���ɹ�: nodeId=2105095021630971907, size=11
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+08:39:01.617 [main] ERROR com.stcloud.search.listener.FileIndexEventListener -- Failed to handle file index event: fileId=1, action=INDEX, error=ES error
+08:39:01.649 [main] WARN com.stcloud.search.listener.FileIndexMessageConsumer -- �յ����ļ�������Ϣ������
+08:39:01.669 [main] ERROR com.stcloud.search.listener.FileIndexMessageConsumer -- �����ļ����� MQ ��Ϣʧ��: eventLogId=99, action=INDEX, error=ES error
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+[ERROR] Tests run: 1, Failures: 0, Errors: 1, Skipped: 0, Time elapsed: 0.466 s <<< FAILURE! -- in com.stcloud.search.service.impl.NgramSearchIntegrationTest
+[ERROR] com.stcloud.search.service.impl.NgramSearchIntegrationTest -- Time elapsed: 0.466 s <<< ERROR!
+org.apache.http.ConnectionClosedException: Connection is closed
+	at org.elasticsearch.client.RestClient.extractAndWrapCause(RestClient.java:920)
+	at org.elasticsearch.client.RestClient.performRequest(RestClient.java:300)
+	at org.elasticsearch.client.RestClient.performRequest(RestClient.java:288)
+	at co.elastic.clients.transport.rest_client.RestClientHttpClient.performRequest(RestClientHttpClient.java:91)
+	at co.elastic.clients.transport.ElasticsearchTransportBase.performRequest(ElasticsearchTransportBase.java:144)
+	at co.elastic.clients.elasticsearch.indices.ElasticsearchIndicesClient.create(ElasticsearchIndicesClient.java:266)
+	at com.stcloud.search.service.impl.NgramSearchIntegrationTest.setup(NgramSearchIntegrationTest.java:72)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+Caused by: org.apache.http.ConnectionClosedException: Connection is closed
+	at org.apache.http.nio.protocol.HttpAsyncRequestExecutor.endOfInput(HttpAsyncRequestExecutor.java:356)
+	at org.apache.http.impl.nio.DefaultNHttpClientConnection.consumeInput(DefaultNHttpClientConnection.java:261)
+	at org.apache.http.impl.nio.client.InternalIODispatch.onInputReady(InternalIODispatch.java:87)
+	at org.apache.http.impl.nio.client.InternalIODispatch.onInputReady(InternalIODispatch.java:40)
+	at org.apache.http.impl.nio.reactor.AbstractIODispatch.inputReady(AbstractIODispatch.java:114)
+	at org.apache.http.impl.nio.reactor.BaseIOReactor.readable(BaseIOReactor.java:162)
+	at org.apache.http.impl.nio.reactor.AbstractIOReactor.processEvent(AbstractIOReactor.java:337)
+	at org.apache.http.impl.nio.reactor.AbstractIOReactor.processEvents(AbstractIOReactor.java:315)
+	at org.apache.http.impl.nio.reactor.AbstractIOReactor.execute(AbstractIOReactor.java:276)
+	at org.apache.http.impl.nio.reactor.BaseIOReactor.execute(BaseIOReactor.java:104)
+	at org.apache.http.impl.nio.reactor.AbstractMultiworkerIOReactor$Worker.run(AbstractMultiworkerIOReactor.java:591)
+	at java.base/java.lang.Thread.run(Thread.java:840)
+
+08:40:06.938 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Search request: keyword='test', ownerId=1, page=1, size=10, filters=[nodeType=null, suffixes=null, sizeMin=null, sizeMax=null, dateFrom=null, dateTo=null]
+08:40:06.945 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Search completed: keyword='test', ownerId=1, totalHits=1, returned=1
+08:40:06.951 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Search request: keyword='test', ownerId=1, page=1, size=10, filters=[nodeType=null, suffixes=null, sizeMin=null, sizeMax=null, dateFrom=null, dateTo=null]
+08:40:06.956 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Search completed: keyword='test', ownerId=1, totalHits=1, returned=1
+08:40:06.962 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Search request: keyword='test', ownerId=1, page=1, size=10, filters=[nodeType=null, suffixes=null, sizeMin=null, sizeMax=null, dateFrom=null, dateTo=null]
+08:40:06.962 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Search completed: keyword='test', ownerId=1, totalHits=1, returned=1
+08:40:06.966 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Search request: keyword='test', ownerId=1, page=1, size=10, filters=[nodeType=null, suffixes=null, sizeMin=null, sizeMax=null, dateFrom=null, dateTo=null]
+08:40:06.967 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Search completed: keyword='test', ownerId=1, totalHits=1, returned=1
+08:40:06.981 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Reindexed 0 / 0 file nodes to ES
+08:40:06.990 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Indexed file 1 to ES, name=a.txt, size=4bytes
+08:40:06.990 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Indexed metadata for node 2 to ES, name=b.jpg
+08:40:06.990 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Indexed metadata for node 3 to ES, name=folder
+08:40:06.990 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Reindexed 3 / 3 file nodes to ES
+08:40:06.999 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Updated file meta in ES: fileId=101, name=renamed.txt, path=/new/path/renamed.txt
+08:40:07.011 [main] WARN com.stcloud.search.service.impl.SearchServiceImpl -- Failed to update file meta in ES: fileId=1, error=ES error
+08:40:07.015 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Updated file meta in ES: fileId=100, name=renamed.txt, path=/new/path/renamed.txt
+08:40:07.023 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Removed file 100 from ES index
+08:40:07.027 [main] WARN com.stcloud.search.service.impl.SearchServiceImpl -- Failed to remove file 1 from ES: ES error
+08:40:07.035 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Search request: keyword='test', ownerId=1, page=0, size=10, filters=[nodeType=null, suffixes=null, sizeMin=null, sizeMax=null, dateFrom=null, dateTo=null]
+08:40:07.036 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Search completed: keyword='test', ownerId=1, totalHits=0, returned=0
+08:40:07.039 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Search request: keyword='services', ownerId=1, page=1, size=10, filters=[nodeType=null, suffixes=null, sizeMin=null, sizeMax=null, dateFrom=null, dateTo=null]
+08:40:07.040 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Search completed: keyword='services', ownerId=1, totalHits=1, returned=1
+08:40:07.045 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Search request: keyword='keyword', ownerId=1, page=1, size=10, filters=[nodeType=null, suffixes=null, sizeMin=null, sizeMax=null, dateFrom=null, dateTo=null]
+08:40:07.046 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Search completed: keyword='keyword', ownerId=1, totalHits=3, returned=3
+08:40:07.049 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Search request: keyword='test', ownerId=1, page=1, size=10, filters=[nodeType=null, suffixes=null, sizeMin=null, sizeMax=null, dateFrom=null, dateTo=null]
+08:40:07.049 [main] ERROR com.stcloud.search.service.impl.SearchServiceImpl -- Search failed, keyword=test, ownerId=1: ES connection refused
+08:40:07.052 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Search request: keyword='nothing', ownerId=1, page=1, size=10, filters=[nodeType=null, suffixes=null, sizeMin=null, sizeMax=null, dateFrom=null, dateTo=null]
+08:40:07.052 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Search completed: keyword='nothing', ownerId=1, totalHits=0, returned=0
+08:40:07.055 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Search request: keyword='Hello', ownerId=1, page=1, size=20, filters=[nodeType=null, suffixes=null, sizeMin=null, sizeMax=null, dateFrom=null, dateTo=null]
+08:40:07.056 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Search completed: keyword='Hello', ownerId=1, totalHits=1, returned=1
+08:40:07.059 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Search request: keyword='gone', ownerId=1, page=1, size=10, filters=[nodeType=null, suffixes=null, sizeMin=null, sizeMax=null, dateFrom=null, dateTo=null]
+08:40:07.059 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Search completed: keyword='gone', ownerId=1, totalHits=1, returned=0
+08:40:07.061 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Search request: keyword='leak', ownerId=1, page=1, size=10, filters=[nodeType=null, suffixes=null, sizeMin=null, sizeMax=null, dateFrom=null, dateTo=null]
+08:40:07.062 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Search completed: keyword='leak', ownerId=1, totalHits=1, returned=0
+08:40:07.065 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Search request: keyword='test', ownerId=1, page=1, size=10, filters=[nodeType=null, suffixes=null, sizeMin=null, sizeMax=null, dateFrom=null, dateTo=null]
+08:40:07.065 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Search completed: keyword='test', ownerId=1, totalHits=2, returned=1
+08:40:07.068 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Search request: keyword='test', ownerId=null, page=1, size=10, filters=[nodeType=null, suffixes=null, sizeMin=null, sizeMax=null, dateFrom=null, dateTo=null]
+08:40:07.068 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Search completed: keyword='test', ownerId=null, totalHits=1, returned=1
+08:40:07.072 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Indexed file 1 to ES, name=edge.pdf, size=100bytes
+08:40:07.075 [main] WARN com.stcloud.search.service.impl.SearchServiceImpl -- Failed to index file 1 to ES: ES connection refused
+08:40:07.080 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Indexed metadata for node 200 to ES, name=myFolder
+08:40:07.083 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Indexed metadata for node 1 to ES, name=big.pdf
+08:40:07.085 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Indexed file 100 to ES, name=report.txt, size=34bytes
+08:40:07.088 [main] WARN com.stcloud.search.service.impl.SearchServiceImpl -- Failed to index file 1 to ES: S3 error
+08:40:07.090 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Indexed metadata for node 1 to ES, name=photo.jpg
+08:40:07.437 [main] WARN org.springframework.context.annotation.AnnotationConfigApplicationContext -- Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'teamSearchServiceImpl': Invocation of init method failed
+08:40:07.477 [main] WARN org.springframework.context.annotation.AnnotationConfigApplicationContext -- Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'teamSearchServiceImpl': Invocation of init method failed
+08:40:07.486 [main] WARN org.springframework.context.annotation.AnnotationConfigApplicationContext -- Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'teamSearchServiceImpl': Invocation of init method failed
+08:40:07.534 [main] WARN com.stcloud.search.service.impl.TeamSearchServiceImpl -- �Ŷ������ݲ�����: tenantId=1, userId=5, spaceId=10, scanned=0, error=connection refused
+[ERROR] Errors: 
+[ERROR]   NgramSearchIntegrationTest.setup:72 ? ConnectionClosed Connection is closed
+[ERROR] Tests run: 71, Failures: 0, Errors: 1, Skipped: 0
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.1.2:test (default-test) on project st-search: 
+[ERROR] 
+[ERROR] Please refer to E:\code\st-cloud\st-search\target\surefire-reports for the individual test results.
+[ERROR] Please refer to dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
+[ERROR] 
+[ERROR] After correcting the problems, you can resume the build with the command
+[ERROR]   mvn <args> -rf :st-search

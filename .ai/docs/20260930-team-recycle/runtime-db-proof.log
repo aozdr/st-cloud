@@ -1,0 +1,7 @@
+mysql: [Warning] Using a password on the command line interface can be insecure.
+sync_changes
+32
+status	event_count
+1	75
+script_live_files
+0

@@ -1,0 +1,10 @@
+{
+  "taskId": "20260930-team-recycle",
+  "criterionProposal": {
+    "id": "SECURITY_REVIEW",
+    "outcome": "pass",
+    "by": "workflow-manager",
+    "evidenceRef": ".ai/docs/20260930-team-recycle/security.md",
+    "validatedRevision": "team-recycle-code-8d9bce85490e655a"
+  }
+}

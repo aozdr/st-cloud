@@ -1,0 +1,42 @@
+{
+  "taskId": "20260930-team-recycle",
+  "criterionProposal": {
+    "id": "ACCEPT",
+    "outcome": "pass",
+    "by": "workflow-manager",
+    "evidenceRef": ".ai/docs/20260930-team-recycle/acceptance.md",
+    "validatedRevision": "team-recycle-code-8d9bce85490e655a"
+  },
+  "acceptanceEvidence": [
+    {
+      "criterion": "团队回收根可见",
+      "evidenceRef": ".ai/docs/20260930-team-recycle/acceptance.md",
+      "validatedRevision": "team-recycle-code-8d9bce85490e655a"
+    },
+    {
+      "criterion": "拥有者管理员恢复保留团队及混合所有者子树",
+      "evidenceRef": ".ai/docs/20260930-team-recycle/acceptance.md",
+      "validatedRevision": "team-recycle-code-8d9bce85490e655a"
+    },
+    {
+      "criterion": "其他成员失效成员跨租户不可操作",
+      "evidenceRef": ".ai/docs/20260930-team-recycle/acceptance.md",
+      "validatedRevision": "team-recycle-code-8d9bce85490e655a"
+    },
+    {
+      "criterion": "团队永久删除清空隔离及配额正确",
+      "evidenceRef": ".ai/docs/20260930-team-recycle/acceptance.md",
+      "validatedRevision": "team-recycle-code-8d9bce85490e655a"
+    },
+    {
+      "criterion": "个人回收站兼容",
+      "evidenceRef": ".ai/docs/20260930-team-recycle/acceptance.md",
+      "validatedRevision": "team-recycle-code-8d9bce85490e655a"
+    },
+    {
+      "criterion": "真实健康依赖下完整启动及HTTP回收恢复通过",
+      "evidenceRef": ".ai/docs/20260930-team-recycle/acceptance.md",
+      "validatedRevision": "team-recycle-code-8d9bce85490e655a"
+    }
+  ]
+}

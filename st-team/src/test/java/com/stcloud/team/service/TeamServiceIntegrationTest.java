@@ -145,7 +145,7 @@ class TeamServiceIntegrationTest extends AbstractTeamIntegrationTest {
         request.setUserId(200L);
         Long memberId = teamService.inviteMember(spaceId, request).getData().getId();
 
-        Result<Void> result = teamService.updateMemberRole(spaceId, memberId, 1);
+        Result<Void> result = teamService.updateMemberRole(spaceId, memberId, 1L);
 
         assertEquals(200, result.getCode());
         TeamMember member = teamMemberMapper.selectById(memberId);

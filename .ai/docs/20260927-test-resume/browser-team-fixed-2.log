@@ -1,0 +1,85 @@
+ACL 星云盘
+上传文件
+首页
+全部文件
+我的收藏
+我的关注
+我的分享
+团队空间
+回收站
+重复检测
+隐藏文件
+折叠侧栏
+主题设置
+存储空间
+0%
+0 B / 0 B · 0 B 可用
+Ctrl K
+搜索
+O
+角色验收空间
+搜索
+成员
+3
+设置
+空间根目录权限
+活动
+存储: 0 B / 953.7 MB
+根目录
+此文件夹为空
+
+上传文件或创建文件夹开始管理你的内容
+
+新建文件夹
+权限：角色验收空间
+
+权限规则
+
+暂无规则，继承父文件夹权限
+
+配置规则
+
+全体成员
+指定成员
+指定角色
+全体成员（管理员除外）
+
+权限点
+
+查看文件
+上传文件
+下载文件
+删除文件
+重命名
+移动
+分享
+编辑文档
+管理成员
+管理设置
+
+勾选「上传/下载」会自动补上「查看」；选择后可直接点「保存」，也可点下方按钮继续设置其他规则。
+
+添加规则
+取消
+保存
+隔离权限拒绝
+Network Error
+邀请成功
+邀请链接已生成
+成员角色已更新
+隔离权限拒绝
+Network Error
+成员角色已更新
+SELECTS [{'label': '规则主体类型', 'value': 'all', 'options': [{'value': 'all', 'text': '全体成员'}, {'value': 'member', 'text': '指定成员'}, {'value': 'role', 'text': '指定角色'}]}]
+ERRORS []
+Starting server 1/1: npm.cmd run dev -- --host 127.0.0.1 --port 5187 --strictPort
+Waiting for server on port 5187...
+Server ready on port 5187
+
+All 1 server(s) ready
+Running: python ../.ai/docs/20260927-test-resume/browser-team.py
+
+
+Stopping 1 server(s)...
+Server 1 stopped
+All servers stopped

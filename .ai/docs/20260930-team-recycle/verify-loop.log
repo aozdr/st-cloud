@@ -1,0 +1,123 @@
+Agent Loop 静态校验
+根目录: E:\code\st-cloud\.ai
+
+[1/7] 退出标准定义（.ai/loop/exit-criteria.yaml）
+  [PASS] 解析到 3 个规模档：large / medium / small
+  [PASS] large 定义 12 项退出标准
+  [PASS] large 标准 id 无重复
+  [PASS] large 终点唯一：ACCEPT（最终收敛点）
+  [PASS] large 起点唯一：REQ_ANALYSIS
+  [PASS] large 依赖图无环（拓扑处理 12/12）
+  [PASS] large 含条件项 2 项：EXP_DESIGN, EXP_ACCEPT
+  [PASS] large 条件标准均允许记录不适用：EXP_DESIGN, EXP_ACCEPT
+  [PASS] medium 定义 8 项退出标准
+  [PASS] medium 标准 id 无重复
+  [PASS] medium 终点唯一：ACCEPT（最终收敛点）
+  [PASS] medium 起点唯一：DESIGN
+  [PASS] medium 依赖图无环（拓扑处理 8/8）
+  [PASS] medium 含条件项 1 项：SECURITY_REVIEW
+  [PASS] small 定义 4 项退出标准
+  [PASS] small 标准 id 无重复
+  [PASS] small 终点唯一：ACCEPT（最终收敛点）
+  [PASS] small 起点唯一：IMPLEMENTED
+  [PASS] small 依赖图无环（拓扑处理 4/4）
+  [PASS] large SECURITY_REVIEW 必选
+  [PASS] medium SECURITY_REVIEW 可凭证据跳过
+  [PASS] catalog 全部 14 项均有 owner 归属
+
+[2/7] 关键门禁 dependsOn 映射（等价旧版禁止项）
+  [PASS] TECH_DESIGN 依赖 IMPACT_ANALYSIS+EXP_DESIGN
+  [PASS] IMPLEMENTED 依赖 TECH_DESIGN+TESTCASES
+  [PASS] CODE_REVIEW 依赖 IMPLEMENTED
+  [PASS] SECURITY_REVIEW 依赖 IMPLEMENTED
+  [PASS] TEST_PASS 依赖 CODE_REVIEW+SECURITY_REVIEW
+  [PASS] KNOWLEDGE 依赖 TEST_PASS+SECURITY_REVIEW+EXP_ACCEPT
+  [PASS] ACCEPT 依赖 KNOWLEDGE（验收为最终收敛点）
+
+[3/7] 文档口径一致（文档声明的项数必须等于定义文件）
+  [PASS] knowledge\loop-state-model.md 口径一致：### 大型任务（12 项）
+  [PASS] knowledge\loop-verification-checklist.md 口径一致：large=12
+  [PASS] workflows\feature-development.md 口径一致：- **大型（12 项）**
+  [PASS] knowledge\loop-state-model.md 口径一致：### 中型任务（8 项，含 1 项条件标准）
+  [PASS] knowledge\loop-verification-checklist.md 口径一致：medium=8（含 1 条件项）
+  [PASS] workflows\feature-development.md 口径一致：- **中型（8 项，含 1 项条件标准）**
+  [PASS] knowledge\loop-state-model.md 口径一致：### 小型任务（4 项）
+  [PASS] knowledge\loop-verification-checklist.md 口径一致：small=4
+  [PASS] workflows\feature-development.md 口径一致：- **小型（4 项）**
+
+[4/7] State 诚信（产物存在 / done 前置 / 角色分离 / 僵尸任务）
+  [PASS] 20260809-mobile-interaction.yaml done 前置满足（3 项标准全 done）
+  [WARN] 20260809-mobile-interaction.yaml 缺 exitCriteria[*].by，无法校验角色分离（历史 State）
+  [PASS] 20260809-mobile-pwa-capacitor.yaml done 前置满足（12 项标准全 done）
+  [WARN] 20260809-mobile-pwa-capacitor.yaml 缺 exitCriteria[*].by，无法校验角色分离（历史 State）
+  [PASS] 20260809-pikpak-discovery.yaml 历史 State（legacy=true，无 exitCriteria），跳过 done 前置校验
+  [WARN] 20260809-pikpak-discovery.yaml 缺 exitCriteria[*].by，无法校验角色分离（历史 State）
+  [PASS] 20260809-pikpak-redesign-phase2.yaml done 前置满足（12 项标准全 done）
+  [WARN] 20260809-pikpak-redesign-phase2.yaml 缺 exitCriteria[*].by，无法校验角色分离（历史 State）
+  [PASS] 20260809-pikpak-redesign.yaml done 前置满足（12 项标准全 done）
+  [WARN] 20260809-pikpak-redesign.yaml 缺 exitCriteria[*].by，无法校验角色分离（历史 State）
+  [PASS] 20260810-mobile-ux-polish.yaml done 前置满足（3 项标准全 done）
+  [WARN] 20260810-mobile-ux-polish.yaml 缺 exitCriteria[*].by，无法校验角色分离（历史 State）
+  [PASS] 20260811-codex-tasks-execution.yaml done 前置满足（12 项标准全 done）
+  [WARN] 20260811-codex-tasks-execution.yaml 缺 exitCriteria[*].by，无法校验角色分离（历史 State）
+  [PASS] 20260811-workflow-optimization.yaml done 前置满足（7 项标准全 done）
+  [WARN] 20260811-workflow-optimization.yaml 缺 exitCriteria[*].by，无法校验角色分离（历史 State）
+  [PASS] 20260812-review-followups.yaml done 前置满足（12 项标准全 done）
+  [WARN] 20260812-review-followups.yaml 缺 exitCriteria[*].by，无法校验角色分离（历史 State）
+  [PASS] 20260812-schema-versioning.yaml V2 严格校验通过
+  [PASS] 20260813-code-review-fix.yaml done 前置满足（12 项标准全 done）
+  [WARN] 20260813-code-review-fix.yaml 缺 exitCriteria[*].by，无法校验角色分离（历史 State）
+  [PASS] 20260814-loop-parallel-demo.yaml done 前置满足（3 项标准全 done）
+  [WARN] 20260814-loop-parallel-demo.yaml 缺 exitCriteria[*].by，无法校验角色分离（历史 State）
+  [PASS] 20260814-permission-ui.yaml done 前置满足（8 项标准全 done）
+  [WARN] 20260814-permission-ui.yaml 缺 exitCriteria[*].by，无法校验角色分离（历史 State）
+  [PASS] 20260815-new-file.yaml V2 严格校验通过
+  [PASS] 20260815-onlyoffice-editor.yaml done 前置满足（12 项标准全 done）
+  [WARN] 20260815-onlyoffice-editor.yaml 缺 exitCriteria[*].by，无法校验角色分离（历史 State）
+  [PASS] 20260815-sync-refactor.yaml done 前置满足（8 项标准全 done）
+  [WARN] 20260815-sync-refactor.yaml 缺 exitCriteria[*].by，无法校验角色分离（历史 State）
+  [PASS] 20260817-transaction-boundary.yaml V2 严格校验通过
+  [PASS] 20260817-worktree-isolation.yaml V2 严格校验通过
+  [PASS] 20260820-ui-refactor.yaml V2 严格校验通过
+  [PASS] 20260823-share-bruteforce.yaml done 前置满足（8 项标准全 done）
+  [WARN] 20260823-share-bruteforce.yaml 缺 exitCriteria[*].by，无法校验角色分离（历史 State）
+  [PASS] 20260910-ai-process-optimization.yaml V2 严格校验通过
+  [PASS] 20260910-version-preview.yaml done 前置满足（8 项标准全 done）
+  [WARN] 20260910-version-preview.yaml 缺 exitCriteria[*].by，无法校验角色分离（历史 State）
+  [PASS] 20260911-agent-loop-v2.yaml V2 严格校验通过
+  [PASS] 20260912-second-review-fix.yaml V2 严格校验通过
+  [PASS] 20260912-stcore-security-consistency.yaml V2 严格校验通过
+  [PASS] 20260914-code-review-round3.yaml V2 严格校验通过
+  [PASS] 20260916-team-search-watch.yaml V2 严格校验通过
+  [PASS] 20260919-team-search-watch.yaml V2 严格校验通过
+  [PASS] 20260921-team-search-watch.yaml V2 严格校验通过
+  [PASS] 20260922-team-search-watch.yaml V2 严格校验通过
+  [PASS] 20260923-desktop-auth-startup.yaml V2 严格校验通过
+  [PASS] 20260923-team-root-permission.yaml V2 严格校验通过
+  [PASS] 20260923-team-search-watch.yaml V2 严格校验通过
+  [PASS] 20260924-code-review-design.yaml V2 严格校验通过
+  [INFO] State 合计 38：done=20，非 done=18
+
+[5/7] cross-ref 路径存在（带「回填标注」的文件跳过）
+  [PASS] checked=337 悬空引用=0（跳过回填标注文件 10 个）
+
+[6/7] 残留权威线性表述（WARN 供人工确认）
+  [WARN] knowledge\loop-state-model.md:3 命中 '阶段间单向传递' -- 若属旧版对比则合法: > 本文件定义星云盘 Agent Loop 的核心数据结构：**Loop State**。编排器（Workflow Manager）与所有 Agent 围绕同一份 State 协作，取代旧的"阶段间单向传递文档"模式。本文件是 Loop 架构的事实源，AGENTS.md、workflow-manager.md、feature-development.md 均引用此处定义。
+  [WARN] workflows\feature-development.md:5 命中 '线性 15 步流水线' -- 若属旧版对比则合法: 旧版：线性 15 步流水线，阶段单向传递，走完即结束。
+
+[7/7] Task / ADR / hook / 技能映射配置一致性
+  [PASS] task-template.md 存在
+  [PASS] .ai/tasks/ 目录存在
+  [PASS] .ai/decisions/ADR/ 目录存在
+  [PASS] adr-template.md 存在
+  [PASS] skill-mapping.md 存在
+  [PASS] exit-criteria.yaml 存在
+  [PASS] pre-commit 门禁存在
+  [PASS] AGENTS.md 含工程约束章节
+  [PASS] knowledge\role-context.md 含 Task 驱动规则
+  [PASS] agents\workflow-manager.md 含 Task 驱动规则
+  [PASS] skill-mapping.md 引用 grilling（Grill Me 引擎）
+
+========== 汇总 ==========
+FAIL=0  WARN=18
+结果: PASS

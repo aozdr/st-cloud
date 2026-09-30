@@ -1,0 +1,239 @@
+
+> st-cloud-desktop@1.0.0 test
+> tsc src/sync-retry.ts src/sync-retry.test.ts src/db-migrate.ts src/db-migrate.test.ts src/sync-utils.ts src/sync-utils.test.ts src/transfer-tasks.test.ts --outDir .test-dist --module commonjs --target ES2020 --skipLibCheck --esModuleInterop && node --test ".test-dist/*.test.js" && node --test src/sync/sync-recovery.test.cjs src/sync/sync-cursor.test.cjs src/sync/sync-conflict.test.cjs src/sync/sync-path.test.cjs src/sync/sync-reconcile.test.cjs src/sync/sync-size.test.cjs src/sync/sync-restart.test.cjs
+
+✔ INTEGER 亲和性导致雪花ID读回丢精度（bug 复现） (36.6822ms)
+✔ ensureIdColumnsText 重建后雪花ID读回完整字符串 (12.1609ms)
+✔ ensureIdColumnsText 幂等：二次调用不再重建 (5.094ms)
+✔ ensureIdColumnsText 对新库（已是 TEXT）不重建 (1.912ms)
+✔ TCDB-09 旧库大 root/node/cursor 以 SQL 整数字面量迁移并隔离两根 (8.4038ms)
+✔ computeBackoffMs: 指数退避曲线 30s/60s/120s/240s (0.7735ms)
+✔ computeBackoffMs: 封顶 1 小时 (0.1068ms)
+✔ computeBackoffMs: failCount<=0 按首次失败处理 (0.0985ms)
+✔ shouldRetryUpload: 无失败记录始终允许上传 (0.136ms)
+✔ shouldRetryUpload: 退避期内跳过 (0.1174ms)
+✔ shouldRetryUpload: 退避到期允许重试 (0.099ms)
+✔ shouldRetryUpload: 用户再次修改（mtime 变化）立即重试 (0.6869ms)
+✔ shouldRetryUpload: nextRetryAt 为空视为可重试 (0.1027ms)
+✔ isIgnoredLocalPath 过滤 Office 锁文件与系统临时文件 (1.1344ms)
+✔ isConflictCopyName 只匹配机器格式冲突副本 (0.2275ms)
+✔ uniqueConflictName 同秒冲突追加序号，避免互相覆盖 (1.7015ms)
+✔ isLocallyChanged 以 sync_state.local_mtime 为准 (0.1704ms)
+✔ conflictRelPath 推导冲突副本的同步相对路径 (0.2315ms)
+✔ 上传和下载任务可通过真实 SQLite 创建并在重载后完整读回 (35.4975ms)
+✔ relay 恢复不会降级为普通直传 (0.6419ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 262.8861
+✔ TC04-24/25: 真实上传模块对任务 failed 抛错并保留旧基线 (113.6439ms)
+✔ TC04-24/25: 真实上传模块对任务 running 抛错并保留旧基线 (34.12ms)
+✔ TC04-24: keep_both 上传 failed 后保留临时源及旧基线 (63.9742ms)
+✔ TC04-24: keep_both 上传 timeout 后保留临时源及旧基线 (45.761ms)
+✔ TC04-25: local_wins 上传失败传播且恢复后源文件不变 (37.365ms)
+✔ TC04-25: latest_wins 上传失败传播且恢复后源文件不变 (34.3893ms)
+✔ TCDB-10: 大游标逐字符传递，不经过 Number (3.476ms)
+✔ TCDB-10: 相邻大游标连续分页并持久化最后一页 (2.2374ms)
+✔ TCDB-10: hasMore=true 且大游标未前进不确认页面 (1.0875ms)
+✔ TC04-08: 协议版本缺失或错误时游标不推进 (2.418ms)
+✔ TC04-08: 数字游标和损坏响应均被拒绝 (6.4375ms)
+✔ TCDB-10: 真实 SQLite 持久化大游标，重启后续页并拒绝停滞 (127.668ms)
+✔ TC04-06: 空过滤页仍继续读取下一页的有效事件 (1.6327ms)
+✔ TC04-34: 第二页失败保留第一页游标，恢复后从第二页继续 (61.0534ms)
+✔ TC04-10: 越界路径和目录联接不允许解析到根外 (14.4745ms)
+✔ TC04-33: 不完整列举和第二页故障不清理原文件或状态，恢复后补齐 (116.2108ms)
+✔ 空目录 pages=0 且无旧状态可以完成对账 (67.5696ms)
+✔ TC04-30: 最后时刻编辑随原件移动 (35.3759ms)
+✔ 已打开的句柄写入仍保存在恢复原件中 (28.1879ms)
+✔ 目录遍历后新增文件被整体保全并记录 (40.1389ms)
+✔ 原子移动失败保留源且同事件可以重试 (32.3906ms)
+✔ 跨设备选用同步根旁目录（设备号注入） (19.5302ms)
+✔ 真实跨卷：应用目录与工作区不在同盘时，原件保存在同步根旁 (16.937ms)
+✔ 实际 EXDEV 失败不回退为复制删除 (16.9008ms)
+✔ 旧 pending 副本和新源同时存在时双方均不覆盖 (27.8695ms)
+✔ 已完成事件重放不删除新出现的同名文件 (22.348ms)
+✔ 恢复位置属于其他同步根时拒绝 (8.7839ms)
+✔ 移动后清单提交失败仍保有完整原件 (23.3163ms)
+✔ TC04-29: 初始 manifest 写入失败保留源且同事件可重试 (19.9683ms)
+✔ TC04-29: 目录移动后清单提交失败，重试补记移动期间新增文件 (30.5212ms)
+✔ TC04-10: 恢复目录联接指向外部时不写入外部清单或移动源 (11.2442ms)
+✔ TC04-31: watcher-move 云端故障期间用户修改由下一轮补传 (12228.6905ms)
+✔ TC04-31: watcher-move 真实chokidar自激不回传，独立用户编辑仍上传 (3940.2808ms)
+✔ TC04-31: watcher-delete 云端故障期间用户修改由下一轮补传 (11972.1928ms)
+✔ TC04-31: watcher-delete 真实chokidar自激不回传，独立用户编辑仍上传 (3990.5869ms)
+✔ TC04-28: 成功冲突后同页失败，跨进程重放不回传覆盖原云端版本 (9131.6305ms)
+✔ TC04-28: fail-upload 连续三轮部分成功不重复已完成副本 (6094.5257ms)
+✔ TC04-28: fail-download 连续三轮部分成功不重复已完成副本 (24133.1158ms)
+✔ TC04-28: 已存云端副本详情失败不假定完成，恢复后复用而非重新上传 (9593.8244ms)
+✔ TC04-28: 云端保留副本已被修改时重新保全当前本地字节 (10109.8083ms)
+✔ TC04-24/25: keep_both/fail-upload 真实上传任务失败保留基线和cursor (3481.4068ms)
+✔ TC04-24/25: keep_both/fail-timeout 真实上传任务失败保留基线和cursor (2416.3216ms)
+✔ TC04-24/25: local_wins/fail-upload 真实上传任务失败保留基线和cursor (3402.0052ms)
+✔ TC04-24/25: local_wins/fail-timeout 真实上传任务失败保留基线和cursor (2390.0978ms)
+✔ TC04-24/25: latest_wins/fail-upload 真实上传任务失败保留基线和cursor (3396.1804ms)
+✔ TC04-24/25: latest_wins/fail-timeout 真实上传任务失败保留基线和cursor (2383.2349ms)
+✔ TC04-26/27: conflict-keep_both/fail-download 连续失败重启保持原身份与MD5 (17010.7146ms)
+✔ TC04-26/27: conflict-reconcile-baseline/fail-download 连续失败重启保持原身份与MD5 (16949.8911ms)
+✔ TC04-26/27: conflict-reconcile-other/fail-download 连续失败重启保持原身份与MD5 (16956.6712ms)
+✔ TC04-26/27: conflict-reconcile-missing/fail-download 连续失败重启保持原身份与MD5 (16968.2699ms)
+✖ TC04-26/27: conflict-keep_both/fail-upload 连续失败重启保持原身份与MD5 (3474.7954ms)
+✖ TC04-26/27: conflict-reconcile-baseline/fail-upload 连续失败重启保持原身份与MD5 (3460.3704ms)
+✖ TC04-26/27: conflict-reconcile-other/fail-upload 连续失败重启保持原身份与MD5 (3422.4218ms)
+✖ TC04-26/27: conflict-reconcile-missing/fail-upload 连续失败重启保持原身份与MD5 (3450.9477ms)
+✔ TC04-26/27: conflict-keep_both/fail-both 连续失败重启保持原身份与MD5 (18981.8796ms)
+✔ TC04-26/27: conflict-reconcile-baseline/fail-both 连续失败重启保持原身份与MD5 (19002.1135ms)
+✔ TC04-26/27: conflict-reconcile-other/fail-both 连续失败重启保持原身份与MD5 (18993.488ms)
+✔ TC04-26/27: conflict-reconcile-missing/fail-both 连续失败重启保持原身份与MD5 (18988.0427ms)
+✔ TC04-09: reconcile-root-rename/fail-root-list 对账失败后跨进程恢复且根身份不变 (7981.3413ms)
+✔ TC04-09: reconcile-root-rename/fail-root-detail 对账失败后跨进程恢复且根身份不变 (7968.5929ms)
+✔ TC04-09: reconcile-root-move/fail-root-list 对账失败后跨进程恢复且根身份不变 (7994.0134ms)
+✔ TC04-09: reconcile-root-move/fail-root-detail 对账失败后跨进程恢复且根身份不变 (7970.2289ms)
+✔ TC04-09: reconcile-root-missing-old/fail-root-list 对账失败后跨进程恢复且根身份不变 (7982.0929ms)
+✔ TC04-09: reconcile-root-missing-old/fail-root-detail 对账失败后跨进程恢复且根身份不变 (8003.1689ms)
+✔ TC04-20: 旧版启动详情失败保留版本，重启升级保全修改和无状态文件 (7977.6261ms)
+✔ TC04-03: A迁移到B/fail-root-A 两根独立提交且跨进程恢复 (8342.822ms)
+✔ TC04-03: A迁移到B/fail-root-B 两根独立提交且跨进程恢复 (8343.898ms)
+✔ TC04-12: 历史CREATE/inside 按当前树恢复且详情403不被当作删除 (7985.4258ms)
+✔ TC04-12: 历史CREATE/outside 按当前树恢复且详情403不被当作删除 (7971.9821ms)
+✔ TC04-12: 历史CREATE/trash 按当前树恢复且详情403不被当作删除 (7965.6114ms)
+✔ TC04-12: 历史CREATE详情超时保留旧状态和游标 (7975.9785ms)
+✔ TC04-12: 历史MOVE/inside 按当前树恢复且详情403不被当作删除 (7990.2227ms)
+✔ TC04-12: 历史MOVE/outside 按当前树恢复且详情403不被当作删除 (7978.2163ms)
+✔ TC04-12: 历史MOVE/trash 按当前树恢复且详情403不被当作删除 (8010.5479ms)
+✔ TC04-12: 历史MOVE详情超时保留旧状态和游标 (7997.508ms)
+✔ TC04-29: 清单提交前退出，重启完成 pending 后才提交游标 (1318.6965ms)
+✔ TC04-29: manifest-write 故障后跨进程重试保全原件 (972.035ms)
+✔ TC04-29: source-move 故障后跨进程重试保全原件 (962.0805ms)
+✔ TC04-32: 删除完成但游标提交前退出，跨进程重放不重复副作用 (1357.2123ms)
+✔ TC04-29: reconcile 清理进程退出后先完成清单再删除旧状态 (1309.2444ms)
+✔ TC04-29: historical 清理进程退出后先完成清单再删除旧状态 (1305.4573ms)
+✔ TC04-29: complete 写入前退出，丢失恢复副本时拒绝确认游标 (1312.4017ms)
+✔ TC04-29: complete 写入前退出，完整副本可在新进程恢复 (957.5134ms)
+✔ TC04-32: move 完成而游标未提交，重启重放不再次修改文件 (1327.8859ms)
+✔ TC04-32: download 完成而游标未提交，重启重放不再次修改文件 (1311.3503ms)
+✔ TC04-32: create 完成而游标未提交，重启重放不再次修改文件 (1304.6798ms)
+✔ TC04-07: 同页第二事件失败，重启重放首事件不重复下载 (7973.8577ms)
+✔ TC04-22: same-page/same-size 历史日志采用当前内容且只下载一次 (480.2183ms)
+✔ TC04-22: same-page/different-size 历史日志采用当前内容且只下载一次 (481.7235ms)
+✔ TC04-22: cross-page/same-size 历史日志采用当前内容且只下载一次 (488.8949ms)
+✔ TC04-22: cross-page/different-size 历史日志采用当前内容且只下载一次 (484.2468ms)
+✔ TC04-23: race-same 拒绝错误流，重启刷新元数据后再提交 (985.1061ms)
+✔ TC04-23: race-size 拒绝错误流，重启刷新元数据后再提交 (969.0116ms)
+✔ TC04-23: truncate 拒绝错误流，重启刷新元数据后再提交 (982.5386ms)
+✔ TC04-23: tamper 拒绝错误流，重启刷新元数据后再提交 (972.9137ms)
+✔ TC04-13: delete-returned 旧删除事件不能清理有效节点 (469.8449ms)
+✔ TC04-13: delete-reused 旧删除事件不能清理有效节点 (471.6956ms)
+✔ TC04-19: 全量扫描将路径登记为新 X 后，旧 N 快照不能清理 X (471.2834ms)
+✔ TC04-10: invalid-current-parent 完整引擎拒绝且根外哨兵不变 (833.9455ms)
+✔ TC04-10: invalid-current-drive 完整引擎拒绝且根外哨兵不变 (846.417ms)
+✔ TC04-10: invalid-current-link 完整引擎拒绝且根外哨兵不变 (845.7737ms)
+✔ TC04-10: invalid-old-parent 完整引擎拒绝且根外哨兵不变 (854.1839ms)
+✔ TC04-10: invalid-old-drive 完整引擎拒绝且根外哨兵不变 (875.3259ms)
+✔ TC04-10: invalid-old-link 完整引擎拒绝且根外哨兵不变 (832.3621ms)
+✔ TC04-10: invalid-recovery-link 完整引擎拒绝且根外哨兵不变 (842.5718ms)
+✔ TC04-04: 外部目录移入完整下载 101 文件及深层/空目录，排除项不进入 (902.067ms)
+✔ TC04-05: 移出目录不依赖父目录 mtime，已改文件与未知文件均保全 (853.5994ms)
+✔ TC04-17: folder-modified 第二页失败后跨进程补齐 (8490.7912ms)
+✔ TC04-18: folder-missing 第二页失败后跨进程补齐 (8433.4586ms)
+✔ TC04-04: folder-import 第二页失败后跨进程补齐 (8410.8872ms)
+✔ TC04-18: 缺失源目录第二页失败，同一引擎重试识别 pending 目标 (7960.7118ms)
+✔ TC04-18: 源缺失但目标属于不同 X 时保留目标并拒绝推进 (838.2074ms)
+✔ TC04-21: delta 与目录大小完整矩阵，下载按实际字节验证且 ID/游标保持字符串 (247.4583ms)
+ℹ tests 113
+ℹ suites 0
+ℹ pass 109
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 473569.4587
+
+✖ failing tests:
+
+test at src\sync\sync-restart.test.cjs:157:5
+✖ TC04-26/27: conflict-keep_both/fail-upload 连续失败重启保持原身份与MD5 (3474.7954ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(failed.requests.some(row => row.url === '/file/' + '9007199254741003' + '/stream'))
+  
+      at TestContext.<anonymous> (E:\code\st-cloud\st-desktop\src\sync\sync-restart.test.cjs:167:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at src\sync\sync-restart.test.cjs:157:5
+✖ TC04-26/27: conflict-reconcile-baseline/fail-upload 连续失败重启保持原身份与MD5 (3460.3704ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(failed.requests.some(row => row.url === '/file/' + '9007199254741003' + '/stream'))
+  
+      at TestContext.<anonymous> (E:\code\st-cloud\st-desktop\src\sync\sync-restart.test.cjs:167:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at src\sync\sync-restart.test.cjs:157:5
+✖ TC04-26/27: conflict-reconcile-other/fail-upload 连续失败重启保持原身份与MD5 (3422.4218ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(failed.requests.some(row => row.url === '/file/' + '9007199254741003' + '/stream'))
+  
+      at TestContext.<anonymous> (E:\code\st-cloud\st-desktop\src\sync\sync-restart.test.cjs:167:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }
+
+test at src\sync\sync-restart.test.cjs:157:5
+✖ TC04-26/27: conflict-reconcile-missing/fail-upload 连续失败重启保持原身份与MD5 (3450.9477ms)
+  AssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:
+  
+    assert.ok(failed.requests.some(row => row.url === '/file/' + '9007199254741003' + '/stream'))
+  
+      at TestContext.<anonymous> (E:\code\st-cloud\st-desktop\src\sync\sync-restart.test.cjs:167:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

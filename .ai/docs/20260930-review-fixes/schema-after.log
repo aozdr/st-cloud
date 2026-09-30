@@ -1,0 +1,51 @@
+
+===== 1. Parse H2 schema.sql =====
+  H2 schema.sql: 19 tables
+
+===== 2. Query MySQL schema =====
+  MySQL: 37 tables
+
+===== 3. Column diff (shared tables) =====
+  [PASS] [event_log] aligned (10 cols)
+  [PASS] [file_block] aligned (9 cols)
+  [PASS] [file_chunk] aligned (12 cols)
+  [PASS] [file_favorite] aligned (7 cols)
+  [PASS] [file_node] aligned (29 cols)
+  [PASS] [file_object] aligned (10 cols)
+  [PASS] [file_orphan_candidate] aligned (11 cols)
+  [PASS] [file_share] aligned (18 cols)
+  [PASS] [file_version] aligned (11 cols)
+  [PASS] [file_watch] aligned (5 cols)
+  [PASS] [file_watch_delivery] aligned (16 cols)
+  [PASS] [notification] aligned (14 cols)
+  [PASS] [schema_version] aligned (7 cols)
+  [PASS] [sync_change_log] aligned (13 cols)
+  [PASS] [sys_config] aligned (10 cols)
+  [PASS] [sys_tenant] aligned (12 cols)
+  [PASS] [sys_user] aligned (17 cols)
+  [PASS] [team_space] aligned (12 cols)
+  [PASS] [upload_session] aligned (17 cols)
+  [INFO] [audit_log] only in MySQL (H2 schema.sql may not need it)
+  [INFO] [sync_conflict] only in MySQL (H2 schema.sql may not need it)
+  [INFO] [sync_device] only in MySQL (H2 schema.sql may not need it)
+  [INFO] [sync_exclusion] only in MySQL (H2 schema.sql may not need it)
+  [INFO] [sync_root] only in MySQL (H2 schema.sql may not need it)
+  [INFO] [sys_jwt_secret] only in MySQL (H2 schema.sql may not need it)
+  [INFO] [sys_permission] only in MySQL (H2 schema.sql may not need it)
+  [INFO] [sys_rate_limit] only in MySQL (H2 schema.sql may not need it)
+  [INFO] [sys_role] only in MySQL (H2 schema.sql may not need it)
+  [INFO] [sys_role_permission] only in MySQL (H2 schema.sql may not need it)
+  [INFO] [sys_user_role] only in MySQL (H2 schema.sql may not need it)
+  [INFO] [team_activity] only in MySQL (H2 schema.sql may not need it)
+  [INFO] [team_comment] only in MySQL (H2 schema.sql may not need it)
+  [INFO] [team_external_config] only in MySQL (H2 schema.sql may not need it)
+  [INFO] [team_folder_permission] only in MySQL (H2 schema.sql may not need it)
+  [INFO] [team_invite] only in MySQL (H2 schema.sql may not need it)
+  [INFO] [team_member] only in MySQL (H2 schema.sql may not need it)
+  [INFO] [team_role] only in MySQL (H2 schema.sql may not need it)
+
+===== 4. Pending SQL files (not in schema_version) =====
+  [PASS] All SQL files recorded in schema_version
+
+===== Summary =====
+  Result: PASS (no diff)

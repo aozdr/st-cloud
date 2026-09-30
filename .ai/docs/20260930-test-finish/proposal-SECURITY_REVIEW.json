@@ -1,0 +1,10 @@
+{
+  "criterionProposal": {
+    "outcome": "pass",
+    "evidenceRef": ".ai/docs/20260930-test-finish/security.md",
+    "validatedRevision": "finish-contract-tests-v9",
+    "by": "root",
+    "id": "SECURITY_REVIEW"
+  },
+  "taskId": "TASK-20260930-TEST-FINISH"
+}

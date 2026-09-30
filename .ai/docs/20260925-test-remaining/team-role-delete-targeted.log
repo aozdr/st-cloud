@@ -1,0 +1,30 @@
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-09-26T20:17:18.435+08:00  INFO 32828 --- [           main] t.s.TeamServicePermissionIntegrationTest : Starting TeamServicePermissionIntegrationTest using Java 17.0.14 with PID 32828 (started by Administrator in E:\code\st-cloud\st-team)
+2026-09-26T20:17:18.437+08:00  INFO 32828 --- [           main] t.s.TeamServicePermissionIntegrationTest : The following 1 profile is active: "test"
+2026-09-26T20:17:19.177+08:00  WARN 32828 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-26T20:17:19.179+08:00  WARN 32828 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-26T20:17:19.233+08:00  WARN 32828 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'createRocketMQMessageConverter' of type [org.apache.rocketmq.spring.support.RocketMQMessageConverter] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-26T20:17:19.240+08:00  WARN 32828 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketmq-org.apache.rocketmq.spring.autoconfigure.RocketMQProperties' of type [org.apache.rocketmq.spring.autoconfigure.RocketMQProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-26T20:17:19.241+08:00  WARN 32828 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketMQMessageListenerContainerRegistrar' of type [org.apache.rocketmq.spring.support.RocketMQMessageListenerContainerRegistrar] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-09-26T20:17:19.506+08:00  INFO 32828 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-09-26T20:17:19.692+08:00  INFO 32828 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:stteam-test user=SA
+2026-09-26T20:17:19.693+08:00  INFO 32828 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+2026-09-26T20:17:22.109+08:00  WARN 32828 --- [           main] o.a.r.s.a.RocketMQAutoConfiguration      : The necessary spring property 'rocketmq.name-server' is not defined, all rockertmq beans creation are skipped!
+2026-09-26T20:17:22.593+08:00  INFO 32828 --- [           main] t.s.TeamServicePermissionIntegrationTest : Started TeamServicePermissionIntegrationTest in 4.486 seconds (process running for 5.303)
+2026-09-26T20:17:22.723+08:00  WARN 32828 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-26T20:17:22.803+08:00  WARN 32828 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-26T20:17:22.819+08:00  INFO 32828 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�100�����Ŷӿռ�: spaceId=2103821229222850561, name=Ȩ�޿ռ�-100

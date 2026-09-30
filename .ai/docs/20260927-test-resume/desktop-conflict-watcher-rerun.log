@@ -1,0 +1,190 @@
+
+> st-cloud-desktop@1.0.0 test
+> tsc src/sync-retry.ts src/sync-retry.test.ts src/db-migrate.ts src/db-migrate.test.ts src/sync-utils.ts src/sync-utils.test.ts src/transfer-tasks.test.ts --outDir .test-dist --module commonjs --target ES2020 --skipLibCheck --esModuleInterop && node --test ".test-dist/*.test.js" && node --test src/sync/sync-recovery.test.cjs src/sync/sync-cursor.test.cjs src/sync/sync-conflict.test.cjs src/sync/sync-path.test.cjs src/sync/sync-reconcile.test.cjs src/sync/sync-size.test.cjs src/sync/sync-restart.test.cjs
+
+✔ INTEGER 亲和性导致雪花ID读回丢精度（bug 复现） (39.695ms)
+✔ ensureIdColumnsText 重建后雪花ID读回完整字符串 (13.5669ms)
+✔ ensureIdColumnsText 幂等：二次调用不再重建 (6.1353ms)
+✔ ensureIdColumnsText 对新库（已是 TEXT）不重建 (2.051ms)
+✔ TCDB-09 旧库大 root/node/cursor 以 SQL 整数字面量迁移并隔离两根 (8.7051ms)
+✔ computeBackoffMs: 指数退避曲线 30s/60s/120s/240s (0.8794ms)
+✔ computeBackoffMs: 封顶 1 小时 (0.1501ms)
+✔ computeBackoffMs: failCount<=0 按首次失败处理 (0.1267ms)
+✔ shouldRetryUpload: 无失败记录始终允许上传 (0.2139ms)
+✔ shouldRetryUpload: 退避期内跳过 (0.1792ms)
+✔ shouldRetryUpload: 退避到期允许重试 (0.1212ms)
+✔ shouldRetryUpload: 用户再次修改（mtime 变化）立即重试 (1.0614ms)
+✔ shouldRetryUpload: nextRetryAt 为空视为可重试 (0.1443ms)
+✔ isIgnoredLocalPath 过滤 Office 锁文件与系统临时文件 (1.1714ms)
+✔ isConflictCopyName 只匹配机器格式冲突副本 (0.3363ms)
+✔ uniqueConflictName 同秒冲突追加序号，避免互相覆盖 (2.2104ms)
+✔ isLocallyChanged 以 sync_state.local_mtime 为准 (0.2175ms)
+✔ conflictRelPath 推导冲突副本的同步相对路径 (0.2562ms)
+✔ 上传和下载任务可通过真实 SQLite 创建并在重载后完整读回 (37.9655ms)
+✔ relay 恢复不会降级为普通直传 (0.9182ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 280.3259
+✔ TC04-24/25: 真实上传模块对任务 failed 抛错并保留旧基线 (114.0858ms)
+✔ TC04-24/25: 真实上传模块对任务 running 抛错并保留旧基线 (33.0681ms)
+✔ TC04-24: keep_both 上传 failed 后保留临时源及旧基线 (60.4791ms)
+✔ TC04-24: keep_both 上传 timeout 后保留临时源及旧基线 (42.7557ms)
+✔ TC04-25: local_wins 上传失败传播且恢复后源文件不变 (34.1875ms)
+✔ TC04-25: latest_wins 上传失败传播且恢复后源文件不变 (33.877ms)
+✔ TCDB-10: 大游标逐字符传递，不经过 Number (3.5315ms)
+✔ TCDB-10: 相邻大游标连续分页并持久化最后一页 (2.257ms)
+✔ TCDB-10: hasMore=true 且大游标未前进不确认页面 (1.0938ms)
+✔ TC04-08: 协议版本缺失或错误时游标不推进 (2.3071ms)
+✔ TC04-08: 数字游标和损坏响应均被拒绝 (7.951ms)
+✔ TCDB-10: 真实 SQLite 持久化大游标，重启后续页并拒绝停滞 (136.0981ms)
+✔ TC04-06: 空过滤页仍继续读取下一页的有效事件 (1.3452ms)
+✔ TC04-34: 第二页失败保留第一页游标，恢复后从第二页继续 (66.9005ms)
+✔ TC04-10: 越界路径和目录联接不允许解析到根外 (17.59ms)
+✔ TC04-33: 不完整列举和第二页故障不清理原文件或状态，恢复后补齐 (123.3137ms)
+✔ 空目录 pages=0 且无旧状态可以完成对账 (66.1167ms)
+✔ TC04-30: 最后时刻编辑随原件移动 (38.7636ms)
+✔ 已打开的句柄写入仍保存在恢复原件中 (36.8043ms)
+✔ 目录遍历后新增文件被整体保全并记录 (26.3965ms)
+✔ 原子移动失败保留源且同事件可以重试 (43.4421ms)
+✔ 跨设备选用同步根旁目录（设备号注入） (27.2205ms)
+✔ 真实跨卷：应用目录与工作区不在同盘时，原件保存在同步根旁 (15.7737ms)
+✔ 实际 EXDEV 失败不回退为复制删除 (15.5552ms)
+✔ 旧 pending 副本和新源同时存在时双方均不覆盖 (29.5258ms)
+✔ 已完成事件重放不删除新出现的同名文件 (22.5003ms)
+✔ 恢复位置属于其他同步根时拒绝 (7.5125ms)
+✔ 移动后清单提交失败仍保有完整原件 (25.0057ms)
+✔ TC04-29: 初始 manifest 写入失败保留源且同事件可重试 (19.9765ms)
+✔ TC04-29: 目录移动后清单提交失败，重试补记移动期间新增文件 (27.8443ms)
+✔ TC04-10: 恢复目录联接指向外部时不写入外部清单或移动源 (10.6985ms)
+✖ TC04-31: watcher-move 真实chokidar自激不回传，独立用户编辑仍上传 (864.023ms)
+✖ TC04-31: watcher-delete 真实chokidar自激不回传，独立用户编辑仍上传 (1948.1261ms)
+✔ TC04-28: 成功冲突后同页失败，跨进程重放不回传覆盖原云端版本 (9190.6271ms)
+✔ TC04-24/25: keep_both/fail-upload 真实上传任务失败保留基线和cursor (3474.4606ms)
+✔ TC04-24/25: keep_both/fail-timeout 真实上传任务失败保留基线和cursor (2443.016ms)
+✔ TC04-24/25: local_wins/fail-upload 真实上传任务失败保留基线和cursor (3462.8965ms)
+✔ TC04-24/25: local_wins/fail-timeout 真实上传任务失败保留基线和cursor (2470.2777ms)
+✔ TC04-24/25: latest_wins/fail-upload 真实上传任务失败保留基线和cursor (3429.5562ms)
+✔ TC04-24/25: latest_wins/fail-timeout 真实上传任务失败保留基线和cursor (2413.5555ms)
+✔ TC04-26/27: conflict-keep_both/fail-download 连续失败重启保持原身份与MD5 (4962.7677ms)
+✔ TC04-26/27: conflict-reconcile-baseline/fail-download 连续失败重启保持原身份与MD5 (4990.1422ms)
+✔ TC04-26/27: conflict-reconcile-other/fail-download 连续失败重启保持原身份与MD5 (4959.1319ms)
+✔ TC04-26/27: conflict-keep_both/fail-upload 连续失败重启保持原身份与MD5 (4968.0563ms)
+✔ TC04-26/27: conflict-reconcile-baseline/fail-upload 连续失败重启保持原身份与MD5 (5015.0653ms)
+✔ TC04-26/27: conflict-reconcile-other/fail-upload 连续失败重启保持原身份与MD5 (4989.5445ms)
+✔ TC04-26/27: conflict-keep_both/fail-both 连续失败重启保持原身份与MD5 (4933.0941ms)
+✔ TC04-26/27: conflict-reconcile-baseline/fail-both 连续失败重启保持原身份与MD5 (4958.148ms)
+✔ TC04-26/27: conflict-reconcile-other/fail-both 连续失败重启保持原身份与MD5 (4956.1612ms)
+✔ TC04-09: reconcile-root-rename/fail-root-list 对账失败后跨进程恢复且根身份不变 (8007.9684ms)
+✔ TC04-09: reconcile-root-rename/fail-root-detail 对账失败后跨进程恢复且根身份不变 (7982.8947ms)
+✔ TC04-09: reconcile-root-move/fail-root-list 对账失败后跨进程恢复且根身份不变 (7982.8176ms)
+✔ TC04-09: reconcile-root-move/fail-root-detail 对账失败后跨进程恢复且根身份不变 (7971.5705ms)
+✔ TC04-09: reconcile-root-missing-old/fail-root-list 对账失败后跨进程恢复且根身份不变 (7984.2824ms)
+✔ TC04-09: reconcile-root-missing-old/fail-root-detail 对账失败后跨进程恢复且根身份不变 (8011.5655ms)
+✔ TC04-20: 旧版启动详情失败保留版本，重启升级保全修改和无状态文件 (7987.8568ms)
+✔ TC04-03: A迁移到B/fail-root-A 两根独立提交且跨进程恢复 (8375.4095ms)
+✔ TC04-03: A迁移到B/fail-root-B 两根独立提交且跨进程恢复 (8350.9465ms)
+✔ TC04-12: 历史CREATE/inside 按当前树恢复且详情403不被当作删除 (7996.0445ms)
+✔ TC04-12: 历史CREATE/outside 按当前树恢复且详情403不被当作删除 (7941.1478ms)
+✔ TC04-12: 历史CREATE/trash 按当前树恢复且详情403不被当作删除 (7966.9096ms)
+✔ TC04-12: 历史CREATE详情超时保留旧状态和游标 (7981.3798ms)
+✔ TC04-12: 历史MOVE/inside 按当前树恢复且详情403不被当作删除 (7995.2068ms)
+✔ TC04-12: 历史MOVE/outside 按当前树恢复且详情403不被当作删除 (7957.9542ms)
+✔ TC04-12: 历史MOVE/trash 按当前树恢复且详情403不被当作删除 (7985.2828ms)
+✔ TC04-12: 历史MOVE详情超时保留旧状态和游标 (7984.8546ms)
+✔ TC04-29: 清单提交前退出，重启完成 pending 后才提交游标 (1316.917ms)
+✔ TC04-29: manifest-write 故障后跨进程重试保全原件 (970.2133ms)
+✔ TC04-29: source-move 故障后跨进程重试保全原件 (967.7925ms)
+✔ TC04-32: 删除完成但游标提交前退出，跨进程重放不重复副作用 (1332.3348ms)
+✔ TC04-29: reconcile 清理进程退出后先完成清单再删除旧状态 (1311.321ms)
+✔ TC04-29: historical 清理进程退出后先完成清单再删除旧状态 (1339.955ms)
+✔ TC04-29: complete 写入前退出，丢失恢复副本时拒绝确认游标 (1353.3554ms)
+✔ TC04-29: complete 写入前退出，完整副本可在新进程恢复 (960.1935ms)
+✔ TC04-32: move 完成而游标未提交，重启重放不再次修改文件 (1311.6503ms)
+✔ TC04-32: download 完成而游标未提交，重启重放不再次修改文件 (1306.842ms)
+✔ TC04-32: create 完成而游标未提交，重启重放不再次修改文件 (1314.4765ms)
+✔ TC04-07: 同页第二事件失败，重启重放首事件不重复下载 (7992.1389ms)
+✔ TC04-22: same-page/same-size 历史日志采用当前内容且只下载一次 (484.8958ms)
+✔ TC04-22: same-page/different-size 历史日志采用当前内容且只下载一次 (480.2992ms)
+✔ TC04-22: cross-page/same-size 历史日志采用当前内容且只下载一次 (480.6195ms)
+✔ TC04-22: cross-page/different-size 历史日志采用当前内容且只下载一次 (487.5054ms)
+✔ TC04-23: race-same 拒绝错误流，重启刷新元数据后再提交 (968.0626ms)
+✔ TC04-23: race-size 拒绝错误流，重启刷新元数据后再提交 (981.7462ms)
+✔ TC04-23: truncate 拒绝错误流，重启刷新元数据后再提交 (958.9286ms)
+✔ TC04-23: tamper 拒绝错误流，重启刷新元数据后再提交 (973.4609ms)
+✔ TC04-13: delete-returned 旧删除事件不能清理有效节点 (477.5859ms)
+✔ TC04-13: delete-reused 旧删除事件不能清理有效节点 (481.149ms)
+✔ TC04-19: 全量扫描将路径登记为新 X 后，旧 N 快照不能清理 X (476.8465ms)
+✔ TC04-10: invalid-current-parent 完整引擎拒绝且根外哨兵不变 (834.8063ms)
+✔ TC04-10: invalid-current-drive 完整引擎拒绝且根外哨兵不变 (840.182ms)
+✔ TC04-10: invalid-current-link 完整引擎拒绝且根外哨兵不变 (838.5656ms)
+✔ TC04-10: invalid-old-parent 完整引擎拒绝且根外哨兵不变 (849.811ms)
+✔ TC04-10: invalid-old-drive 完整引擎拒绝且根外哨兵不变 (834.8198ms)
+✔ TC04-10: invalid-old-link 完整引擎拒绝且根外哨兵不变 (855.6246ms)
+✔ TC04-10: invalid-recovery-link 完整引擎拒绝且根外哨兵不变 (926.3723ms)
+✔ TC04-04: 外部目录移入完整下载 101 文件及深层/空目录，排除项不进入 (999.7157ms)
+✔ TC04-05: 移出目录不依赖父目录 mtime，已改文件与未知文件均保全 (858.8659ms)
+✔ TC04-17: folder-modified 第二页失败后跨进程补齐 (8565.8453ms)
+✔ TC04-18: folder-missing 第二页失败后跨进程补齐 (8540.0043ms)
+✔ TC04-04: folder-import 第二页失败后跨进程补齐 (8537.9967ms)
+✔ TC04-18: 缺失源目录第二页失败，同一引擎重试识别 pending 目标 (8039.0021ms)
+✔ TC04-18: 源缺失但目标属于不同 X 时保留目标并拒绝推进 (855.6754ms)
+✔ TC04-21: delta 与目录大小完整矩阵，下载按实际字节验证且 ID/游标保持字符串 (255.2431ms)
+ℹ tests 104
+ℹ suites 0
+ℹ pass 102
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 282316.9937
+
+✖ failing tests:
+
+test at src\sync\sync-restart.test.cjs:35:3
+✖ TC04-31: watcher-move 真实chokidar自激不回传，独立用户编辑仍上传 (864.023ms)
+  AssertionError [ERR_ASSERTION]: Assertion failed: !_wcsnicmp(filename, dir, dirlen), file src\win\fs-event.c, line 72
+  
+  
+  3221226505 !== 0
+  
+      at run (E:\code\st-cloud\st-desktop\src\sync\sync-restart.test.cjs:22:12)
+      at TestContext.<anonymous> (E:\code\st-cloud\st-desktop\src\sync\sync-restart.test.cjs:37:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.start (node:internal/test_runner/test:1177:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 3221226505,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at src\sync\sync-restart.test.cjs:35:3
+✖ TC04-31: watcher-delete 真实chokidar自激不回传，独立用户编辑仍上传 (1948.1261ms)
+  AssertionError [ERR_ASSERTION]: Assertion failed: !_wcsnicmp(filename, dir, dirlen), file src\win\fs-event.c, line 72
+  
+  
+  3221226505 !== 0
+  
+      at run (E:\code\st-cloud\st-desktop\src\sync\sync-restart.test.cjs:22:12)
+      at TestContext.<anonymous> (E:\code\st-cloud\st-desktop\src\sync\sync-restart.test.cjs:37:20)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 3221226505,
+    expected: 0,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

@@ -1,0 +1,15 @@
+
+> st-cloud-desktop@1.0.0 build:main
+> tsup src/main.ts src/preload.ts --format cjs --outDir dist
+
+Error: spawn EPERM
+    at ChildProcess.spawn (node:internal/child_process:441:11)
+    at Object.spawn (node:child_process:796:9)
+    at ensureServiceIsRunning (E:\code\st-cloud\st-desktop\node_modules\esbuild\lib\main.js:2268:29)
+    at build (E:\code\st-cloud\st-desktop\node_modules\esbuild\lib\main.js:2166:26)
+    at run (E:\code\st-cloud\st-desktop\node_modules\bundle-require\dist\index.cjs:243:55)
+    at E:\code\st-cloud\st-desktop\node_modules\bundle-require\dist\index.cjs:284:5
+    at new Promise (<anonymous>)
+    at bundleRequire (E:\code\st-cloud\st-desktop\node_modules\bundle-require\dist\index.cjs:179:10)
+    at loadTsupConfig (E:\code\st-cloud\st-desktop\node_modules\tsup\dist\chunk-VGC3FXLU.js:59:55)
+    at async build (E:\code\st-cloud\st-desktop\node_modules\tsup\dist\index.js:1489:51)

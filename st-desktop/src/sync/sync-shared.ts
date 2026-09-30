@@ -29,9 +29,11 @@ export interface DeltaItem {
 }
 
 export interface DeltaResponse {
-  cursor: number;
+  cursor: string;
   hasMore: boolean;
   changes: DeltaItem[];
+  scopeProjectionVersion?: number;
+  reconcileRequired?: boolean;
 }
 
 /** 块级同步阈值：文件 >=8MB 且为更新已有文件时走块级增量上传 */
@@ -39,10 +41,10 @@ export const BLOCK_SYNC_THRESHOLD = 8 * 1024 * 1024;
 
 /**
  * 同步引擎版本：同步逻辑变更（含冲突/状态语义）时 +1。
- * 客户端本地版本与 sync_config.sync_version 不一致 → 触发一次全量重建（清本地库 + 云端快照对账）。
+ * 客户端本地版本与 sync_config.sync_version 不一致 → 保留旧状态并执行云端快照对账。
  * V3：sync_state 改为 (root_id, local_path) 复合主键，修复重新配置同步根后旧状态污染。
  */
-export const SYNC_ENGINE_VERSION = 3;
+export const SYNC_ENGINE_VERSION = 4;
 
 /** 引擎自写路径的 TTL（ms）：落盘后短期内监听事件即使到达也跳过，防止自激上传 */
 export const ENGINE_WRITE_TTL_MS = 30_000;
@@ -94,4 +96,15 @@ export interface SyncEngineCtx {
   uploadFile(absPath: string, relPath: string, existingNodeId?: string): Promise<void>;
   downloadFile(item: DeltaItem, absPath: string, relPath: string): Promise<void>;
   handleConflict(absPath: string, relPath: string, item: DeltaItem): Promise<void>;
+}
+
+/** 文件大小允许转换为 JS 安全整数；节点 ID 和同步游标始终保留字符串。 */
+export function parseFileSize(value: unknown): number | null {
+  if (value == null) return null;
+  if (typeof value !== 'string' && typeof value !== 'number') throw new Error('文件大小格式无效');
+  const encoded = String(value);
+  if (!/^(0|[1-9][0-9]*)$/.test(encoded)) throw new Error('文件大小格式无效');
+  const parsed = Number(encoded);
+  if (!Number.isSafeInteger(parsed)) throw new Error('文件大小超出安全整数范围');
+  return parsed;
 }

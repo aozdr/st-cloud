@@ -1,0 +1,38 @@
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-09-30T08:33:30.757+08:00  INFO 25184 --- [           main] c.s.a.UserSecurityRedisIntegrationTest   : Starting UserSecurityRedisIntegrationTest using Java 17.0.14 with PID 25184 (started by Administrator in E:\code\st-cloud\st-admin)
+2026-09-30T08:33:30.759+08:00  INFO 25184 --- [           main] c.s.a.UserSecurityRedisIntegrationTest   : The following 1 profile is active: "test"
+2026-09-30T08:33:31.631+08:00  WARN 25184 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:33:31.633+08:00  WARN 25184 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:33:31.682+08:00  WARN 25184 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'createRocketMQMessageConverter' of type [org.apache.rocketmq.spring.support.RocketMQMessageConverter] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:33:31.687+08:00  WARN 25184 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketmq-org.apache.rocketmq.spring.autoconfigure.RocketMQProperties' of type [org.apache.rocketmq.spring.autoconfigure.RocketMQProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T08:33:31.689+08:00  WARN 25184 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketMQMessageListenerContainerRegistrar' of type [org.apache.rocketmq.spring.support.RocketMQMessageListenerContainerRegistrar] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-09-30T08:33:31.950+08:00  INFO 25184 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-09-30T08:33:32.158+08:00  INFO 25184 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:admin-real-redis user=SA
+2026-09-30T08:33:32.159+08:00  INFO 25184 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+2026-09-30T08:33:35.194+08:00  WARN 25184 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:33:35.198+08:00  INFO 25184 --- [           main] com.stcloud.common.utils.JwtUtils        : JWT ǩ����Կ��������ɲ��������
+2026-09-30T08:33:35.334+08:00  WARN 25184 --- [           main] o.a.r.s.a.RocketMQAutoConfiguration      : The necessary spring property 'rocketmq.name-server' is not defined, all rockertmq beans creation are skipped!
+2026-09-30T08:33:35.649+08:00  INFO 25184 --- [           main] c.s.a.UserSecurityRedisIntegrationTest   : Started UserSecurityRedisIntegrationTest in 5.25 seconds (process running for 6.206)
+2026-09-30T08:33:36.262+08:00  WARN 25184 --- [           main] c.s.a.security.JwtAuthenticationFilter   : JWT ��;��ȫ�汾��Ч���ܾ���֤
+2026-09-30T08:33:36.393+08:00  INFO 25184 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-30T08:33:36.397+08:00  WARN 25184 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:33:42.560+08:00  INFO 25184 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-30T08:33:43.201+08:00  INFO 25184 --- [           main] c.s.a.s.impl.UserManageServiceImpl       : ����Ա1�����û�: userId=101
+2026-09-30T08:33:43.215+08:00  WARN 25184 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T08:33:43.218+08:00  WARN 25184 --- [           main] c.s.a.security.JwtAuthenticationFilter   : JWT ��;��ȫ�汾��Ч���ܾ���֤
+2026-09-30T08:33:43.308+08:00  INFO 25184 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-30T08:33:43.311+08:00  WARN 25184 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������

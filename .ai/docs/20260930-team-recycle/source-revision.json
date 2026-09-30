@@ -1,0 +1,11 @@
+{
+  "revision": "team-recycle-code-8d9bce85490e655a",
+  "hashes": {
+    "st-core/src/main/java/com/stcloud/core/mapper/TeamStorageMapper.java": "2f3d246194639b86597c04aef13d354d03ee0e8a89d580d82bf2da1426e117fa",
+    "st-core/src/main/java/com/stcloud/core/service/impl/RecycleBinServiceImpl.java": "fed8634d044340c2e73979eeb9edb1d407e9bf29bce7d4de07c4a3cdbe19fae6",
+    "st-core/src/test/resources/schema.sql": "fe4260a306de7b313dd6122895b3b5e2ad7d3054251311ec97f4d52c13aa8a85",
+    "st-core/src/test/java/com/stcloud/core/service/impl/TeamRecycleBinIntegrationTest.java": "29b61c318f9d1a25abe86d4e9b823e33e0399dc2e723bf5ae38fa76b6172de96",
+    "st-core/src/test/java/com/stcloud/core/service/impl/TeamRecycleBinMysqlIntegrationTest.java": "4ba993f511ab93be62b37bf8de7beaa86730dd374cae0768bbe48255e3cbded5"
+  },
+  "jarSha256": "53a374e4bdd01dfdc724535c12026147ae96d35c870721ac411b0d7aa37046e9"
+}

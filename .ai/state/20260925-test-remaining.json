@@ -1,0 +1,207 @@
+{
+  "schemaVersion": 2,
+  "definitionVersion": 2,
+  "taskId": "TASK-20260925-TEST-REMAINING",
+  "scale": "large",
+  "status": "running",
+  "goal": {
+    "objective": "执行剩余 Code Review 整改用例并修复发现的核心缺陷",
+    "scope": [
+      "CR-01 至 CR-07",
+      "数据库与前端字符串 ID",
+      "隔离测试夹具与逐项结果"
+    ],
+    "completionCriteria": [
+      "136 条用例均记录当前状态和独立证据",
+      "可隔离执行的剩余用例完成实际执行与必要修复",
+      "相称回归与 State 校验通过"
+    ]
+  },
+  "revision": {
+    "design": "test-remaining-v1",
+    "code": "working-tree"
+  },
+  "exitCriteria": [
+    {
+      "id": "REQ_ANALYSIS",
+      "status": "done",
+      "dependsOn": [],
+      "by": "root",
+      "executionKind": "direct",
+      "executionId": "root-REQ_ANALYSIS",
+      "evidenceRef": ".ai/docs/20260924-code-review-design/requirement.md",
+      "validatedRevision": "test-remaining-v1"
+    },
+    {
+      "id": "IMPACT_ANALYSIS",
+      "status": "done",
+      "dependsOn": [
+        "REQ_ANALYSIS"
+      ],
+      "by": "root",
+      "executionKind": "direct",
+      "executionId": "root-IMPACT_ANALYSIS",
+      "evidenceRef": ".ai/docs/20260924-code-review-design/impact.md",
+      "validatedRevision": "test-remaining-v1"
+    },
+    {
+      "id": "EXP_DESIGN",
+      "status": "skipped",
+      "dependsOn": [
+        "REQ_ANALYSIS"
+      ],
+      "applicable": false,
+      "skipReason": "本轮仅补测试与修复后端缩略图边界，没有新增 UI 设计"
+    },
+    {
+      "id": "TECH_DESIGN",
+      "status": "done",
+      "dependsOn": [
+        "IMPACT_ANALYSIS",
+        "EXP_DESIGN"
+      ],
+      "by": "root",
+      "executionKind": "direct",
+      "executionId": "root-TECH_DESIGN",
+      "evidenceRef": ".ai/docs/20260925-test-remaining/execution-plan.md",
+      "validatedRevision": "test-remaining-v1"
+    },
+    {
+      "id": "TESTCASES",
+      "status": "done",
+      "dependsOn": [
+        "TECH_DESIGN"
+      ],
+      "by": "root",
+      "executionKind": "direct",
+      "executionId": "root-TESTCASES",
+      "evidenceRef": ".ai/docs/20260924-code-review-testcases/testcases.md",
+      "validatedRevision": "test-remaining-v1"
+    },
+    {
+      "id": "IMPLEMENTED",
+      "status": "in_progress",
+      "dependsOn": [
+        "TECH_DESIGN",
+        "TESTCASES"
+      ]
+    },
+    {
+      "id": "CODE_REVIEW",
+      "status": "pending",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ]
+    },
+    {
+      "id": "SECURITY_REVIEW",
+      "status": "pending",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ]
+    },
+    {
+      "id": "EXP_ACCEPT",
+      "status": "skipped",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ],
+      "applicable": false,
+      "skipReason": "本轮无 UI 变更"
+    },
+    {
+      "id": "TEST_PASS",
+      "status": "pending",
+      "dependsOn": [
+        "CODE_REVIEW",
+        "SECURITY_REVIEW"
+      ]
+    },
+    {
+      "id": "KNOWLEDGE",
+      "status": "pending",
+      "dependsOn": [
+        "TEST_PASS",
+        "SECURITY_REVIEW",
+        "EXP_ACCEPT"
+      ]
+    },
+    {
+      "id": "ACCEPT",
+      "status": "pending",
+      "dependsOn": [
+        "KNOWLEDGE"
+      ]
+    }
+  ],
+  "artifacts": {
+    "requirement.md": {
+      "status": "done",
+      "ref": ".ai/docs/20260924-code-review-design/requirement.md"
+    },
+    "impact.md": {
+      "status": "done",
+      "ref": ".ai/docs/20260924-code-review-design/impact.md"
+    },
+    "execution-plan.md": {
+      "status": "done",
+      "ref": ".ai/docs/20260925-test-remaining/execution-plan.md"
+    },
+    "testcases.md": {
+      "status": "done",
+      "ref": ".ai/docs/20260924-code-review-testcases/testcases.md"
+    },
+    "results.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260925-test-remaining/results.md"
+    }
+  },
+  "blockers": [],
+  "acceptanceEvidence": [],
+  "dispatchLedger": [],
+  "singleAgentAuthorization": {
+    "taskId": "TASK-20260925-TEST-REMAINING",
+    "actor": "root",
+    "authorizedBy": "user",
+    "authorizationQuote": "不要开子线程，你自己完成",
+    "evidenceRef": ".ai/tasks/TASK-20260925-TEST-REMAINING.md",
+    "criteria": [
+      "CODE_REVIEW",
+      "SECURITY_REVIEW",
+      "TEST_PASS",
+      "ACCEPT"
+    ]
+  },
+  "history": [
+    {
+      "eventId": "remaining-test-progress-1",
+      "action": "隔离执行并逐项登记；目标未完成，继续执行",
+      "actor": "root",
+      "occurredAt": "2026-09-26T12:00:00Z",
+      "revision": {
+        "design": "test-remaining-v1",
+        "code": "working-tree"
+      }
+    },
+    {
+      "eventId": "remaining-test-progress-2",
+      "action": "同步路径、目录列举、恢复清单和大小矩阵完成增量执行；27 PASS、55 PARTIAL、54 NOT RUN，继续补足剩余场景",
+      "actor": "root",
+      "occurredAt": "2026-09-27T00:44:26Z",
+      "revision": {
+        "design": "test-remaining-v1",
+        "code": "working-tree"
+      }
+    },
+    {
+      "eventId": "remaining-test-progress-3",
+      "action": "真实引擎SQLite进程恢复及服务端投影增量验证；41 PASS、50 PARTIAL、45 NOT RUN，目标仍未完成",
+      "actor": "root",
+      "occurredAt": "2026-09-27T06:09:07Z",
+      "revision": {
+        "code": "working-tree",
+        "design": "test-remaining-v1"
+      }
+    }
+  ]
+}

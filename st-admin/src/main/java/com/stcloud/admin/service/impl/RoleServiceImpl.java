@@ -16,6 +16,7 @@ import com.stcloud.auth.mapper.SysRoleMapper;
 import com.stcloud.auth.mapper.SysRolePermissionMapper;
 import com.stcloud.auth.mapper.SysUserMapper;
 import com.stcloud.auth.mapper.SysUserRoleMapper;
+import com.stcloud.auth.service.UserSecurityService;
 import com.stcloud.common.exception.BusinessException;
 import com.stcloud.common.response.ResultCode;
 import jakarta.annotation.Resource;
@@ -45,6 +46,8 @@ public class RoleServiceImpl implements RoleService {
 
     @Resource
     private SysUserMapper userMapper;
+    @Resource
+    private UserSecurityService userSecurityService;
 
     @Override
     public List<RoleVO> listRoles() {
@@ -98,6 +101,7 @@ public class RoleServiceImpl implements RoleService {
         if (role == null) {
             throw new BusinessException(ResultCode.BUSINESS_ERROR, "角色不存在");
         }
+        userSecurityService.lockTenant(role.getTenantId());
 
         role.setRoleName(request.getRoleName());
         role.setDescription(request.getDescription());
@@ -107,6 +111,7 @@ public class RoleServiceImpl implements RoleService {
         // 单租户部署：数据范围固定为「本人」，不做跨用户/跨租户数据访问
         role.setDataScope(1);
         roleMapper.updateById(role);
+        userSecurityService.incrementRoleMembers(role.getTenantId(), roleId);
         log.info("更新角色: roleId={}", roleId);
         return toVO(role);
     }
@@ -121,6 +126,9 @@ public class RoleServiceImpl implements RoleService {
         if (role.getBuiltIn() == 1) {
             throw new BusinessException(ResultCode.BUSINESS_ERROR, "内置角色不可删除");
         }
+        userSecurityService.lockTenant(role.getTenantId());
+        // 删除关联前递增受影响用户版本，与角色删除同事务提交。
+        userSecurityService.incrementRoleMembers(role.getTenantId(), roleId);
 
         // 物理删除角色-权限关联
         rolePermissionMapper.physicalDeleteByRoleId(roleId);
@@ -138,6 +146,7 @@ public class RoleServiceImpl implements RoleService {
         if (role == null) {
             throw new BusinessException(ResultCode.BUSINESS_ERROR, "角色不存在");
         }
+        userSecurityService.lockTenant(role.getTenantId());
 
         // 物理删除旧关联（避免软删除+唯一键冲突）
         rolePermissionMapper.physicalDeleteByRoleId(roleId);
@@ -152,6 +161,7 @@ public class RoleServiceImpl implements RoleService {
                 rolePermissionMapper.insert(rp);
             }
         }
+        userSecurityService.incrementRoleMembers(role.getTenantId(), roleId);
         log.info("分配角色权限: roleId={}, permissionCount={}", roleId,
                 request.getPermissionIds() != null ? request.getPermissionIds().size() : 0);
     }
@@ -159,13 +169,23 @@ public class RoleServiceImpl implements RoleService {
     @Override
     @Transactional
     public void assignRolesToUser(Long userId, List<String> roleIds) {
+        SysUser user = userMapper.selectById(userId);
+        if (user == null) throw new BusinessException(ResultCode.USER_NOT_FOUND);
+        userSecurityService.lockTenant(user.getTenantId());
+        if (roleIds != null) {
+            for (String roleId : roleIds) {
+                SysRole role = roleMapper.selectById(Long.valueOf(roleId));
+                if (role == null || !user.getTenantId().equals(role.getTenantId())) {
+                    throw new BusinessException(ResultCode.BAD_REQUEST, "角色不属于用户租户");
+                }
+            }
+        }
         // 物理删除旧关联（避免软删除+唯一键冲突）
         userRoleMapper.physicalDeleteByUserId(userId);
 
         // 再插入新关联（关联记录继承目标用户的租户）
         if (roleIds != null) {
-            SysUser user = userMapper.selectById(userId);
-            Long targetTenantId = user != null ? user.getTenantId() : 0L;
+            Long targetTenantId = user.getTenantId();
             for (String roleIdStr : roleIds) {
                 Long roleId = Long.valueOf(roleIdStr);
                 SysUserRole userRole = new SysUserRole();
@@ -175,6 +195,7 @@ public class RoleServiceImpl implements RoleService {
                 userRoleMapper.insert(userRole);
             }
         }
+        userSecurityService.increment(user.getTenantId(), userId);
         log.info("分配用户角色: userId={}, roleCount={}", userId,
                 roleIds != null ? roleIds.size() : 0);
     }

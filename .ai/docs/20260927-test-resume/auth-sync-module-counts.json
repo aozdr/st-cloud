@@ -1,0 +1,37 @@
+[
+  {
+    "Module": "st-admin",
+    "Tests": 43.0,
+    "Failures": 0.0,
+    "Errors": 0.0,
+    "Skipped": 17.0
+  },
+  {
+    "Module": "st-auth",
+    "Tests": 14.0,
+    "Failures": 0.0,
+    "Errors": 0.0,
+    "Skipped": 0.0
+  },
+  {
+    "Module": "st-common",
+    "Tests": 31.0,
+    "Failures": 0.0,
+    "Errors": 0.0,
+    "Skipped": 0.0
+  },
+  {
+    "Module": "st-core",
+    "Tests": 213.0,
+    "Failures": 0.0,
+    "Errors": 0.0,
+    "Skipped": 0.0
+  },
+  {
+    "Module": "st-sync",
+    "Tests": 37.0,
+    "Failures": 0.0,
+    "Errors": 0.0,
+    "Skipped": 0.0
+  }
+]

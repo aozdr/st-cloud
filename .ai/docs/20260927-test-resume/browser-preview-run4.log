@@ -1,0 +1,53 @@
+Exception in callback SyncBase._sync.<locals>.<lambda>(<Task cancell...twork.py:358>>) at C:\Program Files\python\lib\site-packages\playwright\_impl\_sync_base.py:111
+handle: <Handle SyncBase._sync.<locals>.<lambda>(<Task cancell...twork.py:358>>) at C:\Program Files\python\lib\site-packages\playwright\_impl\_sync_base.py:111>
+Traceback (most recent call last):
+  File "C:\Program Files\python\lib\asyncio\events.py", line 81, in _run
+    self._context.run(self._callback, *self._args)
+  File "C:\Program Files\python\lib\site-packages\playwright\_impl\_sync_base.py", line 111, in <lambda>
+    task.add_done_callback(lambda _: g_self.switch())
+  File "C:\Program Files\python\lib\site-packages\playwright\_impl\_helper.py", line 323, in _handler
+    self.handler(route, route.request)  # type: ignore
+  File "C:\Program Files\python\lib\site-packages\playwright\_impl\_impl_to_api_mapping.py", line 123, in wrapper_func
+    return handler(
+  File "../.ai/docs/20260927-test-resume/browser-preview.py", line 31, in api
+    if path.endswith('/download-token'):reply(route,{'token':'fixture-node-scoped-token'});return
+  File "../.ai/docs/20260927-test-resume/browser-preview.py", line 14, in reply
+    route.fulfill(status=200,content_type='application/json',body=json.dumps({'code':code,'data':data,'message':'isolated error' if code!=200 else 'ok'}))
+  File "C:\Program Files\python\lib\site-packages\playwright\sync_api\_generated.py", line 730, in fulfill
+    self._sync(
+  File "C:\Program Files\python\lib\site-packages\playwright\_impl\_sync_base.py", line 115, in _sync
+    return task.result()
+asyncio.exceptions.CancelledError
+Exception in callback Connection.dispatch.<locals>._done_callback(<Task cancell..._page.py:283>>) at C:\Program Files\python\lib\site-packages\playwright\_impl\_connection.py:430
+handle: <Handle Connection.dispatch.<locals>._done_callback(<Task cancell..._page.py:283>>) at C:\Program Files\python\lib\site-packages\playwright\_impl\_connection.py:430>
+Traceback (most recent call last):
+  File "../.ai/docs/20260927-test-resume/browser-preview.py", line 68, in <module>
+    assert any(r['path']=='/api/file/105/stream' for r in requests)
+AssertionError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Program Files\python\lib\asyncio\events.py", line 81, in _run
+    self._context.run(self._callback, *self._args)
+  File "C:\Program Files\python\lib\site-packages\playwright\_impl\_connection.py", line 431, in _done_callback
+    exc = future.exception()
+asyncio.exceptions.CancelledError
+Traceback (most recent call last):
+  File "../.ai/docs/20260927-test-resume/browser-preview.py", line 68, in <module>
+    assert any(r['path']=='/api/file/105/stream' for r in requests)
+AssertionError
+Future exception was never retrieved
+future: <Future finished exception=TargetClosedError('Target page, context or browser has been closed')>
+playwright._impl._errors.TargetClosedError: Target page, context or browser has been closed
+Starting server 1/1: npm.cmd run dev -- --host 127.0.0.1 --port 5187 --strictPort
+Waiting for server on port 5187...
+Server ready on port 5187
+
+All 1 server(s) ready
+Running: python ../.ai/docs/20260927-test-resume/browser-preview.py
+
+
+Stopping 1 server(s)...
+Server 1 stopped
+All servers stopped

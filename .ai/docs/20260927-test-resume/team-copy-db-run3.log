@@ -1,0 +1,37 @@
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-09-28T14:21:25.879+08:00  INFO 35100 --- [           main] c.s.t.TeamCopyDatabaseIntegrationTest    : Starting TeamCopyDatabaseIntegrationTest using Java 17.0.14 with PID 35100 (started by Administrator in E:\code\st-cloud\st-team)
+2026-09-28T14:21:25.883+08:00  INFO 35100 --- [           main] c.s.t.TeamCopyDatabaseIntegrationTest    : The following 1 profile is active: "test"
+2026-09-28T14:21:26.760+08:00  WARN 35100 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-28T14:21:26.762+08:00  WARN 35100 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-28T14:21:26.841+08:00  WARN 35100 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'createRocketMQMessageConverter' of type [org.apache.rocketmq.spring.support.RocketMQMessageConverter] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-28T14:21:26.850+08:00  WARN 35100 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketmq-org.apache.rocketmq.spring.autoconfigure.RocketMQProperties' of type [org.apache.rocketmq.spring.autoconfigure.RocketMQProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-28T14:21:26.852+08:00  WARN 35100 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketMQMessageListenerContainerRegistrar' of type [org.apache.rocketmq.spring.support.RocketMQMessageListenerContainerRegistrar] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-09-28T14:21:27.115+08:00  INFO 35100 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-09-28T14:21:27.330+08:00  INFO 35100 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:stteam-test user=SA
+2026-09-28T14:21:27.331+08:00  INFO 35100 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+2026-09-28T14:21:30.247+08:00  WARN 35100 --- [           main] o.a.r.s.a.RocketMQAutoConfiguration      : The necessary spring property 'rocketmq.name-server' is not defined, all rockertmq beans creation are skipped!
+2026-09-28T14:21:31.012+08:00  INFO 35100 --- [           main] c.s.t.TeamCopyDatabaseIntegrationTest    : Started TeamCopyDatabaseIntegrationTest in 5.523 seconds (process running for 6.485)
+2026-09-28T14:21:31.278+08:00  INFO 35100 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�100�����Ŷӿռ�: spaceId=2104456450100293633, name=copy-db
+2026-09-28T14:21:31.683+08:00  INFO 35100 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�100�����Ŷӿռ�: spaceId=2104456451773820930, name=copy-db
+2026-09-28T14:21:31.796+08:00  INFO 35100 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�100�����Ŷӿռ�: spaceId=2104456452289720322, name=copy-db
+2026-09-28T14:21:31.976+08:00  INFO 35100 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�100�����Ŷӿռ�: spaceId=2104456453006946305, name=copy-db
+2026-09-28T14:21:32.083+08:00  INFO 35100 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�100�����Ŷӿռ�: spaceId=2104456453472514050, name=copy-db
+2026-09-28T14:21:32.177+08:00  INFO 35100 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�100�����Ŷӿռ�: spaceId=2104456453866778626, name=copy-db
+2026-09-28T14:21:32.239+08:00  INFO 35100 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�100�����Ŷӿռ�: spaceId=2104456454126825474, name=copy-db
+2026-09-28T14:21:32.282+08:00  INFO 35100 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�100�����Ŷӿռ�: spaceId=2104456454323957761, name=copy-db
+2026-09-28T14:21:32.376+08:00  INFO 35100 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�100�����Ŷӿռ�: spaceId=2104456454714028033, name=copy-db
+2026-09-28T14:21:32.459+08:00  INFO 35100 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�100�����Ŷӿռ�: spaceId=2104456455041183745, name=copy-db

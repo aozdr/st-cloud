@@ -1,0 +1,41 @@
+✔ TC04-30: 最后时刻编辑随原件移动 (25.2246ms)
+✔ 已打开的句柄写入仍保存在恢复原件中 (21.1688ms)
+✔ 目录遍历后新增文件被整体保全并记录 (22.1747ms)
+✔ 原子移动失败保留源且同事件可以重试 (27.7184ms)
+✔ 跨设备选用同步根旁目录（设备号注入） (21.3088ms)
+✔ 真实跨卷：应用目录与工作区不在同盘时，原件保存在同步根旁 (18.7713ms)
+✔ 实际 EXDEV 失败不回退为复制删除 (19.903ms)
+✔ 旧 pending 副本和新源同时存在时双方均不覆盖 (34.9137ms)
+✔ 已完成事件重放不删除新出现的同名文件 (27.8242ms)
+✔ 恢复位置属于其他同步根时拒绝 (9.4508ms)
+✖ 移动后清单提交失败仍保有完整原件 (20.7397ms)
+✔ TC04-29: 初始 manifest 写入失败保留源且同事件可重试 (22.3915ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 11
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 487.8045
+
+✖ failing tests:
+
+test at src\sync\sync-recovery.test.cjs:152:1
+✖ 移动后清单提交失败仍保有完整原件 (20.7397ms)
+  Error: ENOENT: no such file or directory, lstat 'C:\Users\ADMINI~1\AppData\Local\Temp\st-recovery-test-hcSLpf\root\note.txt'
+      at Object.realpathSync (node:fs:2787:29)
+      at Object.preserveAndRemove (evalmachine.<anonymous>:22:37)
+      at Object.run (E:\code\st-cloud\st-desktop\src\sync\sync-recovery.test.cjs:40:13)
+      at TestContext.<anonymous> (E:\code\st-cloud\st-desktop\src\sync\sync-recovery.test.cjs:165:18)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    errno: -4058,
+    code: 'ENOENT',
+    syscall: 'lstat',
+    path: 'C:\\Users\\ADMINI~1\\AppData\\Local\\Temp\\st-recovery-test-hcSLpf\\root\\note.txt'
+  }

@@ -1,0 +1,9 @@
+{
+  "id": "1902d80e4cd41cb9716a9609848dc08a72db1a4916e95a3559250f2d695d3edc",
+  "name": "st-test-mysql-20260928-resume",
+  "database": "stcloud_resume",
+  "host": "127.0.0.1",
+  "port": 60328,
+  "mounts": [],
+  "label": "stcloud.test-task=TASK-20260927-TEST-RESUME"
+}

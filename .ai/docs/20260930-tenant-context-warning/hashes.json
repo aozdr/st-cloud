@@ -1,0 +1,7 @@
+{
+  "st-common/src/main/java/com/stcloud/common/context/TenantContext.java": "e6596cc4dcdf7a0d38c72a906a571190720a25a87ec5dd8e276630c2ca4f30f8",
+  "st-auth/src/main/java/com/stcloud/auth/service/UserSecurityService.java": "da65f1b2a2b0be0be80c523af7c4b58fd052253cf694519cb28afbcf2c0cdedf",
+  "st-auth/src/test/java/com/stcloud/auth/UserSecurityServiceIntegrationTest.java": "c78cba212e7b8138e63a2d65a72fa0b4ae517cec9f51f614954b9143f04a837e",
+  "st-auth/src/test/java/com/stcloud/auth/UserSecurityServiceMysqlIntegrationTest.java": "a1ab3562ddd1d8e9292eac44b90304bfc08e6c4212431401a78ac94ccab07268",
+  "st-auth/src/test/java/com/stcloud/auth/UserSecurityServiceTenantFailureTest.java": "7e012be5ce56867a5beab3d2399b2614885d24141e8ec3820febc4de0a5809e3"
+}

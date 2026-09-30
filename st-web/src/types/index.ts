@@ -348,6 +348,8 @@ export interface TeamSpace {
 }
   // isPinned comes from team_member, added by backend listSpaces (TODO: add to VO)
 
+export type TeamRoleId = string;
+
 export interface TeamMember {
   id: string;
   spaceId: string;
@@ -355,7 +357,7 @@ export interface TeamMember {
   username: string;
   nickname: string;
   avatar: string | null;
-  role: number; // 0-管理员 1-编辑者 2-查看者
+  role: TeamRoleId;
   joinedAt: string;
   lastActiveAt: string | null;
 }
@@ -640,7 +642,7 @@ export interface SyncRootVO {
   localPathHint: string | null;
   status: number;
   conflictStrategy: string;
-  cursor: number;
+  cursor: string;
   lastSyncAt: string | null;
   createdAt: string;
   updatedAt: string;
@@ -682,7 +684,7 @@ export interface TeamInvite {
   id: string;
   spaceId: string;
   inviteCode: string;
-  role: number;
+  role: TeamRoleId;
   createdBy: string;
   createdByName: string;
   expireAt: string | null;

@@ -1,0 +1,468 @@
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-09-30T10:42:17.589+08:00  INFO 15712 --- [st-cloud] [           main] com.stcloud.StCloudApplication           : Starting StCloudApplication v1.0.0-SNAPSHOT using Java 17.0.14 with PID 15712 (E:\code\st-cloud\st-api\target\st-api-1.0.0-SNAPSHOT.jar started by Administrator in E:\code\st-cloud)
+2026-09-30T10:42:17.594+08:00  INFO 15712 --- [st-cloud] [           main] com.stcloud.StCloudApplication           : The following 1 profile is active: "dev"
+2026-09-30T10:42:18.974+08:00  INFO 15712 --- [st-cloud] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Multiple Spring Data modules found, entering strict repository configuration mode
+2026-09-30T10:42:18.976+08:00  INFO 15712 --- [st-cloud] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data Redis repositories in DEFAULT mode.
+2026-09-30T10:42:19.019+08:00  INFO 15712 --- [st-cloud] [           main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 29 ms. Found 0 Redis repository interfaces.
+2026-09-30T10:42:19.748+08:00  WARN 15712 --- [st-cloud] [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T10:42:19.750+08:00  WARN 15712 --- [st-cloud] [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T10:42:19.827+08:00  WARN 15712 --- [st-cloud] [           main] trationDelegate$BeanPostProcessorChecker : Bean 'createRocketMQMessageConverter' of type [org.apache.rocketmq.spring.support.RocketMQMessageConverter] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T10:42:19.845+08:00  WARN 15712 --- [st-cloud] [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketmq-org.apache.rocketmq.spring.autoconfigure.RocketMQProperties' of type [org.apache.rocketmq.spring.autoconfigure.RocketMQProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T10:42:19.848+08:00  WARN 15712 --- [st-cloud] [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketMQMessageListenerContainerRegistrar' of type [org.apache.rocketmq.spring.support.RocketMQMessageListenerContainerRegistrar] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T10:42:20.227+08:00  INFO 15712 --- [st-cloud] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 18082 (http)
+2026-09-30T10:42:20.238+08:00  INFO 15712 --- [st-cloud] [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-09-30T10:42:20.239+08:00  INFO 15712 --- [st-cloud] [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.20]
+2026-09-30T10:42:20.284+08:00  INFO 15712 --- [st-cloud] [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-09-30T10:42:20.285+08:00  INFO 15712 --- [st-cloud] [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 2599 ms
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-09-30T10:42:20.755+08:00  INFO 15712 --- [st-cloud] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-09-30T10:42:21.036+08:00  INFO 15712 --- [st-cloud] [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@cea67b1
+2026-09-30T10:42:21.039+08:00  INFO 15712 --- [st-cloud] [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-09-30T10:42:21.242+08:00  WARN 15712 --- [st-cloud] [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:42:21.254+08:00  INFO 15712 --- [st-cloud] [           main] com.stcloud.common.utils.JwtUtils        : JWT ǩ����Կ��������ɲ��������
+2026-09-30T10:42:25.175+08:00  INFO 15712 --- [st-cloud] [           main] a.r.s.s.DefaultRocketMQListenerContainer : running container: DefaultRocketMQListenerContainer{consumerGroup='stcloud-core', namespace='', nameServer='127.0.0.1:29876', topic='PHYSICAL_DELETE', consumeMode=CONCURRENTLY, selectorType=TAG, selectorExpression='*', messageModel=CLUSTERING', tlsEnable=false, instanceName=DEFAULT}
+2026-09-30T10:42:25.175+08:00  INFO 15712 --- [st-cloud] [           main] ocketMQMessageListenerContainerRegistrar : Register the listener to container, listenerBeanName:physicalDeleteMessageConsumer, containerBeanName:org.apache.rocketmq.spring.support.DefaultRocketMQListenerContainer_1
+2026-09-30T10:42:25.424+08:00  INFO 15712 --- [st-cloud] [           main] o.a.r.s.a.RocketMQAutoConfiguration      : a producer (stcloud-team-recycle-test) init on namesrv 127.0.0.1:29876
+2026-09-30T10:42:26.763+08:00  INFO 15712 --- [st-cloud] [           main] a.r.s.s.DefaultRocketMQListenerContainer : running container: DefaultRocketMQListenerContainer{consumerGroup='stcloud-sync', namespace='', nameServer='127.0.0.1:29876', topic='SYNC_CHANGE', consumeMode=CONCURRENTLY, selectorType=TAG, selectorExpression='*', messageModel=CLUSTERING', tlsEnable=false, instanceName=DEFAULT}
+2026-09-30T10:42:26.763+08:00  INFO 15712 --- [st-cloud] [           main] ocketMQMessageListenerContainerRegistrar : Register the listener to container, listenerBeanName:syncChangeMessageConsumer, containerBeanName:org.apache.rocketmq.spring.support.DefaultRocketMQListenerContainer_2
+2026-09-30T10:42:27.096+08:00  INFO 15712 --- [st-cloud] [           main] c.s.search.init.SearchIndexInitializer   : ES pipeline 'file-content-pipeline' ensured
+2026-09-30T10:42:27.107+08:00  INFO 15712 --- [st-cloud] [           main] c.s.search.init.SearchIndexInitializer   : ES index 'file_content' already exists, skip creation
+2026-09-30T10:42:27.142+08:00  INFO 15712 --- [st-cloud] [           main] c.s.search.init.SearchIndexInitializer   : ES index 'file_content' ngram sub-fields already present
+2026-09-30T10:42:27.142+08:00  INFO 15712 --- [st-cloud] [           main] c.s.search.init.SearchIndexInitializer   : ES search index and pipeline initialized successfully
+2026-09-30T10:42:27.666+08:00  INFO 15712 --- [st-cloud] [           main] a.r.s.s.DefaultRocketMQListenerContainer : running container: DefaultRocketMQListenerContainer{consumerGroup='stcloud-search', namespace='', nameServer='127.0.0.1:29876', topic='FILE_INDEX', consumeMode=CONCURRENTLY, selectorType=TAG, selectorExpression='*', messageModel=CLUSTERING', tlsEnable=false, instanceName=DEFAULT}
+2026-09-30T10:42:27.667+08:00  INFO 15712 --- [st-cloud] [           main] ocketMQMessageListenerContainerRegistrar : Register the listener to container, listenerBeanName:fileIndexMessageConsumer, containerBeanName:org.apache.rocketmq.spring.support.DefaultRocketMQListenerContainer_3
+2026-09-30T10:42:28.156+08:00  INFO 15712 --- [st-cloud] [           main] o.s.s.web.DefaultSecurityFilterChain     : Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@7d2dfe9c, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@60b721c9, org.springframework.security.web.context.SecurityContextHolderFilter@3d2e1d18, org.springframework.security.web.header.HeaderWriterFilter@6c758c74, org.springframework.web.filter.CorsFilter@4f2ab774, org.springframework.security.web.authentication.logout.LogoutFilter@15363eba, com.stcloud.auth.security.JwtAuthenticationFilter@18d14de3, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@402d443d, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@32e0b990, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@f57ced1, org.springframework.security.web.session.SessionManagementFilter@7b0a864e, org.springframework.security.web.access.ExceptionTranslationFilter@2aee0173, org.springframework.security.web.access.intercept.AuthorizationFilter@1ab6a093]
+2026-09-30T10:42:28.606+08:00  INFO 15712 --- [st-cloud] [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 18082 (http) with context path ''
+2026-09-30T10:42:28.625+08:00  INFO 15712 --- [st-cloud] [           main] com.stcloud.StCloudApplication           : Started StCloudApplication in 11.564 seconds (process running for 12.131)
+2026-09-30T10:42:28.634+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:42:28.856+08:00  INFO 15712 --- [st-cloud] [           main] c.s.core.config.StorageInitializer       : S3 Bucket�����ɹ�: stcloud-team-recycle-20260930
+2026-09-30T10:42:28.934+08:00  INFO 15712 --- [st-cloud] [           main] c.s.core.config.StorageInitializer       : S3 Bucket CORS���óɹ�: stcloud-team-recycle-20260930
+2026-09-30T10:42:28.966+08:00  INFO 15712 --- [st-cloud] [           main] c.s.core.config.StorageInitializer       : S3 Bucket�����ɹ�: stcloud-team-recycle-chunks-20260930
+2026-09-30T10:42:28.993+08:00  INFO 15712 --- [st-cloud] [           main] c.s.core.config.StorageInitializer       : S3 Bucket CORS���óɹ�: stcloud-team-recycle-chunks-20260930
+2026-09-30T10:42:29.022+08:00  INFO 15712 --- [st-cloud] [           main] c.s.core.config.StorageInitializer       : S3 Bucket�����ɹ�: stcloud-team-recycle-preview-20260930
+2026-09-30T10:42:29.046+08:00  INFO 15712 --- [st-cloud] [           main] c.s.core.config.StorageInitializer       : S3 Bucket CORS���óɹ�: stcloud-team-recycle-preview-20260930
+2026-09-30T10:43:28.646+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:27.555+08:00  INFO 15712 --- [st-cloud] [io-18082-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-09-30T10:44:27.555+08:00  INFO 15712 --- [st-cloud] [io-18082-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-09-30T10:44:27.557+08:00  INFO 15712 --- [st-cloud] [io-18082-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 2 ms
+2026-09-30T10:44:27.728+08:00  WARN 15712 --- [st-cloud] [io-18082-exec-2] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:28.268+08:00  INFO 15712 --- [st-cloud] [io-18082-exec-2] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=admin, userId=1
+2026-09-30T10:44:28.277+08:00  WARN 15712 --- [st-cloud] [udit-log-writer] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:28.373+08:00  WARN 15712 --- [st-cloud] [io-18082-exec-3] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:28.419+08:00  INFO 15712 --- [st-cloud] [io-18082-exec-3] com.stcloud.auth.service.AuthService     : �û�ע��ɹ�: username=recycle-admin-1790736268, userId=2105126603968233474, tenantId=1
+2026-09-30T10:44:28.458+08:00  WARN 15712 --- [st-cloud] [udit-log-writer] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:28.534+08:00  WARN 15712 --- [st-cloud] [io-18082-exec-5] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:28.572+08:00  INFO 15712 --- [st-cloud] [io-18082-exec-5] com.stcloud.auth.service.AuthService     : �û�ע��ɹ�: username=recycle-editor-1790736268, userId=2105126604618350593, tenantId=1
+2026-09-30T10:44:28.609+08:00  WARN 15712 --- [st-cloud] [udit-log-writer] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:28.650+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:28.655+08:00  WARN 15712 --- [st-cloud] [io-18082-exec-4] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:28.702+08:00  INFO 15712 --- [st-cloud] [io-18082-exec-4] c.s.team.service.impl.TeamServiceImpl    : �û�1�����Ŷӿռ�: spaceId=2105126605180387330, name=HTTP���ջع�-1790736268
+2026-09-30T10:44:28.722+08:00  WARN 15712 --- [st-cloud] [io-18082-exec-6] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:28.774+08:00  WARN 15712 --- [st-cloud] [activity-writer] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:28.778+08:00  WARN 15712 --- [st-cloud] [activity-writer] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:28.796+08:00  WARN 15712 --- [st-cloud] [io-18082-exec-7] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:28.823+08:00  WARN 15712 --- [st-cloud] [activity-writer] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:28.825+08:00  WARN 15712 --- [st-cloud] [activity-writer] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:51.952+08:00  WARN 15712 --- [st-cloud] [io-18082-exec-9] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:52.031+08:00  INFO 15712 --- [st-cloud] [io-18082-exec-9] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=admin, userId=1
+2026-09-30T10:44:52.034+08:00  WARN 15712 --- [st-cloud] [udit-log-writer] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:52.096+08:00  WARN 15712 --- [st-cloud] [o-18082-exec-10] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:52.110+08:00  INFO 15712 --- [st-cloud] [o-18082-exec-10] com.stcloud.auth.service.AuthService     : �û�ע��ɹ�: username=recycle-admin-1790736292, userId=2105126703369043969, tenantId=1
+2026-09-30T10:44:52.521+08:00  WARN 15712 --- [st-cloud] [udit-log-writer] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:52.607+08:00  WARN 15712 --- [st-cloud] [io-18082-exec-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:52.621+08:00  INFO 15712 --- [st-cloud] [io-18082-exec-1] com.stcloud.auth.service.AuthService     : �û�ע��ɹ�: username=recycle-editor-1790736292, userId=2105126705520721921, tenantId=1
+2026-09-30T10:44:52.647+08:00  WARN 15712 --- [st-cloud] [udit-log-writer] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:52.652+08:00  WARN 15712 --- [st-cloud] [io-18082-exec-2] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:52.665+08:00  INFO 15712 --- [st-cloud] [io-18082-exec-2] c.s.team.service.impl.TeamServiceImpl    : �û�1�����Ŷӿռ�: spaceId=2105126705713659906, name=HTTP���ջع�-1790736292
+2026-09-30T10:44:52.677+08:00  WARN 15712 --- [st-cloud] [io-18082-exec-3] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:52.701+08:00  WARN 15712 --- [st-cloud] [activity-writer] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:52.704+08:00  WARN 15712 --- [st-cloud] [activity-writer] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:52.715+08:00  WARN 15712 --- [st-cloud] [io-18082-exec-5] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:52.733+08:00  WARN 15712 --- [st-cloud] [activity-writer] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:52.736+08:00  WARN 15712 --- [st-cloud] [activity-writer] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:52.745+08:00  WARN 15712 --- [st-cloud] [io-18082-exec-4] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:52.811+08:00  WARN 15712 --- [st-cloud] [activity-writer] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:52.813+08:00  WARN 15712 --- [st-cloud] [activity-writer] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:52.819+08:00  WARN 15712 --- [st-cloud] [io-18082-exec-6] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:52.879+08:00  WARN 15712 --- [st-cloud] [activity-writer] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:52.883+08:00  WARN 15712 --- [st-cloud] [activity-writer] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:52.887+08:00  WARN 15712 --- [st-cloud] [io-18082-exec-7] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:53.006+08:00  INFO 15712 --- [st-cloud] [io-18082-exec-7] c.s.c.service.impl.StorageServiceImpl    : S3���ϴ��ɹ�: bucket=stcloud-team-recycle-20260930, key=1/d41d8cd98f00b204e9800998ecf8427e
+2026-09-30T10:44:53.028+08:00  WARN 15712 --- [st-cloud] [activity-writer] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:53.029+08:00  WARN 15712 --- [st-cloud] [activity-writer] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:53.034+08:00  WARN 15712 --- [st-cloud] [io-18082-exec-8] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:53.119+08:00  WARN 15712 --- [st-cloud] [activity-writer] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:53.121+08:00  WARN 15712 --- [st-cloud] [activity-writer] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:53.127+08:00  WARN 15712 --- [st-cloud] [io-18082-exec-9] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:53.180+08:00  WARN 15712 --- [st-cloud] [o-18082-exec-10] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:53.194+08:00  WARN 15712 --- [st-cloud] [io-18082-exec-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:53.212+08:00 ERROR 15712 --- [st-cloud] [io-18082-exec-1] com.stcloud.admin.aspect.AuditAspect     : ��Ʋ����쳣: action=RESTORE
+
+com.stcloud.common.exception.BusinessException: ��Ȩ��
+	at com.stcloud.core.service.impl.RecycleBinServiceImpl.getAuthorizedRecycleNode(RecycleBinServiceImpl.java:286) ~[st-core-1.0.0-SNAPSHOT.jar!/:1.0.0-SNAPSHOT]
+	at com.stcloud.core.service.impl.RecycleBinServiceImpl.restore(RecycleBinServiceImpl.java:76) ~[st-core-1.0.0-SNAPSHOT.jar!/:1.0.0-SNAPSHOT]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[na:na]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[na:na]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569) ~[na:na]
+	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:354) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:196) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:163) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.transaction.interceptor.TransactionInterceptor$1.proceedWithInvocation(TransactionInterceptor.java:123) ~[spring-tx-6.1.6.jar!/:6.1.6]
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:392) ~[spring-tx-6.1.6.jar!/:6.1.6]
+	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:119) ~[spring-tx-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:720) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at com.stcloud.core.service.impl.RecycleBinServiceImpl$$SpringCGLIB$$0.restore(<generated>) ~[st-core-1.0.0-SNAPSHOT.jar!/:1.0.0-SNAPSHOT]
+	at com.stcloud.core.controller.RecycleBinController.restore(RecycleBinController.java:37) ~[st-core-1.0.0-SNAPSHOT.jar!/:1.0.0-SNAPSHOT]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[na:na]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[na:na]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569) ~[na:na]
+	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:354) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:196) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:163) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.aspectj.MethodInvocationProceedingJoinPoint.proceed(MethodInvocationProceedingJoinPoint.java:89) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at com.stcloud.admin.aspect.AuditAspect.audit(AuditAspect.java:62) ~[st-admin-1.0.0-SNAPSHOT.jar!/:1.0.0-SNAPSHOT]
+	at jdk.internal.reflect.GeneratedMethodAccessor105.invoke(Unknown Source) ~[na:na]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569) ~[na:na]
+	at org.springframework.aop.aspectj.AbstractAspectJAdvice.invokeAdviceMethodWithGivenArgs(AbstractAspectJAdvice.java:637) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.aspectj.AbstractAspectJAdvice.invokeAdviceMethod(AbstractAspectJAdvice.java:627) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.aspectj.AspectJAroundAdvice.invoke(AspectJAroundAdvice.java:71) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:173) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.security.authorization.method.AuthorizationManagerBeforeMethodInterceptor.invoke(AuthorizationManagerBeforeMethodInterceptor.java:198) ~[spring-security-core-6.2.4.jar!/:6.2.4]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.interceptor.ExposeInvocationInterceptor.invoke(ExposeInvocationInterceptor.java:97) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:720) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at com.stcloud.core.controller.RecycleBinController$$SpringCGLIB$$0.restore(<generated>) ~[st-core-1.0.0-SNAPSHOT.jar!/:1.0.0-SNAPSHOT]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[na:na]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[na:na]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569) ~[na:na]
+	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:255) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:188) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:118) ~[spring-webmvc-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:926) ~[spring-webmvc-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:831) ~[spring-webmvc-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87) ~[spring-webmvc-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1089) ~[spring-webmvc-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:979) ~[spring-webmvc-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1014) ~[spring-webmvc-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:914) ~[spring-webmvc-6.1.6.jar!/:6.1.6]
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:590) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:885) ~[spring-webmvc-6.1.6.jar!/:6.1.6]
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:658) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:206) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51) ~[tomcat-embed-websocket-10.1.20.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:110) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:108) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.springframework.security.web.FilterChainProxy.lambda$doFilterInternal$3(FilterChainProxy.java:231) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:365) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.access.intercept.AuthorizationFilter.doFilter(AuthorizationFilter.java:100) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:126) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:120) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:131) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:85) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.authentication.AnonymousAuthenticationFilter.doFilter(AnonymousAuthenticationFilter.java:100) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter.doFilter(SecurityContextHolderAwareRequestFilter.java:179) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.savedrequest.RequestCacheAwareFilter.doFilter(RequestCacheAwareFilter.java:63) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at com.stcloud.auth.security.JwtAuthenticationFilter.doFilterInternal(JwtAuthenticationFilter.java:113) ~[st-auth-1.0.0-SNAPSHOT.jar!/:1.0.0-SNAPSHOT]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:107) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:93) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.web.filter.CorsFilter.doFilterInternal(CorsFilter.java:91) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.header.HeaderWriterFilter.doHeadersAfter(HeaderWriterFilter.java:90) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.header.HeaderWriterFilter.doFilterInternal(HeaderWriterFilter.java:75) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:82) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:69) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter.doFilterInternal(WebAsyncManagerIntegrationFilter.java:62) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.session.DisableEncodeUrlFilter.doFilterInternal(DisableEncodeUrlFilter.java:42) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.FilterChainProxy.doFilterInternal(FilterChainProxy.java:233) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.FilterChainProxy.doFilter(FilterChainProxy.java:191) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.servlet.handler.HandlerMappingIntrospector.lambda$createCacheFilter$3(HandlerMappingIntrospector.java:195) ~[spring-webmvc-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.filter.CompositeFilter.doFilter(CompositeFilter.java:74) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.springframework.security.config.annotation.web.configuration.WebMvcSecurityConfiguration$CompositeFilterChainProxy.doFilter(WebMvcSecurityConfiguration.java:230) ~[spring-security-config-6.2.4.jar!/:6.2.4]
+	at org.springframework.web.filter.DelegatingFilterProxy.invokeDelegate(DelegatingFilterProxy.java:352) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.filter.DelegatingFilterProxy.doFilter(DelegatingFilterProxy.java:268) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:167) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:90) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:482) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:115) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:93) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:344) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:391) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:896) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1736) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1191) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:659) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:63) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at java.base/java.lang.Thread.run(Thread.java:840) ~[na:na]
+
+2026-09-30T10:44:53.230+08:00  WARN 15712 --- [st-cloud] [io-18082-exec-1] c.s.c.exception.GlobalExceptionHandler   : ҵ���쳣: code=403, message=��Ȩ��
+2026-09-30T10:44:53.235+08:00  WARN 15712 --- [st-cloud] [io-18082-exec-2] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:53.248+08:00 ERROR 15712 --- [st-cloud] [io-18082-exec-2] com.stcloud.admin.aspect.AuditAspect     : ��Ʋ����쳣: action=PERMANENT_DELETE
+
+com.stcloud.common.exception.BusinessException: ��Ȩ��
+	at com.stcloud.core.service.impl.RecycleBinServiceImpl.getAuthorizedRecycleNode(RecycleBinServiceImpl.java:286) ~[st-core-1.0.0-SNAPSHOT.jar!/:1.0.0-SNAPSHOT]
+	at com.stcloud.core.service.impl.RecycleBinServiceImpl.permanentDelete(RecycleBinServiceImpl.java:152) ~[st-core-1.0.0-SNAPSHOT.jar!/:1.0.0-SNAPSHOT]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[na:na]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[na:na]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569) ~[na:na]
+	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:354) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:196) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:163) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.transaction.interceptor.TransactionInterceptor$1.proceedWithInvocation(TransactionInterceptor.java:123) ~[spring-tx-6.1.6.jar!/:6.1.6]
+	at org.springframework.transaction.interceptor.TransactionAspectSupport.invokeWithinTransaction(TransactionAspectSupport.java:392) ~[spring-tx-6.1.6.jar!/:6.1.6]
+	at org.springframework.transaction.interceptor.TransactionInterceptor.invoke(TransactionInterceptor.java:119) ~[spring-tx-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:720) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at com.stcloud.core.service.impl.RecycleBinServiceImpl$$SpringCGLIB$$0.permanentDelete(<generated>) ~[st-core-1.0.0-SNAPSHOT.jar!/:1.0.0-SNAPSHOT]
+	at com.stcloud.core.controller.RecycleBinController.permanentDelete(RecycleBinController.java:46) ~[st-core-1.0.0-SNAPSHOT.jar!/:1.0.0-SNAPSHOT]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[na:na]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[na:na]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569) ~[na:na]
+	at org.springframework.aop.support.AopUtils.invokeJoinpointUsingReflection(AopUtils.java:354) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.invokeJoinpoint(ReflectiveMethodInvocation.java:196) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:163) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.aspectj.MethodInvocationProceedingJoinPoint.proceed(MethodInvocationProceedingJoinPoint.java:89) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at com.stcloud.admin.aspect.AuditAspect.audit(AuditAspect.java:62) ~[st-admin-1.0.0-SNAPSHOT.jar!/:1.0.0-SNAPSHOT]
+	at jdk.internal.reflect.GeneratedMethodAccessor105.invoke(Unknown Source) ~[na:na]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569) ~[na:na]
+	at org.springframework.aop.aspectj.AbstractAspectJAdvice.invokeAdviceMethodWithGivenArgs(AbstractAspectJAdvice.java:637) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.aspectj.AbstractAspectJAdvice.invokeAdviceMethod(AbstractAspectJAdvice.java:627) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.aspectj.AspectJAroundAdvice.invoke(AspectJAroundAdvice.java:71) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:173) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.security.authorization.method.AuthorizationManagerBeforeMethodInterceptor.invoke(AuthorizationManagerBeforeMethodInterceptor.java:198) ~[spring-security-core-6.2.4.jar!/:6.2.4]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.interceptor.ExposeInvocationInterceptor.invoke(ExposeInvocationInterceptor.java:97) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.framework.ReflectiveMethodInvocation.proceed(ReflectiveMethodInvocation.java:184) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.framework.CglibAopProxy$CglibMethodInvocation.proceed(CglibAopProxy.java:768) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at org.springframework.aop.framework.CglibAopProxy$DynamicAdvisedInterceptor.intercept(CglibAopProxy.java:720) ~[spring-aop-6.1.6.jar!/:6.1.6]
+	at com.stcloud.core.controller.RecycleBinController$$SpringCGLIB$$0.permanentDelete(<generated>) ~[st-core-1.0.0-SNAPSHOT.jar!/:1.0.0-SNAPSHOT]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method) ~[na:na]
+	at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77) ~[na:na]
+	at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43) ~[na:na]
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569) ~[na:na]
+	at org.springframework.web.method.support.InvocableHandlerMethod.doInvoke(InvocableHandlerMethod.java:255) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.method.support.InvocableHandlerMethod.invokeForRequest(InvocableHandlerMethod.java:188) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.servlet.mvc.method.annotation.ServletInvocableHandlerMethod.invokeAndHandle(ServletInvocableHandlerMethod.java:118) ~[spring-webmvc-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.invokeHandlerMethod(RequestMappingHandlerAdapter.java:926) ~[spring-webmvc-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter.handleInternal(RequestMappingHandlerAdapter.java:831) ~[spring-webmvc-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.servlet.mvc.method.AbstractHandlerMethodAdapter.handle(AbstractHandlerMethodAdapter.java:87) ~[spring-webmvc-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.servlet.DispatcherServlet.doDispatch(DispatcherServlet.java:1089) ~[spring-webmvc-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.servlet.DispatcherServlet.doService(DispatcherServlet.java:979) ~[spring-webmvc-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.servlet.FrameworkServlet.processRequest(FrameworkServlet.java:1014) ~[spring-webmvc-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.servlet.FrameworkServlet.doPost(FrameworkServlet.java:914) ~[spring-webmvc-6.1.6.jar!/:6.1.6]
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:590) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.springframework.web.servlet.FrameworkServlet.service(FrameworkServlet.java:885) ~[spring-webmvc-6.1.6.jar!/:6.1.6]
+	at jakarta.servlet.http.HttpServlet.service(HttpServlet.java:658) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:206) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.tomcat.websocket.server.WsFilter.doFilter(WsFilter.java:51) ~[tomcat-embed-websocket-10.1.20.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:110) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:108) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.springframework.security.web.FilterChainProxy.lambda$doFilterInternal$3(FilterChainProxy.java:231) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:365) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.access.intercept.AuthorizationFilter.doFilter(AuthorizationFilter.java:100) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:126) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.access.ExceptionTranslationFilter.doFilter(ExceptionTranslationFilter.java:120) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:131) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.session.SessionManagementFilter.doFilter(SessionManagementFilter.java:85) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.authentication.AnonymousAuthenticationFilter.doFilter(AnonymousAuthenticationFilter.java:100) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter.doFilter(SecurityContextHolderAwareRequestFilter.java:179) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.savedrequest.RequestCacheAwareFilter.doFilter(RequestCacheAwareFilter.java:63) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at com.stcloud.auth.security.JwtAuthenticationFilter.doFilterInternal(JwtAuthenticationFilter.java:113) ~[st-auth-1.0.0-SNAPSHOT.jar!/:1.0.0-SNAPSHOT]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:107) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.authentication.logout.LogoutFilter.doFilter(LogoutFilter.java:93) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.web.filter.CorsFilter.doFilterInternal(CorsFilter.java:91) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.header.HeaderWriterFilter.doHeadersAfter(HeaderWriterFilter.java:90) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.header.HeaderWriterFilter.doFilterInternal(HeaderWriterFilter.java:75) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:82) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.context.SecurityContextHolderFilter.doFilter(SecurityContextHolderFilter.java:69) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter.doFilterInternal(WebAsyncManagerIntegrationFilter.java:62) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.session.DisableEncodeUrlFilter.doFilterInternal(DisableEncodeUrlFilter.java:42) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.springframework.security.web.FilterChainProxy$VirtualFilterChain.doFilter(FilterChainProxy.java:374) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.FilterChainProxy.doFilterInternal(FilterChainProxy.java:233) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.security.web.FilterChainProxy.doFilter(FilterChainProxy.java:191) ~[spring-security-web-6.2.4.jar!/:6.2.4]
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.servlet.handler.HandlerMappingIntrospector.lambda$createCacheFilter$3(HandlerMappingIntrospector.java:195) ~[spring-webmvc-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.filter.CompositeFilter$VirtualFilterChain.doFilter(CompositeFilter.java:113) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.filter.CompositeFilter.doFilter(CompositeFilter.java:74) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.springframework.security.config.annotation.web.configuration.WebMvcSecurityConfiguration$CompositeFilterChainProxy.doFilter(WebMvcSecurityConfiguration.java:230) ~[spring-security-config-6.2.4.jar!/:6.2.4]
+	at org.springframework.web.filter.DelegatingFilterProxy.invokeDelegate(DelegatingFilterProxy.java:352) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.filter.DelegatingFilterProxy.doFilter(DelegatingFilterProxy.java:268) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.springframework.web.filter.RequestContextFilter.doFilterInternal(RequestContextFilter.java:100) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.springframework.web.filter.FormContentFilter.doFilterInternal(FormContentFilter.java:93) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.springframework.web.filter.CharacterEncodingFilter.doFilterInternal(CharacterEncodingFilter.java:201) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.springframework.web.filter.OncePerRequestFilter.doFilter(OncePerRequestFilter.java:116) ~[spring-web-6.1.6.jar!/:6.1.6]
+	at org.apache.catalina.core.ApplicationFilterChain.internalDoFilter(ApplicationFilterChain.java:175) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.catalina.core.ApplicationFilterChain.doFilter(ApplicationFilterChain.java:150) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.catalina.core.StandardWrapperValve.invoke(StandardWrapperValve.java:167) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.catalina.core.StandardContextValve.invoke(StandardContextValve.java:90) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.catalina.authenticator.AuthenticatorBase.invoke(AuthenticatorBase.java:482) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.catalina.core.StandardHostValve.invoke(StandardHostValve.java:115) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.catalina.valves.ErrorReportValve.invoke(ErrorReportValve.java:93) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.catalina.core.StandardEngineValve.invoke(StandardEngineValve.java:74) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.catalina.connector.CoyoteAdapter.service(CoyoteAdapter.java:344) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.coyote.http11.Http11Processor.service(Http11Processor.java:391) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.coyote.AbstractProcessorLight.process(AbstractProcessorLight.java:63) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.coyote.AbstractProtocol$ConnectionHandler.process(AbstractProtocol.java:896) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.tomcat.util.net.NioEndpoint$SocketProcessor.doRun(NioEndpoint.java:1736) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.tomcat.util.net.SocketProcessorBase.run(SocketProcessorBase.java:52) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1191) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.tomcat.util.threads.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:659) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at org.apache.tomcat.util.threads.TaskThread$WrappingRunnable.run(TaskThread.java:63) ~[tomcat-embed-core-10.1.20.jar!/:na]
+	at java.base/java.lang.Thread.run(Thread.java:840) ~[na:na]
+
+2026-09-30T10:44:53.258+08:00  WARN 15712 --- [st-cloud] [io-18082-exec-2] c.s.c.exception.GlobalExceptionHandler   : ҵ���쳣: code=403, message=��Ȩ��
+2026-09-30T10:44:53.262+08:00  WARN 15712 --- [st-cloud] [io-18082-exec-3] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:53.337+08:00  WARN 15712 --- [st-cloud] [io-18082-exec-5] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:53.393+08:00  WARN 15712 --- [st-cloud] [io-18082-exec-4] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:58.353+08:00  WARN 15712 --- [st-cloud] [_stcloud-sync_7] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:58.353+08:00  WARN 15712 --- [st-cloud] [_stcloud-sync_5] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:58.353+08:00  WARN 15712 --- [st-cloud] [_stcloud-sync_6] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:58.353+08:00  WARN 15712 --- [st-cloud] [_stcloud-sync_2] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:58.354+08:00  WARN 15712 --- [st-cloud] [_stcloud-sync_1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:58.354+08:00  WARN 15712 --- [st-cloud] [_stcloud-sync_4] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:58.354+08:00  WARN 15712 --- [st-cloud] [_stcloud-sync_3] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:44:59.241+08:00  INFO 15712 --- [st-cloud] [tcloud-search_5] c.s.s.service.impl.SearchServiceImpl     : Removed file 2105126706233753602 from ES index
+2026-09-30T10:44:59.241+08:00  INFO 15712 --- [st-cloud] [tcloud-search_3] c.s.s.service.impl.SearchServiceImpl     : Indexed metadata for node 2105126706569297922 to ES, name=����Ա��Ŀ¼
+2026-09-30T10:44:59.241+08:00  INFO 15712 --- [st-cloud] [tcloud-search_1] c.s.s.service.impl.SearchServiceImpl     : Indexed metadata for node 2105126706569297922 to ES, name=����Ա��Ŀ¼
+2026-09-30T10:44:59.241+08:00  INFO 15712 --- [st-cloud] [tcloud-search_2] c.s.s.service.impl.SearchServiceImpl     : Indexed metadata for node 2105126706233753602 to ES, name=HTTP����Ŀ¼
+2026-09-30T10:44:59.241+08:00  INFO 15712 --- [st-cloud] [tcloud-search_4] c.s.s.service.impl.SearchServiceImpl     : Indexed metadata for node 2105126706233753602 to ES, name=HTTP����Ŀ¼
+2026-09-30T10:44:59.514+08:00  INFO 15712 --- [st-cloud] [tcloud-search_6] c.s.s.service.impl.SearchServiceImpl     : Indexed file 2105126707181666305 to ES, name=��ʵ�洢�ع�.txt, size=0bytes
+2026-09-30T10:44:59.519+08:00  INFO 15712 --- [st-cloud] [tcloud-search_7] c.s.s.service.impl.SearchServiceImpl     : Indexed file 2105126707181666305 to ES, name=��ʵ�洢�ع�.txt, size=0bytes
+2026-09-30T10:45:28.653+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:46:28.655+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:47:28.659+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:48:28.661+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:49:28.664+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:50:28.666+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:51:28.668+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:52:28.670+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:53:28.674+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:54:28.677+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:55:28.680+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:56:28.683+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:57:28.686+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:58:28.689+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T10:59:28.692+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T11:00:00.002+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T11:00:28.695+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T11:01:28.697+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T11:02:28.701+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T11:03:28.703+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T11:04:28.705+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T11:05:28.708+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T11:06:28.710+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T11:07:28.714+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T11:08:28.716+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T11:09:28.719+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T11:10:28.721+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T11:11:28.723+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T11:12:28.725+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T11:13:28.728+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T11:14:28.731+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T11:15:28.734+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T11:16:28.737+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T11:17:28.739+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T11:18:28.741+08:00  WARN 15712 --- [st-cloud] [   scheduling-1] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������

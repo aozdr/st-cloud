@@ -1,0 +1,121 @@
+✔ TC04-24/25: keep_both/fail-upload 真实上传任务失败保留基线和cursor (4621.2481ms)
+✔ TC04-24/25: keep_both/fail-timeout 真实上传任务失败保留基线和cursor (3648.1341ms)
+✔ TC04-24/25: local_wins/fail-upload 真实上传任务失败保留基线和cursor (3647.057ms)
+✔ TC04-24/25: local_wins/fail-timeout 真实上传任务失败保留基线和cursor (2555.4542ms)
+✔ TC04-24/25: latest_wins/fail-upload 真实上传任务失败保留基线和cursor (3451.5275ms)
+✔ TC04-24/25: latest_wins/fail-timeout 真实上传任务失败保留基线和cursor (2475.8361ms)
+✔ TC04-26/27: conflict-keep_both/fail-download 连续失败重启保持原身份与MD5 (6013.0496ms)
+✖ TC04-26/27: conflict-reconcile-baseline/fail-download 连续失败重启保持原身份与MD5 (12065.5278ms)
+✖ TC04-26/27: conflict-reconcile-other/fail-download 连续失败重启保持原身份与MD5 (12211.3575ms)
+✔ TC04-26/27: conflict-keep_both/fail-upload 连续失败重启保持原身份与MD5 (6105.7092ms)
+✖ TC04-26/27: conflict-reconcile-baseline/fail-upload 连续失败重启保持原身份与MD5 (5107.3989ms)
+✖ TC04-26/27: conflict-reconcile-other/fail-upload 连续失败重启保持原身份与MD5 (5107.8438ms)
+✔ TC04-26/27: conflict-keep_both/fail-both 连续失败重启保持原身份与MD5 (6037.4466ms)
+✔ TC04-26/27: conflict-reconcile-baseline/fail-both 连续失败重启保持原身份与MD5 (6085.0076ms)
+✔ TC04-26/27: conflict-reconcile-other/fail-both 连续失败重启保持原身份与MD5 (6042.5507ms)
+ℹ tests 15
+ℹ suites 0
+ℹ pass 11
+ℹ fail 4
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 85279.9505
+
+✖ failing tests:
+
+test at src\sync\sync-restart.test.cjs:64:5
+✖ TC04-26/27: conflict-reconcile-baseline/fail-download 连续失败重启保持原身份与MD5 (12065.5278ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + '9007199254740997'
+  - '9007199254740999'
+                    ^
+  
+      at TestContext.<anonymous> (E:\code\st-cloud\st-desktop\src\sync\sync-restart.test.cjs:78:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '9007199254740997',
+    expected: '9007199254740999',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at src\sync\sync-restart.test.cjs:64:5
+✖ TC04-26/27: conflict-reconcile-other/fail-download 连续失败重启保持原身份与MD5 (12211.3575ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + '9007199254740997'
+  - '9007199254740999'
+                    ^
+  
+      at TestContext.<anonymous> (E:\code\st-cloud\st-desktop\src\sync\sync-restart.test.cjs:78:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '9007199254740997',
+    expected: '9007199254740999',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at src\sync\sync-restart.test.cjs:64:5
+✖ TC04-26/27: conflict-reconcile-baseline/fail-upload 连续失败重启保持原身份与MD5 (5107.3989ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + '9007199254740997'
+  - '9007199254740999'
+                    ^
+  
+      at TestContext.<anonymous> (E:\code\st-cloud\st-desktop\src\sync\sync-restart.test.cjs:78:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '9007199254740997',
+    expected: '9007199254740999',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at src\sync\sync-restart.test.cjs:64:5
+✖ TC04-26/27: conflict-reconcile-other/fail-upload 连续失败重启保持原身份与MD5 (5107.8438ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + '9007199254740997'
+  - '9007199254740999'
+                    ^
+  
+      at TestContext.<anonymous> (E:\code\st-cloud\st-desktop\src\sync\sync-restart.test.cjs:78:14)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '9007199254740997',
+    expected: '9007199254740999',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

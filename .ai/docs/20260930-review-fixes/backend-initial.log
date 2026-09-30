@@ -1,0 +1,339 @@
+[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO] 
+[INFO] ������ Parent                                                         [pom]
+[INFO] ������ Common                                                         [jar]
+[INFO] ������ Auth                                                           [jar]
+[INFO] ������ Core                                                           [jar]
+[INFO] ������ Search                                                         [jar]
+[INFO] ������ Team                                                           [jar]
+[INFO] 
+[INFO] --------------------< com.stcloud:st-cloud-parent >---------------------
+[INFO] Building ������ Parent 1.0.0-SNAPSHOT                                 [1/6]
+[INFO]   from pom.xml
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO] 
+[INFO] -----------------------< com.stcloud:st-common >------------------------
+[INFO] Building ������ Common 1.0.0-SNAPSHOT                                 [2/6]
+[INFO]   from st-common\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ st-common ---
+[INFO] skip non existing resourceDirectory E:\code\st-cloud\st-common\src\main\resources
+[INFO] skip non existing resourceDirectory E:\code\st-cloud\st-common\src\main\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ st-common ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ st-common ---
+[INFO] skip non existing resourceDirectory E:\code\st-cloud\st-common\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ st-common ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- surefire:3.1.2:test (default-test) @ st-common ---
+[INFO] 
+[INFO] ------------------------< com.stcloud:st-auth >-------------------------
+[INFO] Building ������ Auth 1.0.0-SNAPSHOT                                   [3/6]
+[INFO]   from st-auth\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ st-auth ---
+[INFO] skip non existing resourceDirectory E:\code\st-cloud\st-auth\src\main\resources
+[INFO] skip non existing resourceDirectory E:\code\st-cloud\st-auth\src\main\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ st-auth ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 24 source files with javac [debug release 17] to target\classes
+[INFO] /E:/code/st-cloud/st-auth/src/main/java/com/stcloud/auth/security/JwtAuthenticationFilter.java: E:\code\st-cloud\st-auth\src\main\java\com\stcloud\auth\security\JwtAuthenticationFilter.javaʹ����δ�����򲻰�ȫ�Ĳ�����
+[INFO] /E:/code/st-cloud/st-auth/src/main/java/com/stcloud/auth/security/JwtAuthenticationFilter.java: �й���ϸ��Ϣ, ��ʹ�� -Xlint:unchecked ���±��롣
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ st-auth ---
+[INFO] Copying 2 resources from src\test\resources to target\test-classes
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ st-auth ---
+[INFO] Changes detected - recompiling the module! :dependency
+[INFO] Compiling 5 source files with javac [debug release 17] to target\test-classes
+[INFO] 
+[INFO] --- surefire:3.1.2:test (default-test) @ st-auth ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.stcloud.auth.AuthServiceIntegrationTest
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-09-30T09:49:11.953+08:00  INFO 34444 --- [           main] c.s.auth.AuthServiceIntegrationTest      : Starting AuthServiceIntegrationTest using Java 17.0.14 with PID 34444 (started by Administrator in E:\code\st-cloud\st-auth)
+2026-09-30T09:49:11.955+08:00  INFO 34444 --- [           main] c.s.auth.AuthServiceIntegrationTest      : The following 1 profile is active: "test"
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-09-30T09:49:12.891+08:00  INFO 34444 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-09-30T09:49:13.047+08:00  INFO 34444 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:stauth-test user=SA
+2026-09-30T09:49:13.049+08:00  INFO 34444 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+2026-09-30T09:49:15.375+08:00  WARN 34444 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T09:49:15.379+08:00  INFO 34444 --- [           main] com.stcloud.common.utils.JwtUtils        : JWT ǩ����Կ��������ɲ��������
+2026-09-30T09:49:15.649+08:00  INFO 34444 --- [           main] c.s.auth.AuthServiceIntegrationTest      : Started AuthServiceIntegrationTest in 4.026 seconds (process running for 5.311)
+2026-09-30T09:49:15.953+08:00  INFO 34444 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=dave, userId=2105112709736443906
+2026-09-30T09:49:16.302+08:00  INFO 34444 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=alice, userId=2105112711640657922
+2026-09-30T09:49:16.451+08:00  INFO 34444 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=carol, userId=2105112712294969345
+2026-09-30T09:49:17.816+08:00  INFO 34444 --- [           main] com.stcloud.auth.service.AuthService     : �û�ע��ɹ�: username=newuser, userId=2105112718305406978, tenantId=1
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.752 s -- in com.stcloud.auth.AuthServiceIntegrationTest
+[INFO] Running com.stcloud.auth.UserSecurityServiceIntegrationTest
+[INFO] Tests run: 2, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.182 s -- in com.stcloud.auth.UserSecurityServiceIntegrationTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 10, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] ------------------------< com.stcloud:st-core >-------------------------
+[INFO] Building ������ Core 1.0.0-SNAPSHOT                                   [4/6]
+[INFO]   from st-core\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ st-core ---
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] Copying 4 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ st-core ---
+[INFO] Changes detected - recompiling the module! :source
+[INFO] Compiling 118 source files with javac [debug release 17] to target\classes
+[INFO] /E:/code/st-cloud/st-core/src/main/java/com/stcloud/core/service/impl/VersionServiceImpl.java: E:\code\st-cloud\st-core\src\main\java\com\stcloud\core\service\impl\VersionServiceImpl.javaʹ�û򸲸����ѹ�ʱ�� API��
+[INFO] /E:/code/st-cloud/st-core/src/main/java/com/stcloud/core/service/impl/VersionServiceImpl.java: �й���ϸ��Ϣ, ��ʹ�� -Xlint:deprecation ���±��롣
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ st-core ---
+[INFO] Copying 2 resources from src\test\resources to target\test-classes
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ st-core ---
+[INFO] Changes detected - recompiling the module! :dependency
+[INFO] Compiling 34 source files with javac [debug release 17] to target\test-classes
+[INFO] 
+[INFO] --- surefire:3.1.2:test (default-test) @ st-core ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.stcloud.core.schema.SchemaConsistencyTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.120 s -- in com.stcloud.core.schema.SchemaConsistencyTest
+[INFO] Running com.stcloud.core.service.impl.FileServiceFlowIntegrationTest
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-09-30T09:49:24.635+08:00  INFO 21836 --- [           main] c.s.c.s.i.FileServiceFlowIntegrationTest : Starting FileServiceFlowIntegrationTest using Java 17.0.14 with PID 21836 (started by Administrator in E:\code\st-cloud\st-core)
+2026-09-30T09:49:24.638+08:00  INFO 21836 --- [           main] c.s.c.s.i.FileServiceFlowIntegrationTest : The following 1 profile is active: "test"
+2026-09-30T09:49:25.775+08:00  WARN 21836 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T09:49:25.778+08:00  WARN 21836 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T09:49:25.866+08:00  WARN 21836 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'createRocketMQMessageConverter' of type [org.apache.rocketmq.spring.support.RocketMQMessageConverter] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T09:49:25.877+08:00  WARN 21836 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketmq-org.apache.rocketmq.spring.autoconfigure.RocketMQProperties' of type [org.apache.rocketmq.spring.autoconfigure.RocketMQProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T09:49:25.879+08:00  WARN 21836 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketMQMessageListenerContainerRegistrar' of type [org.apache.rocketmq.spring.support.RocketMQMessageListenerContainerRegistrar] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-09-30T09:49:28.046+08:00  INFO 21836 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-09-30T09:49:28.272+08:00  INFO 21836 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:stcloud-test user=SA
+2026-09-30T09:49:28.274+08:00  INFO 21836 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-09-30T09:49:28.637+08:00  WARN 21836 --- [           main] o.a.r.s.a.RocketMQAutoConfiguration      : The necessary spring property 'rocketmq.name-server' is not defined, all rockertmq beans creation are skipped!
+2026-09-30T09:49:29.020+08:00  INFO 21836 --- [           main] c.s.c.s.i.FileServiceFlowIntegrationTest : Started FileServiceFlowIntegrationTest in 4.769 seconds (process running for 5.707)
+[INFO] Tests run: 17, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.339 s -- in com.stcloud.core.service.impl.FileServiceFlowIntegrationTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 20, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] 
+[INFO] -----------------------< com.stcloud:st-search >------------------------
+[INFO] Building ������ Search 1.0.0-SNAPSHOT                                 [5/6]
+[INFO]   from st-search\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ st-search ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ st-search ---
+[INFO] Changes detected - recompiling the module! :dependency
+[INFO] Compiling 12 source files with javac [debug release 17] to target\classes
+[INFO] /E:/code/st-cloud/st-search/src/main/java/com/stcloud/search/service/impl/SearchServiceImpl.java: ĳЩ�����ļ�ʹ����δ�����򲻰�ȫ�Ĳ�����
+[INFO] /E:/code/st-cloud/st-search/src/main/java/com/stcloud/search/service/impl/SearchServiceImpl.java: �й���ϸ��Ϣ, ��ʹ�� -Xlint:unchecked ���±��롣
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ st-search ---
+[INFO] skip non existing resourceDirectory E:\code\st-cloud\st-search\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ st-search ---
+[INFO] Changes detected - recompiling the module! :dependency
+[INFO] Compiling 8 source files with javac [debug release 17] to target\test-classes
+[INFO] /E:/code/st-cloud/st-search/src/test/java/com/stcloud/search/service/impl/TeamSearchServiceTest.java: ĳЩ�����ļ�ʹ����δ�����򲻰�ȫ�Ĳ�����
+[INFO] /E:/code/st-cloud/st-search/src/test/java/com/stcloud/search/service/impl/TeamSearchServiceTest.java: �й���ϸ��Ϣ, ��ʹ�� -Xlint:unchecked ���±��롣
+[INFO] 
+[INFO] --- surefire:3.1.2:test (default-test) @ st-search ---
+[INFO] 
+[INFO] ------------------------< com.stcloud:st-team >-------------------------
+[INFO] Building ������ Team 1.0.0-SNAPSHOT                                   [6/6]
+[INFO]   from st-team\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ st-team ---
+[INFO] skip non existing resourceDirectory E:\code\st-cloud\st-team\src\main\resources
+[INFO] skip non existing resourceDirectory E:\code\st-cloud\st-team\src\main\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ st-team ---
+[INFO] Changes detected - recompiling the module! :dependency
+[INFO] Compiling 73 source files with javac [debug release 17] to target\classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ st-team ---
+[INFO] Copying 3 resources from src\test\resources to target\test-classes
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ st-team ---
+[INFO] Changes detected - recompiling the module! :dependency
+[INFO] Compiling 24 source files with javac [debug release 17] to target\test-classes
+[WARNING] /E:/code/st-cloud/st-team/src/test/java/com/stcloud/team/service/FolderPermissionFreshTest.java:[93,72] ���һ������ʹ���˲�׼ȷ�ı������͵� varargs �����ķ� varargs ����; 
+  ���� varargs ����, Ӧʹ�� com.stcloud.core.entity.FileNode
+  ���ڷ� varargs ����, Ӧʹ�� com.stcloud.core.entity.FileNode[], ����Ҳ�������ƴ˾���
+[WARNING] /E:/code/st-cloud/st-team/src/test/java/com/stcloud/team/service/FolderPermissionFreshTest.java:[148,72] ���һ������ʹ���˲�׼ȷ�ı������͵� varargs �����ķ� varargs ����; 
+  ���� varargs ����, Ӧʹ�� com.stcloud.core.entity.FileNode
+  ���ڷ� varargs ����, Ӧʹ�� com.stcloud.core.entity.FileNode[], ����Ҳ�������ƴ˾���
+[INFO] /E:/code/st-cloud/st-team/src/test/java/com/stcloud/team/service/FolderPermissionFreshTest.java: ĳЩ�����ļ�ʹ����δ�����򲻰�ȫ�Ĳ�����
+[INFO] /E:/code/st-cloud/st-team/src/test/java/com/stcloud/team/service/FolderPermissionFreshTest.java: �й���ϸ��Ϣ, ��ʹ�� -Xlint:unchecked ���±��롣
+[INFO] 
+[INFO] --- surefire:3.1.2:test (default-test) @ st-team ---
+[INFO] Using auto detected provider org.apache.maven.surefire.junitplatform.JUnitPlatformProvider
+[INFO] 
+[INFO] -------------------------------------------------------
+[INFO]  T E S T S
+[INFO] -------------------------------------------------------
+[INFO] Running com.stcloud.team.service.TeamRoleConcurrencyIntegrationTest
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-09-30T09:49:37.913+08:00  INFO 7160 --- [           main] s.t.s.TeamRoleConcurrencyIntegrationTest : Starting TeamRoleConcurrencyIntegrationTest using Java 17.0.14 with PID 7160 (started by Administrator in E:\code\st-cloud\st-team)
+2026-09-30T09:49:37.916+08:00  INFO 7160 --- [           main] s.t.s.TeamRoleConcurrencyIntegrationTest : The following 1 profile is active: "test"
+2026-09-30T09:49:38.729+08:00  WARN 7160 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T09:49:38.730+08:00  WARN 7160 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T09:49:38.778+08:00  WARN 7160 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'createRocketMQMessageConverter' of type [org.apache.rocketmq.spring.support.RocketMQMessageConverter] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T09:49:38.784+08:00  WARN 7160 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketmq-org.apache.rocketmq.spring.autoconfigure.RocketMQProperties' of type [org.apache.rocketmq.spring.autoconfigure.RocketMQProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T09:49:38.786+08:00  WARN 7160 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketMQMessageListenerContainerRegistrar' of type [org.apache.rocketmq.spring.support.RocketMQMessageListenerContainerRegistrar] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-09-30T09:49:39.053+08:00  INFO 7160 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-09-30T09:49:39.250+08:00  INFO 7160 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:stteam-test user=SA
+2026-09-30T09:49:39.253+08:00  INFO 7160 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+2026-09-30T09:49:42.283+08:00  WARN 7160 --- [           main] o.a.r.s.a.RocketMQAutoConfiguration      : The necessary spring property 'rocketmq.name-server' is not defined, all rockertmq beans creation are skipped!
+2026-09-30T09:49:43.120+08:00  INFO 7160 --- [           main] s.t.s.TeamRoleConcurrencyIntegrationTest : Started TeamRoleConcurrencyIntegrationTest in 5.551 seconds (process running for 6.435)
+2026-09-30T09:49:43.388+08:00  INFO 7160 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�9100000000000001�����Ŷӿռ�: spaceId=2105112825570541570, name=tx-space-9100000000000001
+2026-09-30T09:49:43.624+08:00  INFO 7160 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�9100000000000004�����Ŷӿռ�: spaceId=2105112826535231489, name=tx-space-9100000000000004
+2026-09-30T09:49:43.683+08:00  INFO 7160 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�9100000000000007�����Ŷӿռ�: spaceId=2105112826803666945, name=tx-space-9100000000000007
+2026-09-30T09:49:43.736+08:00  INFO 7160 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�9100000000000010�����Ŷӿռ�: spaceId=2105112827000799233, name=tx-space-9100000000000010
+2026-09-30T09:49:43.788+08:00  INFO 7160 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�9100000000000013�����Ŷӿռ�: spaceId=2105112827260846082, name=tx-space-9100000000000013
+2026-09-30T09:49:43.835+08:00  INFO 7160 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�9100000000000016�����Ŷӿռ�: spaceId=2105112827457978370, name=tx-space-9100000000000016
+2026-09-30T09:49:43.879+08:00  INFO 7160 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�9100000000000019�����Ŷӿռ�: spaceId=2105112827655110658, name=tx-space-9100000000000019
+2026-09-30T09:49:43.925+08:00  INFO 7160 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�9100000000000022�����Ŷӿռ�: spaceId=2105112827852242945, name=tx-space-9100000000000022
+2026-09-30T09:49:43.973+08:00  INFO 7160 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�9100000000000025�����Ŷӿռ�: spaceId=2105112828053569538, name=race-space-9100000000000025
+2026-09-30T09:49:44.015+08:00  INFO 7160 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�9100000000000028�����Ŷӿռ�: spaceId=2105112828187787265, name=race-space-9100000000000028
+2026-09-30T09:49:44.056+08:00  INFO 7160 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�9100000000000031�����Ŷӿռ�: spaceId=2105112828389113857, name=race-space-9100000000000031
+2026-09-30T09:49:44.086+08:00  INFO 7160 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�9100000000000034�����Ŷӿռ�: spaceId=2105112828519137282, name=race-space-9100000000000034
+2026-09-30T09:49:44.114+08:00  INFO 7160 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�9100000000000037�����Ŷӿռ�: spaceId=2105112828586246146, name=race-space-9100000000000037
+2026-09-30T09:49:44.150+08:00  INFO 7160 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�9100000000000040�����Ŷӿռ�: spaceId=2105112828787572738, name=race-space-9100000000000040
+2026-09-30T09:49:44.184+08:00  INFO 7160 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�9100000000000043�����Ŷӿռ�: spaceId=2105112828913401858, name=race-space-9100000000000043
+2026-09-30T09:49:44.224+08:00  INFO 7160 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�9100000000000046�����Ŷӿռ�: spaceId=2105112829106339841, name=race-space-9100000000000046
+[INFO] Tests run: 16, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 7.058 s -- in com.stcloud.team.service.TeamRoleConcurrencyIntegrationTest
+[INFO] Running com.stcloud.team.service.TeamServiceIntegrationTest
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-09-30T09:49:44.300+08:00  INFO 7160 --- [           main] c.s.t.s.TeamServiceIntegrationTest       : Starting TeamServiceIntegrationTest using Java 17.0.14 with PID 7160 (started by Administrator in E:\code\st-cloud\st-team)
+2026-09-30T09:49:44.300+08:00  INFO 7160 --- [           main] c.s.t.s.TeamServiceIntegrationTest       : The following 1 profile is active: "test"
+2026-09-30T09:49:44.481+08:00  WARN 7160 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T09:49:44.482+08:00  WARN 7160 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T09:49:44.482+08:00  WARN 7160 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'createRocketMQMessageConverter' of type [org.apache.rocketmq.spring.support.RocketMQMessageConverter] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T09:49:44.484+08:00  WARN 7160 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketmq-org.apache.rocketmq.spring.autoconfigure.RocketMQProperties' of type [org.apache.rocketmq.spring.autoconfigure.RocketMQProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-30T09:49:44.484+08:00  WARN 7160 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketMQMessageListenerContainerRegistrar' of type [org.apache.rocketmq.spring.support.RocketMQMessageListenerContainerRegistrar] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-09-30T09:49:44.601+08:00  INFO 7160 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Starting...
+2026-09-30T09:49:44.601+08:00  INFO 7160 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-2 - Added connection conn10: url=jdbc:h2:mem:stteam-test user=SA
+2026-09-30T09:49:44.601+08:00  INFO 7160 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-2 - Start completed.
+2026-09-30T09:49:44.754+08:00  WARN 7160 --- [           main] o.a.r.s.a.RocketMQAutoConfiguration      : The necessary spring property 'rocketmq.name-server' is not defined, all rockertmq beans creation are skipped!
+2026-09-30T09:49:44.960+08:00  INFO 7160 --- [           main] c.s.t.s.TeamServiceIntegrationTest       : Started TeamServiceIntegrationTest in 0.693 seconds (process running for 8.276)
+2026-09-30T09:49:44.971+08:00  WARN 7160 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T09:49:44.975+08:00  INFO 7160 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�100�����Ŷӿռ�: spaceId=2105112832239484930, name=���Կռ�-100
+2026-09-30T09:49:45.011+08:00  WARN 7160 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T09:49:45.013+08:00  INFO 7160 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�100�����Ŷӿռ�: spaceId=2105112832373702657, name=���Կռ�-100
+2026-09-30T09:49:45.072+08:00  WARN 7160 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T09:49:45.074+08:00  INFO 7160 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�100�����Ŷӿռ�: spaceId=2105112832633749505, name=���Կռ�-100
+2026-09-30T09:49:45.080+08:00  WARN 7160 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T09:49:45.083+08:00  INFO 7160 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�100�����Ŷӿռ�: spaceId=2105112832700858370, name=���Կռ�-100
+2026-09-30T09:49:45.104+08:00  WARN 7160 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T09:49:45.105+08:00  WARN 7160 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T09:49:45.108+08:00  INFO 7160 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�100�����Ŷӿռ�: spaceId=2105112832767967233, name=���Կռ�-100
+2026-09-30T09:49:45.125+08:00  WARN 7160 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T09:49:45.127+08:00  WARN 7160 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T09:49:45.130+08:00  INFO 7160 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�100�����Ŷӿռ�: spaceId=2105112832897990657, name=���Կռ�-100
+2026-09-30T09:49:45.147+08:00  WARN 7160 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T09:49:45.149+08:00  INFO 7160 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�100�����Ŷӿռ�: spaceId=2105112832960905218, name=���Կռ�-100
+2026-09-30T09:49:45.158+08:00  WARN 7160 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T09:49:45.159+08:00  WARN 7160 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T09:49:45.161+08:00  INFO 7160 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�100�����Ŷӿռ�: spaceId=2105112833028014082, name=���Կռ�-100
+2026-09-30T09:49:45.182+08:00  WARN 7160 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-30T09:49:45.184+08:00  INFO 7160 --- [           main] c.s.team.service.impl.TeamServiceImpl    : �û�100�����Ŷӿռ�: spaceId=2105112833095122945, name=���Կռ�-100
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.940 s -- in com.stcloud.team.service.TeamServiceIntegrationTest
+[INFO] 
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 25, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary for ������ Parent 1.0.0-SNAPSHOT:
+[INFO] 
+[INFO] ������ Parent ......................................... SUCCESS [  0.002 s]
+[INFO] ������ Common ......................................... SUCCESS [  1.205 s]
+[INFO] ������ Auth ........................................... SUCCESS [ 11.141 s]
+[INFO] ������ Core ........................................... SUCCESS [ 12.169 s]
+[INFO] ������ Search ......................................... SUCCESS [  2.735 s]
+[INFO] ������ Team ........................................... SUCCESS [ 12.188 s]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  39.735 s
+[INFO] Finished at: 2026-09-30T09:49:45+08:00
+[INFO] ------------------------------------------------------------------------

@@ -11,7 +11,7 @@ import { useUpload } from '../hooks/useUpload';
 import { formatSize, cn } from '../lib/utils';
 import { usePermission } from '../lib/permission';
 import { useAuthStore } from '../store/auth';
-import type { TeamSpace, TeamMember, TeamInvite, TeamActivity, FileNode, PageResult, UserSearch } from '../types';
+import type { TeamSpace, TeamMember, TeamInvite, TeamActivity, FileNode, PageResult, UserSearch, TeamRoleInfo } from '../types';
 import FolderPermissionDialog from '../components/team/FolderPermissionDialog';
 import RoleManageDialog from '../components/team/RoleManageDialog';
 import StatsPanel from '../components/team/StatsPanel';
@@ -20,11 +20,11 @@ import { Shield } from 'lucide-react';
 
 const EMOJI_ICONS = ['📁','📂','🚀','💡','🎨','⚙️','🏢','📊','🔥','⭐','🎯','🔧','📦','🎉','🔬','📚','💼','🖥️','🗂️','📌','🏷️','💬','🏗️','🌐'];
 
-const roleConfig = [
-  { label: '管理员', icon: Crown, color: 'text-amber-600 dark:text-amber-400 bg-amber-500/15' },
-  { label: '编辑者', icon: Pencil, color: 'text-primary-600 bg-primary-500/10' },
-  { label: '查看者', icon: Eye, color: 'text-muted bg-surface-2' },
-];
+const roleConfig: Record<string, { label: string; icon: typeof Crown; color: string }> = {
+  '0': { label: '管理员', icon: Crown, color: 'text-amber-600 dark:text-amber-400 bg-amber-500/15' },
+  '1': { label: '编辑者', icon: Pencil, color: 'text-primary-600 bg-primary-500/10' },
+  '2': { label: '查看者', icon: Eye, color: 'text-muted bg-surface-2' },
+};
 
 const actionTextMap: Record<string, string> = {
   FILE_UPLOAD: '上传了文件', FILE_DELETE: '删除了', FILE_RENAME: '重命名了',
@@ -84,15 +84,17 @@ export default function TeamSpacePage() {
   const [activeTab, setActiveTab] = useState<'files' | 'activity'>('files');
   const [showMembers, setShowMembers] = useState(false);
   const [members, setMembers] = useState<TeamMember[]>([]);
+  const [memberRoleEdits, setMemberRoleEdits] = useState<Record<string, { role: string; pending: boolean; error?: string }>>({});
+  const [roles, setRoles] = useState<TeamRoleInfo[]>([]);
   const [inviteKeyword, setInviteKeyword] = useState('');
   const [inviteUsers, setInviteUsers] = useState<UserSearch[]>([]);
   const [selectedUser, setSelectedUser] = useState<UserSearch | null>(null);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const userSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [inviteRole, setInviteRole] = useState(2);
+  const [inviteRole, setInviteRole] = useState('2');
   const [sortBy, setSortBy] = useState<'role' | 'active'>('role');
   const [invites, setInvites] = useState<TeamInvite[]>([]);
-  const [newInviteRole, setNewInviteRole] = useState(2);
+  const [newInviteRole, setNewInviteRole] = useState('2');
   const [newInviteExpiry, setNewInviteExpiry] = useState<'1d' | '7d' | 'permanent'>('7d');
   const [showSettings, setShowSettings] = useState(false);
   const [settingsForm, setSettingsForm] = useState({ spaceName: '', description: '', icon: '📁', storageQuota: '', quotaUnit: 'GB' });
@@ -126,12 +128,17 @@ export default function TeamSpacePage() {
     try { const res = await api.get<PageResult<TeamInvite>>(`/team/${spaceId}/invites`, { params: { page: 1, size: 50 } }); setInvites(res?.records || []); } catch { /* ignore */ }
   }, [spaceId]);
 
+  const fetchRoles = useCallback(async () => {
+    try { setRoles(await api.get<TeamRoleInfo[]>(`/team/${spaceId}/roles`) || []); }
+    catch { setRoles([]); }
+  }, [spaceId]);
+
   const fetchActivities = useCallback(async (page: number, append: boolean) => {
     try { const res = await api.get<PageResult<TeamActivity>>(`/team/${spaceId}/activities`, { params: { filter: activityFilter, page, size: 20 } }); const records = res?.records || []; if (append) { setActivities(prev => [...prev, ...records]); } else { setActivities(records); } setActivityHasMore(records.length >= 20); } catch { /* ignore */ }
   }, [spaceId, activityFilter]);
 
   // 挂载即拉取成员列表：用于判断当前用户是否为管理员（权限入口可见性，后端 checkPermission(spaceId,0) 为最终闸门）
-  useEffect(() => { fetchSpace(); fetchMembers(); }, [fetchSpace, fetchMembers]);
+  useEffect(() => { fetchSpace(); fetchMembers(); fetchRoles(); }, [fetchSpace, fetchMembers, fetchRoles]);
   useEffect(() => { if (showMembers) fetchMembers(); }, [sortBy, fetchMembers, showMembers]);
   useEffect(() => { if (activeTab === 'activity') { setActivityPage(1); fetchActivities(1, false); } }, [activeTab, fetchActivities]);
 
@@ -216,6 +223,25 @@ export default function TeamSpacePage() {
     try { await api.delete(`/team/${spaceId}/invite/${inviteId}`); showToast('已撤销', 'success'); fetchInvites(); } catch (e) { showToast((e instanceof Error ? e.message : '') || '操作失败', 'error'); }
   };
 
+  const handleChangeMemberRole = async (memberId: string, roleId: string) => {
+    // 待提交选择与已保存角色分开：失败保留选择，不能把未成功的权限变更显示为已生效。
+    setMemberRoleEdits(prev => ({ ...prev, [memberId]: { role: roleId, pending: true } }));
+    try {
+      await api.put(`/team/${spaceId}/member/${memberId}`, null, { params: { role: roleId } });
+      setMembers(prev => prev.map(member => member.id === memberId ? { ...member, role: roleId } : member));
+      setMemberRoleEdits(prev => {
+        const next = { ...prev };
+        delete next[memberId];
+        return next;
+      });
+      showToast('成员角色已更新', 'success');
+    } catch (e) {
+      const error = (e instanceof Error ? e.message : '') || '修改角色失败';
+      setMemberRoleEdits(prev => ({ ...prev, [memberId]: { role: roleId, pending: false, error } }));
+      showToast(error, 'error');
+    }
+  };
+
   const handleRemoveMember = async (memberId: string) => {
     if (!confirm('确定移除该成员？')) return;
     try { await api.delete(`/team/${spaceId}/member/${memberId}`); showToast('成员已移除', 'success'); fetchMembers(); } catch (e) { showToast((e instanceof Error ? e.message : '') || '操作失败', 'error'); }
@@ -271,7 +297,11 @@ export default function TeamSpacePage() {
   // 权限入口可见性：空间拥有者或管理员（role===0）；后端 checkPermission(spaceId,0) 为最终闸门
   const currentFolderName = breadcrumbs.length > 0 ? breadcrumbs[breadcrumbs.length - 1].name : '';
   const isSpaceOwner = !!space && space.ownerId === currentUserId;
-  const isSpaceAdmin = isSpaceOwner || members.some((m) => m.userId === currentUserId && m.role === 0);
+  const isSpaceAdmin = isSpaceOwner || members.some((m) => m.userId === currentUserId && String(m.role) === '0');
+  const roleName = (roleId: string) => roles.find(role => role.id === String(roleId))?.name || roleConfig[String(roleId)]?.label || '无效角色';
+  const roleOptions = roles.length > 0
+    ? roles.filter(role => role.isPreset || role.status === 1)
+    : [{ id: '0', name: '管理员' }, { id: '1', name: '编辑者' }, { id: '2', name: '查看者' }];
   const permissionButtonText = parentId ? '当前文件夹权限' : '空间根目录权限';
 
   return (
@@ -367,15 +397,15 @@ export default function TeamSpacePage() {
           <div className="w-full max-w-lg bg-surface rounded-xl shadow-lg border border-border overflow-hidden max-h-[90vh] overflow-y-auto animate-scale-in" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-border sticky top-0 bg-surface z-10"><h2 className="text-base font-semibold text-fg">成员管理</h2><button onClick={() => setShowMembers(false)} className="text-muted hover:text-fg cursor-pointer" aria-label="关闭"><X className="w-5 h-5" aria-hidden /></button></div>
             <div className="p-5 space-y-4">
-              <div><p className="text-xs font-medium text-muted mb-1.5">搜索用户邀请</p><div className="flex gap-2"><div className="flex-1 relative"><input type="text" value={inviteKeyword} onChange={(e) => handleUserSearch(e.target.value)} onFocus={() => inviteUsers.length > 0 && setShowUserDropdown(true)} onBlur={() => setTimeout(() => setShowUserDropdown(false), 200)} placeholder="输入用户名或昵称搜索" className={cn('w-full px-3 py-2 text-sm bg-surface-2 rounded-md border outline-none focus:bg-surface transition-colors', selectedUser ? 'border-primary-400' : 'border-border focus:border-primary-400')} />{showUserDropdown && inviteUsers.length > 0 && (<div className="absolute z-20 top-full left-0 right-0 mt-1 bg-surface rounded-md border border-border shadow-lg max-h-60 overflow-auto">{inviteUsers.map(u => (<button key={u.userId} onClick={() => handleSelectUser(u)} className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-surface-2 transition-colors cursor-pointer text-left"><div className="w-7 h-7 bg-primary-600 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0">{u.nickname?.[0] || u.username[0]}</div><div className="min-w-0"><p className="text-sm text-fg truncate">{u.nickname || u.username}</p><p className="text-xs text-muted truncate">@{u.username}</p></div></button>))}</div>)}{showUserDropdown && inviteUsers.length === 0 && inviteKeyword.trim() && (<div className="absolute z-20 top-full left-0 right-0 mt-1 bg-surface rounded-md border border-border shadow-lg px-3 py-2 text-sm text-muted">未找到匹配用户</div>)}</div><select value={inviteRole} onChange={(e) => setInviteRole(parseInt(e.target.value))} className="px-3 py-2 text-sm bg-surface-2 rounded-md border border-border outline-none cursor-pointer"><option value={0}>管理员</option><option value={1}>编辑者</option><option value={2}>查看者</option></select><button onClick={handleInvite} className="flex items-center gap-1 px-4 py-2 text-sm text-white bg-primary-600 rounded-md hover:bg-primary-700 transition-colors cursor-pointer whitespace-nowrap"><UserPlus className="w-4 h-4" /> 邀请</button></div></div>
-              <div className="pt-2 border-t border-border"><p className="text-xs font-medium text-muted mb-1.5">邀请链接</p><div className="flex gap-2 mb-2"><select value={newInviteRole} onChange={(e) => setNewInviteRole(parseInt(e.target.value))} className="px-3 py-2 text-sm bg-surface-2 rounded-md border border-border outline-none cursor-pointer"><option value={0}>管理员</option><option value={1}>编辑者</option><option value={2}>查看者</option></select><select value={newInviteExpiry} onChange={(e) => setNewInviteExpiry(e.target.value as '1d' | '7d' | 'permanent')} className="px-3 py-2 text-sm bg-surface-2 rounded-md border border-border outline-none cursor-pointer"><option value="1d">24小时</option><option value="7d">7天</option><option value="permanent">永久</option></select><button onClick={handleCreateInvite} className="flex items-center gap-1 px-4 py-2 text-sm text-white bg-primary-600 rounded-md hover:bg-primary-700 transition-colors cursor-pointer whitespace-nowrap"><Link2 className="w-4 h-4" /> 生成</button></div>
-                {invites.length > 0 && (<div className="space-y-1.5 max-h-40 overflow-auto">{invites.map(inv => (<div key={inv.id} className={cn('flex items-center justify-between px-3 py-2 bg-surface-2 rounded-md', inv.status === 0 && 'opacity-50')}><div className="flex items-center gap-2 min-w-0"><Link2 className="w-3.5 h-3.5 text-muted flex-shrink-0" /><div className="min-w-0"><p className="text-xs text-fg truncate">/team/invite/{inv.inviteCode.slice(0, 12)}...</p><p className="text-xs text-muted">{roleConfig[inv.role]?.label} · {inv.expireAt ? `至 ${new Date(inv.expireAt).toLocaleDateString('zh-CN')}` : '永久'}{inv.status === 0 ? ' · 已撤销' : ''}</p></div></div><div className="flex items-center gap-1 flex-shrink-0">{inv.status === 1 && (<><button onClick={() => handleCopyInvite(inv.inviteCode)} className="p-1 text-muted hover:text-primary-600 cursor-pointer" aria-label="复制链接"><Copy className="w-3.5 h-3.5" /></button><button onClick={() => handleRevokeInvite(inv.id)} className="p-1 text-muted hover:text-red-500 cursor-pointer" aria-label="撤销"><Trash2 className="w-3.5 h-3.5" /></button></>)}</div></div>))}</div>)}
+              <div><p className="text-xs font-medium text-muted mb-1.5">搜索用户邀请</p><div className="flex gap-2"><div className="flex-1 relative"><input type="text" value={inviteKeyword} onChange={(e) => handleUserSearch(e.target.value)} onFocus={() => inviteUsers.length > 0 && setShowUserDropdown(true)} onBlur={() => setTimeout(() => setShowUserDropdown(false), 200)} placeholder="输入用户名或昵称搜索" className={cn('w-full px-3 py-2 text-sm bg-surface-2 rounded-md border outline-none focus:bg-surface transition-colors', selectedUser ? 'border-primary-400' : 'border-border focus:border-primary-400')} />{showUserDropdown && inviteUsers.length > 0 && (<div className="absolute z-20 top-full left-0 right-0 mt-1 bg-surface rounded-md border border-border shadow-lg max-h-60 overflow-auto">{inviteUsers.map(u => (<button key={u.userId} onClick={() => handleSelectUser(u)} className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-surface-2 transition-colors cursor-pointer text-left"><div className="w-7 h-7 bg-primary-600 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0">{u.nickname?.[0] || u.username[0]}</div><div className="min-w-0"><p className="text-sm text-fg truncate">{u.nickname || u.username}</p><p className="text-xs text-muted truncate">@{u.username}</p></div></button>))}</div>)}{showUserDropdown && inviteUsers.length === 0 && inviteKeyword.trim() && (<div className="absolute z-20 top-full left-0 right-0 mt-1 bg-surface rounded-md border border-border shadow-lg px-3 py-2 text-sm text-muted">未找到匹配用户</div>)}</div><select value={inviteRole} onChange={(e) => setInviteRole(e.target.value)} className="px-3 py-2 text-sm bg-surface-2 rounded-md border border-border outline-none cursor-pointer">{roleOptions.map(role => <option key={role.id} value={role.id}>{role.name}</option>)}</select><button onClick={handleInvite} className="flex items-center gap-1 px-4 py-2 text-sm text-white bg-primary-600 rounded-md hover:bg-primary-700 transition-colors cursor-pointer whitespace-nowrap"><UserPlus className="w-4 h-4" /> 邀请</button></div></div>
+              <div className="pt-2 border-t border-border"><p className="text-xs font-medium text-muted mb-1.5">邀请链接</p><div className="flex gap-2 mb-2"><select value={newInviteRole} onChange={(e) => setNewInviteRole(e.target.value)} className="px-3 py-2 text-sm bg-surface-2 rounded-md border border-border outline-none cursor-pointer">{roleOptions.map(role => <option key={role.id} value={role.id}>{role.name}</option>)}</select><select value={newInviteExpiry} onChange={(e) => setNewInviteExpiry(e.target.value as '1d' | '7d' | 'permanent')} className="px-3 py-2 text-sm bg-surface-2 rounded-md border border-border outline-none cursor-pointer"><option value="1d">24小时</option><option value="7d">7天</option><option value="permanent">永久</option></select><button onClick={handleCreateInvite} className="flex items-center gap-1 px-4 py-2 text-sm text-white bg-primary-600 rounded-md hover:bg-primary-700 transition-colors cursor-pointer whitespace-nowrap"><Link2 className="w-4 h-4" /> 生成</button></div>
+                {invites.length > 0 && (<div className="space-y-1.5 max-h-40 overflow-auto">{invites.map(inv => (<div key={inv.id} className={cn('flex items-center justify-between px-3 py-2 bg-surface-2 rounded-md', inv.status === 0 && 'opacity-50')}><div className="flex items-center gap-2 min-w-0"><Link2 className="w-3.5 h-3.5 text-muted flex-shrink-0" /><div className="min-w-0"><p className="text-xs text-fg truncate">/team/invite/{inv.inviteCode.slice(0, 12)}...</p><p className="text-xs text-muted">{roleName(inv.role)} · {inv.expireAt ? `至 ${new Date(inv.expireAt).toLocaleDateString('zh-CN')}` : '永久'}{inv.status === 0 ? ' · 已撤销' : ''}</p></div></div><div className="flex items-center gap-1 flex-shrink-0">{inv.status === 1 && (<><button onClick={() => handleCopyInvite(inv.inviteCode)} className="p-1 text-muted hover:text-primary-600 cursor-pointer" aria-label="复制链接"><Copy className="w-3.5 h-3.5" /></button><button onClick={() => handleRevokeInvite(inv.id)} className="p-1 text-muted hover:text-red-500 cursor-pointer" aria-label="撤销"><Trash2 className="w-3.5 h-3.5" /></button></>)}</div></div>))}</div>)}
               </div>
               <div className="pt-2 border-t border-border">
                 <div className="flex items-center justify-between mb-2"><p className="text-xs font-medium text-muted">成员列表</p><button onClick={() => { setSortBy(sortBy === 'role' ? 'active' : 'role'); }} className="text-xs text-primary-600 hover:text-primary-700 cursor-pointer">{sortBy === 'role' ? '按活跃排序' : '按角色排序'}</button></div>
-                <div className="space-y-2 max-h-60 overflow-auto">{members.map((member) => { const role = roleConfig[member.role] || roleConfig[2]; const memberIsOwner = space?.ownerId === member.userId; return (<div key={member.id} className="flex items-center justify-between px-3 py-2.5 bg-surface-2 rounded-md"><div className="flex items-center gap-3 min-w-0"><div className="w-9 h-9 bg-primary-600 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0">{member.nickname?.[0] || member.username[0]}</div><div className="min-w-0"><div className="flex items-center gap-1.5"><span className={cn('w-1.5 h-1.5 rounded-full flex-shrink-0', activeDotColor(member.lastActiveAt))} /><p className="text-sm font-medium text-fg truncate">{member.nickname || member.username}</p>{memberIsOwner && <Crown className="w-3 h-3 text-amber-500 flex-shrink-0" />}</div><p className="text-xs text-muted">@{member.username} · {timeAgo(member.lastActiveAt)}</p></div></div><div className="flex items-center gap-2 flex-shrink-0"><span className={cn('inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-md', role.color)}><role.icon className="w-3 h-3" />{role.label}</span>{!memberIsOwner && <button onClick={() => handleRemoveMember(member.id)} className="text-muted hover:text-red-500 cursor-pointer p-1" aria-label="移除成员"><X className="w-4 h-4" aria-hidden /></button>}</div></div>); })}</div>
+                <div className="space-y-2 max-h-60 overflow-auto">{members.map((member) => { const role = roleConfig[String(member.role)] || { label: roleName(member.role), icon: Shield, color: 'text-primary-600 bg-primary-500/10' }; const memberIsOwner = space?.ownerId === member.userId; return (<div key={member.id} className="flex items-center justify-between px-3 py-2.5 bg-surface-2 rounded-md"><div className="flex items-center gap-3 min-w-0"><div className="w-9 h-9 bg-primary-600 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0">{member.nickname?.[0] || member.username[0]}</div><div className="min-w-0"><div className="flex items-center gap-1.5"><span className={cn('w-1.5 h-1.5 rounded-full flex-shrink-0', activeDotColor(member.lastActiveAt))} /><p className="text-sm font-medium text-fg truncate">{member.nickname || member.username}</p>{memberIsOwner && <Crown className="w-3 h-3 text-amber-500 flex-shrink-0" />}</div><p className="text-xs text-muted">@{member.username} · {timeAgo(member.lastActiveAt)}</p></div></div><div className="flex items-center gap-2 flex-shrink-0"><span className={cn('inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-md', role.color)}><role.icon className="w-3 h-3" />{role.label}</span>{isSpaceAdmin && !memberIsOwner && <select aria-label={'修改' + member.username + '的角色'} value={memberRoleEdits[member.id]?.role ?? String(member.role)} disabled={memberRoleEdits[member.id]?.pending} aria-invalid={!!memberRoleEdits[member.id]?.error} aria-describedby={memberRoleEdits[member.id]?.error ? 'role-error-' + member.id : undefined} onChange={(event) => void handleChangeMemberRole(member.id, event.target.value)} className='px-2 py-1 text-xs bg-surface border border-border rounded'>{!roleOptions.some(option => option.id === String(member.role)) && <option value={String(member.role)}>无效角色</option>}{roleOptions.map(option => <option key={option.id} value={option.id}>{option.name}</option>)}</select>}{memberRoleEdits[member.id]?.error && <span className='text-xs text-red-500' id={'role-error-' + member.id} role='status'>未保存<button type='button' onClick={() => void handleChangeMemberRole(member.id, memberRoleEdits[member.id].role)} className='ml-1 underline cursor-pointer' aria-label={'重试修改' + member.username + '的角色'}>重试</button></span>}{isSpaceAdmin && !memberIsOwner && <button onClick={() => handleRemoveMember(member.id)} className="text-muted hover:text-red-500 cursor-pointer p-1" aria-label="移除成员"><X className="w-4 h-4" aria-hidden /></button>}</div></div>); })}</div>
               </div>
-              <div className="pt-2 border-t border-border flex items-center justify-between"><button onClick={handleLeaveSpace} className="flex items-center gap-1.5 text-sm text-red-500 hover:text-red-600 cursor-pointer"><LogOut className="w-4 h-4" /> 退出空间</button>{space && members.some(m => m.userId === space.ownerId && m.role === 0) && <button onClick={() => setShowTransfer(true)} className="flex items-center gap-1.5 text-sm text-primary-600 hover:text-primary-700 cursor-pointer"><Send className="w-4 h-4" /> 移交所有权</button>}</div>
+              <div className="pt-2 border-t border-border flex items-center justify-between"><button onClick={handleLeaveSpace} className="flex items-center gap-1.5 text-sm text-red-500 hover:text-red-600 cursor-pointer"><LogOut className="w-4 h-4" /> 退出空间</button>{space && members.some(m => m.userId === space.ownerId && String(m.role) === '0') && <button onClick={() => setShowTransfer(true)} className="flex items-center gap-1.5 text-sm text-primary-600 hover:text-primary-700 cursor-pointer"><Send className="w-4 h-4" /> 移交所有权</button>}</div>
             </div>
           </div>
         </div>
@@ -387,7 +417,7 @@ export default function TeamSpacePage() {
             <div className="flex items-center justify-between px-5 py-4 border-b border-border"><h2 className="text-base font-semibold text-fg">移交所有权</h2><button onClick={() => setShowTransfer(false)} className="text-muted hover:text-fg cursor-pointer" aria-label="关闭"><X className="w-5 h-5" aria-hidden /></button></div>
             <div className="p-5 space-y-3">
               <p className="text-sm text-muted">选择新的空间拥有者（仅管理员可移交）：</p>
-              {members.filter(m => m.role === 0 && m.userId !== space?.ownerId).map(m => (
+              {members.filter(m => String(m.role) === '0' && m.userId !== space?.ownerId).map(m => (
                 <label key={m.id} className={cn('flex items-center gap-3 px-3 py-2.5 rounded-md cursor-pointer transition-colors', transferTarget === m.id ? 'bg-primary-500/10 ring-1 ring-primary-400' : 'bg-surface-2 hover:bg-surface-2')}>
                   <input type="radio" name="transfer" checked={transferTarget === m.id} onChange={() => setTransferTarget(m.id)} className="cursor-pointer" />
                   <div className="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-white text-sm font-medium">{m.nickname?.[0] || m.username[0]}</div>
@@ -406,7 +436,7 @@ export default function TeamSpacePage() {
         <FolderPermissionDialog spaceId={spaceId} node={permissionNode} onClose={() => setPermissionNode(null)} />
       )}
       {spaceId && showRoleManage && (
-        <RoleManageDialog spaceId={spaceId} onClose={() => setShowRoleManage(false)} />
+        <RoleManageDialog spaceId={spaceId} onClose={() => { setShowRoleManage(false); void fetchRoles(); }} />
       )}
       {spaceId && showStats && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 overscroll-contain" role="presentation" onClick={() => setShowStats(false)}>

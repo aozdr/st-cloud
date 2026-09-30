@@ -1,0 +1,140 @@
+{
+  "scope": "Archived evidence only; source fixtures and immutable review baselines retained",
+  "xmlFilesChecked": 141,
+  "redactedFiles": [
+    {
+      "path": ".ai/docs/20260927-test-resume/browser-preview-requests.json",
+      "beforeSha256": "2ddaf73f4a3e3904aa5d799f658538c7977cbd5a0a4df07387dc2fbecf970340",
+      "afterSha256": "bfb2364ec70f4365b81665f072883b5f12ca793820e07682b660c01d9ce6a780"
+    },
+    {
+      "path": ".ai/docs/20260930-review-fixes/backend-xml/TEST-com.stcloud.auth.AuthServiceIntegrationTest.xml",
+      "beforeSha256": "1dc016c89b0c44ba29590e117f6644dbd2d17c3b6adaeed4bd9542d556ffd325",
+      "afterSha256": "4f984847f47555fa1c734b5828e2ab234639dc18585432cfa2be896f17ca4e6f"
+    },
+    {
+      "path": ".ai/docs/20260930-review-fixes/backend-xml/TEST-com.stcloud.auth.RegisterMysqlConcurrencyIntegrationTest.xml",
+      "beforeSha256": "e10226ba56a3591aa5ba74180e5a6acad1fcb99b622cbb90f29d02d5c2ae726d",
+      "afterSha256": "2bd9190734e19e04bc6c0af927469529db4e8bc15e56176b0f9c64648a9fedd9"
+    },
+    {
+      "path": ".ai/docs/20260930-review-fixes/backend-xml/TEST-com.stcloud.auth.UserSecurityServiceIntegrationTest.xml",
+      "beforeSha256": "2a52133db45910c884de8576aef044feb97950d802add7e861a9c97dccd05de3",
+      "afterSha256": "49ea5788557b24d183a442f0fc2bcd68a8c9e98a982dbc80ee10670b707b226a"
+    },
+    {
+      "path": ".ai/docs/20260930-review-fixes/backend-xml/TEST-com.stcloud.core.schema.SchemaConsistencyTest.xml",
+      "beforeSha256": "c07fc868462e403e9afd26ada092f710b38f0c29b1da0366d2c5162c38bdd073",
+      "afterSha256": "6b24fb444c29ccfa46073795384365a9ba91a3aabf9a2c7aef6320b1f9595409"
+    },
+    {
+      "path": ".ai/docs/20260930-review-fixes/backend-xml/TEST-com.stcloud.core.service.impl.FileServiceFlowIntegrationTest.xml",
+      "beforeSha256": "527b7b7cf78d0cba231e2276e03004d816eb048e6d28db2d628805427a35cb70",
+      "afterSha256": "3606503e45f4206a5677a96986f5f0790c94bf02119fa1347fa85ee66f24c65c"
+    },
+    {
+      "path": ".ai/docs/20260930-review-fixes/backend-xml/TEST-com.stcloud.team.controller.TeamRoleApiIntegrationTest.xml",
+      "beforeSha256": "83ef91825f0624304cf5e0e6c9ddd8528cf27bf1444fe4a1fcbf1168cace633c",
+      "afterSha256": "7267c6c0249c42f75a911c8ab8087e80983d483e964f37bdfa181b039737cbd6"
+    },
+    {
+      "path": ".ai/docs/20260930-review-fixes/backend-xml/TEST-com.stcloud.team.service.TeamRoleConcurrencyIntegrationTest.xml",
+      "beforeSha256": "c265e8a28b66f16505046a272f86e7894d254b6bfd845df2c3f6f6a4728190fd",
+      "afterSha256": "79a1b322d4154d8c124db135067ba1404466e5dd74be4f61f7c673a09547064f"
+    },
+    {
+      "path": ".ai/docs/20260930-review-fixes/backend-xml/TEST-com.stcloud.team.service.TeamRoleMysqlConcurrencyIntegrationTest.xml",
+      "beforeSha256": "365f2186209c1cc6476dd0ff16a755f2b8a8f746fdf2067a76d8a6492fb76628",
+      "afterSha256": "e42d144a759639339c9d79941714263ca521e3fa602a360fd7e2762a6d55372c"
+    },
+    {
+      "path": ".ai/docs/20260930-review-fixes/backend-xml/TEST-com.stcloud.team.service.TeamServiceIntegrationTest.xml",
+      "beforeSha256": "45c51c18ae869f9f429d5f2adcd1e0f8e15895821cd9e80ccba8e63eb05dc9a3",
+      "afterSha256": "0c7bf47be117a84473dfee4fb44ea0123d33305777e3e48d7dff1568c5e459ed"
+    },
+    {
+      "path": ".ai/docs/20260930-review-fixes/backend-xml/TEST-com.stcloud.team.service.TeamServicePermissionIntegrationTest.xml",
+      "beforeSha256": "917b00cdef77293e671171223c396c4894d0e55a769ff4ed4a0a76210107500e",
+      "afterSha256": "8d40e603f414a93144b81f48fec62067b9d8d74b9fcef2a1c4519309260b3894"
+    },
+    {
+      "path": ".ai/docs/20260930-review-fixes/browser-filmstrip-requests.json",
+      "beforeSha256": "b18165f8455014897f3ebe2d5f35077bb1da4a2cb48b7c0ef27fc4c843f19636",
+      "afterSha256": "f0162cf2522b3dd2010d2d63a1faf60797689b5da19ec6890892cc7eb5bac2b1"
+    },
+    {
+      "path": ".ai/docs/20260930-team-recycle/backend-xml/TEST-com.stcloud.core.schema.SchemaConsistencyTest.xml",
+      "beforeSha256": "328ad537bb672649dbecd0f4f4c094d2314d20dbb559adce94d2f371b65633b6",
+      "afterSha256": "14e79efa3e9df09b5638eadf7d2534ccc3593ad39c977d2c334959861f928713"
+    },
+    {
+      "path": ".ai/docs/20260930-team-recycle/backend-xml/TEST-com.stcloud.core.service.impl.FileServiceFlowIntegrationTest.xml",
+      "beforeSha256": "771bd7905ad93407b42593cc1503ebe746d54402a6e6aa49dc75760e5794e7ff",
+      "afterSha256": "9874c906bbc7ef2246ff6bdf0f0310e7f7dffb96800e319ec503999f636c10b3"
+    },
+    {
+      "path": ".ai/docs/20260930-team-recycle/backend-xml/TEST-com.stcloud.core.service.impl.FileServicePermissionIntegrationTest.xml",
+      "beforeSha256": "d24b8fba32c66b9906df30d02511fba5437d8dcc9f22d60216ae790992b5482b",
+      "afterSha256": "dedad3103e89ca8da8c1dc28c0cda8e4d9315243b33bafa6ba16cd4ee0b3a903"
+    },
+    {
+      "path": ".ai/docs/20260930-team-recycle/backend-xml/TEST-com.stcloud.core.service.impl.RecycleBinPhysicalDeleteIntegrationTest.xml",
+      "beforeSha256": "55b2f936d4f5065d9ba7cbb2d4f660d5ff7deaf3d04930a6924673219ce420dc",
+      "afterSha256": "3fdad5f68f9e5388c0ccf63b766b5e7128e6331126dd8b6de2b74571e0d73b85"
+    },
+    {
+      "path": ".ai/docs/20260930-team-recycle/backend-xml/TEST-com.stcloud.core.service.impl.TeamRecycleBinIntegrationTest.xml",
+      "beforeSha256": "148920ad781b132c7f863bbde2ffd18917ab968c5d6c3148eb50d0544bc02f5e",
+      "afterSha256": "4a1e7d2a3c676bea5a077c343ed82007e8b104e66495c2eef96cd5e1650c0ec3"
+    },
+    {
+      "path": ".ai/docs/20260930-team-recycle/backend-xml/TEST-com.stcloud.core.service.impl.TeamRecycleBinMysqlIntegrationTest.xml",
+      "beforeSha256": "1d17ac4170dd29d0ea776553333495b979b79cb0ca0a1c3e2acacf9edb92ed00",
+      "afterSha256": "eda3139a4875d9c9db586130929205c775b21a9519aa561095ed180dd2933862"
+    },
+    {
+      "path": ".ai/docs/20260930-tenant-context-warning/xml/TEST-com.stcloud.auth.AuthServiceIntegrationTest.xml",
+      "beforeSha256": "800788b522149c0fb579ab6384da622d6dd82f041a9923e42ea15c7b5810c83a",
+      "afterSha256": "5496b5c5ec8556da25de7c322a42a33f2f7d4cebdd98e73c581713ddc5ca9e35"
+    },
+    {
+      "path": ".ai/docs/20260930-tenant-context-warning/xml/TEST-com.stcloud.auth.security.JwtAuthenticationFilterPurposeTest.xml",
+      "beforeSha256": "1187f210731f63c793ef5d10067242f1cac556e979f9938b515a4d2f6a688b62",
+      "afterSha256": "003b008b3b7a6a1ee3e932563e87f2052192c887635ef0b3858b1c387b408c1d"
+    },
+    {
+      "path": ".ai/docs/20260930-tenant-context-warning/xml/TEST-com.stcloud.auth.UserSecurityServiceIntegrationTest.xml",
+      "beforeSha256": "9d2bc389e4508e57e310b0d574fcec30c6ea8433516262b1f78143b0490559c6",
+      "afterSha256": "efd588891822ff4f519472edd4f8ce14a8de9db4f09468ad0ce92425ee49f2eb"
+    },
+    {
+      "path": ".ai/docs/20260930-tenant-context-warning/xml/TEST-com.stcloud.auth.UserSecurityServiceMysqlIntegrationTest.xml",
+      "beforeSha256": "4aca4cd0504fdbff1683d375c1a1d5e4e0785b9e136af768e9d66e972e18e0ec",
+      "afterSha256": "ed569f8092bfa7981e302eb8c51c28b2ee08fdd160e42b6c0874d0bc50048139"
+    },
+    {
+      "path": ".ai/docs/20260930-tenant-context-warning/xml/TEST-com.stcloud.auth.UserSecurityServiceTenantFailureTest.xml",
+      "beforeSha256": "8518f722273990cb0f8c23efd3cc5c1c24406312e2d89b42d42c1e7f32fd7f65",
+      "afterSha256": "fe39121b37654d0049e3fdecc97b0c6f1a4d086b153f0a92b6a700586a615401"
+    },
+    {
+      "path": ".ai/docs/20260930-test-finish/browser-preview-requests.json",
+      "beforeSha256": "2ddaf73f4a3e3904aa5d799f658538c7977cbd5a0a4df07387dc2fbecf970340",
+      "afterSha256": "bfb2364ec70f4365b81665f072883b5f12ca793820e07682b660c01d9ce6a780"
+    },
+    {
+      "path": ".ai/docs/20260930-test-finish/browser-version-share-requests.json",
+      "beforeSha256": "5aec381b102e675cac2c9903da1663f3978ce2aa5bb9b740ef2df8e3f159e960",
+      "afterSha256": "651aae9280d463ec29d0cfcd14fb236b4bf17e936c4e7f87046e681ee960c897"
+    }
+  ],
+  "checks": [
+    "JWT/PAT/private key pattern absent",
+    "XML credential properties redacted",
+    "JSON sensitive fields and URL/CLI passwords redacted",
+    "XML suite and testcase attributes unchanged",
+    "26 screenshots visually checked: synthetic test pages"
+  ],
+  "reproduction": "Scripts that require environment credentials use STCLOUD_TEST_MYSQL_PASSWORD, STCLOUD_TEST_ADMIN_PASSWORD and STCLOUD_TEST_USER_PASSWORD. Supply credentials for a new isolated test environment.",
+  "limitations": "Historical source fixtures include documented development defaults and synthetic test data; these are not deployed credentials. Archived scripts may require updating local tool paths."
+}

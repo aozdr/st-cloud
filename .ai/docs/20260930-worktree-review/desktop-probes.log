@@ -1,0 +1,18 @@
+{"probe":"rotating-refresh","attempts":["R0","R0"],"registered":"R1","secondFailed":true}
+{"probe":"delete","cursor":"1","downloads":0,"states":["/old.txt"],"error":"同步失败: Error: 云端节点详情不可用","targetExists":false}
+[sync] download failed: /new.txt Error: 下载长度不匹配
+    at downloadFile (evalmachine.<anonymous>:38:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async SyncEngine.processCloudDelta (evalmachine.<anonymous>:567:29)
+    at async SyncEngine.syncOnce (evalmachine.<anonymous>:230:17)
+    at async deltaProbe (E:\code\st-cloud\.ai\docs\20260930-worktree-review\desktop-probes.cjs:84:5)
+    at async E:\code\st-cloud\.ai\docs\20260930-worktree-review\desktop-probes.cjs:95:80
+[sync] download failed: /new.txt Error: 下载长度不匹配
+    at downloadFile (evalmachine.<anonymous>:38:19)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async SyncEngine.processCloudDelta (evalmachine.<anonymous>:567:29)
+    at async SyncEngine.syncOnce (evalmachine.<anonymous>:230:17)
+    at async deltaProbe (E:\code\st-cloud\.ai\docs\20260930-worktree-review\desktop-probes.cjs:84:30)
+    at async E:\code\st-cloud\.ai\docs\20260930-worktree-review\desktop-probes.cjs:95:80
+{"probe":"move-historical-content","cursor":"1","downloads":2,"states":["/old.txt"],"error":"同步失败: Error: 下载长度不匹配","targetExists":false}
+{"probe":"move-replay","cursor":"2","downloads":0,"states":["/old.txt","/new.txt"],"targetExists":true}

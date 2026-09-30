@@ -1,0 +1,212 @@
+{
+  "schemaVersion": 2,
+  "definitionVersion": 2,
+  "taskId": "TASK-20260925-TEST-CONTINUE",
+  "scale": "medium",
+  "status": "done",
+  "goal": {
+    "objective": "续测未覆盖的高风险用例并修复新发现的游标精度问题",
+    "scope": [
+      "缩略图渲染器",
+      "桌面同步游标",
+      "执行记录"
+    ],
+    "completionCriteria": [
+      "缩略图资源与格式定向测试通过",
+      "游标数字精度问题修复并通过回归",
+      "新增证据按136条总册逐项登记"
+    ]
+  },
+  "revision": {
+    "design": "v1",
+    "code": "v1"
+  },
+  "exitCriteria": [
+    {
+      "id": "DESIGN",
+      "status": "done",
+      "dependsOn": [],
+      "by": "root",
+      "executionKind": "direct",
+      "executionId": "root-DESIGN",
+      "evidenceRef": ".ai/docs/20260925-test-continue/design.md",
+      "validatedRevision": "v1",
+      "completedAt": "2026-09-25T03:21:25.995121+00:00",
+      "confirmationRequired": false
+    },
+    {
+      "id": "TESTCASES",
+      "status": "done",
+      "dependsOn": [
+        "DESIGN"
+      ],
+      "by": "root",
+      "executionKind": "direct",
+      "executionId": "root-TESTCASES",
+      "evidenceRef": ".ai/docs/20260925-test-continue/testcases.md",
+      "validatedRevision": "v1",
+      "completedAt": "2026-09-25T03:21:25.995121+00:00",
+      "confirmationRequired": false
+    },
+    {
+      "id": "IMPLEMENTED",
+      "status": "done",
+      "dependsOn": [
+        "DESIGN",
+        "TESTCASES"
+      ],
+      "by": "root",
+      "executionKind": "direct",
+      "executionId": "root-IMPLEMENTED",
+      "evidenceRef": ".ai/docs/20260925-test-continue/changereport.md",
+      "validatedRevision": "v1",
+      "completedAt": "2026-09-25T03:21:25.995121+00:00",
+      "confirmationRequired": false
+    },
+    {
+      "id": "CODE_REVIEW",
+      "status": "done",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ],
+      "by": "root",
+      "executionKind": "direct",
+      "executionId": "root-CODE_REVIEW",
+      "evidenceRef": ".ai/docs/20260925-test-continue/codereview.md",
+      "validatedRevision": "v1",
+      "completedAt": "2026-09-25T03:21:25.995121+00:00",
+      "confirmationRequired": false
+    },
+    {
+      "id": "SECURITY_REVIEW",
+      "status": "done",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ],
+      "by": "root",
+      "executionKind": "direct",
+      "executionId": "root-SECURITY_REVIEW",
+      "evidenceRef": ".ai/docs/20260925-test-continue/security.md",
+      "validatedRevision": "v1",
+      "completedAt": "2026-09-25T03:21:25.995121+00:00",
+      "confirmationRequired": false
+    },
+    {
+      "id": "TEST_PASS",
+      "status": "done",
+      "dependsOn": [
+        "CODE_REVIEW",
+        "SECURITY_REVIEW"
+      ],
+      "by": "root",
+      "executionKind": "direct",
+      "executionId": "root-TEST_PASS",
+      "evidenceRef": ".ai/docs/20260925-test-continue/testreport.md",
+      "validatedRevision": "v1",
+      "completedAt": "2026-09-25T03:21:25.995121+00:00",
+      "confirmationRequired": false
+    },
+    {
+      "id": "KNOWLEDGE",
+      "status": "done",
+      "dependsOn": [
+        "TEST_PASS"
+      ],
+      "by": "root",
+      "executionKind": "direct",
+      "executionId": "root-KNOWLEDGE",
+      "evidenceRef": ".ai/docs/20260925-test-continue/results.md",
+      "validatedRevision": "v1",
+      "completedAt": "2026-09-25T03:21:25.995121+00:00",
+      "confirmationRequired": false
+    },
+    {
+      "id": "ACCEPT",
+      "status": "done",
+      "dependsOn": [
+        "KNOWLEDGE"
+      ],
+      "by": "root",
+      "executionKind": "direct",
+      "executionId": "root-ACCEPT",
+      "evidenceRef": ".ai/docs/20260925-test-continue/results.md",
+      "validatedRevision": "v1",
+      "completedAt": "2026-09-25T03:21:25.995121+00:00",
+      "confirmationRequired": false
+    }
+  ],
+  "artifacts": {
+    "design.md": {
+      "status": "done",
+      "ref": ".ai/docs/20260925-test-continue/design.md"
+    },
+    "testcases.md": {
+      "status": "done",
+      "ref": ".ai/docs/20260925-test-continue/testcases.md"
+    },
+    "changereport.md": {
+      "status": "done",
+      "ref": ".ai/docs/20260925-test-continue/changereport.md"
+    },
+    "codereview.md": {
+      "status": "done",
+      "ref": ".ai/docs/20260925-test-continue/codereview.md"
+    },
+    "security.md": {
+      "status": "done",
+      "ref": ".ai/docs/20260925-test-continue/security.md"
+    },
+    "testreport.md": {
+      "status": "done",
+      "ref": ".ai/docs/20260925-test-continue/testreport.md"
+    },
+    "results.md": {
+      "status": "done",
+      "ref": ".ai/docs/20260925-test-continue/results.md"
+    }
+  },
+  "blockers": [],
+  "acceptanceEvidence": [
+    {
+      "criterion": "缩略图资源与格式定向测试通过",
+      "evidenceRef": ".ai/docs/20260925-test-continue/results.md",
+      "validatedRevision": "v1"
+    },
+    {
+      "criterion": "游标数字精度问题修复并通过回归",
+      "evidenceRef": ".ai/docs/20260925-test-continue/results.md",
+      "validatedRevision": "v1"
+    },
+    {
+      "criterion": "新增证据按136条总册逐项登记",
+      "evidenceRef": ".ai/docs/20260925-test-continue/results.md",
+      "validatedRevision": "v1"
+    }
+  ],
+  "dispatchLedger": [],
+  "singleAgentAuthorization": {
+    "taskId": "TASK-20260925-TEST-CONTINUE",
+    "actor": "root",
+    "authorizedBy": "user",
+    "authorizationQuote": "不要开子线程，你自己完成",
+    "evidenceRef": ".ai/tasks/TASK-20260925-TEST-CONTINUE.md",
+    "criteria": [
+      "CODE_REVIEW",
+      "SECURITY_REVIEW",
+      "TEST_PASS",
+      "ACCEPT"
+    ]
+  },
+  "history": [
+    {
+      "eventId": "test-continue-done",
+      "action": "主线程自检与逐项登记",
+      "actor": "root",
+      "occurredAt": "2026-09-25T03:21:25.995121+00:00",
+      "revision": {
+        "design": "v1",
+        "code": "v1"
+      }
+    }
+  ]
+}

@@ -102,6 +102,12 @@ public class JwtUtils {
 
     public String generateToken(Long userId, Long tenantId, String username,
                                 List<String> roles, List<String> permissions, int dataScope) {
+        return generateToken(userId, tenantId, username, roles, permissions, dataScope, 0L);
+    }
+
+    public String generateToken(Long userId, Long tenantId, String username,
+                                List<String> roles, List<String> permissions, int dataScope,
+                                long securityVersion) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);
         claims.put("tenantId", tenantId);
@@ -109,6 +115,8 @@ public class JwtUtils {
         claims.put("roles", roles);
         claims.put("permissions", permissions);
         claims.put("dataScope", dataScope);
+        claims.put("type", "access");
+        claims.put("securityVersion", securityVersion);
         return Jwts.builder()
                 .claims(claims)
                 .subject(username)
@@ -119,11 +127,20 @@ public class JwtUtils {
     }
 
     public String generateRefreshToken(Long userId, String username) {
+        return generateRefreshToken(userId, null, username, 0L);
+    }
+
+    public String generateRefreshToken(Long userId, Long tenantId, String username,
+                                       long securityVersion) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);
+        claims.put("tenantId", tenantId);
+        claims.put("securityVersion", securityVersion);
         claims.put("type", "refresh");
         return Jwts.builder()
                 .claims(claims)
+                // 同秒签发也必须生成不同的刷新令牌，否则CAS替换为原值会允许重复刷新。
+                .id(UUID.randomUUID().toString())
                 .subject(username)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + refreshExpiration))

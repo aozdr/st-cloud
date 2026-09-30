@@ -119,7 +119,7 @@ export async function initDatabase(): Promise<void> {
     CREATE TABLE IF NOT EXISTS sync_config (
       root_id       TEXT PRIMARY KEY,
       local_path    TEXT NOT NULL,
-      cursor        INTEGER DEFAULT 0,
+      cursor        TEXT DEFAULT '0',
       status        TEXT DEFAULT 'active',
       user_id       TEXT,
       last_sync_at  INTEGER,

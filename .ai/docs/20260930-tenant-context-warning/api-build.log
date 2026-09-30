@@ -1,0 +1,324 @@
+[INFO] Scanning for projects...
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Build Order:
+[INFO] 
+[INFO] ������ Parent                                                         [pom]
+[INFO] ������ Common                                                         [jar]
+[INFO] ������ Auth                                                           [jar]
+[INFO] ������ Core                                                           [jar]
+[INFO] ������ Search                                                         [jar]
+[INFO] ������ Team                                                           [jar]
+[INFO] ������ Preview                                                        [jar]
+[INFO] ������ Share                                                          [jar]
+[INFO] ������ Sync                                                           [jar]
+[INFO] ������ Admin                                                          [jar]
+[INFO] ������ API                                                            [jar]
+[INFO] 
+[INFO] --------------------< com.stcloud:st-cloud-parent >---------------------
+[INFO] Building ������ Parent 1.0.0-SNAPSHOT                                [1/11]
+[INFO]   from pom.xml
+[INFO] --------------------------------[ pom ]---------------------------------
+[INFO] 
+[INFO] -----------------------< com.stcloud:st-common >------------------------
+[INFO] Building ������ Common 1.0.0-SNAPSHOT                                [2/11]
+[INFO]   from st-common\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ st-common ---
+[INFO] skip non existing resourceDirectory E:\code\st-cloud\st-common\src\main\resources
+[INFO] skip non existing resourceDirectory E:\code\st-cloud\st-common\src\main\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ st-common ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ st-common ---
+[INFO] skip non existing resourceDirectory E:\code\st-cloud\st-common\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ st-common ---
+[INFO] Nothing to compile - all classes are up to date
+[INFO] 
+[INFO] --- surefire:3.1.2:test (default-test) @ st-common ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- jar:3.3.0:jar (default-jar) @ st-common ---
+[INFO] Building jar: E:\code\st-cloud\st-common\target\st-common-1.0.0-SNAPSHOT.jar
+[INFO] 
+[INFO] ------------------------< com.stcloud:st-auth >-------------------------
+[INFO] Building ������ Auth 1.0.0-SNAPSHOT                                  [3/11]
+[INFO]   from st-auth\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ st-auth ---
+[INFO] skip non existing resourceDirectory E:\code\st-cloud\st-auth\src\main\resources
+[INFO] skip non existing resourceDirectory E:\code\st-cloud\st-auth\src\main\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ st-auth ---
+[INFO] Changes detected - recompiling the module! :dependency
+[INFO] Compiling 24 source files with javac [debug release 17] to target\classes
+[INFO] /E:/code/st-cloud/st-auth/src/main/java/com/stcloud/auth/security/JwtAuthenticationFilter.java: E:\code\st-cloud\st-auth\src\main\java\com\stcloud\auth\security\JwtAuthenticationFilter.javaʹ����δ�����򲻰�ȫ�Ĳ�����
+[INFO] /E:/code/st-cloud/st-auth/src/main/java/com/stcloud/auth/security/JwtAuthenticationFilter.java: �й���ϸ��Ϣ, ��ʹ�� -Xlint:unchecked ���±��롣
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ st-auth ---
+[INFO] Copying 2 resources from src\test\resources to target\test-classes
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ st-auth ---
+[INFO] Changes detected - recompiling the module! :dependency
+[INFO] Compiling 8 source files with javac [debug release 17] to target\test-classes
+[INFO] /E:/code/st-cloud/st-auth/src/test/java/com/stcloud/auth/RegisterMysqlConcurrencyIntegrationTest.java: E:\code\st-cloud\st-auth\src\test\java\com\stcloud\auth\RegisterMysqlConcurrencyIntegrationTest.javaʹ����δ�����򲻰�ȫ�Ĳ�����
+[INFO] /E:/code/st-cloud/st-auth/src/test/java/com/stcloud/auth/RegisterMysqlConcurrencyIntegrationTest.java: �й���ϸ��Ϣ, ��ʹ�� -Xlint:unchecked ���±��롣
+[INFO] 
+[INFO] --- surefire:3.1.2:test (default-test) @ st-auth ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- jar:3.3.0:jar (default-jar) @ st-auth ---
+[INFO] Building jar: E:\code\st-cloud\st-auth\target\st-auth-1.0.0-SNAPSHOT.jar
+[INFO] 
+[INFO] ------------------------< com.stcloud:st-core >-------------------------
+[INFO] Building ������ Core 1.0.0-SNAPSHOT                                  [4/11]
+[INFO]   from st-core\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ st-core ---
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] Copying 4 resources from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ st-core ---
+[INFO] Changes detected - recompiling the module! :dependency
+[INFO] Compiling 118 source files with javac [debug release 17] to target\classes
+[INFO] /E:/code/st-cloud/st-core/src/main/java/com/stcloud/core/service/impl/VersionServiceImpl.java: E:\code\st-cloud\st-core\src\main\java\com\stcloud\core\service\impl\VersionServiceImpl.javaʹ�û򸲸����ѹ�ʱ�� API��
+[INFO] /E:/code/st-cloud/st-core/src/main/java/com/stcloud/core/service/impl/VersionServiceImpl.java: �й���ϸ��Ϣ, ��ʹ�� -Xlint:deprecation ���±��롣
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ st-core ---
+[INFO] Copying 2 resources from src\test\resources to target\test-classes
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ st-core ---
+[INFO] Changes detected - recompiling the module! :dependency
+[INFO] Compiling 36 source files with javac [debug release 17] to target\test-classes
+[INFO] 
+[INFO] --- surefire:3.1.2:test (default-test) @ st-core ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- jar:3.3.0:jar (default-jar) @ st-core ---
+[INFO] Building jar: E:\code\st-cloud\st-core\target\st-core-1.0.0-SNAPSHOT.jar
+[INFO] 
+[INFO] -----------------------< com.stcloud:st-search >------------------------
+[INFO] Building ������ Search 1.0.0-SNAPSHOT                                [5/11]
+[INFO]   from st-search\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ st-search ---
+[INFO] Copying 1 resource from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ st-search ---
+[INFO] Changes detected - recompiling the module! :dependency
+[INFO] Compiling 12 source files with javac [debug release 17] to target\classes
+[INFO] /E:/code/st-cloud/st-search/src/main/java/com/stcloud/search/service/impl/SearchServiceImpl.java: ĳЩ�����ļ�ʹ����δ�����򲻰�ȫ�Ĳ�����
+[INFO] /E:/code/st-cloud/st-search/src/main/java/com/stcloud/search/service/impl/SearchServiceImpl.java: �й���ϸ��Ϣ, ��ʹ�� -Xlint:unchecked ���±��롣
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ st-search ---
+[INFO] skip non existing resourceDirectory E:\code\st-cloud\st-search\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ st-search ---
+[INFO] Changes detected - recompiling the module! :dependency
+[INFO] Compiling 8 source files with javac [debug release 17] to target\test-classes
+[INFO] /E:/code/st-cloud/st-search/src/test/java/com/stcloud/search/service/impl/TeamSearchServiceTest.java: ĳЩ�����ļ�ʹ����δ�����򲻰�ȫ�Ĳ�����
+[INFO] /E:/code/st-cloud/st-search/src/test/java/com/stcloud/search/service/impl/TeamSearchServiceTest.java: �й���ϸ��Ϣ, ��ʹ�� -Xlint:unchecked ���±��롣
+[INFO] 
+[INFO] --- surefire:3.1.2:test (default-test) @ st-search ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- jar:3.3.0:jar (default-jar) @ st-search ---
+[INFO] Building jar: E:\code\st-cloud\st-search\target\st-search-1.0.0-SNAPSHOT.jar
+[INFO] 
+[INFO] ------------------------< com.stcloud:st-team >-------------------------
+[INFO] Building ������ Team 1.0.0-SNAPSHOT                                  [6/11]
+[INFO]   from st-team\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ st-team ---
+[INFO] skip non existing resourceDirectory E:\code\st-cloud\st-team\src\main\resources
+[INFO] skip non existing resourceDirectory E:\code\st-cloud\st-team\src\main\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ st-team ---
+[INFO] Changes detected - recompiling the module! :dependency
+[INFO] Compiling 73 source files with javac [debug release 17] to target\classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ st-team ---
+[INFO] Copying 3 resources from src\test\resources to target\test-classes
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ st-team ---
+[INFO] Changes detected - recompiling the module! :dependency
+[INFO] Compiling 25 source files with javac [debug release 17] to target\test-classes
+[WARNING] /E:/code/st-cloud/st-team/src/test/java/com/stcloud/team/service/FolderPermissionFreshTest.java:[93,72] ���һ������ʹ���˲�׼ȷ�ı������͵� varargs �����ķ� varargs ����; 
+  ���� varargs ����, Ӧʹ�� com.stcloud.core.entity.FileNode
+  ���ڷ� varargs ����, Ӧʹ�� com.stcloud.core.entity.FileNode[], ����Ҳ�������ƴ˾���
+[WARNING] /E:/code/st-cloud/st-team/src/test/java/com/stcloud/team/service/FolderPermissionFreshTest.java:[148,72] ���һ������ʹ���˲�׼ȷ�ı������͵� varargs �����ķ� varargs ����; 
+  ���� varargs ����, Ӧʹ�� com.stcloud.core.entity.FileNode
+  ���ڷ� varargs ����, Ӧʹ�� com.stcloud.core.entity.FileNode[], ����Ҳ�������ƴ˾���
+[INFO] /E:/code/st-cloud/st-team/src/test/java/com/stcloud/team/service/FolderPermissionFreshTest.java: ĳЩ�����ļ�ʹ����δ�����򲻰�ȫ�Ĳ�����
+[INFO] /E:/code/st-cloud/st-team/src/test/java/com/stcloud/team/service/FolderPermissionFreshTest.java: �й���ϸ��Ϣ, ��ʹ�� -Xlint:unchecked ���±��롣
+[INFO] 
+[INFO] --- surefire:3.1.2:test (default-test) @ st-team ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- jar:3.3.0:jar (default-jar) @ st-team ---
+[INFO] Building jar: E:\code\st-cloud\st-team\target\st-team-1.0.0-SNAPSHOT.jar
+[INFO] 
+[INFO] -----------------------< com.stcloud:st-preview >-----------------------
+[INFO] Building ������ Preview 1.0.0-SNAPSHOT                               [7/11]
+[INFO]   from st-preview\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ st-preview ---
+[INFO] skip non existing resourceDirectory E:\code\st-cloud\st-preview\src\main\resources
+[INFO] skip non existing resourceDirectory E:\code\st-cloud\st-preview\src\main\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ st-preview ---
+[INFO] Changes detected - recompiling the module! :dependency
+[INFO] Compiling 4 source files with javac [debug release 17] to target\classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ st-preview ---
+[INFO] Copying 2 resources from src\test\resources to target\test-classes
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ st-preview ---
+[INFO] Changes detected - recompiling the module! :dependency
+[INFO] Compiling 4 source files with javac [debug release 17] to target\test-classes
+[INFO] 
+[INFO] --- surefire:3.1.2:test (default-test) @ st-preview ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- jar:3.3.0:jar (default-jar) @ st-preview ---
+[INFO] Building jar: E:\code\st-cloud\st-preview\target\st-preview-1.0.0-SNAPSHOT.jar
+[INFO] 
+[INFO] ------------------------< com.stcloud:st-share >------------------------
+[INFO] Building ������ Share 1.0.0-SNAPSHOT                                 [8/11]
+[INFO]   from st-share\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ st-share ---
+[INFO] skip non existing resourceDirectory E:\code\st-cloud\st-share\src\main\resources
+[INFO] skip non existing resourceDirectory E:\code\st-cloud\st-share\src\main\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ st-share ---
+[INFO] Changes detected - recompiling the module! :dependency
+[INFO] Compiling 15 source files with javac [debug release 17] to target\classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ st-share ---
+[INFO] Copying 3 resources from src\test\resources to target\test-classes
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ st-share ---
+[INFO] Changes detected - recompiling the module! :dependency
+[INFO] Compiling 13 source files with javac [debug release 17] to target\test-classes
+[INFO] 
+[INFO] --- surefire:3.1.2:test (default-test) @ st-share ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- jar:3.3.0:jar (default-jar) @ st-share ---
+[INFO] Building jar: E:\code\st-cloud\st-share\target\st-share-1.0.0-SNAPSHOT.jar
+[INFO] 
+[INFO] ------------------------< com.stcloud:st-sync >-------------------------
+[INFO] Building ������ Sync 1.0.0-SNAPSHOT                                  [9/11]
+[INFO]   from st-sync\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ st-sync ---
+[INFO] skip non existing resourceDirectory E:\code\st-cloud\st-sync\src\main\resources
+[INFO] skip non existing resourceDirectory E:\code\st-cloud\st-sync\src\main\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ st-sync ---
+[INFO] Changes detected - recompiling the module! :dependency
+[INFO] Compiling 37 source files with javac [debug release 17] to target\classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ st-sync ---
+[INFO] Copying 2 resources from src\test\resources to target\test-classes
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ st-sync ---
+[INFO] Changes detected - recompiling the module! :dependency
+[INFO] Compiling 8 source files with javac [debug release 17] to target\test-classes
+[INFO] /E:/code/st-cloud/st-sync/src/test/java/com/stcloud/sync/service/impl/SyncServiceProjectionTest.java: E:\code\st-cloud\st-sync\src\test\java\com\stcloud\sync\service\impl\SyncServiceProjectionTest.javaʹ����δ�����򲻰�ȫ�Ĳ�����
+[INFO] /E:/code/st-cloud/st-sync/src/test/java/com/stcloud/sync/service/impl/SyncServiceProjectionTest.java: �й���ϸ��Ϣ, ��ʹ�� -Xlint:unchecked ���±��롣
+[INFO] 
+[INFO] --- surefire:3.1.2:test (default-test) @ st-sync ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- jar:3.3.0:jar (default-jar) @ st-sync ---
+[INFO] Building jar: E:\code\st-cloud\st-sync\target\st-sync-1.0.0-SNAPSHOT.jar
+[INFO] 
+[INFO] ------------------------< com.stcloud:st-admin >------------------------
+[INFO] Building ������ Admin 1.0.0-SNAPSHOT                                [10/11]
+[INFO]   from st-admin\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ st-admin ---
+[INFO] skip non existing resourceDirectory E:\code\st-cloud\st-admin\src\main\resources
+[INFO] skip non existing resourceDirectory E:\code\st-cloud\st-admin\src\main\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ st-admin ---
+[INFO] Changes detected - recompiling the module! :dependency
+[INFO] Compiling 35 source files with javac [debug release 17] to target\classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ st-admin ---
+[INFO] Copying 3 resources from src\test\resources to target\test-classes
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ st-admin ---
+[INFO] Changes detected - recompiling the module! :dependency
+[INFO] Compiling 7 source files with javac [debug release 17] to target\test-classes
+[INFO] /E:/code/st-cloud/st-admin/src/test/java/com/stcloud/admin/UserSecurityRedisIntegrationTest.java: E:\code\st-cloud\st-admin\src\test\java\com\stcloud\admin\UserSecurityRedisIntegrationTest.javaʹ����δ�����򲻰�ȫ�Ĳ�����
+[INFO] /E:/code/st-cloud/st-admin/src/test/java/com/stcloud/admin/UserSecurityRedisIntegrationTest.java: �й���ϸ��Ϣ, ��ʹ�� -Xlint:unchecked ���±��롣
+[INFO] 
+[INFO] --- surefire:3.1.2:test (default-test) @ st-admin ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- jar:3.3.0:jar (default-jar) @ st-admin ---
+[INFO] Building jar: E:\code\st-cloud\st-admin\target\st-admin-1.0.0-SNAPSHOT.jar
+[INFO] 
+[INFO] -------------------------< com.stcloud:st-api >-------------------------
+[INFO] Building ������ API 1.0.0-SNAPSHOT                                  [11/11]
+[INFO]   from st-api\pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ st-api ---
+[INFO] Copying 2 resources from src\main\resources to target\classes
+[INFO] Copying 0 resource from src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.11.0:compile (default-compile) @ st-api ---
+[INFO] Changes detected - recompiling the module! :dependency
+[INFO] Compiling 1 source file with javac [debug release 17] to target\classes
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ st-api ---
+[INFO] skip non existing resourceDirectory E:\code\st-cloud\st-api\src\test\resources
+[INFO] 
+[INFO] --- compiler:3.11.0:testCompile (default-testCompile) @ st-api ---
+[INFO] Changes detected - recompiling the module! :dependency
+[INFO] Compiling 2 source files with javac [debug release 17] to target\test-classes
+[INFO] 
+[INFO] --- surefire:3.1.2:test (default-test) @ st-api ---
+[INFO] Tests are skipped.
+[INFO] 
+[INFO] --- jar:3.3.0:jar (default-jar) @ st-api ---
+[INFO] Building jar: E:\code\st-cloud\st-api\target\st-api-1.0.0-SNAPSHOT.jar
+[INFO] 
+[INFO] --- spring-boot:3.2.5:repackage (repackage) @ st-api ---
+[INFO] Replacing main artifact E:\code\st-cloud\st-api\target\st-api-1.0.0-SNAPSHOT.jar with repackaged archive, adding nested dependencies in BOOT-INF/.
+[INFO] The original artifact has been renamed to E:\code\st-cloud\st-api\target\st-api-1.0.0-SNAPSHOT.jar.original
+[INFO] ------------------------------------------------------------------------
+[INFO] Reactor Summary for ������ Parent 1.0.0-SNAPSHOT:
+[INFO] 
+[INFO] ������ Parent ......................................... SUCCESS [  0.002 s]
+[INFO] ������ Common ......................................... SUCCESS [  1.304 s]
+[INFO] ������ Auth ........................................... SUCCESS [  2.923 s]
+[INFO] ������ Core ........................................... SUCCESS [  4.574 s]
+[INFO] ������ Search ......................................... SUCCESS [  2.626 s]
+[INFO] ������ Team ........................................... SUCCESS [  2.962 s]
+[INFO] ������ Preview ........................................ SUCCESS [  1.475 s]
+[INFO] ������ Share .......................................... SUCCESS [  2.100 s]
+[INFO] ������ Sync ........................................... SUCCESS [  1.890 s]
+[INFO] ������ Admin .......................................... SUCCESS [  1.883 s]
+[INFO] ������ API ............................................ SUCCESS [  1.864 s]
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  23.886 s
+[INFO] Finished at: 2026-09-30T14:24:15+08:00
+[INFO] ------------------------------------------------------------------------

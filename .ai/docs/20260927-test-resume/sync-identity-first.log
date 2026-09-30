@@ -1,0 +1,73 @@
+✔ TC04-14: move present 实际目录基线与目标保护 (927.9994ms)
+✖ TC04-14: move missing 实际目录基线与目标保护 (970.9271ms)
+✔ TC04-14: move collision 实际目录基线与目标保护 (992.8153ms)
+✔ TC04-14: rename present 实际目录基线与目标保护 (1091.1922ms)
+✖ TC04-14: rename missing 实际目录基线与目标保护 (969.0715ms)
+✔ TC04-14: rename collision 实际目录基线与目标保护 (936.841ms)
+✔ TC04-14: 未修改目录MOVE保留后代基线 (929.6256ms)
+✔ TC04-15: reused 旧路径身份对账失败及跨进程恢复 (8521.7461ms)
+✖ TC04-16: unknown 旧路径身份对账失败及跨进程恢复 (8459.3162ms)
+✔ TC04-16: 直接消费同路径脏MOVE不能改绑X，失败保留基线 (7957.2083ms)
+ℹ tests 10
+ℹ suites 0
+ℹ pass 7
+ℹ fail 3
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 31862.2038
+
+✖ failing tests:
+
+test at st-desktop\src\sync\sync-restart.test.cjs:572:5
+✖ TC04-14: move missing 实际目录基线与目标保护 (970.9271ms)
+  AssertionError [ERR_ASSERTION]: 源缺失补齐后不能残留旧身份
+  
+  true !== false
+  
+      at TestContext.<anonymous> (E:\code\st-cloud\st-desktop\src\sync\sync-restart.test.cjs:590:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at st-desktop\src\sync\sync-restart.test.cjs:572:5
+✖ TC04-14: rename missing 实际目录基线与目标保护 (969.0715ms)
+  AssertionError [ERR_ASSERTION]: 源缺失补齐后不能残留旧身份
+  
+  true !== false
+  
+      at TestContext.<anonymous> (E:\code\st-cloud\st-desktop\src\sync\sync-restart.test.cjs:590:16)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: true,
+    expected: false,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at st-desktop\src\sync\sync-restart.test.cjs:613:3
+✖ TC04-16: unknown 旧路径身份对账失败及跨进程恢复 (8459.3162ms)
+  TypeError: Cannot read properties of null (reading 'status')
+      at TestContext.<anonymous> (E:\code\st-cloud\st-desktop\src\sync\sync-restart.test.cjs:629:37)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7)

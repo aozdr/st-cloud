@@ -12,7 +12,16 @@ public class TenantContext {
     private static final ThreadLocal<String> TENANT_MODE = new ThreadLocal<>();
 
     public static void setTenantId(Long tenantId) {
-        TENANT_ID.set(tenantId);
+        if (tenantId == null) {
+            TENANT_ID.remove();
+        } else {
+            TENANT_ID.set(tenantId);
+        }
+    }
+
+    /** 只读取线程中实际设置的租户，供临时切换前保存快照；不用于数据库访问时的默认租户解析。 */
+    public static Long getTenantIdOrNull() {
+        return TENANT_ID.get();
     }
 
     public static Long getTenantId() {

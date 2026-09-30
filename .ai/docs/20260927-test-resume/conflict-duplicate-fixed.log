@@ -1,0 +1,11 @@
+✔ TC04-28: 成功冲突后同页失败，跨进程重放不回传覆盖原云端版本 (9165.0601ms)
+✔ TC04-28: fail-upload 连续三轮部分成功不重复已完成副本 (6095.4829ms)
+✔ TC04-28: fail-download 连续三轮部分成功不重复已完成副本 (24127.507ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 39483.556

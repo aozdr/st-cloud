@@ -1,5 +1,5 @@
 import { memo, useState, useEffect } from 'react';
-import api, { buildStreamUrl } from '../../lib/api';
+import api from '../../lib/api';
 import { getFileTypeConfig, isImage, cn } from '../../lib/utils';
 import type { FileNode } from '../../types';
 import FileTypeIcon from './FileTypeIcon';
@@ -16,7 +16,8 @@ function FileThumbnail({ file, size = 'sm', blur = false, className }: Props) {
   const [url, setUrl] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const config = getFileTypeConfig(file.nodeType, file.suffix);
-  const img = file.nodeType === 1 && isImage(file.suffix);
+  const img = file.nodeType === 1 && isImage(file.suffix)
+    && !['webp', 'svg'].includes(file.suffix?.toLowerCase() || '');
 
   useEffect(() => {
     if (!img) return;
@@ -28,16 +29,7 @@ function FileThumbnail({ file, size = 'sm', blur = false, className }: Props) {
         if (!cancelled) setUrl(u);
       })
       .catch(() => {
-        // 缩略图接口失败：改用 download-token 兜底（download 令牌后端允许 URL query，绝不暴露 access token）
-        if (cancelled) return;
-        api
-          .post<{ token: string }>(`/file/${file.id}/download-token`)
-          .then((d) => {
-            if (!cancelled) setUrl(buildStreamUrl(file.id, { token: d.token, inline: true }));
-          })
-          .catch(() => {
-            if (!cancelled) setUrl(null);
-          });
+        if (!cancelled) setUrl(null);
       });
     return () => {
       cancelled = true;
@@ -76,6 +68,7 @@ function FileThumbnail({ file, size = 'sm', blur = false, className }: Props) {
           loading="lazy"
           draggable={false}
           onLoad={() => setLoaded(true)}
+          onError={() => { setUrl(null); setLoaded(false); }}
         />
       )}
     </div>

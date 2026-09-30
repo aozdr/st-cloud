@@ -11,14 +11,14 @@ interface DuplicateGroup {
   cnt: number;
   totalSize: number;
   sampleName: string;
-  sampleId: number;
+  sampleId: string;
 }
 
 interface CleanupResult {
   total: number;
   deletedCount: number;
   skippedCount: number;
-  keptId?: number;
+  keptId?: string;
   keptName?: string;
 }
 

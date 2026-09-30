@@ -1,0 +1,14 @@
+stcloud-team-recycle-mq-broker Up 3 hours
+stcloud-team-recycle-mq-namesrv Up 3 hours
+stcloud-onlyoffice Up 4 hours
+stcloud-elasticsearch Up 4 hours
+stcloud-rocketmq-broker Up 4 hours
+stcloud-rocketmq-dashboard Up 4 hours
+stcloud-redis Up 4 hours
+stcloud-rocketmq-namesrv Up 4 hours
+stcloud-rustfs Up 4 hours
+PONG
+#Cluster Name           #Broker Name            #BID  #Addr                  #Version              #InTPS(LOAD)     #OutTPS(LOAD)  #Timer(Progress)        #PCWait(ms)  #Hour         #SPACE    #ACTIVATED
+TeamRecycleTest         team-recycle-test       0     127.0.0.1:20911        V5_3_1                 0.00(0,0ms)       0.00(0,0ms)  0-0(0.0w, 0.0, 0.0)               0  3.37          0.0400          true
+RustFS HTTP 403
+ES HTTP 200

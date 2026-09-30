@@ -76,3 +76,10 @@ design/
 *_IMPLEMENTATION_ANALYSIS.md
 *_IMPLEMENTATION_REPORT.md
 TRANSFER_FLOATING_WIDGET_IMPLEMENTATION.md
+
+# AI 验证过程中生成的数据库、临时文件和模拟同步目录
+.ai/docs/**/*.sqlite
+.ai/docs/**/*.tmp
+.ai/docs/**/conflict-debug/
+.ai/docs/**/conflict-replay-debug/
+.ai/docs/**/commit-paths.txt

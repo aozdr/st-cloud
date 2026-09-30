@@ -1,0 +1,10 @@
+{
+  "taskId": "20260930-team-recycle",
+  "criterionProposal": {
+    "id": "TESTCASES",
+    "outcome": "pass",
+    "by": "workflow-manager",
+    "evidenceRef": ".ai/docs/20260930-team-recycle/testcases.md",
+    "validatedRevision": "team-recycle-design-v1"
+  }
+}

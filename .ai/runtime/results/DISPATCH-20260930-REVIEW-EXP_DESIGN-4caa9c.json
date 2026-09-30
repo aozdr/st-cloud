@@ -1,0 +1,48 @@
+{
+  "dispatchId": "DISPATCH-20260930-REVIEW-EXP_DESIGN-4caa9c",
+  "taskId": "TASK-20260930-REVIEW-EXP_DESIGN",
+  "status": "completed",
+  "artifactRefs": [".ai/docs/20260930-review-fixes/exp-review.md"],
+  "criterionProposal": {
+    "id": "EXP_DESIGN",
+    "outcome": "pass",
+    "by": "/root/exp_design_review",
+    "dispatchId": "DISPATCH-20260930-REVIEW-EXP_DESIGN-4caa9c",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260930-REVIEW-EXP_DESIGN-4caa9c.json",
+    "validatedRevision": "review-fixes-design-v1"
+  },
+  "blockerProposals": [],
+  "背景": "独立审查 F8 分享胶卷失败降级设计覆盖，不作实现验收。",
+  "输入": [
+    ".ai/tasks/TASK-20260930-REVIEW-EXP_DESIGN.md",
+    ".ai/docs/20260930-review-fixes/requirement.md",
+    ".ai/docs/20260930-review-fixes/uispec.md",
+    ".ai/docs/20260930-review-fixes/design.md",
+    ".ai/docs/20260930-review-fixes/testcases.md",
+    ".ai/docs/20260930-review-fixes/baseline/hashes.json",
+    ".ai/docs/20260930-worktree-review/review.md"
+  ],
+  "分析": "F8 正常、不支持、失败、来源/版本变化、名称及导航状态均由当前 uispec/design 覆盖；九项文档边界均追踪，前八项没有新增 UI 页面。",
+  "决策": "建议 EXP_DESIGN pass。当前 F8 源码仍为隐藏 img；不代表已经修复或 EXP_ACCEPT 通过。",
+  "State Delta": "仅上述 criterionProposal；未写 State 或执行 Evaluate。",
+  "风险": "实现必须将节点版本实际加入 URL、使用通用图片图标并防止旧 URL 的 error 污染新状态。未运行浏览器或构建，视觉与操作事实待实现验收。",
+  "下一步": "主线程核对结果并 Evaluate；实现后执行 F8 的图标、名称、键盘/点击导航及不同 URL 重试验证。",
+  "变更影响": "仅写入 scope.include 的报告和本结果，未修改源码/State/数据库。",
+  "validationEvidence": [
+    {
+      "check": "Envelope 必需/允许字段、ACK 身份三元组、版本与白名单检查",
+      "outcome": "pass"
+    },
+    {
+      "check": "PreviewModal 声明 baseline、baseline 副本、当前源码 SHA256 一致",
+      "outcome": "pass",
+      "sha256": "b68dbfabd4b79a65f7fcbd487e42c33e3bef79ea5f0a2ec40fca0e6d3d9cd7fd"
+    },
+    {
+      "check": "uispec 全部页面和状态逐项对照 design 第 6 项及 F8 用例",
+      "outcome": "pass",
+      "evidenceRef": ".ai/docs/20260930-review-fixes/exp-review.md"
+    }
+  ],
+  "notExecuted": ["浏览器及真实 img error", "视觉对比度测量", "Web 构建", "后端/MySQL/桌面测试"]
+}

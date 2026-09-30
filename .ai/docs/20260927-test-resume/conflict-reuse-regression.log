@@ -1,0 +1,12 @@
+✔ TC04-26/27: conflict-keep_both/fail-upload 连续失败重启保持原身份与MD5 (4973.9923ms)
+✔ TC04-26/27: conflict-reconcile-baseline/fail-upload 连续失败重启保持原身份与MD5 (4978.4519ms)
+✔ TC04-26/27: conflict-reconcile-other/fail-upload 连续失败重启保持原身份与MD5 (5026.2065ms)
+✔ TC04-26/27: conflict-reconcile-missing/fail-upload 连续失败重启保持原身份与MD5 (4974.6798ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 20047.8666

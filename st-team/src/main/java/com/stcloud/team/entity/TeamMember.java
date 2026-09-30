@@ -14,7 +14,7 @@ public class TeamMember extends BaseEntity {
 
     private Long spaceId;
     private Long userId;
-    private Integer role; // 0-管理员 1-编辑者 2-查看者
+    private Long role; // 0-管理员 1-编辑者 2-查看者；其他值为自定义角色 ID
     private LocalDateTime joinedAt;
     private LocalDateTime lastActiveAt;
     private Integer isPinned; // 是否置顶：0-否 1-是

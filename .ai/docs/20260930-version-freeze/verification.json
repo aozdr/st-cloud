@@ -1,0 +1,246 @@
+{
+  "date": "2026-09-30",
+  "kind": "freeze evidence inventory, not new full acceptance",
+  "junit": {
+    "review-fixes": {
+      "xmlDirectory": ".ai/docs/20260930-review-fixes/backend-xml",
+      "totals": {
+        "suites": 10,
+        "tests": 117,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "suiteResults": [
+        {
+          "name": "com.stcloud.auth.AuthServiceIntegrationTest",
+          "tests": 8,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.stcloud.auth.RegisterMysqlConcurrencyIntegrationTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.stcloud.auth.UserSecurityServiceIntegrationTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.stcloud.core.schema.SchemaConsistencyTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.stcloud.core.service.impl.FileServiceFlowIntegrationTest",
+          "tests": 18,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.stcloud.team.controller.TeamRoleApiIntegrationTest",
+          "tests": 23,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.stcloud.team.service.TeamRoleConcurrencyIntegrationTest",
+          "tests": 16,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.stcloud.team.service.TeamRoleMysqlConcurrencyIntegrationTest",
+          "tests": 16,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.stcloud.team.service.TeamServiceIntegrationTest",
+          "tests": 9,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.stcloud.team.service.TeamServicePermissionIntegrationTest",
+          "tests": 19,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ]
+    },
+    "team-recycle": {
+      "xmlDirectory": ".ai/docs/20260930-team-recycle/backend-xml",
+      "totals": {
+        "suites": 6,
+        "tests": 67,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "suiteResults": [
+        {
+          "name": "com.stcloud.core.schema.SchemaConsistencyTest",
+          "tests": 3,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.stcloud.core.service.impl.FileServiceFlowIntegrationTest",
+          "tests": 18,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.stcloud.core.service.impl.FileServicePermissionIntegrationTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.stcloud.core.service.impl.RecycleBinPhysicalDeleteIntegrationTest",
+          "tests": 5,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.stcloud.core.service.impl.TeamRecycleBinIntegrationTest",
+          "tests": 18,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.stcloud.core.service.impl.TeamRecycleBinMysqlIntegrationTest",
+          "tests": 18,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ]
+    },
+    "tenant-context-warning": {
+      "xmlDirectory": ".ai/docs/20260930-tenant-context-warning/xml",
+      "totals": {
+        "suites": 5,
+        "tests": 22,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0
+      },
+      "suiteResults": [
+        {
+          "name": "com.stcloud.auth.AuthServiceIntegrationTest",
+          "tests": 8,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.stcloud.auth.security.JwtAuthenticationFilterPurposeTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.stcloud.auth.UserSecurityServiceIntegrationTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.stcloud.auth.UserSecurityServiceMysqlIntegrationTest",
+          "tests": 4,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        },
+        {
+          "name": "com.stcloud.auth.UserSecurityServiceTenantFailureTest",
+          "tests": 2,
+          "failures": 0,
+          "errors": 0,
+          "skipped": 0
+        }
+      ]
+    }
+  },
+  "desktopHistorical": {
+    "review": 13,
+    "round3Phases": [
+      21,
+      127
+    ],
+    "note": "Separate runs; overlap not added",
+    "log": ".ai/docs/20260930-review-fixes/desktop-regression.log"
+  },
+  "revisionChecks": {
+    "review-fixes": {
+      "snapshot": ".ai/docs/20260930-review-fixes/source-revision.json",
+      "checked": 15,
+      "mismatches": []
+    },
+    "team-recycle": {
+      "snapshot": ".ai/docs/20260930-team-recycle/source-revision.json",
+      "checked": 5,
+      "mismatches": []
+    },
+    "tenant-context-warning": {
+      "snapshot": ".ai/docs/20260930-tenant-context-warning/hashes.json",
+      "checked": 5,
+      "mismatches": []
+    }
+  },
+  "checks": [
+    "JUnit totals read from original XML",
+    "current team-recycle and tenant-warning snapshot hashes match",
+    "original review snapshot hashes match within their recorded scope",
+    "git diff --cached --check for source, formal docs and scripts; archived raw outputs/baselines excluded",
+    "archive-sanitization.json records redaction without changing XML suite/testcase attributes"
+  ],
+  "pendingOriginalReviewGates": [
+    "TEST_PASS",
+    "KNOWLEDGE",
+    "ACCEPT"
+  ],
+  "whitespaceOnlyCleanup": [
+    "st-web/src/pages/TeamSpacePage.tsx",
+    ".ai/docs/20260925-test-remaining/remaining.md",
+    "st-admin/src/test/java/com/stcloud/admin/UserSecurityRedisIntegrationTest.java",
+    "st-share/src/test/resources/mysql-share-fixture.sql",
+    "st-sync/src/test/java/com/stcloud/sync/service/impl/SyncScopeIntegrationTest.java",
+    "st-sync/src/test/resources/sync-scope-fixture.sql",
+    "st-team/src/test/java/com/stcloud/team/controller/TeamRoleApiIntegrationTest.java",
+    "st-team/src/test/java/com/stcloud/team/service/TeamRoleConcurrencyIntegrationTest.java",
+    ".ai/docs/20260925-test-remaining/build-results.cjs",
+    ".ai/docs/20260927-test-resume/browser-team.py",
+    ".ai/docs/20260927-test-resume/build-results.cjs",
+    ".ai/docs/20260930-tenant-context-warning/mq/broker.conf",
+    ".ai/docs/20260930-test-finish/browser-id-0/browser-team.py",
+    ".ai/docs/20260930-test-finish/browser-id-1/browser-team.py",
+    ".ai/docs/20260930-test-finish/browser-id-2/browser-team.py",
+    ".ai/docs/20260930-test-finish/browser-version-share.py",
+    ".ai/docs/20260930-test-finish/schema-authorization-check.ps1"
+  ]
+}

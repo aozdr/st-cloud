@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260924-DESIGN-CR-01-01",
+  "taskId": "TASK-20260924-DESIGN-CR-01",
+  "idempotencyKey": "design-20260924-CR-01",
+  "role": "executor",
+  "taskType": "design",
+  "objective": "完成 CR-01 需求和程序设计文档，不执行之后流程",
+  "taskRefs": [
+    ".ai/tasks/TASK-20260924-DESIGN-CR-01.md"
+  ],
+  "stateRef": ".ai/docs/20260924-code-review-design/state-snapshot.json",
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "exclude": [
+      "源码",
+      "SQL",
+      "配置",
+      "测试",
+      "Loop State"
+    ],
+    "include": [
+      ".ai/docs/20260924-code-review-design/CR-01/"
+    ]
+  },
+  "acceptance": [
+    "基于代码给出完整中文需求及可实施设计",
+    "不编写测试用例、不修改程序、不运行构建测试"
+  ],
+  "validation": [
+    "只读核对代码和文档交叉引用"
+  ],
+  "forbidSpawn": true,
+  "output": {
+    "resultRef": ".ai/docs/20260924-code-review-design/CR-01/result.json"
+  }
+}

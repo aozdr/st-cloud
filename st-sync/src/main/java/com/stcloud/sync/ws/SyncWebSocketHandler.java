@@ -1,5 +1,7 @@
 package com.stcloud.sync.ws;
 
+import com.stcloud.auth.service.UserSecurityService;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
@@ -20,7 +22,10 @@ import java.util.concurrent.CopyOnWriteArraySet;
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class SyncWebSocketHandler extends TextWebSocketHandler {
+
+    private final UserSecurityService userSecurityService;
 
     /** userId -> 该用户所有在线设备的 WebSocket 会话集合 */
     private final Map<Long, Set<WebSocketSession>> userSessions = new ConcurrentHashMap<>();
@@ -56,6 +61,7 @@ public class SyncWebSocketHandler extends TextWebSocketHandler {
 
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) {
+        if (!isCurrent(session)) return;
         // 客户端心跳 pong 响应或其他消息在此处理；当前仅记录
         String payload = message.getPayload();
         if ("ping".equalsIgnoreCase(payload)) {
@@ -85,7 +91,7 @@ public class SyncWebSocketHandler extends TextWebSocketHandler {
         int sent = 0;
         TextMessage textMessage = new TextMessage(message);
         for (WebSocketSession session : sessions) {
-            if (session.isOpen()) {
+            if (session.isOpen() && isCurrent(session)) {
                 try {
                     synchronized (session) {
                         session.sendMessage(textMessage);
@@ -112,7 +118,8 @@ public class SyncWebSocketHandler extends TextWebSocketHandler {
         int sent = 0;
         TextMessage textMessage = new TextMessage(message);
         for (WebSocketSession session : sessions) {
-            if (!tenantId.equals(session.getAttributes().get("tenantId")) || !session.isOpen()) {
+            if (!tenantId.equals(session.getAttributes().get("tenantId")) || !session.isOpen()
+                    || !isCurrent(session)) {
                 continue;
             }
             try {
@@ -142,6 +149,26 @@ public class SyncWebSocketHandler extends TextWebSocketHandler {
             return (Long) userId;
         }
         return null;
+    }
+
+    private boolean isCurrent(WebSocketSession session) {
+        Object expiry = session.getAttributes().get("expiresAt");
+        boolean valid = expiry instanceof Long && (Long) expiry > System.currentTimeMillis();
+        if (valid) {
+            try {
+                valid = userSecurityService.isCurrent(session.getAttributes().get("userId"),
+                        session.getAttributes().get("tenantId"), session.getAttributes().get("securityVersion"));
+            } catch (Exception e) {
+                valid = false;
+            }
+        }
+        if (!valid) {
+            Long userId = getUserId(session);
+            Set<WebSocketSession> sessions = userId == null ? null : userSessions.get(userId);
+            if (sessions != null) sessions.remove(session);
+            closeQuietly(session);
+        }
+        return valid;
     }
 
     private void closeQuietly(WebSocketSession session) {

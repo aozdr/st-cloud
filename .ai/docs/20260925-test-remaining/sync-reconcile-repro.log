@@ -1,0 +1,28 @@
+✖ TC04-33: 不完整列举和第二页故障不清理原文件或状态，恢复后补齐 (11.9136ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 235.4042
+
+✖ failing tests:
+
+test at src\sync\sync-reconcile.test.cjs:70:1
+✖ TC04-33: 不完整列举和第二页故障不清理原文件或状态，恢复后补齐 (11.9136ms)
+  AssertionError [ERR_ASSERTION]: The input did not match the regular expression /云端目录响应不完整/. Input:
+  
+  '全量对账失败: Error: 历史节点仍在同步根中，等待增量对账'
+  
+      at TestContext.<anonymous> (E:\code\st-cloud\st-desktop\src\sync\sync-reconcile.test.cjs:84:12)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '全量对账失败: Error: 历史节点仍在同步根中，等待增量对账',
+    expected: /云端目录响应不完整/,
+    operator: 'match',
+    diff: 'simple'
+  }

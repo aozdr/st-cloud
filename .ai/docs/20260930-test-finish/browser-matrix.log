@@ -1,0 +1,21 @@
+PASS: 大ID邀请、成员更新/回显、权限/网络失败保留和重试、同名角色ACL分离保存与回显
+ERRORS []
+PASS: 打开复制对话框后撤权，两次提交均拒绝，保持目标选择且不显示成功。API受控，服务端另层真实H2验证。
+PASS: 大ID邀请、成员更新/回显、权限/网络失败保留和重试、同名角色ACL分离保存与回显
+ERRORS []
+PASS: 打开复制对话框后撤权，两次提交均拒绝，保持目标选择且不显示成功。API受控，服务端另层真实H2验证。
+PASS: 大ID邀请、成员更新/回显、权限/网络失败保留和重试、同名角色ACL分离保存与回显
+ERRORS []
+PASS: 打开复制对话框后撤权，两次提交均拒绝，保持目标选择且不显示成功。API受控，服务端另层真实H2验证。
+PASS: 胶卷404/业务错误/坏图片降级，无批量原图及循环请求；名称与导航保持；WebP/SVG主图经授权API并仅img展示，脚本/外链不执行；GIF主图使用专用token原流。
+Starting server 1/1: npm --prefix st-web run dev -- --host 127.0.0.1 --port 5187 --strictPort
+Waiting for server on port 5187...
+Server ready on port 5187
+
+All 1 server(s) ready
+Running: python .ai/docs/20260930-test-finish/browser-matrix.py
+
+
+Stopping 1 server(s)...
+Server 1 stopped
+All servers stopped

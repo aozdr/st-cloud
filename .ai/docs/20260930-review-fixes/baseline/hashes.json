@@ -1,0 +1,10 @@
+{
+  "st-auth/src/main/java/com/stcloud/auth/service/AuthService.java": "3cf71a92bf1399564982a0008fce0d5f843510228ec09074b9050089f3bf9727",
+  "st-team/src/main/java/com/stcloud/team/service/impl/TeamServiceImpl.java": "a4d4d7efc8c5fa72a93a5dd098fc14cfd06db70ea422f94faab95dcdd7e30d34",
+  "st-core/src/main/java/com/stcloud/core/service/impl/FileServiceImpl.java": "be21aa11d291b3a71f7d461067bf380e14aa3bd36637c41e5c76bade96a8eb10",
+  "st-desktop/src/sync-engine.ts": "09f076417a237377d1a14303e9996ae91ae012bd76a3c8e2cfe207722a987423",
+  "st-desktop/src/sync-manager.ts": "867dfd1422473dfdb5f206ed58b816cfb40087459112085a1d38b302a8d1857c",
+  "st-desktop/src/sync/sync-reconcile.ts": "00202c5974a319f899ce656e38f9d72cd52aeecfe166faa6d3252b602f22f4f7",
+  "st-web/src/components/preview/PreviewModal.tsx": "b68dbfabd4b79a65f7fcbd487e42c33e3bef79ea5f0a2ec40fca0e6d3d9cd7fd",
+  "docker/mysql/init/45_user_security_version.sql": "1500e381e323e30f853a38ca6b626fd02ab61f2c9edb574b674068e36ba9e392"
+}

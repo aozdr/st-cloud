@@ -233,7 +233,7 @@ export function deleteSyncHistoryByRoot(rootId: string): void {
 export interface SyncConfigRow {
   rootId: string;
   localPath: string;
-  cursor: number;
+  cursor: string;
   status: string;
   userId?: string;
   /** 最后成功同步时间（epoch ms），仅用于展示/审计，增量判定仍以 cursor 为准 */
@@ -254,7 +254,7 @@ export function upsertSyncConfig(row: Partial<SyncConfigRow> & { rootId: string;
        last_sync_at=COALESCE(excluded.last_sync_at, sync_config.last_sync_at),
        sync_version=COALESCE(excluded.sync_version, sync_config.sync_version),
        updated_at=excluded.updated_at`,
-    [row.rootId, row.localPath, row.cursor ?? 0, row.status ?? 'active', row.userId ?? null,
+    [row.rootId, row.localPath, row.cursor ?? '0', row.status ?? 'active', row.userId ?? null,
      row.lastSyncAt ?? null, row.syncVersion ?? null, now],
   );
   persist();
@@ -269,7 +269,7 @@ export function getSyncConfig(rootId: string): SyncConfigRow | null {
     result = {
       rootId: row.root_id as string,
       localPath: row.local_path as string,
-      cursor: (row.cursor as number | null) ?? 0,
+      cursor: String(row.cursor ?? '0'),
       status: (row.status as string | null) ?? 'active',
       lastSyncAt: (row.last_sync_at as number | null) ?? undefined,
       syncVersion: (row.sync_version as number | null) ?? undefined,
@@ -290,7 +290,7 @@ export function getAllSyncConfigs(userId?: string): SyncConfigRow[] {
     results.push({
       rootId: row.root_id as string,
       localPath: row.local_path as string,
-      cursor: (row.cursor as number | null) ?? 0,
+      cursor: String(row.cursor ?? '0'),
       status: (row.status as string | null) ?? 'active',
       userId: (row.user_id as string | null) ?? undefined,
       lastSyncAt: (row.last_sync_at as number | null) ?? undefined,

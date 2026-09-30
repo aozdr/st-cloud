@@ -1,0 +1,10 @@
+{
+  "criterionProposal": {
+    "evidenceRef": ".ai/docs/20260930-test-finish/exp-review.md",
+    "validatedRevision": "finish-confirmed-v1",
+    "outcome": "pass",
+    "id": "EXP_DESIGN",
+    "by": "root"
+  },
+  "taskId": "TASK-20260930-TEST-FINISH"
+}

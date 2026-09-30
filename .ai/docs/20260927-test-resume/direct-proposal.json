@@ -1,0 +1,8 @@
+{
+  "taskId": "TASK-20260927-TEST-RESUME",
+  "outcome": "pass",
+  "by": "root",
+  "validatedRevision": "resume-ui-retry-v2",
+  "evidenceRef": ".ai/docs/20260927-test-resume/impact.md",
+  "id": "IMPACT_ANALYSIS"
+}

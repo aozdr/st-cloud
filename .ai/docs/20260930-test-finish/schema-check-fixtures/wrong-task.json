@@ -1,0 +1,192 @@
+{
+  "schemaVersion": 2,
+  "definitionVersion": 2,
+  "taskId": "TASK-20260930-TEST-FINISH",
+  "scale": "large",
+  "status": "running",
+  "goal": {
+    "objective": "完成136条验收与核心修复验证",
+    "scope": "CR-01～07、DB-ID、必要流程一致性修复、隔离夹具",
+    "completionCriteria": [
+      "136条逐项完整证据",
+      "核心修复相称回归通过",
+      "合法自检验收及资源清理"
+    ]
+  },
+  "revision": {
+    "design": "finish-confirmed-v1",
+    "code": "finish-contract-tests-v9"
+  },
+  "exitCriteria": [
+    {
+      "id": "REQ_ANALYSIS",
+      "status": "done",
+      "dependsOn": [],
+      "by": "root",
+      "evidenceRef": ".ai/docs/20260930-test-finish/requirement.md",
+      "validatedRevision": "finish-confirmed-v1",
+      "executionKind": "direct",
+      "executionId": "direct:TASK-20260930-TEST-FINISH:REQ_ANALYSIS:finish-confirmed-v1:finish-sync-identity-v8",
+      "completedAt": "2026-09-30T00:35:20.618846Z"
+    },
+    {
+      "id": "IMPACT_ANALYSIS",
+      "status": "done",
+      "dependsOn": [
+        "REQ_ANALYSIS"
+      ],
+      "by": "root",
+      "evidenceRef": ".ai/docs/20260930-test-finish/impact.md",
+      "validatedRevision": "finish-confirmed-v1",
+      "executionKind": "direct",
+      "executionId": "direct:TASK-20260930-TEST-FINISH:IMPACT_ANALYSIS:finish-confirmed-v1:finish-sync-identity-v8",
+      "completedAt": "2026-09-30T00:35:20.9503117Z"
+    },
+    {
+      "id": "EXP_DESIGN",
+      "status": "pending",
+      "dependsOn": [
+        "REQ_ANALYSIS"
+      ],
+      "applicable": true,
+      "by": "root",
+      "evidenceRef": ".ai/docs/20260930-test-finish/exp-review.md",
+      "validatedRevision": "finish-confirmed-v1",
+      "executionKind": "direct",
+      "executionId": "direct:TASK-20260930-TEST-FINISH:EXP_DESIGN:finish-confirmed-v1:finish-sync-identity-v8",
+      "completedAt": "2026-09-30T00:36:11.9841096Z"
+    },
+    {
+      "id": "TECH_DESIGN",
+      "status": "pending",
+      "dependsOn": [
+        "IMPACT_ANALYSIS",
+        "EXP_DESIGN"
+      ],
+      "by": "root",
+      "evidenceRef": ".ai/docs/20260930-test-finish/design.md",
+      "validatedRevision": "finish-confirmed-v1",
+      "executionKind": "direct",
+      "executionId": "direct:TASK-20260930-TEST-FINISH:TECH_DESIGN:finish-confirmed-v1:finish-sync-identity-v8",
+      "completedAt": "2026-09-30T00:36:12.4211435Z"
+    },
+    {
+      "id": "TESTCASES",
+      "status": "pending",
+      "dependsOn": [
+        "TECH_DESIGN"
+      ],
+      "by": "root",
+      "evidenceRef": ".ai/docs/20260930-test-finish/testcases.md",
+      "validatedRevision": "finish-confirmed-v1",
+      "executionKind": "direct",
+      "executionId": "direct:TASK-20260930-TEST-FINISH:TESTCASES:finish-confirmed-v1:finish-sync-identity-v8",
+      "completedAt": "2026-09-30T00:36:12.8639685Z"
+    },
+    {
+      "id": "IMPLEMENTED",
+      "status": "pending",
+      "dependsOn": [
+        "TECH_DESIGN",
+        "TESTCASES"
+      ],
+      "by": "root"
+    },
+    {
+      "id": "CODE_REVIEW",
+      "status": "pending",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ]
+    },
+    {
+      "id": "SECURITY_REVIEW",
+      "status": "pending",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ]
+    },
+    {
+      "id": "EXP_ACCEPT",
+      "status": "pending",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ],
+      "applicable": true
+    },
+    {
+      "id": "TEST_PASS",
+      "status": "pending",
+      "dependsOn": [
+        "CODE_REVIEW",
+        "SECURITY_REVIEW"
+      ]
+    },
+    {
+      "id": "KNOWLEDGE",
+      "status": "pending",
+      "dependsOn": [
+        "TEST_PASS",
+        "SECURITY_REVIEW",
+        "EXP_ACCEPT"
+      ]
+    },
+    {
+      "id": "ACCEPT",
+      "status": "pending",
+      "dependsOn": [
+        "KNOWLEDGE"
+      ]
+    }
+  ],
+  "artifacts": {
+    "requirement.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-test-finish/requirement.md"
+    },
+    "impact.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-test-finish/impact.md"
+    },
+    "architecture-review.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-test-finish/architecture-review.md"
+    },
+    "design.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-test-finish/design.md"
+    },
+    "testcases.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-test-finish/testcases.md"
+    },
+    "uispec.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-test-finish/uispec.md"
+    },
+    "exp-review.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-test-finish/exp-review.md"
+    }
+  },
+  "blockers": [],
+  "acceptanceEvidence": [],
+  "dispatchLedger": [],
+  "proposals": [],
+  "history": [],
+  "singleAgentAuthorization": {
+    "taskId": "SYNTHETIC-OTHER-TASK",
+    "actor": "root",
+    "authorizedBy": "user",
+    "authorizationQuote": "不要开子线程或子 Agent，全部由当前主线程完成。",
+    "evidenceRef": ".ai/tasks/TASK-20260930-TEST-FINISH.md",
+    "criteria": [
+      "EXP_DESIGN",
+      "CODE_REVIEW",
+      "SECURITY_REVIEW",
+      "EXP_ACCEPT",
+      "TEST_PASS",
+      "ACCEPT"
+    ]
+  }
+}

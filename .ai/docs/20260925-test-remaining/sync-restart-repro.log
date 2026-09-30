@@ -1,0 +1,35 @@
+✖ TC04-29: 清单提交前退出，重启完成 pending 后才提交游标 (1401.0328ms)
+✔ TC04-29: manifest-write 故障后跨进程重试保全原件 (1017.2978ms)
+✔ TC04-29: source-move 故障后跨进程重试保全原件 (1045.409ms)
+✔ TC04-32: 删除完成但游标提交前退出，跨进程重放不重复副作用 (1346.4075ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 3
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 4908.7825
+
+✖ failing tests:
+
+test at src\sync\sync-restart.test.cjs:32:1
+✖ TC04-29: 清单提交前退出，重启完成 pending 后才提交游标 (1401.0328ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'pending'
+  - 'complete'
+  
+      at TestContext.<anonymous> (E:\code\st-cloud\st-desktop\src\sync\sync-restart.test.cjs:41:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.start (node:internal/test_runner/test:1177:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'pending',
+    expected: 'complete',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

@@ -4,6 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.stcloud.common.context.UserContext;
 import com.stcloud.common.enums.NodeStatus;
+import com.stcloud.common.exception.BusinessException;
+import com.stcloud.common.response.ResultCode;
 import com.stcloud.core.dto.RecycleItemVO;
 import com.stcloud.core.entity.FileNode;
 import com.stcloud.core.event.FileIndexEvent;
@@ -18,6 +20,7 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Isolation;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
@@ -47,12 +50,7 @@ public class RecycleBinServiceImpl implements RecycleBinService {
 
     @Override
     public List<RecycleItemVO> listRecycleBin() {
-        Long userId = UserContext.getUserId();
-        LambdaQueryWrapper<FileNode> wrapper = new LambdaQueryWrapper<FileNode>()
-                .eq(FileNode::getStatus, NodeStatus.RECYCLED.getCode())
-                .eq(FileNode::getTenantId, UserContext.getTenantId())
-                .eq(FileNode::getOwnerId, userId)
-                .and(w -> w.isNull(FileNode::getSpaceId).or().le(FileNode::getSpaceId, 0))
+        LambdaQueryWrapper<FileNode> wrapper = accessibleRecycleQuery()
                 .orderByDesc(FileNode::getUpdatedAt);
 
         List<FileNode> nodes = fileNodeMapper.selectList(wrapper);
@@ -72,10 +70,10 @@ public class RecycleBinServiceImpl implements RecycleBinService {
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public void restore(List<Long> nodeIds) {
         for (Long nodeId : nodeIds) {
-            FileNode node = fileService.getNodeByIdAndOwner(nodeId);
+            FileNode node = getAuthorizedRecycleNode(nodeId);
             if (node.getStatus() != NodeStatus.RECYCLED.getCode()) {
                 continue;
             }
@@ -88,9 +86,8 @@ public class RecycleBinServiceImpl implements RecycleBinService {
             if (targetParentId != 0L) {
                 FileNode parent = fileNodeMapper.selectById(targetParentId);
                 if (parent == null || parent.getStatus() != NodeStatus.NORMAL.getCode()
-                        || !java.util.Objects.equals(parent.getTenantId(), node.getTenantId())
-                        || !java.util.Objects.equals(parent.getOwnerId(), node.getOwnerId())
-                        || parent.getSpaceId() != null && parent.getSpaceId() > 0) {
+                        || !sameRecycleScope(parent, node)
+                        || fileNodeMapper.countInaccessibleAncestors(targetParentId) > 0) {
                     targetParentId = 0L;
                 } else {
                     parentPath = parent.getPath();
@@ -100,8 +97,10 @@ public class RecycleBinServiceImpl implements RecycleBinService {
             // 重名冲突处理
             String name = node.getName();
             if (fileNodeMapper.countActiveByScope(node.getTenantId(), targetParentId,
-                    node.getOwnerId(), node.getSpaceId(), name) > 0) {
-                name = fileService.resolveNameConflict(targetParentId, name);
+                    isTeamNode(node) ? null : node.getOwnerId(), node.getSpaceId(), name) > 0) {
+                name = isTeamNode(node)
+                        ? fileService.resolveTeamNameConflict(node.getSpaceId(), targetParentId, name)
+                        : fileService.resolveNameConflict(targetParentId, name);
             }
 
             // 计算恢复后路径（id 不变，重命名/回归根仅改变 path 与 name）
@@ -130,6 +129,9 @@ public class RecycleBinServiceImpl implements RecycleBinService {
             reliableEventPublisher.publishSyncChange(node, SyncChangeEvent.ChangeType.CREATE);
             // 恢复后子孙可能残留「不可访问」缓存（回收期间被访问过）：级联失效，恢复访问正确性
             for (FileNode descendant : fileService.collectDescendants(nodeId)) {
+                if (!sameRecycleScope(descendant, node)) {
+                    continue;
+                }
                 fileService.invalidateAccessible(descendant.getId());
                 if (descendant.getStatus() == NodeStatus.NORMAL.getCode()) {
                     reliableEventPublisher.publishFileIndex(descendant, FileIndexEvent.ActionType.INDEX);
@@ -140,14 +142,18 @@ public class RecycleBinServiceImpl implements RecycleBinService {
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public void permanentDelete(List<Long> nodeIds) {
         for (Long nodeId : nodeIds) {
             if (nodeId == null || fileNodeMapper.selectById(nodeId) == null) {
                 // 同一请求中的父子节点或重复 ID 已由前一次删除覆盖。
                 continue;
             }
-            FileNode node = fileService.getNodeByIdAndOwner(nodeId);
+            FileNode node = getAuthorizedRecycleNode(nodeId);
+            // 永久删除只能针对回收根，不能借回收站接口删除仍在使用的团队/个人节点。
+            if (node.getStatus() != NodeStatus.RECYCLED.getCode()) {
+                throw new BusinessException(ResultCode.BAD_REQUEST, "只能永久删除回收站中的文件");
+            }
             permanentDeleteNodeAndChildren(node);
         }
     }
@@ -156,12 +162,12 @@ public class RecycleBinServiceImpl implements RecycleBinService {
         if (node.isFolder()) {
             LambdaQueryWrapper<FileNode> wrapper = new LambdaQueryWrapper<FileNode>()
                     .eq(FileNode::getParentId, node.getId())
-                    .eq(FileNode::getTenantId, node.getTenantId())
-                    .eq(FileNode::getOwnerId, node.getOwnerId());
+                    .eq(FileNode::getTenantId, node.getTenantId());
             if (node.getSpaceId() != null && node.getSpaceId() > 0) {
                 wrapper.eq(FileNode::getSpaceId, node.getSpaceId());
             } else {
-                wrapper.and(w -> w.isNull(FileNode::getSpaceId).or().le(FileNode::getSpaceId, 0));
+                wrapper.eq(FileNode::getOwnerId, node.getOwnerId())
+                        .and(w -> w.isNull(FileNode::getSpaceId).or().le(FileNode::getSpaceId, 0));
             }
             List<FileNode> children = fileNodeMapper.selectList(wrapper);
             for (FileNode child : children) {
@@ -206,14 +212,9 @@ public class RecycleBinServiceImpl implements RecycleBinService {
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public void emptyRecycleBin() {
-        Long userId = UserContext.getUserId();
-        LambdaQueryWrapper<FileNode> wrapper = new LambdaQueryWrapper<FileNode>()
-                .eq(FileNode::getStatus, NodeStatus.RECYCLED.getCode())
-                .eq(FileNode::getTenantId, UserContext.getTenantId())
-                .eq(FileNode::getOwnerId, userId)
-                .and(w -> w.isNull(FileNode::getSpaceId).or().le(FileNode::getSpaceId, 0));
+        LambdaQueryWrapper<FileNode> wrapper = accessibleRecycleQuery();
         List<FileNode> nodes = fileNodeMapper.selectList(wrapper);
         for (FileNode node : nodes) {
             if (!hasRecycledAncestor(node)) {
@@ -228,9 +229,7 @@ public class RecycleBinServiceImpl implements RecycleBinService {
         Long parentId = node.getParentId();
         while (parentId != null && parentId > 0 && seen.add(parentId)) {
             FileNode parent = fileNodeMapper.selectById(parentId);
-            if (parent == null || !java.util.Objects.equals(parent.getTenantId(), node.getTenantId())
-                    || !java.util.Objects.equals(parent.getOwnerId(), node.getOwnerId())
-                    || !sameSpace(parent.getSpaceId(), node.getSpaceId())) {
+            if (parent == null || !sameRecycleScope(parent, node)) {
                 return false;
             }
             if (parent.getStatus() == NodeStatus.RECYCLED.getCode()) {
@@ -241,10 +240,52 @@ public class RecycleBinServiceImpl implements RecycleBinService {
         return false;
     }
 
-    private boolean sameSpace(Long left, Long right) {
-        long leftScope = left == null ? 0L : left;
-        long rightScope = right == null ? 0L : right;
-        return leftScope == rightScope;
+    private boolean isTeamNode(FileNode node) {
+        return node.getSpaceId() != null && node.getSpaceId() > 0;
+    }
+
+    /** 团队子树允许多个上传者；个人子树必须同时匹配 owner，禁止混入其他空间的节点。 */
+    private boolean sameRecycleScope(FileNode left, FileNode right) {
+        if (!java.util.Objects.equals(left.getTenantId(), right.getTenantId())) {
+            return false;
+        }
+        if (isTeamNode(right)) {
+            return java.util.Objects.equals(left.getSpaceId(), right.getSpaceId());
+        }
+        return !isTeamNode(left) && java.util.Objects.equals(left.getOwnerId(), right.getOwnerId());
+    }
+
+    private LambdaQueryWrapper<FileNode> accessibleRecycleQuery() {
+        Long tenantId = UserContext.getTenantId();
+        Long userId = UserContext.getUserId();
+        List<Long> managedSpaces = teamStorageMapper.findRecycleManagedSpaceIds(tenantId, userId);
+        // 个人和团队采用不同权限边界：团队按当前空间管理员关系，而非文件 owner 过滤。
+        return new LambdaQueryWrapper<FileNode>()
+                .eq(FileNode::getTenantId, tenantId)
+                .eq(FileNode::getStatus, NodeStatus.RECYCLED.getCode())
+                .and(scope -> {
+                    scope.nested(personal -> personal.eq(FileNode::getOwnerId, userId)
+                            .and(w -> w.isNull(FileNode::getSpaceId).or().le(FileNode::getSpaceId, 0)));
+                    if (!managedSpaces.isEmpty()) {
+                        scope.or().in(FileNode::getSpaceId, managedSpaces);
+                    }
+                });
+    }
+
+    private FileNode getAuthorizedRecycleNode(Long nodeId) {
+        FileNode node = fileNodeMapper.selectById(nodeId);
+        if (node == null) {
+            throw new BusinessException(ResultCode.FILE_NOT_FOUND);
+        }
+        Long tenantId = UserContext.getTenantId();
+        Long userId = UserContext.getUserId();
+        if (!java.util.Objects.equals(tenantId, node.getTenantId())
+                || (isTeamNode(node)
+                ? !teamStorageMapper.findRecycleManagedSpaceIds(tenantId, userId).contains(node.getSpaceId())
+                : !java.util.Objects.equals(userId, node.getOwnerId()))) {
+            throw new BusinessException(ResultCode.FORBIDDEN);
+        }
+        return node;
     }
 
     @Override

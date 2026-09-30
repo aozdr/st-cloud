@@ -20,12 +20,12 @@ import com.stcloud.search.service.TeamSearchService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import jakarta.annotation.PostConstruct;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -67,8 +67,6 @@ public class TeamSearchServiceImpl implements TeamSearchService {
     private final ElasticsearchClient client;
     private final FileNodeMapper fileNodeMapper;
     private final TeamFileAccessPolicy accessPolicy;
-    // 未配置共享密钥时仍可在单实例内安全分页；重启会使旧游标失效。
-    private final String ephemeralCursorSecret = newEphemeralCursorSecret();
 
     @Value("${stcloud.search.team-max-candidates:2000}")
     private int maxCandidates = 2000;
@@ -76,6 +74,14 @@ public class TeamSearchServiceImpl implements TeamSearchService {
     /** 生产必须由外部安全配置注入；不提供源码默认密钥。 */
     @Value("${stcloud.search.team-cursor-secret:${STCLOUD_SEARCH_TEAM_CURSOR_SECRET:}}")
     private String cursorSecret = "";
+
+    @PostConstruct
+    void validateCursorSecret() {
+        // 多实例必须使用同一签名密钥；缺失配置时直接拒绝启动搜索服务。
+        if (cursorSecret == null || cursorSecret.isBlank()) {
+            throw new IllegalStateException("必须配置 stcloud.search.team-cursor-secret / STCLOUD_SEARCH_TEAM_CURSOR_SECRET");
+        }
+    }
 
     @Value("${stcloud.search.team-cursor-ttl-seconds:600}")
     private long cursorTtlSeconds = DEFAULT_CURSOR_TTL_SECONDS;
@@ -633,18 +639,8 @@ public class TeamSearchServiceImpl implements TeamSearchService {
     }
 
     private String requireCursorSecret() {
-        String secret = cursorSecret;
-        if (secret == null || secret.isBlank()) {
-            // 兼容聚合应用未加载 st-search 自带 application.yml 的场景，仍只从环境变量取密钥。
-            secret = System.getenv("STCLOUD_SEARCH_TEAM_CURSOR_SECRET");
-        }
-        return secret == null || secret.isBlank() ? ephemeralCursorSecret : secret;
-    }
-
-    private static String newEphemeralCursorSecret() {
-        byte[] bytes = new byte[32];
-        new SecureRandom().nextBytes(bytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+        validateCursorSecret();
+        return cursorSecret;
     }
 
     private byte[] hmac(String secret, byte[] payload) {

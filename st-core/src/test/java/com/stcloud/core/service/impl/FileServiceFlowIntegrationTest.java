@@ -143,6 +143,24 @@ class FileServiceFlowIntegrationTest extends AbstractIntegrationTest {
 
     // ---- 测试数据构建 ----
 
+    @Test
+    void detailRecycledNodeAndAncestorUseRecycleCodeAfterOwnershipCheck() {
+        FileNode parent = folder("回收目录", 0L, "/回收目录");
+        FileNode child = file("note.txt", parent.getId(), "/回收目录/note.txt");
+        assertNotNull(fileService.getNodeDetail(child.getId()));
+        parent.setStatus(NodeStatus.RECYCLED.getCode());
+        fileNodeMapper.updateById(parent);
+        assertEquals(2008, assertThrows(BusinessException.class,
+                () -> fileService.getNodeDetail(child.getId())).getCode());
+        assertEquals(2008, assertThrows(BusinessException.class,
+                () -> fileService.getNodeDetail(parent.getId())).getCode());
+        setUpUser(2002L, TENANT);
+        assertEquals(403, assertThrows(BusinessException.class,
+                () -> fileService.getNodeDetail(child.getId())).getCode());
+        setUpUser(USER, 2L);
+        assertThrows(BusinessException.class, () -> fileService.getNodeDetail(child.getId()));
+    }
+
     private FileNode folder(String name, Long parentId, String path) {
         FileNode n = new FileNode();
         n.setTenantId(TENANT);
@@ -263,6 +281,139 @@ class FileServiceFlowIntegrationTest extends AbstractIntegrationTest {
         assertEquals("team-copying(1)", fileService.resolveTeamNameConflict(11L, target.getId(), "team-copying"));
         scopedFolder("team-conflict", target.getId(), 2002L, 11L);
         assertEquals("team-conflict(1)", fileService.resolveTeamNameConflict(11L, target.getId(), "team-conflict"));
+    }
+
+    @Test
+    void teamCopyRejectsIncompleteUploadBeforeCreatingAnyNode() {
+        FileNode source = file("unfinished-source.txt", 0L, "/unfinished-source.txt");
+        source.setSpaceId(11L);
+        source.setUploadStatus(UploadStatus.UPLOADING.getCode());
+        source.setFileMd5(null);
+        fileNodeMapper.updateById(source);
+        FileNode target = scopedFolder("completed-target", 0L, USER, 11L);
+        long before = fileNodeMapper.selectCount(null);
+        assertThrows(BusinessException.class,
+                () -> fileService.copyTeamFiles(11L, List.of(source.getId()), target.getId()));
+        assertEquals(before, fileNodeMapper.selectCount(null));
+    }
+
+    @Test
+    void teamCopyPrechecksLaterBatchSourceAndNestedChildBeforeWriting() {
+        FileNode complete = scopedFolder("batch-complete", 0L, USER, 11L);
+        FileNode incomplete = file("batch-incomplete.txt", 0L, "/batch-incomplete.txt");
+        incomplete.setSpaceId(11L);
+        incomplete.setUploadStatus(UploadStatus.UPLOADING.getCode());
+        incomplete.setFileMd5(null);
+        fileNodeMapper.updateById(incomplete);
+        FileNode target = scopedFolder("batch-target", 0L, USER, 11L);
+        long before = fileNodeMapper.selectCount(null);
+        assertThrows(BusinessException.class, () -> fileService.copyTeamFiles(
+                11L, List.of(complete.getId(), incomplete.getId()), target.getId()));
+        assertEquals(before, fileNodeMapper.selectCount(null));
+
+        FileNode nested = file("nested-incomplete.txt", complete.getId(), "/batch-complete/nested-incomplete.txt");
+        nested.setSpaceId(11L);
+        nested.setUploadStatus(UploadStatus.UPLOADING.getCode());
+        nested.setFileMd5(null);
+        fileNodeMapper.updateById(nested);
+        before = fileNodeMapper.selectCount(null);
+        assertThrows(BusinessException.class,
+                () -> fileService.copyTeamFiles(11L, List.of(complete.getId()), target.getId()));
+        assertEquals(before, fileNodeMapper.selectCount(null));
+    }
+
+    @Test
+    void teamCopyRejectsOtherSpaceRecycledSourceAndNonFolderTarget() {
+        FileNode target = scopedFolder("valid-team-target", 0L, USER, 11L);
+        FileNode valid = scopedFolder("valid-team-source", 0L, USER, 11L);
+        FileNode otherSpace = scopedFolder("other-space-source", 0L, USER, 12L);
+        FileNode recycled = scopedFolder("recycled-source", 0L, USER, 11L);
+        recycled.setStatus(NodeStatus.RECYCLED.getCode());
+        fileNodeMapper.updateById(recycled);
+        FileNode fileTarget = file("not-a-folder.txt", 0L, "/not-a-folder.txt");
+        fileTarget.setSpaceId(11L);
+        fileNodeMapper.updateById(fileTarget);
+        long before = fileNodeMapper.selectCount(null);
+        long objectsBefore = fileObjectMapper.selectCount(null);
+        Long usedBefore = jdbcTemplate.queryForObject("SELECT storage_used FROM sys_user WHERE id = 2001", Long.class);
+        Mockito.clearInvocations(reliableEventPublisher);
+        assertThrows(BusinessException.class,
+                () -> fileService.copyTeamFiles(11L, List.of(otherSpace.getId()), target.getId()));
+        assertThrows(BusinessException.class,
+                () -> fileService.copyTeamFiles(11L, List.of(recycled.getId()), target.getId()));
+        assertThrows(BusinessException.class,
+                () -> fileService.copyTeamFiles(11L, List.of(valid.getId()), fileTarget.getId()));
+        assertThrows(BusinessException.class,
+                () -> fileService.copyTeamFiles(11L, List.of(valid.getId()), otherSpace.getId()));
+        assertEquals(before, fileNodeMapper.selectCount(null));
+        assertEquals(objectsBefore, fileObjectMapper.selectCount(null));
+        assertEquals(usedBefore, jdbcTemplate.queryForObject("SELECT storage_used FROM sys_user WHERE id = 2001", Long.class));
+        Mockito.verifyNoInteractions(reliableEventPublisher);
+    }
+
+    @Test
+    void teamCopyBatchKeepsNestedTreeAndRenamesConflictingDestination() {
+        FileNode target = scopedFolder("copy-batch-target", 0L, USER, 11L);
+        FileNode first = scopedFolder("copy-first", 0L, USER, 11L);
+        FileNode second = scopedFolder("copy-second", 0L, USER, 11L);
+        FileNode nested = scopedFolder("copy-nested", first.getId(), USER, 11L);
+        scopedFolder("copy-first", target.getId(), USER, 11L);
+        Mockito.clearInvocations(reliableEventPublisher);
+
+        fileService.copyTeamFiles(11L, List.of(first.getId(), second.getId()), target.getId());
+
+        FileNode copiedFirst = fileNodeMapper.selectOne(new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<FileNode>()
+                .eq(FileNode::getParentId, target.getId()).eq(FileNode::getSpaceId, 11L)
+                .eq(FileNode::getName, "copy-first(1)"));
+        assertNotNull(copiedFirst);
+        FileNode copiedSecond = fileNodeMapper.selectOne(new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<FileNode>()
+                .eq(FileNode::getParentId, target.getId()).eq(FileNode::getSpaceId, 11L)
+                .eq(FileNode::getName, "copy-second"));
+        assertNotNull(copiedSecond);
+        assertEquals(1, fileNodeMapper.countActiveByScope(TENANT, copiedFirst.getId(), null, 11L, nested.getName()));
+        assertEquals("/copy-batch-target/copy-first(1)/copy-nested",
+                fileNodeMapper.selectOne(new com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper<FileNode>()
+                        .eq(FileNode::getParentId, copiedFirst.getId()).eq(FileNode::getName, nested.getName())).getPath());
+        verify(reliableEventPublisher, times(3)).publishFileIndex(any(), eq(FileIndexEvent.ActionType.INDEX));
+    }
+
+    @Test
+    void teamCopyInsufficientQuotaRejectsBeforeAnyNodeOrEvent() {
+        jdbcTemplate.update("INSERT INTO team_space (id, tenant_id, space_name, owner_id, storage_used, storage_quota, status, deleted) "
+                + "VALUES (11, 1, 'quota-test-space', 2001, 1, 1, 1, 0)");
+        FileNode source = file("quota-source.txt", 0L, "/quota-source.txt");
+        source.setSpaceId(11L);
+        fileNodeMapper.updateById(source);
+        FileNode target = scopedFolder("quota-target", 0L, USER, 11L);
+        long nodesBefore = fileNodeMapper.selectCount(null);
+        long objectsBefore = fileObjectMapper.selectCount(null);
+        Mockito.clearInvocations(reliableEventPublisher);
+
+        assertThrows(BusinessException.class,
+                () -> fileService.copyTeamFiles(11L, List.of(source.getId()), target.getId()));
+        assertEquals(nodesBefore, fileNodeMapper.selectCount(null));
+        assertEquals(objectsBefore, fileObjectMapper.selectCount(null));
+        assertEquals(1L, jdbcTemplate.queryForObject("SELECT storage_used FROM team_space WHERE id = 11", Long.class));
+        Mockito.verifyNoInteractions(reliableEventPublisher);
+    }
+
+    @Test
+    void teamCopyNestedDirectoryQuotaFailureLeavesTreeUnchanged() {
+        jdbcTemplate.update("INSERT INTO team_space (id, tenant_id, space_name, owner_id, storage_used, storage_quota, status, deleted) "
+                + "VALUES (11, 1, 'folder-quota-space', 2001, 0, 100, 1, 0)");
+        FileNode directory = scopedFolder("large-directory", 0L, USER, 11L);
+        FileNode child = file("nested-large.txt", directory.getId(), "/large-directory/nested-large.txt");
+        child.setSpaceId(11L);
+        fileNodeMapper.updateById(child);
+        FileNode target = scopedFolder("directory-target", 0L, USER, 11L);
+        long nodesBefore = fileNodeMapper.selectCount(null);
+        Mockito.clearInvocations(reliableEventPublisher);
+
+        assertThrows(BusinessException.class,
+                () -> fileService.copyTeamFiles(11L, List.of(directory.getId()), target.getId()));
+        assertEquals(nodesBefore, fileNodeMapper.selectCount(null));
+        assertEquals(0L, jdbcTemplate.queryForObject("SELECT storage_used FROM team_space WHERE id = 11", Long.class));
+        Mockito.verifyNoInteractions(reliableEventPublisher);
     }
 
     // ---- 文件移动 ----

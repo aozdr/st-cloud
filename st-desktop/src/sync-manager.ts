@@ -10,7 +10,7 @@ interface CloudSyncRootVO {
   cloudFolderName: string;
   localPathHint: string | null;
   status: number;
-  cursor: number;
+  cursor: string;
 }
 
 const engines = new Map<string, SyncEngine>();
@@ -64,12 +64,14 @@ export async function startSync(rootId: string, cloudFolderNodeId: string, local
   const engine = new SyncEngine(info);
   engines.set(rootId, engine);
   try {
+    // 排除规则是所有扫描/升级对账的边界；获取失败时禁止以空规则处理本地文件。
+    await refreshExclusions(rootId);
     await engine.start();
     ensureWsClient();
-    // Fetch and apply exclusions + conflict strategy
-    refreshExclusions(rootId).catch(() => {});
   } catch (err) {
     engines.delete(rootId);
+    await engine.stop();
+    maybeStopWsClient();
     throw err;
   }
 }
@@ -122,7 +124,7 @@ export async function registerSyncRoot(cloudFolderNodeId: string, localPath: str
   if (!root) throw new Error('注册同步根失败');
 
   const rootId = root.id;
-  upsertSyncConfig({ rootId, localPath, cursor: 0, status: 'active', userId: getUserId() ?? undefined });
+  upsertSyncConfig({ rootId, localPath, cursor: '0', status: 'active', userId: getUserId() ?? undefined });
   await startSync(rootId, root.cloudFolderNodeId, localPath);
 
   return root;
@@ -149,7 +151,11 @@ export async function refreshExclusions(rootId: string): Promise<{ id: string; s
   try {
     const res = await apiClient.get(`/sync/roots/${rootId}/exclusions`);
     const body = res.data;
-    const exclusions = body?.data ?? body ?? [];
+    const exclusions = body?.data ?? body;
+    if ((body?.code != null && body.code !== 200) || !Array.isArray(exclusions)
+        || exclusions.some((e: { relativePath?: unknown }) => typeof e?.relativePath !== 'string')) {
+      throw new Error('同步排除规则响应无效');
+    }
     const paths = exclusions.map((e: { relativePath: string }) => e.relativePath);
     const engine = engines.get(rootId);
     if (engine) {
@@ -158,7 +164,7 @@ export async function refreshExclusions(rootId: string): Promise<{ id: string; s
     return exclusions;
   } catch (err) {
     console.error('[sync] fetch exclusions failed:', err);
-    return [];
+    throw err;
   }
 }
 
@@ -241,7 +247,7 @@ export async function resumeSyncEngines(): Promise<void> {
         continue;
       }
       try {
-        upsertSyncConfig({ rootId: cloudRoot.id, localPath, cursor: cloudRoot.cursor || 0, status: 'active' });
+        upsertSyncConfig({ rootId: cloudRoot.id, localPath, cursor: String(cloudRoot.cursor || '0'), status: 'active' });
         await startSync(cloudRoot.id, cloudRoot.cloudFolderNodeId, localPath);
         console.log('[sync] auto-relinked orphan root', cloudRoot.id, '->', cloudRoot.cloudFolderName || cloudRoot.cloudFolderNodeId);
       } catch (err) {

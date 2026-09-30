@@ -1,0 +1,194 @@
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+19:39:06.114 [main] INFO com.stcloud.common.utils.JwtUtils -- JWT ǩ����Կ��������ɲ��������
+19:39:06.377 [main] INFO com.stcloud.common.utils.JwtUtils -- JWT ǩ����Կ��������ɲ��������
+19:39:06.382 [main] INFO com.stcloud.common.utils.JwtUtils -- JWT ǩ����Կ��������ɲ��������
+19:39:06.387 [main] INFO com.stcloud.common.utils.JwtUtils -- JWT ǩ����Կ��������ɲ��������
+19:39:06.391 [main] INFO com.stcloud.common.utils.JwtUtils -- JWT ǩ����Կ��������ɲ��������
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-09-27T19:39:10.352+08:00  INFO 29960 --- [           main] c.s.a.UserSecurityRedisIntegrationTest   : Starting UserSecurityRedisIntegrationTest using Java 17.0.14 with PID 29960 (started by Administrator in E:\code\st-cloud\st-admin)
+2026-09-27T19:39:10.354+08:00  INFO 29960 --- [           main] c.s.a.UserSecurityRedisIntegrationTest   : The following 1 profile is active: "test"
+2026-09-27T19:39:11.164+08:00  WARN 29960 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-27T19:39:11.166+08:00  WARN 29960 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-27T19:39:11.216+08:00  WARN 29960 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'createRocketMQMessageConverter' of type [org.apache.rocketmq.spring.support.RocketMQMessageConverter] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-27T19:39:11.223+08:00  WARN 29960 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketmq-org.apache.rocketmq.spring.autoconfigure.RocketMQProperties' of type [org.apache.rocketmq.spring.autoconfigure.RocketMQProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-27T19:39:11.224+08:00  WARN 29960 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketMQMessageListenerContainerRegistrar' of type [org.apache.rocketmq.spring.support.RocketMQMessageListenerContainerRegistrar] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-09-27T19:39:11.463+08:00  INFO 29960 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-09-27T19:39:11.651+08:00  INFO 29960 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:admin-real-redis user=SA
+2026-09-27T19:39:11.652+08:00  INFO 29960 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+2026-09-27T19:39:14.501+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:14.505+08:00  INFO 29960 --- [           main] com.stcloud.common.utils.JwtUtils        : JWT ǩ����Կ��������ɲ��������
+2026-09-27T19:39:14.638+08:00  WARN 29960 --- [           main] o.a.r.s.a.RocketMQAutoConfiguration      : The necessary spring property 'rocketmq.name-server' is not defined, all rockertmq beans creation are skipped!
+2026-09-27T19:39:14.922+08:00  INFO 29960 --- [           main] c.s.a.UserSecurityRedisIntegrationTest   : Started UserSecurityRedisIntegrationTest in 4.905 seconds (process running for 5.758)
+2026-09-27T19:39:15.091+08:00  INFO 29960 --- [           main] c.s.admin.service.impl.RoleServiceImpl   : �����û���ɫ: userId=101, roleCount=1
+2026-09-27T19:39:15.609+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:15.692+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-102, userId=102
+2026-09-27T19:39:15.698+08:00  INFO 29960 --- [           main] c.s.admin.service.impl.RoleServiceImpl   : �����û���ɫ: userId=101, roleCount=0
+2026-09-27T19:39:15.754+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:15.757+08:00  WARN 29960 --- [           main] c.s.a.security.JwtAuthenticationFilter   : JWT ��;��ȫ�汾��Ч���ܾ���֤
+2026-09-27T19:39:15.775+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:15.857+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:15.950+08:00  INFO 29960 --- [           main] c.s.admin.service.impl.RoleServiceImpl   : �����û���ɫ: userId=101, roleCount=1
+2026-09-27T19:39:16.031+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:16.108+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-102, userId=102
+2026-09-27T19:39:16.117+08:00  INFO 29960 --- [           main] c.s.admin.service.impl.RoleServiceImpl   : �����û���ɫ: userId=101, roleCount=1
+2026-09-27T19:39:16.119+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:16.120+08:00  WARN 29960 --- [           main] c.s.a.security.JwtAuthenticationFilter   : JWT ��;��ȫ�汾��Ч���ܾ���֤
+2026-09-27T19:39:16.125+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:16.198+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:16.333+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:16.399+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-102, userId=102
+2026-09-27T19:39:16.414+08:00  INFO 29960 --- [           main] c.s.admin.service.impl.RoleServiceImpl   : ɾ����ɫ: roleId=101
+2026-09-27T19:39:16.417+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:16.419+08:00  WARN 29960 --- [           main] c.s.a.security.JwtAuthenticationFilter   : JWT ��;��ȫ�汾��Ч���ܾ���֤
+2026-09-27T19:39:16.423+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:16.489+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:16.619+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:16.686+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-102, userId=102
+2026-09-27T19:39:16.750+08:00  INFO 29960 --- [           main] c.s.a.s.impl.UserManageServiceImpl       : ����Ա1�����û�: userId=101
+2026-09-27T19:39:16.759+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:16.760+08:00  WARN 29960 --- [           main] c.s.a.security.JwtAuthenticationFilter   : JWT ��;��ȫ�汾��Ч���ܾ���֤
+2026-09-27T19:39:16.765+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:16.892+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:16.894+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:17.023+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:17.089+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-102, userId=102
+2026-09-27T19:39:17.096+08:00  INFO 29960 --- [           main] c.s.a.s.impl.UserManageServiceImpl       : ����Ա1�����û�: userId=101
+2026-09-27T19:39:17.100+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:17.102+08:00  WARN 29960 --- [           main] c.s.a.security.JwtAuthenticationFilter   : JWT ��;��ȫ�汾��Ч���ܾ���֤
+2026-09-27T19:39:17.105+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:17.240+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:17.306+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-102, userId=102
+2026-09-27T19:39:17.311+08:00  INFO 29960 --- [           main] c.s.a.s.impl.UserManageServiceImpl       : ����Ա1ɾ���û�: userId=101
+2026-09-27T19:39:17.315+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:17.316+08:00  WARN 29960 --- [           main] c.s.a.security.JwtAuthenticationFilter   : JWT ��;��ȫ�汾��Ч���ܾ���֤
+2026-09-27T19:39:17.320+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:17.454+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:17.527+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:17.713+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:17.720+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:17.901+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:17.908+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:18.089+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:18.150+08:00  INFO 29960 --- [           main] c.s.a.s.impl.UserManageServiceImpl       : ����Ա1�����û�: userId=101
+2026-09-27T19:39:18.155+08:00  INFO 29960 --- [urity-manager-A] c.s.a.s.impl.UserManageServiceImpl       : ����Ա1�����û�: userId=101
+2026-09-27T19:39:18.157+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:18.158+08:00  WARN 29960 --- [           main] c.s.a.security.JwtAuthenticationFilter   : JWT ��;��ȫ�汾��Ч���ܾ���֤
+2026-09-27T19:39:18.223+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:18.223+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:18.401+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:18.407+08:00  INFO 29960 --- [           main] c.s.a.s.impl.UserManageServiceImpl       : ����Ա1�����û�: userId=101
+2026-09-27T19:39:18.411+08:00  INFO 29960 --- [urity-manager-A] c.s.a.s.impl.UserManageServiceImpl       : ����Ա1�����û�: userId=101
+2026-09-27T19:39:18.413+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:18.414+08:00  WARN 29960 --- [           main] c.s.a.security.JwtAuthenticationFilter   : JWT ��;��ȫ�汾��Ч���ܾ���֤
+2026-09-27T19:39:18.538+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:18.543+08:00  INFO 29960 --- [           main] c.s.a.s.impl.UserManageServiceImpl       : ����Ա1�����û�: userId=101
+2026-09-27T19:39:18.548+08:00  INFO 29960 --- [urity-manager-A] c.s.a.s.impl.UserManageServiceImpl       : ����Ա1�����û�: userId=101
+2026-09-27T19:39:18.551+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:18.552+08:00  WARN 29960 --- [           main] c.s.a.security.JwtAuthenticationFilter   : JWT ��;��ȫ�汾��Ч���ܾ���֤
+2026-09-27T19:39:18.678+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:18.681+08:00  INFO 29960 --- [           main] c.s.a.s.impl.UserManageServiceImpl       : ����Ա1�����û�: userId=101
+2026-09-27T19:39:18.682+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:18.808+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:18.811+08:00  INFO 29960 --- [           main] c.s.a.s.impl.UserManageServiceImpl       : ����Ա1�����û�: userId=101
+2026-09-27T19:39:18.813+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:18.939+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:19.001+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-102, userId=102
+2026-09-27T19:39:19.004+08:00  INFO 29960 --- [           main] c.s.admin.service.impl.RoleServiceImpl   : �����ɫȨ��: roleId=101, permissionCount=0
+2026-09-27T19:39:19.006+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:19.006+08:00  WARN 29960 --- [           main] c.s.a.security.JwtAuthenticationFilter   : JWT ��;��ȫ�汾��Ч���ܾ���֤
+2026-09-27T19:39:19.010+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:19.072+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:19.192+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:19.253+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-102, userId=102
+2026-09-27T19:39:19.258+08:00  INFO 29960 --- [           main] c.s.admin.service.impl.RoleServiceImpl   : ���½�ɫ: roleId=101
+2026-09-27T19:39:19.260+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:19.261+08:00  WARN 29960 --- [           main] c.s.a.security.JwtAuthenticationFilter   : JWT ��;��ȫ�汾��Ч���ܾ���֤
+2026-09-27T19:39:19.264+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:19.329+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:19.459+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:19.521+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-102, userId=102
+2026-09-27T19:39:19.525+08:00  INFO 29960 --- [           main] c.s.admin.service.impl.RoleServiceImpl   : ���½�ɫ: roleId=101
+2026-09-27T19:39:19.527+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:19.527+08:00  WARN 29960 --- [           main] c.s.a.security.JwtAuthenticationFilter   : JWT ��;��ȫ�汾��Ч���ܾ���֤
+2026-09-27T19:39:19.530+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:19.591+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:19.713+08:00  INFO 29960 --- [           main] c.s.admin.service.impl.RoleServiceImpl   : �����ɫȨ��: roleId=101, permissionCount=0
+2026-09-27T19:39:19.717+08:00  INFO 29960 --- [     login-race] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:19.719+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:19.719+08:00  WARN 29960 --- [           main] c.s.a.security.JwtAuthenticationFilter   : JWT ��;��ȫ�汾��Ч���ܾ���֤
+2026-09-27T19:39:19.783+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:19.784+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:19.905+08:00  INFO 29960 --- [           main] c.s.admin.service.impl.RoleServiceImpl   : �����ɫȨ��: roleId=101, permissionCount=0
+2026-09-27T19:39:19.908+08:00  INFO 29960 --- [     login-race] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:19.909+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:19.909+08:00  WARN 29960 --- [           main] c.s.a.security.JwtAuthenticationFilter   : JWT ��;��ȫ�汾��Ч���ܾ���֤
+2026-09-27T19:39:19.971+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:19.972+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:20.093+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:20.153+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-102, userId=102
+2026-09-27T19:39:20.161+08:00  INFO 29960 --- [     role-first] c.s.admin.service.impl.RoleServiceImpl   : �����û���ɫ: userId=102, roleCount=1
+2026-09-27T19:39:20.162+08:00  INFO 29960 --- [    role-second] c.s.admin.service.impl.RoleServiceImpl   : �����ɫȨ��: roleId=101, permissionCount=0
+2026-09-27T19:39:20.164+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:20.164+08:00  WARN 29960 --- [           main] c.s.a.security.JwtAuthenticationFilter   : JWT ��;��ȫ�汾��Ч���ܾ���֤
+2026-09-27T19:39:20.167+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:20.167+08:00  WARN 29960 --- [           main] c.s.a.security.JwtAuthenticationFilter   : JWT ��;��ȫ�汾��Ч���ܾ���֤
+2026-09-27T19:39:20.230+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-102, userId=102
+2026-09-27T19:39:20.231+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:20.352+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:20.412+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-102, userId=102
+2026-09-27T19:39:20.418+08:00  INFO 29960 --- [     role-first] c.s.admin.service.impl.RoleServiceImpl   : �����ɫȨ��: roleId=101, permissionCount=0
+2026-09-27T19:39:20.421+08:00  INFO 29960 --- [    role-second] c.s.admin.service.impl.RoleServiceImpl   : �����û���ɫ: userId=102, roleCount=1
+2026-09-27T19:39:20.422+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:20.423+08:00  WARN 29960 --- [           main] c.s.a.security.JwtAuthenticationFilter   : JWT ��;��ȫ�汾��Ч���ܾ���֤
+2026-09-27T19:39:20.425+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:20.425+08:00  WARN 29960 --- [           main] c.s.a.security.JwtAuthenticationFilter   : JWT ��;��ȫ�汾��Ч���ܾ���֤
+2026-09-27T19:39:20.488+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-102, userId=102
+2026-09-27T19:39:20.489+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:20.610+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:20.671+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-102, userId=102
+2026-09-27T19:39:20.677+08:00  INFO 29960 --- [     role-first] c.s.admin.service.impl.RoleServiceImpl   : �����û���ɫ: userId=102, roleCount=1
+2026-09-27T19:39:20.680+08:00  INFO 29960 --- [    role-second] c.s.admin.service.impl.RoleServiceImpl   : ɾ����ɫ: roleId=101
+2026-09-27T19:39:20.681+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:20.682+08:00  WARN 29960 --- [           main] c.s.a.security.JwtAuthenticationFilter   : JWT ��;��ȫ�汾��Ч���ܾ���֤
+2026-09-27T19:39:20.683+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:20.683+08:00  WARN 29960 --- [           main] c.s.a.security.JwtAuthenticationFilter   : JWT ��;��ȫ�汾��Ч���ܾ���֤
+2026-09-27T19:39:20.744+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-102, userId=102
+2026-09-27T19:39:20.745+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:20.867+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:20.928+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-102, userId=102
+2026-09-27T19:39:20.933+08:00  INFO 29960 --- [     role-first] c.s.admin.service.impl.RoleServiceImpl   : ɾ����ɫ: roleId=101
+2026-09-27T19:39:20.936+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:20.937+08:00  WARN 29960 --- [           main] c.s.a.security.JwtAuthenticationFilter   : JWT ��;��ȫ�汾��Ч���ܾ���֤
+2026-09-27T19:39:20.939+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:21.001+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-102, userId=102
+2026-09-27T19:39:21.003+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:21.124+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:21.127+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:21.130+08:00  WARN 29960 --- [           main] c.s.a.security.JwtAuthenticationFilter   : JWT ��֤ʧ��: injected primary timeout
+2026-09-27T19:39:21.136+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:21.261+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:21.322+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:21.454+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:21.460+08:00  INFO 29960 --- [           main] c.s.admin.service.impl.RoleServiceImpl   : �����ɫȨ��: roleId=101, permissionCount=0
+2026-09-27T19:39:21.521+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:21.644+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:21.654+08:00  INFO 29960 --- [           main] c.s.admin.service.impl.RoleServiceImpl   : �����ɫȨ��: roleId=101, permissionCount=0
+2026-09-27T19:39:21.657+08:00  WARN 29960 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-27T19:39:21.658+08:00  WARN 29960 --- [           main] c.s.a.security.JwtAuthenticationFilter   : JWT ��;��ȫ�汾��Ч���ܾ���֤
+2026-09-27T19:39:21.779+08:00  INFO 29960 --- [           main] com.stcloud.auth.service.AuthService     : �û���¼�ɹ�: username=security-101, userId=101
+2026-09-27T19:39:21.789+08:00  INFO 29960 --- [           main] c.s.admin.service.impl.RoleServiceImpl   : �����ɫȨ��: roleId=101, permissionCount=0

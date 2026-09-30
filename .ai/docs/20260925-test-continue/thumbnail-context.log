@@ -1,0 +1,50 @@
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+11:19:20.513 [main] WARN org.springframework.context.annotation.AnnotationConfigApplicationContext -- Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanDefinitionStoreException: Invalid bean definition with name 's3Client' defined in com.stcloud.common.config.S3StorageConfig: @Bean definition illegally overridden by existing bean definition: Generic bean: class [software.amazon.awssdk.services.s3.S3Client]; scope=singleton; abstract=false; lazyInit=null; autowireMode=0; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=null; initMethodNames=null; destroyMethodNames=null
+11:19:20.552 [main] WARN org.springframework.context.annotation.AnnotationConfigApplicationContext -- Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanDefinitionStoreException: Invalid bean definition with name 's3Client' defined in com.stcloud.common.config.S3StorageConfig: @Bean definition illegally overridden by existing bean definition: Generic bean: class [software.amazon.awssdk.services.s3.S3Client]; scope=singleton; abstract=false; lazyInit=null; autowireMode=0; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=null; initMethodNames=null; destroyMethodNames=null
+11:19:20.559 [main] WARN org.springframework.context.annotation.AnnotationConfigApplicationContext -- Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanDefinitionStoreException: Invalid bean definition with name 's3Client' defined in com.stcloud.common.config.S3StorageConfig: @Bean definition illegally overridden by existing bean definition: Generic bean: class [software.amazon.awssdk.services.s3.S3Client]; scope=singleton; abstract=false; lazyInit=null; autowireMode=0; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=null; initMethodNames=null; destroyMethodNames=null
+11:19:20.564 [main] WARN org.springframework.context.annotation.AnnotationConfigApplicationContext -- Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanDefinitionStoreException: Invalid bean definition with name 's3Client' defined in com.stcloud.common.config.S3StorageConfig: @Bean definition illegally overridden by existing bean definition: Generic bean: class [software.amazon.awssdk.services.s3.S3Client]; scope=singleton; abstract=false; lazyInit=null; autowireMode=0; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=null; initMethodNames=null; destroyMethodNames=null
+11:19:20.569 [main] WARN org.springframework.context.annotation.AnnotationConfigApplicationContext -- Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanDefinitionStoreException: Invalid bean definition with name 's3Client' defined in com.stcloud.common.config.S3StorageConfig: @Bean definition illegally overridden by existing bean definition: Generic bean: class [software.amazon.awssdk.services.s3.S3Client]; scope=singleton; abstract=false; lazyInit=null; autowireMode=0; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=null; initMethodNames=null; destroyMethodNames=null
+11:19:20.575 [main] WARN org.springframework.context.annotation.AnnotationConfigApplicationContext -- Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanDefinitionStoreException: Invalid bean definition with name 's3Client' defined in com.stcloud.common.config.S3StorageConfig: @Bean definition illegally overridden by existing bean definition: Generic bean: class [software.amazon.awssdk.services.s3.S3Client]; scope=singleton; abstract=false; lazyInit=null; autowireMode=0; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=null; initMethodNames=null; destroyMethodNames=null
+11:19:20.581 [main] WARN org.springframework.context.annotation.AnnotationConfigApplicationContext -- Exception encountered during context initialization - cancelling refresh attempt: org.springframework.beans.factory.BeanDefinitionStoreException: Invalid bean definition with name 's3Client' defined in com.stcloud.common.config.S3StorageConfig: @Bean definition illegally overridden by existing bean definition: Generic bean: class [software.amazon.awssdk.services.s3.S3Client]; scope=singleton; abstract=false; lazyInit=null; autowireMode=0; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=null; initMethodNames=null; destroyMethodNames=null
+[ERROR] Tests run: 8, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 5.149 s <<< FAILURE! -- in com.stcloud.core.service.ThumbnailRendererTest
+[ERROR] com.stcloud.core.service.ThumbnailRendererTest.invalidPropertiesAbortSpringStartupAndCustomLimitTakesEffect -- Time elapsed: 0.258 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: expected: <null> but was: <org.springframework.beans.factory.BeanDefinitionStoreException: Invalid bean definition with name 's3Client' defined in com.stcloud.common.config.S3StorageConfig: @Bean definition illegally overridden by existing bean definition: Generic bean: class [software.amazon.awssdk.services.s3.S3Client]; scope=singleton; abstract=false; lazyInit=null; autowireMode=0; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=null; initMethodNames=null; destroyMethodNames=null>
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:151)
+	at org.junit.jupiter.api.AssertionFailureBuilder.buildAndThrow(AssertionFailureBuilder.java:132)
+	at org.junit.jupiter.api.AssertNull.failNotNull(AssertNull.java:50)
+	at org.junit.jupiter.api.AssertNull.assertNull(AssertNull.java:35)
+	at org.junit.jupiter.api.AssertNull.assertNull(AssertNull.java:30)
+	at org.junit.jupiter.api.Assertions.assertNull(Assertions.java:279)
+	at com.stcloud.core.service.ThumbnailRendererTest.lambda$invalidPropertiesAbortSpringStartupAndCustomLimitTakesEffect$12(ThumbnailRendererTest.java:182)
+	at org.springframework.boot.test.context.runner.AbstractApplicationContextRunner.accept(AbstractApplicationContextRunner.java:434)
+	at org.springframework.boot.test.context.runner.AbstractApplicationContextRunner.consumeAssertableContext(AbstractApplicationContextRunner.java:363)
+	at org.springframework.boot.test.context.runner.AbstractApplicationContextRunner.lambda$run$0(AbstractApplicationContextRunner.java:341)
+	at org.springframework.boot.test.util.TestPropertyValues.lambda$applyToSystemProperties$1(TestPropertyValues.java:174)
+	at org.springframework.boot.test.util.TestPropertyValues.applyToSystemProperties(TestPropertyValues.java:188)
+	at org.springframework.boot.test.util.TestPropertyValues.applyToSystemProperties(TestPropertyValues.java:173)
+	at org.springframework.boot.test.context.runner.AbstractApplicationContextRunner.lambda$run$1(AbstractApplicationContextRunner.java:341)
+	at org.springframework.boot.test.context.runner.AbstractApplicationContextRunner.withContextClassLoader(AbstractApplicationContextRunner.java:369)
+	at org.springframework.boot.test.context.runner.AbstractApplicationContextRunner.run(AbstractApplicationContextRunner.java:340)
+	at com.stcloud.core.service.ThumbnailRendererTest.invalidPropertiesAbortSpringStartupAndCustomLimitTakesEffect(ThumbnailRendererTest.java:181)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+
+[ERROR] Failures: 
+[ERROR]   ThumbnailRendererTest.invalidPropertiesAbortSpringStartupAndCustomLimitTakesEffect:181->lambda$invalidPropertiesAbortSpringStartupAndCustomLimitTakesEffect$12:182 expected: <null> but was: <org.springframework.beans.factory.BeanDefinitionStoreException: Invalid bean definition with name 's3Client' defined in com.stcloud.common.config.S3StorageConfig: @Bean definition illegally overridden by existing bean definition: Generic bean: class [software.amazon.awssdk.services.s3.S3Client]; scope=singleton; abstract=false; lazyInit=null; autowireMode=0; dependencyCheck=0; autowireCandidate=true; primary=false; factoryBeanName=null; factoryMethodName=null; initMethodNames=null; destroyMethodNames=null>
+[ERROR] Tests run: 8, Failures: 1, Errors: 0, Skipped: 0
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.1.2:test (default-test) on project st-core: There are test failures.
+[ERROR] 
+[ERROR] Please refer to E:\code\st-cloud\st-core\target\surefire-reports for the individual test results.
+[ERROR] Please refer to dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
+[ERROR] 
+[ERROR] After correcting the problems, you can resume the build with the command
+[ERROR]   mvn <args> -rf :st-core

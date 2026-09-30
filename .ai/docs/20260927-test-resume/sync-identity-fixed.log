@@ -1,0 +1,20 @@
+✔ TC04-14: move present 实际目录基线与目标保护 (929.7679ms)
+✔ TC04-14: move missing 实际目录基线与目标保护 (993.2876ms)
+✔ TC04-14: move collision 实际目录基线与目标保护 (978.3433ms)
+✔ TC04-14: rename present 实际目录基线与目标保护 (933.098ms)
+✔ TC04-14: rename missing 实际目录基线与目标保护 (922.37ms)
+✔ TC04-14: rename collision 实际目录基线与目标保护 (912.5957ms)
+✔ TC04-14: 未修改目录MOVE保留后代基线 (935.4404ms)
+✔ TC04-15: reused 旧路径身份对账失败及跨进程恢复 (8448.6637ms)
+✔ TC04-16: unknown 旧路径身份对账失败及跨进程恢复 (8449.7866ms)
+✔ TC04-16: 直接消费同路径脏MOVE不能改绑X，失败保留基线 (7925.103ms)
+✔ TC04-14: move 源缺失下载失败保留旧基线，再次成功后清理 (8477.0537ms)
+✔ TC04-14: rename 源缺失下载失败保留旧基线，再次成功后清理 (8462.3191ms)
+ℹ tests 12
+ℹ suites 0
+ℹ pass 12
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 48472.4377

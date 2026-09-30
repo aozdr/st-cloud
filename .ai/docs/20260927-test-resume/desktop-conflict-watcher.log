@@ -1,0 +1,63 @@
+
+> st-cloud-desktop@1.0.0 test
+> tsc src/sync-retry.ts src/sync-retry.test.ts src/db-migrate.ts src/db-migrate.test.ts src/sync-utils.ts src/sync-utils.test.ts src/transfer-tasks.test.ts --outDir .test-dist --module commonjs --target ES2020 --skipLibCheck --esModuleInterop && node --test ".test-dist/*.test.js" && node --test src/sync/sync-recovery.test.cjs src/sync/sync-cursor.test.cjs src/sync/sync-conflict.test.cjs src/sync/sync-path.test.cjs src/sync/sync-reconcile.test.cjs src/sync/sync-size.test.cjs src/sync/sync-restart.test.cjs
+
+✔ INTEGER 亲和性导致雪花ID读回丢精度（bug 复现） (43.5806ms)
+✔ ensureIdColumnsText 重建后雪花ID读回完整字符串 (12.4614ms)
+✔ ensureIdColumnsText 幂等：二次调用不再重建 (5.7026ms)
+✔ ensureIdColumnsText 对新库（已是 TEXT）不重建 (1.3549ms)
+✔ TCDB-09 旧库大 root/node/cursor 以 SQL 整数字面量迁移并隔离两根 (10.1361ms)
+✔ computeBackoffMs: 指数退避曲线 30s/60s/120s/240s (0.9561ms)
+✔ computeBackoffMs: 封顶 1 小时 (0.1607ms)
+✔ computeBackoffMs: failCount<=0 按首次失败处理 (0.1308ms)
+✔ shouldRetryUpload: 无失败记录始终允许上传 (0.2429ms)
+✔ shouldRetryUpload: 退避期内跳过 (0.1897ms)
+✔ shouldRetryUpload: 退避到期允许重试 (0.1447ms)
+✔ shouldRetryUpload: 用户再次修改（mtime 变化）立即重试 (0.8943ms)
+✔ shouldRetryUpload: nextRetryAt 为空视为可重试 (0.1364ms)
+✔ isIgnoredLocalPath 过滤 Office 锁文件与系统临时文件 (2.4982ms)
+✔ isConflictCopyName 只匹配机器格式冲突副本 (0.2635ms)
+✔ uniqueConflictName 同秒冲突追加序号，避免互相覆盖 (2.0993ms)
+✔ isLocallyChanged 以 sync_state.local_mtime 为准 (0.2132ms)
+✔ conflictRelPath 推导冲突副本的同步相对路径 (0.3391ms)
+✔ 上传和下载任务可通过真实 SQLite 创建并在重载后完整读回 (39.3294ms)
+✔ relay 恢复不会降级为普通直传 (0.7187ms)
+ℹ tests 20
+ℹ suites 0
+ℹ pass 20
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 301.8079
+✔ TC04-24/25: 真实上传模块对任务 failed 抛错并保留旧基线 (121.4345ms)
+✔ TC04-24/25: 真实上传模块对任务 running 抛错并保留旧基线 (40.2687ms)
+✔ TC04-24: keep_both 上传 failed 后保留临时源及旧基线 (62.7608ms)
+✔ TC04-24: keep_both 上传 timeout 后保留临时源及旧基线 (39.4145ms)
+✔ TC04-25: local_wins 上传失败传播且恢复后源文件不变 (36.6944ms)
+✔ TC04-25: latest_wins 上传失败传播且恢复后源文件不变 (42.5819ms)
+✔ TCDB-10: 大游标逐字符传递，不经过 Number (4.0701ms)
+✔ TCDB-10: 相邻大游标连续分页并持久化最后一页 (2.8756ms)
+✔ TCDB-10: hasMore=true 且大游标未前进不确认页面 (1.2668ms)
+✔ TC04-08: 协议版本缺失或错误时游标不推进 (2.4934ms)
+✔ TC04-08: 数字游标和损坏响应均被拒绝 (6.7667ms)
+✔ TCDB-10: 真实 SQLite 持久化大游标，重启后续页并拒绝停滞 (172.1601ms)
+✔ TC04-06: 空过滤页仍继续读取下一页的有效事件 (2.3716ms)
+✔ TC04-34: 第二页失败保留第一页游标，恢复后从第二页继续 (74.8434ms)
+✔ TC04-10: 越界路径和目录联接不允许解析到根外 (27.5766ms)
+✔ TC04-33: 不完整列举和第二页故障不清理原文件或状态，恢复后补齐 (153.877ms)
+✔ 空目录 pages=0 且无旧状态可以完成对账 (95.8471ms)
+✔ TC04-30: 最后时刻编辑随原件移动 (100.9099ms)
+✔ 已打开的句柄写入仍保存在恢复原件中 (63.3566ms)
+✔ 目录遍历后新增文件被整体保全并记录 (49.5728ms)
+✔ 原子移动失败保留源且同事件可以重试 (42.9861ms)
+✔ 跨设备选用同步根旁目录（设备号注入） (30.2047ms)
+✔ 真实跨卷：应用目录与工作区不在同盘时，原件保存在同步根旁 (25.5907ms)
+✔ 实际 EXDEV 失败不回退为复制删除 (21.3018ms)
+✔ 旧 pending 副本和新源同时存在时双方均不覆盖 (36.2737ms)
+✔ 已完成事件重放不删除新出现的同名文件 (29.183ms)
+✔ 恢复位置属于其他同步根时拒绝 (10.7941ms)
+✔ 移动后清单提交失败仍保有完整原件 (31.1919ms)
+✔ TC04-29: 初始 manifest 写入失败保留源且同事件可重试 (26.3794ms)
+✔ TC04-29: 目录移动后清单提交失败，重试补记移动期间新增文件 (44.49ms)
+✔ TC04-10: 恢复目录联接指向外部时不写入外部清单或移动源 (14.3164ms)

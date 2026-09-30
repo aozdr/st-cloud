@@ -3,6 +3,7 @@ package com.stcloud.auth.service;
 import cn.hutool.core.util.IdUtil;
 import cn.hutool.crypto.digest.BCrypt;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.stcloud.auth.dto.LoginRequest;
 import com.stcloud.auth.dto.LoginResponse;
 import com.stcloud.auth.dto.RegisterRequest;
@@ -18,13 +19,19 @@ import com.stcloud.common.utils.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -41,6 +48,8 @@ public class AuthService {
     private final SysRolePermissionMapper rolePermissionMapper;
     private final StringRedisTemplate stringRedisTemplate;
     private final JwtUtils jwtUtils;
+    private final UserSecurityService userSecurityService;
+    private final PlatformTransactionManager transactionManager;
 
     private static final String REFRESH_TOKEN_PREFIX = "stcloud:refresh:";
     private static final Long DEFAULT_QUOTA = 10L * 1024 * 1024 * 1024; // 10GB
@@ -48,8 +57,44 @@ public class AuthService {
     /**
      * 用户注册
      */
-    @Transactional
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public LoginResponse register(RegisterRequest request) {
+        // 密码哈希与 Redis 不进入数据库写事务；用户及默认角色提交后才能签发会话。
+        String passwordHash = BCrypt.hashpw(request.getPassword());
+        TransactionTemplate registration = new TransactionTemplate(transactionManager);
+        registration.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        registration.setIsolationLevel(TransactionDefinition.ISOLATION_READ_COMMITTED);
+        SysUser registered = registration.execute(status -> registerUser(request, passwordHash));
+
+        // 独立只读快照保证用户版本、租户及权限来自同一提交视图，不拼接写事务的旧实体。
+        TransactionTemplate snapshot = new TransactionTemplate(transactionManager);
+        snapshot.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        snapshot.setIsolationLevel(TransactionDefinition.ISOLATION_REPEATABLE_READ);
+        snapshot.setReadOnly(true);
+        UserSnapshot current = snapshot.execute(status -> {
+            SysUser user = userMapper.selectById(registered.getId());
+            if (user == null || !Integer.valueOf(UserStatus.NORMAL.getCode()).equals(user.getStatus())) {
+                throw new BusinessException(ResultCode.USER_NOT_FOUND);
+            }
+            SysTenant tenant = tenantMapper.selectById(user.getTenantId());
+            if (tenant == null || !Integer.valueOf(TenantStatus.NORMAL.getCode()).equals(tenant.getStatus())) {
+                throw new BusinessException(ResultCode.BUSINESS_ERROR, "租户不可用");
+            }
+            return new UserSnapshot(user, loadUserPermissions(user));
+        });
+        SysUser user = current.user();
+        UserPermissions userPerms = current.permissions();
+        if (!userSecurityService.isCurrent(user.getId(), user.getTenantId(), user.getSecurityVersion())) {
+            throw new BusinessException(ResultCode.TOKEN_INVALID);
+        }
+        String token = jwtUtils.generateToken(user.getId(), user.getTenantId(), user.getUsername(),
+                userPerms.roles, userPerms.permissions, userPerms.dataScope, user.getSecurityVersion());
+        String refreshToken = jwtUtils.generateRefreshToken(user.getId(), user.getTenantId(), user.getUsername(), user.getSecurityVersion());
+        stringRedisTemplate.opsForValue().set(REFRESH_TOKEN_PREFIX + user.getId(), refreshToken, 30, TimeUnit.DAYS);
+        return buildLoginResponse(token, refreshToken, user, userPerms);
+    }
+
+    private SysUser registerUser(RegisterRequest request, String passwordHash) {
         Long existingCount = userMapper.selectCount(
                 new LambdaQueryWrapper<SysUser>()
                         .eq(SysUser::getUsername, request.getUsername()));
@@ -72,15 +117,26 @@ public class AuthService {
         }
 
         TenantContext.setTenantId(tenant.getId());
+        userSecurityService.lockTenant(tenant.getId());
+        // 等待安全写锁期间租户可能被禁用；RC 锁后重读才能使用最新决策状态。
+        tenant = tenantMapper.selectById(tenant.getId());
+        if (tenant == null || !Integer.valueOf(TenantStatus.NORMAL.getCode()).equals(tenant.getStatus())) {
+            throw new BusinessException(ResultCode.BUSINESS_ERROR, "租户不可用");
+        }
+        if (userMapper.selectCount(new LambdaQueryWrapper<SysUser>()
+                .eq(SysUser::getUsername, request.getUsername())) > 0) {
+            throw new BusinessException(ResultCode.USER_ALREADY_EXISTS);
+        }
 
         SysUser user = new SysUser();
         user.setUsername(request.getUsername());
-        user.setPassword(BCrypt.hashpw(request.getPassword()));
+        user.setPassword(passwordHash);
         user.setNickname(StringUtils.hasText(request.getNickname()) ? request.getNickname() : request.getUsername());
         user.setEmail(request.getEmail());
         user.setPhone(request.getPhone());
         // 新注册用户默认正常
         user.setStatus(UserStatus.NORMAL.getCode());
+        user.setSecurityVersion(0L);
         user.setStorageUsed(0L);
         user.setStorageQuota(DEFAULT_QUOTA);
         userMapper.insert(user);
@@ -90,17 +146,7 @@ public class AuthService {
 
         log.info("用户注册成功: username={}, userId={}, tenantId={}", user.getUsername(), user.getId(), tenant.getId());
 
-        UserPermissions userPerms = loadUserPermissions(user);
-        String token = jwtUtils.generateToken(user.getId(), tenant.getId(), user.getUsername(),
-                userPerms.roles, userPerms.permissions, userPerms.dataScope);
-        String refreshToken = jwtUtils.generateRefreshToken(user.getId(), user.getUsername());
-
-        stringRedisTemplate.opsForValue().set(
-                REFRESH_TOKEN_PREFIX + user.getId(),
-                refreshToken,
-                30, TimeUnit.DAYS);
-
-        return buildLoginResponse(token, refreshToken, user, userPerms);
+        return user;
     }
 
     /**
@@ -130,14 +176,15 @@ public class AuthService {
         // 设置租户上下文以查询角色权限
         TenantContext.setTenantId(user.getTenantId());
 
-        user.setLastLoginAt(LocalDateTime.now());
-        user.setLastLoginIp(ip);
-        userMapper.updateById(user);
+        userMapper.update(null, new LambdaUpdateWrapper<SysUser>()
+                .eq(SysUser::getId, user.getId())
+                .set(SysUser::getLastLoginAt, LocalDateTime.now())
+                .set(SysUser::getLastLoginIp, ip));
 
         UserPermissions userPerms = loadUserPermissions(user);
         String token = jwtUtils.generateToken(user.getId(), tenant.getId(), user.getUsername(),
-                userPerms.roles, userPerms.permissions, userPerms.dataScope);
-        String refreshToken = jwtUtils.generateRefreshToken(user.getId(), user.getUsername());
+                userPerms.roles, userPerms.permissions, userPerms.dataScope, user.getSecurityVersion());
+        String refreshToken = jwtUtils.generateRefreshToken(user.getId(), tenant.getId(), user.getUsername(), user.getSecurityVersion());
 
         stringRedisTemplate.opsForValue().set(
                 REFRESH_TOKEN_PREFIX + user.getId(),
@@ -157,6 +204,12 @@ public class AuthService {
             throw new BusinessException(ResultCode.TOKEN_EXPIRED);
         }
 
+        io.jsonwebtoken.Claims claims = jwtUtils.parseToken(refreshToken);
+        if (!"refresh".equals(claims.get("type"))
+                || !userSecurityService.isCurrent(claims.get("userId"), claims.get("tenantId"), claims.get("securityVersion"))) {
+            throw new BusinessException(ResultCode.TOKEN_INVALID);
+        }
+
         Long userId = jwtUtils.getUserId(refreshToken);
         String cachedToken = stringRedisTemplate.opsForValue().get(REFRESH_TOKEN_PREFIX + userId);
         if (cachedToken == null || !cachedToken.equals(refreshToken)) {
@@ -167,19 +220,32 @@ public class AuthService {
         if (user == null || user.getStatus() != UserStatus.NORMAL.getCode()) {
             throw new BusinessException(ResultCode.USER_NOT_FOUND);
         }
+        Long presentedVersion = userSecurityService.exactNonNegativeLong(claims.get("securityVersion"));
+        Long presentedTenantId = userSecurityService.exactNonNegativeLong(claims.get("tenantId"));
+        if (!java.util.Objects.equals(user.getSecurityVersion(), presentedVersion)
+                || !java.util.Objects.equals(user.getTenantId(), presentedTenantId)) {
+            throw new BusinessException(ResultCode.TOKEN_INVALID);
+        }
 
         SysTenant tenant = tenantMapper.selectById(user.getTenantId());
         TenantContext.setTenantId(user.getTenantId());
 
         UserPermissions userPerms = loadUserPermissions(user);
+        // 权限读取期间若角色或用户状态已提交变更，旧 Refresh 不能继承新的安全版本。
+        if (!userSecurityService.isCurrent(claims.get("userId"), claims.get("tenantId"), claims.get("securityVersion"))) {
+            throw new BusinessException(ResultCode.TOKEN_INVALID);
+        }
         String newToken = jwtUtils.generateToken(user.getId(), tenant.getId(), user.getUsername(),
-                userPerms.roles, userPerms.permissions, userPerms.dataScope);
-        String newRefreshToken = jwtUtils.generateRefreshToken(user.getId(), user.getUsername());
+                userPerms.roles, userPerms.permissions, userPerms.dataScope, user.getSecurityVersion());
+        String newRefreshToken = jwtUtils.generateRefreshToken(user.getId(), tenant.getId(), user.getUsername(), user.getSecurityVersion());
 
-        stringRedisTemplate.opsForValue().set(
-                REFRESH_TOKEN_PREFIX + user.getId(),
-                newRefreshToken,
-                30, TimeUnit.DAYS);
+        // 仅当旧 refresh 仍是 Redis 当前值时替换；并发刷新或撤销不能被覆盖。
+        DefaultRedisScript<Long> cas = new DefaultRedisScript<>(
+                "if redis.call('get', KEYS[1]) == ARGV[1] then "
+                        + "redis.call('set', KEYS[1], ARGV[2], 'EX', ARGV[3]); return 1 else return 0 end", Long.class);
+        Long replaced = stringRedisTemplate.execute(cas, Collections.singletonList(REFRESH_TOKEN_PREFIX + user.getId()),
+                refreshToken, newRefreshToken, String.valueOf(TimeUnit.DAYS.toSeconds(30)));
+        if (!Long.valueOf(1L).equals(replaced)) throw new BusinessException(ResultCode.TOKEN_INVALID);
 
         return buildLoginResponse(newToken, newRefreshToken, user, userPerms);
     }
@@ -317,4 +383,5 @@ public class AuthService {
      * 用户权限加载结果
      */
     private record UserPermissions(List<String> roles, List<String> permissions, int dataScope) {}
+    private record UserSnapshot(SysUser user, UserPermissions permissions) {}
 }

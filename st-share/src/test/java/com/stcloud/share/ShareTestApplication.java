@@ -13,6 +13,7 @@ import com.stcloud.core.service.DownloadService;
 import com.stcloud.core.service.FileObjectService;
 import com.stcloud.core.service.FileService;
 import com.stcloud.core.service.StorageService;
+import com.stcloud.core.service.ThumbnailRenderer;
 import com.stcloud.share.service.ShareService;
 import com.stcloud.share.service.ShareBruteForceGuard;
 import com.stcloud.share.service.ShareCaptchaService;
@@ -73,6 +74,11 @@ public class ShareTestApplication {
     @Bean
     StorageService storageService() {
         return mock(StorageService.class);
+    }
+
+    @Bean
+    ThumbnailRenderer thumbnailRenderer() {
+        return mock(ThumbnailRenderer.class);
     }
 
     @Bean

@@ -1,5 +1,5 @@
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { X, Download, ChevronLeft, ChevronRight, RotateCw, ZoomIn, ZoomOut, Maximize2, Play, Pause } from 'lucide-react';
+import { X, Download, ChevronLeft, ChevronRight, RotateCw, ZoomIn, ZoomOut, Maximize2, Play, Pause, Image as ImageIcon } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api, { buildStreamUrl } from '../../lib/api';
 import { isElectron } from '../../lib/electron';
@@ -12,6 +12,15 @@ import AudioPlayer from './AudioPlayer';
 import FileThumbnail from '../file/FileThumbnail';
 
 const PlyrPlayer = lazy(() => import('./PlyrPlayer'));
+
+function ShareFilmstripThumbnail({ src, name, supported }: { src: string; name: string; supported: boolean }) {
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  // 失败仅影响该 URL；分享来源或内容版本变化后重新加载，按钮名称与导航不受影响。
+  return !supported || failedUrl === src
+    ? <ImageIcon className="w-5 h-5 text-white/60 mx-auto mt-1" aria-hidden />
+    : <img src={src} alt={name} className="w-full h-full object-cover" loading="lazy"
+        onError={() => setFailedUrl(src)} />;
+}
 
 interface Props {
   files: FileNode[];
@@ -45,6 +54,8 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
   /** 版本预览的后端返回类型：版本模式以服务端能力为准判定可预览性 */
   const [versionType, setVersionType] = useState<string | null>(null);
   const [versionError, setVersionError] = useState(false);
+  const [retriedPreviews, setRetriedPreviews] = useState<Set<string>>(new Set());
+  const [retryRevision, setRetryRevision] = useState(0);
   const file = files[index];
   /** 历史版本模式：数据来自版本预览接口，不参与文件切换/幻灯片/最近文件/编辑器跳转 */
   const isVersionMode = !!versionId;
@@ -209,6 +220,10 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
           api.post<{ token: string }>(`/file/${file.id}/download-token`)
             .then((d) => { setUrl(buildStreamUrl(file.id, { token: d.token, inline: true })); setLoading(false); })
             .catch(() => setLoading(false));
+        } else if (['webp', 'svg'].includes(file.suffix?.toLowerCase() || '')) {
+          api.get<PreviewResult>(`/preview/${file.id}`)
+            .then((data) => { if (data.type === 'image') setUrl(data.url ?? null); setLoading(false); })
+            .catch(() => setLoading(false));
         } else {
           // 其它图片：通过预览 API 获取预签名缩略图（access token 无法用于 <img src>）
           api.get<string>(`/preview/${file.id}/thumbnail`, { params: { size: 'lg' } })
@@ -242,7 +257,7 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
           .catch(() => setLoading(false));
       }
     }
-  }, [file, versionId, shareContext, location.pathname, location.search, navigate]);
+  }, [file, versionId, shareContext, location.pathname, location.search, navigate, retryRevision]);
 
   // Keyboard navigation
   useEffect(() => {
@@ -381,6 +396,7 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
               <img
                 ref={imgRef}
                 src={url}
+                onError={() => setUrl(null)}
                 alt={file.name}
                 width={800}
                 height={600}
@@ -506,6 +522,8 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
                     return (
                       <button
                         key={img.id}
+                        title={img.name}
+                        aria-label={`预览 ${img.name}`}
                         onClick={() => {
                           const idx = files.findIndex((f) => f.id === img.id);
                           if (idx >= 0) setIndex(idx);
@@ -516,16 +534,16 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
                         )}
                       >
                         {shareContext ? (
-                          <img
+                          <ShareFilmstripThumbnail
+                            supported={!['webp', 'svg'].includes(img.suffix?.toLowerCase() || '')}
                             src={(() => {
                               const params = new URLSearchParams({ nodeId: String(img.id), size: 'sm' });
+                              if (img.updatedAt) params.set('v', img.updatedAt);
                               if (shareContext.password) params.set('password', shareContext.password);
                               const base = isElectron() ? getServerUrlSync() : '';
                               return `${base}/api/share/access/thumbnail/${shareContext.shareCode}?${params.toString()}`;
                             })()}
-                            alt={img.name}
-                            className="w-full h-full object-cover"
-                            loading="lazy"
+                            name={img.name}
                           />
                         ) : (
                           <FileThumbnail file={img} size="lg" className="!w-full !h-full !rounded-none" />
@@ -561,6 +579,19 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
           ) : asPdf && url ? (
             /* 历史版本 PDF：编辑器只认当前版本，这里用浏览器内置 PDF 查看器 */
             <iframe src={url} title={file.name} className="w-[80vw] h-[80vh] bg-white rounded-lg" />
+          ) : asImage ? (
+            <div className="text-center text-white/70">
+              <config.icon className="w-12 h-12 mx-auto mb-3" aria-hidden />
+              <p>暂无法预览，可下载原文件</p>
+              {!retriedPreviews.has(`${file.id}:${versionId ?? ''}`) && (
+                <button onClick={() => {
+                  // 每个文件版本只允许用户显式重试一次，避免失败降级自动循环请求原图。
+                  setRetriedPreviews(previous => new Set(previous).add(`${file.id}:${versionId ?? ''}`));
+                  setRetryRevision(previous => previous + 1);
+                }} className="mt-3 px-3 py-2 bg-white/10 rounded">重试预览</button>
+              )}
+              {onDownload && <button onClick={() => onDownload(file)} className="mt-3 px-3 py-2 bg-white/10 rounded">下载文件</button>}
+            </div>
           ) : null}
         </div>
 

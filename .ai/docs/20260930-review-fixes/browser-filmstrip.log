@@ -1,0 +1,1 @@
+PASS F8: 503/损坏图片与WebP/SVG图标降级；正常图片；名称/点击/Enter导航；新分享URL重新请求；无pageerror。真实React组件，API受控。

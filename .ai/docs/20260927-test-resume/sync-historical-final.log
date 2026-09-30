@@ -1,0 +1,16 @@
+✔ TC04-12: 历史CREATE/inside 按当前树恢复且详情403不被当作删除 (8048.6547ms)
+✔ TC04-12: 历史CREATE/outside 按当前树恢复且详情403不被当作删除 (8016.0197ms)
+✔ TC04-12: 历史CREATE/trash 按当前树恢复且详情403不被当作删除 (8024.6428ms)
+✔ TC04-12: 历史CREATE详情超时保留旧状态和游标 (8032.4631ms)
+✔ TC04-12: 历史MOVE/inside 按当前树恢复且详情403不被当作删除 (8035.9338ms)
+✔ TC04-12: 历史MOVE/outside 按当前树恢复且详情403不被当作删除 (8052.0792ms)
+✔ TC04-12: 历史MOVE/trash 按当前树恢复且详情403不被当作删除 (8003.2312ms)
+✔ TC04-12: 历史MOVE详情超时保留旧状态和游标 (8018.0166ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 64331.1302

@@ -1,0 +1,56 @@
+{
+  "dispatchId": "DISPATCH-20260930-REVIEW-EXP_ACCEPT-647c69",
+  "taskId": "TASK-20260930-REVIEW-EXP_ACCEPT",
+  "status": "completed",
+  "artifactRefs": [".ai/docs/20260930-review-fixes/exp-review.md"],
+  "criterionProposal": {
+    "id": "EXP_ACCEPT",
+    "outcome": "pass",
+    "by": "/root/exp_accept",
+    "dispatchId": "DISPATCH-20260930-REVIEW-EXP_ACCEPT-647c69",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260930-REVIEW-EXP_ACCEPT-647c69.json",
+    "validatedRevision": "review-fixes-code-3ae1050e4646f449"
+  },
+  "blockerProposals": [],
+  "background": "独立审查当前修订分享胶卷体验及九项修复范围，不代替其他门禁或最终 ACCEPT。",
+  "input": [
+    ".ai/tasks/TASK-20260930-REVIEW-EXP_ACCEPT.md",
+    ".ai/docs/20260930-review-fixes/requirement.md",
+    ".ai/docs/20260930-review-fixes/design.md",
+    ".ai/docs/20260930-review-fixes/testcases.md",
+    ".ai/docs/20260930-review-fixes/uispec.md",
+    ".ai/docs/20260930-review-fixes/baseline/hashes.json",
+    ".ai/docs/20260930-review-fixes/source-revision.json",
+    ".ai/docs/20260930-review-fixes/browser-filmstrip.py",
+    ".ai/docs/20260930-review-fixes/browser-filmstrip.log",
+    ".ai/docs/20260930-review-fixes/browser-filmstrip-requests.json",
+    ".ai/docs/20260930-review-fixes/browser-filmstrip-fallback.png",
+    ".ai/docs/20260930-review-fixes/web-build.log",
+    ".ai/docs/20260930-review-fixes/desktop-review.log",
+    ".ai/docs/20260930-review-fixes/backend-regression.log",
+    ".ai/docs/20260930-review-fixes/mysql-migration.log",
+    ".ai/docs/20260930-review-fixes/schema-before.log",
+    ".ai/docs/20260930-review-fixes/schema-after.log"
+  ],
+  "analysis": {
+    "facts": [
+      "八份 baseline 副本及全部 15 项 source-revision 当前哈希匹配；已执行差异比对。",
+      "503、损坏 PNG、WebP/SVG 均渲染同一 ImageIcon，正常缩略图仍显示，名称/点击/Enter/新分享 URL 请求有主线程浏览器证据，截图可见四个降级图标。",
+      "缩略图 URL 包含分享来源、节点 id、密码及已有 updatedAt 版本；失败只与当前 URL 比较。",
+      "九项 finding 的当前改动、对应用例与现有日志已在报告逐项对应。",
+      "新增桌面失败路径 13/13；后端回归 BUILD SUCCESS；MySQL 两次 schema 对比 exit=0，已有安全版本 17 保留。"
+    ],
+    "validationBoundary": [
+      "审查者实际执行哈希、文本差异、用例/日志和截图检查，未重跑构建或运行测试。",
+      "浏览器使用真实 React 页面，API 全部由 Playwright route 受控；不是后端 HTTP 端到端验证。",
+      "Tab/Space/左右键、同一挂载组件 updatedAt 切换、异步旧 error 和量化对比度没有专项浏览器运行证据。",
+      "桌面全回归日志读取时仍在追加；不代替 TEST_PASS。",
+      "Envelope 依据 schema 人工核对，Python jsonschema 包不可用，未声称 Schema 库校验。"
+    ]
+  },
+  "decisions": ["建议 EXP_ACCEPT 通过，未发现本次新改动的体验阻断；结论限于当前修订与明确证据边界。"],
+  "stateDelta": {"kind": "proposal-only", "criterionId": "EXP_ACCEPT", "outcome": "pass"},
+  "risks": ["真实后端 HTTP、Electron 外壳、弱网设备、不同分辨率及明确列出的专项未覆盖。"],
+  "nextSteps": ["主线程核对 attempt、白名单与修订后 Evaluate；代码修订变化时重新获取有效证据。"],
+  "changeImpact": "仅追加 exp-review.md 的 EXP_ACCEPT 部分并新增本结果 JSON，保留 EXP_DESIGN 内容；未修改源码、数据库、配置或 State，未执行 Git 或共享构建。"
+}

@@ -1,0 +1,12 @@
+PASS: 打开复制对话框后撤权，两次提交均拒绝，保持目标选择且不显示成功。API受控，服务端另层真实H2验证。
+Starting server 1/1: npm.cmd run dev -- --host 127.0.0.1 --port 5187 --strictPort
+Waiting for server on port 5187...
+Server ready on port 5187
+
+All 1 server(s) ready
+Running: python ../.ai/docs/20260927-test-resume/browser-copy.py
+
+
+Stopping 1 server(s)...
+Server 1 stopped
+All servers stopped

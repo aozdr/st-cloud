@@ -1,0 +1,52 @@
+✖ TC04-28: fail-upload 连续三轮部分成功不重复已完成副本 (4631.5165ms)
+✖ TC04-28: fail-download 连续三轮部分成功不重复已完成副本 (4600.3265ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 0
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 9332.1277
+
+✖ failing tests:
+
+test at src\sync\sync-restart.test.cjs:82:3
+✖ TC04-28: fail-upload 连续三轮部分成功不重复已完成副本 (4631.5165ms)
+  AssertionError [ERR_ASSERTION]: 同一内容冲突的已完成副本必须复用，不能每次重试新增
+  
+  3 !== 1
+  
+      at TestContext.<anonymous> (E:\code\st-cloud\st-desktop\src\sync\sync-restart.test.cjs:91:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.start (node:internal/test_runner/test:1177:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 3,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at src\sync\sync-restart.test.cjs:82:3
+✖ TC04-28: fail-download 连续三轮部分成功不重复已完成副本 (4600.3265ms)
+  AssertionError [ERR_ASSERTION]: 同一内容冲突的已完成副本必须复用，不能每次重试新增
+  
+  3 !== 1
+  
+      at TestContext.<anonymous> (E:\code\st-cloud\st-desktop\src\sync\sync-restart.test.cjs:91:12)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+      at Test.postRun (node:internal/test_runner/test:1447:19)
+      at Test.run (node:internal/test_runner/test:1372:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:385:3) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 3,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

@@ -16,7 +16,7 @@ export function updateApiBaseUrl(): void {
 }
 
 /** 拼接文件流下载/预览 URL（token 入 query 仅作 Authorization 头不可用时的兜底） */
-export function buildStreamUrl(nodeId: string | number, opts?: { token?: string | null; inline?: boolean }): string {
+export function buildStreamUrl(nodeId: string, opts?: { token?: string | null; inline?: boolean }): string {
   const params = new URLSearchParams();
   if (opts?.token) params.set('token', opts.token);
   if (opts?.inline) params.set('inline', '1');

@@ -93,7 +93,7 @@ class FolderPermissionServiceRuleTest {
         TeamMemberMapper memberMapper = mock(TeamMemberMapper.class);
         // 成员角色=100（自定义），role 规则 subjectId=100 → 命中 {download}
         TeamMember member = new TeamMember();
-        member.setRole(100);
+        member.setRole(100L);
         when(memberMapper.selectOne(any())).thenReturn(member);
         when(permMapper.selectList(any())).thenReturn(List.of(rule("role", 100L, "{\"download\":true}")));
 
@@ -108,7 +108,7 @@ class FolderPermissionServiceRuleTest {
         TeamMemberMapper memberMapper = mock(TeamMemberMapper.class);
         // 成员角色=2，role 规则 subjectId=100 → 不命中，回退角色权限集
         TeamMember member = new TeamMember();
-        member.setRole(2);
+        member.setRole(2L);
         when(memberMapper.selectOne(any())).thenReturn(member);
         when(permMapper.selectList(any())).thenReturn(List.of(rule("role", 100L, "{\"download\":true}")));
 

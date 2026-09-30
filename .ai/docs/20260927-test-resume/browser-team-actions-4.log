@@ -1,0 +1,46 @@
+Traceback (most recent call last):
+  File "../.ai/docs/20260927-test-resume/browser-team.py", line 93, in <module>
+    expect(page.get_by_label('�޸�member�Ľ�ɫ')).to_have_value(R)
+  File "C:\Program Files\python\lib\site-packages\playwright\sync_api\_generated.py", line 19435, in to_have_value
+    self._sync(self._impl_obj.to_have_value(value=value, timeout=timeout))
+  File "C:\Program Files\python\lib\site-packages\playwright\_impl\_sync_base.py", line 115, in _sync
+    return task.result()
+  File "C:\Program Files\python\lib\site-packages\playwright\_impl\_assertions.py", line 404, in to_have_value
+    await self._expect_impl(
+  File "C:\Program Files\python\lib\site-packages\playwright\_impl\_assertions.py", line 74, in _expect_impl
+    raise AssertionError(
+AssertionError: Locator expected to have Value '9007199254740993'
+Actual value: 9007199254740995 
+Call log:
+LocatorAssertions.to_have_value with timeout 5000ms
+  - waiting for get_by_label("�޸�member�Ľ�ɫ")
+  -   locator resolved to <select aria-label="�޸�member�Ľ�ɫ" class="px-2 py-1 text-xs bg-surface border border-border rounded">��</select>
+  -   unexpected value "9007199254740995"
+  -   locator resolved to <select aria-label="�޸�member�Ľ�ɫ" class="px-2 py-1 text-xs bg-surface border border-border rounded">��</select>
+  -   unexpected value "9007199254740995"
+  -   locator resolved to <select aria-label="�޸�member�Ľ�ɫ" class="px-2 py-1 text-xs bg-surface border border-border rounded">��</select>
+  -   unexpected value "9007199254740995"
+  -   locator resolved to <select aria-label="�޸�member�Ľ�ɫ" class="px-2 py-1 text-xs bg-surface border border-border rounded">��</select>
+  -   unexpected value "9007199254740995"
+  -   locator resolved to <select aria-label="�޸�member�Ľ�ɫ" class="px-2 py-1 text-xs bg-surface border border-border rounded">��</select>
+  -   unexpected value "9007199254740995"
+  -   locator resolved to <select aria-label="�޸�member�Ľ�ɫ" class="px-2 py-1 text-xs bg-surface border border-border rounded">��</select>
+  -   unexpected value "9007199254740995"
+  -   locator resolved to <select aria-label="�޸�member�Ľ�ɫ" class="px-2 py-1 text-xs bg-surface border border-border rounded">��</select>
+  -   unexpected value "9007199254740995"
+  -   locator resolved to <select aria-label="�޸�member�Ľ�ɫ" class="px-2 py-1 text-xs bg-surface border border-border rounded">��</select>
+  -   unexpected value "9007199254740995"
+  -   locator resolved to <select aria-label="�޸�member�Ľ�ɫ" class="px-2 py-1 text-xs bg-surface border border-border rounded">��</select>
+  -   unexpected value "9007199254740995"
+
+Starting server 1/1: npm.cmd run dev -- --host 127.0.0.1 --port 5187 --strictPort
+Waiting for server on port 5187...
+Server ready on port 5187
+
+All 1 server(s) ready
+Running: python ../.ai/docs/20260927-test-resume/browser-team.py
+
+
+Stopping 1 server(s)...
+Server 1 stopped
+All servers stopped

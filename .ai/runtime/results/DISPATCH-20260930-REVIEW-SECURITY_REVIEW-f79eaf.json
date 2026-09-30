@@ -1,0 +1,97 @@
+{
+  "dispatchId": "DISPATCH-20260930-REVIEW-SECURITY_REVIEW-f79eaf",
+  "taskId": "TASK-20260930-REVIEW-SECURITY_REVIEW",
+  "status": "completed",
+  "artifactRefs": [
+    ".ai/docs/20260930-review-fixes/security.md"
+  ],
+  "criterionProposal": {
+    "id": "SECURITY_REVIEW",
+    "outcome": "pass",
+    "by": "/root/security_review",
+    "dispatchId": "DISPATCH-20260930-REVIEW-SECURITY_REVIEW-f79eaf",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20260930-REVIEW-SECURITY_REVIEW-f79eaf.json",
+    "validatedRevision": "review-fixes-code-3ae1050e4646f449"
+  },
+  "blockerProposals": [],
+  "background": "独立审查九项整改相对本任务 baseline 的新增改动及直接安全边界。",
+  "inputs": [
+    ".ai/tasks/TASK-20260930-REVIEW-SECURITY_REVIEW.md",
+    ".ai/docs/20260930-review-fixes/requirement.md",
+    ".ai/docs/20260930-review-fixes/design.md",
+    ".ai/docs/20260930-review-fixes/testcases.md",
+    ".ai/docs/20260930-review-fixes/baseline/hashes.json",
+    ".ai/docs/20260930-review-fixes/source-revision.json"
+  ],
+  "analysis": "逐项对照 baseline 与当前源码，重点核对注册提交后安全快照、角色引用锁后决策、回收业务码所有权边界、桌面保全与下载校验。未发现本次新增阻断。详见 security.md。",
+  "decision": "建议当前修订 SECURITY_REVIEW pass；没有判定整个 Goal 完成。",
+  "stateDelta": {
+    "kind": "proposal",
+    "criterionId": "SECURITY_REVIEW",
+    "outcome": "pass",
+    "stateWritten": false
+  },
+  "validationEvidence": [
+    "独立执行 SHA256：baseline 8 个文件一致，当前 revision 15 个文件一致。",
+    "独立读取 backend-regression.log：注册 MySQL 3/3、团队 MySQL 16/16、FileServiceFlow 18/18、SchemaConsistency 3/3，BUILD SUCCESS；未重跑构建。",
+    "独立读取 mysql-migration.log：两次 schema 对比 exit 0，45/46 重跑成功，security_version=17 保留，schema_version 已记录 20260930.901/.902。",
+    "独立读取 desktop-review.log：13/13，真实临时文件与受控 API 的 DELETE、MOVE/RENAME、排除、映射重放、失败重启路径。",
+    "独立读取 browser-filmstrip.log：真实 React 组件与受控 API 的错误降级及导航验证。"
+  ],
+  "acceptanceEvidence": [
+    {
+      "criterionId": "S1迁移可重复执行且结构一致",
+      "evidenceRef": ".ai/docs/20260930-review-fixes/mysql-migration.log",
+      "validatedRevision": "review-fixes-code-3ae1050e4646f449"
+    },
+    {
+      "criterionId": "F1注册权限与安全版本使用提交后当前快照",
+      "evidenceRef": ".ai/docs/20260930-review-fixes/security.md",
+      "validatedRevision": "review-fixes-code-3ae1050e4646f449"
+    },
+    {
+      "criterionId": "F2角色并发无悬空引用",
+      "evidenceRef": ".ai/docs/20260930-review-fixes/backend-regression.log",
+      "validatedRevision": "review-fixes-code-3ae1050e4646f449"
+    },
+    {
+      "criterionId": "F3云端回收删除可保全并继续增量",
+      "evidenceRef": ".ai/docs/20260930-review-fixes/desktop-review.log",
+      "validatedRevision": "review-fixes-code-3ae1050e4646f449"
+    },
+    {
+      "criterionId": "F4补下载采用当前内容且普通移动保留本地基线",
+      "evidenceRef": ".ai/docs/20260930-review-fixes/desktop-review.log",
+      "validatedRevision": "review-fixes-code-3ae1050e4646f449"
+    },
+    {
+      "criterionId": "F5首次对账之前加载排除规则",
+      "evidenceRef": ".ai/docs/20260930-review-fixes/desktop-review.log",
+      "validatedRevision": "review-fixes-code-3ae1050e4646f449"
+    },
+    {
+      "criterionId": "F6移动重放清理旧节点映射",
+      "evidenceRef": ".ai/docs/20260930-review-fixes/desktop-review.log",
+      "validatedRevision": "review-fixes-code-3ae1050e4646f449"
+    },
+    {
+      "criterionId": "F7全量失败后可重新启动",
+      "evidenceRef": ".ai/docs/20260930-review-fixes/desktop-review.log",
+      "validatedRevision": "review-fixes-code-3ae1050e4646f449"
+    },
+    {
+      "criterionId": "F8分享胶卷失败显示图标且可导航",
+      "evidenceRef": ".ai/docs/20260930-review-fixes/browser-filmstrip.log",
+      "validatedRevision": "review-fixes-code-3ae1050e4646f449"
+    }
+  ],
+  "risks": [
+    "未独立重跑构建或数据库测试；测试通过数取自主线程真实日志，执行边界详见报告。",
+    "跨租户新增测试仅证明拒绝，未证明具体 403；不改变或扩展本任务原有隐藏语义。",
+    "注册提交后签发失败会保留已提交账号；历史 refresh 问题不属于本任务。"
+  ],
+  "nextSteps": [
+    "主线程核对当前 attempt、scope、revision 和产物后执行 Evaluate；代码变化则重审。"
+  ],
+  "changeImpact": "仅新增白名单内 security.md 与独立结果 JSON；未修改 State 或业务源码。"
+}

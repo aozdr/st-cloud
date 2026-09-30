@@ -1,0 +1,5 @@
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+10:57:55.751 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Indexed metadata for node 9007199254740993 to ES, name=isolated-folder
+10:57:55.756 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Reindexed 1 / 1 file nodes to ES
+10:57:55.784 [main] INFO com.stcloud.search.service.impl.SearchServiceImpl -- Reindexed 0 / 0 file nodes to ES

@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260930-REVIEW-SECURITY_REVIEW-f79eaf",
+  "taskId": "TASK-20260930-REVIEW-SECURITY_REVIEW",
+  "idempotencyKey": "TASK-20260930-REVIEW-SECURITY_REVIEW",
+  "role": "reviewer",
+  "taskType": "security",
+  "objective": "独立审查本次九项修复的SECURITY_REVIEW，只审本任务相对baseline的新改动；报告原有未改代码时须证明属于本任务修复必要范围",
+  "taskRefs": [
+    ".ai/tasks/TASK-20260930-REVIEW-SECURITY_REVIEW.md",
+    ".ai/docs/20260930-review-fixes/requirement.md",
+    ".ai/docs/20260930-review-fixes/design.md",
+    ".ai/docs/20260930-review-fixes/testcases.md"
+  ],
+  "stateRef": ".ai/state/20260930-review-fixes.json",
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      ".ai/docs/20260930-review-fixes/security.md",
+      ".ai/runtime/results/DISPATCH-20260930-REVIEW-SECURITY_REVIEW-f79eaf.json"
+    ],
+    "exclude": [
+      ".ai/state/**",
+      "**/src/**",
+      "docker/**"
+    ]
+  },
+  "acceptance": [
+    "产物真实且仅写入白名单",
+    "当前修订九项范围有事实与证据，结果仅proposal"
+  ],
+  "validation": [
+    "读取最小State快照与本任务baseline，不加载历史State",
+    "对照用例和现有代码/日志，未执行验证须明确"
+  ],
+  "forbidSpawn": true,
+  "forbidGitMvn": true,
+  "output": {
+    "resultRef": ".ai/runtime/results/DISPATCH-20260930-REVIEW-SECURITY_REVIEW-f79eaf.json",
+    "artifactRef": ".ai/docs/20260930-review-fixes/security.md",
+    "criterionId": "SECURITY_REVIEW",
+    "validatedRevision": "review-fixes-code-3ae1050e4646f449"
+  }
+}

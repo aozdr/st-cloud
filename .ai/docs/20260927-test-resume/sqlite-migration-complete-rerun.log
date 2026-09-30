@@ -1,0 +1,14 @@
+✔ INTEGER 亲和性导致雪花ID读回丢精度（bug 复现） (28.9617ms)
+✔ ensureIdColumnsText 重建后雪花ID读回完整字符串 (8.9081ms)
+✔ ensureIdColumnsText 幂等：二次调用不再重建 (4.5479ms)
+✔ ensureIdColumnsText 对新库（已是 TEXT）不重建 (1.14ms)
+✔ TCDB-09 旧库大 root/node/cursor 以 SQL 整数字面量迁移并隔离两根 (5.1256ms)
+✔ TCDB-09 全部现有迁移列、主键索引与落盘重开保持，非ID字段不转换 (6.1403ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 152.7204

@@ -1,0 +1,6 @@
+isolation=REPEATABLE-READ
+delete_snapshot_reference_count=0
+committed_dangling_references=1
+registration_snapshot_permissions=file:delete
+current_effective_permission_count=0
+new_user_current_security_version=0

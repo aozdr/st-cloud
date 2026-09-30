@@ -1,0 +1,70 @@
+
+> st-web@0.0.0 build
+> tsc -b && vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 3904 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/registerSW.js                            0.14 kB
+dist/manifest.webmanifest                     0.42 kB
+dist/index.html                               2.05 kB │ gzip:   0.99 kB
+dist/assets/plyr-BoANmIBg.css                32.68 kB │ gzip:   5.20 kB
+dist/assets/index-d5kOICYy.css               85.12 kB │ gzip:  14.90 kB
+dist/assets/TitleBar-D9jIquey.js              0.14 kB │ gzip:   0.15 kB
+dist/assets/storage-JAWzE2ly.js               0.18 kB │ gzip:   0.17 kB
+dist/assets/permission-sLAEL_cA.js            0.27 kB │ gzip:   0.20 kB
+dist/assets/fileTypes-D9nBf6D0.js             0.60 kB │ gzip:   0.37 kB
+dist/assets/useMobile-o_adij93.js             0.68 kB │ gzip:   0.38 kB
+dist/assets/FavoritesPage-CVQt1aR1.js         0.80 kB │ gzip:   0.52 kB
+dist/assets/CategoryPage-CdF9-oGM.js          0.96 kB │ gzip:   0.60 kB
+dist/assets/FileManager-BH5nV_ga.js           0.99 kB │ gzip:   0.61 kB
+dist/assets/editor-Cd3rWSos.js                1.04 kB │ gzip:   0.65 kB
+dist/assets/PlyrPlayer-CA-b5Ehz.js            1.14 kB │ gzip:   0.73 kB
+dist/assets/transfer-CChEwGaE.js              1.41 kB │ gzip:   0.58 kB
+dist/assets/Dialog-7NL81Yco.js                2.01 kB │ gzip:   1.02 kB
+dist/assets/HiddenFilesPage-BHsLs7Ne.js       2.17 kB │ gzip:   1.15 kB
+dist/assets/FileTypeIcon-COs4mzwJ.js          2.62 kB │ gzip:   1.15 kB
+dist/assets/fileSource-DVVeCxE4.js            2.64 kB │ gzip:   1.00 kB
+dist/assets/TeamInvitePage-VtLQPS8i.js        2.90 kB │ gzip:   1.14 kB
+dist/assets/TextEditorPage-PeRDbrW9.js        3.11 kB │ gzip:   1.56 kB
+dist/assets/ServerConfigPage-B3PxBKkR.js      3.26 kB │ gzip:   1.58 kB
+dist/assets/EmptyState-CPYK7oBd.js            4.67 kB │ gzip:   1.20 kB
+dist/assets/DuplicateFilesPage-Cnwvhlc0.js    4.75 kB │ gzip:   2.11 kB
+dist/assets/TeamPage-C-VvgwS-.js              5.40 kB │ gzip:   1.98 kB
+dist/assets/EditorPage-Bd6Lxf0_.js            5.66 kB │ gzip:   2.60 kB
+dist/assets/Login-BrXLUcb8.js                 6.37 kB │ gzip:   2.25 kB
+dist/assets/FollowingPage-G8EVYDfn.js         8.73 kB │ gzip:   3.15 kB
+dist/assets/RecycleBin-BRFiI-Q6.js            9.62 kB │ gzip:   2.58 kB
+dist/assets/ShareManagePage-JkiQo8Eb.js      10.76 kB │ gzip:   2.68 kB
+dist/assets/HomePage-CF7vLZlU.js             10.78 kB │ gzip:   3.52 kB
+dist/assets/ShareAccessPage-BZmjQroY.js      15.59 kB │ gzip:   4.87 kB
+dist/assets/SyncPage-DPaz5Lg5.js             16.37 kB │ gzip:   4.97 kB
+dist/assets/index-3ZdIlJDq.js                18.37 kB │ gzip:   6.36 kB
+dist/assets/AuditLogPanel-C-sX5xjJ.js        20.30 kB │ gzip:   6.11 kB
+dist/assets/folderFilter-CfJ8W1TO.js         21.19 kB │ gzip:   7.36 kB
+dist/assets/PreviewModal-CfsyI3br.js         21.77 kB │ gzip:   7.04 kB
+dist/assets/TransferManager-CYi-Uuud.js      25.90 kB │ gzip:   6.90 kB
+dist/assets/select-BeCjozu2.js               26.85 kB │ gzip:   9.62 kB
+dist/assets/SearchPage-DLiHjhF6.js           30.64 kB │ gzip:   8.77 kB
+dist/assets/AppLayout-_5y44FIH.js            38.17 kB │ gzip:  11.42 kB
+dist/assets/utils-DHYyaaYs.js                52.60 kB │ gzip:  19.11 kB
+dist/assets/TeamSpacePage-DuLb7dRy.js        54.76 kB │ gzip:  14.52 kB
+dist/assets/lucide-D5Xn0-w1.js               58.01 kB │ gzip:  10.84 kB
+dist/assets/AdminPage-DFE-rPu3.js            60.78 kB │ gzip:  14.98 kB
+dist/assets/popover-Cv9nfcKt.js              66.59 kB │ gzip:  23.63 kB
+dist/assets/index-B4XISDiA.js                75.43 kB │ gzip:  27.61 kB
+dist/assets/calendar-BLQ4yvDM.js             80.23 kB │ gzip:  23.75 kB
+dist/assets/plyr-HE2JHqmA.js                113.19 kB │ gzip:  33.65 kB
+dist/assets/FileBrowser-o2uTk3e-.js         175.52 kB │ gzip:  52.91 kB
+dist/assets/react-vendor-DnVLYb7R.js        181.18 kB │ gzip:  59.41 kB
+dist/assets/recharts-DQ707jpW.js            392.11 kB │ gzip: 106.41 kB
+✓ built in 7.38s
+
+PWA v1.3.0
+mode      generateSW
+precache  64 entries (1797.06 KiB)
+files generated
+  dist/sw.js
+  dist/workbox-8b1f5376.js

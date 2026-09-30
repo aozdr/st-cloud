@@ -1,0 +1,21 @@
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+19:51:02.100 [main] WARN com.stcloud.auth.security.JwtAuthenticationFilter -- editor ���Ʊ����ڷ���ʽ�˵㣬�ܾ���uri=/api/file/list
+19:51:02.103 [main] WARN com.stcloud.auth.security.JwtAuthenticationFilter -- editor ����δͨ���������ԣ��ܾ���uri=/api/file/list
+19:51:02.106 [main] WARN com.stcloud.common.context.TenantContext -- SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+19:51:02.110 [main] WARN com.stcloud.auth.security.JwtAuthenticationFilter -- editor ���� nodeId ��ƥ�䣺token=101, path=102
+19:51:02.110 [main] WARN com.stcloud.auth.security.JwtAuthenticationFilter -- editor ����δͨ���������ԣ��ܾ���uri=/api/file/102/stream
+19:51:02.110 [main] WARN com.stcloud.common.context.TenantContext -- SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+19:51:02.113 [main] WARN com.stcloud.common.context.TenantContext -- SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+19:51:02.126 [main] WARN com.stcloud.auth.security.JwtAuthenticationFilter -- JWT ��;��ȫ�汾��Ч���ܾ���֤
+19:51:02.127 [main] WARN com.stcloud.common.context.TenantContext -- SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+19:51:02.127 [main] WARN com.stcloud.auth.security.JwtAuthenticationFilter -- JWT ��;��ȫ�汾��Ч���ܾ���֤
+19:51:02.127 [main] WARN com.stcloud.common.context.TenantContext -- SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+19:51:02.174 [main] WARN com.stcloud.auth.security.JwtAuthenticationFilter -- download ���Ʊ����ڷ���ʽ�˵㣬�ܾ���uri=/api/file/list
+19:51:02.174 [main] WARN com.stcloud.auth.security.JwtAuthenticationFilter -- download ����δͨ���������ԣ��ܾ���uri=/api/file/list
+19:51:02.174 [main] WARN com.stcloud.common.context.TenantContext -- SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+19:51:02.176 [main] WARN com.stcloud.auth.security.JwtAuthenticationFilter -- download ���� nodeId ��ƥ�䣺token=101, path=102
+19:51:02.176 [main] WARN com.stcloud.auth.security.JwtAuthenticationFilter -- download ����δͨ���������ԣ��ܾ���uri=/api/file/102/stream
+19:51:02.176 [main] WARN com.stcloud.common.context.TenantContext -- SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+19:51:02.176 [main] WARN com.stcloud.common.context.TenantContext -- SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+19:51:02.181 [main] WARN com.stcloud.common.context.TenantContext -- SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������

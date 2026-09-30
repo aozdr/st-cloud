@@ -66,8 +66,10 @@ export function getUserId(): string | null {
     const payload = token.split('.')[1];
     // JWT payload 为 base64url（含 -/_），先转换为标准 base64 再解码
     const base64url = payload.replace(/-/g, '+').replace(/_/g, '/');
-    const decoded = JSON.parse(Buffer.from(base64url, 'base64').toString('utf-8'));
-    return decoded.userId != null ? String(decoded.userId) : null;
+    const decoded = Buffer.from(base64url, 'base64').toString('utf-8');
+    // JSON.parse 会先把未加引号的 Long 变成 JS Number，转回字符串时精度已丢失。
+    const userId = decoded.match(/(?:^|[{,])\s*"userId"\s*:\s*(?:"([0-9]+)"|([0-9]+))\s*(?=[,}])/);
+    return userId?.[1] ?? userId?.[2] ?? null;
   } catch {
     return null;
   }

@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -442,6 +443,13 @@ public class FileServiceImpl implements FileService {
     @Override
     public FileNodeVO getNodeDetail(Long nodeId) {
         FileNode node = getNodeByIdAndOwner(nodeId);
+        // 先验证租户/所有权，再区分回收态；真实失权仍返回 403，不能被同步端当作删除。
+        if (Integer.valueOf(NodeStatus.DELETED.getCode()).equals(node.getStatus())) {
+            throw new BusinessException(ResultCode.FILE_NOT_FOUND);
+        }
+        if (fileNodeMapper.countInaccessibleAncestors(nodeId) > 0) {
+            throw new BusinessException(ResultCode.FILE_IN_RECYCLE);
+        }
         validateAccessible(nodeId);
         return toVO(node);
     }
@@ -535,7 +543,7 @@ public class FileServiceImpl implements FileService {
         StorageInfoVO quota = teamStorageMapper.getTeamSpaceQuota(spaceId);
         if (quota != null && quota.getQuota() != null && quota.getQuota() > 0) {
             long used = quota.getUsed() == null ? 0 : quota.getUsed();
-            if (used + fileSize > quota.getQuota()) {
+            if (fileSize > quota.getQuota() - used) {
                 throw new BusinessException(ResultCode.STORAGE_QUOTA_EXCEEDED.getCode(), "团队空间存储配额不足");
             }
         }
@@ -1008,11 +1016,25 @@ public class FileServiceImpl implements FileService {
             validateTeamNode(spaceId, targetParentId);
         }
         String targetPath = validateTeamParentPath(spaceId, targetParentId);
+        List<FileNode> sources = new ArrayList<>();
+        long requestedBytes = 0L;
         for (Long nodeId : nodeIds) {
             validateTeamNode(spaceId, nodeId);
             FileNode node = fileNodeMapper.selectById(nodeId);
             if (node == null) continue;
-            copyTeamNodeRecursive(node, targetParentId, targetPath);
+            // 批量复制先递归校验全部源树，避免后续子项无效时前半批已产生副本。
+            try {
+                requestedBytes = Math.addExact(requestedBytes,
+                        validateTeamCopySource(node, spaceId, new HashSet<>(), 0));
+            } catch (ArithmeticException overflow) {
+                throw new BusinessException(ResultCode.STORAGE_QUOTA_EXCEEDED, "复制文件大小超过配额计算范围");
+            }
+            sources.add(node);
+        }
+        // 初始配额不足时在任何节点/引用/事件写入前拒绝；逐文件的原子扣减仍处理并发变化。
+        if (requestedBytes > 0) checkTeamQuota(spaceId, requestedBytes);
+        for (FileNode node : sources) {
+            copyTeamNodeRecursive(fileNodeMapper.selectById(node.getId()), targetParentId, targetPath, spaceId);
         }
     }
 
@@ -1111,14 +1133,48 @@ public class FileServiceImpl implements FileService {
         return toVO(current);
     }
 
-    private void copyTeamNodeRecursive(FileNode source, Long targetParentId, String targetPath) {
-        copyTeamNodeRecursive(source, targetParentId, targetPath, new HashSet<>(), 0);
+    private void copyTeamNodeRecursive(FileNode source, Long targetParentId, String targetPath, Long spaceId) {
+        copyTeamNodeRecursive(source, targetParentId, targetPath, spaceId, new HashSet<>(), 0);
+    }
+
+    private long validateTeamCopySource(FileNode source, Long spaceId, Set<Long> visited, int depth) {
+        if (source == null || source.getId() == null || !visited.add(source.getId())
+                || depth > MAX_FOLDER_DEPTH || visited.size() > MAX_TRAVERSAL_NODES) {
+            throw new BusinessException(ResultCode.BUSINESS_ERROR, "目录树存在循环或超过处理上限");
+        }
+        if (!Objects.equals(spaceId, source.getSpaceId())
+                || !Integer.valueOf(NodeStatus.NORMAL.getCode()).equals(source.getStatus())) {
+            throw new BusinessException(ResultCode.FORBIDDEN, "文件不属于该团队空间或已失效");
+        }
+        if (source.isFile() && !Integer.valueOf(UploadStatus.COMPLETED.getCode()).equals(source.getUploadStatus())) {
+            throw new BusinessException(ResultCode.BUSINESS_ERROR, "文件尚未上传完成");
+        }
+        if (source.isFile()) return source.getFileMd5() == null || source.getFileSize() == null
+                ? 0L : Math.max(0L, source.getFileSize());
+        if (source.isFolder()) {
+            long total = 0L;
+            List<FileNode> children = fileNodeMapper.selectList(new LambdaQueryWrapper<FileNode>()
+                    .eq(FileNode::getParentId, source.getId())
+                    .eq(FileNode::getStatus, NodeStatus.NORMAL.getCode()));
+            for (FileNode child : children) total = Math.addExact(total,
+                    validateTeamCopySource(child, spaceId, visited, depth + 1));
+            return total;
+        }
+        return 0L;
     }
 
     private void copyTeamNodeRecursive(FileNode source, Long targetParentId, String targetPath,
-                                       Set<Long> visited, int depth) {
+                                       Long spaceId, Set<Long> visited, int depth) {
         if (source == null || source.getId() == null || !visited.add(source.getId())) {
             throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "目录树存在循环或重复引用");
+        }
+        if (!Objects.equals(spaceId, source.getSpaceId())
+                || !Integer.valueOf(NodeStatus.NORMAL.getCode()).equals(source.getStatus())) {
+            throw new BusinessException(ResultCode.FORBIDDEN, "文件不属于该团队空间或已失效");
+        }
+        // 目录子项可能尚在上传或在复制过程中变更；写入副本前再次校验源状态。
+        if (source.isFile() && !Integer.valueOf(UploadStatus.COMPLETED.getCode()).equals(source.getUploadStatus())) {
+            throw new BusinessException(ResultCode.BUSINESS_ERROR, "文件尚未上传完成");
         }
         if (depth > MAX_FOLDER_DEPTH || visited.size() > MAX_TRAVERSAL_NODES) {
             throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "目录树超过处理上限");
@@ -1180,7 +1236,7 @@ public class FileServiceImpl implements FileService {
                     .eq(FileNode::getStatus, NodeStatus.NORMAL.getCode());
             List<FileNode> children = fileNodeMapper.selectList(wrapper);
             for (FileNode child : children) {
-                copyTeamNodeRecursive(child, copy.getId(), newPath, visited, depth + 1);
+                copyTeamNodeRecursive(child, copy.getId(), newPath, spaceId, visited, depth + 1);
             }
         }
     }

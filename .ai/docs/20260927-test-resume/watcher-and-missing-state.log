@@ -1,0 +1,15 @@
+✔ TC04-31: watcher-move 云端故障期间用户修改由下一轮补传 (12026.998ms)
+✔ TC04-31: watcher-move 真实chokidar自激不回传，独立用户编辑仍上传 (3954.388ms)
+✔ TC04-31: watcher-delete 云端故障期间用户修改由下一轮补传 (12006.3097ms)
+✔ TC04-31: watcher-delete 真实chokidar自激不回传，独立用户编辑仍上传 (3944.283ms)
+✔ TC04-26/27: conflict-reconcile-missing/fail-download 连续失败重启保持原身份与MD5 (5012.177ms)
+✔ TC04-26/27: conflict-reconcile-missing/fail-upload 连续失败重启保持原身份与MD5 (4943.9183ms)
+✔ TC04-26/27: conflict-reconcile-missing/fail-both 连续失败重启保持原身份与MD5 (4962.1221ms)
+ℹ tests 7
+ℹ suites 0
+ℹ pass 7
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 46951.1383

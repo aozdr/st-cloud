@@ -19,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
@@ -511,22 +512,57 @@ class TeamSearchServiceTest {
     }
 
     @Test
-    void missingCursorSecretAllowsPaginationWithinInstance() throws Exception {
+    void missingCursorSecretFailsFast() {
         ReflectionTestUtils.setField(service, "cursorSecret", "");
+        assertThrows(IllegalStateException.class, service::validateCursorSecret);
+    }
+
+    @Test
+    void separateServiceInstancesShareCursorOnlyWithSameKey() throws Exception {
         stubActiveMember();
         FileNode first = file(1L, null);
         FileNode second = file(2L, null);
-        stubNodes(first, second);
+        FileNode third = file(3L, null);
+        stubNodes(first, second, third);
         when(accessPolicy.canView(any(), any(), any(), any())).thenReturn(true);
-        doReturn(response(List.of(source(first), source(second))),
-                response(List.of(source(second))))
+        doReturn(response(List.of(source(first), source(second)), 3L),
+                response(List.of(source(second), source(third)), 3L),
+                response(List.of(source(third)), 3L))
                 .when(client).search(any(Function.class), eq(Map.class));
 
-        TeamSearchResultPage firstPage = search(1, null);
-        assertEquals(1L, firstPage.getRecords().get(0).getFileId());
-        assertNotNull(firstPage.getNextCursor());
-        TeamSearchResultPage secondPage = search(1, firstPage.getNextCursor());
-        assertEquals(2L, secondPage.getRecords().get(0).getFileId());
-        assertFalse(secondPage.isHasMore());
+        TeamSearchServiceImpl other = new TeamSearchServiceImpl(client, nodeMapper, accessPolicy);
+        ReflectionTestUtils.setField(other, "cursorSecret", TEST_CURSOR_SECRET);
+        TeamSearchResultPage page1 = search(1, null);
+        TeamSearchResultPage page2 = other.search(1L, 5L, 10L, null, "合同", 1,
+                page1.getNextCursor(), null, null, null, null, null, null);
+        TeamSearchResultPage page3 = search(1, page2.getNextCursor());
+        assertEquals(List.of(1L, 2L, 3L), List.of(page1, page2, page3).stream()
+                .flatMap(page -> page.getRecords().stream()).map(record -> record.getFileId()).toList());
+
+        ReflectionTestUtils.setField(other, "cursorSecret", "different-isolated-test-key");
+        BusinessException rejected = assertThrows(BusinessException.class,
+                () -> other.search(1L, 5L, 10L, null, "合同", 1,
+                        page1.getNextCursor(), null, null, null, null, null, null));
+        assertEquals(TeamSearchServiceImpl.SEARCH_CURSOR_INVALID, rejected.getCode());
+        verify(client, times(3)).search(any(Function.class), eq(Map.class));
+    }
+
+    @Test
+    void cursorSecretConfigurationFailsAtBeanStartupAndSupportsBothInputs() {
+        ApplicationContextRunner runner = new ApplicationContextRunner()
+                .withBean(TeamSearchServiceImpl.class,
+                        () -> new TeamSearchServiceImpl(client, nodeMapper, accessPolicy));
+        runner.run(context -> assertNotNull(context.getStartupFailure()));
+        for (String invalid : List.of("", "   ")) {
+            runner.withPropertyValues("stcloud.search.team-cursor-secret=" + invalid)
+                    .run(context -> assertNotNull(context.getStartupFailure()));
+        }
+        runner.withPropertyValues("stcloud.search.team-cursor-secret=" + TEST_CURSOR_SECRET)
+                .run(context -> assertEquals(TEST_CURSOR_SECRET,
+                        ReflectionTestUtils.getField(context.getBean(TeamSearchServiceImpl.class), "cursorSecret")));
+        runner.withPropertyValues("STCLOUD_SEARCH_TEAM_CURSOR_SECRET=" + TEST_CURSOR_SECRET)
+                .run(context -> assertEquals(TEST_CURSOR_SECRET,
+                        ReflectionTestUtils.getField(context.getBean(TeamSearchServiceImpl.class), "cursorSecret")));
+        new ApplicationContextRunner().run(context -> assertTrue(context.getStartupFailure() == null));
     }
 }

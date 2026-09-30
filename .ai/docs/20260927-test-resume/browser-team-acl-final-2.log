@@ -1,0 +1,13 @@
+PASS: 大ID邀请、成员更新/回显、权限/网络失败保留和重试、同名角色ACL分离保存与回显
+ERRORS []
+Starting server 1/1: npm.cmd run dev -- --host 127.0.0.1 --port 5187 --strictPort
+Waiting for server on port 5187...
+Server ready on port 5187
+
+All 1 server(s) ready
+Running: python ../.ai/docs/20260927-test-resume/browser-team.py
+
+
+Stopping 1 server(s)...
+Server 1 stopped
+All servers stopped

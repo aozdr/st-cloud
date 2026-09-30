@@ -1,0 +1,597 @@
+{
+  "schemaVersion": 2,
+  "definitionVersion": 2,
+  "taskId": "TASK-20260927-TEST-RESUME",
+  "scale": "large",
+  "status": "running",
+  "goal": {
+    "objective": "完成剩余136条验收及必要核心修复",
+    "scope": "CR-01至07、DB-ID、隔离夹具",
+    "completionCriteria": [
+      "逐项完整证据",
+      "剩余用例完成及核心缺陷修复",
+      "相称回归通过"
+    ]
+  },
+  "revision": {
+    "design": "resume-ui-retry-v2",
+    "code": "resume-preview-fallback-v7"
+  },
+  "exitCriteria": [
+    {
+      "id": "REQ_ANALYSIS",
+      "status": "done",
+      "dependsOn": [],
+      "by": "root",
+      "evidenceRef": ".ai/docs/20260927-test-resume/requirement.md",
+      "validatedRevision": "resume-ui-retry-v2",
+      "executionKind": "direct",
+      "executionId": "direct:TASK-20260927-TEST-RESUME:REQ_ANALYSIS:resume-ui-retry-v2:resume-role-retry-v5",
+      "completedAt": "2026-09-28T00:50:27.6793128Z"
+    },
+    {
+      "id": "IMPACT_ANALYSIS",
+      "status": "done",
+      "dependsOn": [
+        "REQ_ANALYSIS"
+      ],
+      "by": "root",
+      "evidenceRef": ".ai/docs/20260927-test-resume/impact.md",
+      "validatedRevision": "resume-ui-retry-v2",
+      "executionKind": "direct",
+      "executionId": "direct:TASK-20260927-TEST-RESUME:IMPACT_ANALYSIS:resume-ui-retry-v2:resume-role-retry-v5",
+      "completedAt": "2026-09-28T00:50:28.1300443Z"
+    },
+    {
+      "id": "EXP_DESIGN",
+      "status": "stale",
+      "dependsOn": [
+        "REQ_ANALYSIS"
+      ],
+      "applicable": true,
+      "evidenceRef": ".ai/docs/20260927-test-resume/exp-review.md"
+    },
+    {
+      "id": "TECH_DESIGN",
+      "status": "stale",
+      "dependsOn": [
+        "IMPACT_ANALYSIS",
+        "EXP_DESIGN"
+      ],
+      "by": "root",
+      "evidenceRef": ".ai/docs/20260927-test-resume/design.md",
+      "validatedRevision": "resume-v1",
+      "executionKind": "direct",
+      "executionId": "direct:TASK-20260927-TEST-RESUME:TECH_DESIGN:resume-v1:resume-working-tree",
+      "completedAt": "2026-09-27T06:16:48.8706369Z"
+    },
+    {
+      "id": "TESTCASES",
+      "status": "stale",
+      "dependsOn": [
+        "TECH_DESIGN"
+      ],
+      "by": "root",
+      "evidenceRef": ".ai/docs/20260927-test-resume/testcases.md",
+      "validatedRevision": "resume-v1",
+      "executionKind": "direct",
+      "executionId": "direct:TASK-20260927-TEST-RESUME:TESTCASES:resume-v1:resume-working-tree",
+      "completedAt": "2026-09-27T06:16:49.2314511Z"
+    },
+    {
+      "id": "IMPLEMENTED",
+      "status": "in_progress",
+      "dependsOn": [
+        "TECH_DESIGN",
+        "TESTCASES"
+      ],
+      "by": "root"
+    },
+    {
+      "id": "CODE_REVIEW",
+      "status": "pending",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ]
+    },
+    {
+      "id": "SECURITY_REVIEW",
+      "status": "pending",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ]
+    },
+    {
+      "id": "EXP_ACCEPT",
+      "status": "stale",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ],
+      "applicable": true,
+      "evidenceRef": ".ai/docs/20260927-test-resume/exp-review.md"
+    },
+    {
+      "id": "TEST_PASS",
+      "status": "pending",
+      "dependsOn": [
+        "CODE_REVIEW",
+        "SECURITY_REVIEW"
+      ]
+    },
+    {
+      "id": "KNOWLEDGE",
+      "status": "pending",
+      "dependsOn": [
+        "TEST_PASS",
+        "SECURITY_REVIEW",
+        "EXP_ACCEPT"
+      ]
+    },
+    {
+      "id": "ACCEPT",
+      "status": "pending",
+      "dependsOn": [
+        "KNOWLEDGE"
+      ]
+    }
+  ],
+  "artifacts": {
+    "requirement.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260927-test-resume/requirement.md"
+    },
+    "impact.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260927-test-resume/impact.md"
+    },
+    "architecture-review.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260927-test-resume/architecture-review.md"
+    },
+    "design.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260927-test-resume/design.md"
+    },
+    "testcases.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260927-test-resume/testcases.md"
+    },
+    "exp-review.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260927-test-resume/exp-review.md"
+    },
+    "results.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260927-test-resume/results.md"
+    },
+    "testreport.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260927-test-resume/testreport.md"
+    },
+    "changereport.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260927-test-resume/changereport.md"
+    },
+    "remaining.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260927-test-resume/remaining.md"
+    },
+    "uispec.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260927-test-resume/uispec.md"
+    }
+  },
+  "blockers": [],
+  "acceptanceEvidence": [],
+  "dispatchLedger": [],
+  "proposals": [],
+  "history": [
+    {
+      "eventId": "direct:TASK-20260927-TEST-RESUME:REQ_ANALYSIS:resume-v1:resume-working-tree",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "REQ_ANALYSIS",
+        "status": "pending"
+      },
+      "after": {
+        "id": "REQ_ANALYSIS",
+        "status": "done",
+        "revision": {
+          "design": "resume-v1",
+          "code": "resume-working-tree"
+        }
+      },
+      "actor": "root",
+      "occurredAt": "2026-09-27T06:16:48.3041121Z",
+      "revision": {
+        "design": "resume-v1",
+        "code": "resume-working-tree"
+      }
+    },
+    {
+      "eventId": "direct:TASK-20260927-TEST-RESUME:IMPACT_ANALYSIS:resume-v1:resume-working-tree",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "IMPACT_ANALYSIS",
+        "status": "pending"
+      },
+      "after": {
+        "id": "IMPACT_ANALYSIS",
+        "status": "done",
+        "revision": {
+          "design": "resume-v1",
+          "code": "resume-working-tree"
+        }
+      },
+      "actor": "root",
+      "occurredAt": "2026-09-27T06:16:48.5944683Z",
+      "revision": {
+        "design": "resume-v1",
+        "code": "resume-working-tree"
+      }
+    },
+    {
+      "eventId": "direct:TASK-20260927-TEST-RESUME:TECH_DESIGN:resume-v1:resume-working-tree",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "TECH_DESIGN",
+        "status": "pending"
+      },
+      "after": {
+        "id": "TECH_DESIGN",
+        "status": "done",
+        "revision": {
+          "design": "resume-v1",
+          "code": "resume-working-tree"
+        }
+      },
+      "actor": "root",
+      "occurredAt": "2026-09-27T06:16:48.8824083Z",
+      "revision": {
+        "design": "resume-v1",
+        "code": "resume-working-tree"
+      }
+    },
+    {
+      "eventId": "direct:TASK-20260927-TEST-RESUME:TESTCASES:resume-v1:resume-working-tree",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "TESTCASES",
+        "status": "pending"
+      },
+      "after": {
+        "id": "TESTCASES",
+        "status": "done",
+        "revision": {
+          "design": "resume-v1",
+          "code": "resume-working-tree"
+        }
+      },
+      "actor": "root",
+      "occurredAt": "2026-09-27T06:16:49.2388759Z",
+      "revision": {
+        "design": "resume-v1",
+        "code": "resume-working-tree"
+      }
+    },
+    {
+      "eventId": "resume-progress-1",
+      "action": "新增17项同步场景，桌面106通过及补强历史事件8通过；45 PASS、49 PARTIAL、42 NOT RUN，继续运行，未ACCEPT",
+      "actor": "root",
+      "occurredAt": "2026-09-27T06:26:33.7492724Z",
+      "revision": {
+        "design": "resume-v1",
+        "code": "resume-working-tree"
+      }
+    },
+    {
+      "eventId": "stale:code:resume-sync-conflict-v2",
+      "action": "stale-cascade",
+      "before": {
+        "roots": [
+          "IMPLEMENTED",
+          "CODE_REVIEW",
+          "SECURITY_REVIEW",
+          "EXP_ACCEPT",
+          "TEST_PASS",
+          "KNOWLEDGE",
+          "ACCEPT"
+        ]
+      },
+      "after": {
+        "affected": [
+          "IMPLEMENTED",
+          "CODE_REVIEW",
+          "SECURITY_REVIEW",
+          "EXP_ACCEPT",
+          "TEST_PASS",
+          "KNOWLEDGE",
+          "ACCEPT"
+        ],
+        "revision": {
+          "design": "resume-v1",
+          "code": "resume-sync-conflict-v2"
+        }
+      },
+      "actor": "root",
+      "occurredAt": "2026-09-27T11:14:44.686294Z",
+      "revision": {
+        "design": "resume-v1",
+        "code": "resume-sync-conflict-v2"
+      }
+    },
+    {
+      "eventId": "stale:code:resume-sync-conflict-dedup-v3",
+      "action": "stale-cascade",
+      "before": {
+        "roots": [
+          "IMPLEMENTED",
+          "CODE_REVIEW",
+          "SECURITY_REVIEW",
+          "EXP_ACCEPT",
+          "TEST_PASS",
+          "KNOWLEDGE",
+          "ACCEPT"
+        ]
+      },
+      "after": {
+        "affected": [
+          "IMPLEMENTED",
+          "CODE_REVIEW",
+          "SECURITY_REVIEW",
+          "EXP_ACCEPT",
+          "TEST_PASS",
+          "KNOWLEDGE",
+          "ACCEPT"
+        ],
+        "revision": {
+          "design": "resume-v1",
+          "code": "resume-sync-conflict-dedup-v3"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-27T11:34:59.0468544Z",
+      "revision": {
+        "design": "resume-v1",
+        "code": "resume-sync-conflict-dedup-v3"
+      }
+    },
+    {
+      "eventId": "stale:code:resume-refresh-jti-v4",
+      "action": "stale-cascade",
+      "before": {
+        "roots": [
+          "IMPLEMENTED",
+          "CODE_REVIEW",
+          "SECURITY_REVIEW",
+          "EXP_ACCEPT",
+          "TEST_PASS",
+          "KNOWLEDGE",
+          "ACCEPT"
+        ]
+      },
+      "after": {
+        "affected": [
+          "IMPLEMENTED",
+          "CODE_REVIEW",
+          "SECURITY_REVIEW",
+          "EXP_ACCEPT",
+          "TEST_PASS",
+          "KNOWLEDGE",
+          "ACCEPT"
+        ],
+        "revision": {
+          "design": "resume-v1",
+          "code": "resume-refresh-jti-v4"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-27T11:39:26.9816422Z",
+      "revision": {
+        "design": "resume-v1",
+        "code": "resume-refresh-jti-v4"
+      }
+    },
+    {
+      "eventId": "stale:design:resume-ui-retry-v2",
+      "action": "stale-cascade",
+      "before": {
+        "roots": [
+          "REQ_ANALYSIS"
+        ]
+      },
+      "after": {
+        "affected": [
+          "REQ_ANALYSIS",
+          "IMPACT_ANALYSIS",
+          "EXP_DESIGN",
+          "TECH_DESIGN",
+          "TESTCASES",
+          "IMPLEMENTED",
+          "CODE_REVIEW",
+          "SECURITY_REVIEW",
+          "EXP_ACCEPT",
+          "TEST_PASS",
+          "KNOWLEDGE",
+          "ACCEPT"
+        ],
+        "revision": {
+          "design": "resume-ui-retry-v2",
+          "code": "resume-refresh-jti-v4"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-28T00:48:31.7002405Z",
+      "revision": {
+        "design": "resume-ui-retry-v2",
+        "code": "resume-refresh-jti-v4"
+      }
+    },
+    {
+      "eventId": "stale:code:resume-role-retry-v5",
+      "action": "stale-cascade",
+      "before": {
+        "roots": [
+          "IMPLEMENTED",
+          "CODE_REVIEW",
+          "SECURITY_REVIEW",
+          "EXP_ACCEPT",
+          "TEST_PASS",
+          "KNOWLEDGE",
+          "ACCEPT"
+        ]
+      },
+      "after": {
+        "affected": [
+          "IMPLEMENTED",
+          "CODE_REVIEW",
+          "SECURITY_REVIEW",
+          "EXP_ACCEPT",
+          "TEST_PASS",
+          "KNOWLEDGE",
+          "ACCEPT"
+        ],
+        "revision": {
+          "design": "resume-ui-retry-v2",
+          "code": "resume-role-retry-v5"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-28T00:49:02.7238976Z",
+      "revision": {
+        "design": "resume-ui-retry-v2",
+        "code": "resume-role-retry-v5"
+      }
+    },
+    {
+      "eventId": "direct:TASK-20260927-TEST-RESUME:REQ_ANALYSIS:resume-ui-retry-v2:resume-role-retry-v5",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "REQ_ANALYSIS",
+        "status": "stale"
+      },
+      "after": {
+        "id": "REQ_ANALYSIS",
+        "status": "done",
+        "revision": {
+          "design": "resume-ui-retry-v2",
+          "code": "resume-role-retry-v5"
+        }
+      },
+      "actor": "root",
+      "occurredAt": "2026-09-28T00:50:27.7095075Z",
+      "revision": {
+        "design": "resume-ui-retry-v2",
+        "code": "resume-role-retry-v5"
+      }
+    },
+    {
+      "eventId": "direct:TASK-20260927-TEST-RESUME:IMPACT_ANALYSIS:resume-ui-retry-v2:resume-role-retry-v5",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "IMPACT_ANALYSIS",
+        "status": "stale"
+      },
+      "after": {
+        "id": "IMPACT_ANALYSIS",
+        "status": "done",
+        "revision": {
+          "design": "resume-ui-retry-v2",
+          "code": "resume-role-retry-v5"
+        }
+      },
+      "actor": "root",
+      "occurredAt": "2026-09-28T00:50:28.1376046Z",
+      "revision": {
+        "design": "resume-ui-retry-v2",
+        "code": "resume-role-retry-v5"
+      }
+    },
+    {
+      "eventId": "stale:code:resume-external-policy-v6",
+      "action": "stale-cascade",
+      "before": {
+        "roots": [
+          "IMPLEMENTED",
+          "CODE_REVIEW",
+          "SECURITY_REVIEW",
+          "EXP_ACCEPT",
+          "TEST_PASS",
+          "KNOWLEDGE",
+          "ACCEPT"
+        ]
+      },
+      "after": {
+        "affected": [
+          "IMPLEMENTED",
+          "CODE_REVIEW",
+          "SECURITY_REVIEW",
+          "EXP_ACCEPT",
+          "TEST_PASS",
+          "KNOWLEDGE",
+          "ACCEPT"
+        ],
+        "revision": {
+          "design": "resume-ui-retry-v2",
+          "code": "resume-external-policy-v6"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-28T06:26:46.2997351Z",
+      "revision": {
+        "design": "resume-ui-retry-v2",
+        "code": "resume-external-policy-v6"
+      }
+    },
+    {
+      "eventId": "stale:code:resume-preview-fallback-v7",
+      "action": "stale-cascade",
+      "before": {
+        "roots": [
+          "IMPLEMENTED",
+          "CODE_REVIEW",
+          "SECURITY_REVIEW",
+          "EXP_ACCEPT",
+          "TEST_PASS",
+          "KNOWLEDGE",
+          "ACCEPT"
+        ]
+      },
+      "after": {
+        "affected": [
+          "IMPLEMENTED",
+          "CODE_REVIEW",
+          "SECURITY_REVIEW",
+          "EXP_ACCEPT",
+          "TEST_PASS",
+          "KNOWLEDGE",
+          "ACCEPT"
+        ],
+        "revision": {
+          "design": "resume-ui-retry-v2",
+          "code": "resume-preview-fallback-v7"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-28T13:32:00.1861189Z",
+      "revision": {
+        "design": "resume-ui-retry-v2",
+        "code": "resume-preview-fallback-v7"
+      }
+    }
+  ],
+  "singleAgentAuthorization": {
+    "taskId": "TASK-20260927-TEST-RESUME",
+    "actor": "root",
+    "authorizedBy": "user",
+    "authorizationQuote": "不要开子线程或子 Agent，全部由当前主线程完成。",
+    "evidenceRef": ".ai/tasks/TASK-20260927-TEST-RESUME.md",
+    "criteria": [
+      "CODE_REVIEW",
+      "SECURITY_REVIEW",
+      "EXP_ACCEPT",
+      "TEST_PASS",
+      "ACCEPT"
+    ]
+  }
+}

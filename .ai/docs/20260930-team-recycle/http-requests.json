@@ -1,0 +1,200 @@
+[
+  {
+    "method": "GET",
+    "path": "/auth/ping",
+    "http": 200,
+    "code": 200
+  },
+  {
+    "method": "POST",
+    "path": "/auth/login",
+    "http": 200,
+    "code": 200
+  },
+  {
+    "method": "POST",
+    "path": "/auth/register",
+    "http": 200,
+    "code": 200
+  },
+  {
+    "method": "POST",
+    "path": "/auth/register",
+    "http": 200,
+    "code": 200
+  },
+  {
+    "method": "POST",
+    "path": "/team/space",
+    "http": 200,
+    "code": 200
+  },
+  {
+    "method": "POST",
+    "path": "/team/2105176905785827330/member",
+    "http": 200,
+    "code": 200
+  },
+  {
+    "method": "POST",
+    "path": "/team/2105176905785827330/member",
+    "http": 200,
+    "code": 200
+  },
+  {
+    "method": "POST",
+    "path": "/team/2105176905785827330/folder?folderName=HTTP回收目录",
+    "http": 200,
+    "code": 200
+  },
+  {
+    "method": "POST",
+    "path": "/team/2105176905785827330/folder?parentId=2105176906192674817&folderName=管理员子目录",
+    "http": 200,
+    "code": 200
+  },
+  {
+    "method": "POST",
+    "path": "/team/2105176905785827330/files/new",
+    "http": 200,
+    "code": 200
+  },
+  {
+    "method": "POST",
+    "path": "/team/2105176905785827330/files/delete",
+    "http": 200,
+    "code": 200
+  },
+  {
+    "method": "GET",
+    "path": "/recycle/list",
+    "http": 200,
+    "code": 200
+  },
+  {
+    "method": "GET",
+    "path": "/recycle/list",
+    "http": 200,
+    "code": 200
+  },
+  {
+    "method": "POST",
+    "path": "/recycle/restore",
+    "http": 200,
+    "code": 403
+  },
+  {
+    "method": "POST",
+    "path": "/recycle/delete",
+    "http": 200,
+    "code": 403
+  },
+  {
+    "method": "POST",
+    "path": "/recycle/restore",
+    "http": 200,
+    "code": 200
+  },
+  {
+    "method": "GET",
+    "path": "/team/2105176905785827330/files?parentId=0",
+    "http": 200,
+    "code": 200
+  },
+  {
+    "method": "GET",
+    "path": "/team/2105176905785827330/files/2105176906612105217",
+    "http": 200,
+    "code": 200
+  },
+  {
+    "method": "POST",
+    "path": "/team/2105176905785827330/files/delete",
+    "http": 200,
+    "code": 200
+  },
+  {
+    "method": "POST",
+    "path": "/recycle/restore",
+    "http": 200,
+    "code": 200
+  },
+  {
+    "method": "POST",
+    "path": "/file/folder",
+    "http": 200,
+    "code": 200
+  },
+  {
+    "method": "POST",
+    "path": "/file/delete",
+    "http": 200,
+    "code": 200
+  },
+  {
+    "method": "GET",
+    "path": "/recycle/list",
+    "http": 200,
+    "code": 200
+  },
+  {
+    "method": "POST",
+    "path": "/recycle/restore",
+    "http": 200,
+    "code": 200
+  },
+  {
+    "method": "GET",
+    "path": "/file/2105176908507930626",
+    "http": 200,
+    "code": 200
+  },
+  {
+    "method": "POST",
+    "path": "/team/2105176905785827330/files/delete",
+    "http": 200,
+    "code": 200
+  },
+  {
+    "method": "POST",
+    "path": "/recycle/delete",
+    "http": 200,
+    "code": 200
+  },
+  {
+    "method": "POST",
+    "path": "/file/delete",
+    "http": 200,
+    "code": 200
+  },
+  {
+    "method": "POST",
+    "path": "/recycle/delete",
+    "http": 200,
+    "code": 200
+  },
+  {
+    "method": "POST",
+    "path": "/team/2105126705713659906/files/delete",
+    "http": 200,
+    "code": 200
+  },
+  {
+    "method": "POST",
+    "path": "/recycle/delete",
+    "http": 200,
+    "code": 200
+  },
+  {
+    "method": "POST",
+    "path": "/team/2105176566156255233/files/delete",
+    "http": 200,
+    "code": 200
+  },
+  {
+    "method": "POST",
+    "path": "/recycle/delete",
+    "http": 200,
+    "code": 200
+  }
+]

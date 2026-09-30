@@ -1,0 +1,5 @@
+{
+  "st-core/src/main/java/com/stcloud/core/mapper/TeamStorageMapper.java": "3716d4a73ea85e37d159bcb6dc788d631708e1004db296f6353f63b646a85cef",
+  "st-core/src/main/java/com/stcloud/core/service/impl/RecycleBinServiceImpl.java": "e659f0d62b494e3916218b30255b700be32dbea6ff70b36f2ebbffd6592c1b5c",
+  "st-core/src/test/resources/schema.sql": "239e64a1b42c8bf6639f5335f139c69a307a82b7aaeb8ff1ceb464dd871fb8cc"
+}

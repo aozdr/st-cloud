@@ -1,0 +1,85 @@
+{
+  "revision": "design-v1",
+  "kind": "document-static-check-only",
+  "checkedAt": "2026-09-24T01:28:00.4124467Z",
+  "coreDocuments": [
+    {
+      "task": "CR-01",
+      "document": "requirement",
+      "characters": 1635
+    },
+    {
+      "task": "CR-01",
+      "document": "design",
+      "characters": 3961
+    },
+    {
+      "task": "CR-02",
+      "document": "requirement",
+      "characters": 1588
+    },
+    {
+      "task": "CR-02",
+      "document": "design",
+      "characters": 3551
+    },
+    {
+      "task": "CR-03",
+      "document": "requirement",
+      "characters": 1132
+    },
+    {
+      "task": "CR-03",
+      "document": "design",
+      "characters": 1222
+    },
+    {
+      "task": "CR-04",
+      "document": "requirement",
+      "characters": 1547
+    },
+    {
+      "task": "CR-04",
+      "document": "design",
+      "characters": 4012
+    },
+    {
+      "task": "CR-05",
+      "document": "requirement",
+      "characters": 1069
+    },
+    {
+      "task": "CR-05",
+      "document": "design",
+      "characters": 1587
+    },
+    {
+      "task": "CR-06",
+      "document": "requirement",
+      "characters": 840
+    },
+    {
+      "task": "CR-06",
+      "document": "design",
+      "characters": 1264
+    },
+    {
+      "task": "CR-07",
+      "document": "requirement",
+      "characters": 1226
+    },
+    {
+      "task": "CR-07",
+      "document": "design",
+      "characters": 2809
+    }
+  ],
+  "markdownDocumentCount": 24,
+  "issues": [],
+  "scope": "only current design documents, tasks and state",
+  "businessTests": "NOT RUN",
+  "builds": "NOT RUN",
+  "databaseOperations": "NOT RUN",
+  "laterStages": "all pending",
+  "result": "PASS"
+}

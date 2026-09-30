@@ -1,0 +1,10 @@
+{
+  "taskId": "20260930-team-recycle",
+  "criterionProposal": {
+    "id": "KNOWLEDGE",
+    "outcome": "pass",
+    "by": "workflow-manager",
+    "evidenceRef": ".ai/docs/20260930-team-recycle/knowledge.md",
+    "validatedRevision": "team-recycle-code-8d9bce85490e655a"
+  }
+}

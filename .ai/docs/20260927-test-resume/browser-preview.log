@@ -1,0 +1,28 @@
+Traceback (most recent call last):
+  File "../.ai/docs/20260927-test-resume/browser-preview.py", line 52, in <module>
+    expect(page.get_by_role('button',name='��һ��',exact=True)).to_be_enabled()
+  File "C:\Program Files\python\lib\site-packages\playwright\sync_api\_generated.py", line 19954, in to_be_enabled
+    self._sync(self._impl_obj.to_be_enabled(enabled=enabled, timeout=timeout))
+  File "C:\Program Files\python\lib\site-packages\playwright\_impl\_sync_base.py", line 115, in _sync
+    return task.result()
+  File "C:\Program Files\python\lib\site-packages\playwright\_impl\_assertions.py", line 626, in to_be_enabled
+    await self._expect_impl(
+  File "C:\Program Files\python\lib\site-packages\playwright\_impl\_assertions.py", line 74, in _expect_impl
+    raise AssertionError(
+AssertionError: Locator expected to be enabled
+Actual value: <element(s) not found> 
+Call log:
+LocatorAssertions.to_be_enabled with timeout 5000ms
+  - waiting for get_by_role("button", name="��һ��", exact=True)
+
+Starting server 1/1: npm.cmd run dev -- --host 127.0.0.1 --port 5187 --strictPort
+Waiting for server on port 5187...
+Server ready on port 5187
+
+All 1 server(s) ready
+Running: python ../.ai/docs/20260927-test-resume/browser-preview.py
+
+
+Stopping 1 server(s)...
+Server 1 stopped
+All servers stopped

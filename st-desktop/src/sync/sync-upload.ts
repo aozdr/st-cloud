@@ -143,7 +143,8 @@ export async function uploadFile(ctx: SyncEngineCtx, absPath: string, relPath: s
     emitSyncEvent('upload_failed', { relPath, error: errorMsg });
     const waitSec = Math.ceil(computeBackoffMs(getSyncState(ctx.root.rootId, relPath)?.failCount ?? 1) / 1000);
     syncLog('error', `上传失败: ${fileName} - ${errorMsg}（将在 ${waitSec}s 后重试）`);
-    return;
+    // 冲突处理依赖异常阻止游标推进，不能将失败或超时当作上传成功。
+    throw new Error('上传未完成: ' + errorMsg);
   }
 
   const task = getTask(taskId);

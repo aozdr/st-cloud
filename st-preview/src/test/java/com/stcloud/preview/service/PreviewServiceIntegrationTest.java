@@ -2,6 +2,8 @@ package com.stcloud.preview.service;
 
 import com.stcloud.core.entity.FileNode;
 import com.stcloud.core.service.StorageService;
+import com.stcloud.core.service.ThumbnailRenderer;
+import com.stcloud.common.exception.BusinessException;
 import com.stcloud.preview.AbstractPreviewIntegrationTest;
 import com.stcloud.preview.dto.PreviewResultVO;
 import org.junit.jupiter.api.Test;
@@ -26,7 +28,9 @@ import java.nio.charset.StandardCharsets;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -50,6 +54,9 @@ class PreviewServiceIntegrationTest extends AbstractPreviewIntegrationTest {
     @Autowired
     private S3Presigner s3Presigner;
 
+    @Autowired
+    private ThumbnailRenderer thumbnailRenderer;
+
     @Test
     void previewImage_generatesThumbnailAndReturnsImageUrl() throws Exception {
         setUpUser(100L, 1L);
@@ -63,12 +70,7 @@ class PreviewServiceIntegrationTest extends AbstractPreviewIntegrationTest {
         PresignedGetObjectRequest presigned = mock(PresignedGetObjectRequest.class);
         when(presigned.url()).thenReturn(new URL("http://preview.example.com/thumb.jpg"));
         when(s3Presigner.presignGetObject(any(GetObjectPresignRequest.class))).thenReturn(presigned);
-        // 真实 1x1 PNG，ImageIO 可解码
-        BufferedImage img = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        ImageIO.write(img, "png", baos);
-        when(storageService.downloadObject("files/photo.png"))
-                .thenReturn(new ByteArrayInputStream(baos.toByteArray()));
+        when(thumbnailRenderer.render(any(), any(), anyInt())).thenReturn(new byte[] {1, 2, 3});
 
         PreviewResultVO vo = previewService.preview(node.getId());
 
@@ -123,15 +125,10 @@ class PreviewServiceIntegrationTest extends AbstractPreviewIntegrationTest {
     }
 
     @Test
-    void getThumbnailUrl_nonImage_returnsOriginalUrl() {
+    void getThumbnailUrl_nonImage_rejected() {
         setUpUser(100L, 1L);
         FileNode node = insertFileNode(1L, 100L, "doc.pdf", "files/doc.pdf", 0);
-        when(storageService.generateDownloadUrl("files/doc.pdf"))
-                .thenReturn("https://storage.example.com/doc.pdf");
-
-        String url = previewService.getThumbnailUrl(node.getId(), "md");
-
-        assertEquals("https://storage.example.com/doc.pdf", url);
+        assertThrows(BusinessException.class, () -> previewService.getThumbnailUrl(node.getId(), "md"));
         // 非图片不触发 S3 缩略图探测
         verify(s3Client, never()).headObject(any(HeadObjectRequest.class));
     }

@@ -1,0 +1,1019 @@
+{
+  "schemaVersion": 2,
+  "definitionVersion": 2,
+  "taskId": "20260930-review-fixes",
+  "scale": "large",
+  "status": "running",
+  "goal": {
+    "objective": "修复 review.md 中 S1 与 F1–F8，保持权限、文件保全及兼容边界",
+    "scope": "注册/团队角色/个人文件详情/桌面同步/分享胶卷/安全版本迁移",
+    "completionCriteria": [
+      "S1迁移可重复执行且结构一致",
+      "F1注册权限与安全版本使用提交后当前快照",
+      "F2角色并发无悬空引用",
+      "F3云端回收删除可保全并继续增量",
+      "F4补下载采用当前内容且普通移动保留本地基线",
+      "F5首次对账之前加载排除规则",
+      "F6移动重放清理旧节点映射",
+      "F7全量失败后可重新启动",
+      "F8分享胶卷失败显示图标且可导航"
+    ]
+  },
+  "revision": {
+    "design": "review-fixes-design-v1",
+    "code": "review-fixes-code-3ae1050e4646f449"
+  },
+  "exitCriteria": [
+    {
+      "id": "REQ_ANALYSIS",
+      "status": "done",
+      "dependsOn": [],
+      "confirmationRequired": false,
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20260930-review-fixes/requirement.md",
+      "validatedRevision": "review-fixes-design-v1",
+      "executionKind": "direct",
+      "executionId": "direct:20260930-review-fixes:REQ_ANALYSIS:review-fixes-design-v1:",
+      "completedAt": "2026-09-30T01:40:49.8494613Z"
+    },
+    {
+      "id": "IMPACT_ANALYSIS",
+      "status": "done",
+      "dependsOn": [
+        "REQ_ANALYSIS"
+      ],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20260930-review-fixes/impact.md",
+      "validatedRevision": "review-fixes-design-v1",
+      "executionKind": "direct",
+      "executionId": "direct:20260930-review-fixes:IMPACT_ANALYSIS:review-fixes-design-v1:",
+      "completedAt": "2026-09-30T01:40:50.1546773Z"
+    },
+    {
+      "id": "EXP_DESIGN",
+      "status": "done",
+      "dependsOn": [
+        "REQ_ANALYSIS"
+      ],
+      "applicable": true,
+      "by": "/root/exp_design_review",
+      "dispatchId": "DISPATCH-20260930-REVIEW-EXP_DESIGN-4caa9c",
+      "evidenceRef": ".ai/runtime/results/DISPATCH-20260930-REVIEW-EXP_DESIGN-4caa9c.json",
+      "validatedRevision": "review-fixes-design-v1",
+      "completedAt": "2026-09-30T01:46:03.3734986Z"
+    },
+    {
+      "id": "TECH_DESIGN",
+      "status": "done",
+      "dependsOn": [
+        "IMPACT_ANALYSIS",
+        "EXP_DESIGN"
+      ],
+      "confirmationRequired": false,
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20260930-review-fixes/design.md",
+      "validatedRevision": "review-fixes-design-v1",
+      "executionKind": "direct",
+      "executionId": "direct:20260930-review-fixes:TECH_DESIGN:review-fixes-design-v1:",
+      "completedAt": "2026-09-30T01:46:03.8515942Z"
+    },
+    {
+      "id": "TESTCASES",
+      "status": "done",
+      "dependsOn": [
+        "TECH_DESIGN"
+      ],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20260930-review-fixes/testcases.md",
+      "validatedRevision": "review-fixes-design-v1",
+      "executionKind": "direct",
+      "executionId": "direct:20260930-review-fixes:TESTCASES:review-fixes-design-v1:",
+      "completedAt": "2026-09-30T01:46:04.3728259Z"
+    },
+    {
+      "id": "IMPLEMENTED",
+      "status": "done",
+      "dependsOn": [
+        "TECH_DESIGN",
+        "TESTCASES"
+      ],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20260930-review-fixes/changereport.md",
+      "validatedRevision": "review-fixes-code-3ae1050e4646f449",
+      "executionKind": "direct",
+      "executionId": "direct:20260930-review-fixes:IMPLEMENTED:review-fixes-design-v1:review-fixes-code-3ae1050e4646f449",
+      "completedAt": "2026-09-30T02:02:05.1597125Z"
+    },
+    {
+      "id": "CODE_REVIEW",
+      "status": "done",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ],
+      "by": "/root/code_review",
+      "dispatchId": "DISPATCH-20260930-REVIEW-CODE_REVIEW-c4e3c9",
+      "evidenceRef": ".ai/runtime/results/DISPATCH-20260930-REVIEW-CODE_REVIEW-c4e3c9.json",
+      "validatedRevision": "review-fixes-code-3ae1050e4646f449",
+      "completedAt": "2026-09-30T02:09:45.6453362Z"
+    },
+    {
+      "id": "SECURITY_REVIEW",
+      "status": "done",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ],
+      "by": "/root/security_review",
+      "dispatchId": "DISPATCH-20260930-REVIEW-SECURITY_REVIEW-f79eaf",
+      "evidenceRef": ".ai/runtime/results/DISPATCH-20260930-REVIEW-SECURITY_REVIEW-f79eaf.json",
+      "validatedRevision": "review-fixes-code-3ae1050e4646f449",
+      "completedAt": "2026-09-30T02:09:46.870359Z"
+    },
+    {
+      "id": "EXP_ACCEPT",
+      "status": "done",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ],
+      "applicable": true,
+      "by": "/root/exp_accept",
+      "dispatchId": "DISPATCH-20260930-REVIEW-EXP_ACCEPT-647c69",
+      "evidenceRef": ".ai/runtime/results/DISPATCH-20260930-REVIEW-EXP_ACCEPT-647c69.json",
+      "validatedRevision": "review-fixes-code-3ae1050e4646f449",
+      "completedAt": "2026-09-30T02:10:58.8682447Z"
+    },
+    {
+      "id": "TEST_PASS",
+      "status": "pending",
+      "dependsOn": [
+        "CODE_REVIEW",
+        "SECURITY_REVIEW"
+      ]
+    },
+    {
+      "id": "KNOWLEDGE",
+      "status": "pending",
+      "dependsOn": [
+        "TEST_PASS",
+        "SECURITY_REVIEW",
+        "EXP_ACCEPT"
+      ]
+    },
+    {
+      "id": "ACCEPT",
+      "status": "pending",
+      "dependsOn": [
+        "KNOWLEDGE"
+      ]
+    }
+  ],
+  "artifacts": {
+    "requirement": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-review-fixes/requirement.md"
+    },
+    "uispec": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-review-fixes/uispec.md"
+    },
+    "impact": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-review-fixes/impact.md"
+    },
+    "architecture-review": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-review-fixes/architecture-review.md"
+    },
+    "design": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-review-fixes/design.md"
+    },
+    "testcases": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-review-fixes/testcases.md"
+    },
+    ".ai/docs/20260930-review-fixes/exp-review.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-review-fixes/exp-review.md"
+    },
+    "changereport": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-review-fixes/changereport.md"
+    },
+    ".ai/docs/20260930-review-fixes/codereview.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-review-fixes/codereview.md"
+    },
+    ".ai/docs/20260930-review-fixes/security.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-review-fixes/security.md"
+    }
+  },
+  "blockers": [],
+  "acceptanceEvidence": [],
+  "dispatchLedger": [
+    {
+      "dispatchId": "DISPATCH-20260930-REVIEW-EXP_DESIGN-PLACEHOLDER",
+      "taskId": "TASK-20260930-REVIEW-EXP_DESIGN",
+      "idempotencyKey": "TASK-20260930-REVIEW-EXP_DESIGN",
+      "role": "reviewer",
+      "taskType": "exp-review",
+      "criterionId": "EXP_DESIGN",
+      "childId": "/root/exp_design",
+      "status": "failed",
+      "failureReason": "错误构建的占位dispatch已在执行工具前中止，重新构建并校验实际Envelope后派发；不作为通过证据"
+    },
+    {
+      "dispatchId": "DISPATCH-20260930-REVIEW-EXP_DESIGN-4caa9c",
+      "taskId": "TASK-20260930-REVIEW-EXP_DESIGN",
+      "idempotencyKey": "TASK-20260930-REVIEW-EXP_DESIGN",
+      "role": "reviewer",
+      "taskType": "exp-review",
+      "criterionId": "EXP_DESIGN",
+      "childId": "/root/exp_design_review",
+      "status": "evaluated",
+      "envelopeRef": ".ai/docs/20260930-review-fixes/envelope-EXP_DESIGN.json",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260930-REVIEW-EXP_DESIGN-4caa9c.json",
+      "scopeVerified": true,
+      "updatedAt": "2026-09-30T01:46:02.9619471Z",
+      "evaluatedAt": "2026-09-30T01:46:03.3737545Z"
+    },
+    {
+      "dispatchId": "DISPATCH-20260930-REVIEW-CODE_REVIEW-c4e3c9",
+      "taskId": "TASK-20260930-REVIEW-CODE_REVIEW",
+      "idempotencyKey": "TASK-20260930-REVIEW-CODE_REVIEW",
+      "role": "reviewer",
+      "taskType": "review",
+      "criterionId": "CODE_REVIEW",
+      "childId": "/root/code_review",
+      "status": "evaluated",
+      "envelopeRef": ".ai/docs/20260930-review-fixes/envelope-CODE_REVIEW.json",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260930-REVIEW-CODE_REVIEW-c4e3c9.json",
+      "scopeVerified": true,
+      "updatedAt": "2026-09-30T02:09:44.9607436Z",
+      "evaluatedAt": "2026-09-30T02:09:45.6455637Z"
+    },
+    {
+      "dispatchId": "DISPATCH-20260930-REVIEW-SECURITY_REVIEW-f79eaf",
+      "taskId": "TASK-20260930-REVIEW-SECURITY_REVIEW",
+      "idempotencyKey": "TASK-20260930-REVIEW-SECURITY_REVIEW",
+      "role": "reviewer",
+      "taskType": "security",
+      "criterionId": "SECURITY_REVIEW",
+      "childId": "/root/security_review",
+      "status": "evaluated",
+      "envelopeRef": ".ai/docs/20260930-review-fixes/envelope-SECURITY_REVIEW.json",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260930-REVIEW-SECURITY_REVIEW-f79eaf.json",
+      "scopeVerified": true,
+      "updatedAt": "2026-09-30T02:09:46.3421156Z",
+      "evaluatedAt": "2026-09-30T02:09:46.870535Z"
+    },
+    {
+      "dispatchId": "DISPATCH-20260930-REVIEW-EXP_ACCEPT-647c69",
+      "taskId": "TASK-20260930-REVIEW-EXP_ACCEPT",
+      "idempotencyKey": "TASK-20260930-REVIEW-EXP_ACCEPT",
+      "role": "reviewer",
+      "taskType": "exp-review",
+      "criterionId": "EXP_ACCEPT",
+      "childId": "/root/exp_accept",
+      "status": "evaluated",
+      "envelopeRef": ".ai/docs/20260930-review-fixes/envelope-EXP_ACCEPT.json",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260930-REVIEW-EXP_ACCEPT-647c69.json",
+      "scopeVerified": true,
+      "updatedAt": "2026-09-30T02:10:58.0428393Z",
+      "evaluatedAt": "2026-09-30T02:10:58.8684701Z"
+    },
+    {
+      "dispatchId": "DISPATCH-20260930-REVIEW-TEST_PASS-b93b6e",
+      "taskId": "TASK-20260930-REVIEW-TEST_PASS",
+      "idempotencyKey": "TASK-20260930-REVIEW-TEST_PASS",
+      "role": "tester",
+      "taskType": "test",
+      "criterionId": "TEST_PASS",
+      "childId": "/root/test_verification",
+      "status": "running",
+      "envelopeRef": ".ai/docs/20260930-review-fixes/envelope-TEST_PASS.json",
+      "resultRef": ".ai/runtime/results/DISPATCH-20260930-REVIEW-TEST_PASS-b93b6e.json",
+      "updatedAt": "2026-09-30T02:11:00.9552376Z"
+    }
+  ],
+  "proposals": [],
+  "history": [
+    {
+      "eventId": "672796ba-0524-4b66-8451-158412fae1fc",
+      "action": "init",
+      "before": null,
+      "after": {
+        "taskId": "20260930-review-fixes",
+        "scale": "large",
+        "status": "running",
+        "revision": {
+          "design": "review-fixes-design-v1",
+          "code": null
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T01:39:17.5710826Z",
+      "revision": {
+        "design": null,
+        "code": null
+      }
+    },
+    {
+      "eventId": "stale:design:review-fixes-design-v1",
+      "action": "stale-cascade",
+      "before": {
+        "roots": [
+          "REQ_ANALYSIS"
+        ]
+      },
+      "after": {
+        "affected": [
+          "REQ_ANALYSIS",
+          "IMPACT_ANALYSIS",
+          "EXP_DESIGN",
+          "TECH_DESIGN",
+          "TESTCASES",
+          "IMPLEMENTED",
+          "CODE_REVIEW",
+          "SECURITY_REVIEW",
+          "EXP_ACCEPT",
+          "TEST_PASS",
+          "KNOWLEDGE",
+          "ACCEPT"
+        ],
+        "revision": {
+          "design": "review-fixes-design-v1",
+          "code": null
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T01:39:17.9631466Z",
+      "revision": {
+        "design": "review-fixes-design-v1",
+        "code": null
+      }
+    },
+    {
+      "eventId": "direct:20260930-review-fixes:REQ_ANALYSIS:review-fixes-design-v1:",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "REQ_ANALYSIS",
+        "status": "pending"
+      },
+      "after": {
+        "id": "REQ_ANALYSIS",
+        "status": "done",
+        "revision": {
+          "design": "review-fixes-design-v1",
+          "code": null
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T01:40:49.8794246Z",
+      "revision": {
+        "design": "review-fixes-design-v1",
+        "code": null
+      }
+    },
+    {
+      "eventId": "direct:20260930-review-fixes:IMPACT_ANALYSIS:review-fixes-design-v1:",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "IMPACT_ANALYSIS",
+        "status": "pending"
+      },
+      "after": {
+        "id": "IMPACT_ANALYSIS",
+        "status": "done",
+        "revision": {
+          "design": "review-fixes-design-v1",
+          "code": null
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T01:40:50.1605749Z",
+      "revision": {
+        "design": "review-fixes-design-v1",
+        "code": null
+      }
+    },
+    {
+      "eventId": "1a8deb8f-8dac-42e0-b152-e261a8551658",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-EXP_DESIGN-4caa9c",
+        "status": "planned"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-EXP_DESIGN-4caa9c",
+        "status": "spawned",
+        "revision": {
+          "design": "review-fixes-design-v1",
+          "code": null
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T01:42:21.5644935Z",
+      "revision": {
+        "design": "review-fixes-design-v1",
+        "code": null
+      }
+    },
+    {
+      "eventId": "3defd34f-eacd-4cdd-8e80-c2936b351fc0",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-EXP_DESIGN-4caa9c",
+        "status": "spawned"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-EXP_DESIGN-4caa9c",
+        "status": "acked",
+        "revision": {
+          "design": "review-fixes-design-v1",
+          "code": null
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T01:44:01.5577448Z",
+      "revision": {
+        "design": "review-fixes-design-v1",
+        "code": null
+      }
+    },
+    {
+      "eventId": "61c1aa54-4158-4b4a-af8e-520b0af4242f",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-EXP_DESIGN-4caa9c",
+        "status": "acked"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-EXP_DESIGN-4caa9c",
+        "status": "running",
+        "revision": {
+          "design": "review-fixes-design-v1",
+          "code": null
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T01:44:01.9082002Z",
+      "revision": {
+        "design": "review-fixes-design-v1",
+        "code": null
+      }
+    },
+    {
+      "eventId": "2458b5e0-064f-4d71-9795-3a209ed0851e",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-EXP_DESIGN-4caa9c",
+        "status": "running"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-EXP_DESIGN-4caa9c",
+        "status": "returned",
+        "revision": {
+          "design": "review-fixes-design-v1",
+          "code": null
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T01:46:02.9720442Z",
+      "revision": {
+        "design": "review-fixes-design-v1",
+        "code": null
+      }
+    },
+    {
+      "eventId": "DISPATCH-20260930-REVIEW-EXP_DESIGN-4caa9c:EXP_DESIGN:evaluate",
+      "action": "evaluate",
+      "before": {
+        "id": "EXP_DESIGN",
+        "status": "pending"
+      },
+      "after": {
+        "id": "EXP_DESIGN",
+        "status": "done",
+        "revision": {
+          "design": "review-fixes-design-v1",
+          "code": null
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T01:46:03.3740763Z",
+      "revision": {
+        "design": "review-fixes-design-v1",
+        "code": null
+      }
+    },
+    {
+      "eventId": "direct:20260930-review-fixes:TECH_DESIGN:review-fixes-design-v1:",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "TECH_DESIGN",
+        "status": "pending"
+      },
+      "after": {
+        "id": "TECH_DESIGN",
+        "status": "done",
+        "revision": {
+          "design": "review-fixes-design-v1",
+          "code": null
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T01:46:03.8814986Z",
+      "revision": {
+        "design": "review-fixes-design-v1",
+        "code": null
+      }
+    },
+    {
+      "eventId": "direct:20260930-review-fixes:TESTCASES:review-fixes-design-v1:",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "TESTCASES",
+        "status": "pending"
+      },
+      "after": {
+        "id": "TESTCASES",
+        "status": "done",
+        "revision": {
+          "design": "review-fixes-design-v1",
+          "code": null
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T01:46:04.3793913Z",
+      "revision": {
+        "design": "review-fixes-design-v1",
+        "code": null
+      }
+    },
+    {
+      "eventId": "stale:code:review-fixes-code-3ae1050e4646f449",
+      "action": "stale-cascade",
+      "before": {
+        "roots": [
+          "IMPLEMENTED",
+          "CODE_REVIEW",
+          "SECURITY_REVIEW",
+          "EXP_ACCEPT",
+          "TEST_PASS",
+          "KNOWLEDGE",
+          "ACCEPT"
+        ]
+      },
+      "after": {
+        "affected": [
+          "IMPLEMENTED",
+          "CODE_REVIEW",
+          "SECURITY_REVIEW",
+          "EXP_ACCEPT",
+          "TEST_PASS",
+          "KNOWLEDGE",
+          "ACCEPT"
+        ],
+        "revision": {
+          "design": "review-fixes-design-v1",
+          "code": "review-fixes-code-3ae1050e4646f449"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T02:02:04.8014367Z",
+      "revision": {
+        "design": "review-fixes-design-v1",
+        "code": "review-fixes-code-3ae1050e4646f449"
+      }
+    },
+    {
+      "eventId": "direct:20260930-review-fixes:IMPLEMENTED:review-fixes-design-v1:review-fixes-code-3ae1050e4646f449",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "IMPLEMENTED",
+        "status": "pending"
+      },
+      "after": {
+        "id": "IMPLEMENTED",
+        "status": "done",
+        "revision": {
+          "design": "review-fixes-design-v1",
+          "code": "review-fixes-code-3ae1050e4646f449"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T02:02:05.1830896Z",
+      "revision": {
+        "design": "review-fixes-design-v1",
+        "code": "review-fixes-code-3ae1050e4646f449"
+      }
+    },
+    {
+      "eventId": "ae5e3b5e-b7fd-41b8-a8c3-e383957fb734",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-CODE_REVIEW-c4e3c9",
+        "status": "planned"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-CODE_REVIEW-c4e3c9",
+        "status": "spawned",
+        "revision": {
+          "design": "review-fixes-design-v1",
+          "code": "review-fixes-code-3ae1050e4646f449"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T02:03:00.1143619Z",
+      "revision": {
+        "design": "review-fixes-design-v1",
+        "code": "review-fixes-code-3ae1050e4646f449"
+      }
+    },
+    {
+      "eventId": "2221280d-0466-4901-ae79-beb65f03ed5a",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-CODE_REVIEW-c4e3c9",
+        "status": "spawned"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-CODE_REVIEW-c4e3c9",
+        "status": "acked",
+        "revision": {
+          "design": "review-fixes-design-v1",
+          "code": "review-fixes-code-3ae1050e4646f449"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T02:03:00.8404552Z",
+      "revision": {
+        "design": "review-fixes-design-v1",
+        "code": "review-fixes-code-3ae1050e4646f449"
+      }
+    },
+    {
+      "eventId": "71613b0e-4bee-4ac6-8564-3cba0bef1210",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-CODE_REVIEW-c4e3c9",
+        "status": "acked"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-CODE_REVIEW-c4e3c9",
+        "status": "running",
+        "revision": {
+          "design": "review-fixes-design-v1",
+          "code": "review-fixes-code-3ae1050e4646f449"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T02:03:01.3950953Z",
+      "revision": {
+        "design": "review-fixes-design-v1",
+        "code": "review-fixes-code-3ae1050e4646f449"
+      }
+    },
+    {
+      "eventId": "465b84ea-6651-4dca-b54c-ddf5652ecb84",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-SECURITY_REVIEW-f79eaf",
+        "status": "planned"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-SECURITY_REVIEW-f79eaf",
+        "status": "spawned",
+        "revision": {
+          "design": "review-fixes-design-v1",
+          "code": "review-fixes-code-3ae1050e4646f449"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T02:03:02.0017035Z",
+      "revision": {
+        "design": "review-fixes-design-v1",
+        "code": "review-fixes-code-3ae1050e4646f449"
+      }
+    },
+    {
+      "eventId": "479733fb-e6b5-4e4a-86ab-c643292f9b4f",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-SECURITY_REVIEW-f79eaf",
+        "status": "spawned"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-SECURITY_REVIEW-f79eaf",
+        "status": "acked",
+        "revision": {
+          "design": "review-fixes-design-v1",
+          "code": "review-fixes-code-3ae1050e4646f449"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T02:04:30.8117743Z",
+      "revision": {
+        "design": "review-fixes-design-v1",
+        "code": "review-fixes-code-3ae1050e4646f449"
+      }
+    },
+    {
+      "eventId": "0625da6d-0793-4493-9767-e978dc3ad078",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-SECURITY_REVIEW-f79eaf",
+        "status": "acked"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-SECURITY_REVIEW-f79eaf",
+        "status": "running",
+        "revision": {
+          "design": "review-fixes-design-v1",
+          "code": "review-fixes-code-3ae1050e4646f449"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T02:04:31.3998968Z",
+      "revision": {
+        "design": "review-fixes-design-v1",
+        "code": "review-fixes-code-3ae1050e4646f449"
+      }
+    },
+    {
+      "eventId": "66c3d1c4-d1f2-42e1-81a1-08928f899d43",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-EXP_ACCEPT-647c69",
+        "status": "planned"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-EXP_ACCEPT-647c69",
+        "status": "spawned",
+        "revision": {
+          "design": "review-fixes-design-v1",
+          "code": "review-fixes-code-3ae1050e4646f449"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T02:04:32.2199401Z",
+      "revision": {
+        "design": "review-fixes-design-v1",
+        "code": "review-fixes-code-3ae1050e4646f449"
+      }
+    },
+    {
+      "eventId": "72eb16a8-61cb-4ea9-9516-314c7f0b4617",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-EXP_ACCEPT-647c69",
+        "status": "spawned"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-EXP_ACCEPT-647c69",
+        "status": "acked",
+        "revision": {
+          "design": "review-fixes-design-v1",
+          "code": "review-fixes-code-3ae1050e4646f449"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T02:04:55.1268651Z",
+      "revision": {
+        "design": "review-fixes-design-v1",
+        "code": "review-fixes-code-3ae1050e4646f449"
+      }
+    },
+    {
+      "eventId": "ea5a39b1-3405-4fbf-8bad-f1d57ec20c80",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-EXP_ACCEPT-647c69",
+        "status": "acked"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-EXP_ACCEPT-647c69",
+        "status": "running",
+        "revision": {
+          "design": "review-fixes-design-v1",
+          "code": "review-fixes-code-3ae1050e4646f449"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T02:04:55.7479903Z",
+      "revision": {
+        "design": "review-fixes-design-v1",
+        "code": "review-fixes-code-3ae1050e4646f449"
+      }
+    },
+    {
+      "eventId": "300e96e4-4c4c-4796-bc7d-c691580f4cb5",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-CODE_REVIEW-c4e3c9",
+        "status": "running"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-CODE_REVIEW-c4e3c9",
+        "status": "returned",
+        "revision": {
+          "design": "review-fixes-design-v1",
+          "code": "review-fixes-code-3ae1050e4646f449"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T02:09:44.9709026Z",
+      "revision": {
+        "design": "review-fixes-design-v1",
+        "code": "review-fixes-code-3ae1050e4646f449"
+      }
+    },
+    {
+      "eventId": "DISPATCH-20260930-REVIEW-CODE_REVIEW-c4e3c9:CODE_REVIEW:evaluate",
+      "action": "evaluate",
+      "before": {
+        "id": "CODE_REVIEW",
+        "status": "pending"
+      },
+      "after": {
+        "id": "CODE_REVIEW",
+        "status": "done",
+        "revision": {
+          "design": "review-fixes-design-v1",
+          "code": "review-fixes-code-3ae1050e4646f449"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T02:09:45.6458747Z",
+      "revision": {
+        "design": "review-fixes-design-v1",
+        "code": "review-fixes-code-3ae1050e4646f449"
+      }
+    },
+    {
+      "eventId": "af3a41e4-f386-4bfd-9387-a6027695a831",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-SECURITY_REVIEW-f79eaf",
+        "status": "running"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-SECURITY_REVIEW-f79eaf",
+        "status": "returned",
+        "revision": {
+          "design": "review-fixes-design-v1",
+          "code": "review-fixes-code-3ae1050e4646f449"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T02:09:46.342455Z",
+      "revision": {
+        "design": "review-fixes-design-v1",
+        "code": "review-fixes-code-3ae1050e4646f449"
+      }
+    },
+    {
+      "eventId": "DISPATCH-20260930-REVIEW-SECURITY_REVIEW-f79eaf:SECURITY_REVIEW:evaluate",
+      "action": "evaluate",
+      "before": {
+        "id": "SECURITY_REVIEW",
+        "status": "pending"
+      },
+      "after": {
+        "id": "SECURITY_REVIEW",
+        "status": "done",
+        "revision": {
+          "design": "review-fixes-design-v1",
+          "code": "review-fixes-code-3ae1050e4646f449"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T02:09:46.8707965Z",
+      "revision": {
+        "design": "review-fixes-design-v1",
+        "code": "review-fixes-code-3ae1050e4646f449"
+      }
+    },
+    {
+      "eventId": "0f7d3ece-d081-4dfd-8c9f-760ac5a6da09",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-EXP_ACCEPT-647c69",
+        "status": "running"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-EXP_ACCEPT-647c69",
+        "status": "returned",
+        "revision": {
+          "design": "review-fixes-design-v1",
+          "code": "review-fixes-code-3ae1050e4646f449"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T02:10:58.0530381Z",
+      "revision": {
+        "design": "review-fixes-design-v1",
+        "code": "review-fixes-code-3ae1050e4646f449"
+      }
+    },
+    {
+      "eventId": "DISPATCH-20260930-REVIEW-EXP_ACCEPT-647c69:EXP_ACCEPT:evaluate",
+      "action": "evaluate",
+      "before": {
+        "id": "EXP_ACCEPT",
+        "status": "pending"
+      },
+      "after": {
+        "id": "EXP_ACCEPT",
+        "status": "done",
+        "revision": {
+          "design": "review-fixes-design-v1",
+          "code": "review-fixes-code-3ae1050e4646f449"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T02:10:58.8687752Z",
+      "revision": {
+        "design": "review-fixes-design-v1",
+        "code": "review-fixes-code-3ae1050e4646f449"
+      }
+    },
+    {
+      "eventId": "f210bdaa-3aa3-48a6-bf6e-b5e41d1ce231",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-TEST_PASS-b93b6e",
+        "status": "planned"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-TEST_PASS-b93b6e",
+        "status": "spawned",
+        "revision": {
+          "design": "review-fixes-design-v1",
+          "code": "review-fixes-code-3ae1050e4646f449"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T02:10:59.6553945Z",
+      "revision": {
+        "design": "review-fixes-design-v1",
+        "code": "review-fixes-code-3ae1050e4646f449"
+      }
+    },
+    {
+      "eventId": "81458174-35ef-4020-ba9e-bac20144a340",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-TEST_PASS-b93b6e",
+        "status": "spawned"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-TEST_PASS-b93b6e",
+        "status": "acked",
+        "revision": {
+          "design": "review-fixes-design-v1",
+          "code": "review-fixes-code-3ae1050e4646f449"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T02:11:00.3646774Z",
+      "revision": {
+        "design": "review-fixes-design-v1",
+        "code": "review-fixes-code-3ae1050e4646f449"
+      }
+    },
+    {
+      "eventId": "cbef6cf1-da88-49c7-b63d-0715a40e96b5",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-TEST_PASS-b93b6e",
+        "status": "acked"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20260930-REVIEW-TEST_PASS-b93b6e",
+        "status": "running",
+        "revision": {
+          "design": "review-fixes-design-v1",
+          "code": "review-fixes-code-3ae1050e4646f449"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T02:11:00.9556525Z",
+      "revision": {
+        "design": "review-fixes-design-v1",
+        "code": "review-fixes-code-3ae1050e4646f449"
+      }
+    },
+    {
+      "eventId": "DISPATCH-20260930-REVIEW-EXP_DESIGN-PLACEHOLDER-failed",
+      "action": "dispatch-failed",
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T02:11:56.362Z",
+      "revision": {
+        "design": "review-fixes-design-v1",
+        "code": "review-fixes-code-3ae1050e4646f449"
+      }
+    }
+  ]
+}

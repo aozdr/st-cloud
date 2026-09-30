@@ -1,0 +1,13 @@
+# JWT租户上下文快照告警修复
+
+目标：去除正常JWT鉴权产生的重复缺租户误报，准确恢复临时切换前的线程状态。小型直接路径，无新TASK/Loop State，无子线程。范围只含TenantContext原始快照读取、UserSecurityService保存/恢复调用与相称测试；不更改默认租户、角色/版本校验和真正缺上下文时的告警。
+
+根因：JwtAuthenticationFilter在设置请求租户前调用UserSecurityService.isCurrentAccess。isCurrent为了保存旧租户调用带默认值/告警的TenantContext.getTenantId，原先无上下文时每次产生WARN，还会将原先未设置的状态恢复成租户1。改为getTenantIdOrNull读取实际ThreadLocal值；setTenantId(null)只移除租户ID，保留原有部署模式。
+
+测试：最终22条全部成功（H2安全状态4、真实本机独立MySQL安全状态4、异常恢复2、JWT用途/清理4、Auth服务8），fail/error/skipped均0。连续20次安全版本校验分别在H2/MySQL验证没有TenantContext日志且恢复null；原始租户99及PRIVATE模式恢复，数据库异常也恢复null/99。测试还断言真正调用默认租户getter时仍会产生WARN。
+
+完整st-api重新构建成功，独立18083实例连接本机独立库、Redis14、临时隔离MQ及已有专用S3桶/ES；真实登录后连续20次GET /api/auth/me均成功，鉴权阶段无新增TenantContext WARN；随后匿名/me返回401且没有继承身份。公开登录及定时任务的默认租户警告不在本次消除范围，HTTP脚本记录登录后日志基线，只核对本次20次认证请求的新增日志。没有声称本次重跑全部文件业务链路。
+
+证据：tests.log、5套xml、api-build.log、api-runtime.log、http-test.py、http-test.log、hashes.json。开发主密钥在本机MySQL测试中与该独立库既有密钥一致，未删除或重置密钥，测试事务回滚。初次MySQL夹具主密钥不匹配和Java参数引用错误已修正，最终日志通过；不以初次失败结果作为通过依据。
+
+工程规则：临时租户切换保存快照必须读原始上下文，不得用带兜底的getTenantId；数据访问继续使用原有租户解析与过滤入口。共享用户数据与8080后端未修改/重启，需重启后端加载修复。测试独立进程与临时MQ验证身份后清理。原Review整改任务仍暂停。

@@ -1,0 +1,6 @@
+mysql: [Warning] Using a password on the command line interface can be insecure.
+mysql: [Warning] Using a password on the command line interface can be insecure.
+first_apply_exit=0
+mysql: [Warning] Using a password on the command line interface can be insecure.
+ERROR 1060 (42S21) at line 4: Duplicate column name 'security_version'
+second_apply_exit=1

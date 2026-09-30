@@ -1,0 +1,30 @@
+[ERROR] COMPILATION ERROR : 
+[ERROR] /E:/code/st-cloud/st-share/src/test/java/com/stcloud/share/ShareServiceImplNoTransactionIntegrationTest.java:[220,9] �Ҳ�������
+  ����:   ���� assertThrows(java.lang.Class<java.lang.IllegalStateException>,()->shareS[...]onse))
+  λ��: �� com.stcloud.share.ShareServiceImplNoTransactionIntegrationTest
+[ERROR] /E:/code/st-cloud/st-share/src/test/java/com/stcloud/share/ShareServiceImplNoTransactionIntegrationTest.java:[226,9] �Ҳ�������
+  ����:   ���� assertThrows(java.lang.Class<java.lang.IllegalStateException>,()->shareS[...]null))
+  λ��: �� com.stcloud.share.ShareServiceImplNoTransactionIntegrationTest
+[ERROR] /E:/code/st-cloud/st-share/src/test/java/com/stcloud/share/ShareServiceImplNoTransactionIntegrationTest.java:[249,9] �Ҳ�������
+  ����:   ���� assertThrows(java.lang.Class<com.stcloud.common.exception.BusinessException>,()->shareS[...]onse))
+  λ��: �� com.stcloud.share.ShareServiceImplNoTransactionIntegrationTest
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-compiler-plugin:3.11.0:testCompile (default-testCompile) on project st-share: Compilation failure: Compilation failure: 
+[ERROR] /E:/code/st-cloud/st-share/src/test/java/com/stcloud/share/ShareServiceImplNoTransactionIntegrationTest.java:[220,9] �Ҳ�������
+[ERROR]   ����:   ���� assertThrows(java.lang.Class<java.lang.IllegalStateException>,()->shareS[...]onse))
+[ERROR]   λ��: �� com.stcloud.share.ShareServiceImplNoTransactionIntegrationTest
+[ERROR] /E:/code/st-cloud/st-share/src/test/java/com/stcloud/share/ShareServiceImplNoTransactionIntegrationTest.java:[226,9] �Ҳ�������
+[ERROR]   ����:   ���� assertThrows(java.lang.Class<java.lang.IllegalStateException>,()->shareS[...]null))
+[ERROR]   λ��: �� com.stcloud.share.ShareServiceImplNoTransactionIntegrationTest
+[ERROR] /E:/code/st-cloud/st-share/src/test/java/com/stcloud/share/ShareServiceImplNoTransactionIntegrationTest.java:[249,9] �Ҳ�������
+[ERROR]   ����:   ���� assertThrows(java.lang.Class<com.stcloud.common.exception.BusinessException>,()->shareS[...]onse))
+[ERROR]   λ��: �� com.stcloud.share.ShareServiceImplNoTransactionIntegrationTest
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
+[ERROR] 
+[ERROR] After correcting the problems, you can resume the build with the command
+[ERROR]   mvn <args> -rf :st-share

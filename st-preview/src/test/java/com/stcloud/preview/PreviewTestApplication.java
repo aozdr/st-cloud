@@ -5,6 +5,7 @@ import com.stcloud.common.config.MyMetaObjectHandler;
 import com.stcloud.common.config.S3StorageConfig;
 import com.stcloud.core.service.FileService;
 import com.stcloud.core.service.StorageService;
+import com.stcloud.core.service.ThumbnailRenderer;
 import com.stcloud.preview.service.PreviewService;
 import com.stcloud.preview.service.impl.PreviewServiceImpl;
 import org.apache.rocketmq.spring.autoconfigure.RocketMQAutoConfiguration;
@@ -59,6 +60,11 @@ public class PreviewTestApplication {
     @Bean
     StorageService storageService() {
         return mock(StorageService.class);
+    }
+
+    @Bean
+    ThumbnailRenderer thumbnailRenderer() {
+        return mock(ThumbnailRenderer.class);
     }
 
     @Bean

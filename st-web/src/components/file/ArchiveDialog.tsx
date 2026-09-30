@@ -125,7 +125,7 @@ export default function ArchiveDialog({ file, onClose, onExtracted }: Props) {
         currentId = String(node.id);
         continue;
       }
-      const created = await api.post<{ id?: number | string }>('/file/folder', { parentId: currentId, folderName: seg });
+      const created = await api.post<{ id?: string }>('/file/folder', { parentId: currentId, folderName: seg });
       const newId = created?.id != null ? String(created.id) : '';
       if (!newId) throw new Error(`创建目录 ${acc} 失败`);
       currentId = newId;
@@ -234,7 +234,7 @@ export default function ArchiveDialog({ file, onClose, onExtracted }: Props) {
     const parentId = targetFolderId || '0';
     setCreatingFolder(true);
     try {
-      const created = await api.post<{ id?: number | string }>('/file/folder', { parentId, folderName: name });
+      const created = await api.post<{ id?: string }>('/file/folder', { parentId, folderName: name });
       const newId = created?.id != null ? String(created.id) : '';
       if (!newId) throw new Error('新建文件夹失败');
       await loadTree();

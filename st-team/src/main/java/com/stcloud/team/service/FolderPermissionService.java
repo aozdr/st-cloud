@@ -515,7 +515,7 @@ public class FolderPermissionService {
         TeamMember member = teamMemberMapper.selectOne(new LambdaQueryWrapper<TeamMember>()
                 .eq(TeamMember::getSpaceId, spaceId)
                 .eq(TeamMember::getUserId, userId));
-        return member == null || member.getRole() == null ? null : Long.valueOf(member.getRole());
+        return member == null ? null : member.getRole();
     }
 
     private Long loadMemberRole(Long tenantId, Long spaceId, Long userId) {
@@ -527,7 +527,7 @@ public class FolderPermissionService {
             query.eq(TeamMember::getTenantId, tenantId);
         }
         TeamMember member = teamMemberMapper.selectOne(query);
-        return member == null ? null : Long.valueOf(member.getRole());
+        return member == null ? null : member.getRole();
     }
 
     /**

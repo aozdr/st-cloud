@@ -1,6 +1,8 @@
 package com.stcloud.sync.ws;
 
+import com.stcloud.auth.service.UserSecurityService;
 import com.stcloud.common.utils.JwtUtils;
+import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.server.ServerHttpRequest;
@@ -25,6 +27,7 @@ import java.util.Map;
 public class SyncAuthHandshakeInterceptor implements HandshakeInterceptor {
 
     private final JwtUtils jwtUtils;
+    private final UserSecurityService userSecurityService;
 
     @Override
     public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response,
@@ -52,12 +55,21 @@ public class SyncAuthHandshakeInterceptor implements HandshakeInterceptor {
             }
 
             // 鉴权通过，将用户信息存入握手属性
-            Long userId = jwtUtils.getUserId(token);
-            Long tenantId = jwtUtils.getTenantId(token);
-            attributes.put("userId", userId);
-            attributes.put("tenantId", tenantId);
-            log.debug("WebSocket 握手成功：userId={}", userId);
-            return true;
+            try {
+                Claims claims = jwtUtils.parseToken(token);
+                if (!userSecurityService.isCurrentAccess(claims)) return false;
+                Long userId = userSecurityService.exactNonNegativeLong(claims.get("userId"));
+                Long tenantId = userSecurityService.exactNonNegativeLong(claims.get("tenantId"));
+                attributes.put("userId", userId);
+                attributes.put("tenantId", tenantId);
+                attributes.put("securityVersion", userSecurityService.exactNonNegativeLong(claims.get("securityVersion")));
+                attributes.put("expiresAt", claims.getExpiration().getTime());
+                log.debug("WebSocket 握手成功：userId={}", userId);
+                return true;
+            } catch (Exception e) {
+                log.warn("WebSocket 握手失败：认证状态不可用");
+                return false;
+            }
         }
         return false;
     }

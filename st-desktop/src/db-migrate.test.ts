@@ -96,7 +96,7 @@ test('ensureIdColumnsText 重建后雪花ID读回完整字符串', async () => {
   const cfg = c.getAsObject() as Record<string, unknown>;
   c.free();
   assert.equal(cfg.root_id, '2083478593059856385');
-  assert.equal(cfg.cursor, 8);
+  assert.equal(cfg.cursor, '8');
   assert.equal(cfg.last_sync_at, 1786773945813);
   // 重建后 sync_version 列与值必须保留（防 schema 常量漏列导致升级后版本门控失效）
   assert.equal(cfg.sync_version, 1);
@@ -114,6 +114,52 @@ test('ensureIdColumnsText 对新库（已是 TEXT）不重建', async () => {
   const SQL = await getSQL();
   const db = new SQL.Database();
   db.run('CREATE TABLE sync_state (local_path TEXT PRIMARY KEY, node_id TEXT)');
-  db.run('CREATE TABLE sync_config (root_id TEXT PRIMARY KEY, local_path TEXT)');
+  db.run('CREATE TABLE sync_config (root_id TEXT PRIMARY KEY, local_path TEXT, cursor TEXT)');
   assert.deepEqual(ensureIdColumnsText(db), []);
+});
+
+test('TCDB-09 旧库大 root/node/cursor 以 SQL 整数字面量迁移并隔离两根', async () => {
+  const db = await createOldSchemaDb();
+  db.run(`INSERT INTO sync_config (root_id, local_path, cursor, user_id, updated_at)
+    VALUES (9007199254740993, '/root-a', 9223372036854775806, '9007199254740997', 'now'),
+           (9007199254740995, '/root-b', 9223372036854775805, '9007199254740999', 'now')`);
+  db.run(`INSERT INTO sync_state (root_id, local_path, node_id, updated_at)
+    VALUES ('9007199254740993', '/a.txt', 9007199254740997, 'now'),
+           ('9007199254740995', '/b.txt', 9007199254740999, 'now')`);
+  assert.deepEqual(ensureIdColumnsText(db).sort(), ['sync_config', 'sync_state']);
+  const config = db.exec('SELECT root_id, cursor, user_id FROM sync_config ORDER BY root_id')[0].values;
+  assert.deepEqual(config, [
+    ['9007199254740993', '9223372036854775806', '9007199254740997'],
+    ['9007199254740995', '9223372036854775805', '9007199254740999'],
+  ]);
+  const state = db.exec('SELECT root_id, local_path, node_id FROM sync_state ORDER BY root_id')[0].values;
+  assert.deepEqual(state, [
+    ['9007199254740993', '/a.txt', '9007199254740997'],
+    ['9007199254740995', '/b.txt', '9007199254740999'],
+  ]);
+  assert.equal(ensureIdColumnsText(db).length, 0);
+  db.close();
+});
+
+test('TCDB-09 全部现有迁移列、主键索引与落盘重开保持，非ID字段不转换', async () => {
+  const SQL = await getSQL();
+  const db = await createOldSchemaDb();
+  db.run(`INSERT INTO sync_config VALUES (9007199254740993,'/a',9223372036854775806,'paused','cfg-time','9223372036854775806',123456,4)`);
+  db.run(`INSERT INTO sync_state VALUES ('9007199254740993','/same',9007199254740995,'hash',123,456,'cloud-time','needs_review','state-time',3,789.25,987)`);
+  ensureIdColumnsText(db);
+  // 实际迁移目标只有sync_state/root,node和sync_config/root,cursor；user_id原已为TEXT，role列不存在。
+  assert.deepEqual(db.exec('SELECT * FROM sync_config')[0].values, [['9007199254740993','/a','9223372036854775806','paused','9223372036854775806',123456,4,'cfg-time']]);
+  assert.deepEqual(db.exec('SELECT * FROM sync_state')[0].values, [['9007199254740993','/same','9007199254740995','hash',123,456,'cloud-time','needs_review',3,789.25,987,'state-time']]);
+  db.run(`INSERT INTO sync_state(root_id,local_path,node_id,updated_at) VALUES ('9007199254740995','/same','9223372036854775806','b')`);
+  assert.throws(() => db.run(`INSERT INTO sync_state(root_id,local_path,updated_at) VALUES ('9007199254740993','/same','duplicate')`));
+  const snapshot = db.exec("SELECT name,type,sql FROM sqlite_master WHERE type IN ('table','index') ORDER BY name");
+  const reopened = new SQL.Database(db.export());
+  assert.deepEqual(ensureIdColumnsText(reopened), []);
+  assert.deepEqual(reopened.exec("SELECT name,type,sql FROM sqlite_master WHERE type IN ('table','index') ORDER BY name"), snapshot);
+  assert.deepEqual(reopened.exec('SELECT * FROM sync_state ORDER BY root_id'), db.exec('SELECT * FROM sync_state ORDER BY root_id'));
+  for (const [table, columns] of [['sync_state', ['root_id','node_id']], ['sync_config',['root_id','cursor','user_id']]] as const) {
+    const info = reopened.exec(`PRAGMA table_info(${table})`)[0].values;
+    for (const column of columns) assert.equal(info.find(row=>row[1]===column)?.[2], 'TEXT');
+  }
+  reopened.close();db.close();
 });

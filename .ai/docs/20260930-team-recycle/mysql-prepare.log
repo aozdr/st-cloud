@@ -1,0 +1,102 @@
+mysql: [Warning] Using a password on the command line interface can be insecure.
+mysql: [Warning] Using a password on the command line interface can be insecure.
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 02_create_tables.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 04_rbac_tables.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 05_rate_limit_tables.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 06_sync_tables.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+1
+1
+APPLIED 07_cloud_capacity.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+1
+1
+APPLIED 08_chunk_original_size.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 09_jwt_secret.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 09b_remove_two_factor.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 10_drop_is_admin.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 11_role_data_scope.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 12_add_permissions.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 13_remove_ratelimit_orphan.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 14_add_preview_permission.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 15_add_file_favorite.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 16_add_file_hidden.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 17_team_invite.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 18_team_activity.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 19_notification.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 20_team_comment.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 21_team_folder_permission.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 22_team_member_pinned.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 23_file_lock.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 24_team_role.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 25_team_external.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 26_sync_change_log.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 27_sync_exclusion_conflict.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 28_file_object.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 29_event_log.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+1
+1
+APPLIED 30_sync_change_log_event_log_id.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 31_schema_version.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 32_file_block.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 33_share_allow_download.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 34_team_folder_permission_permissions.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 35_file_share_permissions.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 36_editor_version_source.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 37_add_edit_permission.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 38_share_security_config.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 39_reset_editing_permission.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 40_upload_session.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 41_file_node_version_uniqueness.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 42_file_orphan_candidate.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 43_file_watch.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 44_team_role_bigint.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+APPLIED 45_user_security_version.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+1
+1
+APPLIED 46_user_security_version_retry.sql
+mysql: [Warning] Using a password on the command line interface can be insecure.
+SCHEMA_BEFORE_EXIT=0

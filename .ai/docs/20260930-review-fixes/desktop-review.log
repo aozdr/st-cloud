@@ -1,0 +1,35 @@
+✔ F3 DELETE status 2008 (216.4161ms)
+✔ F3 DELETE status 403 (87.3111ms)
+✔ F4 MOVE/missing 当前下载及本地旧基线 (83.7856ms)
+✔ F4 MOVE/preserved 当前下载及本地旧基线 (74.2734ms)
+✔ F4 MOVE/rename 当前下载及本地旧基线 (67.2233ms)
+✔ F4 RENAME/missing 当前下载及本地旧基线 (57.9552ms)
+✔ F4 RENAME/preserved 当前下载及本地旧基线 (79.4108ms)
+[sync] WebSocket 客户端已启动
+[sync] fetch exclusions failed: Error: exclusions offline
+    at Object.get (E:\code\st-cloud\st-desktop\src\sync\sync-review.test.cjs:42:42)
+    at refreshExclusions (evalmachine.<anonymous>:145:50)
+    at Object.startSync (evalmachine.<anonymous>:70:15)
+    at E:\code\st-cloud\st-desktop\src\sync\sync-review.test.cjs:133:38
+    at waitForActual (node:assert:632:21)
+    at strict.rejects (node:assert:769:31)
+    at TestContext.<anonymous> (E:\code\st-cloud\st-desktop\src\sync\sync-review.test.cjs:133:16)
+    at Test.runInAsyncScope (node:async_hooks:227:14)
+    at Test.run (node:internal/test_runner/test:1306:25)
+    at Test.processPendingSubtests (node:internal/test_runner/test:897:18)
+[sync] WebSocket 客户端已启动
+[sync] WebSocket 客户端已启动
+✔ F4 RENAME/rename 当前下载及本地旧基线 (66.1397ms)
+✔ F6 完成目标重放清理同节点旧映射 (91.1608ms)
+✔ F6 不误删被其他节点复用的旧映射 (66.0316ms)
+✔ F5 升级前加载排除路径并保留原件/映射 (64.2833ms)
+✔ F5/F7 exclusions 失败清理后可重启 (53.5806ms)
+✔ F5/F7 reconcile 失败清理后可重启 (68.3224ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1225.8278

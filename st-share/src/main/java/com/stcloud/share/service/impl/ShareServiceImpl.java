@@ -68,10 +68,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
-import javax.imageio.ImageIO;
-import java.awt.Graphics2D;
-import java.awt.RenderingHints;
-import java.awt.image.BufferedImage;
+import com.stcloud.core.service.ThumbnailRenderer;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
@@ -94,7 +91,7 @@ public class ShareServiceImpl implements ShareService {
     // S-09 分享流式传输默认限速：5MB/s
     private static final long STREAM_RATE_BYTES_PER_SEC = 5 * 1024 * 1024L;
     private static final Set<String> SHARE_IMAGE_TYPES = Set.of(
-            "jpg", "jpeg", "png", "gif", "webp", "bmp", "svg");
+            "jpg", "jpeg", "png", "gif", "bmp");
     /** 复制/保存文件时对 file_object 的初始引用计数 */
     private static final int REF_COUNT_INITIAL = 1;
 
@@ -109,6 +106,9 @@ public class ShareServiceImpl implements ShareService {
 
     @Resource
     private StorageService storageService;
+
+    @Resource
+    private ThumbnailRenderer thumbnailRenderer;
 
     @Resource
     private TeamService teamService;
@@ -474,19 +474,10 @@ public class ShareServiceImpl implements ShareService {
             }
         }
 
-        // S-07 下载次数原子条件更新：下载限额为空或未达上限才递增，
-        // 消除"先查后增"的 TOCTOU 竞态，并发下由数据库保证计数不超限
-        int updated = fileShareMapper.update(null, new LambdaUpdateWrapper<FileShare>()
-                .eq(FileShare::getId, share.getId())
-                .and(w -> w.isNull(FileShare::getDownloadLimit)
-                        .or().apply("download_count < download_limit"))
-                .setSql("download_count = download_count + 1"));
-        if (updated == 0) {
-            throw new BusinessException(ResultCode.SHARE_ACCESS_DENIED, "下载次数已达上限");
-        }
-
         // S-02 分享链路直接基于 storagePath 生成预签名 URL，不再走 DownloadServiceImpl 的个人 owner 校验（消除匿名 NPE）
         String url = storageService.generateDownloadUrl(targetNode.getStoragePath());
+        // 签名失败不占额度；授权提交后才可返回 URL。
+        consumeDownloadPermit(share);
         return Result.success(url);
     }
 
@@ -538,13 +529,15 @@ public class ShareServiceImpl implements ShareService {
         if (share.getAllowDownload() == null || share.getAllowDownload() == 0) {
             throw new BusinessException(ResultCode.SHARE_ACCESS_DENIED, "该分享不可下载");
         }
+        if (share.getPermission() == null || share.getPermission() == 0) {
+            throw new BusinessException(ResultCode.SHARE_ACCESS_DENIED, "仅查看不可下载");
+        }
         // 分享权限集校验（新模型双保险）：分享权限集含 download 才允许流式/下载
         if (!shareAllowsDownload(share)) {
             throw new BusinessException(ResultCode.SHARE_ACCESS_DENIED, "该分享不可下载");
         }
 
-        // S-02 下载次数限制快速失败（可选）：与 getDownloadUrl 同口径，达到上限直接拒绝；
-        // 并发下的最终闸门为流式成功后的原子条件更新（S-07）
+        // 快速失败只节省存储读取，最终并发闸门为开始输出前的原子授予。
         if (share.getDownloadLimit() != null && share.getDownloadCount() >= share.getDownloadLimit()) {
             throw new BusinessException(ResultCode.SHARE_ACCESS_DENIED, "下载次数已达上限");
         }
@@ -553,6 +546,10 @@ public class ShareServiceImpl implements ShareService {
         FileNode targetNode = fileNodeMapper.selectById(targetNodeId);
         if (targetNode == null || targetNode.getStatus() != 0 || targetNode.getNodeType() != 1) {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
+        }
+        if (targetNode.getUploadStatus() == null
+                || targetNode.getUploadStatus() != UploadStatus.COMPLETED.getCode()) {
+            throw new BusinessException(ResultCode.BUSINESS_ERROR, "文件尚未上传完成");
         }
         fileService.validateAccessible(targetNodeId);
         // S-03 子文件流式预览校验归属：path 必须落在分享根路径边界内（含 "/" 边界，防同名前缀越权）
@@ -563,25 +560,20 @@ public class ShareServiceImpl implements ShareService {
             }
         }
 
-        response.setContentType(targetNode.getContentType() != null
-                ? targetNode.getContentType() : "application/octet-stream");
-        try {
+        long streamStartNanos = System.nanoTime();
+        long totalBytes = 0L;
+        // 外部源流打开后先占额度；失败时不会得到成功响应头或文件字节。
+        try (InputStream is = storageService.downloadObject(targetNode.getStoragePath())) {
+            consumeDownloadPermit(share);
+            response.setContentType(targetNode.getContentType() != null
+                    ? targetNode.getContentType() : "application/octet-stream");
             String encodedName = URLEncoder.encode(targetNode.getName(), StandardCharsets.UTF_8)
                     .replace("+", "%20");
-            response.setHeader("Content-Disposition",
-                    "inline; filename=\"" + encodedName + "\"");
+            response.setHeader("Content-Disposition", "inline; filename=\"" + encodedName + "\"");
             if (targetNode.getFileSize() != null) {
                 response.setContentLengthLong(targetNode.getFileSize());
             }
-        } catch (Exception e) {
-            log.warn("设置响应头失败: {}", e.getMessage());
-        }
-
-        boolean streamCompleted = false;
-        long streamStartNanos = System.nanoTime();
-        long totalBytes = 0L;
-        try (InputStream is = storageService.downloadObject(targetNode.getStoragePath());
-             OutputStream os = response.getOutputStream()) {
+            OutputStream os = response.getOutputStream();
             byte[] buffer = new byte[8192];
             int len;
             while ((len = is.read(buffer)) != -1) {
@@ -591,23 +583,29 @@ public class ShareServiceImpl implements ShareService {
                 paceStream(totalBytes, streamStartNanos);
             }
             os.flush();
-            streamCompleted = true;
         } catch (IOException e) {
             log.warn("分享文件流式传输中断: shareCode={}, nodeId={}, err={}",
                     shareCode, targetNodeId, e.getMessage());
         }
-        // S-07/S-02 流式预览/下载成功后同样消耗下载次数：原子条件更新，下载限额为空或未达上限才递增，
-        // 并发下由数据库保证计数不超限（与 getDownloadUrl 统一口径，仅成功后计数）
-        if (streamCompleted) {
-            int updated = fileShareMapper.update(null, new LambdaUpdateWrapper<FileShare>()
-                    .eq(FileShare::getId, share.getId())
-                    .and(w -> w.isNull(FileShare::getDownloadLimit)
-                            .or().apply("download_count < download_limit"))
-                    .setSql("download_count = download_count + 1"));
-            if (updated == 0) {
-                log.warn("分享流式下载次数已达上限: shareCode={}, nodeId={}", shareCode, targetNodeId);
-                throw new BusinessException(ResultCode.SHARE_ACCESS_DENIED, "下载次数已达上限");
-            }
+    }
+
+    /** 数据库先授予下载资格；授权后网络中断不退次数，避免并发发送突破限额。 */
+    private void consumeDownloadPermit(FileShare share) {
+        LambdaUpdateWrapper<FileShare> permit = new LambdaUpdateWrapper<FileShare>()
+                .eq(FileShare::getId, share.getId())
+                .eq(FileShare::getStatus, ShareStatus.ACTIVE.getCode())
+                .eq(FileShare::getAllowDownload, 1)
+                .eq(FileShare::getPermission, share.getPermission())
+                .and(w -> w.isNull(FileShare::getExpireAt)
+                        .or().gt(FileShare::getExpireAt, LocalDateTime.now(ZoneId.of("Asia/Shanghai"))))
+                .and(w -> w.isNull(FileShare::getDownloadLimit)
+                        .or().apply("download_count < download_limit"))
+                .setSql("download_count = download_count + 1");
+        if (share.getPermissions() == null) permit.isNull(FileShare::getPermissions);
+        else permit.eq(FileShare::getPermissions, share.getPermissions());
+        int updated = fileShareMapper.update(null, permit);
+        if (updated == 0) {
+            throw new BusinessException(ResultCode.SHARE_ACCESS_DENIED, "分享不可下载或下载次数已达上限");
         }
     }
 
@@ -668,35 +666,14 @@ public class ShareServiceImpl implements ShareService {
         if (doesSharePreviewObjectExist(thumbKey)) {
             return;
         }
-        int maxDim = 150;
-        try (InputStream is = storageService.downloadObject(node.getStoragePath())) {
-            BufferedImage original = ImageIO.read(is);
-            if (original == null) {
-                throw new BusinessException(ResultCode.BAD_REQUEST, "无法读取图片");
-            }
-            int w = original.getWidth();
-            int h = original.getHeight();
-            if (w > maxDim || h > maxDim) {
-                double scale = (double) maxDim / Math.max(w, h);
-                w = Math.max(1, (int) (w * scale));
-                h = Math.max(1, (int) (h * scale));
-            }
-            BufferedImage thumbnail = new BufferedImage(Math.max(1, w), Math.max(1, h), BufferedImage.TYPE_INT_RGB);
-            Graphics2D graphics = thumbnail.createGraphics();
-            graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-            graphics.drawImage(original, 0, 0, thumbnail.getWidth(), thumbnail.getHeight(), null);
-            graphics.dispose();
-
-            ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-            if (!ImageIO.write(thumbnail, "jpg", bytes)) {
-                throw new BusinessException(ResultCode.STORAGE_SERVICE_ERROR, "图片格式不支持缩略图");
-            }
+        try {
+            byte[] bytes = thumbnailRenderer.render(node.getStoragePath(), node.getSuffix(), 150);
             s3Client.putObject(PutObjectRequest.builder()
                             .bucket(s3StorageConfig.getPreviewBucket())
                             .key(thumbKey)
                             .contentType("image/jpeg")
-                            .build(), RequestBody.fromBytes(bytes.toByteArray()));
-        } catch (IOException | RuntimeException e) {
+                            .build(), RequestBody.fromBytes(bytes));
+        } catch (RuntimeException e) {
             if (e instanceof BusinessException businessException) {
                 throw businessException;
             }

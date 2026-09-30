@@ -56,7 +56,7 @@ Entity      (数据库实体，继承 BaseEntity)
 ## 同步引擎 V2（桌面端 + 服务端）
 
 - **桌面端 SyncEngine**（`st-desktop/src/sync-engine.ts`）：
-  - 版本门控：`sync_config.sync_version` 与引擎常量 `SYNC_ENGINE_VERSION` 不一致或 `last_sync_at` 为空 → 全量重建一次（清本地机器格式垃圾 → 清表（保留游标）→ 云端快照对账，完整成功才固化版本）；否则只走增量
+  - 版本门控：先成功获取排除规则，`sync_config.sync_version` 与引擎常量 `SYNC_ENGINE_VERSION` 不一致或 `last_sync_at` 为空时保留旧状态并云端快照对账，完整成功才固化版本；失败启动抛错并清理实例，保留旧游标/版本供重试。否则只走增量
   - 增量以 `sync_change_log.id` 游标为准（单调、无时钟漂移），游标仅在全部变更处理成功后推进
   - 事件合并（pending 不丢弃）+ 引擎自写 30s TTL 过滤，防自激循环
   - `upsertSyncState` 为合并语义（COALESCE），局部更新不擦 `local_mtime`

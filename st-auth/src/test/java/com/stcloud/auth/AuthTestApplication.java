@@ -1,6 +1,7 @@
 package com.stcloud.auth;
 
 import com.stcloud.auth.service.AuthService;
+import com.stcloud.auth.service.UserSecurityService;
 import com.stcloud.common.config.MyBatisPlusConfig;
 import com.stcloud.common.config.MyMetaObjectHandler;
 import com.stcloud.common.utils.JwtUtils;
@@ -40,7 +41,8 @@ import static org.mockito.Mockito.when;
         WebMvcAutoConfiguration.class,
 })
 @MapperScan({"com.stcloud.auth.mapper", "com.stcloud.common.mapper"})
-@Import({MyBatisPlusConfig.class, MyMetaObjectHandler.class, AuthService.class, JwtUtils.class})
+@Import({MyBatisPlusConfig.class, MyMetaObjectHandler.class, AuthService.class,
+        UserSecurityService.class, JwtUtils.class})
 public class AuthTestApplication {
 
     /**

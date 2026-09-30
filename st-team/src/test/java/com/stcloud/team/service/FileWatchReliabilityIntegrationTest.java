@@ -192,7 +192,7 @@ class FileWatchReliabilityIntegrationTest extends AbstractTeamIntegrationTest {
         watcher.setTenantId(tenantId);
         watcher.setSpaceId(spaceId);
         watcher.setUserId(watcherId);
-        watcher.setRole(2);
+        watcher.setRole(2L);
         watcher.setDeleted(0);
         teamMemberMapper.insert(watcher);
         FileNode teamFolder = insertNode(tenantId, actorId, spaceId, "new-team", NodeType.FOLDER.getCode(),
@@ -502,7 +502,7 @@ class FileWatchReliabilityIntegrationTest extends AbstractTeamIntegrationTest {
         member.setTenantId(tenantId);
         member.setSpaceId(spaceId);
         member.setUserId(memberId);
-        member.setRole(2);
+        member.setRole(2L);
         member.setDeleted(0);
         teamMemberMapper.insert(member);
         FileNode node = insertNode(tenantId, actorId, spaceId, "team.txt", NodeType.FILE.getCode(),
@@ -566,7 +566,7 @@ class FileWatchReliabilityIntegrationTest extends AbstractTeamIntegrationTest {
         member.setTenantId(tenantId);
         member.setSpaceId(spaceId);
         member.setUserId(watcherId);
-        member.setRole(2);
+        member.setRole(2L);
         member.setDeleted(0);
         teamMemberMapper.insert(member);
 

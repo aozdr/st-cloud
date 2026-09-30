@@ -1,0 +1,14 @@
+✔ TC04-09: reconcile-root-rename/fail-root-list 对账失败后跨进程恢复且根身份不变 (8047.7354ms)
+✔ TC04-09: reconcile-root-rename/fail-root-detail 对账失败后跨进程恢复且根身份不变 (8015.3679ms)
+✔ TC04-09: reconcile-root-move/fail-root-list 对账失败后跨进程恢复且根身份不变 (8029.9346ms)
+✔ TC04-09: reconcile-root-move/fail-root-detail 对账失败后跨进程恢复且根身份不变 (8039.4432ms)
+✔ TC04-09: reconcile-root-missing-old/fail-root-list 对账失败后跨进程恢复且根身份不变 (8068.9181ms)
+✔ TC04-09: reconcile-root-missing-old/fail-root-detail 对账失败后跨进程恢复且根身份不变 (8040.4746ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 48340.1893

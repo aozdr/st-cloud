@@ -1,0 +1,92 @@
+[
+  {
+    "module": "st-admin",
+    "tests": 9,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "oldest": "2026-09-25T10:59:52.136713",
+    "newest": "2026-09-25T10:59:52.229713"
+  },
+  {
+    "module": "st-api",
+    "tests": 2,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "oldest": "2026-09-25T10:59:55.847297",
+    "newest": "2026-09-25T10:59:55.847297"
+  },
+  {
+    "module": "st-auth",
+    "tests": 8,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "oldest": "2026-09-25T10:58:36.570864",
+    "newest": "2026-09-25T10:58:36.570864"
+  },
+  {
+    "module": "st-common",
+    "tests": 31,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "oldest": "2026-09-25T10:58:26.383091",
+    "newest": "2026-09-25T10:58:29.370132"
+  },
+  {
+    "module": "st-core",
+    "tests": 192,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "oldest": "2026-09-25T10:58:42.947386",
+    "newest": "2026-09-25T10:59:07.739077"
+  },
+  {
+    "module": "st-preview",
+    "tests": 14,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "oldest": "2026-09-25T10:59:47.132687",
+    "newest": "2026-09-25T10:59:47.271686"
+  },
+  {
+    "module": "st-search",
+    "tests": 70,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "oldest": "2026-09-25T10:59:38.894696",
+    "newest": "2026-09-25T10:59:40.890707"
+  },
+  {
+    "module": "st-share",
+    "tests": 55,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "oldest": "2026-09-25T10:59:25.987996",
+    "newest": "2026-09-25T10:59:30.584354"
+  },
+  {
+    "module": "st-sync",
+    "tests": 15,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "oldest": "2026-09-25T10:59:36.258253",
+    "newest": "2026-09-25T10:59:36.794553"
+  },
+  {
+    "module": "st-team",
+    "tests": 87,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0,
+    "oldest": "2026-09-25T10:59:13.302018",
+    "newest": "2026-09-25T10:59:19.755740"
+  }
+]

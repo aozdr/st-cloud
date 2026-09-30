@@ -117,6 +117,7 @@ CREATE TABLE IF NOT EXISTS sys_user (
     phone           VARCHAR(20)  DEFAULT NULL,
     avatar          VARCHAR(500) DEFAULT NULL,
     status          TINYINT      NOT NULL DEFAULT 1,
+    security_version BIGINT     NOT NULL DEFAULT 0,
     storage_used    BIGINT       NOT NULL DEFAULT 0,
     storage_quota   BIGINT       DEFAULT NULL,
     last_login_at   DATETIME     DEFAULT NULL,
@@ -383,3 +384,34 @@ CREATE INDEX IF NOT EXISTS idx_file_watch_delivery_due
     ON file_watch_delivery (status, next_retry_at, id);
 CREATE INDEX IF NOT EXISTS idx_file_watch_delivery_user_node
     ON file_watch_delivery (tenant_id, user_id, node_id);
+
+-- 团队回收站权限查询：镜像已有生产表，未新增生产模型。
+CREATE TABLE IF NOT EXISTS team_member (
+    id              BIGINT          NOT NULL AUTO_INCREMENT,
+    tenant_id       BIGINT          NOT NULL,
+    space_id        BIGINT          NOT NULL,
+    user_id         BIGINT          NOT NULL,
+    role            BIGINT          NOT NULL DEFAULT 2,
+    joined_at       DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    last_active_at  DATETIME        DEFAULT NULL,
+    is_pinned       TINYINT         NOT NULL DEFAULT 0,
+    member_type     TINYINT         NOT NULL DEFAULT 0,
+    expire_at       DATETIME        DEFAULT NULL,
+    created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    deleted         TINYINT         NOT NULL DEFAULT 0,
+    PRIMARY KEY (id),
+    CONSTRAINT uk_space_user UNIQUE (space_id, user_id)
+);
+
+-- 团队回收站权限查询：镜像已有生产表，未新增生产模型。
+CREATE TABLE IF NOT EXISTS team_external_config (
+    id              BIGINT          NOT NULL AUTO_INCREMENT,
+    tenant_id       BIGINT          NOT NULL,
+    space_id        BIGINT          NOT NULL,
+    allow_external  TINYINT         NOT NULL DEFAULT 0,
+    created_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at      DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    CONSTRAINT uk_space UNIQUE (space_id)
+);

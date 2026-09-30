@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20260930-REVIEW-EXP_DESIGN-4caa9c",
+  "taskId": "TASK-20260930-REVIEW-EXP_DESIGN",
+  "idempotencyKey": "TASK-20260930-REVIEW-EXP_DESIGN",
+  "role": "reviewer",
+  "taskType": "exp-review",
+  "objective": "独立审查定版uispec与design中的F8降级体验，输出exp-review.md",
+  "taskRefs": [
+    ".ai/tasks/TASK-20260930-REVIEW-EXP_DESIGN.md",
+    ".ai/docs/20260930-review-fixes/requirement.md",
+    ".ai/docs/20260930-review-fixes/design.md",
+    ".ai/docs/20260930-review-fixes/testcases.md"
+  ],
+  "stateRef": ".ai/state/20260930-review-fixes.json",
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      ".ai/docs/20260930-review-fixes/exp-review.md",
+      ".ai/runtime/results/DISPATCH-20260930-REVIEW-EXP_DESIGN-4caa9c.json"
+    ],
+    "exclude": [
+      ".ai/state/**",
+      "**/src/**",
+      "docker/**"
+    ]
+  },
+  "acceptance": [
+    "产物真实且仅写入白名单",
+    "当前修订九项范围有事实与证据，结果仅proposal"
+  ],
+  "validation": [
+    "读取最小State快照与本任务baseline，不加载历史State",
+    "对照用例和现有代码/日志，未执行验证须明确"
+  ],
+  "forbidSpawn": true,
+  "forbidGitMvn": true,
+  "output": {
+    "resultRef": ".ai/runtime/results/DISPATCH-20260930-REVIEW-EXP_DESIGN-4caa9c.json",
+    "artifactRef": ".ai/docs/20260930-review-fixes/exp-review.md",
+    "criterionId": "EXP_DESIGN",
+    "validatedRevision": "review-fixes-design-v1"
+  }
+}

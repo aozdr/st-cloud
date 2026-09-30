@@ -3,6 +3,8 @@ package com.stcloud.team.controller;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.stcloud.common.annotation.Auditable;
 import com.stcloud.common.response.Result;
+import com.stcloud.common.response.ResultCode;
+import com.stcloud.common.exception.BusinessException;
 import com.stcloud.core.editor.EditorConfigService;
 import com.stcloud.core.text.TextFileService;
 import com.stcloud.core.dto.TextContentRequest;
@@ -122,8 +124,12 @@ public class TeamController {
     @Operation(summary = "修改成员角色")
     @Auditable(action = "TEAM_UPDATE_MEMBER", targetType = "TEAM", targetIdParam = "memberId")
     @PutMapping("/{spaceId}/member/{memberId}")
-    public Result<Void> updateMemberRole(@PathVariable Long spaceId, @PathVariable Long memberId, @RequestParam Integer role) {
-        return teamService.updateMemberRole(spaceId, memberId, role);
+    public Result<Void> updateMemberRole(@PathVariable Long spaceId, @PathVariable Long memberId, @RequestParam String role) {
+        if (role == null || !role.matches("0|[1-9][0-9]*")) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "角色 ID 格式无效");
+        }
+        try { return teamService.updateMemberRole(spaceId, memberId, Long.parseLong(role)); }
+        catch (NumberFormatException e) { throw new BusinessException(ResultCode.BAD_REQUEST, "角色 ID 超出范围"); }
     }
 
     @Operation(summary = "移除成员")
@@ -403,9 +409,9 @@ public class TeamController {
     @PreAuthorize("hasAuthority('file:copy') or hasRole('ADMIN')")
     @PostMapping("/{spaceId}/files/copy")
     public Result<Void> copyFiles(@PathVariable Long spaceId, @RequestBody MoveRequest request) {
-        // 复制：源与目标均需 view 权限点
+        // 复制会在目标目录创建节点；源需可查看，目标必须有上传写权限。
         for (Long nodeId : request.getNodeIds()) { teamService.requirePermissions(spaceId, nodeId, "view"); }
-        teamService.requirePermissions(spaceId, request.getTargetParentId(), "view");
+        teamService.requirePermissions(spaceId, request.getTargetParentId(), "upload");
         fileService.copyTeamFiles(spaceId, request.getNodeIds(), request.getTargetParentId());
         // 记录复制活动日志
         for (Long nodeId : request.getNodeIds()) {

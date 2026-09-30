@@ -29,7 +29,7 @@ public class TeamMemberVO {
     private String avatar;
 
     @Schema(description = "角色：0-管理员 1-编辑者 2-查看者")
-    private Integer role;
+    private Long role;
 
     @Schema(description = "加入时间")
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")

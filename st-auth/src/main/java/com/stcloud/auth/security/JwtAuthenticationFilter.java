@@ -1,5 +1,6 @@
 package com.stcloud.auth.security;
 
+import com.stcloud.auth.service.UserSecurityService;
 import com.stcloud.common.context.TenantContext;
 import com.stcloud.common.context.UserContext;
 import com.stcloud.common.utils.JwtUtils;
@@ -40,6 +41,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             Pattern.compile("^/api/file/(\\d+)/stream$");
 
     private final JwtUtils jwtUtils;
+    private final UserSecurityService userSecurityService;
     private final StringRedisTemplate stringRedisTemplate;
 
     @Override
@@ -55,9 +57,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 if (streamToken && !enforceStreamToken(request, claims, tokenType)) {
                     // 流式令牌（download/editor）未通过收敛策略：不建立认证上下文，交由 Spring Security 拒绝
                     log.warn("{} 令牌未通过收敛策略，拒绝：uri={}", tokenType, request.getRequestURI());
-                } else {
-                    Long userId = claims.get("userId", Long.class);
-                    Long tenantId = claims.get("tenantId", Long.class);
+                } else if (streamToken || userSecurityService.isCurrentAccess(claims)) {
+                    Long userId = userSecurityService.exactNonNegativeLong(claims.get("userId"));
+                    Long tenantId = userSecurityService.exactNonNegativeLong(claims.get("tenantId"));
                     String username = claims.getSubject();
 
                     // 解析角色和权限
@@ -100,16 +102,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     UsernamePasswordAuthenticationToken authentication =
                             new UsernamePasswordAuthenticationToken(username, null, authorities);
                     SecurityContextHolder.getContext().setAuthentication(authentication);
+                } else {
+                    log.warn("JWT 用途或安全版本无效，拒绝认证");
                 }
             }
         } catch (Exception e) {
             log.warn("JWT 认证失败: {}", e.getMessage());
         } finally {
+            try {
             filterChain.doFilter(request, response);
+            } finally {
             // 请求结束后清理上下文
             TenantContext.clear();
             UserContext.clear();
             SecurityContextHolder.clearContext();
+            }
         }
     }
 

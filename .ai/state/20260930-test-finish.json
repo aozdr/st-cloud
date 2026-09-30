@@ -1,0 +1,622 @@
+{
+  "schemaVersion": 2,
+  "definitionVersion": 2,
+  "taskId": "TASK-20260930-TEST-FINISH",
+  "scale": "large",
+  "status": "done",
+  "goal": {
+    "objective": "完成136条验收与核心修复验证",
+    "scope": "CR-01～07、DB-ID、必要流程一致性修复、隔离夹具",
+    "completionCriteria": [
+      "136条逐项完整证据",
+      "核心修复相称回归通过",
+      "合法自检验收及资源清理"
+    ]
+  },
+  "revision": {
+    "design": "finish-confirmed-v1",
+    "code": "finish-contract-tests-v9"
+  },
+  "exitCriteria": [
+    {
+      "id": "REQ_ANALYSIS",
+      "status": "done",
+      "dependsOn": [],
+      "by": "root",
+      "evidenceRef": ".ai/docs/20260930-test-finish/requirement.md",
+      "validatedRevision": "finish-confirmed-v1",
+      "executionKind": "direct",
+      "executionId": "direct:TASK-20260930-TEST-FINISH:REQ_ANALYSIS:finish-confirmed-v1:finish-sync-identity-v8",
+      "completedAt": "2026-09-30T00:35:20.618846Z"
+    },
+    {
+      "id": "IMPACT_ANALYSIS",
+      "status": "done",
+      "dependsOn": [
+        "REQ_ANALYSIS"
+      ],
+      "by": "root",
+      "evidenceRef": ".ai/docs/20260930-test-finish/impact.md",
+      "validatedRevision": "finish-confirmed-v1",
+      "executionKind": "direct",
+      "executionId": "direct:TASK-20260930-TEST-FINISH:IMPACT_ANALYSIS:finish-confirmed-v1:finish-sync-identity-v8",
+      "completedAt": "2026-09-30T00:35:20.9503117Z"
+    },
+    {
+      "id": "EXP_DESIGN",
+      "status": "done",
+      "dependsOn": [
+        "REQ_ANALYSIS"
+      ],
+      "applicable": true,
+      "by": "root",
+      "evidenceRef": ".ai/docs/20260930-test-finish/exp-review.md",
+      "validatedRevision": "finish-confirmed-v1",
+      "executionKind": "direct",
+      "executionId": "direct:TASK-20260930-TEST-FINISH:EXP_DESIGN:finish-confirmed-v1:finish-sync-identity-v8",
+      "completedAt": "2026-09-30T00:36:11.9841096Z"
+    },
+    {
+      "id": "TECH_DESIGN",
+      "status": "done",
+      "dependsOn": [
+        "IMPACT_ANALYSIS",
+        "EXP_DESIGN"
+      ],
+      "by": "root",
+      "evidenceRef": ".ai/docs/20260930-test-finish/design.md",
+      "validatedRevision": "finish-confirmed-v1",
+      "executionKind": "direct",
+      "executionId": "direct:TASK-20260930-TEST-FINISH:TECH_DESIGN:finish-confirmed-v1:finish-sync-identity-v8",
+      "completedAt": "2026-09-30T00:36:12.4211435Z"
+    },
+    {
+      "id": "TESTCASES",
+      "status": "done",
+      "dependsOn": [
+        "TECH_DESIGN"
+      ],
+      "by": "root",
+      "evidenceRef": ".ai/docs/20260930-test-finish/testcases.md",
+      "validatedRevision": "finish-confirmed-v1",
+      "executionKind": "direct",
+      "executionId": "direct:TASK-20260930-TEST-FINISH:TESTCASES:finish-confirmed-v1:finish-sync-identity-v8",
+      "completedAt": "2026-09-30T00:36:12.8639685Z"
+    },
+    {
+      "id": "IMPLEMENTED",
+      "status": "done",
+      "dependsOn": [
+        "TECH_DESIGN",
+        "TESTCASES"
+      ],
+      "by": "root",
+      "evidenceRef": ".ai/docs/20260930-test-finish/changereport.md",
+      "validatedRevision": "finish-contract-tests-v9",
+      "executionKind": "direct",
+      "executionId": "direct:TASK-20260930-TEST-FINISH:IMPLEMENTED:finish-confirmed-v1:finish-contract-tests-v9",
+      "completedAt": "2026-09-30T00:59:33.9144163Z"
+    },
+    {
+      "id": "CODE_REVIEW",
+      "status": "done",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ],
+      "by": "root",
+      "evidenceRef": ".ai/docs/20260930-test-finish/codereview.md",
+      "validatedRevision": "finish-contract-tests-v9",
+      "executionKind": "direct",
+      "executionId": "direct:TASK-20260930-TEST-FINISH:CODE_REVIEW:finish-confirmed-v1:finish-contract-tests-v9",
+      "completedAt": "2026-09-30T00:59:34.4515046Z"
+    },
+    {
+      "id": "SECURITY_REVIEW",
+      "status": "done",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ],
+      "by": "root",
+      "evidenceRef": ".ai/docs/20260930-test-finish/security.md",
+      "validatedRevision": "finish-contract-tests-v9",
+      "executionKind": "direct",
+      "executionId": "direct:TASK-20260930-TEST-FINISH:SECURITY_REVIEW:finish-confirmed-v1:finish-contract-tests-v9",
+      "completedAt": "2026-09-30T00:59:34.9659382Z"
+    },
+    {
+      "id": "EXP_ACCEPT",
+      "status": "done",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ],
+      "applicable": true,
+      "by": "root",
+      "evidenceRef": ".ai/docs/20260930-test-finish/exp-review.md",
+      "validatedRevision": "finish-contract-tests-v9",
+      "executionKind": "direct",
+      "executionId": "direct:TASK-20260930-TEST-FINISH:EXP_ACCEPT:finish-confirmed-v1:finish-contract-tests-v9",
+      "completedAt": "2026-09-30T00:59:35.4344375Z"
+    },
+    {
+      "id": "TEST_PASS",
+      "status": "done",
+      "dependsOn": [
+        "CODE_REVIEW",
+        "SECURITY_REVIEW"
+      ],
+      "by": "root",
+      "evidenceRef": ".ai/docs/20260930-test-finish/testreport.md",
+      "validatedRevision": "finish-contract-tests-v9",
+      "executionKind": "direct",
+      "executionId": "direct:TASK-20260930-TEST-FINISH:TEST_PASS:finish-confirmed-v1:finish-contract-tests-v9",
+      "completedAt": "2026-09-30T00:59:35.8738215Z"
+    },
+    {
+      "id": "KNOWLEDGE",
+      "status": "done",
+      "dependsOn": [
+        "TEST_PASS",
+        "SECURITY_REVIEW",
+        "EXP_ACCEPT"
+      ],
+      "by": "root",
+      "evidenceRef": ".ai/docs/20260930-test-finish/knowledge.md",
+      "validatedRevision": "finish-contract-tests-v9",
+      "executionKind": "direct",
+      "executionId": "direct:TASK-20260930-TEST-FINISH:KNOWLEDGE:finish-confirmed-v1:finish-contract-tests-v9",
+      "completedAt": "2026-09-30T00:59:36.2865676Z"
+    },
+    {
+      "id": "ACCEPT",
+      "status": "done",
+      "dependsOn": [
+        "KNOWLEDGE"
+      ],
+      "by": "root",
+      "evidenceRef": ".ai/docs/20260930-test-finish/acceptance.md",
+      "validatedRevision": "finish-contract-tests-v9",
+      "executionKind": "direct",
+      "executionId": "direct:TASK-20260930-TEST-FINISH:ACCEPT:finish-confirmed-v1:finish-contract-tests-v9",
+      "completedAt": "2026-09-30T00:59:36.717081Z"
+    }
+  ],
+  "artifacts": {
+    "requirement.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-test-finish/requirement.md"
+    },
+    "impact.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-test-finish/impact.md"
+    },
+    "architecture-review.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-test-finish/architecture-review.md"
+    },
+    "design.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-test-finish/design.md"
+    },
+    "testcases.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-test-finish/testcases.md"
+    },
+    "uispec.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-test-finish/uispec.md"
+    },
+    "exp-review.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-test-finish/exp-review.md"
+    },
+    "results.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-test-finish/results.md"
+    },
+    "remaining.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-test-finish/remaining.md"
+    },
+    "testreport.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-test-finish/testreport.md"
+    },
+    "changereport.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-test-finish/changereport.md"
+    },
+    "codereview.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-test-finish/codereview.md"
+    },
+    "security.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-test-finish/security.md"
+    },
+    "knowledge.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-test-finish/knowledge.md"
+    },
+    "acceptance.md": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-test-finish/acceptance.md"
+    }
+  },
+  "blockers": [],
+  "acceptanceEvidence": [
+    {
+      "evidenceRef": ".ai/docs/20260930-test-finish/acceptance.md",
+      "validatedRevision": "finish-contract-tests-v9",
+      "criterion": "136条逐项完整证据"
+    },
+    {
+      "evidenceRef": ".ai/docs/20260930-test-finish/acceptance.md",
+      "validatedRevision": "finish-contract-tests-v9",
+      "criterion": "核心修复相称回归通过"
+    },
+    {
+      "evidenceRef": ".ai/docs/20260930-test-finish/acceptance.md",
+      "validatedRevision": "finish-contract-tests-v9",
+      "criterion": "合法自检验收及资源清理"
+    }
+  ],
+  "dispatchLedger": [],
+  "proposals": [],
+  "history": [
+    {
+      "eventId": "b77837ce-13f4-4eb9-a758-6b25946d5563",
+      "action": "init",
+      "before": null,
+      "after": {
+        "taskId": "TASK-20260930-TEST-FINISH",
+        "scale": "large",
+        "status": "running",
+        "revision": {
+          "design": null,
+          "code": null
+        }
+      },
+      "actor": "root",
+      "occurredAt": "2026-09-30T00:33:07.1441918Z",
+      "revision": {
+        "design": null,
+        "code": null
+      }
+    },
+    {
+      "eventId": "direct:TASK-20260930-TEST-FINISH:REQ_ANALYSIS:finish-confirmed-v1:finish-sync-identity-v8",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "REQ_ANALYSIS",
+        "status": "pending"
+      },
+      "after": {
+        "id": "REQ_ANALYSIS",
+        "status": "done",
+        "revision": {
+          "design": "finish-confirmed-v1",
+          "code": "finish-sync-identity-v8"
+        }
+      },
+      "actor": "root",
+      "occurredAt": "2026-09-30T00:35:20.6488236Z",
+      "revision": {
+        "design": "finish-confirmed-v1",
+        "code": "finish-sync-identity-v8"
+      }
+    },
+    {
+      "eventId": "direct:TASK-20260930-TEST-FINISH:IMPACT_ANALYSIS:finish-confirmed-v1:finish-sync-identity-v8",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "IMPACT_ANALYSIS",
+        "status": "pending"
+      },
+      "after": {
+        "id": "IMPACT_ANALYSIS",
+        "status": "done",
+        "revision": {
+          "design": "finish-confirmed-v1",
+          "code": "finish-sync-identity-v8"
+        }
+      },
+      "actor": "root",
+      "occurredAt": "2026-09-30T00:35:20.956659Z",
+      "revision": {
+        "design": "finish-confirmed-v1",
+        "code": "finish-sync-identity-v8"
+      }
+    },
+    {
+      "eventId": "direct:TASK-20260930-TEST-FINISH:EXP_DESIGN:finish-confirmed-v1:finish-sync-identity-v8",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "EXP_DESIGN",
+        "status": "pending"
+      },
+      "after": {
+        "id": "EXP_DESIGN",
+        "status": "done",
+        "revision": {
+          "design": "finish-confirmed-v1",
+          "code": "finish-sync-identity-v8"
+        }
+      },
+      "actor": "root",
+      "occurredAt": "2026-09-30T00:36:12.0246629Z",
+      "revision": {
+        "design": "finish-confirmed-v1",
+        "code": "finish-sync-identity-v8"
+      }
+    },
+    {
+      "eventId": "direct:TASK-20260930-TEST-FINISH:TECH_DESIGN:finish-confirmed-v1:finish-sync-identity-v8",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "TECH_DESIGN",
+        "status": "pending"
+      },
+      "after": {
+        "id": "TECH_DESIGN",
+        "status": "done",
+        "revision": {
+          "design": "finish-confirmed-v1",
+          "code": "finish-sync-identity-v8"
+        }
+      },
+      "actor": "root",
+      "occurredAt": "2026-09-30T00:36:12.4355751Z",
+      "revision": {
+        "design": "finish-confirmed-v1",
+        "code": "finish-sync-identity-v8"
+      }
+    },
+    {
+      "eventId": "direct:TASK-20260930-TEST-FINISH:TESTCASES:finish-confirmed-v1:finish-sync-identity-v8",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "TESTCASES",
+        "status": "pending"
+      },
+      "after": {
+        "id": "TESTCASES",
+        "status": "done",
+        "revision": {
+          "design": "finish-confirmed-v1",
+          "code": "finish-sync-identity-v8"
+        }
+      },
+      "actor": "root",
+      "occurredAt": "2026-09-30T00:36:12.8706866Z",
+      "revision": {
+        "design": "finish-confirmed-v1",
+        "code": "finish-sync-identity-v8"
+      }
+    },
+    {
+      "eventId": "stale:code:finish-contract-tests-v9",
+      "action": "stale-cascade",
+      "before": {
+        "roots": [
+          "IMPLEMENTED",
+          "CODE_REVIEW",
+          "SECURITY_REVIEW",
+          "EXP_ACCEPT",
+          "TEST_PASS",
+          "KNOWLEDGE",
+          "ACCEPT"
+        ]
+      },
+      "after": {
+        "affected": [
+          "IMPLEMENTED",
+          "CODE_REVIEW",
+          "SECURITY_REVIEW",
+          "EXP_ACCEPT",
+          "TEST_PASS",
+          "KNOWLEDGE",
+          "ACCEPT"
+        ],
+        "revision": {
+          "design": "finish-confirmed-v1",
+          "code": "finish-contract-tests-v9"
+        }
+      },
+      "actor": "root",
+      "occurredAt": "2026-09-30T00:51:06.5929435Z",
+      "revision": {
+        "design": "finish-confirmed-v1",
+        "code": "finish-contract-tests-v9"
+      }
+    },
+    {
+      "eventId": "direct:TASK-20260930-TEST-FINISH:IMPLEMENTED:finish-confirmed-v1:finish-contract-tests-v9",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "IMPLEMENTED",
+        "status": "pending"
+      },
+      "after": {
+        "id": "IMPLEMENTED",
+        "status": "done",
+        "revision": {
+          "design": "finish-confirmed-v1",
+          "code": "finish-contract-tests-v9"
+        }
+      },
+      "actor": "root",
+      "occurredAt": "2026-09-30T00:59:33.9407094Z",
+      "revision": {
+        "design": "finish-confirmed-v1",
+        "code": "finish-contract-tests-v9"
+      }
+    },
+    {
+      "eventId": "direct:TASK-20260930-TEST-FINISH:CODE_REVIEW:finish-confirmed-v1:finish-contract-tests-v9",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "CODE_REVIEW",
+        "status": "pending"
+      },
+      "after": {
+        "id": "CODE_REVIEW",
+        "status": "done",
+        "revision": {
+          "design": "finish-confirmed-v1",
+          "code": "finish-contract-tests-v9"
+        }
+      },
+      "actor": "root",
+      "occurredAt": "2026-09-30T00:59:34.4606981Z",
+      "revision": {
+        "design": "finish-confirmed-v1",
+        "code": "finish-contract-tests-v9"
+      }
+    },
+    {
+      "eventId": "direct:TASK-20260930-TEST-FINISH:SECURITY_REVIEW:finish-confirmed-v1:finish-contract-tests-v9",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "SECURITY_REVIEW",
+        "status": "pending"
+      },
+      "after": {
+        "id": "SECURITY_REVIEW",
+        "status": "done",
+        "revision": {
+          "design": "finish-confirmed-v1",
+          "code": "finish-contract-tests-v9"
+        }
+      },
+      "actor": "root",
+      "occurredAt": "2026-09-30T00:59:34.9745644Z",
+      "revision": {
+        "design": "finish-confirmed-v1",
+        "code": "finish-contract-tests-v9"
+      }
+    },
+    {
+      "eventId": "direct:TASK-20260930-TEST-FINISH:EXP_ACCEPT:finish-confirmed-v1:finish-contract-tests-v9",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "EXP_ACCEPT",
+        "status": "pending"
+      },
+      "after": {
+        "id": "EXP_ACCEPT",
+        "status": "done",
+        "revision": {
+          "design": "finish-confirmed-v1",
+          "code": "finish-contract-tests-v9"
+        }
+      },
+      "actor": "root",
+      "occurredAt": "2026-09-30T00:59:35.4409521Z",
+      "revision": {
+        "design": "finish-confirmed-v1",
+        "code": "finish-contract-tests-v9"
+      }
+    },
+    {
+      "eventId": "direct:TASK-20260930-TEST-FINISH:TEST_PASS:finish-confirmed-v1:finish-contract-tests-v9",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "TEST_PASS",
+        "status": "pending"
+      },
+      "after": {
+        "id": "TEST_PASS",
+        "status": "done",
+        "revision": {
+          "design": "finish-confirmed-v1",
+          "code": "finish-contract-tests-v9"
+        }
+      },
+      "actor": "root",
+      "occurredAt": "2026-09-30T00:59:35.8804794Z",
+      "revision": {
+        "design": "finish-confirmed-v1",
+        "code": "finish-contract-tests-v9"
+      }
+    },
+    {
+      "eventId": "direct:TASK-20260930-TEST-FINISH:KNOWLEDGE:finish-confirmed-v1:finish-contract-tests-v9",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "KNOWLEDGE",
+        "status": "pending"
+      },
+      "after": {
+        "id": "KNOWLEDGE",
+        "status": "done",
+        "revision": {
+          "design": "finish-confirmed-v1",
+          "code": "finish-contract-tests-v9"
+        }
+      },
+      "actor": "root",
+      "occurredAt": "2026-09-30T00:59:36.2868798Z",
+      "revision": {
+        "design": "finish-confirmed-v1",
+        "code": "finish-contract-tests-v9"
+      }
+    },
+    {
+      "eventId": "direct:TASK-20260930-TEST-FINISH:ACCEPT:finish-confirmed-v1:finish-contract-tests-v9",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "ACCEPT",
+        "status": "pending"
+      },
+      "after": {
+        "id": "ACCEPT",
+        "status": "done",
+        "revision": {
+          "design": "finish-confirmed-v1",
+          "code": "finish-contract-tests-v9"
+        }
+      },
+      "actor": "root",
+      "occurredAt": "2026-09-30T00:59:36.7184919Z",
+      "revision": {
+        "design": "finish-confirmed-v1",
+        "code": "finish-contract-tests-v9"
+      }
+    },
+    {
+      "eventId": "complete",
+      "action": "complete",
+      "before": {
+        "status": "running"
+      },
+      "after": {
+        "status": "done",
+        "revision": {
+          "design": "finish-confirmed-v1",
+          "code": "finish-contract-tests-v9"
+        }
+      },
+      "actor": "root",
+      "occurredAt": "2026-09-30T00:59:37.5057127Z",
+      "revision": {
+        "design": "finish-confirmed-v1",
+        "code": "finish-contract-tests-v9"
+      }
+    }
+  ],
+  "singleAgentAuthorization": {
+    "taskId": "TASK-20260930-TEST-FINISH",
+    "actor": "root",
+    "authorizedBy": "user",
+    "authorizationQuote": "不要开子线程或子 Agent，全部由当前主线程完成。",
+    "evidenceRef": ".ai/tasks/TASK-20260930-TEST-FINISH.md",
+    "criteria": [
+      "EXP_DESIGN",
+      "CODE_REVIEW",
+      "SECURITY_REVIEW",
+      "EXP_ACCEPT",
+      "TEST_PASS",
+      "ACCEPT"
+    ]
+  }
+}

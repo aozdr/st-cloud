@@ -1,0 +1,3 @@
+PASS: 20 real authenticated HTTP requests, no new TenantContext WARN during authentication, following anonymous request denied
+Anonymous response: 401 401
+MQ uses isolated broker; MySQL and Redis use independent test data; no full business-flow claim for this check

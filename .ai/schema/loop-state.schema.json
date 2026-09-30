@@ -50,7 +50,7 @@
         "authorizedBy": { "const": "user" },
         "authorizationQuote": { "type": "string", "minLength": 1 },
         "evidenceRef": { "type": "string", "minLength": 1 },
-        "criteria": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["CODE_REVIEW", "SECURITY_REVIEW", "EXP_ACCEPT", "TEST_PASS", "ACCEPT"] } }
+        "criteria": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["EXP_DESIGN", "CODE_REVIEW", "SECURITY_REVIEW", "EXP_ACCEPT", "TEST_PASS", "ACCEPT"] } }
       }
     },
     "proposals": { "type": "array", "items": { "type": "object" } },

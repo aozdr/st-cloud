@@ -14,6 +14,8 @@ import io.jsonwebtoken.Claims;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.util.List;
 import java.util.Set;
@@ -25,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.doReturn;
 
 /**
  * st-auth 登录/认证主路径集成测试：
@@ -33,6 +36,9 @@ import static org.mockito.Mockito.when;
  */
 @DisplayName("st-auth 认证主路径集成测试")
 class AuthServiceIntegrationTest extends AbstractAuthIntegrationTest {
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
 
     @Test
     @DisplayName("注册：创建用户、分配默认 user 角色并签发可校验 Token")
@@ -148,6 +154,8 @@ class AuthServiceIntegrationTest extends AbstractAuthIntegrationTest {
         // 模拟 Redis 命中：登录时写入的 refresh token 仍然有效
         when(redisValueOperations.get("stcloud:refresh:" + loginResp.getUserId()))
                 .thenReturn(loginResp.getRefreshToken());
+        doReturn(1L).when(redisTemplate).execute(ArgumentMatchers.any(), ArgumentMatchers.anyList(),
+                ArgumentMatchers.anyString(), ArgumentMatchers.anyString(), ArgumentMatchers.anyString());
 
         LoginResponse resp = authService.refreshToken(loginResp.getRefreshToken());
 

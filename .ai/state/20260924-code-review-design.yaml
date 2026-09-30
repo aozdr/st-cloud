@@ -1,0 +1,325 @@
+{
+  "schemaVersion": 2,
+  "definitionVersion": 2,
+  "taskId": "20260924-code-review-design",
+  "scale": "large",
+  "status": "running",
+  "goal": {
+    "objective": "完成 CR-01 至 CR-07 需求与程序设计；本轮止于设计，不执行测试用例、实现及后续流程",
+    "scope": "仅 .ai/docs/20260924-code-review-design、对应 TASK、State 与独立设计结果",
+    "completionCriteria": [
+      "七项需求与设计均有现状证据、边界、异常、API及数据兼容方案",
+      "设计材料完成并明确后续执行边界；后续流程保持 pending"
+    ]
+  },
+  "revision": {
+    "design": "design-v1",
+    "code": "912996e1b8f34904b792f29ceacab2023844e038"
+  },
+  "exitCriteria": [
+    {
+      "id": "REQ_ANALYSIS",
+      "status": "done",
+      "dependsOn": [],
+      "confirmationRequired": false,
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20260924-code-review-design/document-check.md",
+      "validatedRevision": "design-v1",
+      "executionKind": "direct",
+      "executionId": "direct:20260924-code-review-design:REQ_ANALYSIS:design-v1:912996e1b8f34904b792f29ceacab2023844e038",
+      "completedAt": "2026-09-24T01:27:18.8441221Z"
+    },
+    {
+      "id": "IMPACT_ANALYSIS",
+      "status": "done",
+      "dependsOn": [
+        "REQ_ANALYSIS"
+      ],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20260924-code-review-design/document-check.md",
+      "validatedRevision": "design-v1",
+      "executionKind": "direct",
+      "executionId": "direct:20260924-code-review-design:IMPACT_ANALYSIS:design-v1:912996e1b8f34904b792f29ceacab2023844e038",
+      "completedAt": "2026-09-24T01:27:20.0097808Z"
+    },
+    {
+      "id": "EXP_DESIGN",
+      "status": "pending",
+      "dependsOn": [
+        "REQ_ANALYSIS"
+      ],
+      "applicable": true
+    },
+    {
+      "id": "TECH_DESIGN",
+      "status": "pending",
+      "dependsOn": [
+        "IMPACT_ANALYSIS",
+        "EXP_DESIGN"
+      ],
+      "confirmationRequired": false
+    },
+    {
+      "id": "TESTCASES",
+      "status": "pending",
+      "dependsOn": [
+        "TECH_DESIGN"
+      ]
+    },
+    {
+      "id": "IMPLEMENTED",
+      "status": "pending",
+      "dependsOn": [
+        "TECH_DESIGN",
+        "TESTCASES"
+      ]
+    },
+    {
+      "id": "CODE_REVIEW",
+      "status": "pending",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ]
+    },
+    {
+      "id": "SECURITY_REVIEW",
+      "status": "pending",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ]
+    },
+    {
+      "id": "EXP_ACCEPT",
+      "status": "pending",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ],
+      "applicable": true
+    },
+    {
+      "id": "TEST_PASS",
+      "status": "pending",
+      "dependsOn": [
+        "CODE_REVIEW",
+        "SECURITY_REVIEW"
+      ]
+    },
+    {
+      "id": "KNOWLEDGE",
+      "status": "pending",
+      "dependsOn": [
+        "TEST_PASS",
+        "SECURITY_REVIEW",
+        "EXP_ACCEPT"
+      ]
+    },
+    {
+      "id": "ACCEPT",
+      "status": "pending",
+      "dependsOn": [
+        "KNOWLEDGE"
+      ]
+    }
+  ],
+  "artifacts": {
+    "requirement": {
+      "ref": ".ai/docs/20260924-code-review-design/requirement.md",
+      "status": "ready"
+    },
+    "impact": {
+      "ref": ".ai/docs/20260924-code-review-design/impact.md",
+      "status": "ready"
+    },
+    "uispec": {
+      "ref": ".ai/docs/20260924-code-review-design/uispec.md",
+      "status": "ready"
+    },
+    "architecture-review": {
+      "ref": ".ai/docs/20260924-code-review-design/architecture-review.md",
+      "status": "ready"
+    },
+    "design": {
+      "ref": ".ai/docs/20260924-code-review-design/design.md",
+      "status": "ready"
+    },
+    "exp-review": {
+      "ref": ".ai/docs/20260924-code-review-design/exp-review.md",
+      "status": "ready"
+    },
+    "document-check": {
+      "ref": ".ai/docs/20260924-code-review-design/document-check.md",
+      "status": "ready"
+    },
+    "CR-01-requirement": {
+      "ref": ".ai/docs/20260924-code-review-design/CR-01/requirement.md",
+      "status": "ready"
+    },
+    "CR-01-design": {
+      "ref": ".ai/docs/20260924-code-review-design/CR-01/design.md",
+      "status": "ready"
+    },
+    "CR-02-requirement": {
+      "ref": ".ai/docs/20260924-code-review-design/CR-02/requirement.md",
+      "status": "ready"
+    },
+    "CR-02-design": {
+      "ref": ".ai/docs/20260924-code-review-design/CR-02/design.md",
+      "status": "ready"
+    },
+    "CR-03-requirement": {
+      "ref": ".ai/docs/20260924-code-review-design/CR-03/requirement.md",
+      "status": "ready"
+    },
+    "CR-03-design": {
+      "ref": ".ai/docs/20260924-code-review-design/CR-03/design.md",
+      "status": "ready"
+    },
+    "CR-04-requirement": {
+      "ref": ".ai/docs/20260924-code-review-design/CR-04/requirement.md",
+      "status": "ready"
+    },
+    "CR-04-design": {
+      "ref": ".ai/docs/20260924-code-review-design/CR-04/design.md",
+      "status": "ready"
+    },
+    "CR-05-requirement": {
+      "ref": ".ai/docs/20260924-code-review-design/CR-05/requirement.md",
+      "status": "ready"
+    },
+    "CR-05-design": {
+      "ref": ".ai/docs/20260924-code-review-design/CR-05/design.md",
+      "status": "ready"
+    },
+    "CR-06-requirement": {
+      "ref": ".ai/docs/20260924-code-review-design/CR-06/requirement.md",
+      "status": "ready"
+    },
+    "CR-06-design": {
+      "ref": ".ai/docs/20260924-code-review-design/CR-06/design.md",
+      "status": "ready"
+    },
+    "CR-07-requirement": {
+      "ref": ".ai/docs/20260924-code-review-design/CR-07/requirement.md",
+      "status": "ready"
+    },
+    "CR-07-design": {
+      "ref": ".ai/docs/20260924-code-review-design/CR-07/design.md",
+      "status": "ready"
+    }
+  },
+  "blockers": [],
+  "acceptanceEvidence": [],
+  "dispatchLedger": [
+    {
+      "dispatchId": "DISPATCH-20260924-DESIGN-CR-01-01",
+      "taskId": "TASK-20260924-DESIGN-CR-01",
+      "idempotencyKey": "design-20260924-CR-01",
+      "role": "executor",
+      "taskType": "design",
+      "criterionId": "TECH_DESIGN",
+      "childId": "/root/design_auth",
+      "status": "failed",
+      "cancellationReason": "用户明确不要子线程，已中断；未收到独立结果，不执行 Evaluate pass",
+      "evidenceRef": ".ai/docs/20260924-code-review-design/document-check.md"
+    },
+    {
+      "dispatchId": "DISPATCH-20260924-DESIGN-CR-02-01",
+      "taskId": "TASK-20260924-DESIGN-CR-02",
+      "idempotencyKey": "design-20260924-CR-02",
+      "role": "executor",
+      "taskType": "design",
+      "criterionId": "TECH_DESIGN",
+      "childId": "/root/design_team",
+      "status": "failed",
+      "cancellationReason": "用户明确不要子线程，已中断；未收到独立结果，不执行 Evaluate pass",
+      "evidenceRef": ".ai/docs/20260924-code-review-design/document-check.md"
+    },
+    {
+      "dispatchId": "DISPATCH-20260924-DESIGN-CR-04-01",
+      "taskId": "TASK-20260924-DESIGN-CR-04",
+      "idempotencyKey": "design-20260924-CR-04",
+      "role": "executor",
+      "taskType": "design",
+      "criterionId": "TECH_DESIGN",
+      "childId": "/root/design_sync",
+      "status": "failed",
+      "cancellationReason": "用户明确不要子线程，已中断；未收到独立结果，不执行 Evaluate pass",
+      "evidenceRef": ".ai/docs/20260924-code-review-design/document-check.md"
+    }
+  ],
+  "proposals": [],
+  "history": [
+    {
+      "eventId": "0912d19d-9ae1-4822-9c3a-6b9c99ab8996",
+      "action": "init",
+      "before": null,
+      "after": {
+        "taskId": "20260924-code-review-design",
+        "status": "running"
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-24T01:09:04.0227534Z",
+      "revision": {
+        "design": null,
+        "code": null
+      }
+    },
+    {
+      "eventId": "20260924-user-single-author-design-only",
+      "action": "record-scope-and-cancel-dispatch",
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-24T01:27:17.4810015Z",
+      "revision": {
+        "design": "design-v1",
+        "code": "912996e1b8f34904b792f29ceacab2023844e038"
+      },
+      "userInstruction": "不要开子线程，你自己完成",
+      "stopBoundary": "所有需求和程序设计文档完成后停止；不进入 TESTCASES 及之后流程",
+      "evidenceRef": ".ai/docs/20260924-code-review-design/document-check.md"
+    },
+    {
+      "eventId": "direct:20260924-code-review-design:REQ_ANALYSIS:design-v1:912996e1b8f34904b792f29ceacab2023844e038",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "REQ_ANALYSIS",
+        "status": "pending"
+      },
+      "after": {
+        "id": "REQ_ANALYSIS",
+        "status": "done",
+        "revision": {
+          "design": "design-v1",
+          "code": "912996e1b8f34904b792f29ceacab2023844e038"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-24T01:27:18.8813629Z",
+      "revision": {
+        "design": "design-v1",
+        "code": "912996e1b8f34904b792f29ceacab2023844e038"
+      }
+    },
+    {
+      "eventId": "direct:20260924-code-review-design:IMPACT_ANALYSIS:design-v1:912996e1b8f34904b792f29ceacab2023844e038",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "IMPACT_ANALYSIS",
+        "status": "pending"
+      },
+      "after": {
+        "id": "IMPACT_ANALYSIS",
+        "status": "done",
+        "revision": {
+          "design": "design-v1",
+          "code": "912996e1b8f34904b792f29ceacab2023844e038"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-24T01:27:20.0428724Z",
+      "revision": {
+        "design": "design-v1",
+        "code": "912996e1b8f34904b792f29ceacab2023844e038"
+      }
+    }
+  ]
+}

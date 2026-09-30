@@ -1,0 +1,64 @@
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-09-28T08:29:33.485+08:00  INFO 24424 --- [           main] c.s.s.w.WebSocketSecurityIntegrationTest : Starting WebSocketSecurityIntegrationTest using Java 17.0.14 with PID 24424 (started by Administrator in E:\code\st-cloud\st-sync)
+2026-09-28T08:29:33.487+08:00  INFO 24424 --- [           main] c.s.s.w.WebSocketSecurityIntegrationTest : No active profile set, falling back to 1 default profile: "default"
+2026-09-28T08:29:34.528+08:00  WARN 24424 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-28T08:29:34.530+08:00  WARN 24424 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-28T08:29:34.588+08:00  WARN 24424 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'createRocketMQMessageConverter' of type [org.apache.rocketmq.spring.support.RocketMQMessageConverter] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-28T08:29:34.604+08:00  WARN 24424 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketmq-org.apache.rocketmq.spring.autoconfigure.RocketMQProperties' of type [org.apache.rocketmq.spring.autoconfigure.RocketMQProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-28T08:29:34.606+08:00  WARN 24424 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketMQMessageListenerContainerRegistrar' of type [org.apache.rocketmq.spring.support.RocketMQMessageListenerContainerRegistrar] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-28T08:29:34.913+08:00  INFO 24424 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 0 (http)
+2026-09-28T08:29:34.923+08:00  INFO 24424 --- [           main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-09-28T08:29:34.923+08:00  INFO 24424 --- [           main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.20]
+2026-09-28T08:29:35.003+08:00  INFO 24424 --- [           main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2026-09-28T08:29:35.005+08:00  INFO 24424 --- [           main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1489 ms
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-09-28T08:29:35.261+08:00  INFO 24424 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-09-28T08:29:35.458+08:00  INFO 24424 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:ws-security user=SA
+2026-09-28T08:29:35.459+08:00  INFO 24424 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-09-28T08:29:35.828+08:00  WARN 24424 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-28T08:29:35.831+08:00  INFO 24424 --- [           main] com.stcloud.common.utils.JwtUtils        : JWT ǩ����Կ��������ɲ��������
+2026-09-28T08:29:36.277+08:00  WARN 24424 --- [           main] o.a.r.s.a.RocketMQAutoConfiguration      : The necessary spring property 'rocketmq.name-server' is not defined, all rockertmq beans creation are skipped!
+2026-09-28T08:29:36.718+08:00  INFO 24424 --- [           main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 55508 (http) with context path ''
+2026-09-28T08:29:36.726+08:00  INFO 24424 --- [           main] c.s.s.w.WebSocketSecurityIntegrationTest : Started WebSocketSecurityIntegrationTest in 3.5 seconds (process running for 4.379)
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+2026-09-28T08:29:38.571+08:00  INFO 24424 --- [o-auto-1-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2026-09-28T08:29:38.571+08:00  INFO 24424 --- [o-auto-1-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2026-09-28T08:29:38.572+08:00  INFO 24424 --- [o-auto-1-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2026-09-28T08:29:38.615+08:00  WARN 24424 --- [o-auto-1-exec-1] c.s.s.ws.SyncAuthHandshakeInterceptor    : WebSocket ����ʧ�ܣ�token ��Ч���ѹ���
+2026-09-28T08:29:38.706+08:00  WARN 24424 --- [o-auto-1-exec-3] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-28T08:29:38.751+08:00  INFO 24424 --- [o-auto-1-exec-3] c.stcloud.sync.ws.SyncWebSocketHandler   : WebSocket ���ӽ�����userId=1, sessionId=d2aa64ae-82d5-6ce7-8a45-7b0e56c669f2, �����豸=1
+2026-09-28T08:29:38.763+08:00  WARN 24424 --- [o-auto-1-exec-4] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-28T08:29:38.765+08:00  INFO 24424 --- [o-auto-1-exec-4] c.stcloud.sync.ws.SyncWebSocketHandler   : WebSocket ���ӹرգ�userId=1, sessionId=d2aa64ae-82d5-6ce7-8a45-7b0e56c669f2, status=CloseStatus[code=1003, reason=null]
+2026-09-28T08:29:38.766+08:00  WARN 24424 --- [o-auto-1-exec-5] c.stcloud.sync.ws.SyncWebSocketHandler   : WebSocket �������sessionId=d2aa64ae-82d5-6ce7-8a45-7b0e56c669f2, error=null
+2026-09-28T08:29:38.777+08:00  WARN 24424 --- [o-auto-1-exec-6] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-28T08:29:38.781+08:00  INFO 24424 --- [o-auto-1-exec-6] c.stcloud.sync.ws.SyncWebSocketHandler   : WebSocket ���ӽ�����userId=1, sessionId=316c827a-f09b-8bde-c0a3-97a43507446d, �����豸=1
+2026-09-28T08:29:38.782+08:00  WARN 24424 --- [o-auto-1-exec-7] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-28T08:29:38.786+08:00  WARN 24424 --- [           main] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-28T08:29:38.787+08:00  INFO 24424 --- [           main] c.stcloud.sync.ws.SyncWebSocketHandler   : WebSocket ���ӹرգ�userId=1, sessionId=316c827a-f09b-8bde-c0a3-97a43507446d, status=CloseStatus[code=1003, reason=null]
+2026-09-28T08:29:38.798+08:00  WARN 24424 --- [o-auto-1-exec-9] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-28T08:29:38.802+08:00  INFO 24424 --- [o-auto-1-exec-9] c.stcloud.sync.ws.SyncWebSocketHandler   : WebSocket ���ӽ�����userId=1, sessionId=c76a22f8-4afa-6337-0ef2-24c4a0215841, �����豸=1
+2026-09-28T08:29:38.803+08:00  WARN 24424 --- [-auto-1-exec-10] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-28T08:29:38.808+08:00  INFO 24424 --- [           main] c.stcloud.sync.ws.SyncWebSocketHandler   : WebSocket ���ӹرգ�userId=1, sessionId=c76a22f8-4afa-6337-0ef2-24c4a0215841, status=CloseStatus[code=1003, reason=null]
+2026-09-28T08:29:38.819+08:00  WARN 24424 --- [o-auto-1-exec-2] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-28T08:29:38.823+08:00  INFO 24424 --- [o-auto-1-exec-2] c.stcloud.sync.ws.SyncWebSocketHandler   : WebSocket ���ӽ�����userId=1, sessionId=944bfa15-371d-add2-6374-795bf577e339, �����豸=1
+2026-09-28T08:29:41.021+08:00  INFO 24424 --- [o-auto-1-exec-4] c.stcloud.sync.ws.SyncWebSocketHandler   : WebSocket ���ӹرգ�userId=1, sessionId=944bfa15-371d-add2-6374-795bf577e339, status=CloseStatus[code=1003, reason=null]
+2026-09-28T08:29:41.022+08:00  WARN 24424 --- [o-auto-1-exec-4] c.stcloud.sync.ws.SyncWebSocketHandler   : WebSocket �������sessionId=944bfa15-371d-add2-6374-795bf577e339, error=null
+2026-09-28T08:29:41.032+08:00  WARN 24424 --- [o-auto-1-exec-5] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-28T08:29:41.036+08:00  INFO 24424 --- [o-auto-1-exec-5] c.stcloud.sync.ws.SyncWebSocketHandler   : WebSocket ���ӽ�����userId=1, sessionId=0cc5e234-3f91-c577-d1ed-b34a3b6de07e, �����豸=1
+2026-09-28T08:29:44.022+08:00  INFO 24424 --- [           main] c.stcloud.sync.ws.SyncWebSocketHandler   : WebSocket ���ӹرգ�userId=1, sessionId=0cc5e234-3f91-c577-d1ed-b34a3b6de07e, status=CloseStatus[code=1003, reason=null]
+2026-09-28T08:29:44.032+08:00  WARN 24424 --- [o-auto-1-exec-8] c.stcloud.common.context.TenantContext   : SAAS ģʽ���⻧������δ���ã�����ΪĬ���⻧ 1�����ǵ�¼/�����ӿڳ��������������
+2026-09-28T08:29:44.035+08:00  INFO 24424 --- [o-auto-1-exec-8] c.stcloud.sync.ws.SyncWebSocketHandler   : WebSocket ���ӽ�����userId=1, sessionId=c2fe5fc3-68ba-afe5-5ce9-e7f566dfbf96, �����豸=1
+2026-09-28T08:29:47.023+08:00  INFO 24424 --- [           main] c.stcloud.sync.ws.SyncWebSocketHandler   : WebSocket ���ӹرգ�userId=1, sessionId=c2fe5fc3-68ba-afe5-5ce9-e7f566dfbf96, status=CloseStatus[code=1003, reason=null]

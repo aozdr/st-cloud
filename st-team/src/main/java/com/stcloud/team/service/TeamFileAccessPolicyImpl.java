@@ -45,6 +45,8 @@ public class TeamFileAccessPolicyImpl implements TeamFileAccessPolicy {
     @Resource
     private TeamRoleMapper teamRoleMapper;
     @Resource
+    private com.stcloud.team.mapper.TeamExternalConfigMapper teamExternalConfigMapper;
+    @Resource
     private FileNodeMapper fileNodeMapper;
     @Resource
     private FolderPermissionService folderPermissionService;
@@ -101,6 +103,7 @@ public class TeamFileAccessPolicyImpl implements TeamFileAccessPolicy {
             return false;
         }
         Set<String> rolePerms = resolveRolePermissions(tenantId, spaceId, member);
+        if (rolePerms == null) return false;
         // 管理员直通仍依赖已验证的成员关系，不能绕过 tenant/space/member 检查。
         if ((member.getRole() != null && member.getRole() == 0)
                 || rolePerms.contains(FolderPermissionService.PERM_MANAGE_SETTINGS)) {
@@ -124,11 +127,12 @@ public class TeamFileAccessPolicyImpl implements TeamFileAccessPolicy {
             return nodeId -> false;
         }
         Set<String> rolePerms = resolveRolePermissions(tenantId, spaceId, member);
+        if (rolePerms == null) return nodeId -> false;
         boolean administrator = member.getRole() != null && member.getRole() == 0
                 || rolePerms.contains(FolderPermissionService.PERM_MANAGE_SETTINGS);
         FolderPermissionService.FreshPermissionContext permissionContext = administrator ? null
                 : folderPermissionService.freshPermissionContext(tenantId, spaceId, userId,
-                        member.getRole() == null ? null : member.getRole().longValue(), rolePerms);
+                        member.getRole(), rolePerms);
         Map<Long, FileNode> nodes = new HashMap<>();
         return nodeId -> {
             if (!validId(nodeId)) return false;
@@ -186,6 +190,13 @@ public class TeamFileAccessPolicyImpl implements TeamFileAccessPolicy {
                 && !member.getExpireAt().isAfter(LocalDateTime.now()))) {
             return null;
         }
+        // 搜索与异步访问同样读取当前外部协作开关，不能沿用加入时的授权。
+        if (Integer.valueOf(1).equals(member.getMemberType())) {
+            var config = teamExternalConfigMapper.selectOne(new LambdaQueryWrapper<com.stcloud.team.entity.TeamExternalConfig>()
+                    .eq(com.stcloud.team.entity.TeamExternalConfig::getTenantId, tenantId)
+                    .eq(com.stcloud.team.entity.TeamExternalConfig::getSpaceId, spaceId));
+            if (config == null || !Integer.valueOf(1).equals(config.getAllowExternal())) return null;
+        }
         return member;
     }
 
@@ -220,24 +231,24 @@ public class TeamFileAccessPolicyImpl implements TeamFileAccessPolicy {
 
     private Set<String> resolveRolePermissions(Long tenantId, Long spaceId, TeamMember member) {
         if (member == null || member.getRole() == null) {
-            return FolderPermissionService.VIEWER_PERMISSIONS;
+            return null;
         }
-        int role = member.getRole();
+        long role = member.getRole();
         if (role >= 0 && role <= 2) {
-            return FolderPermissionService.presetPermissions(role);
+            return FolderPermissionService.presetPermissions((int) role);
         }
         TeamRole customRole = teamRoleMapper.selectOne(new LambdaQueryWrapper<TeamRole>()
-                .eq(TeamRole::getId, (long) role)
+                .eq(TeamRole::getId, role)
                 .eq(TeamRole::getTenantId, tenantId)
                 .eq(TeamRole::getSpaceId, spaceId)
                 .eq(TeamRole::getDeleted, 0)
                 .eq(TeamRole::getStatus, RoleStatus.ENABLED.getCode()));
-        if (customRole == null || !Objects.equals(customRole.getId(), (long) role)
+        if (customRole == null || !Objects.equals(customRole.getId(), role)
                 || !Objects.equals(customRole.getTenantId(), tenantId)
                 || !Objects.equals(customRole.getSpaceId(), spaceId)
                 || customRole.getStatus() == null
                 || customRole.getStatus() != RoleStatus.ENABLED.getCode()) {
-            return FolderPermissionService.VIEWER_PERMISSIONS;
+            return null;
         }
         return FolderPermissionService.parsePermissions(customRole.getPermissions());
     }

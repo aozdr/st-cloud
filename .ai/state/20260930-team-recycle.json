@@ -1,0 +1,495 @@
+{
+  "schemaVersion": 2,
+  "definitionVersion": 2,
+  "taskId": "20260930-team-recycle",
+  "scale": "medium",
+  "status": "done",
+  "goal": {
+    "objective": "修复团队文件夹删除后回收站不可见及不可恢复，保持团队权限和个人兼容",
+    "scope": "st-core回收站模块、真实MySQL/HTTP验证，排除其他任务和共享数据",
+    "completionCriteria": [
+      "团队回收根可见",
+      "拥有者管理员恢复保留团队及混合所有者子树",
+      "其他成员失效成员跨租户不可操作",
+      "团队永久删除清空隔离及配额正确",
+      "个人回收站兼容",
+      "真实健康依赖下完整启动及HTTP回收恢复通过"
+    ]
+  },
+  "revision": {
+    "design": "team-recycle-design-v1",
+    "code": "team-recycle-code-8d9bce85490e655a"
+  },
+  "exitCriteria": [
+    {
+      "id": "DESIGN",
+      "status": "done",
+      "dependsOn": [],
+      "confirmationRequired": false,
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20260930-team-recycle/design.md",
+      "validatedRevision": "team-recycle-design-v1",
+      "executionKind": "direct",
+      "executionId": "direct:20260930-team-recycle:DESIGN:team-recycle-design-v1:",
+      "completedAt": "2026-09-30T02:33:02.4953558Z"
+    },
+    {
+      "id": "TESTCASES",
+      "status": "done",
+      "dependsOn": [
+        "DESIGN"
+      ],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20260930-team-recycle/testcases.md",
+      "validatedRevision": "team-recycle-design-v1",
+      "executionKind": "direct",
+      "executionId": "direct:20260930-team-recycle:TESTCASES:team-recycle-design-v1:",
+      "completedAt": "2026-09-30T02:33:02.8313086Z"
+    },
+    {
+      "id": "IMPLEMENTED",
+      "status": "done",
+      "dependsOn": [
+        "DESIGN",
+        "TESTCASES"
+      ],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20260930-team-recycle/changereport.md",
+      "validatedRevision": "team-recycle-code-8d9bce85490e655a",
+      "executionKind": "direct",
+      "executionId": "direct:20260930-team-recycle:IMPLEMENTED:team-recycle-design-v1:team-recycle-code-8d9bce85490e655a",
+      "completedAt": "2026-09-30T06:09:08.180254Z"
+    },
+    {
+      "id": "CODE_REVIEW",
+      "status": "done",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20260930-team-recycle/codereview.md",
+      "validatedRevision": "team-recycle-code-8d9bce85490e655a",
+      "executionKind": "direct",
+      "executionId": "direct:20260930-team-recycle:CODE_REVIEW:team-recycle-design-v1:team-recycle-code-8d9bce85490e655a",
+      "completedAt": "2026-09-30T06:11:12.990696Z"
+    },
+    {
+      "id": "SECURITY_REVIEW",
+      "status": "done",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20260930-team-recycle/security.md",
+      "validatedRevision": "team-recycle-code-8d9bce85490e655a",
+      "executionKind": "direct",
+      "executionId": "direct:20260930-team-recycle:SECURITY_REVIEW:team-recycle-design-v1:team-recycle-code-8d9bce85490e655a",
+      "completedAt": "2026-09-30T06:11:13.4236659Z"
+    },
+    {
+      "id": "TEST_PASS",
+      "status": "done",
+      "dependsOn": [
+        "CODE_REVIEW",
+        "SECURITY_REVIEW"
+      ],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20260930-team-recycle/testreport.md",
+      "validatedRevision": "team-recycle-code-8d9bce85490e655a",
+      "executionKind": "direct",
+      "executionId": "direct:20260930-team-recycle:TEST_PASS:team-recycle-design-v1:team-recycle-code-8d9bce85490e655a",
+      "completedAt": "2026-09-30T06:11:13.8738543Z"
+    },
+    {
+      "id": "KNOWLEDGE",
+      "status": "done",
+      "dependsOn": [
+        "TEST_PASS"
+      ],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20260930-team-recycle/knowledge.md",
+      "validatedRevision": "team-recycle-code-8d9bce85490e655a",
+      "executionKind": "direct",
+      "executionId": "direct:20260930-team-recycle:KNOWLEDGE:team-recycle-design-v1:team-recycle-code-8d9bce85490e655a",
+      "completedAt": "2026-09-30T06:11:14.3546756Z"
+    },
+    {
+      "id": "ACCEPT",
+      "status": "done",
+      "dependsOn": [
+        "KNOWLEDGE"
+      ],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20260930-team-recycle/acceptance.md",
+      "validatedRevision": "team-recycle-code-8d9bce85490e655a",
+      "executionKind": "direct",
+      "executionId": "direct:20260930-team-recycle:ACCEPT:team-recycle-design-v1:team-recycle-code-8d9bce85490e655a",
+      "completedAt": "2026-09-30T06:12:44.0595253Z"
+    }
+  ],
+  "artifacts": {
+    "design": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-team-recycle/design.md"
+    },
+    "testcases": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-team-recycle/testcases.md"
+    },
+    "changereport": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-team-recycle/changereport.md"
+    },
+    "codereview": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-team-recycle/codereview.md"
+    },
+    "security": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-team-recycle/security.md"
+    },
+    "testreport": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-team-recycle/testreport.md"
+    },
+    "knowledge": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-team-recycle/knowledge.md"
+    },
+    "acceptance": {
+      "status": "ready",
+      "ref": ".ai/docs/20260930-team-recycle/acceptance.md"
+    }
+  },
+  "blockers": [],
+  "acceptanceEvidence": [
+    {
+      "criterion": "团队回收根可见",
+      "evidenceRef": ".ai/docs/20260930-team-recycle/acceptance.md",
+      "validatedRevision": "team-recycle-code-8d9bce85490e655a"
+    },
+    {
+      "criterion": "拥有者管理员恢复保留团队及混合所有者子树",
+      "evidenceRef": ".ai/docs/20260930-team-recycle/acceptance.md",
+      "validatedRevision": "team-recycle-code-8d9bce85490e655a"
+    },
+    {
+      "criterion": "其他成员失效成员跨租户不可操作",
+      "evidenceRef": ".ai/docs/20260930-team-recycle/acceptance.md",
+      "validatedRevision": "team-recycle-code-8d9bce85490e655a"
+    },
+    {
+      "criterion": "团队永久删除清空隔离及配额正确",
+      "evidenceRef": ".ai/docs/20260930-team-recycle/acceptance.md",
+      "validatedRevision": "team-recycle-code-8d9bce85490e655a"
+    },
+    {
+      "criterion": "个人回收站兼容",
+      "evidenceRef": ".ai/docs/20260930-team-recycle/acceptance.md",
+      "validatedRevision": "team-recycle-code-8d9bce85490e655a"
+    },
+    {
+      "criterion": "真实健康依赖下完整启动及HTTP回收恢复通过",
+      "evidenceRef": ".ai/docs/20260930-team-recycle/acceptance.md",
+      "validatedRevision": "team-recycle-code-8d9bce85490e655a"
+    }
+  ],
+  "dispatchLedger": [],
+  "proposals": [],
+  "history": [
+    {
+      "eventId": "830e43ee-48c0-418e-93dd-cb01daea8fea",
+      "action": "init",
+      "before": null,
+      "after": {
+        "taskId": "20260930-team-recycle",
+        "scale": "medium",
+        "status": "running",
+        "revision": {
+          "design": "team-recycle-design-v1",
+          "code": null
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T02:32:37.1155466Z",
+      "revision": {
+        "design": null,
+        "code": null
+      }
+    },
+    {
+      "eventId": "stale:design:team-recycle-design-v1",
+      "action": "stale-cascade",
+      "before": {
+        "roots": [
+          "DESIGN"
+        ]
+      },
+      "after": {
+        "affected": [
+          "DESIGN",
+          "TESTCASES",
+          "IMPLEMENTED",
+          "CODE_REVIEW",
+          "SECURITY_REVIEW",
+          "TEST_PASS",
+          "KNOWLEDGE",
+          "ACCEPT"
+        ],
+        "revision": {
+          "design": "team-recycle-design-v1",
+          "code": null
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T02:32:37.4713288Z",
+      "revision": {
+        "design": "team-recycle-design-v1",
+        "code": null
+      }
+    },
+    {
+      "eventId": "direct:20260930-team-recycle:DESIGN:team-recycle-design-v1:",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "DESIGN",
+        "status": "pending"
+      },
+      "after": {
+        "id": "DESIGN",
+        "status": "done",
+        "revision": {
+          "design": "team-recycle-design-v1",
+          "code": null
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T02:33:02.5215769Z",
+      "revision": {
+        "design": "team-recycle-design-v1",
+        "code": null
+      }
+    },
+    {
+      "eventId": "direct:20260930-team-recycle:TESTCASES:team-recycle-design-v1:",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "TESTCASES",
+        "status": "pending"
+      },
+      "after": {
+        "id": "TESTCASES",
+        "status": "done",
+        "revision": {
+          "design": "team-recycle-design-v1",
+          "code": null
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T02:33:02.8360205Z",
+      "revision": {
+        "design": "team-recycle-design-v1",
+        "code": null
+      }
+    },
+    {
+      "eventId": "stale:code:team-recycle-code-8d9bce85490e655a",
+      "action": "stale-cascade",
+      "before": {
+        "roots": [
+          "IMPLEMENTED",
+          "CODE_REVIEW",
+          "SECURITY_REVIEW",
+          "TEST_PASS",
+          "KNOWLEDGE",
+          "ACCEPT"
+        ]
+      },
+      "after": {
+        "affected": [
+          "IMPLEMENTED",
+          "CODE_REVIEW",
+          "SECURITY_REVIEW",
+          "TEST_PASS",
+          "KNOWLEDGE",
+          "ACCEPT"
+        ],
+        "revision": {
+          "design": "team-recycle-design-v1",
+          "code": "team-recycle-code-8d9bce85490e655a"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T06:09:07.8524076Z",
+      "revision": {
+        "design": "team-recycle-design-v1",
+        "code": "team-recycle-code-8d9bce85490e655a"
+      }
+    },
+    {
+      "eventId": "direct:20260930-team-recycle:IMPLEMENTED:team-recycle-design-v1:team-recycle-code-8d9bce85490e655a",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "IMPLEMENTED",
+        "status": "pending"
+      },
+      "after": {
+        "id": "IMPLEMENTED",
+        "status": "done",
+        "revision": {
+          "design": "team-recycle-design-v1",
+          "code": "team-recycle-code-8d9bce85490e655a"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T06:09:08.2026695Z",
+      "revision": {
+        "design": "team-recycle-design-v1",
+        "code": "team-recycle-code-8d9bce85490e655a"
+      }
+    },
+    {
+      "eventId": "direct:20260930-team-recycle:CODE_REVIEW:team-recycle-design-v1:team-recycle-code-8d9bce85490e655a",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "CODE_REVIEW",
+        "status": "pending"
+      },
+      "after": {
+        "id": "CODE_REVIEW",
+        "status": "done",
+        "revision": {
+          "design": "team-recycle-design-v1",
+          "code": "team-recycle-code-8d9bce85490e655a"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T06:11:13.0148766Z",
+      "revision": {
+        "design": "team-recycle-design-v1",
+        "code": "team-recycle-code-8d9bce85490e655a"
+      }
+    },
+    {
+      "eventId": "direct:20260930-team-recycle:SECURITY_REVIEW:team-recycle-design-v1:team-recycle-code-8d9bce85490e655a",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "SECURITY_REVIEW",
+        "status": "pending"
+      },
+      "after": {
+        "id": "SECURITY_REVIEW",
+        "status": "done",
+        "revision": {
+          "design": "team-recycle-design-v1",
+          "code": "team-recycle-code-8d9bce85490e655a"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T06:11:13.4355054Z",
+      "revision": {
+        "design": "team-recycle-design-v1",
+        "code": "team-recycle-code-8d9bce85490e655a"
+      }
+    },
+    {
+      "eventId": "direct:20260930-team-recycle:TEST_PASS:team-recycle-design-v1:team-recycle-code-8d9bce85490e655a",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "TEST_PASS",
+        "status": "pending"
+      },
+      "after": {
+        "id": "TEST_PASS",
+        "status": "done",
+        "revision": {
+          "design": "team-recycle-design-v1",
+          "code": "team-recycle-code-8d9bce85490e655a"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T06:11:13.8803482Z",
+      "revision": {
+        "design": "team-recycle-design-v1",
+        "code": "team-recycle-code-8d9bce85490e655a"
+      }
+    },
+    {
+      "eventId": "direct:20260930-team-recycle:KNOWLEDGE:team-recycle-design-v1:team-recycle-code-8d9bce85490e655a",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "KNOWLEDGE",
+        "status": "pending"
+      },
+      "after": {
+        "id": "KNOWLEDGE",
+        "status": "done",
+        "revision": {
+          "design": "team-recycle-design-v1",
+          "code": "team-recycle-code-8d9bce85490e655a"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T06:11:14.3550729Z",
+      "revision": {
+        "design": "team-recycle-design-v1",
+        "code": "team-recycle-code-8d9bce85490e655a"
+      }
+    },
+    {
+      "eventId": "direct:20260930-team-recycle:ACCEPT:team-recycle-design-v1:team-recycle-code-8d9bce85490e655a",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "ACCEPT",
+        "status": "pending"
+      },
+      "after": {
+        "id": "ACCEPT",
+        "status": "done",
+        "revision": {
+          "design": "team-recycle-design-v1",
+          "code": "team-recycle-code-8d9bce85490e655a"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T06:12:44.067899Z",
+      "revision": {
+        "design": "team-recycle-design-v1",
+        "code": "team-recycle-code-8d9bce85490e655a"
+      }
+    },
+    {
+      "eventId": "complete",
+      "action": "complete",
+      "before": {
+        "status": "running"
+      },
+      "after": {
+        "status": "done",
+        "revision": {
+          "design": "team-recycle-design-v1",
+          "code": "team-recycle-code-8d9bce85490e655a"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-30T06:12:44.9681921Z",
+      "revision": {
+        "design": "team-recycle-design-v1",
+        "code": "team-recycle-code-8d9bce85490e655a"
+      }
+    }
+  ],
+  "singleAgentAuthorization": {
+    "taskId": "20260930-team-recycle",
+    "actor": "workflow-manager",
+    "authorizedBy": "user",
+    "authorizationQuote": "不要开子线程，你自己独立完成",
+    "evidenceRef": ".ai/docs/20260930-team-recycle/single-agent-authorization.md",
+    "criteria": [
+      "CODE_REVIEW",
+      "SECURITY_REVIEW",
+      "TEST_PASS",
+      "ACCEPT"
+    ]
+  }
+}

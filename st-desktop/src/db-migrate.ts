@@ -31,7 +31,7 @@ const SYNC_STATE_SCHEMA = `
 const SYNC_CONFIG_SCHEMA = `
   root_id       TEXT PRIMARY KEY,
   local_path    TEXT NOT NULL,
-  cursor        INTEGER DEFAULT 0,
+  cursor        TEXT DEFAULT '0',
   status        TEXT DEFAULT 'active',
   user_id       TEXT,
   last_sync_at  INTEGER,
@@ -78,7 +78,8 @@ export function ensureIdColumnsText(db: Database): string[] {
     rebuildTable(db, 'sync_state', SYNC_STATE_SCHEMA, SYNC_STATE_COLUMNS);
     rebuilt.push('sync_state');
   }
-  if (columnType(db, 'sync_config', 'root_id') !== 'TEXT') {
+  if (columnType(db, 'sync_config', 'root_id') !== 'TEXT'
+      || columnType(db, 'sync_config', 'cursor') !== 'TEXT') {
     rebuildTable(db, 'sync_config', SYNC_CONFIG_SCHEMA, SYNC_CONFIG_COLUMNS);
     rebuilt.push('sync_config');
   }

@@ -1,0 +1,9 @@
+{
+  "name": "st-test-redis-20260927-resume",
+  "containerId": "a76de363496e4374612fbb0e7713ed14383680d751e56e77ca4da2636298e583",
+  "host": "127.0.0.1",
+  "port": 60327,
+  "label": "stcloud.test-task=TASK-20260927-TEST-RESUME",
+  "state": "active",
+  "cleanup": "docker stop st-test-redis-20260927-resume；--rm自动删除，仅该测试容器，无宿主挂载"
+}

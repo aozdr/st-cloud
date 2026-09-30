@@ -1,0 +1,428 @@
+[
+  {
+    "method": "GET",
+    "path": "/api/file/storage",
+    "query": {},
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/auth/me",
+    "query": {},
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/file/storage",
+    "query": {},
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/auth/me",
+    "query": {},
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/notification/unread-count",
+    "query": {},
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/transfer/speed-limit",
+    "query": {},
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/favorite/ids",
+    "query": {},
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/transfer/speed-limit",
+    "query": {},
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/favorite/ids",
+    "query": {},
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/team/9007199254740993/files",
+    "query": {
+      "page": [
+        "1"
+      ],
+      "size": [
+        "100"
+      ]
+    },
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/team/9007199254740993",
+    "query": {},
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/team/9007199254740993/members",
+    "query": {
+      "page": [
+        "1"
+      ],
+      "size": [
+        "50"
+      ],
+      "sortBy": [
+        "role"
+      ]
+    },
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/team/9007199254740993/roles",
+    "query": {},
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/team/9007199254740993/files",
+    "query": {
+      "page": [
+        "1"
+      ],
+      "size": [
+        "100"
+      ]
+    },
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/team/9007199254740993",
+    "query": {},
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/team/9007199254740993/members",
+    "query": {
+      "page": [
+        "1"
+      ],
+      "size": [
+        "50"
+      ],
+      "sortBy": [
+        "role"
+      ]
+    },
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/team/9007199254740993/roles",
+    "query": {},
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/team/9007199254740993/members",
+    "query": {
+      "page": [
+        "1"
+      ],
+      "size": [
+        "50"
+      ],
+      "sortBy": [
+        "role"
+      ]
+    },
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/team/9007199254740993/invites",
+    "query": {
+      "page": [
+        "1"
+      ],
+      "size": [
+        "50"
+      ]
+    },
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/team/9007199254740993/members",
+    "query": {
+      "page": [
+        "1"
+      ],
+      "size": [
+        "50"
+      ],
+      "sortBy": [
+        "role"
+      ]
+    },
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/team/9007199254740993/users/search",
+    "query": {
+      "keyword": [
+        "new"
+      ]
+    },
+    "body": null
+  },
+  {
+    "method": "POST",
+    "path": "/api/team/9007199254740993/member",
+    "query": {},
+    "body": {
+      "userId": "9223372036854775806",
+      "role": "9007199254740993"
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/api/team/9007199254740993/member",
+    "query": {},
+    "body": {
+      "userId": "9223372036854775806",
+      "role": "9007199254740993"
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/api/team/9007199254740993/member",
+    "query": {},
+    "body": {
+      "userId": "9223372036854775806",
+      "role": "9007199254740993"
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/team/9007199254740993/members",
+    "query": {
+      "page": [
+        "1"
+      ],
+      "size": [
+        "50"
+      ],
+      "sortBy": [
+        "role"
+      ]
+    },
+    "body": null
+  },
+  {
+    "method": "POST",
+    "path": "/api/team/9007199254740993/invite",
+    "query": {},
+    "body": {
+      "role": "9007199254740995",
+      "expireAt": "2026-10-07T00:37:29.831Z"
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/api/team/9007199254740993/invite",
+    "query": {},
+    "body": {
+      "role": "9007199254740995",
+      "expireAt": "2026-10-07T00:37:29.917Z"
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/api/team/9007199254740993/invite",
+    "query": {},
+    "body": {
+      "role": "9007199254740995",
+      "expireAt": "2026-10-07T00:37:29.981Z"
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/team/9007199254740993/invites",
+    "query": {
+      "page": [
+        "1"
+      ],
+      "size": [
+        "50"
+      ]
+    },
+    "body": null
+  },
+  {
+    "method": "PUT",
+    "path": "/api/team/9007199254740993/member/9007199254740995",
+    "query": {
+      "role": [
+        "9007199254740995"
+      ]
+    },
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/team/9007199254740993/members",
+    "query": {
+      "page": [
+        "1"
+      ],
+      "size": [
+        "50"
+      ],
+      "sortBy": [
+        "role"
+      ]
+    },
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/team/9007199254740993/invites",
+    "query": {
+      "page": [
+        "1"
+      ],
+      "size": [
+        "50"
+      ]
+    },
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/team/9007199254740993/members",
+    "query": {
+      "page": [
+        "1"
+      ],
+      "size": [
+        "50"
+      ],
+      "sortBy": [
+        "role"
+      ]
+    },
+    "body": null
+  },
+  {
+    "method": "PUT",
+    "path": "/api/team/9007199254740993/member/9007199254740995",
+    "query": {
+      "role": [
+        "9007199254740993"
+      ]
+    },
+    "body": null
+  },
+  {
+    "method": "PUT",
+    "path": "/api/team/9007199254740993/member/9007199254740995",
+    "query": {
+      "role": [
+        "9007199254740993"
+      ]
+    },
+    "body": null
+  },
+  {
+    "method": "PUT",
+    "path": "/api/team/9007199254740993/member/9007199254740995",
+    "query": {
+      "role": [
+        "9007199254740993"
+      ]
+    },
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/team/9007199254740993/folder/0/permissions",
+    "query": {},
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/team/9007199254740993/roles",
+    "query": {},
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/team/9007199254740993/folder/0/permissions",
+    "query": {},
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/team/9007199254740993/roles",
+    "query": {},
+    "body": null
+  },
+  {
+    "method": "PUT",
+    "path": "/api/team/9007199254740993/folder/0/permissions",
+    "query": {},
+    "body": {
+      "rules": [
+        {
+          "subjectType": "role",
+          "subjectId": "9007199254740993",
+          "permissions": "{\"view\":true,\"upload\":true}"
+        },
+        {
+          "subjectType": "role",
+          "subjectId": "9007199254740995",
+          "permissions": "{\"view\":true}"
+        }
+      ]
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/api/team/9007199254740993/folder/0/permissions",
+    "query": {},
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/team/9007199254740993/roles",
+    "query": {},
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/team/9007199254740993/folder/0/permissions",
+    "query": {},
+    "body": null
+  },
+  {
+    "method": "GET",
+    "path": "/api/team/9007199254740993/roles",
+    "query": {},
+    "body": null
+  }
+]

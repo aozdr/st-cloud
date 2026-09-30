@@ -1,6 +1,7 @@
 package com.stcloud.admin.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.stcloud.admin.dto.CreateUserRequest;
@@ -9,6 +10,7 @@ import com.stcloud.admin.dto.UserManageVO;
 import com.stcloud.admin.service.RoleService;
 import com.stcloud.admin.service.UserManageService;
 import com.stcloud.auth.service.AuthService;
+import com.stcloud.auth.service.UserSecurityService;
 import com.stcloud.auth.entity.SysRole;
 import com.stcloud.auth.entity.SysUser;
 import com.stcloud.auth.enums.UserStatus;
@@ -22,6 +24,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 
@@ -44,6 +48,8 @@ public class UserManageServiceImpl implements UserManageService {
     private RoleService roleService;
     @Resource
     private AuthService authService;
+    @Resource
+    private UserSecurityService userSecurityService;
     @Resource
     private com.stcloud.core.service.CloudStorageService cloudStorageService;
 
@@ -75,13 +81,25 @@ public class UserManageServiceImpl implements UserManageService {
         if (user == null) {
             throw new BusinessException(ResultCode.USER_NOT_FOUND);
         }
+        String encodedPassword = request.getResetPassword() != null && !request.getResetPassword().isBlank()
+                ? passwordEncoder.encode(request.getResetPassword()) : null;
+        userSecurityService.lockTenant(user.getTenantId());
+        // 加锁读返回最新已提交状态，避免事务开始时读到的实体覆盖并发改密或禁用。
+        user = sysUserMapper.selectForSecurityUpdate(user.getTenantId(), userId);
+        if (user == null) throw new BusinessException(ResultCode.USER_NOT_FOUND);
 
         boolean revoke = false;
+        LambdaUpdateWrapper<SysUser> fields = new LambdaUpdateWrapper<SysUser>()
+                .eq(SysUser::getId, userId).eq(SysUser::getTenantId, user.getTenantId());
+        boolean changed = false;
         if (request.getNickname() != null) {
-            user.setNickname(request.getNickname());
+            fields.set(SysUser::getNickname, request.getNickname());
+            changed = true;
         }
         if (request.getStatus() != null) {
-            user.setStatus(request.getStatus());
+            if (!request.getStatus().equals(user.getStatus())) revoke = true;
+            fields.set(SysUser::getStatus, request.getStatus());
+            changed = true;
             // 禁用用户时吊销其 refresh token，禁止刷新会话
             if (request.getStatus() == UserStatus.DISABLED.getCode()) {
                 revoke = true;
@@ -89,15 +107,24 @@ public class UserManageServiceImpl implements UserManageService {
         }
         if (request.getStorageQuota() != null) {
             cloudStorageService.validateQuotaAssignment(user.getStorageQuota(), request.getStorageQuota());
-            user.setStorageQuota(request.getStorageQuota());
+            fields.set(SysUser::getStorageQuota, request.getStorageQuota());
+            changed = true;
         }
-        if (request.getResetPassword() != null && !request.getResetPassword().isBlank()) {
-            user.setPassword(passwordEncoder.encode(request.getResetPassword()));
+        if (encodedPassword != null) {
+            fields.set(SysUser::getPassword, encodedPassword);
+            changed = true;
             revoke = true;
         }
-        sysUserMapper.updateById(user);
+        // 只提交请求指定的字段，不能把旧实体中的密码、状态和安全版本整行写回。
+        if (changed && sysUserMapper.update(null, fields) != 1) {
+            throw new IllegalStateException("用户更新失败");
+        }
         if (revoke) {
-            authService.revokeRefreshToken(userId);
+            userSecurityService.increment(user.getTenantId(), userId);
+            Long revokedUserId = userId;
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override public void afterCommit() { authService.revokeRefreshToken(revokedUserId); }
+            });
         }
         log.info("管理员{}更新用户: userId={}", UserContext.getUserId(), userId);
     }
@@ -109,7 +136,14 @@ public class UserManageServiceImpl implements UserManageService {
         if (userId.equals(UserContext.getUserId())) {
             throw new BusinessException(ResultCode.BAD_REQUEST, "不能删除自己");
         }
+        SysUser user = sysUserMapper.selectById(userId);
+        if (user == null) throw new BusinessException(ResultCode.USER_NOT_FOUND);
+        userSecurityService.lockTenant(user.getTenantId());
+        userSecurityService.increment(user.getTenantId(), userId);
         sysUserMapper.deleteById(userId);
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override public void afterCommit() { authService.revokeRefreshToken(userId); }
+        });
         log.info("管理员{}删除用户: userId={}", UserContext.getUserId(), userId);
     }
 
@@ -136,6 +170,7 @@ public class UserManageServiceImpl implements UserManageService {
         user.setPhone(request.getPhone());
         // 新建用户默认正常
         user.setStatus(UserStatus.NORMAL.getCode());
+        user.setSecurityVersion(0L);
         user.setStorageUsed(0L);
         user.setStorageQuota(DEFAULT_QUOTA);
         sysUserMapper.insert(user);

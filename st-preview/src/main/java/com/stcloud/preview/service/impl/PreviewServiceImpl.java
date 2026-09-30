@@ -9,6 +9,7 @@ import com.stcloud.core.mapper.FileNodeMapper;
 import com.stcloud.core.mapper.FileVersionMapper;
 import com.stcloud.core.service.FileService;
 import com.stcloud.core.service.StorageService;
+import com.stcloud.core.service.ThumbnailRenderer;
 import com.stcloud.preview.dto.PreviewResultVO;
 import com.stcloud.preview.service.PreviewService;
 import jakarta.annotation.Resource;
@@ -21,11 +22,6 @@ import software.amazon.awssdk.services.s3.model.*;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.*;
 
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.time.Duration;
 import java.util.Set;
@@ -70,13 +66,23 @@ public class PreviewServiceImpl implements PreviewService {
     @Resource
     private S3StorageConfig s3StorageConfig;
 
+    @Resource
+    private ThumbnailRenderer thumbnailRenderer;
+
     @Override
     public PreviewResultVO preview(Long nodeId) {
         FileNode node = getFileNode(nodeId);
         String suffix = normalizeSuffix(node.getSuffix());
 
         if (IMAGE_TYPES.contains(suffix)) {
-            return PreviewResultVO.of("image", getThumbnailUrl(nodeId, "lg"));
+            if (!ThumbnailRenderer.FORMATS.contains(suffix)) {
+                return PreviewResultVO.of("image", storageService.generateDownloadUrl(node.getStoragePath()));
+            }
+            try { return PreviewResultVO.of("image", getThumbnailUrl(nodeId, "lg")); }
+            catch (BusinessException e) {
+                if (e.getCode() == ResultCode.BAD_REQUEST.getCode()) return PreviewResultVO.unsupported(suffix);
+                throw e;
+            }
         }
         return dispatchByStorage(node.getStoragePath(), suffix);
     }
@@ -93,10 +99,18 @@ public class PreviewServiceImpl implements PreviewService {
         String suffix = normalizeSuffix(node.getSuffix());
 
         if (IMAGE_TYPES.contains(suffix)) {
+            if (!ThumbnailRenderer.FORMATS.contains(suffix)) {
+                return PreviewResultVO.of("image", storageService.generateDownloadUrl(version.getStoragePath()));
+            }
             // 历史版本缩略图使用版本级命名空间，避免覆盖当前版本缩略图缓存
             String thumbKey = "thumbnails/" + nodeId + "/v" + version.getVersionNum() + "/lg.jpg";
-            if (!doesPreviewObjectExist(thumbKey)) {
-                generateThumbnail(version.getStoragePath(), thumbKey, "lg");
+            try {
+                if (!doesPreviewObjectExist(thumbKey)) {
+                    generateThumbnail(version.getStoragePath(), suffix, thumbKey, "lg");
+                }
+            } catch (BusinessException e) {
+                if (e.getCode() == ResultCode.BAD_REQUEST.getCode()) return PreviewResultVO.unsupported(suffix);
+                throw e;
             }
             return PreviewResultVO.of("image", generatePreviewUrl(thumbKey));
         }
@@ -134,16 +148,15 @@ public class PreviewServiceImpl implements PreviewService {
         FileNode node = getFileNode(nodeId);
         String suffix = node.getSuffix() != null ? node.getSuffix().toLowerCase() : "";
 
-        // 非图片文件直接返回原图URL
-        if (!IMAGE_TYPES.contains(suffix)) {
-            return storageService.generateDownloadUrl(node.getStoragePath());
+        if (!ThumbnailRenderer.FORMATS.contains(suffix)) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "无法生成缩略图：图片格式不支持");
         }
 
         // 检查缩略图是否已生成
         String thumbKey = "thumbnails/" + nodeId + "/" + size + ".jpg";
         if (!doesPreviewObjectExist(thumbKey)) {
             // 生成缩略图
-            generateThumbnail(node.getStoragePath(), thumbKey, size);
+            generateThumbnail(node.getStoragePath(), suffix, thumbKey, size);
         }
 
         return generatePreviewUrl(thumbKey);
@@ -170,34 +183,14 @@ public class PreviewServiceImpl implements PreviewService {
         }
     }
 
-    private void generateThumbnail(String storagePath, String thumbKey, String size) {
+    private void generateThumbnail(String storagePath, String suffix, String thumbKey, String size) {
         int maxDim = switch (size) {
             case "sm" -> 150;
             case "md" -> 400;
             default -> 1200;
         };
-        try (InputStream is = storageService.downloadObject(storagePath)) {
-            BufferedImage original = ImageIO.read(is);
-            if (original == null) {
-                throw new BusinessException(ResultCode.BAD_REQUEST, "无法读取图片");
-            }
-            int w = original.getWidth();
-            int h = original.getHeight();
-            if (w > maxDim || h > maxDim) {
-                double scale = (double) maxDim / Math.max(w, h);
-                w = (int) (w * scale);
-                h = (int) (h * scale);
-            }
-            BufferedImage thumbnail = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
-            Graphics2D g = thumbnail.createGraphics();
-            g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-            g.drawImage(original, 0, 0, w, h, null);
-            g.dispose();
-
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            ImageIO.write(thumbnail, "jpg", baos);
-            byte[] bytes = baos.toByteArray();
-
+        try {
+            byte[] bytes = thumbnailRenderer.render(storagePath, suffix, maxDim);
             // 上传到preview bucket
             PutObjectRequest putReq = PutObjectRequest.builder()
                     .bucket(s3StorageConfig.getPreviewBucket())
@@ -206,6 +199,8 @@ public class PreviewServiceImpl implements PreviewService {
                     .build();
             s3Client.putObject(putReq, RequestBody.fromBytes(bytes));
             log.info("缩略图生成成功: size={}, key={}", size, thumbKey);
+        } catch (BusinessException e) {
+            throw e;
         } catch (Exception e) {
             log.error("缩略图生成失败: key={}", thumbKey, e);
             throw new BusinessException(ResultCode.STORAGE_SERVICE_ERROR, "缩略图生成失败");
@@ -221,7 +216,8 @@ public class PreviewServiceImpl implements PreviewService {
             s3Client.headObject(req);
             return true;
         } catch (S3Exception e) {
-            return e.statusCode() != 404;
+            if (e.statusCode() == 404) return false;
+            throw new BusinessException(ResultCode.STORAGE_SERVICE_ERROR, "检查缩略图失败");
         }
     }
 

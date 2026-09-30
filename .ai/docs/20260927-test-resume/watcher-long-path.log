@@ -1,0 +1,10 @@
+✔ TC04-31: watcher-move 真实chokidar自激不回传，独立用户编辑仍上传 (3929.6729ms)
+✔ TC04-31: watcher-delete 真实chokidar自激不回传，独立用户编辑仍上传 (3941.5334ms)
+ℹ tests 2
+ℹ suites 0
+ℹ pass 2
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 7967.1552

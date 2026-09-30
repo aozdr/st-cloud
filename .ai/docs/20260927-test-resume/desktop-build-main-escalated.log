@@ -1,0 +1,16 @@
+
+> st-cloud-desktop@1.0.0 build:main
+> tsup src/main.ts src/preload.ts --format cjs --outDir dist
+
+CLI Building entry: src/main.ts, src/preload.ts
+CLI Using tsconfig: tsconfig.json
+CLI tsup v8.5.1
+CLI Using tsup config: E:\code\st-cloud\st-desktop\tsup.config.ts
+CLI Target: node18
+CLI Cleaning output folder
+CJS Build start
+CJS dist\preload.js     8.71 KB
+CJS dist\main.js        158.07 KB
+CJS dist\preload.js.map 15.01 KB
+CJS dist\main.js.map    296.12 KB
+CJS ⚡️ Build success in 39ms

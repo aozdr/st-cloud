@@ -1,0 +1,4 @@
+[sync] WebSocket 客户端已启动
+{"probe":"failed-start","reconciliations":1,"running":false,"watcherStarts":0,"timers":0,"excludedSourceExists":false,"savedExcluded":null,"requests":["/sync/roots/R/exclusions"]}
+[sync] WebSocket 客户端已启动
+{"probe":"excluded-upgrade","reconciliations":1,"running":true,"watcherStarts":1,"timers":1,"excludedSourceExists":false,"savedExcluded":"original-excluded","requests":["/file/list","/file/ROOT","/file/N","/sync/roots/R/delta","/sync/roots/R/exclusions"]}

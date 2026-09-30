@@ -1,0 +1,100 @@
+{
+  "taskId": "20260924-code-review-design",
+  "revision": {
+    "design": "design-v1",
+    "code": "912996e1b8f34904b792f29ceacab2023844e038"
+  },
+  "exitCriteria": [
+    {
+      "id": "REQ_ANALYSIS",
+      "status": "pending",
+      "dependsOn": [],
+      "confirmationRequired": false
+    },
+    {
+      "id": "IMPACT_ANALYSIS",
+      "status": "pending",
+      "dependsOn": [
+        "REQ_ANALYSIS"
+      ]
+    },
+    {
+      "id": "EXP_DESIGN",
+      "status": "pending",
+      "dependsOn": [
+        "REQ_ANALYSIS"
+      ],
+      "applicable": true
+    },
+    {
+      "id": "TECH_DESIGN",
+      "status": "pending",
+      "dependsOn": [
+        "IMPACT_ANALYSIS",
+        "EXP_DESIGN"
+      ],
+      "confirmationRequired": false
+    },
+    {
+      "id": "TESTCASES",
+      "status": "pending",
+      "dependsOn": [
+        "TECH_DESIGN"
+      ]
+    },
+    {
+      "id": "IMPLEMENTED",
+      "status": "pending",
+      "dependsOn": [
+        "TECH_DESIGN",
+        "TESTCASES"
+      ]
+    },
+    {
+      "id": "CODE_REVIEW",
+      "status": "pending",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ]
+    },
+    {
+      "id": "SECURITY_REVIEW",
+      "status": "pending",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ]
+    },
+    {
+      "id": "EXP_ACCEPT",
+      "status": "pending",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ],
+      "applicable": true
+    },
+    {
+      "id": "TEST_PASS",
+      "status": "pending",
+      "dependsOn": [
+        "CODE_REVIEW",
+        "SECURITY_REVIEW"
+      ]
+    },
+    {
+      "id": "KNOWLEDGE",
+      "status": "pending",
+      "dependsOn": [
+        "TEST_PASS",
+        "SECURITY_REVIEW",
+        "EXP_ACCEPT"
+      ]
+    },
+    {
+      "id": "ACCEPT",
+      "status": "pending",
+      "dependsOn": [
+        "KNOWLEDGE"
+      ]
+    }
+  ]
+}

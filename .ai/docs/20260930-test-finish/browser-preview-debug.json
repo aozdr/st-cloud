@@ -1,0 +1,286 @@
+{
+  "requests": [
+    {
+      "path": "/api/file/storage",
+      "query": {},
+      "method": "GET"
+    },
+    {
+      "path": "/api/team/1/files",
+      "query": {
+        "page": [
+          "1"
+        ],
+        "size": [
+          "100"
+        ]
+      },
+      "method": "GET"
+    },
+    {
+      "path": "/api/team/1",
+      "query": {},
+      "method": "GET"
+    },
+    {
+      "path": "/api/team/1/members",
+      "query": {
+        "page": [
+          "1"
+        ],
+        "size": [
+          "50"
+        ],
+        "sortBy": [
+          "role"
+        ]
+      },
+      "method": "GET"
+    },
+    {
+      "path": "/api/team/1/roles",
+      "query": {},
+      "method": "GET"
+    },
+    {
+      "path": "/api/auth/me",
+      "query": {},
+      "method": "GET"
+    },
+    {
+      "path": "/api/file/storage",
+      "query": {},
+      "method": "GET"
+    },
+    {
+      "path": "/api/team/1/files",
+      "query": {
+        "page": [
+          "1"
+        ],
+        "size": [
+          "100"
+        ]
+      },
+      "method": "GET"
+    },
+    {
+      "path": "/api/team/1",
+      "query": {},
+      "method": "GET"
+    },
+    {
+      "path": "/api/team/1/members",
+      "query": {
+        "page": [
+          "1"
+        ],
+        "size": [
+          "50"
+        ],
+        "sortBy": [
+          "role"
+        ]
+      },
+      "method": "GET"
+    },
+    {
+      "path": "/api/team/1/roles",
+      "query": {},
+      "method": "GET"
+    },
+    {
+      "path": "/api/auth/me",
+      "query": {},
+      "method": "GET"
+    },
+    {
+      "path": "/api/preview/105/thumbnail",
+      "query": {
+        "size": [
+          "sm"
+        ]
+      },
+      "method": "GET"
+    },
+    {
+      "path": "/api/preview/100/thumbnail",
+      "query": {
+        "size": [
+          "sm"
+        ]
+      },
+      "method": "GET"
+    },
+    {
+      "path": "/api/preview/101/thumbnail",
+      "query": {
+        "size": [
+          "sm"
+        ]
+      },
+      "method": "GET"
+    },
+    {
+      "path": "/api/preview/102/thumbnail",
+      "query": {
+        "size": [
+          "sm"
+        ]
+      },
+      "method": "GET"
+    },
+    {
+      "path": "/api/preview/105/thumbnail",
+      "query": {
+        "size": [
+          "sm"
+        ]
+      },
+      "method": "GET"
+    },
+    {
+      "path": "/api/preview/100/thumbnail",
+      "query": {
+        "size": [
+          "sm"
+        ]
+      },
+      "method": "GET"
+    },
+    {
+      "path": "/api/preview/101/thumbnail",
+      "query": {
+        "size": [
+          "sm"
+        ]
+      },
+      "method": "GET"
+    },
+    {
+      "path": "/api/preview/102/thumbnail",
+      "query": {
+        "size": [
+          "sm"
+        ]
+      },
+      "method": "GET"
+    },
+    {
+      "path": "/api/notification/unread-count",
+      "query": {},
+      "method": "GET"
+    },
+    {
+      "path": "/api/transfer/speed-limit",
+      "query": {},
+      "method": "GET"
+    },
+    {
+      "path": "/api/favorite/ids",
+      "query": {},
+      "method": "GET"
+    },
+    {
+      "path": "/api/transfer/speed-limit",
+      "query": {},
+      "method": "GET"
+    },
+    {
+      "path": "/api/favorite/ids",
+      "query": {},
+      "method": "GET"
+    },
+    {
+      "path": "/api/preview/100/thumbnail",
+      "query": {
+        "size": [
+          "lg"
+        ]
+      },
+      "method": "GET"
+    },
+    {
+      "path": "/api/preview/100/thumbnail",
+      "query": {
+        "size": [
+          "lg"
+        ]
+      },
+      "method": "GET"
+    },
+    {
+      "path": "/api/preview/100/thumbnail",
+      "query": {
+        "size": [
+          "sm"
+        ]
+      },
+      "method": "GET"
+    },
+    {
+      "path": "/api/preview/101/thumbnail",
+      "query": {
+        "size": [
+          "sm"
+        ]
+      },
+      "method": "GET"
+    },
+    {
+      "path": "/api/preview/102/thumbnail",
+      "query": {
+        "size": [
+          "sm"
+        ]
+      },
+      "method": "GET"
+    },
+    {
+      "path": "/api/preview/105/thumbnail",
+      "query": {
+        "size": [
+          "sm"
+        ]
+      },
+      "method": "GET"
+    },
+    {
+      "path": "/api/preview/100/thumbnail",
+      "query": {
+        "size": [
+          "sm"
+        ]
+      },
+      "method": "GET"
+    },
+    {
+      "path": "/api/preview/101/thumbnail",
+      "query": {
+        "size": [
+          "sm"
+        ]
+      },
+      "method": "GET"
+    },
+    {
+      "path": "/api/preview/102/thumbnail",
+      "query": {
+        "size": [
+          "sm"
+        ]
+      },
+      "method": "GET"
+    },
+    {
+      "path": "/api/preview/105/thumbnail",
+      "query": {
+        "size": [
+          "sm"
+        ]
+      },
+      "method": "GET"
+    }
+  ],
+  "errors": []
+}

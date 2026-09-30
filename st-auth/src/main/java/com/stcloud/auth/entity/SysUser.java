@@ -19,6 +19,7 @@ public class SysUser extends BaseEntity {
     private String phone;
     private String avatar;
     private Integer status;
+    private Long securityVersion;
     private Long storageUsed;
     private Long storageQuota;
     private LocalDateTime lastLoginAt;

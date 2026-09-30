@@ -162,17 +162,35 @@ public class SyncServiceImpl implements SyncService {
         List<String> exclusions = getExclusionPaths(rootId);
 
         List<SyncDeltaItem> changes = new ArrayList<>();
+        boolean reconcileRequired = false;
         for (SyncChangeLog logEntry : logs) {
-            // 只返回同步根文件夹范围内的变更（path 与 MOVE/RENAME 的 oldPath 均须在根内），
-            // 防止按用户查询时把其他/已删除同步根的日志串入，造成本地误下载、误移动与冲突循环
-            if (!isUnderRoot(logEntry.getPath(), rootPath)) {
+            boolean moving = "MOVE".equals(logEntry.getChangeType()) || "RENAME".equals(logEntry.getChangeType());
+            if (moving && java.util.Objects.equals(logEntry.getFileNodeId(), root.getCloudFolderNodeId())) {
+                reconcileRequired = true;
                 continue;
             }
-            if (("MOVE".equals(logEntry.getChangeType()) || "RENAME".equals(logEntry.getChangeType()))
-                    && !isUnderRoot(logEntry.getOldPath(), rootPath)) {
+            if (moving && (logEntry.getOldPath() == null || logEntry.getOldPath().isBlank())) {
+                reconcileRequired = true;
                 continue;
             }
+            boolean newIn = isUnderRoot(logEntry.getPath(), rootPath);
+            boolean oldIn = moving && isUnderRoot(logEntry.getOldPath(), rootPath);
+            if (!newIn && !oldIn) continue;
+            boolean newAllowed = newIn && !isExcluded(toRelativePath(logEntry.getPath(), rootPath), exclusions);
+            boolean oldAllowed = oldIn && !isExcluded(toRelativePath(logEntry.getOldPath(), rootPath), exclusions);
+            if (!newAllowed && !oldAllowed) continue;
             SyncDeltaItem item = toDeltaItem(logEntry, rootPath);
+            if (moving && oldAllowed && !newAllowed) {
+                item.setChangeType("DELETE");
+                item.setPath(toRelativePath(logEntry.getOldPath(), rootPath));
+                item.setOldPath(null);
+                item.setName(logEntry.getOldPath().substring(logEntry.getOldPath().lastIndexOf('/') + 1));
+                item.setStatus(1);
+            } else if (moving && !oldAllowed) {
+                item.setChangeType("CREATE");
+                item.setOldPath(null);
+                item.setStatus(0);
+            }
             // 无意义 MOVE/RENAME（新旧路径一致）：源头守卫漏掉的脏日志兜底过滤，
             // 防止客户端 MOVE 分支删除并重建 sync_state 导致 local_mtime 丢失、反复上传
             if (("MOVE".equals(item.getChangeType()) || "RENAME".equals(item.getChangeType()))
@@ -180,19 +198,15 @@ public class SyncServiceImpl implements SyncService {
                 continue;
             }
             // 过滤排除路径下的变更
-            if (item.getPath() != null && !isExcluded(item.getPath(), exclusions)) {
-                changes.add(item);
-            }
-            // MOVE/RENAME 的 oldPath 也要检查：如果旧路径被排除，跳过
-            if (item.getOldPath() != null && isExcluded(item.getOldPath(), exclusions) && !changes.contains(item)) {
-                changes.remove(item);
-            }
+            changes.add(item);
         }
 
         SyncDeltaResponse resp = new SyncDeltaResponse();
         resp.setCursor(newCursor);
         resp.setHasMore(hasMore);
         resp.setChanges(changes);
+        resp.setScopeProjectionVersion(2);
+        resp.setReconcileRequired(reconcileRequired);
 
         root.setLastSyncAt(LocalDateTime.now());
         syncRootMapper.updateById(root);
@@ -342,16 +356,10 @@ public class SyncServiceImpl implements SyncService {
     }
 
     private String toRelativePath(String absPath, String rootPath) {
-        if (absPath == null || absPath.isEmpty()) {
+        if (!isUnderRoot(absPath, rootPath)) {
             return null;
         }
-        String relPath = absPath;
-        if (relPath.startsWith(rootPath)) {
-            relPath = relPath.substring(rootPath.length());
-            if (!relPath.startsWith(PATH_SEP)) {
-                relPath = PATH_SEP + relPath;
-            }
-        }
+        String relPath = absPath.substring(rootPath.length());
         if (relPath.isEmpty()) {
             relPath = PATH_SEP;
         }

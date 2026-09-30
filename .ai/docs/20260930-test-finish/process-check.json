@@ -1,0 +1,20 @@
+[
+  {
+    "ProcessId": 11524,
+    "ParentProcessId": 33472,
+    "Name": "node.exe",
+    "CommandLine": "\"C:\\Program Files\\nodejs\\\\node.exe\"  \"C:\\Program Files\\nodejs\\\\node_modules\\npm\\bin\\npm-cli.js\" --prefix st-web run dev -- --host 127.0.0.1 --port 5187 --strictPort"
+  },
+  {
+    "ProcessId": 29736,
+    "ParentProcessId": 8516,
+    "Name": "node.exe",
+    "CommandLine": "\"node\"   \"E:\\code\\st-cloud\\st-web\\node_modules\\.bin\\\\..\\vite\\bin\\vite.js\" --host 127.0.0.1 --port 5187 --strictPort"
+  },
+  {
+    "ProcessId": 19256,
+    "ParentProcessId": 12924,
+    "Name": "pwsh.exe",
+    "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" -Command \"try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}\ndocker inspect st-test-redis-20260930-finish st-test-es-20260930-finish st-test-mysql-20260930-finish st-test-s3-20260930-finish --format '{{.Id}} {{.Name}} {{index .Config.Labels \\\"stcloud.test-task\\\"}} {{json .Mounts}}' > .ai/docs/20260930-test-finish/resources-before-cleanup.log\n$finishContainers=@(\n@{name='st-test-redis-20260930-finish';id='55924cddaab26421f71ae1315835c4f4bb4265347da407f6e83ebf3b824c9760'},\n@{name='st-test-es-20260930-finish';id='5d9061db73b979d2fbed93dd1d94873d7cbcb188b6a767250bfc456b7551562a'},\n@{name='st-test-mysql-20260930-finish';id='e9e8d906c8f229156a884080bf899d4ca7e1a07174563134d611d2ce034276a7'},\n@{name='st-test-s3-20260930-finish';id='fbd2829ac763662871e7a6612086bb12d5e8e44ee7e0ef03e7d90023849266fb'})\nforeach($finishContainer in $finishContainers) { $finishInspect=docker inspect $finishContainer.name | ConvertFrom-Json; if($finishInspect[0].Id -ne $finishContainer.id -or $finishInspect[0].Config.Labels.'stcloud.test-task' -ne 'TASK-20260930-TEST-FINISH') { throw '隔离资源身份不匹配，拒绝停止' }; docker stop $finishContainer.name | Add-Content .ai/docs/20260930-test-finish/resources-cleanup.log }\ndocker ps -a --filter label=stcloud.test-task=TASK-20260930-TEST-FINISH --format '{{.ID}} {{.Names}}' > .ai/docs/20260930-test-finish/resources-after-cleanup.log\nGet-CimInstance Win32_Process | Where-Object { $_.CommandLine -match 'st-cloud\\\\st-web.*vite|prefix st-web|restart-worker.cjs|surefirebooter' } | Select-Object ProcessId,ParentProcessId,Name,CommandLine | ConvertTo-Json -Depth 3 > .ai/docs/20260930-test-finish/process-check.json\nGet-Content .ai/docs/20260930-test-finish/process-check.json -Raw\""
+  }
+]

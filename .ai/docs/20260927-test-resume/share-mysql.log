@@ -1,0 +1,58 @@
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.5)
+
+2026-09-28T21:37:34.507+08:00  INFO 34748 --- [           main] c.s.share.ShareMysqlIntegrationTest      : Starting ShareMysqlIntegrationTest using Java 17.0.14 with PID 34748 (started by Administrator in E:\code\st-cloud\st-share)
+2026-09-28T21:37:34.509+08:00  INFO 34748 --- [           main] c.s.share.ShareMysqlIntegrationTest      : The following 1 profile is active: "test"
+2026-09-28T21:37:35.274+08:00  WARN 34748 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.ListenerContainerConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-28T21:37:35.276+08:00  WARN 34748 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration' of type [org.apache.rocketmq.spring.autoconfigure.MessageConverterConfiguration$$SpringCGLIB$$0] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-28T21:37:35.326+08:00  WARN 34748 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'createRocketMQMessageConverter' of type [org.apache.rocketmq.spring.support.RocketMQMessageConverter] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-28T21:37:35.332+08:00  WARN 34748 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketmq-org.apache.rocketmq.spring.autoconfigure.RocketMQProperties' of type [org.apache.rocketmq.spring.autoconfigure.RocketMQProperties] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+2026-09-28T21:37:35.334+08:00  WARN 34748 --- [           main] trationDelegate$BeanPostProcessorChecker : Bean 'rocketMQMessageListenerContainerRegistrar' of type [org.apache.rocketmq.spring.support.RocketMQMessageListenerContainerRegistrar] is not eligible for getting processed by all BeanPostProcessors (for example: not eligible for auto-proxying). Is this bean getting eagerly injected into a currently created BeanPostProcessor [org.apache.rocketmq.spring.annotation.RocketMQMessageListenerBeanPostProcessor]? Check the corresponding BeanPostProcessor declaration and its dependencies.
+ _ _   |_  _ _|_. ___ _ |    _ 
+| | |\/|_)(_| | |_\  |_)||_|_\ 
+     /               |         
+                        3.5.7 
+2026-09-28T21:37:35.624+08:00  INFO 34748 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-09-28T21:37:35.852+08:00  INFO 34748 --- [           main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@2c48cede
+2026-09-28T21:37:35.855+08:00  INFO 34748 --- [           main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+OpenJDK 64-Bit Server VM warning: Sharing is only supported for boot loader classes because bootstrap classpath has been appended
+2026-09-28T21:37:38.333+08:00  WARN 34748 --- [           main] o.a.r.s.a.RocketMQAutoConfiguration      : The necessary spring property 'rocketmq.name-server' is not defined, all rockertmq beans creation are skipped!
+2026-09-28T21:37:38.816+08:00  INFO 34748 --- [           main] c.s.share.ShareMysqlIntegrationTest      : Started ShareMysqlIntegrationTest in 4.637 seconds (process running for 5.5)
+2026-09-28T21:37:40.308+08:00  WARN 34748 --- [           main] c.s.share.service.impl.ShareServiceImpl  : �����ļ���ʽ�����ж�: shareCode=TXN22104566210858360834, nodeId=2104566210858360834, err=client/source disconnected
+2026-09-28T21:37:40.342+08:00  WARN 34748 --- [           main] c.s.share.service.impl.ShareServiceImpl  : �����ļ���ʽ�����ж�: shareCode=TXN22104566210988384257, nodeId=2104566210988384257, err=client/source disconnected
+[ERROR] Tests run: 17, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 11.10 s <<< FAILURE! -- in com.stcloud.share.ShareMysqlIntegrationTest
+[ERROR] com.stcloud.share.ShareMysqlIntegrationTest.tc0511ActualExpiryDuringSourceOpenAndPasswordSnapshotSemantics -- Time elapsed: 2.062 s <<< FAILURE!
+org.opentest4j.AssertionFailedError: Expected com.stcloud.common.exception.BusinessException to be thrown, but nothing was thrown.
+	at org.junit.jupiter.api.AssertionFailureBuilder.build(AssertionFailureBuilder.java:152)
+	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:73)
+	at org.junit.jupiter.api.AssertThrows.assertThrows(AssertThrows.java:35)
+	at org.junit.jupiter.api.Assertions.assertThrows(Assertions.java:3115)
+	at com.stcloud.share.ShareMysqlIntegrationTest.tc0511ActualExpiryDuringSourceOpenAndPasswordSnapshotSemantics(ShareMysqlIntegrationTest.java:70)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:569)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+	at java.base/java.util.ArrayList.forEach(ArrayList.java:1511)
+
+[ERROR] Failures: 
+[ERROR]   ShareMysqlIntegrationTest.tc0511ActualExpiryDuringSourceOpenAndPasswordSnapshotSemantics:70 Expected com.stcloud.common.exception.BusinessException to be thrown, but nothing was thrown.
+[ERROR] Tests run: 17, Failures: 1, Errors: 0, Skipped: 0
+[ERROR] Failed to execute goal org.apache.maven.plugins:maven-surefire-plugin:3.1.2:test (default-test) on project st-share: There are test failures.
+[ERROR] 
+[ERROR] Please refer to E:\code\st-cloud\st-share\target\surefire-reports for the individual test results.
+[ERROR] Please refer to dump files (if any exist) [date].dump, [date]-jvmRun[N].dump and [date].dumpstream.
+[ERROR] -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoFailureException
+[ERROR] 
+[ERROR] After correcting the problems, you can resume the build with the command
+[ERROR]   mvn <args> -rf :st-share

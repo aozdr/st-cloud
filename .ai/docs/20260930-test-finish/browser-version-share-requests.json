@@ -1,0 +1,554 @@
+[
+  {
+    "path": "/api/file/storage",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/file/list",
+    "query": {
+      "parentId": [
+        "9223372036854775806"
+      ],
+      "page": [
+        "1"
+      ],
+      "size": [
+        "100"
+      ]
+    },
+    "body": null
+  },
+  {
+    "path": "/api/file/9223372036854775806",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/auth/me",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/file/storage",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/file/list",
+    "query": {
+      "parentId": [
+        "9223372036854775806"
+      ],
+      "page": [
+        "1"
+      ],
+      "size": [
+        "100"
+      ]
+    },
+    "body": null
+  },
+  {
+    "path": "/api/file/9223372036854775806",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/auth/me",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/notification/unread-count",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/transfer/speed-limit",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/favorite/ids",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/transfer/speed-limit",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/favorite/ids",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/file-watches/state",
+    "query": {
+      "nodeId": [
+        "9007199254740993"
+      ]
+    },
+    "body": null
+  },
+  {
+    "path": "/api/file/9007199254740993/versions",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/file/9007199254740993/versions",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/preview/9007199254740993/version/9007199254740995",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/preview/9007199254740993/version/9007199254740995",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/share/access/access",
+    "query": {},
+    "body": {
+      "shareCode": "9007199254740995",
+      "password": "[REDACTED]"
+    }
+  },
+  {
+    "path": "/api/share/access/access",
+    "query": {},
+    "body": {
+      "shareCode": "9007199254740995",
+      "password": "[REDACTED]"
+    }
+  },
+  {
+    "path": "/api/share/access/list",
+    "query": {
+      "shareCode": [
+        "9007199254740995"
+      ],
+      "parentId": [
+        "9223372036854775806"
+      ],
+      "password": [
+        "[REDACTED]"
+      ]
+    },
+    "body": null
+  },
+  {
+    "path": "/api/share/access/list",
+    "query": {
+      "shareCode": [
+        "9007199254740995"
+      ],
+      "parentId": [
+        "9223372036854775806"
+      ],
+      "password": [
+        "[REDACTED]"
+      ]
+    },
+    "body": null
+  },
+  {
+    "path": "/api/share/access/stream/9007199254740995",
+    "query": {
+      "nodeId": [
+        "9007199254740993"
+      ],
+      "password": [
+        "[REDACTED]"
+      ]
+    },
+    "body": null
+  },
+  {
+    "path": "/api/share/access/stream/9007199254740995",
+    "query": {
+      "nodeId": [
+        "9007199254740993"
+      ],
+      "password": [
+        "[REDACTED]"
+      ]
+    },
+    "body": null
+  },
+  {
+    "path": "/api/file/storage",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/file/list",
+    "query": {
+      "parentId": [
+        "9007199254740993"
+      ],
+      "page": [
+        "1"
+      ],
+      "size": [
+        "100"
+      ]
+    },
+    "body": null
+  },
+  {
+    "path": "/api/file/9007199254740993",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/auth/me",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/file/storage",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/file/list",
+    "query": {
+      "parentId": [
+        "9007199254740993"
+      ],
+      "page": [
+        "1"
+      ],
+      "size": [
+        "100"
+      ]
+    },
+    "body": null
+  },
+  {
+    "path": "/api/file/9007199254740993",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/auth/me",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/notification/unread-count",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/transfer/speed-limit",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/favorite/ids",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/transfer/speed-limit",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/favorite/ids",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/file-watches/state",
+    "query": {
+      "nodeId": [
+        "9007199254740995"
+      ]
+    },
+    "body": null
+  },
+  {
+    "path": "/api/file/9007199254740995/versions",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/file/9007199254740995/versions",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/preview/9007199254740995/version/9223372036854775806",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/preview/9007199254740995/version/9223372036854775806",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/share/access/access",
+    "query": {},
+    "body": {
+      "shareCode": "9223372036854775806",
+      "password": "[REDACTED]"
+    }
+  },
+  {
+    "path": "/api/share/access/access",
+    "query": {},
+    "body": {
+      "shareCode": "9223372036854775806",
+      "password": "[REDACTED]"
+    }
+  },
+  {
+    "path": "/api/share/access/list",
+    "query": {
+      "shareCode": [
+        "9223372036854775806"
+      ],
+      "parentId": [
+        "9007199254740993"
+      ],
+      "password": [
+        "[REDACTED]"
+      ]
+    },
+    "body": null
+  },
+  {
+    "path": "/api/share/access/list",
+    "query": {
+      "shareCode": [
+        "9223372036854775806"
+      ],
+      "parentId": [
+        "9007199254740993"
+      ],
+      "password": [
+        "[REDACTED]"
+      ]
+    },
+    "body": null
+  },
+  {
+    "path": "/api/share/access/stream/9223372036854775806",
+    "query": {
+      "nodeId": [
+        "9007199254740995"
+      ],
+      "password": [
+        "[REDACTED]"
+      ]
+    },
+    "body": null
+  },
+  {
+    "path": "/api/share/access/stream/9223372036854775806",
+    "query": {
+      "nodeId": [
+        "9007199254740995"
+      ],
+      "password": [
+        "[REDACTED]"
+      ]
+    },
+    "body": null
+  },
+  {
+    "path": "/api/file/storage",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/file/list",
+    "query": {
+      "parentId": [
+        "9007199254740995"
+      ],
+      "page": [
+        "1"
+      ],
+      "size": [
+        "100"
+      ]
+    },
+    "body": null
+  },
+  {
+    "path": "/api/file/9007199254740995",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/auth/me",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/file/storage",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/file/list",
+    "query": {
+      "parentId": [
+        "9007199254740995"
+      ],
+      "page": [
+        "1"
+      ],
+      "size": [
+        "100"
+      ]
+    },
+    "body": null
+  },
+  {
+    "path": "/api/file/9007199254740995",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/auth/me",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/notification/unread-count",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/transfer/speed-limit",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/favorite/ids",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/transfer/speed-limit",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/favorite/ids",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/file-watches/state",
+    "query": {
+      "nodeId": [
+        "9223372036854775806"
+      ]
+    },
+    "body": null
+  },
+  {
+    "path": "/api/file/9223372036854775806/versions",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/file/9223372036854775806/versions",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/preview/9223372036854775806/version/9007199254740993",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/preview/9223372036854775806/version/9007199254740993",
+    "query": {},
+    "body": null
+  },
+  {
+    "path": "/api/share/access/access",
+    "query": {},
+    "body": {
+      "shareCode": "9007199254740993",
+      "password": "[REDACTED]"
+    }
+  },
+  {
+    "path": "/api/share/access/access",
+    "query": {},
+    "body": {
+      "shareCode": "9007199254740993",
+      "password": "[REDACTED]"
+    }
+  },
+  {
+    "path": "/api/share/access/list",
+    "query": {
+      "shareCode": [
+        "9007199254740993"
+      ],
+      "parentId": [
+        "9007199254740995"
+      ],
+      "password": [
+        "[REDACTED]"
+      ]
+    },
+    "body": null
+  },
+  {
+    "path": "/api/share/access/list",
+    "query": {
+      "shareCode": [
+        "9007199254740993"
+      ],
+      "parentId": [
+        "9007199254740995"
+      ],
+      "password": [
+        "[REDACTED]"
+      ]
+    },
+    "body": null
+  },
+  {
+    "path": "/api/share/access/stream/9007199254740993",
+    "query": {
+      "nodeId": [
+        "9223372036854775806"
+      ],
+      "password": [
+        "[REDACTED]"
+      ]
+    },
+    "body": null
+  },
+  {
+    "path": "/api/share/access/stream/9007199254740993",
+    "query": {
+      "nodeId": [
+        "9223372036854775806"
+      ],
+      "password": [
+        "[REDACTED]"
+      ]
+    },
+    "body": null
+  }
+]

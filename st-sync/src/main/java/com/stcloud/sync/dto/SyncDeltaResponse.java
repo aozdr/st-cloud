@@ -17,4 +17,10 @@ public class SyncDeltaResponse {
 
     @Schema(description = "变更列表")
     private List<SyncDeltaItem> changes;
+
+    @Schema(description = "范围投影协议版本")
+    private Integer scopeProjectionVersion;
+
+    @Schema(description = "存在无法可靠投影的历史事件，客户端需先完整对账")
+    private Boolean reconcileRequired;
 }

@@ -32,6 +32,9 @@ import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Isolation;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
@@ -97,7 +100,7 @@ public class TeamServiceImpl implements TeamService {
         TeamMember member = new TeamMember();
         member.setSpaceId(space.getId());
         member.setUserId(userId);
-        member.setRole(0);
+        member.setRole(0L);
         member.setJoinedAt(LocalDateTime.now());
         teamMemberMapper.insert(member);
 
@@ -181,15 +184,17 @@ public class TeamServiceImpl implements TeamService {
         teamSpaceMapper.deleteById(spaceId);
         teamMemberMapper.delete(new LambdaQueryWrapper<TeamMember>().eq(TeamMember::getSpaceId, spaceId));
         // 空间与成员删除：权限缓存失效
-        folderPermissionService.invalidateSpace(spaceId);
+        invalidateSpaceAfterCommit(spaceId);
         return Result.success();
     }
 
     // ==================== 成员管理 ====================
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public Result<TeamMemberVO> inviteMember(Long spaceId, InviteMemberRequest request) {
+        // 空间锁后读取当前权限/角色/引用，避免等待期间已提交的变更被旧快照遮蔽。
+        lockRoleWrites(spaceId);
         checkPermission(spaceId, 0);
         // 按用户ID查找用户（前端搜索选择后传入 userId，避免手动输入用户名拼写错误）
         SysUser user = sysUserMapper.selectById(request.getUserId());
@@ -202,11 +207,13 @@ public class TeamServiceImpl implements TeamService {
         TeamMember member = new TeamMember();
         member.setSpaceId(spaceId);
         member.setUserId(user.getId());
-        member.setRole(request.getRole() != null ? request.getRole() : 2);
+        Long roleId = request.getRole() != null ? request.getRole() : 2L;
+        requireAssignableRole(spaceId, roleId);
+        member.setRole(roleId);
         member.setJoinedAt(LocalDateTime.now());
         teamMemberMapper.insert(member);
         // 成员变更：权限缓存失效，新成员权限下次访问重新计算
-        folderPermissionService.invalidateSpace(spaceId);
+        invalidateSpaceAfterCommit(spaceId);
 
         // 记录邀请活动日志
         activityHelper.log(spaceId, "MEMBER_INVITE", "MEMBER", user.getId(), user.getNickname());
@@ -271,17 +278,24 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    @Transactional
-    public Result<Void> updateMemberRole(Long spaceId, Long memberId, Integer role) {
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public Result<Void> updateMemberRole(Long spaceId, Long memberId, Long role) {
+        // 空间锁后读取当前权限/角色/引用，避免等待期间已提交的变更被旧快照遮蔽。
+        lockRoleWrites(spaceId);
         checkPermission(spaceId, 0);
+        requireAssignableRole(spaceId, role);
         TeamMember member = teamMemberMapper.selectById(memberId);
         if (member == null || !member.getSpaceId().equals(spaceId)) {
             throw new BusinessException(ResultCode.TEAM_MEMBER_NOT_FOUND);
         }
+        TeamSpace space = teamSpaceMapper.selectById(spaceId);
+        if (space != null && space.getOwnerId().equals(member.getUserId()) && !Long.valueOf(0L).equals(role)) {
+            throw new BusinessException(ResultCode.TEAM_PERMISSION_DENIED, "不能修改空间拥有者的管理员角色");
+        }
         member.setRole(role);
         teamMemberMapper.updateById(member);
         // 角色变更：权限缓存失效，重新按新角色计算
-        folderPermissionService.invalidateSpace(spaceId);
+        invalidateSpaceAfterCommit(spaceId);
         // 记录角色变更活动日志
         SysUser user = sysUserMapper.selectById(member.getUserId());
         activityHelper.log(spaceId, "MEMBER_ROLE_CHANGE", "MEMBER", member.getUserId(),
@@ -302,7 +316,7 @@ public class TeamServiceImpl implements TeamService {
         }
         teamMemberMapper.deleteById(memberId);
         // 成员移除：权限缓存失效
-        folderPermissionService.invalidateSpace(spaceId);
+        invalidateSpaceAfterCommit(spaceId);
         // 记录移除活动日志
         SysUser user = sysUserMapper.selectById(member.getUserId());
         activityHelper.log(spaceId, "MEMBER_REMOVE", "MEMBER", member.getUserId(),
@@ -321,9 +335,10 @@ public class TeamServiceImpl implements TeamService {
         if (member == null) {
             throw new BusinessException(ResultCode.TEAM_PERMISSION_DENIED, "您不是该空间的成员");
         }
+        requireActiveMembership(spaceId, member);
         // 权限模型重设计：按权限点推导旧角色等级（含自定义角色），管理员（roleId==0 或 manage_settings）直通
         int level = legacyRoleLevel(member);
-        if (minRole != null && level > minRole) {
+        if (level < 0 || (minRole != null && level > minRole)) {
             throw new BusinessException(ResultCode.TEAM_PERMISSION_DENIED, "权限不足");
         }
         return level;
@@ -332,15 +347,19 @@ public class TeamServiceImpl implements TeamService {
     // ==================== P0 新增：邀请链接 ====================
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public Result<TeamInviteVO> createInvite(Long spaceId, CreateInviteRequest request) {
+        // 空间锁后读取当前权限/角色/引用，避免等待期间已提交的变更被旧快照遮蔽。
+        lockRoleWrites(spaceId);
         checkPermission(spaceId, 0);
         // 生成 32 位随机邀请码（大小写字母+数字）
         String inviteCode = generateInviteCode();
         TeamInvite invite = new TeamInvite();
         invite.setSpaceId(spaceId);
         invite.setInviteCode(inviteCode);
-        invite.setRole(request.getRole() != null ? request.getRole() : 2);
+        Long roleId = request.getRole() != null ? request.getRole() : 2L;
+        requireAssignableRole(spaceId, roleId);
+        invite.setRole(roleId);
         invite.setCreatedBy(UserContext.getUserId());
         invite.setExpireAt(request.getExpireAt());
         // 新建邀请链接默认有效
@@ -380,23 +399,29 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public Result<Long> joinByCode(String inviteCode) {
         // 查询邀请码（无需空间权限，已认证即可）
         TeamInvite invite = teamInviteMapper.selectOne(new LambdaQueryWrapper<TeamInvite>()
                 .eq(TeamInvite::getInviteCode, inviteCode));
-        if (invite == null || invite.getStatus() == InviteStatus.REVOKED.getCode()) {
+        if (invite == null) throw new BusinessException(ResultCode.TEAM_INVITE_NOT_FOUND);
+        Long spaceId = invite.getSpaceId();
+        lockRoleWrites(spaceId);
+        // 锁前仅定位空间；邀请在等待期间可能已撤销，必须锁后重新检查当前状态。
+        invite = teamInviteMapper.selectById(invite.getId());
+        if (invite == null || !spaceId.equals(invite.getSpaceId())
+                || invite.getStatus() == InviteStatus.REVOKED.getCode()) {
             throw new BusinessException(ResultCode.TEAM_INVITE_NOT_FOUND);
         }
-        // 校验是否过期
         if (invite.getExpireAt() != null && invite.getExpireAt().isBefore(LocalDateTime.now())) {
             throw new BusinessException(ResultCode.TEAM_INVITE_EXPIRED);
         }
-        // 校验空间是否存在且正常
-        TeamSpace space = teamSpaceMapper.selectById(invite.getSpaceId());
+        TeamSpace space = teamSpaceMapper.selectById(spaceId);
         if (space == null || space.getStatus() != TeamSpaceStatus.NORMAL.getCode()) {
             throw new BusinessException(ResultCode.TEAM_NOT_FOUND);
         }
+        // 邀请创建后角色可能被停用或删除，接受时必须重新校验。
+        requireAssignableRole(invite.getSpaceId(), invite.getRole());
         Long userId = UserContext.getUserId();
         // 校验是否已是成员
         Long exists = teamMemberMapper.selectCount(new LambdaQueryWrapper<TeamMember>()
@@ -436,7 +461,7 @@ public class TeamServiceImpl implements TeamService {
         if (member == null) throw new BusinessException(ResultCode.TEAM_MEMBER_NOT_FOUND);
 
         // 管理员退出需额外校验
-        if (member.getRole() == 0) {
+        if (Long.valueOf(0L).equals(member.getRole())) {
             TeamSpace space = teamSpaceMapper.selectById(spaceId);
             // 拥有者必须先移交所有权
             if (space.getOwnerId().equals(userId)) {
@@ -472,7 +497,7 @@ public class TeamServiceImpl implements TeamService {
             throw new BusinessException(ResultCode.TEAM_MEMBER_NOT_FOUND);
         }
         // 目标必须是管理员
-        if (target.getRole() != 0) {
+        if (!Long.valueOf(0L).equals(target.getRole())) {
             throw new BusinessException(ResultCode.TEAM_TRANSFER_TARGET_INVALID);
         }
         // 更新拥有者
@@ -518,7 +543,7 @@ public class TeamServiceImpl implements TeamService {
     public Integer checkPermission(Long spaceId, Long nodeId, Integer minPermission) {
         // 权限模型重设计：兼容旧单值校验，内部按权限点并集推导旧等级（-1 不再产生，规则只增强）
         int effectiveLevel = FolderPermissionService.legacyLevelOf(resolveMyPermissions(spaceId, nodeId));
-        if (minPermission != null && effectiveLevel > minPermission) {
+        if (effectiveLevel < 0 || (minPermission != null && effectiveLevel > minPermission)) {
             throw new BusinessException(ResultCode.TEAM_PERMISSION_DENIED, "权限不足");
         }
         return effectiveLevel;
@@ -549,10 +574,11 @@ public class TeamServiceImpl implements TeamService {
         if (member == null) {
             throw new BusinessException(ResultCode.TEAM_PERMISSION_DENIED, "您不是该空间的成员");
         }
+        requireActiveMembership(spaceId, member);
         // 2. 角色权限集解析
         Set<String> rolePerms = resolveRolePermissions(member);
         // 3. 管理员直通：roleId==0 或权限集含 manage_settings → 全部权限点
-        if (member.getRole() != null && (member.getRole() == 0
+        if (member.getRole() != null && (Long.valueOf(0L).equals(member.getRole())
                 || rolePerms.contains(FolderPermissionService.PERM_MANAGE_SETTINGS))) {
             return new LinkedHashSet<>(FolderPermissionService.ALL_PERMISSIONS);
         }
@@ -564,23 +590,25 @@ public class TeamServiceImpl implements TeamService {
     /**
      * 成员角色 → 权限点集合：
      * role 0/1/2 用 presetPerms（查看者(2) 为 view=true、download=false）；
-     * 自定义角色（>=100，兼容 3~99）从 team_role.permissions JSON 读取，角色缺失/停用回退查看者。
+     * 自定义角色从 team_role.permissions JSON 读取；无效引用拒绝授权。
      */
     private Set<String> resolveRolePermissions(TeamMember member) {
         if (member == null || member.getRole() == null) {
-            return FolderPermissionService.VIEWER_PERMISSIONS;
+            throw new BusinessException(ResultCode.TEAM_PERMISSION_DENIED, "角色无效");
         }
-        int role = member.getRole();
+        Long role = member.getRole();
         if (role >= 0 && role <= 2) {
-            return FolderPermissionService.presetPermissions(role);
+            return FolderPermissionService.presetPermissions(role.intValue());
         }
-        com.stcloud.team.entity.TeamRole teamRole = teamRoleMapper.selectById((long) role);
+        com.stcloud.team.entity.TeamRole teamRole = teamRoleMapper.selectById(role);
         if (teamRole != null && teamRole.getStatus() != null
-                && teamRole.getStatus() == RoleStatus.ENABLED.getCode()) {
+                && teamRole.getStatus() == RoleStatus.ENABLED.getCode()
+                && java.util.Objects.equals(teamRole.getSpaceId(), member.getSpaceId())
+                && java.util.Objects.equals(teamRole.getTenantId(), member.getTenantId())
+                && !Integer.valueOf(1).equals(teamRole.getDeleted())) {
             return FolderPermissionService.parsePermissions(teamRole.getPermissions());
         }
-        // 角色不存在或已停用：回退查看者
-        return FolderPermissionService.VIEWER_PERMISSIONS;
+        throw new BusinessException(ResultCode.TEAM_PERMISSION_DENIED, "角色已失效");
     }
 
     /**
@@ -589,13 +617,60 @@ public class TeamServiceImpl implements TeamService {
      */
     private int legacyRoleLevel(TeamMember member) {
         if (member == null || member.getRole() == null) {
-            return 2;
+            return -1;
         }
         Set<String> perms = resolveRolePermissions(member);
-        if (member.getRole() == 0 || perms.contains(FolderPermissionService.PERM_MANAGE_SETTINGS)) {
+        if (Long.valueOf(0L).equals(member.getRole()) || perms.contains(FolderPermissionService.PERM_MANAGE_SETTINGS)) {
             return 0;
         }
         return FolderPermissionService.legacyLevelOf(perms);
+    }
+
+    private void lockRoleWrites(Long spaceId) {
+        if (!spaceId.equals(teamSpaceMapper.lockRoleWrites(spaceId))) {
+            throw new BusinessException(ResultCode.TEAM_NOT_FOUND);
+        }
+    }
+
+    private void invalidateSpaceAfterCommit(Long spaceId) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            folderPermissionService.invalidateSpace(spaceId);
+            return;
+        }
+        // 授权读取走 fresh；共享缓存仅在提交后失效，避免旧值回填。
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override public void afterCommit() { folderPermissionService.invalidateSpace(spaceId); }
+        });
+    }
+
+    private void requireAssignableRole(Long spaceId, Long roleId) {
+        if (roleId == null || roleId < 0) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "角色无效");
+        }
+        if (roleId <= 2) return;
+        com.stcloud.team.entity.TeamRole role = teamRoleMapper.selectById(roleId);
+        if (role == null || !java.util.Objects.equals(role.getSpaceId(), spaceId)
+                || !Integer.valueOf(RoleStatus.ENABLED.getCode()).equals(role.getStatus())
+                || Integer.valueOf(1).equals(role.getDeleted())) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "角色不存在或已停用");
+        }
+    }
+
+    private void requireActiveMembership(Long spaceId, TeamMember member) {
+        TeamSpace space = teamSpaceMapper.selectById(spaceId);
+        if (space == null || !Integer.valueOf(TeamSpaceStatus.NORMAL.getCode()).equals(space.getStatus())
+                || member.getExpireAt() != null && !member.getExpireAt().isAfter(LocalDateTime.now())) {
+            throw new BusinessException(ResultCode.TEAM_PERMISSION_DENIED, "空间或成员资格已失效");
+        }
+        // 外部协作关闭后，已有外部成员也立即失权；不能只在邀请入口检查开关。
+        if (Integer.valueOf(1).equals(member.getMemberType())) {
+            var config = teamExternalConfigMapper.selectOne(new LambdaQueryWrapper<com.stcloud.team.entity.TeamExternalConfig>()
+                    .eq(com.stcloud.team.entity.TeamExternalConfig::getTenantId, member.getTenantId())
+                    .eq(com.stcloud.team.entity.TeamExternalConfig::getSpaceId, spaceId));
+            if (config == null || !Integer.valueOf(1).equals(config.getAllowExternal())) {
+                throw new BusinessException(ResultCode.TEAM_PERMISSION_DENIED, "空间已关闭外部协作");
+            }
+        }
     }
 
     /**
@@ -891,7 +966,7 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     public Result<List<TeamRoleVO>> listRoles(Long spaceId) {
-        checkPermission(spaceId, 0);
+        checkPermission(spaceId, 2);
         List<TeamRoleVO> result = new java.util.ArrayList<>();
         // 预设角色均为启用状态
         result.add(toRoleVO(0L, spaceId, "管理员", presetPerms(0), RoleStatus.ENABLED.getCode(), true));
@@ -904,8 +979,10 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public Result<TeamRoleVO> createRole(Long spaceId, TeamRoleRequest request) {
+        // 空间锁后读取当前权限/角色/引用，避免等待期间已提交的变更被旧快照遮蔽。
+        lockRoleWrites(spaceId);
         checkPermission(spaceId, 0);
         com.stcloud.team.entity.TeamRole role = new com.stcloud.team.entity.TeamRole();
         role.setSpaceId(spaceId); role.setName(request.getName());
@@ -914,33 +991,46 @@ public class TeamServiceImpl implements TeamService {
         role.setStatus(RoleStatus.ENABLED.getCode());
         teamRoleMapper.insert(role);
         // 角色变更：权限缓存失效（角色规则影响权限链）
-        folderPermissionService.invalidateSpace(spaceId);
+        invalidateSpaceAfterCommit(spaceId);
         return Result.success(toRoleVO(role.getId(), spaceId, role.getName(), role.getPermissions(),
                 RoleStatus.ENABLED.getCode(), false));
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public Result<Void> updateRole(Long spaceId, Long roleId, TeamRoleRequest request) {
+        // 空间锁后读取当前权限/角色/引用，避免等待期间已提交的变更被旧快照遮蔽。
+        lockRoleWrites(spaceId);
         checkPermission(spaceId, 0);
         com.stcloud.team.entity.TeamRole role = teamRoleMapper.selectById(roleId);
         if (role == null || !role.getSpaceId().equals(spaceId)) throw new BusinessException(ResultCode.BAD_REQUEST, "角色不存在");
         role.setName(request.getName()); role.setPermissions(request.getPermissions());
         teamRoleMapper.updateById(role);
         // 角色变更：权限缓存失效
-        folderPermissionService.invalidateSpace(spaceId);
+        invalidateSpaceAfterCommit(spaceId);
         return Result.success();
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public Result<Void> deleteRole(Long spaceId, Long roleId) {
+        // 空间锁后读取当前权限/角色/引用，避免等待期间已提交的变更被旧快照遮蔽。
+        lockRoleWrites(spaceId);
         checkPermission(spaceId, 0);
+        com.stcloud.team.entity.TeamRole role = teamRoleMapper.selectById(roleId);
+        if (role == null || !java.util.Objects.equals(role.getSpaceId(), spaceId)) {
+            throw new BusinessException(ResultCode.BAD_REQUEST, "角色不存在");
+        }
         Long count = teamMemberMapper.selectCount(new LambdaQueryWrapper<TeamMember>().eq(TeamMember::getSpaceId, spaceId).eq(TeamMember::getRole, roleId));
         if (count > 0) throw new BusinessException(ResultCode.BAD_REQUEST, "角色正在使用中，无法删除");
+        Long inviteCount = teamInviteMapper.selectCount(new LambdaQueryWrapper<TeamInvite>()
+                .eq(TeamInvite::getSpaceId, spaceId).eq(TeamInvite::getRole, roleId)
+                .eq(TeamInvite::getStatus, InviteStatus.ACTIVE.getCode())
+                .and(query -> query.isNull(TeamInvite::getExpireAt).or().gt(TeamInvite::getExpireAt, LocalDateTime.now())));
+        if (inviteCount > 0) throw new BusinessException(ResultCode.BAD_REQUEST, "角色仍被有效邀请链接使用，无法删除");
         teamRoleMapper.deleteById(roleId);
         // 角色变更：权限缓存失效
-        folderPermissionService.invalidateSpace(spaceId);
+        invalidateSpaceAfterCommit(spaceId);
         return Result.success();
     }
 
@@ -954,7 +1044,7 @@ public class TeamServiceImpl implements TeamService {
         member.setExpireAt(request.getExpireAt());
         teamMemberMapper.updateById(member);
         // 成员属性变更：权限缓存失效
-        folderPermissionService.invalidateSpace(spaceId);
+        invalidateSpaceAfterCommit(spaceId);
         return Result.success();
     }
 

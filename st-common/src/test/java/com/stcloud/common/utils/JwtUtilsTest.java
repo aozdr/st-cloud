@@ -54,11 +54,11 @@ class JwtUtilsTest {
     }
 
     @Test
-    @DisplayName("访问令牌不含 type=download")
-    void accessTokenHasNoDownloadType() {
+    @DisplayName("访问令牌携带 type=access")
+    void accessTokenHasAccessType() {
         String token = jwtUtils.generateToken(1L, 1L, "alice",
                 List.of("user"), List.of("file:download"), 1);
-        assertNull(jwtUtils.parseToken(token).get("type"));
+        assertEquals("access", jwtUtils.parseToken(token).get("type"));
     }
 
     @Test

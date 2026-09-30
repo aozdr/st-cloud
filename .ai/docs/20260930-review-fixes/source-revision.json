@@ -1,0 +1,20 @@
+{
+  "revision": "review-fixes-code-3ae1050e4646f449",
+  "hashes": {
+    "st-auth/src/main/java/com/stcloud/auth/service/AuthService.java": "5e114b803c0ea7a2a32d4c1c025348d97f0a2af9ed5db09227d96ea0ecac7d5a",
+    "st-team/src/main/java/com/stcloud/team/service/impl/TeamServiceImpl.java": "daf6a248373d5098b9b6dbd57a24623332fb1e1244f429355db3a3119a4ed200",
+    "st-core/src/main/java/com/stcloud/core/service/impl/FileServiceImpl.java": "e7bf52948a70d11f83246967acf87ad2f6e04690588f531e0ee28ae3cba1b207",
+    "st-desktop/src/sync-engine.ts": "07a051cc19afd9456f43bed058fbdd76ccafb2640143151374f1fb942c90755e",
+    "st-desktop/src/sync-manager.ts": "39c1f7dccae4d426357f9bed9b68b800bdbdcfe82e9c29c68c9130f1847ea3cc",
+    "st-desktop/src/sync/sync-reconcile.ts": "00202c5974a319f899ce656e38f9d72cd52aeecfe166faa6d3252b602f22f4f7",
+    "st-web/src/components/preview/PreviewModal.tsx": "6ae60c218a06d1aaaf8b443abb5d079d4d9a9be0c07a547eb9fb35a75f8e6800",
+    "docker/mysql/init/45_user_security_version.sql": "e8e41173ce4055a9a7300d5273192161b46f8039b61f063c2d712855d7fc8814",
+    "st-auth/src/test/java/com/stcloud/auth/RegisterMysqlConcurrencyIntegrationTest.java": "85f7b0780d39e048d799edbd94a778b53e4aa1ba382759e563ce70733fa6bda1",
+    "st-team/src/test/java/com/stcloud/team/service/TeamRoleMysqlConcurrencyIntegrationTest.java": "66efe60beff8d9b2c96756a813f34ba56d1da0717862eb2d5c891f1adf5883aa",
+    "st-core/src/test/java/com/stcloud/core/service/impl/FileServiceFlowIntegrationTest.java": "0ef850637ff1b4fb049c909313be60e0019969e7ad6793bb29b813dece8f9c7a",
+    "st-desktop/src/sync/sync-review.test.cjs": "f7d8d89dc963f30da1b15f78d08069a5893632e97680a027da2c77162e58f0f9",
+    "st-desktop/src/sync/testing/restart-worker.cjs": "2cced265c6cccd7b30771f484815acf35fcd74ec38801f9d99641a59a45db7bd",
+    "st-desktop/package.json": "1e46334e690378cc3b702b45efcbde2eb9f3cec009030f002136f60b9ce3eb8d",
+    "docker/mysql/init/46_user_security_version_retry.sql": "ac1af542693a49a81db8c6bccc315d175aa687170229592542c60884dca1adb4"
+  }
+}

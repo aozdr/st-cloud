@@ -1,0 +1,28 @@
+Traceback (most recent call last):
+  File "../.ai/docs/20260927-test-resume/browser-preview.py", line 56, in <module>
+    for file in files:expect(page.locator('button[title="'+file['name']+'"]')).to_be_visible()
+  File "C:\Program Files\python\lib\site-packages\playwright\sync_api\_generated.py", line 20061, in to_be_visible
+    self._sync(self._impl_obj.to_be_visible(visible=visible, timeout=timeout))
+  File "C:\Program Files\python\lib\site-packages\playwright\_impl\_sync_base.py", line 115, in _sync
+    return task.result()
+  File "C:\Program Files\python\lib\site-packages\playwright\_impl\_assertions.py", line 668, in to_be_visible
+    await self._expect_impl(
+  File "C:\Program Files\python\lib\site-packages\playwright\_impl\_assertions.py", line 74, in _expect_impl
+    raise AssertionError(
+AssertionError: Locator expected to be visible
+Actual value: <element(s) not found> 
+Call log:
+LocatorAssertions.to_be_visible with timeout 5000ms
+  - waiting for locator("button[title=\"large-a.jpg\"]")
+
+Starting server 1/1: npm.cmd run dev -- --host 127.0.0.1 --port 5187 --strictPort
+Waiting for server on port 5187...
+Server ready on port 5187
+
+All 1 server(s) ready
+Running: python ../.ai/docs/20260927-test-resume/browser-preview.py
+
+
+Stopping 1 server(s)...
+Server 1 stopped
+All servers stopped

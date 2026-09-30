@@ -1,0 +1,27 @@
+✖ TC04-10: 恢复目录联接指向外部时不写入外部清单或移动源 (24.774ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 241.1315
+
+✖ failing tests:
+
+test at src\sync\sync-recovery.test.cjs:206:1
+✖ TC04-10: 恢复目录联接指向外部时不写入外部清单或移动源 (24.774ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (E:\code\st-cloud\st-desktop\src\sync\sync-recovery.test.cjs:213:10)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1306:25)
+      at Test.start (node:internal/test_runner/test:1177:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:385:17) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /符号链接|恢复目录/,
+    operator: 'throws',
+    diff: 'simple'
+  }

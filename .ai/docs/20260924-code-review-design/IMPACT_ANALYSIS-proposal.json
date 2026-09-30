@@ -1,0 +1,10 @@
+{
+  "taskId": "20260924-code-review-design",
+  "criterionProposal": {
+    "evidenceRef": ".ai/docs/20260924-code-review-design/document-check.md",
+    "outcome": "pass",
+    "by": "workflow-manager",
+    "id": "IMPACT_ANALYSIS",
+    "validatedRevision": "design-v1"
+  }
+}

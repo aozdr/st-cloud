@@ -1,0 +1,30 @@
+[
+  {
+    "path": "st-desktop/src/sync-engine.ts",
+    "sha256": "C25E8EA8A52ACBFBED36C3529737D2435E9F2F7DFE2D403C2693294B98516D4C"
+  },
+  {
+    "path": "st-desktop/src/sync/sync-reconcile.ts",
+    "sha256": "92941E1E26DF7A42EE046B7037A159265C68328A1E52DB5C522CACF91EA41485"
+  },
+  {
+    "path": "st-desktop/src/sync/sync-recovery.ts",
+    "sha256": "C6BF7C1D302188522E93DD6AA875FE437945A88679078451571FC2C900C3BCD5"
+  },
+  {
+    "path": "st-desktop/src/sync/sync-download.ts",
+    "sha256": "14CADEAD3594E16A176499945B39697C79413C09D7F36363F9FE9DC909575510"
+  },
+  {
+    "path": "st-desktop/src/db/sync-meta.ts",
+    "sha256": "F10EEB829ABE3EC0348A781796DF19E56DB93FB5A58A5905954A0E372A5D95A0"
+  },
+  {
+    "path": "st-desktop/src/sync/testing/restart-worker.cjs",
+    "sha256": "F7A8F7A31BDE5EA9E07639B766AC076A761D82CC3837EA82E6433DB59F720F90"
+  },
+  {
+    "path": "st-desktop/src/sync/sync-restart.test.cjs",
+    "sha256": "1EDA1C4EC098C3ADFC84958B0B33E306EB4069D2D968FAE8A32591EB048A4459"
+  }
+]

@@ -1,0 +1,12 @@
+PASS 三组大ID历史版本预览、分享目录/query/主图节点字符串精度，实际组件，API受控。
+Starting server 1/1: npm --prefix st-web run dev -- --host 127.0.0.1 --port 5187 --strictPort
+Waiting for server on port 5187...
+Server ready on port 5187
+
+All 1 server(s) ready
+Running: python .ai/docs/20260930-test-finish/browser-version-share.py
+
+
+Stopping 1 server(s)...
+Server 1 stopped
+All servers stopped

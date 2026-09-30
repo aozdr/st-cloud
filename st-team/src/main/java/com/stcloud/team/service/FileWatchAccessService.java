@@ -234,6 +234,7 @@ public class FileWatchAccessService {
         }
 
         Set<String> rolePerms = rolePermissions(tenantId, spaceId, member);
+        if (rolePerms == null) return false;
         if ((member.getRole() != null && member.getRole() == 0)
                 || rolePerms.contains(FolderPermissionService.PERM_MANAGE_SETTINGS)) {
             return true;
@@ -258,6 +259,7 @@ public class FileWatchAccessService {
             return false;
         }
         Set<String> rolePerms = rolePermissions(tenantId, spaceId, member);
+        if (rolePerms == null) return false;
         if ((member.getRole() != null && member.getRole() == 0)
                 || rolePerms.contains(FolderPermissionService.PERM_MANAGE_SETTINGS)) {
             return true;
@@ -371,19 +373,19 @@ public class FileWatchAccessService {
 
     private Set<String> rolePermissions(Long tenantId, Long spaceId, TeamMember member) {
         if (member == null || member.getRole() == null) {
-            return FolderPermissionService.VIEWER_PERMISSIONS;
+            return null;
         }
-        int role = member.getRole();
+        long role = member.getRole();
         if (role >= 0 && role <= 2) {
-            return FolderPermissionService.presetPermissions(role);
+            return FolderPermissionService.presetPermissions((int) role);
         }
         TeamRole customRole = teamRoleMapper.selectOne(new LambdaQueryWrapper<TeamRole>()
-                .eq(TeamRole::getId, (long) role)
+                .eq(TeamRole::getId, role)
                 .eq(TeamRole::getTenantId, tenantId)
                 .eq(TeamRole::getSpaceId, spaceId)
                 .eq(TeamRole::getDeleted, 0)
                 .eq(TeamRole::getStatus, RoleStatus.ENABLED.getCode()));
-        return customRole == null ? FolderPermissionService.VIEWER_PERMISSIONS
+        return customRole == null ? null
                 : FolderPermissionService.parsePermissions(customRole.getPermissions());
     }
 

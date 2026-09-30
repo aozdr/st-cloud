@@ -1,0 +1,220 @@
+[
+  {
+    "path": "/api/share/access/access",
+    "query": {}
+  },
+  {
+    "path": "/api/share/access/access",
+    "query": {}
+  },
+  {
+    "path": "/api/share/access/list",
+    "query": {
+      "shareCode": [
+        "review-a"
+      ],
+      "parentId": [
+        "R"
+      ],
+      "password": [
+        "[REDACTED]"
+      ]
+    }
+  },
+  {
+    "path": "/api/share/access/list",
+    "query": {
+      "shareCode": [
+        "review-a"
+      ],
+      "parentId": [
+        "R"
+      ],
+      "password": [
+        "[REDACTED]"
+      ]
+    }
+  },
+  {
+    "path": "/api/share/access/stream/review-a",
+    "query": {
+      "nodeId": [
+        "100"
+      ],
+      "password": [
+        "[REDACTED]"
+      ]
+    }
+  },
+  {
+    "path": "/api/share/access/thumbnail/review-a",
+    "query": {
+      "nodeId": [
+        "100"
+      ],
+      "size": [
+        "sm"
+      ],
+      "v": [
+        "2026-09-30T00:00:00"
+      ],
+      "password": [
+        "[REDACTED]"
+      ]
+    }
+  },
+  {
+    "path": "/api/share/access/thumbnail/review-a",
+    "query": {
+      "nodeId": [
+        "101"
+      ],
+      "size": [
+        "sm"
+      ],
+      "v": [
+        "2026-09-30T00:00:00"
+      ],
+      "password": [
+        "[REDACTED]"
+      ]
+    }
+  },
+  {
+    "path": "/api/share/access/thumbnail/review-a",
+    "query": {
+      "nodeId": [
+        "102"
+      ],
+      "size": [
+        "sm"
+      ],
+      "v": [
+        "2026-09-30T00:00:00"
+      ],
+      "password": [
+        "[REDACTED]"
+      ]
+    }
+  },
+  {
+    "path": "/api/share/access/stream/review-a",
+    "query": {
+      "nodeId": [
+        "101"
+      ],
+      "password": [
+        "[REDACTED]"
+      ]
+    }
+  },
+  {
+    "path": "/api/share/access/stream/review-a",
+    "query": {
+      "nodeId": [
+        "100"
+      ],
+      "password": [
+        "[REDACTED]"
+      ]
+    }
+  },
+  {
+    "path": "/api/share/access/access",
+    "query": {}
+  },
+  {
+    "path": "/api/share/access/access",
+    "query": {}
+  },
+  {
+    "path": "/api/share/access/list",
+    "query": {
+      "shareCode": [
+        "review-b"
+      ],
+      "parentId": [
+        "R"
+      ],
+      "password": [
+        "[REDACTED]"
+      ]
+    }
+  },
+  {
+    "path": "/api/share/access/list",
+    "query": {
+      "shareCode": [
+        "review-b"
+      ],
+      "parentId": [
+        "R"
+      ],
+      "password": [
+        "[REDACTED]"
+      ]
+    }
+  },
+  {
+    "path": "/api/share/access/stream/review-b",
+    "query": {
+      "nodeId": [
+        "100"
+      ],
+      "password": [
+        "[REDACTED]"
+      ]
+    }
+  },
+  {
+    "path": "/api/share/access/thumbnail/review-b",
+    "query": {
+      "nodeId": [
+        "100"
+      ],
+      "size": [
+        "sm"
+      ],
+      "v": [
+        "2026-09-30T00:00:00"
+      ],
+      "password": [
+        "[REDACTED]"
+      ]
+    }
+  },
+  {
+    "path": "/api/share/access/thumbnail/review-b",
+    "query": {
+      "nodeId": [
+        "101"
+      ],
+      "size": [
+        "sm"
+      ],
+      "v": [
+        "2026-09-30T00:00:00"
+      ],
+      "password": [
+        "[REDACTED]"
+      ]
+    }
+  },
+  {
+    "path": "/api/share/access/thumbnail/review-b",
+    "query": {
+      "nodeId": [
+        "102"
+      ],
+      "size": [
+        "sm"
+      ],
+      "v": [
+        "2026-09-30T00:00:00"
+      ],
+      "password": [
+        "[REDACTED]"
+      ]
+    }
+  }
+]

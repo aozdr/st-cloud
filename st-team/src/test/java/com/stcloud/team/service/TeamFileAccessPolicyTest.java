@@ -65,7 +65,7 @@ class TeamFileAccessPolicyTest {
         member.setTenantId(tenantId);
         member.setSpaceId(spaceId);
         member.setUserId(userId);
-        member.setRole(role);
+        member.setRole((long) role);
         return member;
     }
 

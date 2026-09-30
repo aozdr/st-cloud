@@ -1,0 +1,10 @@
+{
+  "taskId": "TASK-20260930-TEST-FINISH",
+  "criterionProposal": {
+    "validatedRevision": "finish-confirmed-v1",
+    "outcome": "pass",
+    "evidenceRef": ".ai/docs/20260930-test-finish/testcases.md",
+    "by": "root",
+    "id": "TESTCASES"
+  }
+}

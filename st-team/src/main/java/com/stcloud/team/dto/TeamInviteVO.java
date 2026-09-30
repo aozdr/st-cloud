@@ -23,7 +23,7 @@ public class TeamInviteVO {
     private String inviteCode;
 
     @Schema(description = "默认角色")
-    private Integer role;
+    private Long role;
 
     @Schema(description = "创建者ID")
     private Long createdBy;

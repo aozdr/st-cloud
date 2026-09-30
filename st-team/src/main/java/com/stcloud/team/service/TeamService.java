@@ -31,7 +31,7 @@ public interface TeamService {
 
     Result<IPage<TeamMemberVO>> listMembers(Long spaceId, int page, int size, String sortBy);
 
-    Result<Void> updateMemberRole(Long spaceId, Long memberId, Integer role);
+    Result<Void> updateMemberRole(Long spaceId, Long memberId, Long role);
 
     Result<Void> removeMember(Long spaceId, Long memberId);
 
