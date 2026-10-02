@@ -1,0 +1,10 @@
+{
+  "criterionProposal": {
+    "outcome": "pass",
+    "validatedRevision": "env-design-r1",
+    "id": "TECH_DESIGN",
+    "by": "workflow-manager",
+    "evidenceRef": ".ai/docs/20260930-environment-remediation/design.md"
+  },
+  "taskId": "20260930-environment-remediation"
+}

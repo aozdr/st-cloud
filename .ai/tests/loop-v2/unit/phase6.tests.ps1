@@ -1,4 +1,4 @@
-#requires -Version 7.0
+﻿#requires -Version 7.0
 [CmdletBinding()]param()
 $ErrorActionPreference='Stop'
 $repoRoot=Split-Path (Split-Path (Split-Path (Split-Path $PSScriptRoot -Parent) -Parent) -Parent) -Parent
@@ -55,7 +55,24 @@ try{
   $noPwshRepo=Join-Path $work 'hook-no-pwsh';New-Item -ItemType Directory $noPwshRepo|Out-Null;Invoke-GitTest $noPwshRepo @('init','-b','main');Invoke-GitTest $noPwshRepo @('config','user.email','hook@example.invalid');Invoke-GitTest $noPwshRepo @('config','user.name','Hook Test');Set-Content (Join-Path $noPwshRepo 'AGENTS.md') 'base';Invoke-GitTest $noPwshRepo @('add','.');Invoke-GitTest $noPwshRepo @('commit','-m','base');Set-Content (Join-Path $noPwshRepo 'AGENTS.md') 'changed';Invoke-GitTest $noPwshRepo @('add','AGENTS.md');Push-Location $noPwshRepo;try{$cmd="PATH=/mingw64/bin:/usr/bin:/bin '$hookPath'";$out=@(& $sh -c $cmd 2>&1|ForEach-Object{$_.ToString()});$code=$LASTEXITCODE}finally{Pop-Location};Expect 'TC-CI-02 缺 PowerShell 时 fail-closed' ($code-ne0-and($out-join"`n")-match'PowerShell not found') ($out-join';')
   $outside=Join-Path ([IO.Path]::GetTempPath()) ('loop-hook-root-'+[Guid]::NewGuid().ToString('N'));New-Item -ItemType Directory $outside|Out-Null;try{Push-Location $outside;try{$out=@(& $sh $hookPath 2>&1|ForEach-Object{$_.ToString()});$code=$LASTEXITCODE}finally{Pop-Location};Expect 'TC-CI-02 缺仓库根时 fail-closed' ($code-ne0-and($out-join"`n")-match'cannot resolve repository root') ($out-join';')}finally{Remove-TestRoot $outside}
 
-  $worktreeScript=Join-Path $repoRoot '.ai\scripts\worktree.ps1';$r1=@(& pwsh -NoProfile -File $worktreeScript reconcile -Strict 2>&1);$c1=$LASTEXITCODE;$r2=@(& pwsh -NoProfile -File $worktreeScript reconcile -Strict 2>&1);$c2=$LASTEXITCODE;Expect 'TC-CI-05 启动与结束 strict reconcile' ($c1-eq0-and$c2-eq0) (($r1+$r2)-join';')
+  # 状态机回归只操作本套件临时仓库；主仓库的旧分支由实际资源门禁单独报告。
+  $reconcileRepo=Join-Path $work 'reconcile'; New-Item -ItemType Directory $reconcileRepo | Out-Null
+  Invoke-GitTest $reconcileRepo @('init','-b','main')
+  Invoke-GitTest $reconcileRepo @('config','user.email','reconcile@example.invalid')
+  Invoke-GitTest $reconcileRepo @('config','user.name','Reconcile Test')
+  Set-Content (Join-Path $reconcileRepo 'README.md') 'fixture'
+  Invoke-GitTest $reconcileRepo @('add','.')
+  Invoke-GitTest $reconcileRepo @('commit','-m','fixture')
+  $worktreeScript=Join-Path $repoRoot '.ai\scripts\worktree.ps1'
+  Push-Location $reconcileRepo
+  try {
+    $r1=@(& pwsh -NoProfile -File $worktreeScript reconcile -Strict 2>&1); $c1=$LASTEXITCODE
+    $r2=@(& pwsh -NoProfile -File $worktreeScript reconcile -Strict 2>&1); $c2=$LASTEXITCODE
+    Expect 'TC-CI-05 隔离仓库启动与结束 strict reconcile' ($c1-eq0-and$c2-eq0) (($r1+$r2)-join';')
+    Invoke-GitTest $reconcileRepo @('branch','codex/orphan-fixture')
+    $r3=@(& pwsh -NoProfile -File $worktreeScript reconcile -Strict 2>&1); $c3=$LASTEXITCODE
+    Expect 'TC-CI-08 资源门禁仍拒绝未登记分支' ($c3-ne0-and($r3-join';')-match'ORPHAN_BRANCH') ($r3-join';')
+  } finally { Pop-Location }
 }finally{
   Remove-TestRoot $work
   foreach($name in $gitEnvNames){

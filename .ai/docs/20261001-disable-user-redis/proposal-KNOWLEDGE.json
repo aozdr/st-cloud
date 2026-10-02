@@ -1,0 +1,10 @@
+{
+  "taskId": "20261001-disable-user-redis",
+  "criterionProposal": {
+    "outcome": "pass",
+    "evidenceRef": ".ai/knowledge/user-disable-redis.md",
+    "id": "KNOWLEDGE",
+    "validatedRevision": "disable-redis-code-r1",
+    "by": "workflow-manager"
+  }
+}

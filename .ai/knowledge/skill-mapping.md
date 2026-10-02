@@ -23,7 +23,7 @@
 - `grilling`、`prd-development` 和 `user-story` 只在对应文档或未决事项确实存在时加载。
 
 > **Grill Me 引擎说明**：`grill-me` 只是入口壳（`disable-model-invocation: true`，正文仅一句转发），实际执行拷打的是 `grilling`。仅在任务存在未决范围、规则或风险时将 `grilling/SKILL.md` 写入 skillRefs，不要填 `grill-me/SKILL.md`。
-> requirement 与 design 任务仍需覆盖目标、边界和风险；只有存在未决事项时才加载 Grill，并将遗留问题点收敛到 ≤3 个，见 AGENTS.md 与 `.ai/loop/exit-criteria.yaml` 的 `grill: true` 标记。
+> requirement 与 design 仍覆盖目标、边界和风险；只有存在未决实质决策才加载 Grill。V3 将测试计划、影响和架构按需合入 design，不为技能名称另建流程节点；以 AGENTS.md 的确认边界为准。
 
 > **标识与发现**：skillRefs 使用运行时技能注册表标识。child 不扫描全量技能；若被选择的技能不可用，报告缺失并在不依赖该能力时继续。
 

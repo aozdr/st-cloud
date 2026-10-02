@@ -5,6 +5,7 @@ import com.stcloud.admin.entity.AuditLog;
 import com.stcloud.admin.mapper.AuditLogMapper;
 import com.stcloud.common.annotation.Auditable;
 import com.stcloud.common.context.UserContext;
+import com.stcloud.common.context.TenantContext;
 import com.stcloud.common.utils.FileSizeUtil;
 import com.stcloud.common.utils.IpUtils;
 import com.stcloud.core.entity.FileNode;
@@ -68,12 +69,20 @@ public class AuditAspect {
         } finally {
             try {
                 AuditLog auditLog = buildAuditLog(joinPoint, auditable, status, errorMsg);
-                // 异步写入，避免阻塞请求线程
+                String requestTenantMode = TenantContext.getTenantModeOrNull();
+                // 异步写入携带请求租户快照，不能让复用线程依赖默认租户或继承前一请求。
                 auditExecutor.execute(() -> {
+                    Long previousTenant = TenantContext.getTenantIdOrNull();
+                    String previousMode = TenantContext.getTenantModeOrNull();
                     try {
+                        TenantContext.setTenantId(auditLog.getTenantId());
+                        TenantContext.setTenantMode(requestTenantMode);
                         auditLogMapper.insert(auditLog);
                     } catch (Exception e) {
                         log.error("异步保存审计日志失败", e);
+                    } finally {
+                        TenantContext.setTenantId(previousTenant);
+                        TenantContext.setTenantMode(previousMode);
                     }
                 });
             } catch (Exception e) {
@@ -90,7 +99,11 @@ public class AuditAspect {
                                    Integer status, String errorMsg) {
         AuditLog auditLog = new AuditLog();
         auditLog.setUserId(UserContext.getUserId());
-        auditLog.setTenantId(UserContext.getTenantId());
+        Long tenantId = UserContext.getTenantId();
+        if (tenantId == null) tenantId = TenantContext.getTenantIdOrNull();
+        // 匿名登录/注册已明确使用默认租户；其它审计若漏设上下文仍产生原有告警。
+        if (tenantId == null && ("LOGIN".equals(auditable.action()) || "REGISTER".equals(auditable.action()))) tenantId = 1L;
+        auditLog.setTenantId(tenantId != null ? tenantId : TenantContext.getTenantId());
         auditLog.setUsername(UserContext.getUsername());
         auditLog.setAction(auditable.action());
         auditLog.setTargetType(auditable.targetType());

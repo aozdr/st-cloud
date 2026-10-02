@@ -1,0 +1,81 @@
+{
+  "revision": "review-fixes-code-r1",
+  "executor": "workflow-manager",
+  "command": "Maven offline -pl st-core -am -Dtest=TeamRecycleBinIntegrationTest,SchemaConsistencyTest,TenantRecycleScanIntegrationTest,RecycleBinPurgeTenantTest -Dsurefire.failIfNoSpecifiedTests=false test",
+  "exitCode": 0,
+  "suites": [
+    {
+      "suite": "com.stcloud.core.service.impl.TeamRecycleBinIntegrationTest",
+      "reportRef": "st-core/target/surefire-reports/TEST-com.stcloud.core.service.impl.TeamRecycleBinIntegrationTest.xml",
+      "tests": 21,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "updated": "2026-10-01T19:52:17.3004354+08:00",
+      "testcases": [
+        "emptyOnlyAuthorizedScopesAndPersonalRestoreCompatible",
+        "permanentDeleteMixedOwnersUsesTeamQuotaAndKeepsOtherScopes",
+        "normalParentUnderRecycledAncestorCannotReceiveRestoredFolder",
+        "softDeletedSpaceStillDeniesUserRecycleOperations",
+        "differentOwnerParentIsKeptAndOtherSpaceNameDoesNotConflict",
+        "authorizationRevocationAfterListTakesEffect",
+        "externalAdminRequiresCurrentlyEnabledCollaboration",
+        "expiredRecycleTreeCanBePurgedAfterSpaceSoftDeletion",
+        "ownerCanRestoreAnotherUploadersFolder",
+        "cannotPermanentlyDeleteNormalNode",
+        "systemPurgeKeepsNormalNodeInSoftDeletedSpace",
+        "unauthorizedCannotListRestoreOrDelete(String)[1]",
+        "unauthorizedCannotListRestoreOrDelete(String)[2]",
+        "unauthorizedCannotListRestoreOrDelete(String)[3]",
+        "unauthorizedCannotListRestoreOrDelete(String)[4]",
+        "unauthorizedCannotListRestoreOrDelete(String)[5]",
+        "unauthorizedCannotListRestoreOrDelete(String)[6]",
+        "unauthorizedCannotListRestoreOrDelete(String)[7]",
+        "deleteFolderListAndRestoreMixedOwners",
+        "independentRecycledChildRemainsRecycledOnParentRestore",
+        "unusableParentReturnsToSameSpaceWithMixedOwnerNameConflict"
+      ]
+    },
+    {
+      "suite": "com.stcloud.core.schema.SchemaConsistencyTest",
+      "reportRef": "st-core/target/surefire-reports/TEST-com.stcloud.core.schema.SchemaConsistencyTest.xml",
+      "tests": 3,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "updated": "2026-10-01T19:52:11.5240947+08:00",
+      "testcases": [
+        "entityFieldsExistInMysqlInitSql",
+        "entityFieldsExistInTestSchema",
+        "testSchemaAndMysqlInitSqlAligned"
+      ]
+    },
+    {
+      "suite": "com.stcloud.core.service.impl.TenantRecycleScanIntegrationTest",
+      "reportRef": "st-core/target/surefire-reports/TEST-com.stcloud.core.service.impl.TenantRecycleScanIntegrationTest.xml",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "updated": "2026-10-01T19:52:17.8472244+08:00",
+      "testcases": [
+        "enumeratesEnabledTenantsAndKeepsRecycleRootsIsolated"
+      ]
+    },
+    {
+      "suite": "com.stcloud.core.task.RecycleBinPurgeTenantTest",
+      "reportRef": "st-core/target/surefire-reports/TEST-com.stcloud.core.task.RecycleBinPurgeTenantTest.xml",
+      "tests": 1,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "updated": "2026-10-01T19:52:18.1299552+08:00",
+      "testcases": [
+        "tenantScanFailureDoesNotBlockNextTenantAndReleasesLock"
+      ]
+    }
+  ],
+  "total": 26,
+  "mySqlExecuted": false,
+  "physicalStorageExecuted": false
+}

@@ -467,8 +467,16 @@ function tree(directory, relative = '') {
       await engine.syncOnce();
     }
   }
-  const manifestPath = path.join(recovery, 'manifest.json');
-  const saved = path.join(recovery, 'files/note.txt');
+  // 对账保全按持久基线分轮；从真实清单观察结果，不在测试中复制生产 ID 算法。
+  let snapshotRecovery = recovery;
+  const recoveryRoot = path.join(userData, 'sync-recovery', rootId);
+  if (reconcileScenario && fs.existsSync(recoveryRoot)) {
+    const operations = fs.readdirSync(recoveryRoot).filter(name => name.startsWith('legacy-' + nodeId + '-'));
+    if (operations.length === 1) snapshotRecovery = path.join(recoveryRoot, operations[0]);
+    else if (operations.length > 1) throw Error('ambiguous fixture recovery round');
+  }
+  const manifestPath = path.join(snapshotRecovery, 'manifest.json');
+  const saved = path.join(snapshotRecovery, 'files/note.txt');
   const snapshot = {
     cloudUploads, directError,
     watcherEvents, watcherInitialRequests, watcherFailureSnapshot,

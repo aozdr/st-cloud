@@ -1,0 +1,50 @@
+{
+  "dispatchId": "DISPATCH-review-fixes-code-03",
+  "taskId": "TASK-20261001-review-fixes-code",
+  "status": "completed",
+  "by": "/root/review_fixes_code_r3",
+  "background": "独立复核本轮多标签续期及软删除空间清理；r1/r2原失败已关闭，r3出现当前修订拒绝被较旧共享修订遮挡的问题。",
+  "inputs": [".ai/tasks/TASK-20261001-review-fixes-code.md", ".ai/docs/20261001-review-fixes/design.md", ".ai/docs/20261001-review-fixes/testcases.md", ".ai/docs/20261001-review-fixes/changereport.md", ".ai/docs/20261001-review-fixes/source-manifest-r3.json", ".ai/docs/20261001-review-fixes/r3/corrections.md"],
+  "artifactRefs": [".ai/docs/20261001-review-fixes/r3/codereview.md"],
+  "analysis": {
+    "facts": [
+      "开始及结束六个SHA256均匹配review-fixes-code-r3清单。",
+      "独立Node多页回归退出0，25/25通过，失败/跳过0；r1/r2已报告根因关闭。",
+      "真实HTTP /files 401触发refresh-1 401；当前R1拒绝墓碑写入成功，但共享R0较旧导致syncBrowserAuth返回，内存R1、登录状态、用户资料与旧context均保留。",
+      "同样HTTP场景无pair写失败时正确退出；locks/tickets两种模式均完成通过断言的差异对照。",
+      "回收锁保留租户条件；用户有效空间/成员授权和RECYCLED状态门禁保持，物理删除走提交后事件；未发现本轮回收新增可复现问题。"
+    ],
+    "limits": ["未测量真实浏览器竞态频率；独立VM模拟锁/存储/事件，HTTP及认证Store/API调用真实。", "未独立运行H2/MySQL/S3/UI或Maven；主线程26项H2报告仅作为外部本轮证据核对。"]
+  },
+  "findings": [{
+    "id": "R3-P2-REJECTED-CURRENT-HIDDEN-BY-OLDER-PAIR",
+    "priority": 2,
+    "file": "st-web/src/auth-session.ts",
+    "start": 88,
+    "end": 90,
+    "relatedLines": [72, 92, 297, 302],
+    "title": "较旧共享修订挡住本页当前修订的永久拒绝",
+    "trigger": "R0→R1成功但共享pair写入单独失败；存储恢复后业务401触发R1永久拒绝，R1拒绝墓碑成功写入，共享仍R0。",
+    "impact": "syncBrowserAuth忽略rejectedCurrent提前返回，用户仍显示已登录并保留旧资料/上下文，业务请求反复401，违反当前修订拒绝应失效的契约。",
+    "evidence": [
+      {"mode":"locks","failPair":false,"httpStatus":401,"calls":["refresh-0","refresh-1"],"refreshAfter":null,"isAuthenticated":false,"userAfter":null,"oldContextStillCurrent":false,"rejectedLatest":true},
+      {"mode":"locks","failPair":true,"httpStatus":401,"calls":["refresh-0","refresh-1"],"refreshAfter":"refresh-1","isAuthenticated":true,"userAfter":"cloud-user","oldContextStillCurrent":true,"rejectedLatest":true},
+      {"mode":"tickets","failPair":false,"httpStatus":401,"calls":["refresh-0","refresh-1"],"refreshAfter":null,"isAuthenticated":false,"userAfter":null,"oldContextStillCurrent":false,"rejectedLatest":true},
+      {"mode":"tickets","failPair":true,"httpStatus":401,"calls":["refresh-0","refresh-1"],"refreshAfter":"refresh-1","isAuthenticated":true,"userAfter":"cloud-user","oldContextStillCurrent":true,"rejectedLatest":true}
+    ]
+  }],
+  "decision": "CODE_REVIEW建议fail，r1/r2原根因关闭，唯一新增P2为当前修订永久拒绝未使本页失效。",
+  "criterionProposal": {
+    "id": "CODE_REVIEW",
+    "outcome": "fail",
+    "by": "/root/review_fixes_code_r3",
+    "dispatchId": "DISPATCH-review-fixes-code-03",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-review-fixes-code-03.json",
+    "validatedRevision": "review-fixes-code-r3"
+  },
+  "stateDelta": "仅上述proposal；未写State或判定Goal。",
+  "blockerProposals": [],
+  "risks": ["成功pair曾写失败且当前修订随后永久拒绝时，UI仍保留已登录状态与用户资料。"],
+  "nextSteps": ["主线程优先处理本页已拒绝当前修订，再决定是否忽略较旧共享pair；保护未标记新修订/新登录，补两模式对照并冻结新修订。"],
+  "changeImpact": "仅新增scope白名单内codereview.md与独立result；未修改源码/测试源码/State/数据库/Git index/部署，未运行Maven或派发。"
+}

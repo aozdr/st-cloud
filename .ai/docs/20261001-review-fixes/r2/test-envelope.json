@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-review-fixes-test-01",
+  "taskId": "TASK-20261001-review-fixes-test",
+  "idempotencyKey": "TASK-20261001-review-fixes-test",
+  "role": "tester",
+  "taskType": "test",
+  "objective": "独立执行本轮 r2 认证/类型回归并核对后端集成证据，按 T01–T10 如实报告",
+  "taskRefs": [
+    ".ai/tasks/TASK-20261001-review-fixes-test.md",
+    ".ai/docs/20261001-review-fixes/testcases.md",
+    ".ai/docs/20261001-review-fixes/design.md"
+  ],
+  "stateRef": ".ai/state/20261001-review-fixes.yaml",
+  "artifactRefs": [
+    ".ai/docs/20261001-review-fixes/changereport.md",
+    ".ai/docs/20261001-review-fixes/source-manifest-r2.json",
+    ".ai/docs/20261001-review-fixes/r2/codereview.md",
+    ".ai/docs/20261001-review-fixes/r2/security.md",
+    ".ai/docs/20261001-review-fixes/r2/corrections.md",
+    ".ai/docs/20261001-review-fixes/core-test-evidence.json"
+  ],
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      ".ai/docs/20261001-review-fixes/testreport.md",
+      ".ai/runtime/results/DISPATCH-review-fixes-test-01.json"
+    ],
+    "exclude": [
+      "源码",
+      "测试源码",
+      ".ai/state/**",
+      "数据库",
+      "Git index",
+      "部署",
+      "历史证据"
+    ]
+  },
+  "acceptance": [
+    "当前 r2 SHA256、T01–T10用例来源及无失败证据匹配，独立执行认证与类型检查",
+    "明确 H2/Mock、未执行 MySQL/S3 的实测边界，不冒认历史证据"
+  ],
+  "validation": [
+    "node --test st-web/src/store/auth-tabs.test.mjs st-web/src/store/auth-startup.test.mjs",
+    "node --test st-desktop/src/auth-rotation.test.cjs",
+    "st-web: node node_modules/typescript/bin/tsc --noEmit --incremental false -p tsconfig.app.json",
+    "st-desktop: node node_modules/typescript/bin/tsc --noEmit --incremental false",
+    "独立读当前四套 surefire XML，仅提取测试摘要，禁止打印密码属性"
+  ],
+  "forbidSpawn": true,
+  "forbidGitMvn": true,
+  "output": {
+    "artifactRef": ".ai/runtime/results/DISPATCH-review-fixes-test-01.json"
+  }
+}

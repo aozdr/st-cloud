@@ -1,0 +1,41 @@
+{
+  "dispatchId": "DISPATCH-env-tenant-01",
+  "taskId": "TASK-20260930-environment-tenant",
+  "status": "completed",
+  "artifactRefs": [
+    ".ai/docs/20260930-environment-remediation/tenant-paths.md",
+    "st-auth/src/main/java/com/stcloud/auth/service/AuthService.java",
+    "st-common/src/main/java/com/stcloud/common/context/TenantContext.java",
+    "st-core/src/main/java/com/stcloud/core/mapper/TenantScanMapper.java",
+    "st-core/src/main/java/com/stcloud/core/task/TenantTaskRunner.java",
+    "st-core/src/main/java/com/stcloud/core/task/RecycleBinPurgeTask.java",
+    "st-auth/src/test/java/com/stcloud/auth/AuthTenantContextIntegrationTest.java",
+    "st-core/src/test/java/com/stcloud/core/task/TenantTaskRunnerTest.java",
+    "st-core/src/test/java/com/stcloud/core/task/RecycleBinPurgeTenantTest.java",
+    "st-core/src/test/java/com/stcloud/core/service/impl/TenantRecycleScanIntegrationTest.java"
+  ],
+  "criterionProposal": {
+    "id": "IMPLEMENTED",
+    "outcome": "pass",
+    "by": "/root/tenant_paths",
+    "dispatchId": "DISPATCH-env-tenant-01",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-env-tenant-01.json",
+    "validatedRevision": "env-code-r1",
+    "partial": true,
+    "notes": "仅本 TASK 限定范围的实现建议；未运行 Maven，测试由主线程串行执行；不代表 O02 总体运行验收。"
+  },
+  "blockerProposals": [],
+  "background": "冻结 O02 的正常公开入口和定时任务仍存在缺租户告警，按当前 TASK 核查与局部修复。",
+  "input": "DISPATCH_ENVELOPE、当前 TASK/design/requirement/testcases 与最小 State 快照；历史 O02 仅事实线索。",
+  "analysis": "默认登录/注册首个用户查询缺上下文；refresh 在临时安全检查恢复后再次默认到1，非默认租户跨请求会查不到用户；回收站调度未枚举租户。Outbox 是系统表全局任务，新候选 GC 的 JDBC 显式携带 tenant_id。另确认旧 GC、审计和匿名分享默认路径，已交给主线程决定/整合。",
+  "decision": "公开认证服务以临时租户作用域显式默认1并恢复原始上下文；refresh 仅使用验签/用途/安全版本通过的声明租户。回收站通过 core 只读 mapper 枚举启用且未删除租户，异常隔离，禁用租户保留，PRIVATE读取配置并单次执行。公开分享保留单租户默认1兼容边界。",
+  "stateDelta": "仅 IMPLEMENTED partial criterionProposal；没有修改 State 或判定 Goal。",
+  "risk": "回收站 SAAS 扫描覆盖扩大至已启用租户是主线程确认的行为变化；未执行真实清理。测试已编写但尚未运行；主线程的旧 GC/审计/公开请求入口需集成验证。",
+  "nextStep": "主线程串行运行 AuthTenantContextIntegrationTest、TenantTaskRunnerTest、RecycleBinPurgeTenantTest、TenantRecycleScanIntegrationTest 并整合其它 O02 路径；提供真实请求/调度日志后再评估运行验收。",
+  "changeImpact": "无数据库、HTTP API、角色权限、配额或删除规则变更；新增 TenantTaskRunner 内部接口和 TenantContext 原始模式快照。保留 getTenantId 真遗漏告警。",
+  "validation": [
+    "静态读取当前源码并记录修改前后路径，事实与运行推测明确分开。",
+    "限定变更文件冲突标记 rg 扫描无匹配（退出1代表无标记）。",
+    "4 个新测试类，11 个展开用例已编写；未运行 Maven/Git，不声称测试通过。"
+  ]
+}

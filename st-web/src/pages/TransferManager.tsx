@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
-  ArrowUp, ArrowDown, Pause, Play, CheckCircle2,
+  Pause, Play, CheckCircle2,
   Activity, Loader2, Trash2,
   FileUp, RefreshCw, Settings2, Inbox, Clock, ArrowUpDown,
 } from 'lucide-react';
@@ -23,36 +23,6 @@ function formatSpeed(speed: number): string {
   return `${formatSize(speed)}/s`;
 }
 
-/** 统计指标卡：彩色图标章 + 大数字 + 标签，可点击的卡片会切换过滤 tab */
-function StatCard({ icon: Icon, label, value, tone, active, onClick }: {
-  icon: typeof Activity;
-  label: string;
-  value: string;
-  tone: string;
-  active?: boolean;
-  onClick?: () => void;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={!onClick}
-      className={`flex items-center gap-3 px-3.5 py-2.5 bg-surface rounded-xl border text-left transition-all duration-200 ${
-        active
-          ? 'border-primary-300 shadow-primary'
-          : 'border-border hover:shadow-card hover:-translate-y-0.5'
-      } ${onClick ? 'cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring' : 'cursor-default'}`}
-    >
-      <div className={`w-9 h-9 rounded-lg ${tone} flex items-center justify-center flex-shrink-0`}>
-        <Icon className="w-4 h-4" aria-hidden />
-      </div>
-      <div className="min-w-0">
-        <p className="text-base font-bold text-fg tabular-nums leading-tight truncate">{value}</p>
-        <p className="text-[11px] text-muted leading-tight">{label}</p>
-      </div>
-    </button>
-  );
-}
-
 export default function TransferManager() {
   const [searchParams] = useSearchParams();
   const [tasks, setTasks] = useState<TransferTask[]>([]);
@@ -62,7 +32,7 @@ export default function TransferManager() {
   const [deleting, setDeleting] = useState(false);
   const [transferSettingsOpen, setTransferSettingsOpen] = useState(false);
 
-  // 悬浮窗"简易限速"入口：跳转到 ?settings=1 时自动弹出传输设置对话框
+  // 托盘“传输设置”入口：跳转到 ?settings=1 时自动弹出设置对话框。
   useEffect(() => {
     if (searchParams.get('settings') === '1') {
       setTransferSettingsOpen(true);
@@ -219,14 +189,14 @@ export default function TransferManager() {
       <div className="px-6 pt-4 pb-3 bg-surface border-b border-border">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center flex-shrink-0 shadow-primary">
-              <ArrowUpDown className="w-5 h-5 text-white" aria-hidden />
+            <div className="w-9 h-9 rounded-lg bg-primary-100 flex items-center justify-center flex-shrink-0">
+              <ArrowUpDown className="w-5 h-5 text-primary-600" aria-hidden />
             </div>
             <div className="min-w-0">
               <h1 className="text-lg font-semibold text-fg leading-tight">传输管理</h1>
               <p className="text-xs text-muted mt-0.5">
                 {activeCount > 0
-                  ? <><span className="text-primary-600 dark:text-primary-400 font-medium tabular-nums">{activeCount}</span> 个任务传输中 · 已完成 <span className="tabular-nums">{completedCount}</span> 个</>
+                  ? <>上传 {formatSpeed(totalUploadSpeed)} · 下载 {formatSpeed(totalDownloadSpeed)} · <span className="text-primary-600 dark:text-primary-400 font-medium tabular-nums">{activeCount}</span> 个任务进行中</>
                   : `共 ${tasks.length} 个任务，已完成 ${completedCount} 个`}
               </p>
             </div>
@@ -252,17 +222,6 @@ export default function TransferManager() {
                   <Play className="w-3.5 h-3.5" aria-hidden />
                   全部开始
                 </button>
-                <button
-                  onClick={() => {
-                    window.electronAPI!.showMiniWindow();
-                    // 找回：若悬浮窗存在但在屏幕外，直接复位到右下角可见位置
-                    window.electronAPI!.resetMiniWindowPosition();
-                  }}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-muted hover:text-fg bg-surface border border-border hover:bg-surface-2 rounded-lg cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  title="显示/找回桌面传输悬浮窗（复位到右下角）"
-                >
-                  悬浮窗
-                </button>
               </>
             )}
             <button
@@ -282,13 +241,6 @@ export default function TransferManager() {
           </div>
         </div>
 
-        {/* 统计指标卡片区 */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-3.5">
-          <StatCard icon={Activity} label="进行中" value={String(activeCount)} tone="bg-primary-500/15 text-primary-600 dark:text-primary-400" active={filter === 'active'} onClick={() => setFilter('active')} />
-          <StatCard icon={ArrowUp} label="上传速度" value={formatSpeed(totalUploadSpeed)} tone="bg-blue-500/15 text-blue-500" />
-          <StatCard icon={ArrowDown} label="下载速度" value={formatSpeed(totalDownloadSpeed)} tone="bg-emerald-500/15 text-emerald-500" />
-          <StatCard icon={CheckCircle2} label="已完成" value={String(completedCount)} tone="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" active={filter === 'completed'} onClick={() => setFilter('completed')} />
-        </div>
       </div>
 
       {/* Segmented tabs（带图标 + 数量徽标） */}
@@ -308,7 +260,7 @@ export default function TransferManager() {
               aria-pressed={isActiveTab}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs rounded-full cursor-pointer transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                 isActiveTab
-                  ? 'bg-primary-600 text-white font-medium shadow-primary'
+                  ? 'bg-primary-600 text-white font-medium'
                   : 'text-muted hover:text-fg hover:bg-surface-2'
               }`}
             >
@@ -331,8 +283,7 @@ export default function TransferManager() {
         ) : filteredTasks.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 animate-fade-in">
             <div className="relative mb-5">
-              <div className="absolute inset-0 rounded-full bg-primary-500/10 blur-xl scale-125" aria-hidden />
-              <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-500/15 dark:to-primary-500/5 border border-primary-100 dark:border-primary-500/20 flex items-center justify-center">
+              <div className="relative w-16 h-16 rounded-full bg-primary-50 dark:bg-primary-500/10 border border-primary-100 dark:border-primary-500/20 flex items-center justify-center">
                 {filter === 'active' ? (
                   <Clock className="w-7 h-7 text-primary-500" aria-hidden />
                 ) : filter === 'completed' ? (

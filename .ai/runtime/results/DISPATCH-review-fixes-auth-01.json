@@ -1,0 +1,51 @@
+{
+  "dispatchId": "DISPATCH-review-fixes-auth-01",
+  "taskId": "TASK-20261001-review-fixes-auth",
+  "status": "completed",
+  "by": "/root/review_fixes_auth",
+  "validatedRevision": "review-fixes-code-r1",
+  "completedAt": "2026-10-01T11:55:28Z",
+  "artifactRefs": [
+    ".ai/docs/20261001-review-fixes/auth-changes.md",
+    "st-web/src/auth-session.ts",
+    "st-desktop/src/auth-test-harness.cjs",
+    "st-web/src/store/auth-tabs.test.mjs"
+  ],
+  "criterionProposal": {
+    "id": "IMPLEMENTED",
+    "outcome": "pass",
+    "by": "/root/review_fixes_auth",
+    "dispatchId": "DISPATCH-review-fixes-auth-01",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-review-fixes-auth-01.json",
+    "validatedRevision": "review-fixes-code-r1"
+  },
+  "blockerProposals": [],
+  "background": "浏览器页面独立持有旧 refresh，缺少跨标签共享 pair 同步与轮换协调，旧拒绝可能清除其它页成功会话。",
+  "inputs": ["本次 schemaVersion=2 Envelope（已核对 schema 约束与写入白名单）", ".ai/tasks/TASK-20261001-review-fixes-auth.md", ".ai/docs/20261001-review-fixes/design.md", ".ai/docs/20261001-review-fixes/testcases.md", "State 相关 exitCriteria 与 revision 快照；skillRefs=-"],
+  "analysis": "storage 事件和上下文读取均重读当前完整共享 pair；同会话修订不回滚，换会话推进 generation 并失效旧用户状态。获得轮换排他权后检查共享 pair，等待期间已轮换则直接复用。",
+  "decisions": ["Web Locks 优先；无 Web Locks 使用每页 bakery ticket 排队，ticket 只含锁/会话/修订元数据", "45秒租约覆盖30秒HTTP超时；租约过期、所有者不确定或协调写失败时拒绝保留会话", "Electron主进程继续唯一轮换，不改其生产代码和协议"],
+  "validation": [
+    {
+      "command": "node --test st-web/src/store/auth-tabs.test.mjs st-web/src/store/auth-startup.test.mjs",
+      "exitCode": 0,
+      "tests": 22,
+      "passed": 22,
+      "failed": 0,
+      "skipped": 0,
+      "observed": "新增14项独立VM共享存储/真实HTTP-CAS回归和既有8项启动回归。覆盖成功响应延迟窗口、选号重入、租约失效拒绝先返回、事件未送达、新登录迟到请求、503与写失败。"
+    },
+    {
+      "command": "node --test st-desktop/src/auth-rotation.test.cjs",
+      "exitCode": 0,
+      "tests": 25,
+      "passed": 25,
+      "failed": 0,
+      "skipped": 0,
+      "observed": "既有桌面/浏览器认证25项，包含桌面磁盘重启、落盘失败后内存最新对和重同步恢复。"
+    }
+  ],
+  "stateDelta": "仅建议IMPLEMENTED/pass，由主线程Evaluate；未写Loop State，未判定全局Goal完成。",
+  "risks": ["租约提供有界协调；挂起页/存储失效不能保证零重复HTTP，但不确定拒绝保留会话", "持久化失败只保证当前内存pair，重载仍依赖最后成功写入的记录", "Web Locks及storage调度为测试模拟，未执行真实浏览器UI验证", "崩溃遗留ticket会在同会话同修订下保守禁止自动拒绝清理，显式退出仍可执行"],
+  "nextSteps": "由主线程固定review-fixes-code-r1源文件、完成集成与独立审查及验收。",
+  "impact": "仅修改auth-session.ts与测试harness，新增多标签测试和独立文档结果；HTTP/IPC/pair格式兼容，无DDL/部署/Git index变化。"
+}

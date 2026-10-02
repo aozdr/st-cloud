@@ -4,7 +4,9 @@
 
 ## 1. 唯一传输路径
 
-主线程直接完成的非独立标准可使用 `loopctl evaluate-direct` 记账：提交真实任务、执行者、当前修订和产物证据，不创建或伪造 dispatch。reviewer 标准及角色分离名单中的标准默认禁止此路径，仍须按下方唯一 Dispatch 传输路径取得独立结果。若用户明确要求同一执行者完成当前任务的剩余评审与验收，可在 State 中逐项记录 `singleAgentAuthorization`（任务、执行者、用户原话、证据及标准），并将结果如实标为自检；该授权不能跨任务复用，也不能声称独立评审。`evaluate-direct` 只接受通过结果，并保持原有依赖、确认、产物和 State 校验。
+默认先由主线程直接执行，用 `loopctl evaluate-direct` 提交真实任务、执行者、当前修订和产物证据，不创建或伪造 dispatch。V3 medium 的测试、自检、知识同步和最终验收均支持直接路径；V3 large 的 CODE_REVIEW 必须由独立 reviewer 派发结果完成，不能用单人授权绕过。V2 State 保留原职责分离和任务级 singleAgentAuthorization 例外。直接结果不声称独立评审，仍检查依赖、确认、产物和当前修订。
+
+以下协议仅在有收益的独立子任务或必要独立评审实际委派时加载；不是每个门禁的必经步骤。同一 reviewer 可在一次 CODE_REVIEW 中覆盖代码、安全与适用风险，测试与最终验收由主线程负责。
 
 Dispatch 只通过当前 Codex Runtime 的子 Agent 创建消息传递：
 
@@ -122,9 +124,9 @@ criterionProposal:
 blockerProposals: []
 ```
 
-`skip` 仅供 canonical 定义声明可跳过的标准使用；当前只有中型 `SECURITY_REVIEW` 可在提供 `skipReason/approvedBy` 后使用。`criterionProposal` 只是建议。主线程核对 schema、attempt、scope、产物、证据、revision 和 DAG 后，才可通过 Evaluate 改变 State。
+`skip` 仅供绑定版本的 canonical 定义声明可跳过的标准使用；V3 没有形式性条件节点，不为无 UI/无安全影响创建跳过任务。V2 保持原条件标准规则。`criterionProposal` 只是建议。主线程核对 schema、attempt、scope、产物、证据、revision 和 DAG 后，才可通过 Evaluate 改变 State。
 
-共享 `changereport.md` 由主线程串行合并各独立结果，避免并发追加竞态。
+共享 verification.md（V2 为 changereport.md）由主线程串行合并各独立结果，避免并发追加竞态。
 
 ## 8. 失败与恢复
 

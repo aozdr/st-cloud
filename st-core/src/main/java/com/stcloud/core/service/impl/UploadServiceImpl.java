@@ -28,6 +28,7 @@ import com.stcloud.core.service.impl.upload.UploadInitCommitManager;
 import com.stcloud.core.service.impl.upload.UploadManager;
 import com.stcloud.core.service.impl.upload.UploadStorageManager;
 import jakarta.annotation.Resource;
+import com.stcloud.core.service.impl.upload.ObjectUploadCandidateService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -72,6 +73,8 @@ public class UploadServiceImpl implements UploadService {
     @Resource
     private UploadCommitManager uploadCommitManager;
     @Resource
+    private ObjectUploadCandidateService objectUploadCandidateService;
+    @Resource
     private UploadInitCommitManager uploadInitCommitManager;
     @Resource
     private UploadChunkManager chunkManager;
@@ -79,8 +82,6 @@ public class UploadServiceImpl implements UploadService {
     private UploadStorageManager storageManager;
     @Resource
     private RelayBufferManager relayBufferManager;
-    @org.springframework.beans.factory.annotation.Autowired(required = false)
-    private OrphanObjectCleanupService orphanObjectCleanupService;
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private UploadProperties uploadProperties = new UploadProperties();
     /** 编辑保护锁服务：生产必有；测试上下文手工装配时缺失，保护检查跳过（保持既有测试兼容） */
@@ -175,27 +176,16 @@ public class UploadServiceImpl implements UploadService {
 
         Long tenantId = UserContext.getTenantId();
         // 去重预查（F2-1，事务外）：同租户同 md5 已存在对象则复用，不重复上传；
-        // 不存在则先上传规范化路径 tenantId/md5（限速保留），S3 上传发生在事务外
+        // 不存在则先登记独立物理路径候选（限速保留），S3 上传发生在事务外
         FileObject existing = fileObjectService.findByTenantAndMd5(tenantId, md5);
         String storagePath;
         boolean uploadedNew = false;
         if (existing != null) {
             storagePath = existing.getStoragePath();
         } else {
-            storagePath = tenantId + "/" + md5;
-            if (orphanObjectCleanupService != null) {
-                orphanObjectCleanupService.beginUpload(tenantId, md5, storagePath);
-            }
-            try {
-                storageManager.uploadObject(storagePath, pacedInputStream(getInputStream(file), rateBytes, userId),
-                        fileSize, file.getContentType());
-                uploadedNew = true;
-            } catch (RuntimeException e) {
-                if (orphanObjectCleanupService != null) {
-                    orphanObjectCleanupService.markFailed(tenantId, storagePath);
-                }
-                throw e;
-            }
+            storagePath = objectUploadCandidateService.upload(tenantId, md5, pacedInputStream(getInputStream(file), rateBytes, userId),
+                    fileSize, file.getContentType());
+            uploadedNew = true;
         }
         FileNodeVO result;
         try {
@@ -205,16 +195,9 @@ public class UploadServiceImpl implements UploadService {
         } catch (RuntimeException e) {
             // 事务失败只登记候选，不能在 current == null 的竞态窗口立即删除规范对象。
             if (uploadedNew) {
-                if (orphanObjectCleanupService != null) {
-                    orphanObjectCleanupService.markFailed(tenantId, storagePath);
-                }
+                cleanupOrphanUpload(tenantId, md5, storagePath);
             }
             throw e;
-        }
-        if (uploadedNew) {
-            if (orphanObjectCleanupService != null) {
-                orphanObjectCleanupService.markCommitted(tenantId, storagePath);
-            }
         }
         return result;
     }
@@ -959,9 +942,8 @@ public class UploadServiceImpl implements UploadService {
 
     /** 上传事务失败只登记规范对象候选，由定时任务在宽限期后做安全复核。 */
     private void cleanupOrphanUpload(Long tenantId, String md5, String storagePath) {
-        if (orphanObjectCleanupService != null) {
-            orphanObjectCleanupService.markFailed(tenantId, storagePath);
-        }
+        // 仅放弃未采用的候选，延迟 GC 按持久引用回收，不立即删除物理对象。
+        objectUploadCandidateService.discard(tenantId, storagePath);
     }
 
     /** DB finalize 已回滚且会话已中止后，仅删除没有对象记录引用的本次 S3 合并产物。 */

@@ -17,10 +17,9 @@ public class MyMetaObjectHandler implements MetaObjectHandler {
         this.strictInsertFill(metaObject, "updatedAt", LocalDateTime.class, LocalDateTime.now());
         this.strictInsertFill(metaObject, "deleted", Integer.class, 0);
 
-        // 自动填充租户ID
-        Long tenantId = TenantContext.getTenantId();
-        if (tenantId != null) {
-            this.strictInsertFill(metaObject, "tenantId", Long.class, tenantId);
+        // 已有租户值或系统实体不需要解析默认租户；真正缺租户的写入仍保留上下文诊断。
+        if (metaObject.hasSetter("tenantId") && metaObject.getValue("tenantId") == null) {
+            this.strictInsertFill(metaObject, "tenantId", Long.class, TenantContext.getTenantId());
         }
     }
 

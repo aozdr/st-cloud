@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-review-fixes-auth-01",
+  "taskId": "TASK-20261001-review-fixes-auth",
+  "idempotencyKey": "TASK-20261001-review-fixes-auth",
+  "role": "executor",
+  "taskType": "implement",
+  "objective": "修复本轮已复现的浏览器多标签续期误登出，完成源码及有意义的回归，不改 Electron 主进程协议。",
+  "taskRefs": [
+    ".ai/tasks/TASK-20261001-review-fixes-auth.md",
+    ".ai/docs/20261001-review-fixes/design.md",
+    ".ai/docs/20261001-review-fixes/testcases.md"
+  ],
+  "stateRef": ".ai/state/20261001-review-fixes.yaml",
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      "st-web/src/auth-session.ts",
+      "st-desktop/src/auth-test-harness.cjs",
+      "st-web/src/store/auth-tabs.test.mjs",
+      ".ai/docs/20261001-review-fixes/auth-changes.md",
+      ".ai/runtime/results/DISPATCH-review-fixes-auth-01.json"
+    ],
+    "exclude": [
+      ".ai/state/**",
+      "其他产品文件",
+      "历史证据",
+      "Git index",
+      "数据库和部署"
+    ]
+  },
+  "acceptance": [
+    "跨标签页顺序与并发轮换使用完整最新pair，旧拒绝不清空新共享记录",
+    "storage事件支持退出/新会话，陈旧事件不回滚pair",
+    "普通HTTP无navigator.locks也正确；桌面/离线/写失败兼容"
+  ],
+  "validation": [
+    "node --test st-web/src/store/auth-tabs.test.mjs st-web/src/store/auth-startup.test.mjs",
+    "node --test st-desktop/src/auth-rotation.test.cjs"
+  ],
+  "forbidSpawn": true,
+  "forbidGitMvn": true,
+  "output": {
+    "artifactRef": ".ai/runtime/results/DISPATCH-review-fixes-auth-01.json"
+  }
+}

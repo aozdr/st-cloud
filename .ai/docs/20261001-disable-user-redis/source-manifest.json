@@ -1,0 +1,2075 @@
+{
+  "revision": "disable-redis-code-r1",
+  "createdAt": "2026-10-01T11:16:27.4566345Z",
+  "files": [
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/aspect/AuditAspect.java",
+      "sha256": "D5819773FF78F624C14A4C958938BC160833B66E130AD2A1F365F15EB2C8B408"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/controller/AuditLogController.java",
+      "sha256": "2784F353E9E4CE5238671BE7F78346B7CE5CC65207A638B6C8573D576392B480"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/controller/CloudCapacityController.java",
+      "sha256": "46E3ED3840746A95BA62C61A357DBEA90D8A12D88FE27AF8908D1A471DE033D8"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/controller/PermissionController.java",
+      "sha256": "CF177B8CBC900BBAAEB7474CFAB897B6F8895025536C8C574AD162F34FA4D841"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/controller/RoleController.java",
+      "sha256": "E33D7500DF496D8DCEA493CB3C58FC50DC59CC03DA73A8FD34E68BA8D818790D"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/controller/SpeedLimitController.java",
+      "sha256": "FD01B8607548822B9197D380BFA98915CB644E1131C5FD0E9085C139799D6AB6"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/controller/StatsController.java",
+      "sha256": "F579398049F0B665C4DB82C869FCDA5B5A6124686F32A37568FC2948ED6F92F9"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/controller/SysConfigController.java",
+      "sha256": "E9F6C1B01853B256D5B75B117211797D912416F27B3F351BA46DED7277CED82D"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/controller/UserManageController.java",
+      "sha256": "C0C8D040F547C492B9A624889EBDBA33B47675ED93F3C26481721BDD753BE687"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/dto/AssignPermissionsRequest.java",
+      "sha256": "E8E33969C467010DCF734F06E528F33D5DCA593A89677A8960F8EB5B321F19F9"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/dto/AssignRolesRequest.java",
+      "sha256": "791ADBA9704B7D47B7C513E5D9167132650A08C2A46260B559C51357CB932E22"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/dto/AuditLogQueryRequest.java",
+      "sha256": "64B197CBCDA5F5AAF209670AC4BF22B1D40324B30A815390861D7A272EA7CB71"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/dto/CloudCapacityRequest.java",
+      "sha256": "96DF5BA1C7FF06364AE3EC83C6624CDEB6FC1F780763C793C67E55EE7120BC82"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/dto/CreateRoleRequest.java",
+      "sha256": "F17FCA84299433065A36AD0CDC900942B3C6B8F856A0CF42E7FBB812F3BD8E96"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/dto/CreateSpeedLimitRequest.java",
+      "sha256": "F8580680D3866718192FD0AF7156A00741C0DFE4DB2B09ED51826237B194856A"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/dto/CreateUserRequest.java",
+      "sha256": "97852CEF354F2B4682F1EE4446248ED017D41A2F23DC4FF80922731FBC22A476"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/dto/PermissionVO.java",
+      "sha256": "D601C0385DF89E4DBCCBF182204C035F7208109530DE667440BA61FCEB7B32C6"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/dto/RoleVO.java",
+      "sha256": "7C06906E2F251240D82A953F8AF833A8A106ED4143238B1FD64FFFB910D17208"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/dto/SpeedLimitVO.java",
+      "sha256": "0953AE6D087D568146A69A466AD3DC137CCF854DB569B788FB272D9C5B01F2BD"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/dto/StatsVO.java",
+      "sha256": "69B3392B0F6C88E0123B3AAC8A36AA4784C64DAC5CA69DF29CAE2653400BD960"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/dto/UpdateUserRequest.java",
+      "sha256": "803D4A53B186BC96BB0F25B21347E6384E5BA14173EA67743DDA35B9CFEF1C8A"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/dto/UserManageVO.java",
+      "sha256": "1EEAFD5DCCFB4B45E6E5EB743EB1B09E2F8CFF14FCF195D665643F3D56E6D1EA"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/entity/AuditLog.java",
+      "sha256": "5CED22E61E8AD80B322D4EC63D9559A596091816EDC7D343AAF2A477BBC5C6D8"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/mapper/AuditLogMapper.java",
+      "sha256": "900E2E4918748D6F9232B709386356B3F3E363AE24C3C991CFD4942860D35832"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/mapper/StatsMapper.java",
+      "sha256": "4F61460D7C1A9C9793202C927C2F12E505E23F7DCF5A94C8D430EC0188182F43"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/service/impl/PermissionServiceImpl.java",
+      "sha256": "8FB5EF288C33C5B311E4FD5C3C159E5D472EF1AE642498E0F260BABB8DEA1602"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/service/impl/RoleServiceImpl.java",
+      "sha256": "46D9469DBE0081CE2C862BF05CBF067D4976EC404BBE75FED7246C391774A5A5"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/service/impl/SpeedLimitManageServiceImpl.java",
+      "sha256": "35A5103AAF86778F76FCDE92AA6ED3DACCC91B6844142486BB6808C3D5A60A9C"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/service/impl/StatsServiceImpl.java",
+      "sha256": "F8926E8CC554E84616F0A05CEC551AA8757D6BDC07E20D2098239ED0F1DC3A37"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/service/impl/UserManageServiceImpl.java",
+      "sha256": "5288415F76FAF42046A3D04972A16752C8571E2125C10FA0F38114AC36CC8E7C"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/service/PermissionService.java",
+      "sha256": "49E2CA3D1EC05506987E456D829AEBD77314D4F1A06E1AAB4D9AD5E8AB627848"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/service/RoleService.java",
+      "sha256": "A15A6238B3C3E2C233234A7B0361E7F0DBCED96E04ABF168DA175549565ED1AE"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/service/SpeedLimitManageService.java",
+      "sha256": "6C6AF525F323E9331C123E48FC8C141D85735B999B3A420383CB1595457FABE7"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/service/StatsService.java",
+      "sha256": "E820E6F805115553F3807938DCEB171F8A4C2C65ED6E17F4C036DB8238F7C3EA"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/service/UserManageService.java",
+      "sha256": "A396366E41FDF9BB794B990594E0915DB7F4E3967C5A8CE41621EC1D0A91816A"
+    },
+    {
+      "path": "st-admin/src/main/java/com/stcloud/admin/service/UserRedisKeyCleanupService.java",
+      "sha256": "452FEAA6F57CBA6C689A99BCDD43B2B3914EFF420E1414F0E6846CADF1755084"
+    },
+    {
+      "path": "st-admin/src/test/java/com/stcloud/admin/AbstractAdminIntegrationTest.java",
+      "sha256": "441C421045C7D541AE5BD64CC5239634609A5834EABC66DA8B76899A0273D63E"
+    },
+    {
+      "path": "st-admin/src/test/java/com/stcloud/admin/AdminTestApplication.java",
+      "sha256": "B9F947CBF0942C6AF0DB6A9B94325C9571467B9FE967BA187A6D3138AC56EDF7"
+    },
+    {
+      "path": "st-admin/src/test/java/com/stcloud/admin/AuditAspectTenantTest.java",
+      "sha256": "556262DA2B30F1191B3034222FDDC73EF0EECB1A5EE92BF9F62815CB3613EA35"
+    },
+    {
+      "path": "st-admin/src/test/java/com/stcloud/admin/AuditLogIntegrationTest.java",
+      "sha256": "DD3F2175DF47457E10A089128B29EBAA4D456238F90B76B42AFFD10A36581D75"
+    },
+    {
+      "path": "st-admin/src/test/java/com/stcloud/admin/SecurityInstanceWorker.java",
+      "sha256": "1821D0351151F422356C5143D281E2D78BB3E2E4142D3A957862D42106477389"
+    },
+    {
+      "path": "st-admin/src/test/java/com/stcloud/admin/SpeedLimitManageIntegrationTest.java",
+      "sha256": "11B3F3CC705B81569EA26C430A69F778814502D203B2DD41DEC02245BEF0B684"
+    },
+    {
+      "path": "st-admin/src/test/java/com/stcloud/admin/UserManageSecurityIntegrationTest.java",
+      "sha256": "35C039BD7FE48850C2DD52DC2EF73EE975DF31CEC88F58B7402857832235686F"
+    },
+    {
+      "path": "st-admin/src/test/java/com/stcloud/admin/UserRedisKeyCleanupServiceTest.java",
+      "sha256": "3368C465D007E3E2891FF78054D1B453BD387D75BC05BD7D82E808F9625751D4"
+    },
+    {
+      "path": "st-admin/src/test/java/com/stcloud/admin/UserSecurityRedisIntegrationTest.java",
+      "sha256": "22541531BCBEFD969775E140EBC01868B766EADC1F76B56ED01B54D1B1377905"
+    },
+    {
+      "path": "st-admin/src/test/resources/application-test.yml",
+      "sha256": "9E368583B589CC1D9672289262883EAE6BD64A95CE51765610217160F1445643"
+    },
+    {
+      "path": "st-admin/src/test/resources/schema.sql",
+      "sha256": "1B13AD183CF5BD5AB7BF8CE3B5A53770B5559827D3C5DFEE61DC5E7EC968F911"
+    },
+    {
+      "path": "st-admin/src/test/resources/security-fixture.sql",
+      "sha256": "36F4E963B3F150FCDA9BA3973A6DEEEFCF165770DBF4E85FD003043D1C03652A"
+    },
+    {
+      "path": "st-api/src/main/java/com/stcloud/StCloudApplication.java",
+      "sha256": "4D08B604F04214168D81A4BC04AC75E9822FBE77FE1D5808AD069980CF98E754"
+    },
+    {
+      "path": "st-api/src/main/resources/application-dev.yml",
+      "sha256": "95C684C3F34825CD9DD48C45B73661D3F2B328B9972D321ACF3DB0F60F292C66"
+    },
+    {
+      "path": "st-api/src/main/resources/application.yml",
+      "sha256": "A48DA07E3E5B5C9DF2CB3DEC96926F94F599030815B4E5D4FEE9B3C0F5997119"
+    },
+    {
+      "path": "st-api/src/test/java/com/stcloud/LargeIdContractTest.java",
+      "sha256": "18B01669018414B768FA7B5238B4FB868A93395DB88A3B704FE80B67E5BB6E03"
+    },
+    {
+      "path": "st-api/src/test/java/com/stcloud/search/ReindexIntegrationTest.java",
+      "sha256": "3E6C6629CA2F07080981AB0FAD02D5CF36ECA81CFCCAD5C27C9E9AE30975D95B"
+    },
+    {
+      "path": "st-auth/src/main/java/com/stcloud/auth/controller/AuthController.java",
+      "sha256": "E5CEC39897F818A1ECDA970C37CB0263CE4C5089A27374C869DADBF28DB36537"
+    },
+    {
+      "path": "st-auth/src/main/java/com/stcloud/auth/dto/LoginRequest.java",
+      "sha256": "0A13686A40F8DB5328F3A7C4392380D84ED7BF5F0CDB96B6B9CF6C6D76B8A8E4"
+    },
+    {
+      "path": "st-auth/src/main/java/com/stcloud/auth/dto/LoginResponse.java",
+      "sha256": "54B357A1633AFC7149B0BA09B39D40DAC53C66DA28F6B598FBDE50A640D25E30"
+    },
+    {
+      "path": "st-auth/src/main/java/com/stcloud/auth/dto/RefreshRequest.java",
+      "sha256": "66EE52C0BA57B811E9D15B27D467F628ED48BB207E9B487BEC764061C28A802D"
+    },
+    {
+      "path": "st-auth/src/main/java/com/stcloud/auth/dto/RegisterRequest.java",
+      "sha256": "A2AA15DEB123DE4E232BAC8B0C205D13B1B381F04ECCF4A7D4ED34D4F78344FA"
+    },
+    {
+      "path": "st-auth/src/main/java/com/stcloud/auth/entity/SysPermission.java",
+      "sha256": "7C9A2150CD9070C91D91341BC04AA5291E147A36DE55470D741DB28B28A72F5F"
+    },
+    {
+      "path": "st-auth/src/main/java/com/stcloud/auth/entity/SysRole.java",
+      "sha256": "C5D79682F7F0EB5619D975147DB70345D5D9BFBEBED71806FCB4FDF2BF0C3240"
+    },
+    {
+      "path": "st-auth/src/main/java/com/stcloud/auth/entity/SysRolePermission.java",
+      "sha256": "F76093775FDE189F8C87762E748FEC3FD3A424A1DDC28FA92476BE4C9FDB0286"
+    },
+    {
+      "path": "st-auth/src/main/java/com/stcloud/auth/entity/SysTenant.java",
+      "sha256": "07AC8D8818619752422403A8787B40CB6CC070B10DB4E1D4500D32BFC6DB395A"
+    },
+    {
+      "path": "st-auth/src/main/java/com/stcloud/auth/entity/SysUser.java",
+      "sha256": "2FFD75DD2B0676FA01E8C984F2E028AA9859274705B5FD6F9248528B748F2AEE"
+    },
+    {
+      "path": "st-auth/src/main/java/com/stcloud/auth/entity/SysUserRole.java",
+      "sha256": "2609947CBAF8258ABB1DE072C216B1C36C2FC21D643C9243F0C09F9A180F2A94"
+    },
+    {
+      "path": "st-auth/src/main/java/com/stcloud/auth/enums/TenantStatus.java",
+      "sha256": "3BC02DDFD6A16676F2253016973F39FA59697B65C233E6EEEF7D7D3257C2A1A3"
+    },
+    {
+      "path": "st-auth/src/main/java/com/stcloud/auth/enums/UserStatus.java",
+      "sha256": "71B6A94AF1D5A24F81D837BE32C71FCA1D8811B3A0DA9E67A8B6B9A34F926F24"
+    },
+    {
+      "path": "st-auth/src/main/java/com/stcloud/auth/mapper/SysPermissionMapper.java",
+      "sha256": "331954F4E669D28422E424649C96A488C289EBE3485451A5863DD09DC9124193"
+    },
+    {
+      "path": "st-auth/src/main/java/com/stcloud/auth/mapper/SysRoleMapper.java",
+      "sha256": "8ACA4BDFBB3DF3710C5477A6A14A2EB6AA03DF96CE913BC1DB0B59CD038252D1"
+    },
+    {
+      "path": "st-auth/src/main/java/com/stcloud/auth/mapper/SysRolePermissionMapper.java",
+      "sha256": "4207F96037E4D14535D40D0D58056428035FB8F21C24698016861F36D351A55C"
+    },
+    {
+      "path": "st-auth/src/main/java/com/stcloud/auth/mapper/SysTenantMapper.java",
+      "sha256": "F73EF24534E09E64B3EFA17F73CE909F7173C30DE3CCB8B7E9BE806FC0B62BC8"
+    },
+    {
+      "path": "st-auth/src/main/java/com/stcloud/auth/mapper/SysUserMapper.java",
+      "sha256": "71899768ECC18BE006500F4E2B52DFF7282474008E08DC1B0A4AE4D877ABC0EB"
+    },
+    {
+      "path": "st-auth/src/main/java/com/stcloud/auth/mapper/SysUserRoleMapper.java",
+      "sha256": "0620CBCA7AB4F7D69C00ACB2F78D45214FB4639152A691C2697AD94A062989D7"
+    },
+    {
+      "path": "st-auth/src/main/java/com/stcloud/auth/security/JwtAuthenticationFilter.java",
+      "sha256": "CF3DB4C4EACFF329E8B35C6C3B7DD4B0D910760DD19DE135259860A18DB1DDC5"
+    },
+    {
+      "path": "st-auth/src/main/java/com/stcloud/auth/security/RestAuthenticationEntryPoint.java",
+      "sha256": "5441958EB7A7D8FC1B56CEE410AFF93237992CA81335676B1AEB62F964EB4E40"
+    },
+    {
+      "path": "st-auth/src/main/java/com/stcloud/auth/security/SecurityConfig.java",
+      "sha256": "68307D4C62FE148133BEDECD110345ABE620F7DD17110D97256CB72737F72F5F"
+    },
+    {
+      "path": "st-auth/src/main/java/com/stcloud/auth/service/AuthService.java",
+      "sha256": "2A969F8BC3F805577B5F214DD9219DB59465730D5DFF4A52CBDF12A16153B802"
+    },
+    {
+      "path": "st-auth/src/main/java/com/stcloud/auth/service/UserSecurityService.java",
+      "sha256": "FE8E89D70AF3F730F469ED6E830CBB73DC1440D307FC3DE55A37A1EE123744F5"
+    },
+    {
+      "path": "st-auth/src/test/java/com/stcloud/auth/AbstractAuthIntegrationTest.java",
+      "sha256": "C39C3A93C528BBA4F817C102D3B6809D0192F686741408302546AC562C4ABB28"
+    },
+    {
+      "path": "st-auth/src/test/java/com/stcloud/auth/AuthServiceIntegrationTest.java",
+      "sha256": "89EB9A6E8BFDF48B6EEB138C6861F630F7607E41335F6CC517A67823C5529596"
+    },
+    {
+      "path": "st-auth/src/test/java/com/stcloud/auth/AuthTenantContextIntegrationTest.java",
+      "sha256": "9DCB38EE3FF8414DF194791BF18D5715C7F364F142A4D8D5850669945374AC26"
+    },
+    {
+      "path": "st-auth/src/test/java/com/stcloud/auth/AuthTestApplication.java",
+      "sha256": "120B673E7696965795D73E8823360796A2A8F7551F404EFC951B8565DBE72B78"
+    },
+    {
+      "path": "st-auth/src/test/java/com/stcloud/auth/RegisterMysqlConcurrencyIntegrationTest.java",
+      "sha256": "9975156B4C23A705ACEBD0FC5ABBC14A4152301F5311B99E749B66BF13C266AD"
+    },
+    {
+      "path": "st-auth/src/test/java/com/stcloud/auth/security/JwtAuthenticationFilterPurposeTest.java",
+      "sha256": "8A8C7C7AFA82D866A5C689B09830E7B6269BB1C7BD6075FC20BEDCE3763F76B8"
+    },
+    {
+      "path": "st-auth/src/test/java/com/stcloud/auth/security/JwtPublicTenantScopeTest.java",
+      "sha256": "58CC8236CA83E80AD138AE7C25E3E5D15614CE8648F7065FB134956C751A6F29"
+    },
+    {
+      "path": "st-auth/src/test/java/com/stcloud/auth/UserSecurityServiceIntegrationTest.java",
+      "sha256": "CB4F149C7214792623D4A8C147904AC85A548C2780E3AB71FA33BE9D93AD01D2"
+    },
+    {
+      "path": "st-auth/src/test/java/com/stcloud/auth/UserSecurityServiceMysqlIntegrationTest.java",
+      "sha256": "E471D44C36448D86D9584A829950A19F9F00BE6A245AE9DC58650F3A8D80D8F2"
+    },
+    {
+      "path": "st-auth/src/test/java/com/stcloud/auth/UserSecurityServiceTenantFailureTest.java",
+      "sha256": "FD25BB2FB8B09DA781CE7C5C346B6DB3D7EF68B54AB8BF3922C28AF2295B8706"
+    },
+    {
+      "path": "st-auth/src/test/resources/application-test.yml",
+      "sha256": "6BC2AFF91429C03B7FEED682C3BA097624164F7DF5B15B1DAE172AE3AC4BB8FA"
+    },
+    {
+      "path": "st-auth/src/test/resources/schema.sql",
+      "sha256": "36F4E963B3F150FCDA9BA3973A6DEEEFCF165770DBF4E85FD003043D1C03652A"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/access/TeamFileAccessPolicy.java",
+      "sha256": "174650F23D3B3E3E5BE899A52CCF91545563C768DF7B314FB23B65E00452AF45"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/annotation/Auditable.java",
+      "sha256": "EA97AF0C23EB21E95E5DDEC02E4404B8500D11E10A342CF6B83AFBA4FE6D5DA3"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/cache/Cache.java",
+      "sha256": "335C57BEE0BF731B25B5C41CA700E29042E93D6DA16786AD3C20BEDB8FB2243D"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/cache/CacheFactory.java",
+      "sha256": "BC489698E6AC7468DD8E469A88B07FE1753EE19A9D6AED49607A86241CA7E1C4"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/cache/RedisTtlCache.java",
+      "sha256": "366E59B1A10D7695665AF6DDC64C7E8D5FF87E0B6DEA7A83D26A4223B6336866"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/cache/TtlCache.java",
+      "sha256": "7A6DF897F430B6138A96E06DDFBDFE3EF0D1EB7F15AF546CD2BFB8B1D6FEF048"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/config/JacksonConfig.java",
+      "sha256": "B0340083A5886611AC3FC49A4B16CEFAF615C32589981EB2717BBAF3C555221F"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/config/Knife4jConfig.java",
+      "sha256": "C506755F0DF2FEC73BE2F109692101F6FB6F89F1BF833A63D3F989B90A0D2328"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/config/MyBatisPlusConfig.java",
+      "sha256": "CFB4554032961C04E3EBB663EE84A1E568A9B31995FC128A061D5C0281AB9CC4"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/config/MyMetaObjectHandler.java",
+      "sha256": "DE03506529525BDC88BC22510BE5BC2CDC07C64526D7606BCB3BA878A70116EC"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/config/RedisConfig.java",
+      "sha256": "F8E3DC91B8779D5E93F99251C0C278403B6472DE8DAC69E31D854F209C510EB0"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/config/S3StorageConfig.java",
+      "sha256": "81DFEE7C430C03B1F97BF3E3D1B05D3042D7D0CDAF5F6C08ED0252827D4393F3"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/context/TenantContext.java",
+      "sha256": "395DC9BE6B6087D7436933C17EE00132BF2E3CBEE667F95F1323543029B98095"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/context/UserContext.java",
+      "sha256": "B11217E447B200C19BEF02A8B143FF0D94DAF52A31541A389569C5178CB4DC5C"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/entity/BaseEntity.java",
+      "sha256": "4ACC556E141B6A91765B10A100B0B68B8057D51EEBAF9679483FB4EE43309686"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/entity/SysConfig.java",
+      "sha256": "1B671C88E8950DB7A81DFCD83C5C41310776CF9E0CBD87B0E3B1D5B9D42BD757"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/entity/SysJwtSecret.java",
+      "sha256": "314CA34749D78086AB155A99C34E8B1215DC3B8600777D7D1774B986B3C81B4B"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/entity/SysRateLimit.java",
+      "sha256": "88F4F3895214F3663F4F77E58A877EBF52EA1AFAA332C992DF3C71ED0495FC99"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/enums/NodeStatus.java",
+      "sha256": "0EA660C5FF4DA131DEAC616D670D4BDA103D142CB601B3738D4050380AB75165"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/enums/NodeType.java",
+      "sha256": "39223609620FF84DDD20486BFDAB89F3AF9E598C0901B1F91C4F1AE48AC51E5F"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/event/NotificationUnreadChangedEvent.java",
+      "sha256": "DA658D2CD5BF2ABE646B6EC977443C7C4DB7B2A3432E260E87E40398831043C1"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/event/NotificationUnreadCountReader.java",
+      "sha256": "142F738B2A4067D6C76BB980A315AB77E9371FD023DD3CE3636671BC35C936B2"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/exception/BusinessException.java",
+      "sha256": "DD894CC9BC5DBF4B420D0AA91E7C42F67743CDB6C980F74A2A8DB2FAE64412AA"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/exception/GlobalExceptionHandler.java",
+      "sha256": "BBC3F79B2892987FD9BFD438091CB78ABDFDE936E30B18CDCF0B8DFEEA0ED1A5"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/mapper/SysConfigMapper.java",
+      "sha256": "3EE7AE465DDEF7697C56071BACCB849C81ECCAE7A9A62EB3AC87353805B4BF43"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/mapper/SysJwtSecretMapper.java",
+      "sha256": "B3048A85E09F93EC39147682501567071A7B7696B1F5FA574D9264CEDB1645C9"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/mapper/SysRateLimitMapper.java",
+      "sha256": "74D0A6F7A5EADE75931A48E67008B1D3818AB35941EB708F7E526346B6EDDEEF"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/ratelimit/SpeedLimitCache.java",
+      "sha256": "42A51D08303B467AFA5499655495A42639DB55F32D45DE39FCA0749690FCB235"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/ratelimit/SpeedLimitResult.java",
+      "sha256": "F33699E80E324639C205776273DF51D0E21AC04600BECF683F33CF4F4DFC4B6D"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/ratelimit/SpeedLimitService.java",
+      "sha256": "D2FC395A33F7B7AF0BD5760EA20C7C1143790724762981D0B2A6EDFD52028B1D"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/ratelimit/TokenBucket.java",
+      "sha256": "7AE07EC2CEB06FFE3F2833C6E76220B574AEEAC574C4FD59DF7431C356101920"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/ratelimit/UserTransferLimiter.java",
+      "sha256": "1F200AEF08BE62997B0AFE73CC0164A65D06AA0A2EEBEBAF34BC37DD522CC3F9"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/response/Result.java",
+      "sha256": "842B04288572978B0E6EE68543664D4985B82DEBED81BF69C2711B2B9CE4B25D"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/response/ResultCode.java",
+      "sha256": "89584F0C48CE0E57A5CA6AF6672EB52723C128C1F7190828ABA229A9F6D25AA6"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/sysconfig/SysConfigService.java",
+      "sha256": "663BA00DD5D4418D7F4F8C6573589BC8935A35B9387AD1C6D19202530C637A82"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/sysconfig/SysConfigServiceImpl.java",
+      "sha256": "109D207050358E88ECA5C8D1B99FD830B5690018D040EF739A6B17C4428F5115"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/utils/FileSizeUtil.java",
+      "sha256": "ADFAA900E51828A04BAABFC34ED7C1A505292EA80BD90CC68B6C3BDC2310279C"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/utils/IpUtils.java",
+      "sha256": "816E219677554DA0BFBC2E028CDB9A19FE5DEEED85ACC5EBBA93ED73FCDE7B44"
+    },
+    {
+      "path": "st-common/src/main/java/com/stcloud/common/utils/JwtUtils.java",
+      "sha256": "FA45C80B84F6EB34CBD506F3CCF205650B48FE71773FCE8976B2887B958D1722"
+    },
+    {
+      "path": "st-common/src/test/java/com/stcloud/common/cache/CacheFactoryTest.java",
+      "sha256": "C58C83F6D5CB230FAE50F69D5409D915C6B3EEB2D2DEEDCAC0CB439A8CC30C4A"
+    },
+    {
+      "path": "st-common/src/test/java/com/stcloud/common/cache/RedisTtlCacheTest.java",
+      "sha256": "6307BC38B8C7EEEEBDF8C787D0A7FEA7B348E60A3C72A8C1714620EF3F9A0270"
+    },
+    {
+      "path": "st-common/src/test/java/com/stcloud/common/cache/TtlCacheTest.java",
+      "sha256": "6D06B7129CDCC724C82B8ED759906BABE551D843047F776FBDAF561AC8E26030"
+    },
+    {
+      "path": "st-common/src/test/java/com/stcloud/common/config/MyMetaObjectHandlerTenantTest.java",
+      "sha256": "F9A9C3D281CBFD9327EF87BD9681A6402C5E5E0856F98C87510A393BA3AE5B18"
+    },
+    {
+      "path": "st-common/src/test/java/com/stcloud/common/ratelimit/UserTransferLimiterTest.java",
+      "sha256": "5C96AA1AEA919305A48D51E35EC6B28CDB76D2FE531E7316C1DC58D114D8E571"
+    },
+    {
+      "path": "st-common/src/test/java/com/stcloud/common/sysconfig/SysConfigServiceTest.java",
+      "sha256": "04722782BE4A6D2ABDD96F1831EE5C64A453F7448DAD3D274AB9BEAD7F9259AA"
+    },
+    {
+      "path": "st-common/src/test/java/com/stcloud/common/utils/JwtUtilsTest.java",
+      "sha256": "AA1AB10570F9035C3AC7A78A69289D7E163C96D41157D239F6E986C5E48BADA7"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/config/ArchiveSafetyProperties.java",
+      "sha256": "5BDEEF1DBDB934B661896A7B46F849A7C7AF5114D762497E2E4FF7451A5358A1"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/config/StorageInitializer.java",
+      "sha256": "0338479BC40D415C19DB377D2A207E54A7DA959C9B992231D8C41D1CEACFD6A8"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/config/UploadProperties.java",
+      "sha256": "9EBADEDCD0C9C77046543C37C557815022CD22D720BD729A15B4B71A3C9FA6EF"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/config/UploadRelayConfig.java",
+      "sha256": "7F2F6D599F8D8C6BD06ECC864F912F89A0135875CA1CD7B40C500E38EC3C1CAF"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/controller/ArchiveController.java",
+      "sha256": "DEAE642370127D23A6C941A33BC9E2B1FA57AAE8FFD995A39CF9403F7B6D5942"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/controller/FavoriteController.java",
+      "sha256": "DFE48B9279F2B1EB02F5E633616E26888F1BAEA53A99F94660E6E7A7575A0D18"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/controller/FileController.java",
+      "sha256": "6F30B9C49BA0BFDB2F950D0F64BBFE9DB2C9855F1B9868545613F0CB50FD9DCB"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/controller/NewFileController.java",
+      "sha256": "FFF70C7816D31C857B771A54D272627D6829999B1452D63912D6CA1D006703DE"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/controller/RecycleBinController.java",
+      "sha256": "51BE4073435B4738281A0999245A446AF48608EA775FBD177B2CAFAE913800E9"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/controller/TransferController.java",
+      "sha256": "5A05705D59F113BB15B068F8691B651CCE99941300887FA40D6C74A0CE2A3980"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/controller/VersionController.java",
+      "sha256": "CE0A0515A20C1BA0738A1435E799829D932B28EC8782C4C1D39B3D5718ECD572"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/convert/FileConvertService.java",
+      "sha256": "FEC177ACF49BCCF3AA49FA79A948E465424000A5996EF6731C410CFEE2EE099D"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/convert/FileConvertServiceImpl.java",
+      "sha256": "D98F8EFE479B74F6A7A33387FAD5CCF636496C058C67626F98CE67FB5B493562"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/dto/BatchIdsRequest.java",
+      "sha256": "3F82791A0BC1C64A7B80E48A29DAA2B702D155B2CA2ECECFB85F68767C5D2A0D"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/dto/ChunkUrlResponse.java",
+      "sha256": "B48F6A9B9932354168A50222EC9CDE97B18D72E46B8B0F583AA412E25516C607"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/dto/ConvertFileRequest.java",
+      "sha256": "7F90B3540DDB18569F13AC5EEFD21AD9C869A91B56DAAA5BEC984AF11A0E02F7"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/dto/CreateFolderRequest.java",
+      "sha256": "D34F0BE361D7A8D19EF1D653B03B2C3779D62CA25E6D1F0BB5F5151427225867"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/dto/FileNodeVO.java",
+      "sha256": "207306DF973F73C510C81D6B586E24A0CADA67E6BDC50E517DEF204E598E808F"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/dto/FileTreeNodeVO.java",
+      "sha256": "D2B9C24596809AD0AF4EFD4336D131514BED51FC3DC171C29028045E8E2840FE"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/dto/FileVersionVO.java",
+      "sha256": "0AD0B851D5688377CE1240ECBA35F0F7CB163C5EE37E512938D0789050274D66"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/dto/FolderSizeVO.java",
+      "sha256": "2CAEC244FACFF21F276C4B36993FDA8792B16345C0DD47FB2B3435CB735A07FC"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/dto/MoveRequest.java",
+      "sha256": "9221B5DEA957EF4738AE52B67E76BC92551D50A465BD7B53E7C25300CAC1674D"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/dto/NewFileRequest.java",
+      "sha256": "0534A5205618CE192F45E9FB0A7950AF7308C697E9868C159732D97FD33EEBCB"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/dto/RecycleItemVO.java",
+      "sha256": "0EB5E8F9B4CDAE67B7C942D7D43CDB9E96A59AA68EB3329DEC04392B8B447A4E"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/dto/RelayChunkResponse.java",
+      "sha256": "4BBAFBC51849F7BDD093ED734028095E709EFBCA0A008C3D1F2F1C1CF5AEC29D"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/dto/RenameRequest.java",
+      "sha256": "0758474A55BBD99BCB5468011ABC93980662885365CA2FAE66EFEB341ACAFBED"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/dto/StorageInfoVO.java",
+      "sha256": "C92B55E59075015A6FCCD4387C72EFBF24C400C6EA786588D82417D5FB637FB1"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/dto/TextContentRequest.java",
+      "sha256": "3D7DC521FA4DADDDC0D99BEDE00885586AF573ADE8D1D965E6AE3B68A9B47225"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/dto/UploadCheckRequest.java",
+      "sha256": "1B2E80C974ECA99C69F615267480D04DD2E53819D58EBDEB7B35B2F5B5846A28"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/dto/UploadCheckResponse.java",
+      "sha256": "FB59EFA2C786CA836AEF4A8FA3A95ADB1DC83FECCC204D5F31F45350797FE5BF"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/dto/UploadInitRequest.java",
+      "sha256": "FE9E47C43430A4BEA0992BA32C80888463325023EA93923284A7B0B1EDA55704"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/dto/UploadInitResponse.java",
+      "sha256": "1841311A6B1E418BF3C9ACE3DD8E75EFAA30936D4A291AC08495EC33EF0CED14"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/dto/UploadMergeRequest.java",
+      "sha256": "80CD3D882E0C1D25602DEB2ADEC1D2963FBDB20E7D88ED24459AB78040063B70"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/dto/UploadStatusResponse.java",
+      "sha256": "9F491FC51FB704BF320E44ABEF0C450451097442AE48E913D6961A97D036A9FC"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/editor/dto/EditorConfigResponse.java",
+      "sha256": "EFC5C1C93B2562C64655647AC944CFD6F512755B093DC256FB19698F5E5D6555"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/editor/dto/OnlyOfficeCallbackRequest.java",
+      "sha256": "1C5064BA1F542ADD934BA3CAF992B3C47E52C73C587F2B93D4E76F932DF66293"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/editor/EditorCallbackRejectedException.java",
+      "sha256": "39F54ADAD72508968B6480BBD1C34E2DBF7B9F8A73D533CCE3D7F865D603A118"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/editor/EditorCallbackService.java",
+      "sha256": "8EAB18C2D2EF0BA4C31C6ED9DC05E6EF59038313862856007110F9753D8CE9C6"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/editor/EditorCallbackServiceImpl.java",
+      "sha256": "4C7ABAD8DA1FB9977553CBE194684065E4657C193FA737B66EA8D56393BCB9FF"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/editor/EditorConfigService.java",
+      "sha256": "97BF36C57ED41672FDCA9900BBCC8A58FC7C46DC1C54B346484B7BBC374817FB"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/editor/EditorConfigServiceImpl.java",
+      "sha256": "7DC53738F4164881D39944EA6F0048FD94D040688CDF3D709F375A654D115B75"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/editor/EditorController.java",
+      "sha256": "FF0E046C9D47F205D5E43D6EBB89BEC833D16EDEF7B4B52178FF00E0EF599959"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/editor/EditorLockService.java",
+      "sha256": "F67889B60E25B2E77B54D6DB957C6ECE7C688657C54C8CB285F68438F7A3DE93"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/editor/EditorPermissionService.java",
+      "sha256": "0E160D436460E03869B9E0B1BD4237B64A28DD9FF55F80D57E0627CA66383F36"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/editor/EditorPermissionServiceImpl.java",
+      "sha256": "68E0841316A87A8FFA8687FE544C336A62C22AA08EAE40A309261E0BBA25CF4A"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/editor/EditorProperties.java",
+      "sha256": "802277BE320D96FEE740F19E084AFFE36F98E624F98041B48BA20FB416689357"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/entity/EventLog.java",
+      "sha256": "7C98F565BF53B636BFE0C9440104A0C947366680DC41EEFFE8F4EA7A689CD345"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/entity/FileChunk.java",
+      "sha256": "0B7BD1722E70A392C387E429093BE293FC51AE73A1AE02C10A47539F87219A34"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/entity/FileFavorite.java",
+      "sha256": "26837B5C359CEE7C1BEFBAA84CE214C485CEA274858A3BCC8FEF9EA314345DB1"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/entity/FileNode.java",
+      "sha256": "9E0F14824AC0C629E64B01FDE26E9CDF7BE27002EAE5A6B28AB952D9D242E825"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/entity/FileObject.java",
+      "sha256": "563D3775209001CA19BCA098AC0A09C67407CEE8DF4B7BB4BCD3FCA43BB68E0C"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/entity/FileVersion.java",
+      "sha256": "889890BEC1D3E9D8399E8A2F4E84B141637C3A2A6FAEE08CFAE880AED056614A"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/entity/OrphanObjectCandidate.java",
+      "sha256": "87048557DE9700B354E9939CBBB20DC2AD24DAC08AA339D8AA4EAAF20990A712"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/entity/UploadSession.java",
+      "sha256": "59A10C9BB039E022059F229FD6F95BACAA9CF834E56EBA1463126BE33408AF4F"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/enums/EventOutboxStatus.java",
+      "sha256": "E424F4BF76F78B66C6BC7DCFE7A4A31F85FE07C944CEC4D70E5A23A3F437C32D"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/enums/FileChunkStatus.java",
+      "sha256": "BB2BA9B373C10746B8C319628953C1A392FF96CD7F0241A27D23F4C5EF8D6262"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/enums/FileObjectStatus.java",
+      "sha256": "846C0871B5068D198F1CBDFD4380184297B430B1EE29073D5A14EA863102950C"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/enums/UploadStatus.java",
+      "sha256": "EF1EF3237ABE756E8EA83C83C466E328388E895A83A93A2F71B18473FC5305A7"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/event/EventMessage.java",
+      "sha256": "8060643C5E138D923D0E5F520A821FEDD2B4216E5A53042C4988BE8C74871097"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/event/FileIndexEvent.java",
+      "sha256": "12D695293ED7F2B95DD7C3413920F94DA40A98A4DC54D7BE569A8E408B9B0679"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/event/FileWatchCaptureEvent.java",
+      "sha256": "96085A9E75A40D031B8FD644953ADF35F46D4B5674786C052A3EFE140689C71C"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/event/OutboxRelayEvent.java",
+      "sha256": "4CE303163EA08116C41709D989B1686468762ABF48C2402FC9B72EE570D34CBF"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/event/PhysicalDeleteEvent.java",
+      "sha256": "1998EFBA0DBD525C2FE4E8F96FFAF0F91194F6F68AD9647EE319CB0725C9293D"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/event/PhysicalDeleteEventListener.java",
+      "sha256": "2AC1EC372951AE9D894B30B179957C2E542F678B647136A454DED4843A0524F3"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/event/PhysicalDeleteMessageConsumer.java",
+      "sha256": "F24B15291A96E68E127F8A5EFC0E7FF41E6BBBEFA6E167FD707337407932B191"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/event/ReliableEventPublisher.java",
+      "sha256": "9763F3CFD75B3A831D14B45EB88649DC205093FE889D34E7479268A1D78D0DBE"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/event/SyncChangeEvent.java",
+      "sha256": "AF7A456B31D63D54538858F0A868EC2B5512428F6FDFF588BDB09DDA8AB9D615"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/mapper/CloudCapacityMapper.java",
+      "sha256": "F061F7237A7E1513B1F427A1CD04FCCCD717C34EBB96257993AE028E993E9C25"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/mapper/EventLogMapper.java",
+      "sha256": "306E47C0FDBB75601FCF00BC588600A62336EAF7E8654772E6C4CA81801B5FAB"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/mapper/FileChunkMapper.java",
+      "sha256": "2832DDA104CF18BECF26373FAB0DCD2C2DD5DC1148EB556970E80D9ACACFBD8E"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/mapper/FileFavoriteMapper.java",
+      "sha256": "AFA762089C78AE38F19D47CBE578CA462CCB14B46E80675C082FF804CA08659E"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/mapper/FileNodeMapper.java",
+      "sha256": "4D5331C0A7C6FF518865B9A14996299E1A01A0D586532F7566CD52EDF4215CC0"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/mapper/FileObjectMapper.java",
+      "sha256": "960D26E69F24845C4E5ED38154970D571F3C4132BD10FC56541041F52338AD59"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/mapper/FileVersionMapper.java",
+      "sha256": "5DA37035A1AE752222B114D361D6F064DD744552D212E75FC2DE9E44CC599694"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/mapper/OrphanObjectCandidateMapper.java",
+      "sha256": "81F3050D6D7F8670296E43B9C2EE23C8F542CE1EAF256E325ABE8BB0E40147F5"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/mapper/TeamStorageMapper.java",
+      "sha256": "F5570D234D8A1219B3D4B2E021266716F0B115BCCAF69F41352D9FBF6EECFC82"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/mapper/TenantScanMapper.java",
+      "sha256": "BCA0D29C66930128354E7EF4D1BDA9BC8AB1EDFDB4CD4510108890EA888BAE34"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/mapper/UploadSessionMapper.java",
+      "sha256": "6B4D33A3662D2E3E8EFAF3CE2305829BB96DF58B77221A94181CCA9B5FDD1E9F"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/mapper/UserQuotaMapper.java",
+      "sha256": "027E5F03D55428A9D9BD513B9E7A8954D6739CFE78D7560FFBB4CC3A0AD103FC"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/outbox/EventLogCleanupTask.java",
+      "sha256": "C998EB50BC2D38D74035554250543367E59376FB0EE40F5C59FAD2991E76E163"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/outbox/EventRelay.java",
+      "sha256": "1706A36585271004CFB918D2D32FF2AF41E3FB4179B0293EC9DE68E9620361D2"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/outbox/EventRetryTask.java",
+      "sha256": "EC472274C15CCDE11D0ECB41A09B908EA30563A6683ED678476B4B89105B5A4C"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/ArchiveProgressReporter.java",
+      "sha256": "51E79EA63BDE1DA144F7FFDDA06549811DE821F84122A8A2EA12C2EA78C77D3A"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/ArchiveService.java",
+      "sha256": "92E24ED9609A73C6D0B1F0D6706C45F7F3405F5625483F4AC3D2999501DC17A0"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/CloudStorageService.java",
+      "sha256": "83EE82BBD8B92DB58BAF5BACA7495392F61FA35C22AC1EB8B0445F24F97C78F3"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/DownloadService.java",
+      "sha256": "DF46DCE337816FF0F4547F69E1A431BDB86B7682AE75274E175BA5591A3E086C"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/FavoriteService.java",
+      "sha256": "2936E20FDE10CD4B4205055FE4590B5E0E4FF351142845325E02D6F8E8DDD9B1"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/FileObjectService.java",
+      "sha256": "BB159FD47B68B41EC4D03B6087B3C17EE803BAA9C1509E603CAFFDC365CF8242"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/FileService.java",
+      "sha256": "CBB06C93A867455442E9644F4B88ABF4BB553BDD3C8CD672D5B5007C516B34F5"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/impl/ArchiveServiceImpl.java",
+      "sha256": "A145F05DA5F527253184BFE5419B28A10D74D05043E1B4001605835873173055"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/impl/CloudStorageServiceImpl.java",
+      "sha256": "26A69789D046CCE257A4A88E334D0158C7959B3BA73DE8AF765DC51648009EEB"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/impl/DownloadServiceImpl.java",
+      "sha256": "8BF1370D0A1B61CD6A22161E5C2F63BE422562ED58122F85C633A5FED3CF43EF"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/impl/FavoriteServiceImpl.java",
+      "sha256": "193200599D1A06B3B5908AA5CD978AAFB4BA2D82508B19B8D260D08894FB8B16"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/impl/FileObjectServiceImpl.java",
+      "sha256": "45AAD69874E25C72B5E9C7F512FF77029533FFEC85C632DC4183B5417FB926AB"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/impl/FileServiceImpl.java",
+      "sha256": "CA90682949EDA00692DFED21C22A76831731165AA7A75707E4ED3C3773255DFE"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/impl/NewFileServiceImpl.java",
+      "sha256": "9D4F26678DBB11B59FF700FD20BBC67CA470227FE72DED128C52147A068664A0"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/impl/OrphanObjectCleanupService.java",
+      "sha256": "EF0B0BB361ABA3266E1A04CFBC18C6A447B2F72008673F19514266587BB5D4E6"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/impl/RecycleBinServiceImpl.java",
+      "sha256": "708887D6191C71A4DFF098F4BF0BDA805175D44AA6C727BAAB2DBF5EE1FE1A66"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/impl/StorageServiceImpl.java",
+      "sha256": "8D116B1D99E5053CBBA3B897637527F1A8A2D89D6EEAC1D99B8DD801B53097F0"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/impl/upload/ObjectUploadCandidateService.java",
+      "sha256": "B51DB61525B7D3A957776D703E11F4CE944AC838B320B78EE65EC62929926859"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/impl/upload/RelayBufferManager.java",
+      "sha256": "7727CA6C9D2073F9AF7F39D1625B84B89A4770F0AA553CCC164D57A15A876359"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/impl/upload/UploadChunkManager.java",
+      "sha256": "A588B25F6F745080FED371652309228D77589A7A30E09B7053CC3310B67C8B27"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/impl/upload/UploadCommitManager.java",
+      "sha256": "5BE7C02E673103F1AADE80AD2BE8F294264644BB108C5CB8CB0928F89C76E9DB"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/impl/upload/UploadEventPublisher.java",
+      "sha256": "3E10B0402485C18E0B162FC4812DA5B894FE55F75C17371646225FEB72E13251"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/impl/upload/UploadInitCommitManager.java",
+      "sha256": "CD2E9C1D11BBB67FAEC31E391317EF19CF73D342D74A0F4E156D6AC15C163DB1"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/impl/upload/UploadManager.java",
+      "sha256": "8D79510C6E50784C7BB75A463E896B14F6632DB5786E069C72BE32883913DB27"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/impl/upload/UploadStorageManager.java",
+      "sha256": "F57447BC4A351A8E9402651B02400FBFD6D4D1A144B39389E97C23772CF611F7"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/impl/UploadServiceImpl.java",
+      "sha256": "3543B4216B49F71FDD35E9EC27DB3EE04E7EAB8BE0694B08E1F46B31DB0A07C6"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/impl/VersionServiceImpl.java",
+      "sha256": "31F3B35D9BB3460BD75AC5FAA44534A2E2183DEAA81EFED2EBEDB3D0D43B0529"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/NewFileService.java",
+      "sha256": "DA1AE9C114AB6D340C430A1326EE97DE6BF4E8B521AECC40F31C168599162EB8"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/RecycleBinService.java",
+      "sha256": "A31F6B9E2006FA355AB80924F2B2048539408E2BFEC7566659A1F9A59575CA0B"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/StorageService.java",
+      "sha256": "88F8234DE30550095FB04B829A327F034A793C764717F83FE777E6225E26E31C"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/ThumbnailRenderer.java",
+      "sha256": "78C4DF81AD80A3A6B1E9516F66522F94095D2631BBEB4DCACB9BB82FC070E80B"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/UploadService.java",
+      "sha256": "2D6ADB10096A8C45D37459FAB4FA8F67E6AAB15E9C72E37946A119AA56490BB6"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/VersionService.java",
+      "sha256": "05CBABD7C9399E43A2EF414BBDFA6B843AD5C2F238A9E165ECEBF3ADB5CD23FD"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/support/SizeFormatter.java",
+      "sha256": "2A1A9F62BBF8CA92E548EB67913BC7AAE58A5FD525E76E886DEE23B36FFCDB3B"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/task/RecycleBinPurgeTask.java",
+      "sha256": "4D9272799152D0A9391A268F6FDFA331EAAEC3F43CAC723D9359B242BE4A07DD"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/task/TenantTaskRunner.java",
+      "sha256": "B3D62FD768E7BE375DFC75F696B8F7BAEED54C631D273185090EF7D71710F7DB"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/text/TextFileService.java",
+      "sha256": "76FDFEACFDED793C2331E3E0631A6D46536006A864CA48F76D61E5AC9F4248BB"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/text/TextFileServiceImpl.java",
+      "sha256": "7F537712DFDB7CBA0497D7EDABDD7936EB994160C69057747F24671DBFA72AE7"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/util/FileNameSanitizer.java",
+      "sha256": "D6505CE48CDF796C8445389414CD309D6E71AFF445D4CBB81D4DDDE03ED91E9B"
+    },
+    {
+      "path": "st-core/src/main/resources/templates/blank-oo-zh.pptx",
+      "sha256": "B6F1BE57B6EB13C559695BB005F0A3A8AEF59F7315B24BEA56C82286F4E80AA2"
+    },
+    {
+      "path": "st-core/src/main/resources/templates/blank.docx",
+      "sha256": "FE853A7BE558EA6DBD2CA941632626533318E9D78E6D2CF58344D1AB7B4D61AF"
+    },
+    {
+      "path": "st-core/src/main/resources/templates/blank.pptx",
+      "sha256": "B6F1BE57B6EB13C559695BB005F0A3A8AEF59F7315B24BEA56C82286F4E80AA2"
+    },
+    {
+      "path": "st-core/src/main/resources/templates/blank.xlsx",
+      "sha256": "7AE64B84D72572FCB864020E1C9C848097026DACCE5EBCE9634D9F0D42B034F7"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/AbstractIntegrationTest.java",
+      "sha256": "80E3A9D101AE430FBF8FE32134D57C2304B393F4F0E838618E7CCD3E135B1FBC"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/CoreTestApplication.java",
+      "sha256": "A826C17088329E886CB47BD1BD849BAEAA4854A796C14A7A038DEC5D44CEEF39"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/editor/EditorCallbackIntegrationTest.java",
+      "sha256": "BCAE4DD5E358F836633C2CA823E95B02C4580707EDB2811BF88F2ECF386E2CFB"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/editor/EditorCallbackTransactionBoundaryTest.java",
+      "sha256": "AD739FE94C3C90B39CC2DDBF9ABBC353DFFE1914EF69FB55A03919B24B509B3B"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/editor/EditorConfigServiceImplTest.java",
+      "sha256": "4414699CA109140C40EE6645C01FDA0135BEE33E4BECDEC229D5A15F6A0C8209"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/editor/EditorLockServiceTest.java",
+      "sha256": "E5EEE6F79EBC5A4E2FC2C5F66AA36E88CE7897C06143DE51BDEAF65A78C966E4"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/editor/EditorPermissionIntegrationTest.java",
+      "sha256": "535CD34DA6F99B22E49F8D5976DF74F5D62F5457BDCBD86E953B443DC7409352"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/editor/EditorVersionIntegrationTest.java",
+      "sha256": "0C7FFFC4D1074E1A1DEBEFB67D27F9D8723230645463BE128F38CCA466E086D5"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/event/PhysicalDeleteEventListenerTest.java",
+      "sha256": "4CB17C99057625E4201566CC4F47A24A9D8892CA33F4CCBA9BE67141B27A7368"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/event/PhysicalDeleteMessageConsumerTest.java",
+      "sha256": "93720C65FE21BBA9A68231DC748CFF4A2AA892DB7C29B0FC8BC79FAA0692727B"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/schema/LargeIdSchemaIntegrationTest.java",
+      "sha256": "3283DA0BD203A0356CACC4CE9C2126B12A408209F852983FEEFAECC00E6E6AC8"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/schema/SchemaConsistencyTest.java",
+      "sha256": "BE73A5CA9F1294B7E5474B9B42DEA7C420A785AE8A0F61EC7486CE504E5AB58B"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/service/impl/AccessibleCacheTest.java",
+      "sha256": "A2B778B35F31664B3775101AAF013C04EE7EA3C86C2F5BDA4A667FD046C7E954"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/service/impl/ArchiveExtractTransactionBoundaryTest.java",
+      "sha256": "5F620BA102435CCF40A0B0A257861249EED02C69A729E1D805EE102259DBFB1F"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/service/impl/ArchiveServiceIntegrationTest.java",
+      "sha256": "BBBFDA231728C616C02744EA5D3C342B2CC2BD20986616212F699AB0AFAD0BF3"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/service/impl/CanonicalObjectCleanupRaceIntegrationTest.java",
+      "sha256": "107F5C823923E413830B53CF99EE9EE09CCE7043F29A78C315A4B4C8CB8514E6"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/service/impl/ConcurrentUploadIntegrationTest.java",
+      "sha256": "1149511485B7F1644539F1749AD2B1AB013B44B1EA7ADCEDCD556F546DE5EC54"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/service/impl/EventOutboxIntegrationTest.java",
+      "sha256": "FE71B2518D82D65629E298F323F181D6638B8BC13B621D3C1B6E04AF0FD678B5"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/service/impl/FavoriteServiceIntegrationTest.java",
+      "sha256": "B6740717A01BEC8E4338C837C7669F38B4FB04098D7F701F809D955EA054C688"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/service/impl/FileObjectIntegrationTest.java",
+      "sha256": "56BD1E389BC1AE4D11DCD80F2C861E1FC3C7813DED61A9883179E917F96357B2"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/service/impl/FileServiceFlowIntegrationTest.java",
+      "sha256": "2B2EB76622A39F49ED8C0A2D79697F5A460398CEFDC80D3D942FED4AB1D06EAA"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/service/impl/FileServicePermissionIntegrationTest.java",
+      "sha256": "5B1023FFC644AADE2E17F93C77C79E682EFBA88A261308B10A66061DA719F6AD"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/service/impl/NewFileServiceIntegrationTest.java",
+      "sha256": "4C3FCB6FA859FB6038BEDEF489A30C6EB4F601D0253A7E9198249DE7C7BC2105"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/service/impl/ObjectCleanupRaceIntegrationTest.java",
+      "sha256": "CAC3E2D098E7FF7E5A2D8D9C2393A360A7831E03BC33C6806B0E39EF14CA6D0B"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/service/impl/ObjectUploadCandidateIntegrationTest.java",
+      "sha256": "B01D413315FD1B7EAB7061867570038ACD33CCAF7AA1FBA961F3CE473D35E7F5"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/service/impl/OrphanObjectCleanupServiceTest.java",
+      "sha256": "A0566FBA87B07AD90E95C375D43E5646785982126DB2AB637DEB03E4ACE44C6C"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/service/impl/QuotaConcurrencyIntegrationTest.java",
+      "sha256": "C7D0D71FEE74B33AFE4E19E0FE15C19D6F17C2DC466531A56D696F4BCA1DFBD0"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/service/impl/RecycleBinPhysicalDeleteIntegrationTest.java",
+      "sha256": "8245B81FC65F78B7A5E833BB8115D913CF6E5C7FF79EEA276C8D01783303C330"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/service/impl/RelayUploadIntegrationTest.java",
+      "sha256": "7301BEBF61EF38C37C304DD520DA59129FC3A65AC30A378D3937FB9800DB2E93"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/service/impl/TeamRecycleBinIntegrationTest.java",
+      "sha256": "7099B65E174E531E342D6D492531293CDBF5D805C45FD0E24DCF60C8F0431A15"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/service/impl/TeamRecycleBinMysqlIntegrationTest.java",
+      "sha256": "1B5E1105B7FF6141A1063E58331BE090D2158DF3B4C1BC6072BAEAC9121F2292"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/service/impl/TeamRecycleMysqlConcurrencyIntegrationTest.java",
+      "sha256": "240AF5CA49F8A25AB64D50471A91C80040AA63D03CD008D11A88E8F29E89FC77"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/service/impl/TenantRecycleScanIntegrationTest.java",
+      "sha256": "7DF74A403AEF78778EB77750B8392FF3F42D2598DD07EEB0E67027D96FB03B91"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/service/impl/UploadSessionConcurrencyIntegrationTest.java",
+      "sha256": "5F20C4F921FE2CC022F8E614920262751AB05046603531B5EF6BECF62AC32D8E"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/service/impl/UploadStateMachineIntegrationTest.java",
+      "sha256": "BD52EE1EEF22B597977D8B95556EA5F2E1CFAD2690B8BD30EF3ECB0874716025"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/service/impl/UploadTransactionBoundaryTest.java",
+      "sha256": "7737C54AF8AAA61AED3AE5BA3299A597734C35BA21166EA925243F4939C07DB4"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/service/ThumbnailRendererTest.java",
+      "sha256": "9EB11E069D0E56F84243B1304AF885CD315C7FE305D0000EF30F2761E8237D8C"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/support/SizeFormatterTest.java",
+      "sha256": "65BBDC6F671805840ECD1365C4F840B89E7C8E1154A09B4736987418555C0670"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/task/RecycleBinPurgeTenantTest.java",
+      "sha256": "1040DF8C6E51D4FE40FDD14B3F11C24433973F294FEF18A5FF5ABF596F9E7A7C"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/task/TenantTaskRunnerTest.java",
+      "sha256": "9E4DB1AA0AEA9928461A886DEBB8C831B8D084473F6479D82B677B7D1F3A4CDD"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/text/TextFileOverwriteTransactionBoundaryTest.java",
+      "sha256": "234626248F9F55D9B4408CE835FD12C4324CC402CC9E409FB1D6F52759127E99"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/util/FileNameSanitizerTest.java",
+      "sha256": "4D7631E4BAA355D757789B7CC67E8E00D621B2AD352BAFC82142F003630C2E1A"
+    },
+    {
+      "path": "st-core/src/test/resources/application-test.yml",
+      "sha256": "CEE81B5ED8D10D59371ED86BB504C95B1E8ECAE7927D5FCCE3FC12036E31314C"
+    },
+    {
+      "path": "st-core/src/test/resources/schema.sql",
+      "sha256": "19B6080C15818391DAAFFCE695985556F507E6283D1B6F49C9D707E2E9A48B81"
+    },
+    {
+      "path": "st-preview/src/main/java/com/stcloud/preview/controller/PreviewController.java",
+      "sha256": "5E9A12B2474A95D4BB701CD2A58F6E176DEB993B696E35D8442D7B19AD59976A"
+    },
+    {
+      "path": "st-preview/src/main/java/com/stcloud/preview/dto/PreviewResultVO.java",
+      "sha256": "1FD8490FC99662109AE2D51911C4F116F2EC694E13EE68B67A351E4661DEB9A2"
+    },
+    {
+      "path": "st-preview/src/main/java/com/stcloud/preview/service/impl/PreviewServiceImpl.java",
+      "sha256": "7D8B2F1048C4EE5D02F9504981AA6B082FF4B99CEAF5CA09E3753BC359B647B1"
+    },
+    {
+      "path": "st-preview/src/main/java/com/stcloud/preview/service/PreviewService.java",
+      "sha256": "E6C86D7624D68FD72ECDABBAFB35C559A2810581DD126318A68C11C11073C8D4"
+    },
+    {
+      "path": "st-preview/src/test/java/com/stcloud/preview/AbstractPreviewIntegrationTest.java",
+      "sha256": "8099830F0D3800C7CCC6D313BD3B4FC043E996DDC00F724617B231D25D35A4F9"
+    },
+    {
+      "path": "st-preview/src/test/java/com/stcloud/preview/PreviewTestApplication.java",
+      "sha256": "C81799A8AD680331979F0546B70F78871392B52C1E021DADC7913F28A9C69BD2"
+    },
+    {
+      "path": "st-preview/src/test/java/com/stcloud/preview/service/PreviewServiceIntegrationTest.java",
+      "sha256": "00889437814F228FC644376C0815B9E2BE80AFBD4F778AE5283F1DA10E8BE276"
+    },
+    {
+      "path": "st-preview/src/test/java/com/stcloud/preview/service/PreviewVersionIntegrationTest.java",
+      "sha256": "21500831301E03839A63199C4394195ADA8DB00125626113FEAA5DE5F9DB062D"
+    },
+    {
+      "path": "st-preview/src/test/resources/application-test.yml",
+      "sha256": "922FC747C1E1490F838A287237EA5CE04EB0F7AB5335688D166223AFEAD63E48"
+    },
+    {
+      "path": "st-preview/src/test/resources/schema.sql",
+      "sha256": "E122BCF35F106EF9C6CC6CCA24420BEE136ED1B9B0438A753E8AC6F841243359"
+    },
+    {
+      "path": "st-search/src/main/java/com/stcloud/search/config/ElasticsearchConfig.java",
+      "sha256": "0B67ECBBDFC0C3C40B83663479B3D5702E120F0EE0472341B21DBF52C630FEA6"
+    },
+    {
+      "path": "st-search/src/main/java/com/stcloud/search/controller/SearchController.java",
+      "sha256": "FEF387DF3AB313A1B2C0DDF88AA6AF3E782A918C30619DC3A2AADD4695D17559"
+    },
+    {
+      "path": "st-search/src/main/java/com/stcloud/search/dto/SearchResultPage.java",
+      "sha256": "8FA4B052EADB10060E8E3742949D6F63B2DDDFEF28C3478F5337CA595C20130C"
+    },
+    {
+      "path": "st-search/src/main/java/com/stcloud/search/dto/SearchResultVO.java",
+      "sha256": "F7FC8AA1E3970A439E3A75268D7D66F03BDFCDBB6E7FBF384583472E45749A42"
+    },
+    {
+      "path": "st-search/src/main/java/com/stcloud/search/dto/TeamSearchResultPage.java",
+      "sha256": "12BF30FFFBF0003545DB7B4D0542FBBF272AFFD60FE688EFE2F37B82FBC3C34E"
+    },
+    {
+      "path": "st-search/src/main/java/com/stcloud/search/init/SearchIndexInitializer.java",
+      "sha256": "F69216272DF100B12DBACF7A33F968E0121BD4E87D57E016BB3F7D63AAADBF28"
+    },
+    {
+      "path": "st-search/src/main/java/com/stcloud/search/listener/FileIndexEventListener.java",
+      "sha256": "6594853B663C75E6124DFE373347BBCB2BB3DA7E0DDDAEAAE568C46444F24F04"
+    },
+    {
+      "path": "st-search/src/main/java/com/stcloud/search/listener/FileIndexMessageConsumer.java",
+      "sha256": "F6B8D82E942A9F3EEB2BB6B072CDCCC844898680069A1135346215C656E737FA"
+    },
+    {
+      "path": "st-search/src/main/java/com/stcloud/search/service/impl/SearchServiceImpl.java",
+      "sha256": "52995A84DB750F9B7BD70D519A85F96E17DBC67556A6A2CD5F35BAD27F951FF9"
+    },
+    {
+      "path": "st-search/src/main/java/com/stcloud/search/service/impl/TeamSearchServiceImpl.java",
+      "sha256": "068207E7A8AA7C82080F9C59C550B8A485844C2D5E5F66D53E03A9654F3DB168"
+    },
+    {
+      "path": "st-search/src/main/java/com/stcloud/search/service/SearchService.java",
+      "sha256": "E954502A930E29FEB271EE805605477612F6D369BDDD9F938238F85DF0D09096"
+    },
+    {
+      "path": "st-search/src/main/java/com/stcloud/search/service/TeamSearchService.java",
+      "sha256": "BFD30A75CE919CE79085E7B55C5372A1AB3DBDF321BC68132CB33CC24068442B"
+    },
+    {
+      "path": "st-search/src/main/resources/application.yml",
+      "sha256": "43D18F93B94EA8373E159E9EDC628954145C2BEDF456034F0045A799C2E12822"
+    },
+    {
+      "path": "st-search/src/test/java/com/stcloud/search/listener/FileIndexEventListenerTest.java",
+      "sha256": "03ABD938960B7B301591B908E356D5D362E4E471B7492C9C14B0D9DA4DAE1C72"
+    },
+    {
+      "path": "st-search/src/test/java/com/stcloud/search/listener/FileIndexMessageConsumerTest.java",
+      "sha256": "604415C17B6D2D7AEDB11FFC0C78DA493D2843528A9C72E8EB10CC3D5F545276"
+    },
+    {
+      "path": "st-search/src/test/java/com/stcloud/search/service/impl/NgramSearchIntegrationTest.java",
+      "sha256": "5370F35C3A63A4EA1406A14B2E88D41225038CF9049F48042FDC387190165B7A"
+    },
+    {
+      "path": "st-search/src/test/java/com/stcloud/search/service/impl/SearchInstanceWorker.java",
+      "sha256": "7505BC669EAC642BF48AA301AA7041D870A29A15852475FBA6614D92B9DB74A3"
+    },
+    {
+      "path": "st-search/src/test/java/com/stcloud/search/service/impl/SearchProcessIntegrationTest.java",
+      "sha256": "08E199FFC304048BA5FE1F1275C97D56FB2A923520FC168AB21A6890B4E9C034"
+    },
+    {
+      "path": "st-search/src/test/java/com/stcloud/search/service/impl/SearchServiceImplTest.java",
+      "sha256": "CC881209866A805D998498EC2963E70B6ACF294B0E387618FA467BACCE0CBA37"
+    },
+    {
+      "path": "st-search/src/test/java/com/stcloud/search/service/impl/TeamSearchElasticsearchIntegrationTest.java",
+      "sha256": "6F27590F0818290E426040DA90BC036369B7E65AE0A9FEFCE0ED8C4AD7F22688"
+    },
+    {
+      "path": "st-search/src/test/java/com/stcloud/search/service/impl/TeamSearchServiceTest.java",
+      "sha256": "661963245A6890468D526296C480A509CA56F8944F405F75688C07B529DD297E"
+    },
+    {
+      "path": "st-share/src/main/java/com/stcloud/share/controller/ShareController.java",
+      "sha256": "6338380DCD2D071E27CE1B41A6B56FC68147C43556A959D2BAB7A2A0F173D664"
+    },
+    {
+      "path": "st-share/src/main/java/com/stcloud/share/dto/CreateShareRequest.java",
+      "sha256": "2EC6597093FB3230F0FAEF140F200A91F1A994387A89A073662666015DB9A564"
+    },
+    {
+      "path": "st-share/src/main/java/com/stcloud/share/dto/SaveShareRequest.java",
+      "sha256": "5BDFDF14153D08396E26D22BBDD2CF6B198DF27ECA6BE348EB51A3035D315D3B"
+    },
+    {
+      "path": "st-share/src/main/java/com/stcloud/share/dto/SaveShareVO.java",
+      "sha256": "7F83C6C3E1C3767592595E5DEF8C3320DACF407050F00D122500211174632BF9"
+    },
+    {
+      "path": "st-share/src/main/java/com/stcloud/share/dto/ShareAccessRequest.java",
+      "sha256": "418353B7F51DCA7FD9D5D1C872B011DAC4C03016E8E85AD3692B45BBF88EA2B5"
+    },
+    {
+      "path": "st-share/src/main/java/com/stcloud/share/dto/ShareAccessVO.java",
+      "sha256": "EC49FB05E936EBA73B8AA8F4667211BE98553B23002529FE9D938CC3764F5D09"
+    },
+    {
+      "path": "st-share/src/main/java/com/stcloud/share/dto/ShareVO.java",
+      "sha256": "B92C92CFD99ED30DFB4F4E5C16C58B8E2B0EB518943FEA5D0CDC88B2FB9DD6C8"
+    },
+    {
+      "path": "st-share/src/main/java/com/stcloud/share/dto/UpdateShareRequest.java",
+      "sha256": "E2AABE6DFD8AEDB2A11B94B593CDA505B8E9A7E474C60DA9E15C6A34CEDB7A05"
+    },
+    {
+      "path": "st-share/src/main/java/com/stcloud/share/entity/FileShare.java",
+      "sha256": "178E29C1932F3D09F8E3E16A8AFF4BC257B19D5A012092E981847DAF5579EF8D"
+    },
+    {
+      "path": "st-share/src/main/java/com/stcloud/share/enums/ShareStatus.java",
+      "sha256": "F4A8838D9A6DB265E91526BF022981043CAEE33516B09A86EC693C2534E2BD28"
+    },
+    {
+      "path": "st-share/src/main/java/com/stcloud/share/mapper/FileShareMapper.java",
+      "sha256": "F7840658CC52B617498187612610DA03A23FF58CF732D756B09B6E60B8201C7D"
+    },
+    {
+      "path": "st-share/src/main/java/com/stcloud/share/service/impl/ShareServiceImpl.java",
+      "sha256": "5C34A1AF0ED88415A1D18BE32C43F554B8FD294EDA81E0BF920F0FC34F16A749"
+    },
+    {
+      "path": "st-share/src/main/java/com/stcloud/share/service/ShareBruteForceGuard.java",
+      "sha256": "2392194C34D5D7A695EBE8727097AED778B1F408DA9F63887A9BAE6431FB69CD"
+    },
+    {
+      "path": "st-share/src/main/java/com/stcloud/share/service/ShareCaptchaService.java",
+      "sha256": "C5BBE6E97A97C794C30048F18A6A4192ACB4F448BFA5D5A67C9C9BCC9EFFD25D"
+    },
+    {
+      "path": "st-share/src/main/java/com/stcloud/share/service/ShareService.java",
+      "sha256": "0DD19EAA10893FF30E7D08EF67F509BD9C94799D7B747DCB67ED8A5E0F5CE8EF"
+    },
+    {
+      "path": "st-share/src/test/java/com/stcloud/share/AbstractShareIntegrationTest.java",
+      "sha256": "5872A8772896666F92EA26F2479EACE66FD323D9F57F3DB1F5CB9AAC8D75134C"
+    },
+    {
+      "path": "st-share/src/test/java/com/stcloud/share/ShareBruteForceGuardTest.java",
+      "sha256": "A3276FE3851A403BCE86697116B243459D81B168E6E33B141F03135B6114394C"
+    },
+    {
+      "path": "st-share/src/test/java/com/stcloud/share/ShareCaptchaServiceTest.java",
+      "sha256": "C7795C9EA8FE1402795FCA59D834CB2CB9EAE4A7070D000434FF03B0C74D99BC"
+    },
+    {
+      "path": "st-share/src/test/java/com/stcloud/share/ShareInstanceWorker.java",
+      "sha256": "D73A6143FDDC5F54CE332C84DBA11D8839EFE7A621E2971F2FCF8547E651C637"
+    },
+    {
+      "path": "st-share/src/test/java/com/stcloud/share/ShareMysqlIntegrationTest.java",
+      "sha256": "08C37BC209EB4A0A09BC228FE42B29B3B63331D4FB31ADFF3E5CD57D07556F16"
+    },
+    {
+      "path": "st-share/src/test/java/com/stcloud/share/ShareServiceImplBruteForceIntegrationTest.java",
+      "sha256": "4B507A5D51B8393A1C3B35DDC02A6559CCE252F2B96B7E3534C90B0F70E46804"
+    },
+    {
+      "path": "st-share/src/test/java/com/stcloud/share/ShareServiceImplExpiryIntegrationTest.java",
+      "sha256": "3F7844FD31A4EA10E801086462E169DC9A29159D0B3F2D9CF852A6A9D85895EE"
+    },
+    {
+      "path": "st-share/src/test/java/com/stcloud/share/ShareServiceImplNoTransactionIntegrationTest.java",
+      "sha256": "C8646205C19601608A301211F8F675F0FB9DF8BBA1B4D418A05221291BD224C2"
+    },
+    {
+      "path": "st-share/src/test/java/com/stcloud/share/ShareServiceImplPermissionLimitIntegrationTest.java",
+      "sha256": "EAA179E24D884A9EF4FAEF779B175B1A8A3A68FCA922B118FD24077A26DB5BBE"
+    },
+    {
+      "path": "st-share/src/test/java/com/stcloud/share/ShareServiceImplSecurityIntegrationTest.java",
+      "sha256": "03D1D4D9E8A894BA5D464D5A00F2C577B2A3B12428D3D4A259928A6E7ECE1185"
+    },
+    {
+      "path": "st-share/src/test/java/com/stcloud/share/ShareServiceImplShareCodeUnitTest.java",
+      "sha256": "26F982C3B0CE4893E8E0022590ADF7E8EAD5AC5B9F74956E9DF3FE2C1B15AA65"
+    },
+    {
+      "path": "st-share/src/test/java/com/stcloud/share/ShareTestApplication.java",
+      "sha256": "A5FEEF8CE289C56A50EFED38CBDA76E9C3344D8B326F8DD2906441A04C175AB0"
+    },
+    {
+      "path": "st-share/src/test/java/com/stcloud/share/ThumbnailEntryIntegrationTest.java",
+      "sha256": "7E88E9390D970588F08C03ACB12E9742D69E0924E8E2E5BE0187EA84C10DB606"
+    },
+    {
+      "path": "st-share/src/test/resources/application-test.yml",
+      "sha256": "AD3DB5DA7AE593C12F378B32A608B02E7E29AAF18DF513A9F8E48F3449B8576B"
+    },
+    {
+      "path": "st-share/src/test/resources/mysql-share-fixture.sql",
+      "sha256": "6041E7173DA36F0963C33A83D5AB9636C2B06E7211E6426EE4C552DDB0D52760"
+    },
+    {
+      "path": "st-share/src/test/resources/schema.sql",
+      "sha256": "3B537F209004CC4E01AFF4FEF4CC7C345B1A83A55A72734FA182BA5842B87172"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/controller/SyncAdminController.java",
+      "sha256": "D775EBEE3BEABFCC26C3D6905F025BD5988B25387123DD60CB0886F7DA5A3DEB"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/controller/SyncBlockController.java",
+      "sha256": "39D5833331E223126E8E7D429B98F5FD0799CCBB8DFFBF48847266C13D7B9351"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/controller/SyncController.java",
+      "sha256": "789D91E5AAA47C517FFCB791ADA25ECF888986A441BEBA289A07E351E0FEBAEF"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/dto/AddExclusionRequest.java",
+      "sha256": "3E68C984795F6A3CB6F8267CCDCB8A3CEB1BEF00BDC7B829CE16ED8B85DFFB4B"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/dto/BlockCheckRequest.java",
+      "sha256": "84FCE5B7829B732A6A43FDDC22D2D5BC78931ED45CCB87D17E4112959C1E1173"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/dto/BlockCheckResponse.java",
+      "sha256": "0218BDE7C6F166D277267EC5A4B806606E6138FFD7C9290026056573944E0F9B"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/dto/BlockUploadRequest.java",
+      "sha256": "F6F21F59179FED786C814AC9C3B3804549EDABD54B42148579BCEA2E5047350D"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/dto/BlockUploadResponse.java",
+      "sha256": "E8E42861432DC58B038CD831B93D0E785F6C8A40EC58FDD8F053404C52EF3883"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/dto/CreateSyncRootRequest.java",
+      "sha256": "CFF3D9FBBB393A9B0CA96E78F4C0CC5EFE3156ADA7D19B8DB0FAF0A1CB870561"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/dto/SyncDeltaItem.java",
+      "sha256": "1B9D3FAA857A53C961793A0847950BCE37C0C45F7A3B4BFC473C8EA94416A818"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/dto/SyncDeltaResponse.java",
+      "sha256": "337C366449E26406533E4F29656C7480FFAEEA9DF9C14832B645C9F967B85A61"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/dto/SyncExclusionVO.java",
+      "sha256": "BAA532DC3C9E825F476DEB2A7114A34C7982CBC69C3B9C8C99D76FBBF2775FA5"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/dto/SyncRootVO.java",
+      "sha256": "238B7F14A5A4D27434E901B136BF5957045F5901CF8533F5923EE1FD851405C6"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/dto/UpdateConflictStrategyRequest.java",
+      "sha256": "5A9DA8E0D2E533DF519557DC66C036E6A92376F5466E31D0F4F14E7A452298C3"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/entity/FileBlock.java",
+      "sha256": "294564D6619B90B820AB6092AE255EF97408370789CDFE50C886486DB69C07E0"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/entity/SyncChangeLog.java",
+      "sha256": "DF6874AFAC90B368A04E5D0DF6DA68FBC0EE64FFE44EEC4E88D7AA2B7C4AF131"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/entity/SyncConflict.java",
+      "sha256": "E6BCBF4B210FAA772B5ACB600477464E899AE39A24BEF9A2E9AFCC2FC88AF571"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/entity/SyncExclusion.java",
+      "sha256": "50F85723871DC0270D750E9DD08B9B115B6C6E0378024C3C9AF43A561B2CC083"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/entity/SyncRoot.java",
+      "sha256": "652805B2365FBC18285013E7B745619A6E3A983795AA76A727AE54BD29F4889F"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/enums/SyncRootStatus.java",
+      "sha256": "56F0EFD240946072B2D163197786763E6FB9BAFE458619A368391C21658AB9C1"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/listener/SyncChangeLogListener.java",
+      "sha256": "E6DDF41252CDF5E28900FBBF70AC8E85C5D34BB0CB774E41E8B5F33E3FAD75CC"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/listener/SyncChangeMessageConsumer.java",
+      "sha256": "DB41713CF77CC0F606C40E948EE5431A5AB92DC8852EE61833F209A2475B3756"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/mapper/FileBlockMapper.java",
+      "sha256": "A45BA620673B5E116A2E1540E69A5DD676C71CD8AC68B26BD310AE778291CE4B"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/mapper/SyncChangeLogMapper.java",
+      "sha256": "0E8282DA83639C40CE01744988A63342CCA0429A94DC4B5C51074F54BDEC4235"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/mapper/SyncConflictMapper.java",
+      "sha256": "59E531CF82E05646F4208088724856D6085746335E1495A3EFAD712F964EAA73"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/mapper/SyncExclusionMapper.java",
+      "sha256": "EA14569D305C030E1049367DC979DD8325F1911196D5A717E9A22581630B6D1C"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/mapper/SyncRootMapper.java",
+      "sha256": "4C62B53A12ACE840251EC9C2436656823A8C2AC1DD68F00B043B8E20A48C440C"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/service/impl/SyncBlockCommitManager.java",
+      "sha256": "52B8D8AC0CC149A1BE947FDB868716D4B5A5115F165BF83F2BA57D69709D296B"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/service/impl/SyncBlockServiceImpl.java",
+      "sha256": "52B865588A2F9FB6E7125C671B112A8AFED757937716CC1D993C6B1515D19D8C"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/service/impl/SyncServiceImpl.java",
+      "sha256": "56F70795B5EF8F822D9DEA5E01DA80B111071F10B4E22F5778A634C8D5039336"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/service/SyncBlockService.java",
+      "sha256": "69032CB35F50D0352802D1FA0923E4E0372D1A7316216AA83A4B4EF58A9E5605"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/service/SyncService.java",
+      "sha256": "2809A243C1AC768E335ADF26B478A1440EF44C306E1E582D5FB0021B5DC0EBF4"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/ws/NotificationWebSocketListener.java",
+      "sha256": "C6B7C9C104E1508B34334D7247C63211DB3792B4CED7C5258992BFCD5EEA8A77"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/ws/SyncAuthHandshakeInterceptor.java",
+      "sha256": "52377252EC3E58BF58594C019456FBC8C8A0F8D7524C554EDB019DB8B4D1A036"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/ws/SyncPushService.java",
+      "sha256": "C9CB263DB9EFF4894333748501222CF83B1ED84A23C112C0EC0BE5FA3F71F466"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/ws/SyncWebSocketConfig.java",
+      "sha256": "92D5A5012EA2A4D5D216FBE49EDA44521627B102FA470914FE77F7F50638C69A"
+    },
+    {
+      "path": "st-sync/src/main/java/com/stcloud/sync/ws/SyncWebSocketHandler.java",
+      "sha256": "437EEF137626E3B7470E423AEB33EC7FA33A61F7F3EFF14D96EF918B928E0C34"
+    },
+    {
+      "path": "st-sync/src/test/java/com/stcloud/sync/listener/SyncChangeMessageConsumerTest.java",
+      "sha256": "D648477E8F59A9214A6FD3C0EE6EF27684C038A2E2FBFCC73907DE9A768ECD13"
+    },
+    {
+      "path": "st-sync/src/test/java/com/stcloud/sync/listener/SyncTenantScopeTest.java",
+      "sha256": "B129F5C698B4748F9467A157CEA1D0C4E4CBA059EBD4720016BA2338838F2DAF"
+    },
+    {
+      "path": "st-sync/src/test/java/com/stcloud/sync/service/impl/SyncBlockCommitManagerTest.java",
+      "sha256": "30E7E3DCDB806A4E536999EE33262D9E439454D68E1D3781B2007A27A3F234CF"
+    },
+    {
+      "path": "st-sync/src/test/java/com/stcloud/sync/service/impl/SyncBlockServiceImplBlockUploadTest.java",
+      "sha256": "0C7B9399F0F4F93E491AFF0F9F7558C5CB8452AB51665E1E626AB1D517378D5B"
+    },
+    {
+      "path": "st-sync/src/test/java/com/stcloud/sync/service/impl/SyncBlockServiceImplNoTransactionTest.java",
+      "sha256": "B526FB6A45A5519F6AED9452D48190F6B1BDD233B0E26C1A5B2AA2ED387BCAD4"
+    },
+    {
+      "path": "st-sync/src/test/java/com/stcloud/sync/service/impl/SyncScopeIntegrationTest.java",
+      "sha256": "62963DEBCB7DA866AD702B5D2B5F7224715E353BA84753B702BBA4D3F5806B1A"
+    },
+    {
+      "path": "st-sync/src/test/java/com/stcloud/sync/service/impl/SyncServiceProjectionTest.java",
+      "sha256": "6997004D5484F7A86819C274E4A3C03DF1C54D3E6A14763FFC5DCB479EB65BA4"
+    },
+    {
+      "path": "st-sync/src/test/java/com/stcloud/sync/ws/NotificationWebSocketListenerTest.java",
+      "sha256": "EAC38C84E0BFD6042F1944319C73A06C0CA4DC8FBAB1227A96A3AB083F109442"
+    },
+    {
+      "path": "st-sync/src/test/java/com/stcloud/sync/ws/WebSocketSecurityIntegrationTest.java",
+      "sha256": "1E48E740A49C7E81575AAA99DA0C472FF3A8DA47F4DDB1B85BF8ED283C95B563"
+    },
+    {
+      "path": "st-sync/src/test/resources/security-fixture.sql",
+      "sha256": "36F4E963B3F150FCDA9BA3973A6DEEEFCF165770DBF4E85FD003043D1C03652A"
+    },
+    {
+      "path": "st-sync/src/test/resources/sync-scope-fixture.sql",
+      "sha256": "0E12FEF911BB37FCF2BD8F9FEDC0114DF8DF8A053C14D31E1B5E2494547B2129"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/controller/FileWatchController.java",
+      "sha256": "288D8014071173CBC302C4485E5F3A18DA02F80DC1DB4CC2F059D05713C22D93"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/controller/NotificationController.java",
+      "sha256": "F4698C8C80838C68AC696C51B6F2829058066F373DAEC3645A39619A01AE3D86"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/controller/TeamController.java",
+      "sha256": "B9FE15FFD6EEF4F58948DDFF88B339449B6409A746B1A3B8CE7219052104A0FD"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/controller/TeamUploadController.java",
+      "sha256": "982C0C8CA4CB815EB4B372CA080BCA569C27FCA4F55E3160732235705CD7F2D8"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/dto/CommentRequest.java",
+      "sha256": "95854C4AD69DB04DE1C952F59C0B0753B6F89AD44CCE28770E41082F5B9E40C5"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/dto/CreateInviteRequest.java",
+      "sha256": "8EE4B6768D21A9056F6420269B8E1AEE4FF100BC8BD0652A611903C7378C0DE2"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/dto/CreateSpaceRequest.java",
+      "sha256": "955743AAEB9A9E72D51A138D5A420F0AD33EAC156B4670B0DF332F5EB0F99D19"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/dto/ExternalMemberRequest.java",
+      "sha256": "51F07DE2CA68CC66ECD23932F197A26DC6FC742DC0268829F7D746D26AD6CA69"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/dto/FileWatchStateVO.java",
+      "sha256": "AC509129DEFEDBA8497D60E8193F855375C84F2CE6010392AA8F5DBE87FE205C"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/dto/FileWatchVO.java",
+      "sha256": "288350398CE7ACB6102F5441324FC3E828CF73B7CA4BA8C8C68A026609D0B9C9"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/dto/FolderPermissionRequest.java",
+      "sha256": "164C07721C706F0EC6838973465AD898538CF77943DDE9916CFB5A9CEBCCF8C9"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/dto/FolderPermissionVO.java",
+      "sha256": "E2ADD1DDE6AFC0DF52B787BC29EB1EE71C8F2334A975D2530A1E2EB0EA8C3F81"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/dto/InviteMemberRequest.java",
+      "sha256": "4A120D958D620B85FA88BBD03EF59E8EF36491EF9B17BD4F4DD1310D3D50F12F"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/dto/LockRequest.java",
+      "sha256": "A3AF7C9B7BFC6A3E7DB88D49A834C1B840DB30D25714B5B18CFE059B761CEE68"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/dto/NotificationTargetVO.java",
+      "sha256": "0E71036EF0A2A9B326C5A9B1314BA152ACED7F435BA1167D810D21F26DAB09AD"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/dto/NotificationVO.java",
+      "sha256": "B84EDE70949D3FC41DB059BE47E313EA7F8480458D48452149F8BA244B199E97"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/dto/RoleIdDeserializer.java",
+      "sha256": "FA014B4D45AEBF2725E31B3DAEBA17FA30CAA4B204ECD91353CF4D91C7B89F41"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/dto/TeamActivityVO.java",
+      "sha256": "E7D08091A0873E9F2FF36D5DC22C7A086BB3CBB027A5C5AB5E99571FF67278C1"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/dto/TeamCommentVO.java",
+      "sha256": "5F40AC7EFF1DE8CAA950780E5DC9489F8630E9980795694FAF83301021F20703"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/dto/TeamInviteVO.java",
+      "sha256": "4126AB355247329E0525E7E0032AFB5A203D347BD13855612583DBF861D7BDCD"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/dto/TeamMemberVO.java",
+      "sha256": "D00E8756F5D48690E8BA02FEA4F864DF2F526584686747FCFD0498EA1866262A"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/dto/TeamRoleRequest.java",
+      "sha256": "9CE432D5B1ABFE99BAE591DD2EC925AE9C77AA1C699EF247C32E6957C11631E9"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/dto/TeamRoleVO.java",
+      "sha256": "EDEE2230C89A254AD6B050826FE2953AF97525D498CBC659B5CE393F639D4164"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/dto/TeamSpaceVO.java",
+      "sha256": "4EA19D516A874DEF660FF0C484B66A7FAA5DFD0F83E9DD55133E75CDC150915E"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/dto/TeamStatsVO.java",
+      "sha256": "D816E5B23E82C6291E6FE88BB7E50A54A15515D30782671FC1FC26B99C7380C4"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/dto/TransferRequest.java",
+      "sha256": "7CB88772E20BD46B1BDD38137BAC368C53CC5703302DD5F218AA6B970C878370"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/dto/UserSearchVO.java",
+      "sha256": "7E47A89A22F06903F45CBECA1E597B6E9AB7A8CD0EA974D8CEE711325B860016"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/entity/FileWatch.java",
+      "sha256": "3DF8F6F81DB97D4E51D22EE92DD013097ED60F74334EEFD5D26CDBDD9F65AE2F"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/entity/FileWatchDelivery.java",
+      "sha256": "FBE44986EC10CA65C1984E44947AA9A654D4ED4858BDCC73474596E62F553702"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/entity/FileWatchDeliveryKey.java",
+      "sha256": "7A746820107A8C4806C8498860A3940B3FFE064DCE6D43E0053A27374CD5B1B5"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/entity/FileWatchMatch.java",
+      "sha256": "EDC79EFF4E5FA576B7FF8E8B944EC0B6F018AF24536B6D311383AA2895F3CEBE"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/entity/Notification.java",
+      "sha256": "F5F33612C6B418FF319009FE37915A17D6C58CA1E175238668FD905AB532DCEE"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/entity/TeamActivity.java",
+      "sha256": "D260DA41D9AC0555A3DA0E5FFA94EC095153DFFFD875C12B79311CC3F9B781BF"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/entity/TeamComment.java",
+      "sha256": "CA20B98FF1A3ED1D47CEF5AC3A64455407313912E2827F0046B20901942BE692"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/entity/TeamExternalConfig.java",
+      "sha256": "F46999928DA8D9AFD6113AA9C37479CEC7D1A12FA7976112ED1B639C92DD73B8"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/entity/TeamFolderPermission.java",
+      "sha256": "5C0B00906C315590C97EDABC8360F8B94492421924A4861D9CBB3D575E7B2A5C"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/entity/TeamInvite.java",
+      "sha256": "9635344E827AC34A687752AC726D8F35D32273F573A454E8B833D923CE61FE72"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/entity/TeamMember.java",
+      "sha256": "F0849F7F6F2AB8EA2EDE59416DF01A13C88C136D8EB649128733978B0EDB702F"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/entity/TeamRole.java",
+      "sha256": "3540791BEC46C5C1767BAA7290C94F92B09003AEE9D92D8B567C7559D6986E54"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/entity/TeamSpace.java",
+      "sha256": "3E726110AAF43582D2BF9B44295C2759EBCF1C5622852A33E2694B09881C1426"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/enums/InviteStatus.java",
+      "sha256": "A79EDB23D5D351EFC5799ACE31EA2684552546D756436DC7989D0CF8A2A6F54A"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/enums/RoleStatus.java",
+      "sha256": "7C1087686E374F85886AB6B0749535A0DF89F7776E7444FE2590A5DF9FE08D97"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/enums/TeamSpaceStatus.java",
+      "sha256": "6C0E913078EC9BE93AD82350026F9EAFF6D2876DD5BE23824D46DC3AEE81B7F7"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/mapper/FileWatchDeliveryMapper.java",
+      "sha256": "3B7AACB3C3FF4522E0BC35C70EBF8E0EDE9B5286A83BD06A1F2709E4D5633C45"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/mapper/FileWatchMapper.java",
+      "sha256": "FB1051FB89587C89C7BBEB417FFE9B34377773BDDCEC9AAE35C8751A7274C17E"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/mapper/NotificationMapper.java",
+      "sha256": "EF4012C2F778D16C85F220AF24A541C4A5ACFAD201FEFF83FD52FE55EA2F3F06"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/mapper/TeamActivityMapper.java",
+      "sha256": "094DE711EF6B8F90EAB9C62B5560CD81E37AD822DE463D0187C4B418E1CB93B5"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/mapper/TeamCommentMapper.java",
+      "sha256": "184AF422D884E8D905624AE5C21DCAD7FD4B47A8EA6FB586D26B4C5B666EBE12"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/mapper/TeamExternalConfigMapper.java",
+      "sha256": "0CBE0A7CB5D7721863B20BCD48673D56B26B97E587F3CFC73B977CCA73C7AF82"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/mapper/TeamFolderPermissionMapper.java",
+      "sha256": "F9810C7FB887C69C7B2784CDC3746D266AB50D1B557C38B6E14D819D074822E3"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/mapper/TeamInviteMapper.java",
+      "sha256": "4636ADEC8E0BC443C5692F54989EFAC5F89B138921C50CA6DA47B9299E3B2817"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/mapper/TeamMemberMapper.java",
+      "sha256": "FAA0735087B13CF586170C9EFE71AA491D80CFEA591768AE990178BF0E13B258"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/mapper/TeamRoleMapper.java",
+      "sha256": "300D33D36E3CA2CC684A0AEDF68E5E32E90246B2766F2072FCBCB823D9EBDF4F"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/mapper/TeamSpaceMapper.java",
+      "sha256": "F57715092D5B0412C2370FF1B68A22DAC2ED17039C6501389A74F0721EC9E180"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/service/FileWatchAccessService.java",
+      "sha256": "7B4C7F417A6EA4FDF1C65AC78AB0C3E42DFEB773306BC5EAE55DE36E9D63D88E"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/service/FileWatchCaptureListener.java",
+      "sha256": "2C6C99E1190EDABB3F5F0750662E07FDB942EC37C564A244970181C69A0EA824"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/service/FileWatchDeliveryProcessor.java",
+      "sha256": "B85FDA78BB394A31E16EF79F6A812BF7D0DB1D2435415E00FF534D517E7315CC"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/service/FileWatchDeliveryReadyEvent.java",
+      "sha256": "63F7002CA5A6671DDF4A888B4BD258F37674CD727621F7E1A0B951BEAA102FA4"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/service/FileWatchDeliveryRetryService.java",
+      "sha256": "D22CC70B696C03829AF6105DF7CA2968B2492DF3B75A2A8D99916D1CCD9D5956"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/service/FileWatchNotificationService.java",
+      "sha256": "49D395FB7E732738BA29D7152081424DB1523B7AD5D1425470B9791A813B6F66"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/service/FileWatchService.java",
+      "sha256": "A772FEE4A15BBDD3F646C34409C9E3C096CDD64F34FC65DF73E87C7132C1E1A6"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/service/FileWatchServiceImpl.java",
+      "sha256": "6946252AD00773AE4E96A9743F8EACC38E1964509CEF936C0A0E52F6308F9721"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/service/FolderPermissionService.java",
+      "sha256": "C614471C92176358434145F716E4A086D25F9985C19CA89D86066BA2D3B81E7F"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/service/impl/TeamServiceImpl.java",
+      "sha256": "522660F20322568A57E8C530DA8B7BB2D33CC4B17E421F8AF15AA47421B962BA"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/service/NotificationUnreadCountService.java",
+      "sha256": "BA70C5762E7CB2C01CD445D0066589C758653BB63CA0369665C5D3694367E1D2"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/service/TeamFileAccessPolicyImpl.java",
+      "sha256": "8366D90B72648BF09DBCE0657A0AEA30DA4ECC87EB24D1BECBACC34B452F99A3"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/service/TeamService.java",
+      "sha256": "394B41FD02E28872F0EF5B9BF089CE54D3B9BDE7313CCC99C6F10D44FE9AF596"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/task/ExternalMemberExpireTask.java",
+      "sha256": "0F1953631B05AE401C655E39372B012376DB6CD75A64B046DA0BCAC3CD0828FC"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/task/FileLockExpireTask.java",
+      "sha256": "0AEB2854271B92177B3D00020A1F0FC15760BFA202DF47D7E23DC74AADF358B6"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/task/FileWatchDeliveryTask.java",
+      "sha256": "BEBB0844A00299F28E14ABD50B3045295A54B08320E8E97AB23D4BE3015AB70E"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/util/ActiveTracker.java",
+      "sha256": "7627D6633DCE1111DEDE98AB8EDF262E6278FEBDCD2EC091F090AEDC2822ACB5"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/util/NotificationHelper.java",
+      "sha256": "83D580541F466F7A351B4EA36EF40141435A0F4E7C31ABF96CEBD7DD3D509697"
+    },
+    {
+      "path": "st-team/src/main/java/com/stcloud/team/util/TeamActivityHelper.java",
+      "sha256": "18337AAA04D07F91506FEE6D22E1CB228CB496222994725C79C6D8B9A96F11EE"
+    },
+    {
+      "path": "st-team/src/test/java/com/stcloud/team/AbstractTeamIntegrationTest.java",
+      "sha256": "4C298389770AEEFE94DB5E2620DB8DDB98FE9C6F5C12A54D9D4E5E77068CEB46"
+    },
+    {
+      "path": "st-team/src/test/java/com/stcloud/team/controller/NotificationControllerTest.java",
+      "sha256": "5AF67C497957E933A88024C8D7EC297B194140D2C5EBEC5C863B8092186818B5"
+    },
+    {
+      "path": "st-team/src/test/java/com/stcloud/team/controller/NotificationSqlIntegrationTest.java",
+      "sha256": "04365D491754FD5E848A43B09440411D15538A7C0135A47BFF0E199AEEBD6A64"
+    },
+    {
+      "path": "st-team/src/test/java/com/stcloud/team/controller/TeamControllerCopyPermissionTest.java",
+      "sha256": "6B5A3981EDB88699E5842624E2190D0651DD3CE22B1C7942DD03E91484C39C08"
+    },
+    {
+      "path": "st-team/src/test/java/com/stcloud/team/controller/TeamRoleApiIntegrationTest.java",
+      "sha256": "5B58F02287684AF44F32C434011574C883B0714C68B78BF25844399F09462626"
+    },
+    {
+      "path": "st-team/src/test/java/com/stcloud/team/service/FileWatchAccessServiceTest.java",
+      "sha256": "9931CBD6348C0E47C207E970EEC25D48860391C83AA49F73C8ABDC7E94414594"
+    },
+    {
+      "path": "st-team/src/test/java/com/stcloud/team/service/FileWatchCaptureListenerTest.java",
+      "sha256": "56D185648DCC7F3DFAA641AF53AEF42D81E636DFC16FE1FFAFD5DA0BD2CF732E"
+    },
+    {
+      "path": "st-team/src/test/java/com/stcloud/team/service/FileWatchDeliveryProcessorTest.java",
+      "sha256": "FD7A2F260076A18DE3A629A84A5AD4CD5FDD46D79996590D7352D964AF054703"
+    },
+    {
+      "path": "st-team/src/test/java/com/stcloud/team/service/FileWatchDeliveryRetryServiceTest.java",
+      "sha256": "FF02239E8AF6ED11228A52C4E943D50167D7092F0BFE36C54539C89745831A25"
+    },
+    {
+      "path": "st-team/src/test/java/com/stcloud/team/service/FileWatchDeliveryTaskEventTest.java",
+      "sha256": "C9BF7BBCA47F6E3B5D63CFC458D17B00A057E45DA958BD24486C968D4827DE98"
+    },
+    {
+      "path": "st-team/src/test/java/com/stcloud/team/service/FileWatchReliabilityIntegrationTest.java",
+      "sha256": "92F499B56D53AFE4433E0E0573571582BB1CED3E92A75DCC7FF34F34B418B38F"
+    },
+    {
+      "path": "st-team/src/test/java/com/stcloud/team/service/FileWatchServiceImplTest.java",
+      "sha256": "25D741D171D78BFD206C61443A0AAF9726AC96F3788CDFDCAE245CC2A0BDCCFF"
+    },
+    {
+      "path": "st-team/src/test/java/com/stcloud/team/service/FolderPermissionFreshTest.java",
+      "sha256": "85A51F64FA12B4EC38732AB3A6387BD68D85F9AC6AC4130E5F8EE30581092C61"
+    },
+    {
+      "path": "st-team/src/test/java/com/stcloud/team/service/FolderPermissionServiceRuleTest.java",
+      "sha256": "6FA312211475DED608015DD12E121E64E0B1C45145F18B2AF9A609128B6DD245"
+    },
+    {
+      "path": "st-team/src/test/java/com/stcloud/team/service/FolderPermissionServiceTest.java",
+      "sha256": "8C496F2CF31FE00AF428A8FD84248D9D3FB5EB36B7AB848157667D5B26A53CF7"
+    },
+    {
+      "path": "st-team/src/test/java/com/stcloud/team/service/TeamAccessRevocationIntegrationTest.java",
+      "sha256": "912D64274FE910BDB5E1D11B72C6746D50DEDDD1EF39C51774C33319DD646FAC"
+    },
+    {
+      "path": "st-team/src/test/java/com/stcloud/team/service/TeamFileAccessPolicyTest.java",
+      "sha256": "C97B8D0FB62838A1FA6D204944855D722A4ACF1D432BEC2C29F3AF68BDC74905"
+    },
+    {
+      "path": "st-team/src/test/java/com/stcloud/team/service/TeamRoleConcurrencyIntegrationTest.java",
+      "sha256": "67B557782E4AC6C0334D83EEC356ABF0973A31A727A6A02178C083404F70EF17"
+    },
+    {
+      "path": "st-team/src/test/java/com/stcloud/team/service/TeamRoleMysqlConcurrencyIntegrationTest.java",
+      "sha256": "6AD82F1C1349731EB3423D46ED4419F27D01592D43CDBD1AD06C5389751D3A41"
+    },
+    {
+      "path": "st-team/src/test/java/com/stcloud/team/service/TeamServiceIntegrationTest.java",
+      "sha256": "EB7DEF7236669D6C6B4C013A1A8C4ACFE181BCEC5998E97208A1D04949A1F163"
+    },
+    {
+      "path": "st-team/src/test/java/com/stcloud/team/service/TeamServicePermissionIntegrationTest.java",
+      "sha256": "F35A2A01DDB3D93EB638FB985E4EAF12FD04D221C7069E1035B4F79897249F2B"
+    },
+    {
+      "path": "st-team/src/test/java/com/stcloud/team/task/TeamExpirationTaskIntegrationTest.java",
+      "sha256": "9F3F0DECEA941DB778C254EE6F72D1A09D59B32F753A454283F9C14C44794372"
+    },
+    {
+      "path": "st-team/src/test/java/com/stcloud/team/TeamCopyDatabaseIntegrationTest.java",
+      "sha256": "9F4AD6AF0BBCDAE601B655A57738D69428D0CAC795023045900C75920FA403B5"
+    },
+    {
+      "path": "st-team/src/test/java/com/stcloud/team/TeamPermissionInstanceWorker.java",
+      "sha256": "6B2C7716E6E923D3EF5D6B453E02E09E0F0DA8B0AE91DCEDCF32BB569EC6FC71"
+    },
+    {
+      "path": "st-team/src/test/java/com/stcloud/team/TeamPermissionProcessIntegrationTest.java",
+      "sha256": "C1C66F26E760DFD7A5F427DF99B8E6EE87FE865DAC572CAA06D4E7D43453EFA5"
+    },
+    {
+      "path": "st-team/src/test/java/com/stcloud/team/TeamTestApplication.java",
+      "sha256": "5158BA166370F699969740040ED7CD59758DAB21E0EAA725F5D8F2DF8EAE5D52"
+    },
+    {
+      "path": "st-team/src/test/java/com/stcloud/team/util/TeamActivityTenantTest.java",
+      "sha256": "970585ED98400B3DF9B87AAF89A2B9BB950E2069DBAAE5491107E2D0B480F8DA"
+    },
+    {
+      "path": "st-team/src/test/resources/application-test.yml",
+      "sha256": "A74F67743D31D8BE3F32D62D1E52A4961D43D65BE890C4834CEF367427ED2C89"
+    },
+    {
+      "path": "st-team/src/test/resources/copy-object-fixture.sql",
+      "sha256": "3A174AE2BC12226454B0454D0887D0595E46796FAC2E1A20D179BCBFA1EE1D91"
+    },
+    {
+      "path": "st-team/src/test/resources/schema.sql",
+      "sha256": "F16A465515D73929D5EA10A73F35E3C3B5F2C86F24E0F9F16604E8D2FBC6C315"
+    }
+  ],
+  "jarSha256": "B6082CC9A65FA68BF11264CA9F1C9F4068FB87CE3A02DFA013478BBF601D4734"
+}

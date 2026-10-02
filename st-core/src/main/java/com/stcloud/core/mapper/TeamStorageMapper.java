@@ -14,6 +14,11 @@ import java.util.List;
 @Mapper
 public interface TeamStorageMapper {
 
+    /** 与成员/角色写路径共用空间锁；空间墓碑仍须锁定，保证其回收文件可由系统清理。 */
+    @Options(flushCache = Options.FlushCachePolicy.TRUE)
+    @Select("SELECT id FROM team_space WHERE id = #{spaceId} AND tenant_id = #{tenantId} FOR UPDATE")
+    Long lockRecycleSpace(@Param("tenantId") Long tenantId, @Param("spaceId") Long spaceId);
+
     /** 回收站仅向有效空间拥有者/管理员开放，不能用节点上传者或系统管理员身份绕过成员关系。 */
     @Options(flushCache = Options.FlushCachePolicy.TRUE)
     @Select("SELECT DISTINCT s.id FROM team_space s JOIN team_member m ON m.space_id = s.id " +

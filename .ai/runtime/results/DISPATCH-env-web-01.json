@@ -1,0 +1,58 @@
+{
+  "dispatchId": "DISPATCH-env-web-01",
+  "taskId": "TASK-20260930-environment-web",
+  "status": "completed",
+  "summary": "V04：修复分享胶卷陈旧 error 请求身份与降级图标对比度；实际 Chrome/React 17 项专项通过。仅部分 IMPLEMENTED proposal。",
+  "artifactRefs": [
+    "st-web/src/components/preview/PreviewModal.tsx",
+    ".ai/docs/20260930-environment-remediation/web-remediation.md",
+    ".ai/docs/20260930-environment-remediation/web-filmstrip-test.cjs",
+    ".ai/docs/20260930-environment-remediation/web-baseline.log",
+    ".ai/docs/20260930-environment-remediation/web-baseline-results.json",
+    ".ai/docs/20260930-environment-remediation/web-baseline-focus.png",
+    ".ai/docs/20260930-environment-remediation/web-baseline-fallback.png",
+    ".ai/docs/20260930-environment-remediation/web-final.log",
+    ".ai/docs/20260930-environment-remediation/web-final-results.json",
+    ".ai/docs/20260930-environment-remediation/web-final-focus.png",
+    ".ai/docs/20260930-environment-remediation/web-final-fallback.png",
+    ".ai/docs/20260930-environment-remediation/web-typecheck.log"
+  ],
+  "criterionProposal": {
+    "id": "IMPLEMENTED",
+    "outcome": "pass",
+    "by": "/root/web_validation",
+    "dispatchId": "DISPATCH-env-web-01",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-env-web-01.json",
+    "validatedRevision": "env-code-r1",
+    "scope": "V04 部分实现；全局 IMPLEMENTED 与最终验收由主线程判定"
+  },
+  "validation": [
+    {
+      "command": "node .ai/docs/20260930-environment-remediation/web-filmstrip-test.cjs --label=final",
+      "exitCode": 0,
+      "tests": 17,
+      "passed": 17,
+      "browser": "Chrome 154.0.8037.57",
+      "evidenceRef": ".ai/docs/20260930-environment-remediation/web-final-results.json"
+    },
+    {
+      "command": "node node_modules/typescript/bin/tsc --project tsconfig.app.json --noEmit --incremental false --pretty false",
+      "workdir": "st-web",
+      "exitCode": 0,
+      "evidenceRef": ".ai/docs/20260930-environment-remediation/web-typecheck.log"
+    }
+  ],
+  "facts": {
+    "baseline": "当前修改前 13/16 通过，陈旧回调、新旧 URL 返回与图标对比度 3 项失败",
+    "final": "17/17 通过；未选中 4.508:1，选中 15.862:1；同一外层挂载和按钮 DOM",
+    "sourceSha256": "ef5b11927235e1c917e780985906ed421cd44e0e6da1cee5886b0d06973d8d57"
+  },
+  "limitations": [
+    "真实 Chromium/React 使用受控 loopback HTTP；未覆盖真实后端分享权限或 Electron 实机",
+    "旧异步 error 使用保存的实际 React 回调受控调用，不声称自然网络一定产生该时序",
+    "对比度仅覆盖当前胶卷图标样式和测试背景，未完成全站可访问性验收",
+    "Web 生产构建由主线程串行完成"
+  ],
+  "blockerProposals": [],
+  "integrationRequests": []
+}

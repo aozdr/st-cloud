@@ -1,5 +1,5 @@
 import { ipcMain, dialog, app, BrowserWindow, shell } from 'electron';
-import { setAuth, setBaseUrl } from './api-client';
+import { setAuth, setBaseUrl, getAuth, clearAuth, refreshAuth, onAuthChanged } from './api-client';
 import { getServerUrl, saveServerUrl } from './server-config';
 import { getAllTasks, deleteTask, getSyncHistory, getSyncStats } from './database';
 import { getTransferSettings, setTransferSettings as applyTransferSettings, type TransferSettings } from './transfer-settings';
@@ -63,14 +63,30 @@ export function registerIpcHandlers(): void {
   });
 
   // ==================== 认证 ====================
-  ipcMain.handle('auth:set', async (_event, token: string, refreshToken: string) => {
-    // 切换用户时先停止所有同步引擎，防止旧用户引擎用新 token 访问导致失败日志
-    await stopAllSync();
-    setAuth(token, refreshToken);
-    // 按新用户身份恢复同步引擎
-    resumeSyncEngines().catch((err) => {
-      console.warn('[sync] resume after auth change failed:', String(err).substring(0, 100));
-    });
+  // 认证代次立即推进；引擎切换串行，避免旧 IPC 等待结束后覆盖新登录。
+  let authLifecycle = Promise.resolve();
+  const queueAuthLifecycle = () => {
+    authLifecycle = authLifecycle.then(async () => {
+      await stopAllSync();
+      if (getAuth().token) await resumeSyncEngines();
+    }).catch(() => { console.warn('[sync] auth lifecycle failed'); });
+  };
+  // 刷新拒绝也会直接清空主进程认证；仅有 refresh 的恢复成功需要启动引擎。
+  let previousAuth = getAuth();
+  onAuthChanged((auth) => {
+    if (previousAuth.sessionId !== auth.sessionId || previousAuth.serverUrl !== auth.serverUrl
+        || !!previousAuth.token !== !!auth.token) queueAuthLifecycle();
+    previousAuth = auth;
+  });
+  ipcMain.handle('auth:set', (_event, token: string, refreshToken: string, sessionId?: string) => {
+    const auth = setAuth(token, refreshToken, sessionId);
+    return auth;
+  });
+  ipcMain.handle('auth:get', () => getAuth());
+  ipcMain.handle('auth:refresh', (_event, sessionId: string) => refreshAuth(sessionId));
+  ipcMain.handle('auth:clear', (_event, sessionId?: string) => {
+    const auth = clearAuth(sessionId);
+    return auth;
   });
 
   // ==================== 服务器地址 ====================

@@ -1,0 +1,43 @@
+{
+  "capturedAt": "2026-10-01T10:22:42.7566488+08:00",
+  "revision": "env-code-r2",
+  "by": "/root/exp_accept",
+  "files": [
+    {
+      "path": "st-web/src/components/preview/PreviewModal.tsx",
+      "sha256": "ef5b11927235e1c917e780985906ed421cd44e0e6da1cee5886b0d06973d8d57"
+    },
+    {
+      "path": "st-web/src/components/layout/Sidebar.tsx",
+      "sha256": "88af4065abf7944245dcbe8f9419cded6e965f4ed7560cfe6b8270e7b84a6632"
+    },
+    {
+      "path": "st-web/src/auth-session.ts",
+      "sha256": "16878feb1f7411e56c08093c5ce806cea8df7d53f05f59ec26e537a0ab09ec32"
+    },
+    {
+      "path": "st-web/src/store/auth.ts",
+      "sha256": "b98a6eafb108baa088af6f70a05edcaacf962315509e3e4645c2627dfb3f6c05"
+    },
+    {
+      "path": "st-desktop/src/api-client.ts",
+      "sha256": "fcc71681136b4a8f0b6283207a19c22845088b93c77a51a6593d24516dddd51f"
+    },
+    {
+      "path": "st-web/vite.config.ts",
+      "sha256": "91dffe9351e4c4f98558e867f88d4b0e18ffab47f23d4228ad4142e193368b52"
+    },
+    {
+      "path": "st-web/dist/index.html",
+      "sha256": "5d742d01d62bec3333b31e697280a17976b21cf13020239016d3264b1b0b3c28"
+    },
+    {
+      "path": "st-web/dist-desktop-check/index.html",
+      "sha256": "dd8e5d10e6d7874e8a846ca9a8a7ae7fc7c484203fd158dda6053f5b8b648c63"
+    }
+  ],
+  "actualBrowser": "154.0.8037.92",
+  "scope": "independent UI/auth evidence and two build artifact entry points",
+  "verifiedAfterFreezeAt": "2026-10-01T10:27:22.0043823+08:00",
+  "matchingFiles": 8
+}

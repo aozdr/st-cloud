@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-round3-design-review-01",
+  "taskId": "TASK-20260912-round3-design-review",
+  "idempotencyKey": "round3-design-review",
+  "role": "reviewer",
+  "taskType": "design-review",
+  "objective": "独立检查第三轮修复候选技术方案，写 architecture-review.md；仅评审不实现",
+  "taskRefs": [
+    ".ai/tasks/TASK-20260912-round3-design-review.md",
+    ".ai/docs/20260912-code-review-round3/requirement.md",
+    ".ai/docs/20260912-code-review-round3/uispec.md"
+  ],
+  "stateRef": ".ai/state/20260912-code-review-round3.yaml",
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "exclude": [
+      "业务代码",
+      ".ai/state/**",
+      "其他已有改动"
+    ],
+    "include": [
+      ".ai/docs/20260912-code-review-round3/architecture-review.md",
+      ".ai/runtime/results/DISPATCH-round3-design-review-01.json"
+    ]
+  },
+  "acceptance": [
+    "给出并发反例与可实施方案",
+    "明确兼容性和范围偏差"
+  ],
+  "validation": [
+    "静态读取源码验证，禁止构建"
+  ],
+  "forbidSpawn": true
+}

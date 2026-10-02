@@ -1,12 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Image as ImageIcon, Video, FileText, Music, Archive, FolderClosed, Clock, Star, ChevronRight, FolderOpen } from 'lucide-react';
-import api from '../lib/api';
-import { formatSize, formatDate } from '../lib/utils';
+import { Image as ImageIcon, Video, FileText, Music, Archive, Star, ChevronRight, FolderOpen } from 'lucide-react';
+import { formatSize } from '../lib/utils';
 import { useStorageStore } from '../store/storage';
 import { useAuthStore } from '../store/auth';
-import type { FileNode, PageResult } from '../types';
-import FileThumbnail from '../components/file/FileThumbnail';
+import type { FileNode } from '../types';
 import FileCard from '../components/home/FileCard';
 import { getRecentFiles, clearRecentFiles, type RecentFile } from '../lib/recentFiles';
 import { useFavoritesStore } from '../store/favorites';
@@ -16,7 +14,7 @@ import PreviewModal from '../components/preview/PreviewModal';
 const QUICK_CARDS = [
   { label: '图片', icon: ImageIcon, type: 'image', tile: 'bg-primary-100 text-primary-600' },
   { label: '视频', icon: Video, type: 'video', tile: 'bg-violet-500/15 text-violet-600' },
-  { label: '文档', icon: FileText, type: 'document', tile: 'bg-[#EDF7FF] text-[#4C91D7]' },
+  { label: '文档', icon: FileText, type: 'document', tile: 'bg-primary-50 text-primary-600' },
   { label: '音乐', icon: Music, type: 'audio', tile: 'bg-orange-500/15 text-orange-600' },
   { label: '压缩包', icon: Archive, type: 'archive', tile: 'bg-violet-500/15 text-violet-600' },
 ];
@@ -40,32 +38,17 @@ export default function HomePage() {
   const navigate = useNavigate();
   const storage = useStorageStore((s) => s.storage);
   const user = useAuthStore((s) => s.user);
-  const [recentFiles, setRecentFiles] = useState<FileNode[]>([]);
   const [accessedFiles, setAccessedFiles] = useState<RecentFile[]>([]);
   const favFiles = useFavoritesStore((s) => s.favorites);
   const fetchFavorites = useFavoritesStore((s) => s.fetchFavorites);
   const toggleFav = useFavoritesStore((s) => s.toggleFavorite);
-  const [loading, setLoading] = useState(true);
   const [preview, setPreview] = useState<{ files: FileNode[]; index: number } | null>(null);
   const [menu, setMenu] = useState<MenuState | null>(null);
 
-  const fetchRecent = useCallback(async () => {
-    try {
-      const data: PageResult<FileNode> = await api.get('/file/list', { params: { parentId: '0', page: 1, size: 50 } });
-      const files = (data.records || [])
-        .filter((f) => f.nodeType === 1)
-        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-        .slice(0, 8);
-      setRecentFiles(files);
-    } catch { setRecentFiles([]); }
-    finally { setLoading(false); }
-  }, []);
-
   useEffect(() => {
-    fetchRecent();
     setAccessedFiles(getRecentFiles());
     fetchFavorites();
-  }, [fetchRecent, fetchFavorites]);
+  }, [fetchFavorites]);
 
   const handleCardClick = (type: string | null) => {
     if (type) navigate(`/files/category/${type}`);
@@ -101,24 +84,24 @@ export default function HomePage() {
 
   return (
     <div className="h-full overflow-auto" onClick={() => menu && setMenu(null)}>
-      {/* Hero banner（UI_DESIGN_SPEC：克制纯色，不渐变/发光） */}
+      {/* 顶部问候：保持信息密度，避免营销式 Hero。 */}
       <div className="relative border-b border-border-light bg-surface">
-        <div className="relative px-6 pt-8 pb-6">
+        <div className="relative px-6 pt-6 pb-5">
           <div className="flex items-end justify-between gap-6">
             <div>
               <p className="text-muted text-sm mb-1">{greeting}，</p>
-              <h1 className="text-3xl font-bold text-fg tracking-tight">{user?.nickname || user?.username || '用户'}</h1>
+              <h1 className="text-xl font-semibold text-fg tracking-tight">{user?.nickname || user?.username || '用户'}</h1>
               <p className="text-muted text-sm mt-2">欢迎回到星云盘，你的文件随时可用。</p>
             </div>
             {storage && (
               <div className="hidden md:flex items-center gap-6 pb-1">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-fg tabular-nums">{formatSize(storage.used)}</div>
+                  <div className="text-base font-semibold text-fg tabular-nums">{formatSize(storage.used)}</div>
                   <div className="text-xs text-muted mt-0.5">已用空间</div>
                 </div>
                 <div className="w-px h-10 bg-border" />
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-fg tabular-nums">{formatSize(available)}</div>
+                  <div className="text-base font-semibold text-fg tabular-nums">{formatSize(available)}</div>
                   <div className="text-xs text-muted mt-0.5">可用空间</div>
                 </div>
               </div>
@@ -135,7 +118,7 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div className="px-6 py-6 space-y-8">
+      <div className="px-6 py-6 space-y-7">
         {/* Quick access */}
         <section>
           <div className="flex items-center justify-between mb-4">
@@ -149,10 +132,10 @@ export default function HomePage() {
               <button
                 key={card.label}
                 onClick={() => handleCardClick(card.type)}
-                aria-label={card.label} className="group relative flex flex-col items-center gap-3 p-5 bg-surface border border-border rounded-[14px] hover:bg-bg-hover hover:border-primary-200 transition-[background-color,border-color] duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+                aria-label={card.label} className="group relative flex items-center gap-3 min-h-[76px] px-4 py-3 bg-surface border border-border-light rounded-xl hover:bg-bg-hover hover:border-border transition-[background-color,border-color] duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
               >
-                <div className={`w-12 h-12 ${card.tile} rounded-xl flex items-center justify-center`}>
-                  <card.icon className="w-6 h-6" aria-hidden />
+                <div className={`w-9 h-9 ${card.tile} rounded-lg flex items-center justify-center flex-shrink-0`}>
+                  <card.icon className="w-5 h-5" aria-hidden />
                 </div>
                 <span className="text-sm font-medium text-fg">{card.label}</span>
               </button>
@@ -227,56 +210,6 @@ export default function HomePage() {
           </section>
         )}
 
-        {/* Recent files */}
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-base font-semibold text-fg">最近文件</h2>
-            <button onClick={() => navigate('/files')} className="text-xs text-muted hover:text-primary-600 flex items-center gap-1 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded">
-              查看全部 <ChevronRight className="w-3 h-3" aria-hidden />
-            </button>
-          </div>
-          {loading ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="flex items-center gap-3 p-3 bg-surface rounded-xl">
-                  <div className="w-8 h-8 bg-surface-2 rounded-lg animate-pulse flex-shrink-0 opacity-60" />
-                  <div className="flex-1 space-y-1.5">
-                    <div className="h-3.5 bg-surface-2 rounded animate-pulse w-2/3 opacity-60" />
-                    <div className="h-3 bg-surface-2 rounded animate-pulse w-1/3 opacity-60" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : recentFiles.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-muted">
-              <FolderClosed className="w-12 h-12 mb-3 opacity-20" aria-hidden />
-              <p className="text-sm">暂无文件，点击上方"上传文件"开始吧</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
-              {recentFiles.map((file) => (
-                <FileCard
-                  key={file.id}
-                  file={file}
-                  actionLabel="文件"
-                  icon={<FileThumbnail file={file} size="sm" />}
-                  onOpen={() => openPreview(file, recentFiles)}
-                  onContextMenu={(e) => { e.preventDefault(); setMenu({ x: e.clientX, y: e.clientY, file }); }}
-                  subtitle={
-                    <span className="flex items-center gap-2">
-                      <span className="tabular-nums">{formatSize(Number(file.fileSize))}</span>
-                      <span className="text-muted">·</span>
-                      <span className="flex items-center gap-0.5 tabular-nums truncate">
-                        <Clock className="w-3 h-3 flex-shrink-0" aria-hidden />
-                        {formatDate(file.updatedAt)}
-                      </span>
-                    </span>
-                  }
-                />
-              ))}
-            </div>
-          )}
-        </section>
       </div>
 
       {preview && (

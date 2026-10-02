@@ -1,0 +1,10 @@
+{
+  "pid": 10028,
+  "port": 8080,
+  "jar": "D:\\code\\st-cloud\\.ai\\docs\\20260930-environment-remediation\\live-runtime-backend-final.jar",
+  "sha256": "C5FF8F3094EDD8AFCC524B9AFCC4E5DE53EEB1F7AE641C2E8DB88AC9A6C81971",
+  "sourceRevision": "env-code-r2",
+  "sourceManifestSha256": "CA61A5A014F4C0F3AEC0C0A36C0F2B4AEB353377AEF97FE87CDE8F28BF2B0EFE",
+  "startedAt": "2026-10-01T10:32:39.9915495+08:00",
+  "previousOwnPid": 26304
+}

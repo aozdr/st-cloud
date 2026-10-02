@@ -4,7 +4,6 @@ import { Search, LogOut, User as UserIcon, X, Clock, Trash2, FolderOpen, Menu, A
 import { useAuthStore } from '../../store/auth';
 import { useFolderFilterStore } from '../../store/folderFilter';
 import { useThemeStore } from '../../store/theme';
-import { isElectron } from '../../lib/electron';
 import { cn } from '../../lib/utils';
 import NotificationBell from '../team/NotificationBell';
 
@@ -128,21 +127,6 @@ function TopBar({ onMenuClick }: TopBarProps) {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  // Ctrl+F 快捷键聚焦搜索框（PikPak 风格搜索入口提示）
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
-        const active = document.activeElement as HTMLElement | null;
-        // 已在输入框中时不抢焦点，避免干扰用户输入
-        if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA')) return;
-        e.preventDefault();
-        inputRef.current?.focus();
-      }
-    };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, []);
-
   const handleLogout = () => {
     logout();
     navigate('/login');
@@ -188,7 +172,7 @@ function TopBar({ onMenuClick }: TopBarProps) {
   const btnBase = 'flex items-center justify-center rounded-full cursor-pointer transition-colors duration-200 flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 
   return (
-    <header className={cn('h-16 bg-surface border-b border-border-light flex items-center px-4 sm:px-8 flex-shrink-0 gap-2 sm:gap-4', !isElectron() && 'rounded-tl-2xl')}>
+    <header className="h-[60px] bg-surface border-b border-border-light flex items-center px-4 sm:px-8 flex-shrink-0 gap-2 sm:gap-4">
       {/* Mobile menu toggle */}
       <button
         onClick={onMenuClick}
@@ -222,8 +206,8 @@ function TopBar({ onMenuClick }: TopBarProps) {
 
       {/* Search (desktop/tablet) */}
       <div className="flex-1 hidden sm:flex justify-center">
-        <div className="relative w-full max-w-[360px] group" ref={searchRef}>
-          <div className="flex items-center h-10 bg-surface-2 border border-transparent rounded-[10px] transition-colors duration-150 group-focus-within:bg-surface group-focus-within:border-[#C9D2FF] group-focus-within:shadow-[0_0_0_3px_rgba(79,110,247,0.10)]">
+        <div className="relative w-full max-w-[440px] group" ref={searchRef}>
+          <div className="flex items-center h-9 bg-surface-2 border border-transparent rounded-lg transition-colors duration-150 group-focus-within:bg-surface group-focus-within:border-primary-200 group-focus-within:shadow-[0_0_0_3px_rgba(79,110,247,0.10)]">
             <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted group-focus-within:text-primary-500 transition-colors" aria-hidden />
               <input
@@ -234,8 +218,8 @@ function TopBar({ onMenuClick }: TopBarProps) {
                 onKeyDown={handleSearch}
                 onFocus={() => setShowHistory(true)}
                 aria-label="搜索文件"
-                placeholder="搜索文件名或文档内容… Ctrl+F"
-                className="w-full pl-11 pr-3 bg-transparent border-0 text-sm text-fg placeholder:text-tertiary outline-none rounded-[10px]"
+                placeholder="搜索文件或内容"
+                className="w-full pl-11 pr-3 bg-transparent border-0 text-sm text-fg placeholder:text-tertiary outline-none rounded-lg"
               />
             </div>
             <div className="flex items-center pr-1">
@@ -252,13 +236,6 @@ function TopBar({ onMenuClick }: TopBarProps) {
                   {isMac ? '⌘' : 'Ctrl'}&nbsp;K
                 </kbd>
               )}
-              <button
-                onClick={() => executeSearch(searchValue)}
-                className="flex items-center gap-1.5 px-3.5 h-7 bg-primary-600 text-white text-sm font-medium rounded-md hover:bg-primary-700 active:bg-primary-800 cursor-pointer transition-colors duration-150 flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
-              >
-                <Search className="w-4 h-4" aria-hidden />
-                <span className="hidden md:inline">搜索</span>
-              </button>
             </div>
           </div>
 

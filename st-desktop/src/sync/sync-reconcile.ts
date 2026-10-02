@@ -1,7 +1,8 @@
 import fs from 'fs';
 import path from 'path';
+import { createHash } from 'crypto';
 import { apiClient } from '../api-client';
-import { getSyncState, getAllSyncStates, deleteSyncState, upsertSyncState } from '../database';
+import { getSyncState, getAllSyncStates, getSyncConfig, deleteSyncState, upsertSyncState } from '../database';
 import { calculateFileMd5 } from '../utils/md5';
 import { withRetry, syncLog, parseFileSize, type SyncEngineCtx, type DeltaItem } from './sync-shared';
 import { preserveAndRemove, resumeRecoveryIfPresent } from './sync-recovery';
@@ -16,6 +17,7 @@ export async function fullReconcile(ctx: SyncEngineCtx): Promise<boolean> {
   syncLog('info', '开始全量对账...');
   try {
     const oldStates = getAllSyncStates(ctx.root.rootId);
+    const baselineCursor = getSyncConfig(ctx.root.rootId)?.cursor ?? '0';
     const seen = new Map<string, string>();
     const downloaded = await reconcileFolder(ctx, ctx.root.cloudFolderNodeId, '', seen);
     const rootResponse = await withRetry(() => apiClient.get(`/file/${ctx.root.cloudFolderNodeId}`), '读取同步根');
@@ -23,8 +25,23 @@ export async function fullReconcile(ctx: SyncEngineCtx): Promise<boolean> {
       throw new Error('同步根详情不可用');
     }
     const rootPath: string = rootResponse.data.data.path;
+    // 同步根自身的 CREATE 可以登记根映射；它属于扫描结果，不能当作历史残留搬走。
+    seen.set(ctx.root.cloudFolderNodeId, '/');
     const handled: string[] = [];
     for (const state of oldStates.sort((a, b) => a.localPath.length - b.localPath.length)) {
+      const canonicalPath = state.localPath.replace(/\/+/g, '/');
+      if (canonicalPath !== state.localPath && state.nodeId && seen.get(state.nodeId) === canonicalPath) {
+        const canonicalState = getSyncState(ctx.root.rootId, canonicalPath);
+        const oldAbs = ctx.absPathFor(state.localPath);
+        const canonicalAbs = ctx.absPathFor(canonicalPath);
+        // 只清除同节点、同实际文件的重复斜杠映射，不移动字节，也不覆盖其他节点的状态。
+        if (oldAbs && canonicalAbs && oldAbs === canonicalAbs
+            && (canonicalState?.nodeId === state.nodeId
+              || (canonicalPath === '/' && state.nodeId === ctx.root.cloudFolderNodeId))) {
+          deleteSyncState(ctx.root.rootId, state.localPath);
+          continue;
+        }
+      }
       // 冲突副本是本地保留内容，并非云端路径镜像；相同云端节点可对应多个副本，不能当历史残留搬走。
       if (state.status === 'conflict') continue;
       if (!state.nodeId || seen.get(state.nodeId) === state.localPath || ctx.isExcluded(state.localPath)
@@ -47,9 +64,18 @@ export async function fullReconcile(ctx: SyncEngineCtx): Promise<boolean> {
       const oldAbs = ctx.absPathFor(state.localPath);
       if (!oldAbs) throw new Error('历史状态路径越界');
       // 原件可能在上次对账中已移入恢复区，清理旧映射前先确认该恢复操作完成。
-      const preserve = fs.existsSync(oldAbs) ? preserveAndRemove : resumeRecoveryIfPresent;
-      const recovery = preserve(ctx.root.rootId, 'legacy-' + state.nodeId,
-        ctx.root.localPath, oldAbs, state.localPath, rel => ctx.markEngineWritten(rel));
+      // 同节点后续移动/修改必须独立保全；同一基线的失败重试则使用稳定 ID，保留所有旧副本。
+      const generation = createHash('sha256').update(JSON.stringify([state.nodeId, state.localPath,
+        state.md5, state.size, state.localMtime, state.cloudMtime, baselineCursor])).digest('hex');
+      const operationId = 'legacy-' + state.nodeId + '-' + generation;
+      const args = [ctx.root.localPath, oldAbs, state.localPath,
+        (rel: string) => ctx.markEngineWritten(rel)] as const;
+      const recovery = fs.existsSync(oldAbs)
+        ? preserveAndRemove(ctx.root.rootId, operationId, ...args)
+        : resumeRecoveryIfPresent(ctx.root.rootId, operationId, ...args)
+          // 兼容升级前已原子移动但未提交清单的操作；其他路径的旧清单不能占用当前保全轮次。
+          ?? resumeRecoveryIfPresent(ctx.root.rootId, 'legacy-' + state.nodeId, ...args,
+            { ignoreUnrelatedPath: true });
       if (recovery) syncLog('conflict', '历史残留已保存到: ' + recovery);
       for (const row of getAllSyncStates(ctx.root.rootId)) {
         if (row.localPath === state.localPath || row.localPath.startsWith(state.localPath + '/')) {
@@ -90,19 +116,22 @@ export async function reconcileFolder(ctx: SyncEngineCtx, folderId: string, relP
       throw new Error('云端目录列举失败: ' + String(res.data.message || res.data.code));
     }
     const payload = res.data?.data ?? res.data;
-    // 分页必须是服务端明确给出的整数；null/空串转成 0 会把损坏响应误判为空目录。
-    if (!payload || !Array.isArray(payload.records) || !Number.isInteger(payload.pages)
-        || payload.pages < 0 || (payload.pages === 0 && payload.records.length > 0)
-        || (payload.pages > 0 && payload.pages < page)) throw new Error('云端目录响应不完整');
+    // 后端 Long 全局序列化为十进制字符串；仅接受安全非负整数，不能把 null/空串误判为空目录。
+    const rawPages: unknown = payload?.pages;
+    const totalPages = typeof rawPages === 'number' ? rawPages
+      : typeof rawPages === 'string' && /^(0|[1-9][0-9]*)$/.test(rawPages) ? Number(rawPages) : NaN;
+    if (!payload || !Array.isArray(payload.records) || !Number.isSafeInteger(totalPages)
+        || totalPages < 0 || (totalPages === 0 && payload.records.length > 0)
+        || (totalPages > 0 && totalPages < page)) throw new Error('云端目录响应不完整');
     const records: Array<{
       id: string; parentId: string; nodeType: number; name: string;
       path: string; fileSize: string | number | null; fileMd5: string | null; updatedAt: string;
     }> = payload?.records ?? [];
-    const totalPages: number = payload.pages;
 
     for (const node of records) {
       const fileSize = parseFileSize(node.fileSize);
-      const relPath = relPrefix + '/' + node.name;
+      // 根事件的 '/' 前缀与全量扫描的空前缀使用同一规范路径，避免生成 '//文件' 状态。
+      const relPath = relPrefix.replace(/\/+/g, '/').replace(/\/$/, '') + '/' + node.name;
       if (ctx.isExcluded(relPath)) continue;
       if (seen) seen.set(node.id, relPath);
       const absPath = ctx.absPathFor(relPath);

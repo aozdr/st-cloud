@@ -1,0 +1,23 @@
+{
+  "executedAt": "2026-10-01T02:12:35.037Z",
+  "process": 36428,
+  "backend": "http://127.0.0.1:8080",
+  "files": [
+    {
+      "file": "st-desktop/src/api-client.ts",
+      "sha256": "fcc71681136b4a8f0b6283207a19c22845088b93c77a51a6593d24516dddd51f"
+    },
+    {
+      "file": "st-desktop/src/auth-test-harness.cjs",
+      "sha256": "b9ce0077b8db9368c08e7242de7ff378d437a504abb39d1371f674d3a028b009"
+    },
+    {
+      "file": "st-web/src/auth-session.ts",
+      "sha256": "16878feb1f7411e56c08093c5ce806cea8df7d53f05f59ec26e537a0ab09ec32"
+    },
+    {
+      "file": "st-web/src/lib/api.ts",
+      "sha256": "63ffbe426291d5a905a3ab6349491e8ad9cb91c9ec27bf4fc96b611a06490c38"
+    }
+  ]
+}

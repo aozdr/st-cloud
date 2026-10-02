@@ -61,7 +61,18 @@ import static org.mockito.Mockito.*;
  * 使用 H2 + 真实 Mapper；S3/文件/事件以 Mock 隔离，RelayBufferManager 为真实实现（临时目录隔离）。
  */
 @Import(RelayUploadIntegrationTest.RelayTestConfig.class)
+@org.springframework.transaction.annotation.Transactional(propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
 class RelayUploadIntegrationTest extends AbstractIntegrationTest {
+
+    @org.junit.jupiter.api.AfterEach
+    void removeCommittedH2Fixtures() {
+        // 上传外部阶段不允许测试事务包裹；提交后的独立 H2 夹具须显式清理。
+        for (String table : new String[]{"file_version", "file_node", "file_object", "upload_session",
+                "object_upload_candidate", "file_orphan_candidate", "event_log"}) {
+            jdbcTemplate.update("DELETE FROM " + table + " WHERE tenant_id=1");
+        }
+        jdbcTemplate.update("DELETE FROM sys_user WHERE tenant_id=1");
+    }
 
     @TestConfiguration
     static class RelayTestConfig {

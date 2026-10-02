@@ -66,7 +66,18 @@ import static org.mockito.Mockito.when;
  * 3. 安全校验：他人目录 -> FORBIDDEN；目标不是文件夹 -> FILE_TYPE_NOT_ALLOWED；目标不存在 -> FILE_NOT_FOUND。
  */
 @Import(ArchiveServiceIntegrationTest.ArchiveTestConfig.class)
+@org.springframework.transaction.annotation.Transactional(propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
 class ArchiveServiceIntegrationTest extends AbstractIntegrationTest {
+
+    @org.junit.jupiter.api.AfterEach
+    void removeCommittedH2Fixtures() {
+        // 上传外部阶段不允许测试事务包裹；提交后的独立 H2 夹具须显式清理。
+        for (String table : new String[]{"file_version", "file_node", "file_object", "upload_session",
+                "object_upload_candidate", "file_orphan_candidate", "event_log"}) {
+            jdbcTemplate.update("DELETE FROM " + table + " WHERE tenant_id=1");
+        }
+        jdbcTemplate.update("DELETE FROM sys_user WHERE tenant_id=1");
+    }
 
     @TestConfiguration
     static class ArchiveTestConfig {
@@ -378,8 +389,10 @@ class ArchiveServiceIntegrationTest extends AbstractIntegrationTest {
         archiveService.extractArchive(zip.getId(), 0L);
 
         // 物理对象重新上传一次，墓碑记录被恢复并 +1 引用
-        verify(storageService, times(1)).uploadObject(eq("1/" + md5), any(InputStream.class), anyLong(), anyString());
         FileObject revived = fileObjectMapper.selectByTenantAndMd5(1L, md5);
+        assertNotNull(revived);
+        verify(storageService, times(1)).uploadObject(eq(revived.getStoragePath()), any(InputStream.class), anyLong(), anyString());
+        assertTrue(revived.getStoragePath().startsWith("1/objects/" + md5 + "/"));
         assertNotNull(revived);
         assertEquals(0, revived.getStatus());
         assertEquals(1, revived.getRefCount());

@@ -1,0 +1,50 @@
+{
+  "dispatchId": "DISPATCH-env-recycle-01",
+  "taskId": "TASK-20260930-environment-recycle-tests",
+  "status": "completed",
+  "artifactRefs": [
+    "st-core/src/test/java/com/stcloud/core/service/impl/TeamRecycleMysqlConcurrencyIntegrationTest.java",
+    ".ai/docs/20260930-environment-remediation/recycle-testcases.md",
+    ".ai/docs/20260930-environment-remediation/recycle-mysql-before.log"
+  ],
+  "criterionProposal": {
+    "id": "TESTCASES",
+    "outcome": "pass",
+    "by": "/root/recycle_tests",
+    "dispatchId": "DISPATCH-env-recycle-01",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-env-recycle-01.json",
+    "validatedRevision": "env-design-r1"
+  },
+  "proposalScope": "仅 V06/RECYCLE01 部分测试用例编写。已只读核对主线程修正 Outbox 统计条件；不提出 TEST_PASS 或整体 TESTCASES 验收结论。主线程正在运行构建，child 遵照要求不并行修改 Java。",
+  "blockerProposals": [],
+  "background": "遗留 V06 缺管理员撤权与恢复/永久删除交错、恢复与永久删除竞争的真实 MySQL 证据。",
+  "inputs": [
+    ".ai/tasks/TASK-20260930-environment-recycle-tests.md",
+    ".ai/docs/20260930-environment-remediation/design.md",
+    ".ai/docs/20260930-environment-remediation/testcases.md",
+    "当前 TeamRecycleBinIntegrationTest、RecycleBinServiceImpl、TeamStorageMapper、ReliableEventPublisher、MyBatisPlusConfig",
+    "当前 Dispatch 协议/schema、State design=env-design-r1"
+  ],
+  "analysis": "初始代码以普通节点/管理员读取作为 UPDATE/DELETE 前判断，等锁期间已提交的权限/状态变更可淘汰该快照。主线程 before 日志实跑4项，4 failure/0 error/0 skip。其中撤权后恢复、撤权后永久删除、恢复先行后永久删除得到不应成功的 completed，3项产品竞态得到复现。删除先行后恢复在 Outbox 计数失败，系本测试错误依赖 event_log.tenant_id；event_log 为系统级忽略租户表，可信租户在 payload.fileNode.tenantId，应改统计条件，不能把该项当作产品竞态。",
+  "decision": "新增独立测试类，不套外层事务；使用真实服务 AOP 代理、真实 MyBatis 连接、InnoDB 锁等待、实际对象引用/配额和真实 ReliableEventPublisher 写 Outbox。控制连接依照空间→节点持锁；真正观测目标服务连接等待控制连接后才提交撤权或排入后到请求。外部投递及物理消费者不运行，S3 删除 Mockito 断言 never。",
+  "stateDelta": "仅 criterionProposal，建议 V06 部分用例编写通过；没有修改 State、执行 Evaluate、判定 Goal 或 ACCEPT。运行是否通过仍由主线程根据当前修订证据判定。",
+  "risks": [
+    "初始 Outbox 统计错误已由主线程改为 JSON_EXTRACT(payload,'$.fileNode.tenantId')=1，child 只读核对；该事实不能替代修正后的实际运行证据。",
+    "主线程产品修复已开始，但 child 未取得本轮修正统计后的完整通过证据，不宣称产品修复完成。",
+    "角色变更由独立 JDBC 事务模拟现有 TeamService 的空间锁顺序，本套没有跨模块调用 st-team 服务 API。",
+    "真实 Outbox 写入覆盖；MQ 投递/物理消费者受控，不证明真实 RocketMQ/S3、浏览器或 Electron 链路。",
+    "账号需要读取 MySQL 8 performance_schema.data_lock_waits/threads，独立库必须有当前 schema。",
+    "初版产品修复曾有 purge/admin 的节点→空间反向锁序；主线程已统一所有入口调用 lockRecycleNode，child 只读核对。未运行这些入口的死锁专项，不把静态修正当作并发通过。"
+  ],
+  "nextSteps": "主线程串行运行修正后4项及原18项矩阵，保留 Surefire XML 和本轮日志。反向撤权等待2项暂不添加，遵照主线程避免并行编译干扰的指示；必要时另行派发该专项。",
+  "changeImpact": "child 只新增一个 Java 测试、本独立文档和 dispatch 结果。没有改产品实现、其他 child 文件、State、数据库迁移或历史记录；没有运行 Git/Maven、数据库访问或网络操作。主线程运行产生 before 日志和产品源码修复，明确不冒称 child 执行。",
+  "validationEvidence": [
+    "首条输出 DISPATCH_ACK 三元组与 Envelope 相符，已回传主线程；Envelope 必填字段、scope、forbidSpawn/forbidGitMvn 校验，skillRefs为-。",
+    "静态 PowerShell 从 Java 源码提取 URL 门禁：两个准确独立库 URL 允许，共享库、查询参数伪装、相似后缀、H2 四个 URL 拒绝，退出码0。",
+    "源码 SHA256（child 最后修改版本）0F595C080A68E7FB63048853BD452B8E32E17D7D73C77ED6E54CBCDC5ACC8B80；主线程修正 Outbox 统计后的当前源码 SHA256 240AF5CA49F8A25AB64D50471A91C80040AA63D03CD008D11A88E8F29E89FC77。",
+    "主线程 recycle-mysql-before.log：Tests run 4, Failures 4, Errors 0, Skipped 0，BUILD FAILURE；child 只读核对失败位置并区分3项产品窗口与1项测试错误。",
+    "服务实际 MyBatis 连接插件断言 Spring 活跃事务、连接RC及同一事务连接ID；池基线RR。锁等待查询关联请求/阻塞线程PROCESSLIST_ID。",
+    "受控通道在@Value注入后由BeanPostProcessor设定；ReliableEventPublisher仍真实写入event_log，不启动MQ客户端或物理消费者。",
+    "child 未执行编译或测试，不能提出 TEST_PASS。"
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-review-fixes-security-01",
+  "taskId": "TASK-20261001-review-fixes-security",
+  "idempotencyKey": "TASK-20261001-review-fixes-security",
+  "role": "reviewer",
+  "taskType": "security",
+  "objective": "独立复核跨标签认证凭据完整性、旧响应/退出竞态，以及墓碑空间清理后的租户和成员权限",
+  "taskRefs": [
+    ".ai/tasks/TASK-20261001-review-fixes-security.md",
+    ".ai/docs/20261001-review-fixes/design.md",
+    ".ai/docs/20261001-review-fixes/testcases.md"
+  ],
+  "stateRef": ".ai/state/20261001-review-fixes.yaml",
+  "artifactRefs": [
+    ".ai/docs/20261001-review-fixes/changereport.md",
+    ".ai/docs/20261001-review-fixes/source-manifest.json"
+  ],
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      ".ai/docs/20261001-review-fixes/security.md",
+      ".ai/runtime/results/DISPATCH-review-fixes-security-01.json"
+    ],
+    "exclude": [
+      "源码",
+      "测试源码",
+      ".ai/state/**",
+      "数据库",
+      "Git index",
+      "部署",
+      "历史证据"
+    ]
+  },
+  "acceptance": [
+    "依据真实云盘场景和当前实现独立复核，必须区分事实与推测",
+    "生成 security.md 及独立结果，proposal id=SECURITY_REVIEW，当前修订 review-fixes-code-r1"
+  ],
+  "validation": [
+    "核对源码 SHA256 与 source-manifest.json；沿真实调用链检查，必要时只读 Node 复现",
+    "不得运行 Maven 或修改 State"
+  ],
+  "forbidSpawn": true,
+  "forbidGitMvn": true,
+  "output": {
+    "artifactRef": ".ai/runtime/results/DISPATCH-review-fixes-security-01.json"
+  }
+}

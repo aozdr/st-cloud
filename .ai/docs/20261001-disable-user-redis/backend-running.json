@@ -1,0 +1,9 @@
+{
+  "revision": "disable-redis-code-r1",
+  "pid": 24264,
+  "jar": "D:\\code\\st-cloud\\.ai\\docs\\20261001-disable-user-redis\\backend-disable-redis-r1.jar",
+  "sha256": "B6082CC9A65FA68BF11264CA9F1C9F4068FB87CE3A02DFA013478BBF601D4734",
+  "startedAt": "2026-10-01T11:17:26.7627511Z",
+  "previousPid": 27708,
+  "previousJar": "D:\\code\\st-cloud\\.ai\\docs\\20260930-environment-remediation\\live-runtime-backend-final.jar"
+}

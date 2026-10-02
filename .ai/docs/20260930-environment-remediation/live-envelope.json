@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-env-live-01",
+  "taskId": "TASK-20260930-environment-live",
+  "idempotencyKey": "TASK-20260930-environment-live",
+  "role": "tester",
+  "taskType": "test",
+  "objective": "按 TASK 验证当前真实认证与桌面同步链路。首条ACK并向/root回传三元组后继续，部分TEST_PASS env-code-r1 proposal。",
+  "taskRefs": [
+    ".ai/tasks/TASK-20260930-environment-live.md",
+    ".ai/docs/20260930-environment-remediation/design.md",
+    ".ai/docs/20260930-environment-remediation/testcases.md"
+  ],
+  "stateRef": ".ai/state/20260930-environment-remediation.yaml",
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      ".ai/docs/20260930-environment-remediation/live-*",
+      ".ai/runtime/results/DISPATCH-env-live-01.json"
+    ],
+    "exclude": [
+      "产品源码",
+      ".ai/state/**",
+      "历史记录",
+      "用户既有资源"
+    ]
+  },
+  "acceptance": [
+    "真实后端/Redis成对轮换并发和持久恢复",
+    "真实桌面引擎+MySQL/Redis/MQ/S3旧DELETE及离线MOVE UPDATE",
+    "实际持久映射新进程重放和故障后重试，缺口明确"
+  ],
+  "validation": [
+    "真实HTTP后端8080与实际桌面模块，专用随机fixture",
+    "不运行Maven/Git或改源码"
+  ],
+  "forbidSpawn": true,
+  "forbidGitMvn": true,
+  "output": {
+    "resultRef": ".ai/runtime/results/DISPATCH-env-live-01.json"
+  }
+}

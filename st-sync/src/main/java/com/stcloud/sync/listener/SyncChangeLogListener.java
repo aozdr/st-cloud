@@ -32,11 +32,16 @@ public class SyncChangeLogListener {
     @Async
     @EventListener
     public void onSyncChange(SyncChangeEvent event) {
+        Long previousTenant = TenantContext.getTenantIdOrNull();
+        String previousMode = TenantContext.getTenantModeOrNull();
         try {
             FileNode node = event.getFileNode();
             if (node == null || node.getId() == null) {
                 return;
             }
+
+            // 异步线程不继承请求租户，按事件节点建立作用域，结束后精确恢复原始状态。
+            TenantContext.setTenantId(node.getTenantId() != null ? node.getTenantId() : TenantContext.getTenantId());
 
             SyncChangeLog logEntry = new SyncChangeLog();
             logEntry.setTenantId(node.getTenantId() != null ? node.getTenantId() : TenantContext.getTenantId());
@@ -64,6 +69,9 @@ public class SyncChangeLogListener {
             log.error("写入同步变更日志失败: nodeId={}, type={}, error={}",
                     event.getFileNode() != null ? event.getFileNode().getId() : null,
                     event.getChangeType(), e.getMessage(), e);
+        } finally {
+            TenantContext.setTenantId(previousTenant);
+            TenantContext.setTenantMode(previousMode);
         }
     }
 }

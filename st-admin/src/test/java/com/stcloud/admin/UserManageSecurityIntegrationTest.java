@@ -7,6 +7,7 @@ import com.stcloud.admin.service.RoleService;
 import com.stcloud.admin.service.UserManageService;
 import com.stcloud.admin.service.impl.RoleServiceImpl;
 import com.stcloud.admin.service.impl.UserManageServiceImpl;
+import com.stcloud.admin.service.UserRedisKeyCleanupService;
 import com.stcloud.auth.dto.LoginRequest;
 import com.stcloud.auth.dto.LoginResponse;
 import com.stcloud.auth.mapper.SysUserMapper;
@@ -70,7 +71,8 @@ class UserManageSecurityIntegrationTest {
             UserDetailsServiceAutoConfiguration.class, WebMvcAutoConfiguration.class})
     @MapperScan({"com.stcloud.auth.mapper", "com.stcloud.common.mapper"})
     @Import({MyBatisPlusConfig.class, MyMetaObjectHandler.class, UserManageServiceImpl.class,
-            RoleServiceImpl.class, UserSecurityService.class, AuthService.class, JwtUtils.class})
+            RoleServiceImpl.class, UserSecurityService.class, AuthService.class, JwtUtils.class,
+            UserRedisKeyCleanupService.class})
     static class App {
         @Bean PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
         @Bean CloudStorageService cloudStorageService() { return mock(CloudStorageService.class); }
@@ -83,6 +85,7 @@ class UserManageSecurityIntegrationTest {
             doAnswer(inv -> { values.put(inv.getArgument(0), inv.getArgument(1)); return null; })
                     .when(ops).set(anyString(), anyString(), anyLong(), any(TimeUnit.class));
             when(redis.delete(anyString())).thenAnswer(inv -> values.remove(inv.getArgument(0)) != null);
+            when(redis.scan(any())).thenAnswer(inv -> mock(org.springframework.data.redis.core.Cursor.class));
             return redis;
         }
     }

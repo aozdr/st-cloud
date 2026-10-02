@@ -1,0 +1,43 @@
+{
+  "dispatchId": "DISPATCH-env-exp-design-01",
+  "taskId": "TASK-20260930-environment-exp-design",
+  "status": "completed",
+  "artifactRefs": [
+    ".ai/docs/20260930-environment-remediation/exp-design.md"
+  ],
+  "criterionProposal": {
+    "id": "EXP_DESIGN",
+    "outcome": "pass",
+    "by": "/root/exp_design",
+    "dispatchId": "DISPATCH-env-exp-design-01",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-env-exp-design-01.json",
+    "validatedRevision": "env-design-r1"
+  },
+  "blockerProposals": [],
+  "background": "独立审视 Sidebar 整合、透明认证刷新和分享图片降级的设计。",
+  "inputs": [
+    ".ai/tasks/TASK-20260930-environment-exp-design.md",
+    ".ai/docs/20260930-environment-remediation/requirement.md",
+    ".ai/docs/20260930-environment-remediation/impact.md",
+    ".ai/docs/20260930-environment-remediation/uispec.md",
+    ".ai/docs/20260930-environment-remediation/design.md",
+    ".ai/docs/20260930-environment-remediation/architecture-review.md",
+    ".ai/docs/20260930-environment-remediation/testcases.md",
+    ".ai/state/20260930-environment-remediation.yaml（目标、修订、标准快照）"
+  ],
+  "analysis": "已对照当前 schema 检查 Envelope 字段、身份和写入范围；设计约束一致，并已细化任意页面 Sidebar、全部认证状态及分享图片交互/竞态的验收矩阵。",
+  "decision": "建议 EXP_DESIGN 通过，后续以本报告矩阵验证实现；暂时断网不得被推断成永久会话失效。",
+  "stateDelta": "仅提出 criterionProposal，没有写入 State 或判定 Goal。",
+  "risks": [
+    "设计审视不证明 Sidebar 监听、磁盘恢复、跨进程旧事件的实现正确。",
+    "真实后端或浏览器条件不足须记录缺口，不能将受控测试视为全部专项验收。",
+    "需在 EXP_ACCEPT 核对暂时故障和落盘失败的实际行为。"
+  ],
+  "nextSteps": "主线程 Evaluate；实现与 EXP_ACCEPT 对照 AUTH01、AUTH02、WEB01 及报告矩阵。",
+  "changeImpact": "仅写两项 scope.include 文档，没有改产品源码、State 或历史文档，没有运行 Git 或构建。",
+  "validationEvidence": [
+    "只读读取任务、当前协议/schema、需求、影响、uispec、design、architecture-review、testcases。",
+    "当前 State design=env-design-r1，EXP_DESIGN=pending。",
+    "没有运行产品构建、测试或浏览器，因此不声称运行验收通过。"
+  ]
+}

@@ -14,6 +14,10 @@ import org.apache.ibatis.annotations.Update;
  */
 @Mapper
 public interface FileObjectMapper extends BaseMapper<FileObject> {
+    /** 唯一键竞争后使用当前读，避免 MySQL REPEATABLE READ 快照看不到刚提交的胜者。 */
+    // tenant+md5 唯一键保证单行；省略冗余 LIMIT，避免租户 SQL 重写把 LIMIT 移到 FOR UPDATE 后。
+    @Select("SELECT * FROM file_object WHERE tenant_id = #{tenantId} AND md5 = #{md5} AND status = 0 AND deleted = 0 FOR UPDATE")
+    FileObject selectCurrentByTenantAndMd5(@Param("tenantId") Long tenantId, @Param("md5") String md5);
 
     /**
      * 按租户+MD5 查找正常对象（秒传/去重命中判定）

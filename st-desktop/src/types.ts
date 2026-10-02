@@ -52,6 +52,14 @@ export interface TransferSettings {
   downloadSpeedLimit: number; // KB/s, 0 = unlimited
 }
 
+export interface DesktopAuthSnapshot {
+  token: string | null;
+  refreshToken: string | null;
+  sessionId: string;
+  serverUrl: string;
+  revision: number;
+}
+
 export interface ElectronAPI {
   isElectron: true;
   /** 同步窗口标题栏与 Windows 三键颜色（isDark=true 深色） */
@@ -60,7 +68,11 @@ export interface ElectronAPI {
   getServerUrl: () => Promise<string | null>;
   setServerUrl: (url: string) => Promise<void>;
   // 认证
-  setAuth: (token: string, refreshToken: string) => void;
+  setAuth: (token: string, refreshToken: string, sessionId?: string) => Promise<DesktopAuthSnapshot>;
+  getAuth: () => Promise<DesktopAuthSnapshot>;
+  refreshAuth: (sessionId: string) => Promise<DesktopAuthSnapshot>;
+  clearAuth: (sessionId?: string) => Promise<DesktopAuthSnapshot>;
+  onAuthChanged: (cb: (auth: DesktopAuthSnapshot) => void) => () => void;
   // 传输设置
   getTransferSettings: () => Promise<TransferSettings>;
   setTransferSettings: (settings: TransferSettings) => void;

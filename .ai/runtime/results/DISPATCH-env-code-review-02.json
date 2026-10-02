@@ -1,0 +1,44 @@
+{
+  "dispatchId": "DISPATCH-env-code-review-02",
+  "taskId": "TASK-20260930-environment-code-review",
+  "status": "completed",
+  "summary": "独立复审 env-code-r2：首轮 CR01–CR03 已关闭，需求相关热点未发现需阻断的未修复代码缺陷；测试与运行版本门禁仍由主线程和独立 tester 完成。",
+  "artifactRefs": [".ai/docs/20260930-environment-remediation/codereview-r2.md"],
+  "criterionProposal": {
+    "id": "CODE_REVIEW",
+    "outcome": "pass",
+    "by": "/root/code_review_r2",
+    "dispatchId": "DISPATCH-env-code-review-02",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-env-code-review-02.json",
+    "validatedRevision": "env-code-r2"
+  },
+  "findings": [],
+  "closedFindings": [
+    {"id": "CR01", "status": "closed", "evidence": "四失效入口均先空间锁和 RC；真实服务连接 RC、四入口实际 InnoDB 等锁；TeamRoleMysqlConcurrencyIntegrationTest 33 项通过"},
+    {"id": "CR02", "status": "closed", "evidence": "活动异步捕获租户/模式、显式 activity tenant、finally 恢复；TeamActivityTenantTest 4 项通过"},
+    {"id": "CR03", "status": "closed", "evidence": "启用租户 runner、成员空间锁后当前 CAS、文件锁身份/时间 CAS；TeamExpirationTaskIntegrationTest 4 项真实 H2 Mapper 通过"}
+  ],
+  "validation": [
+    {"kind": "readonly-source-review", "result": "首轮修复、MQ 租户、分页/根映射/重复恢复身份、Web/Desktop base、认证/候选GC/迁移/配置热点未发现新的阻断缺陷"},
+    {"kind": "source-manifest-current-hash-check", "evidenceRef": ".ai/docs/20260930-environment-remediation/current-source-manifest.json", "revision": "env-code-r2", "createdAt": "2026-10-01T10:29:15.2141582+08:00", "fileCount": 780, "mismatchCount": 0, "manifestSha256": "ca61a5a014f4c0f3aec0c0a36c0f2b4aeb353377aef97fe87cde8f28bf2b0efe"},
+    {"kind": "current-existing-test-evidence", "evidenceRefs": [".ai/docs/20260930-environment-remediation/backend-full-r2.log", ".ai/docs/20260930-environment-remediation/backend-r2-sync-finish.log", ".ai/docs/20260930-environment-remediation/desktop-recovery-rounds-pass.log", ".ai/docs/20260930-environment-remediation/live-report.md", ".ai/docs/20260930-environment-remediation/exp-accept-report.md", ".ai/docs/20260930-environment-remediation/schema-after.log", ".ai/docs/20260930-environment-remediation/mysql-46.log", ".ai/docs/20260930-environment-remediation/s3-current-20261001.log"], "result": "逐项证据边界在报告中说明；修复前全量失败未计为成功"},
+    {"kind": "sync-context-test-repair-review", "file": "st-sync/src/test/java/com/stcloud/sync/listener/SyncTenantScopeTest.java", "result": "doReturn 重设旧 throw 桩避免执行它；读取实际 backend-r2-sync-finish.log，3 项通过，BUILD SUCCESS"},
+    {"kind": "conflict-marker-readonly-scan", "result": "相关产品源目录无遗留合并标记；未运行 Git"}
+  ],
+  "sourceSnapshots": [
+    {"path": "st-team/src/main/java/com/stcloud/team/service/impl/TeamServiceImpl.java", "sha256": "522660f20322568a57e8c530da8b7bb2d33cc4b17e421f8af15aa47421b962ba"},
+    {"path": "st-team/src/main/java/com/stcloud/team/util/TeamActivityHelper.java", "sha256": "18337aaa04d07f91506fee6d22e1cb228cb496222994725c79c6d8b9a96f11ee"},
+    {"path": "st-team/src/main/java/com/stcloud/team/task/ExternalMemberExpireTask.java", "sha256": "0f1953631b05ae401c655e39372b012376db6cd75a64b046da0bcac3cd0828fc"},
+    {"path": "st-team/src/main/java/com/stcloud/team/task/FileLockExpireTask.java", "sha256": "0aeb2854271b92177b3d00020a1f0fc15760bfa202df47d7e23dc74aadf358b6"},
+    {"path": "st-sync/src/main/java/com/stcloud/sync/listener/SyncChangeMessageConsumer.java", "sha256": "db41713cf77cc0f606c40e948ee5431a5ab92dc8852ee61833f209a2475b3756"},
+    {"path": "st-sync/src/main/java/com/stcloud/sync/listener/SyncChangeLogListener.java", "sha256": "e6ddf41252cdf5e28900fbbf70ac8e85c5d34bb0cb774e41e8b5f33e3fad75cc"},
+    {"path": "st-desktop/src/sync/sync-reconcile.ts", "sha256": "1398cada7c6e3d7d36abc3a8fd06408f2ef80346ad6676f2f70b35780d955e6c"},
+    {"path": "st-desktop/src/sync/sync-recovery.ts", "sha256": "9cdd18316d3d324df2362e212a63b5cc069aff74b9cf5d9f3c7b6eea5c789a03"},
+    {"path": "st-web/vite.config.ts", "sha256": "91dffe9351e4c4f98558e867f88d4b0e18ffab47f23d4228ad4142e193368b52"},
+    {"path": "st-desktop/package.json", "sha256": "ca829eb1b996f9ee12f570ca3db77abc20c8372c9e3a5b655871c06b5bae92a6"},
+    {"path": "st-core/src/main/java/com/stcloud/core/service/impl/RecycleBinServiceImpl.java", "sha256": "708887d6191c71a4dff098f4bf0bda805175d44aa6c727baab2dbf5ee1fe1a66"}
+  ],
+  "limitations": ["本 child 未运行 Maven/Git/数据库写入或运行时交错；实际日志来自当前独立专项或主线程", "修复前 backend-full-r2.log 的 TeamCopyDatabaseIntegrationTest 缺 bean 已在当前测试配置补 mock，最终全量仍须独立测试门禁核对", "live 后端证据为 r1 不可变 JAR，最终 r2 部署与 MQ 告警检查不归此代码审查通过结论", "真实 Electron 窗口/原生 IPC、长期压力、全部图片转换并未由本次证据证明", "后续产品修改不自动继承此复审"],
+  "blockerProposals": [],
+  "reworkRequests": []
+}

@@ -1,0 +1,46 @@
+{
+  "dispatchId": "DISPATCH-env-desktop-01",
+  "taskId": "TASK-20260930-environment-desktop",
+  "status": "completed",
+  "summary": "B01 子任务实现：成对轮换、统一并发刷新、迟到401、会话隔离、持久记录恢复和临时错误保留。整体完成由主线程判定。",
+  "artifactRefs": [
+    "st-desktop/src/api-client.ts",
+    "st-desktop/src/main.ts",
+    "st-desktop/src/preload.ts",
+    "st-desktop/src/auth-test-harness.cjs",
+    "st-desktop/src/auth-rotation.test.cjs",
+    "st-desktop/package.json",
+    "st-web/src/auth-session.ts",
+    "st-web/src/lib/api.ts",
+    "st-web/src/store/auth.ts",
+    "st-web/src/store/auth-startup.test.mjs",
+    "st-web/src/types/index.ts",
+    ".ai/docs/20260930-environment-remediation/desktop-supplement.patch",
+    ".ai/docs/20260930-environment-remediation/desktop-lifecycle.patch",
+    ".ai/docs/20260930-environment-remediation/desktop-remediation.md",
+    ".ai/docs/20260930-environment-remediation/desktop-validation.log"
+  ],
+  "criterionProposal": {
+    "id": "IMPLEMENTED",
+    "outcome": "pass",
+    "by": "/root/desktop_auth",
+    "dispatchId": "DISPATCH-env-desktop-01",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-env-desktop-01.json",
+    "validatedRevision": "env-code-r1",
+    "scope": "B01 部分实现；补充 IPC lifecycle patch 由主线程应用并集成验证"
+  },
+  "validation": [
+    { "command": "node --test st-desktop/src/auth-rotation.test.cjs st-web/src/store/auth-startup.test.mjs", "exitCode": 0, "tests": 33, "passed": 33, "evidenceRef": ".ai/docs/20260930-environment-remediation/desktop-validation.log" },
+    { "command": "node st-desktop/node_modules/typescript/bin/tsc --noEmit -p st-desktop/tsconfig.json", "exitCode": 0, "evidenceRef": ".ai/docs/20260930-environment-remediation/desktop-validation.log" },
+    { "command": "node st-web/node_modules/typescript/bin/tsc --noEmit -p st-web/tsconfig.app.json", "exitCode": 0, "evidenceRef": ".ai/docs/20260930-environment-remediation/desktop-validation.log" }
+  ],
+  "limitations": [
+    "本 child 的 HTTP 证据来自真实受控 Node HTTP 服务，未执行真实 Spring/Redis",
+    "真实磁盘适配器恢复已验证，未执行真实 Electron/Chromium localStorage 重启验收",
+    "持续落盘失败直到退出时，内存最新轮换令牌不能保证持久恢复"
+  ],
+  "blockerProposals": [],
+  "integrationRequests": [
+    { "artifactRef": ".ai/docs/20260930-environment-remediation/desktop-lifecycle.patch", "reason": "集中订阅认证状态，使主进程 refresh 拒绝停止同步，refresh-only 恢复成功后启动同步" }
+  ]
+}

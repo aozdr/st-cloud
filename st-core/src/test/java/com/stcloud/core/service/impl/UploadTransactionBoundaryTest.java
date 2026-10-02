@@ -406,13 +406,11 @@ class UploadTransactionBoundaryTest {
         assertThrows(RuntimeException.class, () -> uploadService.simpleUpload(0L, file, null));
 
         // DB 失败后对象暂不直接删除，先进入待回收候选，避免并发重建同一规范对象时误删。
-        verify(storageService).uploadObject(anyString(), any(InputStream.class),
+        org.mockito.ArgumentCaptor<String> keyCaptor = org.mockito.ArgumentCaptor.forClass(String.class);
+        verify(storageService).uploadObject(keyCaptor.capture(), any(InputStream.class),
                 eq((long) data.length), anyString());
         verify(storageService, never()).deleteObject(anyString());
-        assertEquals(1L, jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM file_orphan_candidate WHERE tenant_id = 1 AND md5 = ? "
-                        + "AND active_uploads = 0 AND status = 1",
-                Long.class, lastMd5));
+        assertEquals(1L, jdbcTemplate.queryForObject("SELECT COUNT(*) FROM object_upload_candidate WHERE storage_path=? AND state='DISCARDED'", Long.class, keyCaptor.getValue()));
         // 事务回滚：file_object / file_node 均无本次记录
         assertEquals(0L, fileObjectMapper.selectCount(new LambdaQueryWrapper<FileObject>()
                 .eq(FileObject::getTenantId, 1L).eq(FileObject::getMd5, lastMd5)).longValue(),

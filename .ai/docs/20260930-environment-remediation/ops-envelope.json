@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-env-ops-01",
+  "taskId": "TASK-20260930-environment-ops",
+  "idempotencyKey": "TASK-20260930-environment-ops",
+  "role": "executor",
+  "taskType": "implement",
+  "objective": "完成 O03 当前依赖检查、固定镜像与探针，按TASK边界。首条DISPATCH_ACK并向/root回传三元组，继续工作。部分IMPLEMENTED proposal env-code-r1。",
+  "taskRefs": [
+    ".ai/tasks/TASK-20260930-environment-ops.md",
+    ".ai/docs/20260930-environment-remediation/design.md"
+  ],
+  "stateRef": ".ai/state/20260930-environment-remediation.yaml",
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      "docker/docker-compose.yml",
+      "docker/elasticsearch/Dockerfile",
+      "docker/.env.example",
+      "docker/scripts/*",
+      ".ai/docs/20260930-environment-remediation/ops-*",
+      ".ai/runtime/results/DISPATCH-env-ops-01.json"
+    ],
+    "exclude": [
+      ".ai/state/**",
+      "产品源码",
+      "数据库",
+      "历史记录"
+    ]
+  },
+  "acceptance": [
+    "当前镜像有真实身份记录并固定",
+    "实际可运行健康检查",
+    "Redis/MQ/S3/ES当前证据；历史未知如实记录"
+  ],
+  "validation": [
+    "Docker只读检查/探针；不重启不删除容器与用户数据",
+    "不运行Maven/Git"
+  ],
+  "forbidSpawn": true,
+  "forbidGitMvn": true,
+  "output": {
+    "resultRef": ".ai/runtime/results/DISPATCH-env-ops-01.json"
+  }
+}

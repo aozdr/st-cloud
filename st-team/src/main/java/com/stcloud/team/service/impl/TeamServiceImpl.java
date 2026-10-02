@@ -304,8 +304,10 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public Result<Void> removeMember(Long spaceId, Long memberId) {
+        // 成员失效与回收权限决策共用空间锁，锁等待后再核对当前管理员权限。
+        lockRoleWrites(spaceId);
         checkPermission(spaceId, 0);
         TeamMember member = teamMemberMapper.selectById(memberId);
         if (member == null || !member.getSpaceId().equals(spaceId)) {
@@ -453,8 +455,9 @@ public class TeamServiceImpl implements TeamService {
     // ==================== P0 新增：退出与移交 ====================
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public Result<Void> leaveSpace(Long spaceId) {
+        lockRoleWrites(spaceId);
         Long userId = UserContext.getUserId();
         TeamMember member = teamMemberMapper.selectOne(new LambdaQueryWrapper<TeamMember>()
                 .eq(TeamMember::getSpaceId, spaceId).eq(TeamMember::getUserId, userId));
@@ -1035,8 +1038,10 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public Result<Void> setExternalMember(Long spaceId, Long memberId, ExternalMemberRequest request) {
+        // 外部成员属性/到期时间会撤销回收权限，必须参与同一空间写锁协议。
+        lockRoleWrites(spaceId);
         checkPermission(spaceId, 0);
         TeamMember member = teamMemberMapper.selectById(memberId);
         if (member == null || !member.getSpaceId().equals(spaceId)) throw new BusinessException(ResultCode.TEAM_MEMBER_NOT_FOUND);
@@ -1057,8 +1062,9 @@ public class TeamServiceImpl implements TeamService {
     }
 
     @Override
-    @Transactional
+    @Transactional(isolation = Isolation.READ_COMMITTED)
     public Result<Void> setExternalConfig(Long spaceId, boolean allow) {
+        lockRoleWrites(spaceId);
         checkPermission(spaceId, 0);
         com.stcloud.team.entity.TeamExternalConfig config = teamExternalConfigMapper.selectOne(
                 new LambdaQueryWrapper<com.stcloud.team.entity.TeamExternalConfig>().eq(com.stcloud.team.entity.TeamExternalConfig::getSpaceId, spaceId));

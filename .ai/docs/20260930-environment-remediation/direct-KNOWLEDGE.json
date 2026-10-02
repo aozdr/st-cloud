@@ -1,0 +1,10 @@
+{
+  "taskId": "20260930-environment-remediation",
+  "criterionProposal": {
+    "evidenceRef": ".ai/knowledge/local-environment-baseline.md",
+    "validatedRevision": "env-code-r2",
+    "by": "workflow-manager",
+    "outcome": "pass",
+    "id": "KNOWLEDGE"
+  }
+}

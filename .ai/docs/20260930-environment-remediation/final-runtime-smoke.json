@@ -1,0 +1,62 @@
+{
+  "at": "2026-10-01T02:36:09.145Z",
+  "backend": {
+    "pid": 10028,
+    "port": 8080,
+    "jar": "D:\\code\\st-cloud\\.ai\\docs\\20260930-environment-remediation\\live-runtime-backend-final.jar",
+    "sha256": "C5FF8F3094EDD8AFCC524B9AFCC4E5DE53EEB1F7AE641C2E8DB88AC9A6C81971",
+    "sourceRevision": "env-code-r2",
+    "sourceManifestSha256": "CA61A5A014F4C0F3AEC0C0A36C0F2B4AEB353377AEF97FE87CDE8F28BF2B0EFE",
+    "startedAt": "2026-10-01T10:32:39.9915495+08:00",
+    "previousOwnPid": 26304
+  },
+  "checks": [
+    {
+      "name": "final_backend_registered_normal_fixture",
+      "pass": true
+    },
+    {
+      "name": "final_backend_rotation_1",
+      "pass": true,
+      "oldRefreshRejected": true
+    },
+    {
+      "name": "final_backend_rotation_2",
+      "pass": true,
+      "oldRefreshRejected": true
+    },
+    {
+      "name": "final_backend_s3_image_original_roundtrip",
+      "pass": true,
+      "nodeId": "2105486899080806401",
+      "bytes": 149,
+      "sha256": "f21dad1566aa005179da8704673b32337a95b87954033af81de5d46a00b65d0a"
+    },
+    {
+      "name": "final_backend_s3_thumbnail_roundtrip",
+      "pass": true,
+      "http": 200,
+      "contentType": "image/jpeg",
+      "bytes": 660
+    },
+    {
+      "name": "final_backend_real_chrome_image_decode",
+      "pass": true,
+      "width": 64,
+      "height": 32
+    },
+    {
+      "name": "final_backend_mq_journal",
+      "pass": true,
+      "cursor": "348",
+      "nodeId": "2105486899080806401"
+    }
+  ],
+  "fixture": {
+    "username": "env_final_muoxa5ao55a359",
+    "folderId": "2105486898762039297",
+    "rootId": "2105486898896257025",
+    "nodeId": "2105486899080806401"
+  },
+  "status": "passed"
+}

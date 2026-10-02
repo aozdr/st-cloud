@@ -40,13 +40,13 @@ export default function AppLayout() {
     setMobileSidebarOpen(false);
   }, [location.pathname]);
 
-  // 桌面端：悬浮窗右键菜单点击"传输管理"时，主进程发消息，这里跳转传输页
+  // 桌面端托盘点击“打开传输列表”时，主进程发消息，这里跳转传输页。
   useEffect(() => {
     const unsubscribe = window.electronAPI?.onOpenTransfers?.(() => navigate('/transfers'));
     return unsubscribe;
   }, [navigate]);
 
-  // 桌面端：悬浮窗右键菜单点击"简易限速"时，主进程发消息，跳转传输页并自动弹出设置对话框
+  // 桌面端托盘点击“传输设置”时，主进程发消息，跳转传输页并自动弹出设置对话框。
   useEffect(() => {
     const unsubscribe = window.electronAPI?.onOpenTransferSettings?.(() => navigate('/transfers?settings=1'));
     return unsubscribe;
@@ -74,8 +74,8 @@ export default function AppLayout() {
           {/* 标题栏仅 Electron 桌面端渲染（网页端不显示）；保留拖拽区与 Windows 三键 */}
           {isElectron() && <TitleBar />}
           <TopBar onMenuClick={handleMenuClick} />
-          {/* 左下圆角与侧栏右缘底部圆角对齐（文件区域与侧栏分割线圆角化） */}
-          <main id="main-content" className="flex-1 min-h-0 overflow-hidden rounded-bl-2xl pb-20 md:pb-0">
+          {/* 主内容面保持连续铺满，移动端仅为底部 Tab 保留安全间距。 */}
+          <main id="main-content" className={`flex-1 min-h-0 overflow-hidden ${isElectron() ? '' : 'pb-20 md:pb-0'}`}>
             {/* Suspense 仅包裹 Outlet：路由切换时侧边栏/顶栏不重新挂载，仅顶部进度条提示。
                 不按 pathname 加 key：打开文件夹时页面不整页重挂载，只有文件列表原地更新（Windows 风格） */}
             <Suspense fallback={<SuspenseProgressBar />}>
@@ -86,7 +86,7 @@ export default function AppLayout() {
           </main>
         </div>
       </div>
-      <MobileTabBar onMoreClick={handleMenuClick} />
+      {!isElectron() && <MobileTabBar onMoreClick={handleMenuClick} />}
       <PwaInstallBanner />
       <ShortcutHelpDialog open={shortcutOpen} onClose={() => setShortcutOpen(false)} />
     </UploadProvider>

@@ -50,13 +50,17 @@ export class SyncEngine implements SyncEngineCtx {
   /** 引擎自身写入的相对路径 -> 过期时间戳（自激过滤） */
   private engineWritten = new Map<string, number>();
 
-  constructor(root: SyncRootInfo) {
+  constructor(root: SyncRootInfo, private readonly session?: {
+    assertCurrent(): void;
+    run<T>(action: () => T): T;
+  }) {
     this.root = root;
     this.conflictStrategy = root.conflictStrategy || 'keep_both';
     this.watcher = new FileWatcher(root.localPath);
   }
 
   async start(): Promise<void> {
+    this.session?.assertCurrent();
     if (this.running) return;
     this.running = true;
     if (!fs.existsSync(this.root.localPath)) {
@@ -79,6 +83,7 @@ export class SyncEngine implements SyncEngineCtx {
         }
       }
       const ok = await fullReconcileImpl(this);
+      this.session?.assertCurrent();
       // 全量对账必须完整成功才固化版本；失败抛出，由 manager 清理实例后允许重新启动。
       // 游标保留重建前位置：全量快照覆盖现状，增量从重建前游标继续，不重放整段历史日志
       upsertSyncConfig({
@@ -97,11 +102,15 @@ export class SyncEngine implements SyncEngineCtx {
     }
 
     await this.watcher.start();
+    this.session?.assertCurrent();
 
     // 首次增量对账
     await this.syncOnce();
+    this.session?.assertCurrent();
     // 定时对账（30s 兜底，WS 在线时由 ws-client 触发即时同步）
-    this.timer = setInterval(() => this.syncOnce(), 30_000);
+    this.timer = setInterval(() => {
+      this.syncOnce().catch(err => console.error('[sync] periodic sync failed:', err));
+    }, 30_000);
     emitSyncEvent('started', { rootId: this.root.rootId });
     syncLog('info', '同步已启动 · ' + this.root.localPath);
   }
@@ -214,6 +223,12 @@ export class SyncEngine implements SyncEngineCtx {
    * 游标仅在全部变更处理成功后才推进，保证断网恢复后不丢不重。
    */
   async syncOnce(localEvents?: FileChangeEvent[]): Promise<void> {
+    // WS/文件监听器可能在其它异步上下文调用，整轮仍绑定创建引擎时的会话。
+    if (this.session) return this.session.run(() => this.syncOnceInSession(localEvents));
+    return this.syncOnceInSession(localEvents);
+  }
+
+  private async syncOnceInSession(localEvents?: FileChangeEvent[]): Promise<void> {
     if (this.syncing) {
       // 同步进行中：事件合并进 pending，本轮结束后自动续跑，绝不丢弃
       if (localEvents && localEvents.length > 0) {
@@ -240,10 +255,12 @@ export class SyncEngine implements SyncEngineCtx {
       let hasMore = true;
       while (hasMore) {
         const delta = await withRetry(() => this.fetchDelta(since), '拉取变更');
+        this.session?.assertCurrent();
         if (delta.scopeProjectionVersion !== 2) throw new Error('同步服务端尚未支持范围投影 v2');
         if (delta.hasMore && BigInt(delta.cursor) <= BigInt(since)) throw new Error('同步游标没有前进');
         if (delta.reconcileRequired && !(await fullReconcileImpl(this))) throw new Error('同步根对账失败');
         await this.processCloudDelta(delta.changes);
+        this.session?.assertCurrent();
         changeCount += delta.changes.length;
         since = delta.cursor;
         hasMore = delta.hasMore;
@@ -259,6 +276,7 @@ export class SyncEngine implements SyncEngineCtx {
       }
 
       // 记录本轮成功时间。
+      this.session?.assertCurrent();
       upsertSyncConfig({
         rootId: this.root.rootId,
         localPath: this.root.localPath,

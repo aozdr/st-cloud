@@ -57,10 +57,10 @@ export default function Login() {
       {isElectron() && <TitleBar />}
       <div className="flex flex-1 min-h-0">
         {/* Left brand panel */}
-        <div className="hidden lg:flex lg:w-[45%] brand-gradient flex-col justify-between p-12 relative overflow-hidden">
+        <div className={`hidden lg:flex ${isElectron() ? 'lg:w-[38%]' : 'lg:w-[45%]'} bg-surface flex-col justify-between p-10 relative overflow-hidden border-r border-border-light`}>
         <div className="relative z-10">
           <div className="flex items-center gap-3 text-fg">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-primary">
+            <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
               <Cloud className="w-6 h-6 text-white" aria-hidden />
             </div>
             <span className="text-xl font-semibold tracking-tight">星云盘</span>
@@ -68,8 +68,8 @@ export default function Login() {
         </div>
 
         <div className="relative z-10 text-fg">
-          <h1 className="text-5xl font-bold leading-tight mb-4 bg-gradient-to-r from-fg to-muted bg-clip-text text-transparent">
-            安全、高效的<br />企业云盘解决方案
+          <h1 className={`${isElectron() ? 'text-2xl' : 'text-3xl'} font-semibold leading-tight mb-4 text-fg`}>
+            安全同步你的文件
           </h1>
           <p className="text-muted text-base leading-relaxed max-w-md mt-6">
             支持大文件分片上传、秒传去重、多格式预览，<br />
@@ -77,11 +77,11 @@ export default function Login() {
           </p>
           <div className="mt-10 flex flex-col gap-3 text-muted text-sm">
             <div className="flex items-center gap-2.5">
-              <div className="w-2 h-2 rounded-full bg-primary-500 shadow-[0_0_8px_rgb(var(--color-primary-500)/0.6)]" />
+              <div className="w-2 h-2 rounded-full bg-primary-500" />
               <span>分片上传 · 断点续传</span>
             </div>
             <div className="flex items-center gap-2.5">
-              <div className="w-2 h-2 rounded-full bg-primary-500 shadow-[0_0_8px_rgb(var(--color-primary-500)/0.6)]" />
+              <div className="w-2 h-2 rounded-full bg-primary-500" />
               <span>MD5 秒传</span>
             </div>
           </div>
@@ -96,7 +96,7 @@ export default function Login() {
       <div className="flex-1 flex items-center justify-center px-6 py-12 bg-bg">
         <div className="w-full max-w-md">
           <div className="lg:hidden flex items-center gap-3 mb-8">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-primary">
+            <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
               <Cloud className="w-6 h-6 text-white" aria-hidden />
             </div>
             <h1 className="text-xl font-semibold text-fg">星云盘</h1>

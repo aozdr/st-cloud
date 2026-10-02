@@ -1,8 +1,8 @@
 import { create } from 'zustand';
 import axios from 'axios';
 import api from '../lib/api';
-import { syncAuthToElectron } from '../lib/electron';
 import { getApiBaseUrl } from '../lib/server-config';
+import { beginAuthSession, captureAuthContext, getCurrentAuth, isCurrentAuth, refreshSession, saveLoginCredentials, subscribeAuth } from '../auth-session';
 import { useFavoritesStore } from './favorites';
 import type { LoginRequest, RegisterRequest, LoginResponse, UserInfo } from '../types';
 
@@ -45,27 +45,16 @@ function hasUsableAccessToken(token: string | null): boolean {
   }
 }
 
-const initialAccessUsable = hasUsableAccessToken(sessionStorage.getItem('accessToken'));
-const initialRefreshToken = localStorage.getItem('refreshToken');
+const initialAccessUsable = hasUsableAccessToken(getCurrentAuth().token);
+const initialRefreshToken = getCurrentAuth().refreshToken;
 
 /**
  * 主动刷新 access token：用 refreshToken 换取新的 token 对。
- * 失败时清除登录状态并跳转登录页。
+ * 与业务 401 和启动恢复共用同一轮换；暂时失败保留会话。
  */
 async function proactivelyRefreshToken(): Promise<void> {
-  const refreshToken = localStorage.getItem('refreshToken');
-  if (!refreshToken) return;
-
-  try {
-    const res = await api.post<{ token: string; refreshToken: string }>('/auth/refresh', { refreshToken });
-    sessionStorage.setItem('accessToken', res.token);
-    localStorage.setItem('refreshToken', res.refreshToken);
-    syncAuthToElectron();
-  } catch {
-    // 刷新失败：清除登录态并跳转登录页
-    useAuthStore.getState().logout();
-    window.location.href = '/login';
-  }
+  if (!getCurrentAuth().refreshToken) return;
+  try { await refreshSession(); } catch { /* 认证拒绝由会话事件统一清理，暂时错误下次重试 */ }
 }
 
 /**
@@ -75,7 +64,7 @@ async function proactivelyRefreshToken(): Promise<void> {
 function startRefreshTimer(): void {
   stopRefreshTimer();
   refreshTimer = setInterval(() => {
-    const token = sessionStorage.getItem('accessToken');
+    const token = getCurrentAuth().token;
     if (!token) return;
 
     const issuedAt = getTokenIssuedAt(token);
@@ -116,82 +105,85 @@ export const useAuthStore = create<AuthState>((set) => ({
   loading: false,
 
   login: async (req: LoginRequest) => {
+    const context = beginAuthSession();
     const data: LoginResponse = await api.post('/auth/login', req);
-    sessionStorage.setItem('accessToken', data.token);
-    localStorage.setItem('refreshToken', data.refreshToken);
-    syncAuthToElectron();
+    await saveLoginCredentials(data, context);
+    if (!isCurrentAuth(context)) return;
     set({ isAuthenticated: true, authReady: true });
     startRefreshTimer();
     await useAuthStore.getState().fetchUser();
   },
 
   register: async (req: RegisterRequest) => {
+    const context = beginAuthSession();
     const data: LoginResponse = await api.post('/auth/register', req);
-    sessionStorage.setItem('accessToken', data.token);
-    localStorage.setItem('refreshToken', data.refreshToken);
-    syncAuthToElectron();
+    await saveLoginCredentials(data, context);
+    if (!isCurrentAuth(context)) return;
     set({ isAuthenticated: true, authReady: true });
     startRefreshTimer();
     await useAuthStore.getState().fetchUser();
   },
 
   fetchUser: async () => {
+    const context = captureAuthContext();
     set({ loading: true });
     try {
       const user: UserInfo = await api.get('/auth/me');
+      if (!isCurrentAuth(context)) return;
       set({ user, loading: false });
       // 已认证但定时器未启动（如页面刷新后恢复会话）
       if (!refreshTimer) startRefreshTimer();
     } catch {
-      set({ loading: false });
+      if (isCurrentAuth(context)) set({ loading: false });
     }
   },
 
   restoreSession: () => {
     if (useAuthStore.getState().authReady) return Promise.resolve();
     if (restorePromise) return restorePromise;
-    // 刷新接口不能走业务 401 拦截器；否则失效的 refresh token 会触发重复刷新。
-    restorePromise = (async () => {
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) {
-        sessionStorage.removeItem('accessToken');
+    const context = captureAuthContext();
+    const promise = (async () => {
+      if (!getCurrentAuth().refreshToken) {
         set({ user: null, isAuthenticated: false, authReady: true });
         return;
       }
       try {
-        const response = await axios.post<{ code: number; data?: { token: string; refreshToken: string } }>(
-          getApiBaseUrl() + '/auth/refresh',
-          { refreshToken },
-          { timeout: 30000 },
-        );
-        const credentials = response.data.data;
-        if (response.data.code !== 200 || !credentials?.token || !credentials.refreshToken) {
-          throw new Error('会话恢复失败');
-        }
-        sessionStorage.setItem('accessToken', credentials.token);
-        localStorage.setItem('refreshToken', credentials.refreshToken);
-        syncAuthToElectron();
+        await refreshSession();
+        if (!isCurrentAuth(context)) return;
         set({ isAuthenticated: true, authReady: true });
         startRefreshTimer();
       } catch {
-        sessionStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        stopRefreshTimer();
-        set({ user: null, isAuthenticated: false, authReady: true, loading: false });
+        if (!isCurrentAuth(context)) return;
+        // 离线恢复结束路由等待，保留 refresh；网络恢复后业务请求可以再次刷新。
+        set({ authReady: true, isAuthenticated: !!getCurrentAuth().refreshToken, loading: false });
       }
-    })().finally(() => { restorePromise = null; });
-    return restorePromise;
+    })().finally(() => { if (restorePromise === promise) restorePromise = null; });
+    restorePromise = promise;
+    return promise;
   },
 
   logout: () => {
-    api.post('/auth/logout').catch(() => {});
-    sessionStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
+    const token = getCurrentAuth().token;
+    const base = getApiBaseUrl();
+    beginAuthSession();
+    if (token) void axios.post(base + '/auth/logout', {}, { headers: { Authorization: `Bearer ${token}` }, timeout: 30000 }).catch(() => {});
     stopRefreshTimer();
     set({ user: null, isAuthenticated: false, authReady: true });
     useFavoritesStore.getState().reset();
   },
 }));
+
+// 主进程轮换/拒绝通过同一事件更新持久状态与路由，退出不会遗留旧用户资料。
+subscribeAuth((auth) => {
+  if (!auth.refreshToken) {
+    stopRefreshTimer();
+    restorePromise = null;
+    useAuthStore.setState({ user: null, isAuthenticated: false, authReady: true, loading: false });
+    useFavoritesStore.getState().reset();
+  } else if (auth.token) {
+    useAuthStore.setState({ isAuthenticated: true, authReady: true });
+  }
+});
 
 // 有可用 access token 时直接启动定时器；仅有 refresh token 时由路由门禁先恢复会话。
 if (initialAccessUsable) {

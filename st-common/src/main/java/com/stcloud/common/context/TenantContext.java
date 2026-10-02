@@ -39,7 +39,16 @@ public class TenantContext {
     }
 
     public static void setTenantMode(String mode) {
-        TENANT_MODE.set(mode);
+        if (mode == null) {
+            TENANT_MODE.remove();
+        } else {
+            TENANT_MODE.set(mode);
+        }
+    }
+
+    /** 临时切换时保留未设置状态，避免调度线程复用时遗留显式模式。 */
+    public static String getTenantModeOrNull() {
+        return TENANT_MODE.get();
     }
 
     public static String getTenantMode() {

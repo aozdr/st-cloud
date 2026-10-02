@@ -11,8 +11,8 @@ import { resumePendingDownloads } from './download-manager';
 import { pauseDownload } from './download-manager';
 import { resumeSyncEngines } from './sync-manager';
 import { loadServerUrl } from './server-config';
-import { getToken } from './api-client';
-import { createMiniWindow, closeMiniWindow, showMiniWindow, openTransferPage, openTransferSettings } from './mini-window';
+import { getToken, onAuthChanged, setBaseUrl } from './api-client';
+import { openTransferPage, openTransferSettings } from './mini-window';
 import { prepareMenuWindow, closeMenuWindow, hideMenuWindow } from './menu-window';
 
 const isDev = !app.isPackaged;
@@ -105,9 +105,8 @@ async function createWindow(): Promise<void> {
     await win.loadURL('app://web/index.html');
   }
 
-  // 主窗口关闭时销毁桌面悬浮窗，保持"关窗即退出"
+  // 主窗口关闭时清理托盘菜单。
   win.on('closed', () => {
-    closeMiniWindow();
     closeMenuWindow();
   });
   // 主窗口获得焦点（用户点击主界面）时关闭已弹出的右键菜单小窗
@@ -180,10 +179,6 @@ function createTray(): void {
   tray.setToolTip('星云盘');
   const menu = Menu.buildFromTemplate([
     {
-      label: '显示传输悬浮窗',
-      click: () => showMiniWindow(),
-    },
-    {
       label: '打开传输列表',
       click: () => openTransferPage(),
     },
@@ -215,7 +210,7 @@ function createTray(): void {
     },
   ]);
   tray.setContextMenu(menu);
-  tray.on('double-click', () => showMiniWindow());
+  tray.on('double-click', () => openTransferPage());
 }
 
 app.whenReady().then(async () => {
@@ -244,7 +239,15 @@ app.whenReady().then(async () => {
   });
 
   // 加载服务器地址配置
-  loadServerUrl();
+  const configuredServerUrl = loadServerUrl();
+  setBaseUrl(process.env.STCLOUD_API_URL || configuredServerUrl);
+
+  // 成对轮换通知所有可信渲染器，由页面持久化最新令牌；不把令牌写入日志。
+  onAuthChanged((auth) => {
+    for (const win of BrowserWindow.getAllWindows()) {
+      if (!win.isDestroyed()) win.webContents.send('auth:changed', auth);
+    }
+  });
 
   // 初始化数据库
   await initDatabase();
@@ -258,9 +261,7 @@ app.whenReady().then(async () => {
 
   // 创建窗口
   await createWindow();
-  // 桌面传输悬浮小窗（独立、置顶、可拖动）
-  createMiniWindow();
-  // 系统托盘：提供悬浮窗显示/暂停全部/设置/关于/退出
+  // 系统托盘：提供传输列表/暂停全部/设置/关于/退出；不创建传输悬浮窗。
   createTray();
   // 预加载右键菜单小窗（隐藏），保证首次右键打开不卡顿
   prepareMenuWindow();

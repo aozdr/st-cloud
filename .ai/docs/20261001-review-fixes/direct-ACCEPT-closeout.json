@@ -1,0 +1,16 @@
+{
+  "taskId": "20261001-review-fixes",
+  "acceptanceEvidence": [
+    {"criterion":"A1","evidenceRef":".ai/docs/20261001-review-fixes/user-closeout.md","validatedRevision":"review-fixes-code-r4"},
+    {"criterion":"A2","evidenceRef":".ai/docs/20261001-review-fixes/user-closeout.md","validatedRevision":"review-fixes-code-r4"},
+    {"criterion":"A3","evidenceRef":".ai/docs/20261001-review-fixes/user-closeout.md","validatedRevision":"review-fixes-code-r4"},
+    {"criterion":"A4","evidenceRef":".ai/docs/20261001-review-fixes/user-closeout.md","validatedRevision":"review-fixes-code-r4"}
+  ],
+  "criterionProposal": {
+    "id": "ACCEPT",
+    "outcome": "pass",
+    "by": "workflow-manager",
+    "evidenceRef": ".ai/docs/20261001-review-fixes/user-closeout.md",
+    "validatedRevision": "review-fixes-code-r4"
+  }
+}

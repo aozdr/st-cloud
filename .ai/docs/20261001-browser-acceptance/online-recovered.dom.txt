@@ -1,0 +1,115 @@
+- complementary "侧边导航":
+  - generic: 星云盘
+  - button "上传文件":
+    - generic: 上传文件
+  - navigation "主导航":
+    - link "首页":
+      - /url: /
+      - generic: 首页
+    - generic: 文件
+    - link "全部文件":
+      - /url: /files
+      - generic: 全部文件
+    - link "我的收藏":
+      - /url: /favorites
+      - generic: 我的收藏
+    - link "我的关注":
+      - /url: /following
+      - generic: 我的关注
+    - link "我的分享":
+      - /url: /shares
+      - generic: 我的分享
+    - link "团队空间":
+      - /url: /team
+      - generic: 团队空间
+    - generic: 工具
+    - link "回收站":
+      - /url: /recycle
+      - generic: 回收站
+    - link "重复检测":
+      - /url: /duplicates
+      - generic: 重复检测
+    - link "隐藏文件":
+      - /url: /hidden
+      - generic: 隐藏文件
+  - button "折叠侧边栏":
+    - generic: 折叠侧栏
+  - button "主题设置":
+    - generic: 主题设置
+  - button "存储空间 0% 0 B / 10.0 GB · 10.0 GB 可用":
+    - generic: 存储空间
+    - generic: 0%
+    - generic: 0 B / 10.0 GB · 10.0 GB 可用
+- banner:
+  - button "后退" [disabled]:
+  - button "前进" [disabled]:
+  - textbox "搜索文件":
+    - /placeholder: 搜索文件或内容
+  - generic: Ctrl K
+  - button "通知，无未读消息":
+  - button "切换到深色模式":
+  - button "用户菜单":
+    - generic: E
+- main:
+  - button "返回":
+  - heading "EXP团队-env_exp_muow0kkf12c526" [level=1]
+  - paragraph: 20261001 独立体验验收专用，保留审计。
+  - button "搜索":
+    - generic: 搜索
+  - button "成员 1":
+    - generic: 成员
+    - generic: "1"
+  - button "设置":
+    - generic: 设置
+  - button "空间根目录权限":
+    - generic: 空间根目录权限
+  - button "角色管理":
+  - button "空间统计":
+  - button "活动":
+    - generic: 活动
+  - button "上传":
+    - generic: 上传
+  - generic "点击管理存储配额":
+    - generic: "存储: 0 B / 1.0 MB"
+  - button "新建":
+    - generic: 新建
+  - button "上传文件":
+    - generic: 上传文件
+  - combobox:
+    - generic: 名称
+  - button "↑"
+  - switch "文件夹优先" [checked]
+  - generic: 文件夹优先
+  - button "刷新":
+  - button "列表视图":
+  - button "网格视图":
+  - navigation "路径导航":
+    - button "根目录":
+    - generic: 根目录
+    - button "编辑路径":
+  - table:
+    - row "全选 名称 类型 大小 修改时间 所有者 操作":
+      - columnheader "全选":
+        - checkbox "全选"
+      - columnheader "名称":
+        - button "名称":
+          - generic: 名称
+      - generic: 类型
+      - columnheader "大小":
+        - button "大小":
+          - generic: 大小
+      - columnheader "修改时间":
+        - button "修改时间":
+          - generic: 修改时间
+      - generic: 所有者
+      - columnheader "操作"
+    - row "选择 验收文件夹-env_exp_muow0kkf12c526 文件夹 … 2026-10-01 10:00 env_exp_muow0kkf12c526 收藏":
+      - button "选择"
+      - generic: 验收文件夹-env_exp_muow0kkf12c526
+      - generic: 文件夹
+      - generic: …
+      - generic: 2026-10-01 10:00
+      - generic: env_exp_muow0kkf12c526
+      - button "收藏":
+- button "展开上传队列":
+- status

@@ -157,6 +157,7 @@ class ConcurrentUploadIntegrationTest {
                         objectIds.add(obj.getId());
                     }
                 } catch (Exception e) {
+                    e.printStackTrace();
                     unexpected.incrementAndGet();
                 } finally {
                     done.countDown();
@@ -210,6 +211,7 @@ class ConcurrentUploadIntegrationTest {
                         objectIds.add(obj.getId());
                     }
                 } catch (Exception e) {
+                    e.printStackTrace();
                     unexpected.incrementAndGet();
                 } finally {
                     done.countDown();

@@ -1,126 +1,59 @@
-# 星云盘 AI 研发总规则
+# 星云盘 AI 研发规则
 
-本文件只保留每个 Agent 都必须看到的入口、安全与工程硬约束。当前 Dispatch、State 和退出标准的唯一事实源分别是：
+本文件是常驻入口，只放决策边界和工程硬约束。按任务需要读取说明，禁止先扫描全部知识库、历史 State 或技能。
 
-- `.ai/knowledge/agent-dispatch-protocol.md`
-- `.ai/schema/dispatch.schema.json`
-- `.ai/schema/loop-state.schema.json`
-- `.ai/loop/exit-criteria.yaml`
+## 1. 入口与执行路径
 
-历史协议位于 `.ai/archive/protocols/`，仅供审计，禁止作为当前指令加载或执行。
+用户直接提出修改需求时，主线程负责确定目标、范围、风险和完成标准，持续完成实现与验证。只读咨询/诊断/审查直接交付结论，不创建实现 Loop。没有 TASK 是主线程的待办，不是让用户重复需求的理由。
 
-## 1. 身份与入口
+- small：低风险局部修复、配置或样式调整；在对话说明目标、范围与相称验证后直接完成，不创建 TASK/State/Dispatch。只有用户要求持久化审计时才使用 small State。
+- medium：边界明确的模块增强或兼容改动；默认主线程执行，编码前创建一份 TASK 和精简 design.md（含验收与测试计划）。验证统一写 verification.md，不另建测试用例、变更报告或知识同步任务。
+- large：复杂跨模块、核心写路径、安全/权限、数据库、API 契约或不可逆变更；使用完整计划和独立评审。需求、影响、架构、UI 与测试计划按需合入 requirement.md/design.md，评审记录 codereview.md，验证记录 verification.md。额外文档只为独立决策或用户要求创建。
 
-### 主线程
+文件数仅作参考；普通兼容跨目录修改不自动升级。流程分级与 DAG 唯一维护在 `.ai/loop/exit-criteria.yaml`。只在使用持久化 State 时读取 `.ai/knowledge/loop-state-model.md`；需要执行步骤时读 `.ai/knowledge/agent-loop-runbook.md`。不要为每个门禁创建 Agent。
 
-当前消息包含需要落地的修改需求且不含 `DISPATCH_ENVELOPE` 时，作为 Workflow Manager 执行：
+已有当前任务继续使用绑定版本与仍有效证据，不重复初始化。V2 State 按冻结 V2 定义校验，不自动升级；旧协议仅供审计，不加载为当前指令。需要升级时新建 V3 任务，逐项复核可用证据。
 
-```text
-Observe → Goal → Scale → Plan → Act → Evaluate
-```
+## 2. 计划、确认与协作
 
-只读咨询、解释、诊断和审查直接交付结论，不启动实现类 Loop；用户要求落地修改时再按风险分级。不得把尚未创建 TASK 解释为“没有收到需求”。除非用户明确要求待命，否则不得回复“待命”“等待任务”或要求用户重复需求。
+计划覆盖目标、用户场景、边界、规则、异常、数据/API 影响、风险、验证和完成标准。常规实现细节自行决定；仅对会改变范围、兼容性或风险的实质未决事项请求用户裁决，先完成可供审阅的方案。已有授权可复用，不重复确认。
 
-小型直接路径只需在对话中说明目标、范围和相称验证，不初始化持久化 State、不创建 TASK 或 Dispatch；中型及以上任务才执行完整 Loop。
+medium 默认单 Agent 自检；large 的 CODE_REVIEW 必须由独立 reviewer 完成，包含适用的安全、数据与 UI 维度。主线程可运行测试、更新知识库并完成最终验收；如实标注自检。只有可独立交付且能减少等待或隔离专业上下文的工作才派发子任务；没有收益就主线程完成。
 
-历史任务若需继续处理，必须按当前规则重新建立 TASK、State 和产物；历史 State 与产物只作审计依据，不作为当前流程输入。
+测试在实现完成后即可运行，最终验收等待所有必需证据。并行实现必须无文件重叠，不争用共享构建缓存，集成验证由主线程串行执行。按需使用当前 Worktree 工具，不为只读评审创建 worktree。
 
-中型及以上任务的 Goal 必须包含客观目标、影响范围和完成标准，规模、退出标准及依赖从 `.ai/loop/exit-criteria.yaml` 读取；主线程独占 Goal 完成判定和 State Evaluate。小型直接路径仅记录必要的目标、范围和验证。
+只有实际派发才读取 `.ai/knowledge/agent-dispatch-protocol.md` 和 `.ai/schema/dispatch.schema.json`，一 TASK/一 Envelope/一 child。子 Agent 收到 DISPATCH_ENVELOPE 后先输出 DISPATCH_ACK（dispatchId/taskId/role 原值），ACK 前不调用工具；ACK 后校验消息，读取 TASK、最小 State 快照和所需技能，并继续执行至返回真实结果。
 
-### 子 Agent
-
-当前消息包含 `DISPATCH_ENVELOPE` 时，进入子 Agent 执行态。Dispatch Message 是唯一任务来源。
-
-首条输出必须为：
-
-```text
-DISPATCH_ACK
-dispatchId: <原值>
-taskId: <原值>
-role: <原值>
-```
-
-ACK 前禁止调用工具。ACK 后校验 Envelope，读取 TASK、最小 State 快照和 `skillRefs`，在 `scope` 内完成任务。ACK 不是完成结果，不得以 ACK 结束本轮。
-
-子 Agent：
-
-- 不定义或判定 Goal，不直接修改 Loop State；
-- 不创建子 Agent；需要额外能力时返回 `delegationRequest`；
-- 不向用户发起确认；未定版高风险事项返回 `confirmationRequest` 给主线程；
-- 只返回独立任务结果与 `criterionProposal`，由主线程 Evaluate；
-- Envelope 缺字段时返回 `DISPATCH_INVALID: <字段>`；真实外部阻塞返回 `BLOCKED`。
-
-没有 `DISPATCH_ENVELOPE` 且没有真实用户需求时，不扫描项目猜任务，返回：
-
-```text
-DISPATCH_MISSING
-reason: direct message absent
-```
-
-完整协议见 `.ai/knowledge/agent-dispatch-protocol.md`。
-
-## 2. Workflow Manager 门禁
-
-### 规模与文档
-
-- 小型：低风险、局部 Bug、配置或样式微调，可直接执行；文件数仅供参考，行为影响和风险优先。对话中说明目标、修改范围和禁止修改范围。
-- 中型：单模块增强、新接口或具有明显行为影响的变更。编码前必须有 TASK、测试用例及定版 `design.md`；只有存在尚未解决的范围、兼容性或风险决策时，才在对应 criterion 设置 `confirmationRequired: true` 并等待用户确认。
-- 大型：跨模块、数据模型或核心流程变化。需求分析与技术设计按 `.ai/loop/exit-criteria.yaml` 的完整依赖执行；EXP_DESIGN/EXP_ACCEPT 仅在涉及 UI 时执行并标记 `applicable: true`，无 UI 时记录 `applicable: false` 和跳过证据。
-
-以下文档在存在范围、兼容性或风险方面的未决事项时暂停等待用户确认；当前请求或 State 中已有明确确认时可复用，不重复询问：
-
-| 场景 | 有未决事项时确认 | 确认前禁止进入 |
-|---|---|---|
-| 大型需求分析 | `requirement.md`；涉及 UI 时再加 `uispec.md` | 后续设计与实现 |
-| 大型技术设计 | `architecture-review.md`、`design.md` | 测试用例与实现 |
-| 中型设计 | `design.md` | 测试用例与实现 |
-
-需求与设计落盘前必须覆盖目标、用户与场景、边界、规则、异常、数据/API 影响和风险；存在未决范围或风险时使用 Grill Me 收敛，遗留问题点控制在 3 个以内并写入文档。只对会改变范围、兼容性或风险的未决问题请求裁决，常规实现细节自行决定。
-
-文档保存到 `.ai/docs/<task-id>/`。直说事实与决策，不写空话、套话或互联网黑话。
-
-### 子任务协作
-
-开发、测试、Review 应按依赖拆分；无依赖任务可并行，有依赖任务串行。仅对实际派发的 TASK 要求一个 Envelope 和一个 child；小型任务可由主线程直接完成。实现任务需要隔离时按当前 Worktree 工具与 TASK 约束执行。
-
-主线程负责：创建 TASK、构建并验证 Envelope、派发、收集独立结果、执行 Evaluate、串行集成验证和关闭 child。子 Agent 不互评、不互派、不合并 State。
+子 Agent 只在 scope 内工作，不写 State、不定义 Goal、不互派、不向用户确认；额外能力或实质决策返回 delegationRequest/confirmationRequest。只有主线程 Evaluate 并判定 Goal 完成。无 Envelope 且无真实用户需求时返回 DISPATCH_MISSING，不扫描项目猜任务。
 
 ## 3. 代码修改硬约束
 
-1. 中型及以上代码修改前必须有 `.ai/tasks/TASK-*.md`；严格遵守其中的 include/exclude。
-2. 中型以上或数据库、API 契约、跨模块、不可逆变更前给出实施方案；只有方案仍有会改变范围、兼容性或风险的未决事项时才请求用户确认，小型变更说明范围后直接执行。
-3. 变更最小化，禁止无需求重构，保留用户已有改动。
-4. 修改后执行与风险相称的构建、测试或静态验证；并行实现 child 禁止并行争用共享构建缓存，集成验证由主线程串行执行。
-5. 权限、状态流转、配额、去重和文件处理等核心逻辑必须有中文注释。
-6. 核心写路径不得在数据库事务内调用 S3 或外部网络；上传类先外部操作、后落库，删除类使用提交后异步补偿。
-7. API 变化必须说明向后兼容策略或升级方案。
-8. 禁止越界修改、破坏性 Git 命令和未经授权的数据删除。
+1. medium/large 编码前有 TASK，严格遵守 include/exclude；变更最小化，保留用户已有改动，不做无需求重构。
+2. 修改后完成与风险相称的构建、测试或静态验证。通过后仅因新改动、失败或未解决风险重跑，不因门禁阶段切换重复执行。
+3. 权限、状态流转、配额、去重和文件处理等核心逻辑有中文注释。
+4. 核心写路径不得在数据库事务内调用 S3/外部网络；上传先外部操作后落库，删除使用提交后异步补偿。
+5. API 变化说明向后兼容策略或升级方案。
+6. 禁止越界修改、破坏性 Git 命令、未经授权的数据删除；生产部署/迁移需要明确授权。
+7. 证据必须真实、匹配当前 revision；代码变化使旧代码证据失效。缺证据、open blocker 或未结束派发不得宣布完成。
 
 ## 4. 数据库版本管理
 
-涉及数据库变更时按顺序执行：
+数据库变更按顺序完成，不因流程精简跳过：
 
-1. 在 `docker/mysql/init/` 新增递增编号 SQL，首行必须是 `SET NAMES utf8mb4;`。
-2. 同步 `st-core/src/test/resources/schema.sql`。
-3. 运行 H2 测试（含 `SchemaConsistencyTest`）。
+1. 在 docker/mysql/init/ 新增递增编号 SQL，首行为 SET NAMES utf8mb4;。
+2. 同步 st-core/src/test/resources/schema.sql。
+3. 运行 H2 测试（含 SchemaConsistencyTest）。
 4. 运行 `.ai/scripts/compare-schema.ps1` 对比 MySQL。
-5. 对已授权的开发/测试 MySQL 执行迁移；生产迁移须有明确部署授权。
-6. 向 `schema_version` 写入唯一版本号 `YYYYMMDD.N`、主题、SQL 清单、执行人和备注。
-7. 再次运行 schema 对比并要求退出码 0。
+5. 对已授权开发/测试 MySQL 执行迁移；生产迁移须有明确部署授权。
+6. schema_version 写入唯一版本 YYYYMMDD.N、主题、SQL 清单、执行人和备注。
+7. 再次 schema 对比，退出码必须为 0。
 
-H2 通过不代表 MySQL 一致；未完成两次对比不得通过测试门禁。
+H2 通过不能代替 MySQL 两次对比。
 
-## 5. Agent 结果格式
+## 5. 产物与交付
 
-正式 child 结果使用中文，并包含：
+文档在 `.ai/docs/<task-id>/`，内容和证据只记录一次，其他位置引用；模板是可裁剪参考，不为填空重复写章节。只有稳定规则变化才更新对应知识条目。
 
-- 背景
-- 输入
-- 分析
-- 决策
-- State Delta（仅 proposal；不得声称已写 State）
-- 风险
-- 下一步
-- 变更影响
+child 的中文报告包含结果、证据、风险/阻塞和 criterionProposal；背景、输入、分析与下一步仅在有信息增量时补充，不强制八段空表。proposal 不得声称已写 State。最终报告说明改了什么、验证结果和实际限制。
 
-结果必须区分事实与推测，并给出真实验证证据。主线程可按任务复杂度简化面向用户的报告；最终 ACCEPT 由主线程依据 Goal completionCriteria 和当前 revision 的有效证据判定。
+本规则采用 OpenAI 官方的按需加载、精简指令、复杂任务才做持续计划及评估驱动多 Agent原则；仓库具体门禁见 `.ai/docs/20261001-loop-efficiency/design.md` 的官方来源与工程决策。

@@ -1,0 +1,52 @@
+{
+  "dispatchId": "DISPATCH-review-fixes-security-01",
+  "taskId": "TASK-20261001-review-fixes-security",
+  "status": "completed",
+  "artifactRefs": [".ai/docs/20261001-review-fixes/security.md"],
+  "criterionProposal": {
+    "id": "SECURITY_REVIEW",
+    "outcome": "fail",
+    "by": "/root/review_fixes_security",
+    "dispatchId": "DISPATCH-review-fixes-security-01",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-review-fixes-security-01.json",
+    "validatedRevision": "review-fixes-code-r1"
+  },
+  "blockerProposals": [],
+  "background": "独立复核跨标签认证完整性、旧响应和退出交错，以及空间墓碑清理后的租户和成员权限。",
+  "inputs": [
+    ".ai/tasks/TASK-20261001-review-fixes-security.md",
+    ".ai/docs/20261001-review-fixes/design.md",
+    ".ai/docs/20261001-review-fixes/testcases.md",
+    ".ai/docs/20261001-review-fixes/changereport.md",
+    ".ai/docs/20261001-review-fixes/source-manifest.json"
+  ],
+  "analysis": "正常换账号旧响应及回收权限静态复核未发现扩大边界。一次共享 pair 写入失败后，另一页旧 refresh 的永久拒绝可以清除已持有最新有效内存 pair 的标签页；Web Locks 和 tickets 均由只读 Node fixture 复现。",
+  "decision": "本任务执行完成，建议 SECURITY_REVIEW fail；未写 State、未判定 Goal。",
+  "stateDelta": {"proposalOnly": true, "criterion": "SECURITY_REVIEW", "outcome": "fail"},
+  "findings": [
+    {
+      "id": "SEC-P2-01",
+      "priority": "P2",
+      "path": "st-web/src/auth-session.ts",
+      "line": 305,
+      "title": "共享新 pair 落盘失败后另页旧拒绝清除有效内存会话",
+      "trigger": "A 续期成功 R0→R1，共享 stcloud:auth 的一次 setItem 失败；B 在 A 下次落盘前续期共享 R0，收到401。",
+      "observed": "两种协调路径均为 aBefore=refresh-1、bResult=rejected、aAfter=null、shared=null。",
+      "impact": "已在内存恢复成功的有效会话被跨标签误登出；未观察到泄漏或越权。",
+      "recommendation": "让其它页识别成功轮换尚未共享落盘的不确定窗口，避免该窗口的旧拒绝自动清理；补双标签写失败回归。"
+    }
+  ],
+  "verification": {
+    "sourceManifestMatches": 6,
+    "sourceManifestTotal": 6,
+    "hashChecks": "复核开始与结束两次六项均匹配。",
+    "commands": [
+      {"command": "node --test st-web/src/store/auth-tabs.test.mjs", "exitCode": 0, "tests": 14, "passed": 14, "failed": 0, "skipped": 0},
+      {"command": "node stdin fixture, cwd=st-desktop, code in security.md", "exitCode": 0, "modes": ["locks", "tickets"], "reproduced": true}
+    ],
+    "completedAt": "2026-10-01T12:04:09Z"
+  },
+  "risks": "复现使用独立 VM/内存受控 fixture，未测量真实磁盘故障概率；后端仅静态复核，未独立运行 H2/MySQL/S3。",
+  "nextSteps": "主线程定向修复并登记新 code revision，再取得对应独立复核。",
+  "changeImpact": "仅新增允许的 security.md 和本独立结果文件；产品、测试、State、数据库、Git index、部署未写入。"
+}

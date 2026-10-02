@@ -1,0 +1,28 @@
+{
+  "dispatchId": "DISPATCH-env-code-review-01",
+  "taskId": "TASK-20260930-environment-code-review",
+  "status": "completed",
+  "summary": "独立只读审查发现共享空间锁覆盖缺口、团队活动异步租户传播缺口，以及两个过期任务的默认租户/旧快照写入缺口；需修复后新 attempt 复审。",
+  "artifactRefs": [".ai/docs/20260930-environment-remediation/codereview.md"],
+  "criterionProposal": {
+    "id": "CODE_REVIEW",
+    "outcome": "fail",
+    "by": "/root/code_review",
+    "dispatchId": "DISPATCH-env-code-review-01",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-env-code-review-01.json",
+    "validatedRevision": "env-code-r1"
+  },
+  "findings": [
+    {"id": "CR01", "priority": 1, "file": "st-team/src/main/java/com/stcloud/team/service/impl/TeamServiceImpl.java", "lines": [308, 457, 1039, 1061], "summary": "使成员失效的入口没有共享空间锁，不能保证与回收授权决策的串行契约", "evidenceKind": "static-lock-order-analysis", "runtimeReproduced": false},
+    {"id": "CR02", "priority": 1, "file": "st-team/src/main/java/com/stcloud/team/util/TeamActivityHelper.java", "lines": [49, 50, 57, 68], "summary": "异步用户查询和活动插入未传播租户，非默认租户操作写到 tenant 1", "evidenceKind": "source-and-tenant-sql-fill-logic", "runtimeReproduced": false},
+    {"id": "CR03", "priority": 2, "files": ["st-team/src/main/java/com/stcloud/team/task/ExternalMemberExpireTask.java", "st-team/src/main/java/com/stcloud/team/task/FileLockExpireTask.java"], "summary": "调度入口隐式扫租户1，并按旧扫描无条件删除/清锁", "evidenceKind": "source-and-select-write-interleaving", "runtimeReproduced": false}
+  ],
+  "validation": [
+    {"kind": "readonly-source-review", "result": "3 actionable findings"},
+    {"kind": "existing-current-evidence-inspection", "evidenceRefs": [".ai/docs/20260930-environment-remediation/backend-runtime-build-pass.log", ".ai/docs/20260930-environment-remediation/team-mysql-new-final.log", ".ai/docs/20260930-environment-remediation/schema-after.log", ".ai/docs/20260930-environment-remediation/mysql-46.log", ".ai/docs/20260930-environment-remediation/web-final-results.json"]},
+    {"kind": "conflict-marker-readonly-scan", "command": "rg -n '^<<<<<<< |^=======|^>>>>>>> ' st-core/src st-web/src st-desktop/src st-auth/src", "result": "no matches"}
+  ],
+  "limitations": ["未执行 Maven/Git/数据库写入或运行时交错复现", "真实 live/Electron 验收仍由对应专项负责", "review 仅覆盖当前 env-code-r1，与后续修改无自动继承关系"],
+  "blockerProposals": [],
+  "reworkRequests": ["补全四个成员/外部配置变更入口的共享空间锁和 RC 决策", "团队活动 helper 传播/恢复租户并显式写 activity 租户", "两个定时任务逐租户执行并锁后/写时重判过期条件"]
+}

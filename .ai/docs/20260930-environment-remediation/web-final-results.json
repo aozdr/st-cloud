@@ -1,0 +1,260 @@
+{
+  "timestamp": "2026-09-30T13:45:54.574Z",
+  "label": "final",
+  "browser": "154.0.8037.57",
+  "source": "D:\\code\\st-cloud\\st-web\\src\\components\\preview\\PreviewModal.tsx",
+  "sourceSha256": "ef5b11927235e1c917e780985906ed421cd44e0e6da1cee5886b0d06973d8d57",
+  "harness": "real React/PreviewModal/Tailwind in Chromium; loopback controlled HTTP; old error is the actual saved React handler invoked with flushSync",
+  "results": [
+    {
+      "name": "按钮可访问名称与无装饰图片名冲突",
+      "pass": true,
+      "details": [
+        "预览 A 照片.jpg",
+        "预览 B 照片.jpg",
+        "预览 C 图形.webp"
+      ]
+    },
+    {
+      "name": "Tab 与 Space 选择并保留焦点",
+      "pass": true,
+      "details": "B selected"
+    },
+    {
+      "name": "左右键切换且焦点保持",
+      "pass": true,
+      "details": "B → C → B"
+    },
+    {
+      "name": "Tab 与 Enter 选择",
+      "pass": true,
+      "details": "C selected"
+    },
+    {
+      "name": "左右键到边界不越界",
+      "pass": true,
+      "details": "A/C boundaries retained"
+    },
+    {
+      "name": "同一挂载 updatedAt 更新请求 URL",
+      "pass": true,
+      "details": [
+        {
+          "pathname": "/api/share/access/thumbnail/alpha",
+          "nodeId": "102",
+          "version": "v0",
+          "password": "密 码&=1"
+        },
+        {
+          "pathname": "/api/share/access/thumbnail/alpha",
+          "nodeId": "102",
+          "version": "v2",
+          "password": "密 码&=1"
+        }
+      ]
+    },
+    {
+      "name": "新 URL 失败只显示降级且保留名称",
+      "pass": true,
+      "details": "HTTP 503 fallback"
+    },
+    {
+      "name": "旧异步 error 不覆盖新 URL 的失败状态",
+      "pass": true,
+      "details": "Old callback ignored synchronously"
+    },
+    {
+      "name": "同一挂载失败后新 updatedAt 恢复",
+      "pass": true,
+      "details": "v3 failure → v4 image"
+    },
+    {
+      "name": "旧 error 不影响已经成功的新图片",
+      "pass": true,
+      "details": "v4 image retained"
+    },
+    {
+      "name": "URL 变更返回先前成功版本仍重新加载",
+      "pass": true,
+      "details": "v4 → v0 image"
+    },
+    {
+      "name": "同一挂载分享来源与密码变化重新请求",
+      "pass": true,
+      "details": "beta with encoded password"
+    },
+    {
+      "name": "未选中降级图标对比度至少 3:1",
+      "pass": true,
+      "details": {
+        "cssColor": "rgba(255, 255, 255, 0.9)",
+        "effectiveOpacity": 0.5,
+        "effectiveAlpha": 0.45,
+        "background": [
+          10.925000000000004,
+          10.950000000000006,
+          11.000000000000005
+        ],
+        "foreground": [
+          120.75875,
+          120.77250000000001,
+          120.8
+        ],
+        "contrastRatio": 4.5082767574995675,
+        "selected": {
+          "cssColor": "rgba(255, 255, 255, 0.9)",
+          "effectiveOpacity": 1,
+          "effectiveAlpha": 0.9,
+          "background": [
+            10.925000000000004,
+            10.950000000000006,
+            11.000000000000005
+          ],
+          "foreground": [
+            230.5925,
+            230.595,
+            230.6
+          ],
+          "contrastRatio": 15.862283644799872
+        }
+      }
+    },
+    {
+      "name": "已选中降级图标对比度至少 3:1",
+      "pass": true,
+      "details": {
+        "cssColor": "rgba(255, 255, 255, 0.9)",
+        "effectiveOpacity": 1,
+        "effectiveAlpha": 0.9,
+        "background": [
+          10.925000000000004,
+          10.950000000000006,
+          11.000000000000005
+        ],
+        "foreground": [
+          230.5925,
+          230.595,
+          230.6
+        ],
+        "contrastRatio": 15.862283644799872
+      }
+    },
+    {
+      "name": "胶卷键盘焦点可见",
+      "pass": true,
+      "details": {
+        "focused": true,
+        "focusVisible": true,
+        "outline": "rgb(32, 36, 45) auto 3px",
+        "boxShadow": "none"
+      }
+    },
+    {
+      "name": "Escape 关闭回调一次",
+      "pass": true,
+      "details": "one close"
+    },
+    {
+      "name": "无未处理 React 浏览器异常",
+      "pass": true,
+      "details": "none"
+    }
+  ],
+  "metrics": {
+    "cssColor": "rgba(255, 255, 255, 0.9)",
+    "effectiveOpacity": 0.5,
+    "effectiveAlpha": 0.45,
+    "background": [
+      10.925000000000004,
+      10.950000000000006,
+      11.000000000000005
+    ],
+    "foreground": [
+      120.75875,
+      120.77250000000001,
+      120.8
+    ],
+    "contrastRatio": 4.5082767574995675,
+    "selected": {
+      "cssColor": "rgba(255, 255, 255, 0.9)",
+      "effectiveOpacity": 1,
+      "effectiveAlpha": 0.9,
+      "background": [
+        10.925000000000004,
+        10.950000000000006,
+        11.000000000000005
+      ],
+      "foreground": [
+        230.5925,
+        230.595,
+        230.6
+      ],
+      "contrastRatio": 15.862283644799872
+    }
+  },
+  "focus": {
+    "focused": true,
+    "focusVisible": true,
+    "outline": "rgb(32, 36, 45) auto 3px",
+    "boxShadow": "none"
+  },
+  "requests": [
+    {
+      "pathname": "/api/share/access/thumbnail/alpha",
+      "nodeId": "101",
+      "version": "v0",
+      "password": "密 码&=1"
+    },
+    {
+      "pathname": "/api/share/access/thumbnail/alpha",
+      "nodeId": "102",
+      "version": "v0",
+      "password": "密 码&=1"
+    },
+    {
+      "pathname": "/api/share/access/thumbnail/alpha",
+      "nodeId": "102",
+      "version": "v2",
+      "password": "密 码&=1"
+    },
+    {
+      "pathname": "/api/share/access/thumbnail/alpha",
+      "nodeId": "102",
+      "version": "v3",
+      "password": "密 码&=1"
+    },
+    {
+      "pathname": "/api/share/access/thumbnail/alpha",
+      "nodeId": "102",
+      "version": "v4",
+      "password": "密 码&=1"
+    },
+    {
+      "pathname": "/api/share/access/thumbnail/alpha",
+      "nodeId": "102",
+      "version": "v0",
+      "password": "密 码&=1"
+    },
+    {
+      "pathname": "/api/share/access/thumbnail/beta",
+      "nodeId": "101",
+      "version": "v0",
+      "password": "新&密码 =2"
+    },
+    {
+      "pathname": "/api/share/access/thumbnail/beta",
+      "nodeId": "102",
+      "version": "v0",
+      "password": "新&密码 =2"
+    },
+    {
+      "pathname": "/api/share/access/thumbnail/beta",
+      "nodeId": "102",
+      "version": "v3",
+      "password": "新&密码 =2"
+    }
+  ],
+  "errors": [],
+  "passed": 17,
+  "failed": 0
+}

@@ -1,0 +1,80 @@
+{
+  "sourceEvidence": [
+    {
+      "ref": "live-runtime/auth-source-manifest.json",
+      "mismatches": [],
+      "checked": 4
+    },
+    {
+      "ref": "live-runtime/sync-source-manifest.json",
+      "mismatches": [],
+      "checked": 26
+    },
+    {
+      "ref": "exp-accept-source-manifest.json",
+      "mismatches": [],
+      "checked": 8
+    }
+  ],
+  "backendJarModules": [
+    {
+      "module": "st-common",
+      "currentEntries": 49,
+      "matching": true,
+      "oldEntries": 49,
+      "changedEntries": []
+    },
+    {
+      "module": "st-auth",
+      "currentEntries": 27,
+      "matching": true,
+      "oldEntries": 27,
+      "changedEntries": []
+    },
+    {
+      "module": "st-core",
+      "currentEntries": 143,
+      "matching": true,
+      "oldEntries": 143,
+      "changedEntries": []
+    },
+    {
+      "module": "st-team",
+      "currentEntries": 77,
+      "matching": false,
+      "oldEntries": 77,
+      "changedEntries": [
+        "com/stcloud/team/service/impl/TeamServiceImpl.class",
+        "com/stcloud/team/service/impl/TeamServiceImpl$1.class",
+        "com/stcloud/team/task/ExternalMemberExpireTask.class",
+        "com/stcloud/team/task/FileLockExpireTask.class",
+        "com/stcloud/team/util/TeamActivityHelper.class"
+      ]
+    },
+    {
+      "module": "st-sync",
+      "currentEntries": 40,
+      "matching": false,
+      "oldEntries": 40,
+      "changedEntries": [
+        "com/stcloud/sync/listener/SyncChangeLogListener.class",
+        "com/stcloud/sync/listener/SyncChangeMessageConsumer.class"
+      ]
+    },
+    {
+      "module": "st-share",
+      "currentEntries": 19,
+      "matching": true,
+      "oldEntries": 19,
+      "changedEntries": []
+    },
+    {
+      "module": "st-preview",
+      "currentEntries": 4,
+      "matching": true,
+      "oldEntries": 4,
+      "changedEntries": []
+    }
+  ],
+  "boundary": "比对内嵌 .class 和非 META-INF XML/YAML/properties/SQL；不是对整个 JAR 的字节等价声明。"
+}

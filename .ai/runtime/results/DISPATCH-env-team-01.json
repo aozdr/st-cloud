@@ -1,0 +1,49 @@
+{
+  "dispatchId": "DISPATCH-env-team-01",
+  "taskId": "TASK-20260930-environment-team-tests",
+  "status": "completed",
+  "artifactRefs": [
+    "st-team/src/test/java/com/stcloud/team/service/TeamRoleMysqlConcurrencyIntegrationTest.java",
+    ".ai/docs/20260930-environment-remediation/team-testcases.md",
+    ".ai/docs/20260930-environment-remediation/team-static-check.txt"
+  ],
+  "criterionProposal": {
+    "id": "TESTCASES",
+    "outcome": "pass",
+    "by": "/root/team_tests",
+    "dispatchId": "DISPATCH-env-team-01",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-env-team-01.json",
+    "validatedRevision": "env-design-r1"
+  },
+  "proposalScope": "仅 V02/TEAM01 专项用例编写部分；不提出 TEST_PASS 或整体 TESTCASES 验收结论",
+  "blockerProposals": [],
+  "background": "遗留 V02 缺真实服务事务隔离级别断言和邀请等待锁期间撤销/过期的专项运行。",
+  "inputs": [
+    ".ai/tasks/TASK-20260930-environment-team-tests.md",
+    ".ai/docs/20260930-environment-remediation/design.md",
+    ".ai/docs/20260930-environment-remediation/testcases.md",
+    ".ai/docs/20260930-environment-remediation/requirement.md",
+    "当前 TeamRoleConcurrencyIntegrationTest、TeamRoleMysqlConcurrencyIntegrationTest 与 TeamServiceImpl",
+    "当前 Dispatch 协议/schema；当前 State design=env-design-r1"
+  ],
+  "analysis": "事实：原 MySQL 子类继承 8 个角色/成员/邀请锁顺序场景和 8 个权限提交/回滚场景；新增 7 个服务入口的实际 Spring 事务连接隔离检查，以及 revoke/expire 两个数据库 LOCK WAIT 交错场景，总数预期 25。未运行，不把预期当作通过。",
+  "decision": "只修改 MySQL 专项测试，保留已有矩阵。池基线强制 RR，服务事务必须选择 RC；同时核对实际 JDBC 连接和 MySQL 会话变量。邀请失效必须发生在数据库确认等待期间；解锁后拒绝并核对无成员和有效悬空引用。",
+  "stateDelta": "仅 criterionProposal；没有修改 State、执行 Evaluate、判定 Goal 或声明业务测试通过。",
+  "risks": [
+    "尚未编译或运行测试；主线程需串行 Maven 和真实 MySQL 验证。",
+    "测试账号需能查询 information_schema.innodb_trx（PROCESS 权限），数据库需有当前完整 schema。",
+    "继承测试使用固定用户 ID，整类重复运行须另建新独立测试库，禁止清空共享库。",
+    "旧 MySQL 若不支持 @@session.transaction_isolation 会明确失败，需主线程根据实际版本处理。",
+    "过期测试在确认等待后提交短期截止时间，再持锁等待真实时钟过期；这验证锁后重读及过期拒绝，不替代全链路验收。"
+  ],
+  "nextSteps": "主线程按 team-testcases.md 的环境变量命令串行运行；保留 Surefire XML，确认预期 25 项非 skip。若编译/运行失败按实际证据修正并重验。",
+  "changeImpact": "仅 MySQL 测试 Java、本 dispatch 独立文档和结果。未修改生产代码、其他模块、State、历史记录；未运行 Git/Maven、数据库写入、迁移或外网查询。",
+  "validationEvidence": [
+    "对照 Dispatch schema 校验必填字段、身份、scope 和 forbidSpawn/forbidGitMvn；skillRefs 为 -。",
+    "源码核对全部目标服务 READ_COMMITTED 注解、joinByCode 锁前定位及锁后重新读取，以及 deleteRole 对有效邀请引用的保护。",
+    "PowerShell 从当前 Java 源码提取 URL 门禁正则：两个安全独立库 URL 允许，普通共享库、生产库查询参数伪装、H2、库名后缀伪装四个 URL 拒绝；退出码 0。",
+    "新增代码使用 try/finally 回滚持锁连接、try-with-resources 关闭连接/结果集、线程上下文清理、5 秒观测/过期边界与 10 秒终止断言。",
+    "源码 SHA256: 865FE4CE924B796FE9B74DFF7494C7D5B00E660144028813D585FEDBFBD4C682",
+    "没有运行编译或业务测试，不能提出 TEST_PASS。"
+  ]
+}

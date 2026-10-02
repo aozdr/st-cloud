@@ -3,6 +3,7 @@ package com.stcloud.core.service.impl;
 import com.stcloud.common.exception.BusinessException;
 import com.stcloud.core.AbstractIntegrationTest;
 import com.stcloud.core.entity.FileNode;
+import com.stcloud.core.event.ReliableEventPublisher;
 import com.stcloud.core.service.FileService;
 import com.stcloud.core.service.RecycleBinService;
 import org.junit.jupiter.api.BeforeEach;
@@ -16,6 +17,10 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 /** 真实 Mapper/事务覆盖团队回收权限及混合上传者目录；外部存储/事件在本套中受控。 */
 @Import(FileServiceFlowIntegrationTest.FlowTestConfig.class)
@@ -24,6 +29,7 @@ class TeamRecycleBinIntegrationTest extends AbstractIntegrationTest {
     @Autowired private FileService fileService;
     @Autowired private RecycleBinService recycleBinService;
     @Autowired private JdbcTemplate jdbc;
+    @Autowired private ReliableEventPublisher events;
 
     @BeforeEach
     void prepare() {
@@ -196,6 +202,59 @@ class TeamRecycleBinIntegrationTest extends AbstractIntegrationTest {
         FileNode root = node(SPACE, EDITOR, "active", 0, true, 0);
         assertThrows(BusinessException.class, () -> recycleBinService.permanentDelete(List.of(root.getId())));
         assertNotNull(fileNodeMapper.selectById(root.getId()));
+    }
+
+    @Test
+    void expiredRecycleTreeCanBePurgedAfterSpaceSoftDeletion() {
+        space(71020L, 71099L);
+        FileNode root = node(SPACE, EDITOR, "deleted-space-root", 0, true, 1);
+        FileNode child = node(SPACE, OWNER, "child.txt", root.getId(), false, 0);
+        FileNode other = node(71020L, EDITOR, "other-space.txt", 0, false, 1);
+        // 模拟最后一个对象引用：清理必须释放引用并交给提交后删除事件，不能只删目录记录。
+        jdbc.update("INSERT INTO file_object(id,tenant_id,md5,storage_path,size,ref_count,deleted) " +
+                "VALUES(71030,1,'deleted-space-object','test/deleted-space-object',32,1,0)");
+        child.setObjectId(71030L);
+        child.setStoragePath("test/deleted-space-object");
+        fileNodeMapper.updateById(child);
+        clearInvocations(events);
+        jdbc.update("UPDATE file_node SET updated_at='2000-01-01' WHERE id=?", root.getId());
+        jdbc.update("UPDATE team_space SET deleted=1 WHERE id=?", SPACE);
+        jdbc.update("UPDATE team_member SET deleted=1 WHERE space_id=?", SPACE);
+
+        assertTrue(recycleBinService.findExpiredRecycleRoots().contains(root.getId()));
+        recycleBinService.purgeNode(root.getId());
+        assertNull(fileNodeMapper.selectById(root.getId()));
+        assertNull(fileNodeMapper.selectById(child.getId()));
+        assertNotNull(fileNodeMapper.selectById(other.getId()));
+        assertEquals(0, jdbc.queryForObject("SELECT ref_count FROM file_object WHERE id=71030", Integer.class));
+        verify(events).publishPhysicalDelete(argThat(n -> child.getId().equals(n.getId())));
+        assertEquals(100L, jdbc.queryForObject("SELECT storage_used FROM sys_user WHERE id=?", Long.class, ADMIN));
+        assertDoesNotThrow(() -> recycleBinService.purgeNode(root.getId()));
+        verify(events, times(1)).publishPhysicalDelete(argThat(n -> child.getId().equals(n.getId())));
+    }
+
+    @Test
+    void softDeletedSpaceStillDeniesUserRecycleOperations() {
+        FileNode root = node(SPACE, EDITOR, "deleted-space-protected", 0, true, 1);
+        jdbc.update("UPDATE team_space SET deleted=1 WHERE id=?", SPACE);
+        jdbc.update("UPDATE team_member SET deleted=1 WHERE space_id=?", SPACE);
+
+        assertFalse(recycledIds().contains(root.getId()));
+        assertEquals(403, assertThrows(BusinessException.class,
+                () -> recycleBinService.restore(List.of(root.getId()))).getCode());
+        assertEquals(403, assertThrows(BusinessException.class,
+                () -> recycleBinService.permanentDelete(List.of(root.getId()))).getCode());
+        recycleBinService.emptyRecycleBin();
+        assertEquals(1, fileNodeMapper.selectById(root.getId()).getStatus());
+    }
+
+    @Test
+    void systemPurgeKeepsNormalNodeInSoftDeletedSpace() {
+        FileNode normal = node(SPACE, EDITOR, "deleted-space-normal.txt", 0, false, 0);
+        jdbc.update("UPDATE team_space SET deleted=1 WHERE id=?", SPACE);
+        recycleBinService.purgeNode(normal.getId());
+        assertNotNull(fileNodeMapper.selectById(normal.getId()));
+        assertEquals(0, fileNodeMapper.selectById(normal.getId()).getStatus());
     }
 
     @Test

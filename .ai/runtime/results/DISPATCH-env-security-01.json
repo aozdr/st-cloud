@@ -1,0 +1,36 @@
+{
+  "dispatchId": "DISPATCH-env-security-01",
+  "taskId": "TASK-20260930-environment-security",
+  "status": "completed",
+  "summary": "独立核查 env-code-r2 的认证、IPC、租户异步任务、团队撤权回收、上传候选及迁移配置；本次范围未确认未解决重大安全缺陷。保留既有桌面安全与部署风险，完整构建失败和运行版本缺口未写为通过。",
+  "artifactRefs": [".ai/docs/20260930-environment-remediation/security.md"],
+  "criterionProposal": {
+    "id": "SECURITY_REVIEW",
+    "outcome": "pass",
+    "by": "/root/security_review",
+    "dispatchId": "DISPATCH-env-security-01",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-env-security-01.json",
+    "validatedRevision": "env-code-r2"
+  },
+  "validation": [
+    {"kind": "readonly-source-review", "result": "未确认本次新增未解决重大安全缺陷", "evidenceRef": ".ai/docs/20260930-environment-remediation/security.md"},
+    {"kind": "source-sha256", "revision": "env-code-r2", "fileCount": 780, "mismatchCount": 0, "evidenceRef": ".ai/docs/20260930-environment-remediation/current-source-manifest.json"},
+    {"kind": "existing-evidence-review", "evidenceRefs": [".ai/docs/20260930-environment-remediation/live-auth-final.log", ".ai/docs/20260930-environment-remediation/live-redis-final.log", ".ai/docs/20260930-environment-remediation/live-report.md", ".ai/docs/20260930-environment-remediation/schema-after.log", ".ai/docs/20260930-environment-remediation/schema-46-repeat.log", ".ai/docs/20260930-environment-remediation/s3-current-20261001.log", ".ai/docs/20260930-environment-remediation/backend-full-r2.log"], "result": "定向安全用例及真实认证/S3证据通过；完整后端构建仍失败，不提出TEST_PASS"}
+  ],
+  "findings": [],
+  "baselineRisks": [
+    "Electron webSecurity:false/sandbox:false、宽泛preload页面信任以及主进程IPC未逐次核验senderFrame，属于既有待治理边界，不声称本次已加固",
+    "默认dev profile和开发凭据不是生产安全配置证明",
+    "全局RBAC/system表豁免和缺租户默认1仍保留，未进行全仓多租户模型重设计",
+    "Docker健康探针尚未重建应用；Broker容器层数据须先保存，历史OOM未知"
+  ],
+  "limitations": [
+    "只读安全审查，没有运行Electron原生IPC实机、共享Maven或真实权限修改",
+    "backend-full-r2.log完整构建失败已通知主线程，最终TEST_PASS必须重验",
+    "真实8080业务证据仍使用r1 immutable JAR，最终r2运行证据待主线程补齐",
+    "S3写读成功不能证明全部图片预览/缩略图接口正常"
+  ],
+  "blockerProposals": [],
+  "confirmationRequest": null,
+  "delegationRequest": null
+}

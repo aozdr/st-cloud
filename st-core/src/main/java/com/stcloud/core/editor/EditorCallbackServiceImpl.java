@@ -22,6 +22,7 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import jakarta.annotation.Resource;
+import com.stcloud.core.service.impl.upload.ObjectUploadCandidateService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -68,10 +69,10 @@ public class EditorCallbackServiceImpl implements EditorCallbackService {
     private final TeamStorageMapper teamStorageMapper;
     private final VersionService versionService;
     private final ReliableEventPublisher reliableEventPublisher;
-    @org.springframework.beans.factory.annotation.Autowired(required = false)
-    private com.stcloud.core.service.impl.OrphanObjectCleanupService orphanObjectCleanupService;
     @Resource
     private UploadCommitManager uploadCommitManager;
+    @Resource
+    private ObjectUploadCandidateService objectUploadCandidateService;
     @Resource
     private UploadStorageManager uploadStorageManager;
 
@@ -189,22 +190,10 @@ public class EditorCallbackServiceImpl implements EditorCallbackService {
             if (existing != null) {
                 storagePath = existing.getStoragePath();
             } else {
-                storagePath = tenantId + "/" + md5;
-                if (orphanObjectCleanupService != null) {
-                    orphanObjectCleanupService.beginUpload(tenantId, md5, storagePath);
-                }
                 try (InputStream is = Files.newInputStream(tempFile)) {
-                    storageService.uploadObject(storagePath, is, newSize, contentType);
+                    storagePath = objectUploadCandidateService.upload(tenantId, md5, is, newSize, contentType);
                 } catch (IOException e) {
-                    if (orphanObjectCleanupService != null) {
-                        orphanObjectCleanupService.markFailed(tenantId, storagePath);
-                    }
                     throw new BusinessException(ResultCode.FILE_UPLOAD_FAILED, "回调内容上传失败");
-                } catch (RuntimeException e) {
-                    if (orphanObjectCleanupService != null) {
-                        orphanObjectCleanupService.markFailed(tenantId, storagePath);
-                    }
-                    throw e;
                 }
                 uploadedNew = true;
             }
@@ -216,16 +205,9 @@ public class EditorCallbackServiceImpl implements EditorCallbackService {
             } catch (RuntimeException e) {
                 // 事务失败只登记候选，避免 current == null 竞态误删并发成功对象。
                 if (uploadedNew) {
-                    if (orphanObjectCleanupService != null) {
-                        orphanObjectCleanupService.markFailed(tenantId, storagePath);
-                    }
+                    cleanupOrphanUpload(tenantId, md5, storagePath);
                 }
                 throw e;
-            }
-            if (uploadedNew) {
-                if (orphanObjectCleanupService != null) {
-                    orphanObjectCleanupService.markCommitted(tenantId, storagePath);
-                }
             }
 
             // 关闭/强制保存：提交成功后移除编辑标记（Redis 调用，事务外，TC-08/20）
@@ -253,9 +235,8 @@ public class EditorCallbackServiceImpl implements EditorCallbackService {
 
     /** 回调落库失败只登记规范对象候选，由定时任务在宽限期后做安全复核。 */
     private void cleanupOrphanUpload(Long tenantId, String md5, String storagePath) {
-        if (orphanObjectCleanupService != null) {
-            orphanObjectCleanupService.markFailed(tenantId, storagePath);
-        }
+        // 仅放弃未采用的候选，延迟 GC 按持久引用回收，不立即删除物理对象。
+        objectUploadCandidateService.discard(tenantId, storagePath);
     }
 
     /** 下载回调内容到临时文件：大小上限（Content-Length + 流式计数）与 SSRF 主机白名单（逐跳复核） */

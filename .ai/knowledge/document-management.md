@@ -1,131 +1,21 @@
-# 文档产出与留存规范
+# 文档产出与留存
 
-> 本规范定义星云盘研发流程中各类输出文档的产出、存放、命名、用户可见性与长期留存规则。是 AGENTS.md「文档产出与留存」的实施细则，所有中大型任务必须遵守。
-> 所有文档的输出格式遵循 `docs/newList/` 下的输出标准，对应模板存放于 `.ai/templates/`。
+必需产物只由 `.ai/loop/exit-criteria.yaml` 的当前定义决定。模板及 docs/newList/ 是编写参考，不能额外增加门禁、强制章节或暂停。
 
-## 核心原则
+## 默认产物
 
-- **按需产出**：以 `.ai/loop/exit-criteria.yaml` 当前规模的 artifacts 为准；小型任务和只读任务不因流程而补写文档
-- **必落盘**：作为 Loop 产物的文档必须写入项目目录 `.ai/docs/`，临时咨询结论可直接留在对话中
-- **按需可见**：需要用户裁决或用户要求查看的产物必须告知路径，其余产物在最终报告列出即可
-- **必留存**：文档作为项目资产长期保留，供后续回顾、复盘、知识库同步，不得删除
+small 直接路径不落盘；medium 的 design.md 包含需求/范围/影响/方案/风险/验收/测试计划，verification.md 包含修改/自检/命令结果/适用 UI 与安全检查/知识同步/剩余风险。large 增加 requirement.md 与独立 codereview.md；架构评估合入 design，安全评审合入 codereview。
 
-## 文件编码规范
+复杂 UI、独立架构决策、用户指定交付格式才单独产出 uispec/ADR/其他文档。无 UI 不创建体验文件，不为知识无变化派发任务。内容写一次，多处引用；现有 testcases/changereport/impact 等文件仍可作为证据，不要求重写。
 
-- 所有落盘文档与产物（`.md` / `.yaml` / `.json` 等）统一使用 **UTF-8（无 BOM）** 编码，禁止 GBK/GB2312，禁止同一迭代内混用编码
-- 含非 ASCII 内容的 `.ps1` 脚本使用 **UTF-8 with BOM**，以兼容 Windows PowerShell 5.1 按 ANSI 读取导致的乱码问题
-- 产出文档时必须确认编码为 UTF-8；发现历史文件为其他编码时先转码再修改
+## 存放与编码
 
-## 文档类型与归属
+任务文档在 `.ai/docs/<task-id>/`；TASK 在 `.ai/tasks/`；稳定知识在 `.ai/knowledge/`；ADR 在 `.ai/decisions/ADR/`。UTF-8 无 BOM；含中文的 PowerShell 5.1 脚本使用 UTF-8 BOM。历史产物保留原位，不批量删除或重写。
 
-| 文档 | 产出 Agent | 归属 exitCriteria | 输出标准 | 模板 |
-|------|-----------|-------------------|---------|------|
-| 需求文档（PRD） | executor（taskType=requirement） | REQ_ANALYSIS（大型）/ DESIGN（中型含需求时） | `docs/newList/ai-requirement-document-standard.md` | `.ai/templates/requirement-template.md` |
-| UI 设计文档（uiSpec，按 UI 范围触发） | executor（taskType=ui-design） | REQ_ANALYSIS / EXP_DESIGN | `docs/newList/ai-ui-design-document-standard.md` | `.ai/templates/ui-design-template.md` |
-| 需求发现报告 | executor（taskType=discovery） | 可选上游（不进 Loop 强制门禁） | `docs/newList/ai-requirement-discovery-agent-standard.md` | `.ai/templates/discovery-template.md` |
-| 架构设计评审 | executor（taskType=architecture） | TECH_DESIGN（大型任务前置） | `docs/newList/ai-architecture-review-standard.md` | `.ai/templates/architecture-review-template.md` |
-| 程序设计文档 | executor（taskType=design） | TECH_DESIGN（大型）/ DESIGN（中型） | `docs/newList/ai-design-document-standard.md` | `.ai/templates/design-template.md` |
-| 测试用例 | tester | TESTCASES | `docs/newList/ai-test-case-standard.md` | `.ai/templates/test-case-template.md` |
-| Code Review 记录 | reviewer | CODE_REVIEW | `docs/newList/ai-code-review-standard.md` | `.ai/templates/code-review-template.md` |
-| Task 文件 | workflow-manager | IMPLEMENTED 前置 | 无独立标准 | `.ai/templates/task-template.md` |
-| Change Report | executor（taskType=implement） | IMPLEMENTED | 无独立标准（汇总记录） | 无 |
-| ADR（架构决策记录） | executor（taskType=architecture） | KNOWLEDGE | 无独立标准 | `.ai/templates/adr-template.md` |
+一份文件可以支持多个验证维度，但必须分别记录内容、结果、实际证据及修订；不能把一段“通过”重复登记为多个检查。
 
-> 安全审查（SECURITY_REVIEW）记录 `security.md`、影响分析 `impact.md`、体验评审 `exp-review.md`、测试报告 `testreport.md` 暂无独立 newList 标准，沿用现有格式。
+## 确认与交付
 
-## 存放目录（按迭代归档）
+仅实质范围/兼容/风险未决决策需要确认；设置对应 confirmationRequired=true，并呈现可审阅文档。已有明确授权可复用。其他文档无需暂停或逐段复述。
 
-所有任务文档**按迭代（任务）归档**：每个迭代在 `.ai/docs/` 下创建一个同名文件夹，该迭代产出的全部文档放入此文件夹：
-
-```
-.ai/docs/
-  <task-id>/              # 每个迭代一个文件夹，task-id 与 Loop State 的 taskId 一致
-    discovery.md          # 需求发现报告（可选上游）
-    requirement.md        # 需求文档
-    uispec.md             # UI 设计文档
-    impact.md             # 影响分析
-    exp-review.md         # 体验评审
-    architecture-review.md # 架构设计评审（大型任务，先于 design.md）
-    design.md             # 程序设计文档
-    testcases.md          # 测试用例
-    codereview.md         # Code Review 记录
-    security.md           # 安全审查记录
-    testreport.md         # 测试报告
-    changereport.md       # Change Report（工程师生成）
-```
-
-- 该目录是任务文档的唯一存放地，与 `.ai/knowledge/`（知识库，结构化事实源）区分
-- 同一迭代全程向**同一文件夹**追加文档，不跨迭代混放；编排器初始化 State 时即创建该文件夹
-- 文档随项目版本管理，纳入 git，不放入 `.gitignore`
-- Task 文件与 ADR 存放在任务归档目录之外：Task 文件固定存 `.ai/tasks/TASK-xxx.md`（开发前置产物，随 State 更新）；ADR 固定存 `.ai/decisions/ADR/ADR-xxx-<slug>.md`（跨迭代长期资产，编号递增，不按 task-id 归档）
-
-## 命名规范
-
-```
-.ai/docs/<task-id>/<type>.md
-```
-
-- `task-id`：文件夹名，与 Loop State 的 taskId 一致（建议 `YYYYMMDD-<slug>`，如 `20260809-share-permission`）
-- `type`：文件名，取值 `discovery` / `requirement` / `uispec` / `impact` / `exp-review` / `architecture-review` / `design` / `testcases` / `codereview` / `security` / `testreport` / `changereport`
-- 示例（`<task-id>` 为实际任务标识）：
-  - `.ai/docs/<task-id>/requirement.md`
-  - `.ai/docs/<task-id>/design.md`
-  - `.ai/docs/<task-id>/uispec.md`
-  - `.ai/docs/<task-id>/architecture-review.md`
-- ADR 命名：`.ai/decisions/ADR/ADR-xxx-<slug>.md`（编号递增，如 `ADR-001-file-object-model.md`）
-
-> 历史文档（采用 `<task-id>-<type>.md` 扁平命名，如 `favorites-enhancement-requirement.md`）保留原位不动，新迭代一律使用文件夹结构。
-
-## 用户可见性
-
-需要用户裁决或用户要求查看时，文档落盘后由产出 Agent 或编排器在对话中：
-
-1. 明确告知文档的相对路径（如 `.ai/docs/<task-id>/requirement.md`，具体命名见上节）
-2. 简述文档核心内容（背景、范围、验收标准 / 架构、接口、数据设计）
-3. 存在未决范围、兼容性或风险时列出「遗留问题点」（≤3 个）并请求裁决
-
-无需用户裁决的产物在最终报告集中列出路径即可，不要求单独暂停或逐段复述。
-
-> 需要用户裁决的需求/设计文档必须可供用户查看后再推进依赖该裁决的下游阶段；测试、评审和 Change Report 等无需确认的文档不因未在对话中逐段复述而阻塞流程。
-
-## 需求/设计文档确认门禁（20260815 起）
-
-- **需求文档**（`requirement.md`）与**程序设计文档**（`design.md`）是确认型产出：
-  只有对应 exit criterion 设置 `confirmationRequired: true` 时，才需确认影响范围、兼容性或风险方面的未决事项；当前请求或 State 已明确确认时可复用，不重复暂停
-- 未确认的实质决策不能使 REQ_ANALYSIS / DESIGN / TECH_DESIGN 标 done，也不能驱动下游 TASK
-- 用户裁决结果回写文档（在对应章节补「用户决策」记录），并记入 Loop State `userConfirmedAt`
-- 其余文档（测试用例、评审记录、测试报告、Change Report）按既有流程产出即可，无需确认门禁
-
-## 简洁性要求（20260815 起）
-
-- 直说事实与决策，每段只说一件事；能用表格/列表/短句不用长段落
-- 禁止空话套话与互联网黑话（赋能/抓手/闭环/颗粒度/对齐/拉通/维度 等）
-- 术语首次出现用一句话解释；删除“众所周知”“综上所述”等填充内容
-- 模板中的注释性说明（`<!-- ... -->`）仅为填写提示，产出时替换为实际内容，不得保留在文档中
-
-## 长期留存
-
-- 任务收敛 `status=done` 后，文档保留在 `.ai/docs/`，**不移除、不归档到别处**
-- 文档是后续回顾、复盘、需求变更溯源、知识库同步的依据
-- rework 导致文档修订时，覆盖更新同一文件（保留最新版），同时在 Loop State history 记录修订原因；不保留多版本副本（git 已提供历史版本）
-
-## 与 Loop State 的关系
-
-- `artifacts.prd.ref` 必须指向 `.ai/docs/<task-id>/requirement.md` 的真实路径
-- 若任务涉及 UI，`artifacts.uiSpec.ref` 必须指向 `.ai/docs/<task-id>/uispec.md` 的真实路径；无 UI 时不要求该产物
-- `artifacts.design.ref` 必须指向 `.ai/docs/<task-id>/design.md` 的真实路径
-- `artifacts.archReview.ref`（大型任务）指向 `.ai/docs/<task-id>/architecture-review.md`
-- 编排器在 Evaluate 段校验 ref 指向的文件真实存在，否则对应 exitCriteria 不得标 done
-
-## 大型任务设计阶段顺序
-
-大型任务的 TECH_DESIGN 阶段分为两步，均须落盘；EXP_DESIGN/EXP_ACCEPT 仅在涉及 UI 时要求体验文档：
-
-1. **架构设计评审**（`architecture-review.md`）：Architect 主笔，评估整体技术方案、影响范围、性能/安全/扩展性，评审通过后才进入程序设计
-2. **程序设计文档**（`design.md`）：前后端工程师基于架构评审结论产出详细设计
-
-> 架构评审是程序设计的前置条件，未通过架构评审不得产出最终 design.md（门禁由编排器在 Evaluate 段强制）。
-
-## 小型任务例外
-
-小型任务（直接执行）不强制产出需求/设计文档，但若改动涉及核心逻辑（权限/配额/文件处理/分享），鼓励补记一份简要设计说明到 `.ai/docs/<task-id>/`，命名同规范。
+结果与验证路径在最终报告给出；必要背景简述，不堆积八段空表。V2 State 仍按绑定定义要求原文件，V3 产物合并不追溯改变其门禁。

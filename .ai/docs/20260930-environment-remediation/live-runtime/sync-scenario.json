@@ -1,0 +1,29 @@
+{
+  "root": {
+    "rootId": "2105298514185756673",
+    "cloudFolderNodeId": "2105298513682440193",
+    "localPath": "D:\\code\\st-cloud\\.ai\\docs\\20260930-environment-remediation\\live-runtime\\sync-root-2105298513682440193"
+  },
+  "rootId": "2105298514185756673",
+  "folderId": "2105298513682440193",
+  "destinationId": "2105298513967652866",
+  "nodeId": "2105298514835873794",
+  "originalBytes": "Original dedicated sync bytes a3d1d5d1-8249-4a92-ae08-45c69bcd1b51",
+  "updatedBytes": "Updated dedicated bytes after offline rename move 24d7f8f1-bcb8-407e-9a81-7f8e0d0f2e88",
+  "oldDelete": {
+    "logId": "340",
+    "nodeId": "2105298514835873794",
+    "parentId": null,
+    "changeType": "DELETE",
+    "path": "/note.txt",
+    "oldPath": null,
+    "name": "note.txt",
+    "nodeType": 1,
+    "size": "66",
+    "md5": "57e7520b6def7209cc6ebce67d0ec2ff",
+    "suffix": "txt",
+    "status": 1,
+    "updatedAt": "2026-10-01 10:20:37"
+  },
+  "createdAt": "2026-10-01T02:20:39.588Z"
+}

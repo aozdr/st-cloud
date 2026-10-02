@@ -129,9 +129,9 @@ export default function SyncPage() {
     try {
       await window.electronAPI!.syncUpdateConflictStrategy(rootId, strategy);
       setRoots((prev) => prev.map((r) => r.id === rootId ? { ...r, conflictStrategy: strategy } : r));
-      showToast('Conflict strategy updated', 'success');
+      showToast('冲突策略已更新', 'success');
     } catch {
-      showToast('Failed to update conflict strategy', 'error');
+      showToast('更新冲突策略失败', 'error');
     }
   };
 
@@ -155,7 +155,7 @@ export default function SyncPage() {
       setExclusions(data || []);
       setExclusionInput('');
     } catch {
-      showToast('Failed to add exclusion', 'error');
+      showToast('添加排除路径失败', 'error');
     }
   };
 
@@ -166,7 +166,7 @@ export default function SyncPage() {
       const data = await window.electronAPI!.syncListExclusions(showExclusions);
       setExclusions(data || []);
     } catch {
-      showToast('Failed to remove exclusion', 'error');
+      showToast('移除排除路径失败', 'error');
     }
   };
 
@@ -219,9 +219,9 @@ export default function SyncPage() {
           <h1 className="text-base font-semibold text-fg">文件同步</h1>
         </div>
         <div className="flex items-center gap-2">
-          <span className="flex items-center gap-1 text-xs " title={wsConnected ? "Real-time connected" : "Offline - polling"}>
+          <span className="flex items-center gap-1 text-xs" title={wsConnected ? '实时连接' : '离线，使用轮询'}>
             {wsConnected ? <Wifi className="w-3.5 h-3.5 text-green-600" /> : <WifiOff className="w-3.5 h-3.5 text-muted" />}
-            <span className={wsConnected ? "text-green-600" : "text-muted"}>{wsConnected ? "Realtime" : "Polling"}</span>
+            <span className={wsConnected ? "text-green-600" : "text-muted"}>{wsConnected ? '实时连接' : '轮询'}</span>
           </span>
           <button onClick={fetchRoots} className="btn-ghost">
             <RefreshCw className="w-4 h-4" aria-hidden />
@@ -272,14 +272,14 @@ export default function SyncPage() {
                       value={root.conflictStrategy || "keep_both"}
                       onChange={(e) => handleConflictStrategy(root.id, e.target.value)}
                       className="text-xs border border-border rounded px-1.5 py-1 bg-surface text-fg"
-                      title="Conflict resolution strategy"
+                      title="冲突处理策略"
                     >
-                      <option value="keep_both">Keep Both</option>
-                      <option value="latest_wins">Latest Wins</option>
-                      <option value="server_wins">Server Wins</option>
-                      <option value="local_wins">Local Wins</option>
+                      <option value="keep_both">保留两份</option>
+                      <option value="latest_wins">最新版本优先</option>
+                      <option value="server_wins">云端优先</option>
+                      <option value="local_wins">本地优先</option>
                     </select>
-                    <button onClick={() => handleShowExclusions(root.id)} className="btn-ghost" title="Selective sync">
+                    <button onClick={() => handleShowExclusions(root.id)} className="btn-ghost" title="选择性同步">
                       <Settings className="w-4 h-4" aria-hidden />
                     </button>
                     {isActive ? (
@@ -406,24 +406,24 @@ export default function SyncPage() {
       {showExclusions && (
         <div className="modal-overlay" onClick={() => setShowExclusions(null)}>
           <div className="modal-content w-[480px] max-w-[92vw] p-6" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-lg font-semibold text-fg mb-4">Selective Sync</h2>
-            <p className="text-sm text-muted mb-4">Excluded paths will not be synced between local and cloud.</p>
+            <h2 className="text-lg font-semibold text-fg mb-4">选择性同步</h2>
+            <p className="text-sm text-muted mb-4">排除的路径不会在本地与云端之间同步。</p>
 
             <div className="flex items-center gap-2 mb-4">
               <input
                 type="text"
                 value={exclusionInput}
                 onChange={(e) => setExclusionInput(e.target.value)}
-                placeholder="/subfolder to exclude..."
+                placeholder="输入要排除的子目录…"
                 className="input-field flex-1 text-sm"
                 onKeyDown={(e) => e.key === 'Enter' && handleAddExclusion()}
               />
-              <button onClick={handleAddExclusion} className="btn-primary text-sm">Add</button>
+              <button onClick={handleAddExclusion} className="btn-primary text-sm">添加</button>
             </div>
 
             <div className="max-h-60 overflow-y-auto space-y-1.5 mb-4">
               {exclusions.length === 0 ? (
-                <div className="text-sm text-muted text-center py-4">No exclusions - all paths sync</div>
+                <div className="text-sm text-muted text-center py-4">暂无排除路径，所有路径都会同步</div>
               ) : (
                 exclusions.map((excl) => (
                   <div key={excl.id} className="flex items-center justify-between p-2 rounded-md bg-surface-2">
@@ -440,7 +440,7 @@ export default function SyncPage() {
             </div>
 
             <div className="flex justify-end">
-              <button onClick={() => setShowExclusions(null)} className="btn-secondary">Close</button>
+              <button onClick={() => setShowExclusions(null)} className="btn-secondary">关闭</button>
             </div>
           </div>
         </div>

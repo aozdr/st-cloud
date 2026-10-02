@@ -1,0 +1,1 @@
+{"taskId":"TASK-20261002-review-session-view","revision":"session-view-r3","status":"accepted","scope":"本次会话修复，非全量工作区","blockers":[],"dispatch":{"dispatchId":"DISPATCH-session-view-review-01","childId":"/root/session_view_review","status":"evaluated","outcome":"pass"},"evidence":".ai/docs/20261002-review-session-view/verification.md"}

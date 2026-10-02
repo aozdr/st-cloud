@@ -6,6 +6,7 @@ import com.stcloud.core.mapper.FileObjectMapper;
 import com.stcloud.core.service.FileObjectService;
 import com.stcloud.core.service.StorageService;
 import jakarta.annotation.Resource;
+import com.stcloud.core.service.impl.upload.ObjectUploadCandidateService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -24,6 +25,9 @@ public class FileObjectServiceImpl implements FileObjectService {
     @Resource
     private StorageService storageService;
 
+    @Resource
+    private ObjectUploadCandidateService objectUploadCandidateService;
+
     @Override
     public FileObject acquire(Long tenantId, String md5, long size, Supplier<String> storagePathSupplier) {
         if (md5 == null || md5.isEmpty()) {
@@ -32,7 +36,7 @@ public class FileObjectServiceImpl implements FileObjectService {
         // 去重命中：直接复用已有对象并 +1 引用，不重复上传
         FileObject existing = fileObjectMapper.selectByTenantAndMd5(tenantId, md5);
         if (existing != null) {
-            fileObjectMapper.incrementRefCount(existing.getId());
+            requireIncrement(existing);
             return existing;
         }
         // 未命中：由调用方（事务内/事务外均可）先上传新物理对象，再按路径归属/创建对象记录
@@ -45,12 +49,13 @@ public class FileObjectServiceImpl implements FileObjectService {
         if (md5 == null || md5.isEmpty()) {
             return null;
         }
+        boolean claimed = ObjectUploadCandidateService.isManagedPath(storagePath) && objectUploadCandidateService.claim(tenantId, md5, storagePath);
         // 仅 DB 操作（事务边界治理）：物理对象已上传，此处不再触发任何 S3 调用。
         // 先复用命中，再尝试创建，最后处理并发竞争，与 acquire 的"上传后归属"语义保持一致。
         FileObject existing = fileObjectMapper.selectByTenantAndMd5(tenantId, md5);
         if (existing != null) {
-            fileObjectMapper.incrementRefCount(existing.getId());
-            return existing;
+            requireIncrement(existing);
+            return finishClaim(tenantId, storagePath, claimed, existing);
         }
         FileObject created = new FileObject();
         created.setTenantId(tenantId);
@@ -63,24 +68,35 @@ public class FileObjectServiceImpl implements FileObjectService {
         int inserted = fileObjectMapper.insertIgnore(created);
         if (inserted == 0) {
             // 并发首个上传竞争：另一事务已插入同 md5 对象，复用之（可能产生一次冗余上传，属可接受竞态）
-            FileObject winner = fileObjectMapper.selectByTenantAndMd5(tenantId, md5);
+            FileObject winner = fileObjectMapper.selectCurrentByTenantAndMd5(tenantId, md5);
             if (winner != null) {
-                fileObjectMapper.incrementRefCount(winner.getId());
-                return winner;
+                requireIncrement(winner);
+                return finishClaim(tenantId, storagePath, claimed, winner);
             }
             // 去重墓碑：同 md5 存在已软删除记录（uk_tenant_md5 唯一键保留但查询不可见）。
             // 物理对象已由 supplier 重新上传，恢复该记录并原子 +1 引用（ref_count 先置 0 再由 +1 保证并发正确）
             fileObjectMapper.revive(tenantId, md5, storagePath, size);
-            winner = fileObjectMapper.selectByTenantAndMd5(tenantId, md5);
+            winner = fileObjectMapper.selectCurrentByTenantAndMd5(tenantId, md5);
             if (winner != null) {
-                fileObjectMapper.incrementRefCount(winner.getId());
-                return fileObjectMapper.selectByTenantAndMd5(tenantId, md5);
+                requireIncrement(winner);
+                return finishClaim(tenantId, storagePath, claimed, fileObjectMapper.selectByTenantAndMd5(tenantId, md5));
             }
         }
         // 返回权威行（含数据库生成 id）
-        return fileObjectMapper.selectByTenantAndMd5(tenantId, md5);
+        return finishClaim(tenantId, storagePath, claimed, fileObjectMapper.selectByTenantAndMd5(tenantId, md5));
     }
 
+    private void requireIncrement(FileObject object) {
+        // 原子增引用失败说明对象已失效，不能继续创建指向失效路径的节点。
+        if (fileObjectMapper.incrementRefCount(object.getId()) != 1)
+            throw new IllegalStateException("对象已失效，请重试");
+    }
+
+    private FileObject finishClaim(Long tenantId, String path, boolean claimed, FileObject object) {
+        if (object == null) throw new IllegalStateException("对象归属失败");
+        if (claimed && !path.equals(object.getStoragePath())) objectUploadCandidateService.discardClaim(tenantId, path);
+        return object;
+    }
     @Override
     public FileObject findByTenantAndMd5(Long tenantId, String md5) {
         if (md5 == null || md5.isEmpty()) {

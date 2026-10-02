@@ -28,6 +28,7 @@ public class RecycleBinPurgeTask {
 
     private final RecycleBinService recycleBinService;
     private final StringRedisTemplate stringRedisTemplate;
+    private final TenantTaskRunner tenantTaskRunner;
 
     /** 释放锁的 Lua 脚本：仅当 value 匹配时删除，避免误删其它实例持有的锁 */
     private static final DefaultRedisScript<Long> UNLOCK_SCRIPT = new DefaultRedisScript<>(
@@ -44,22 +45,26 @@ public class RecycleBinPurgeTask {
             return;
         }
         try {
-            List<Long> ids = recycleBinService.findExpiredRecycleRoots();
-            log.info("回收站自动清理：待清理 {} 个过期节点", ids.size());
-            int success = 0;
-            int failure = 0;
-            for (Long id : ids) {
-                try {
-                    recycleBinService.purgeNode(id);
-                    success++;
-                } catch (Exception e) {
-                    failure++;
-                    log.warn("回收站自动清理：节点 {} 清理失败: {}", id, e.getMessage());
-                }
-            }
-            log.info("回收站自动清理完成：成功 {}，失败 {}", success, failure);
+            tenantTaskRunner.runForEachTenant("回收站自动清理", this::purgeCurrentTenant);
         } finally {
             stringRedisTemplate.execute(UNLOCK_SCRIPT, Collections.singletonList(LOCK_KEY), token);
         }
+    }
+
+    private void purgeCurrentTenant() {
+        List<Long> ids = recycleBinService.findExpiredRecycleRoots();
+        log.info("回收站自动清理：待清理 {} 个过期节点", ids.size());
+        int success = 0;
+        int failure = 0;
+        for (Long id : ids) {
+            try {
+                recycleBinService.purgeNode(id);
+                success++;
+            } catch (Exception e) {
+                failure++;
+                log.warn("回收站自动清理：节点 {} 清理失败: {}", id, e.getMessage());
+            }
+        }
+        log.info("回收站自动清理完成：成功 {}，失败 {}", success, failure);
     }
 }

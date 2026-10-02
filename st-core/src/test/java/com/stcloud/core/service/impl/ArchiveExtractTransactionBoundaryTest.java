@@ -319,17 +319,52 @@ class ArchiveExtractTransactionBoundaryTest {
         verify(storageService, times(2))
                 .uploadObject(anyString(), any(InputStream.class), anyLong(), anyString());
         verify(storageService, org.mockito.Mockito.never()).deleteObject(anyString());
-        assertEquals(2L, jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM file_orphan_candidate WHERE tenant_id = 1 "
-                        + "AND md5 IN (?, ?) AND active_uploads = 0 AND status = 1",
-                Long.class,
-                DigestUtil.md5Hex("hello".getBytes(StandardCharsets.UTF_8)),
-                DigestUtil.md5Hex("world".getBytes(StandardCharsets.UTF_8))));
+        assertEquals(2L, jdbcTemplate.queryForObject("SELECT COUNT(*) FROM object_upload_candidate WHERE tenant_id=1 AND md5 IN (?,?) AND state='DISCARDED'", Long.class, DigestUtil.md5Hex("hello"), DigestUtil.md5Hex("world")));
         assertEquals(0L, fileNodeMapper.selectCount(new LambdaQueryWrapper<FileNode>()
                         .eq(FileNode::getName, "a.txt")), "DB 失败后节点应随事务回滚");
         assertEquals(0L, userQuotaMapper.getUserQuota(USER_ID).getUsed(), "DB 失败后配额不应扣减");
     }
 
+    @Test
+    void failedArchiveCannotDeleteConcurrentSuccessfulExtract() throws Exception {
+        FileNode zip = insertZipNode("tx-archive-race.zip");
+        byte[] zipData = buildZip("a.txt:round3-archive-race");
+        when(storageService.downloadObject(zip.getStoragePath())).thenAnswer(inv -> new ByteArrayInputStream(zipData));
+        Set<String> physical = java.util.concurrent.ConcurrentHashMap.newKeySet();
+        var bothPut = new java.util.concurrent.CountDownLatch(2);
+        var loserDone = new java.util.concurrent.CountDownLatch(1);
+        doAnswer(inv -> {
+            physical.add(inv.getArgument(0)); bothPut.countDown();
+            assertTrue(bothPut.await(10, java.util.concurrent.TimeUnit.SECONDS));
+            if (Thread.currentThread().getName().equals("archive-winner"))
+                assertTrue(loserDone.await(10, java.util.concurrent.TimeUnit.SECONDS));
+            return null;
+        }).when(storageService).uploadObject(anyString(), any(InputStream.class), anyLong(), anyString());
+        doAnswer(inv -> { physical.remove(inv.getArgument(0)); return null; }).when(storageService).deleteObject(anyString());
+        doAnswer(inv -> {
+            Object result = inv.callRealMethod();
+            if (Thread.currentThread().getName().equals("archive-loser")) throw new IllegalStateException("archive rollback");
+            return result;
+        }).when(fileObjectService).acquireByPath(eq(1L),anyString(),anyLong(),anyString());
+        var loser = java.util.concurrent.Executors.newSingleThreadExecutor(r -> new Thread(r,"archive-loser"));
+        var winner = java.util.concurrent.Executors.newSingleThreadExecutor(r -> new Thread(r,"archive-winner"));
+        try {
+            var failed = loser.submit(() -> {
+                setUpUser(USER_ID,1L);
+                try { assertThrows(RuntimeException.class, () -> archiveService.extractArchive(zip.getId(),0L)); }
+                finally { loserDone.countDown(); UserContext.clear(); TenantContext.clear(); }
+            });
+            var succeeded = winner.submit(() -> {
+                setUpUser(USER_ID,1L);
+                try { assertEquals(1,archiveService.extractArchive(zip.getId(),0L)); }
+                finally { UserContext.clear(); TenantContext.clear(); }
+            });
+            failed.get(15,java.util.concurrent.TimeUnit.SECONDS); succeeded.get(15,java.util.concurrent.TimeUnit.SECONDS);
+            String path = jdbcTemplate.queryForObject("SELECT storage_path FROM file_node WHERE name='a.txt' AND owner_id=100",String.class);
+            assertTrue(physical.contains(path),"解压败者不得删除胜者物理对象");
+            assertEquals(1,jdbcTemplate.queryForObject("SELECT ref_count FROM file_object WHERE storage_path=?",Integer.class,path));
+        } finally { loser.shutdownNow(); winner.shutdownNow(); }
+    }
     @Test
     void archive01_02_inputLimitStopsStreamingAndDeletesTempFile() throws Exception {
         archiveSafetyProperties.setMaxArchiveInputSize(1024L * 1024);

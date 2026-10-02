@@ -1,0 +1,113 @@
+{
+  "dispatchId": "DISPATCH-env-exp-accept-01",
+  "taskId": "TASK-20260930-environment-exp-accept",
+  "status": "completed",
+  "artifactRefs": [
+    ".ai/docs/20260930-environment-remediation/exp-accept-report.md",
+    ".ai/docs/20260930-environment-remediation/exp-accept-source-manifest.json",
+    ".ai/docs/20260930-environment-remediation/exp-accept-web-independent-results.json",
+    ".ai/docs/20260930-environment-remediation/exp-accept-web-independent-focus.png",
+    ".ai/docs/20260930-environment-remediation/exp-accept-auth.log",
+    ".ai/docs/20260930-environment-remediation/exp-accept-browser-preview-failure-results.json",
+    ".ai/docs/20260930-environment-remediation/exp-accept-recycle.png",
+    ".ai/docs/20260930-environment-remediation/exp-accept-browser-results.json",
+    ".ai/docs/20260930-environment-remediation/exp-accept-vite-baseline.json",
+    ".ai/docs/20260930-environment-remediation/exp-accept-vite-diagnostic.json"
+  ],
+  "criterionProposal": {
+    "id": "EXP_ACCEPT",
+    "outcome": "pass",
+    "by": "/root/exp_accept",
+    "dispatchId": "DISPATCH-env-exp-accept-01",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-env-exp-accept-01.json",
+    "validatedRevision": "env-code-r2"
+  },
+  "blockerProposals": [],
+  "background": "独立当前体验验收，真实浏览器团队软删除、回收查看与恢复；核对认证、胶卷及实机覆盖边界。",
+  "inputs": [
+    ".ai/tasks/TASK-20260930-environment-exp-accept.md",
+    ".ai/docs/20260930-environment-remediation/uispec.md",
+    ".ai/docs/20260930-environment-remediation/desktop-remediation.md",
+    ".ai/docs/20260930-environment-remediation/web-remediation.md",
+    ".ai/docs/20260930-environment-remediation/exp-design.md",
+    ".ai/state/20260930-environment-remediation.yaml 的最小修订与标准快照",
+    "主线程 r2 冻结通知"
+  ],
+  "analysis": "事实：独立胶卷17/17、认证33/33通过；真实普通Web Sidebar导航/折叠/主题及团队删除→回收查看→恢复HTTP200/code200并回收项消失。发现Web共用相对base导致原生Vite preview深链空白，主线程修复后独立复验当前普通Web dist两入口JS/CSS200、MIME正确、登录页正常。r2冻结及IMPLEMENTED当前通过已核对，八项相关源码/构建入口哈希一致。没有真实S3原图失败证据。",
+  "decision": "建议EXP_ACCEPT通过，仅包含报告明确覆盖的体验与实现边界；不宣称原团队列表末段、我的Chrome真实后端两轮、实机Electron或全站体验全部完成。",
+  "stateDelta": "仅 criterionProposal，没有写 State、Evaluate 或判定 Goal。",
+  "coverageLimitations": [
+    "恢复后已登录原团队列表可见末段未完成；原Web深链缺陷已修复并以匿名原生preview重验，但不以登录页替代目录可见。",
+    "本child Chrome真实后端连续两轮和临时离线末段未完成；真实认证两轮和新进程证据来自主线程正常登录live脚本，独立33项为受控HTTP/磁盘适配。",
+    "实机Electron窗口导航和Chromium原生磁盘跨进程恢复未覆盖。",
+    "图片陈旧错误使用保存的真实React handler受控调用；未声称网络栈自然产生此顺序。",
+    "第三轮创建团队受真实容量code2009限制，已按主线程停止新账号/团队；没有绕过配额或提权。"
+  ],
+  "automaticApprovalRejection": {
+    "action": "只读精确本任务fixture用户在Redis中的refresh以恢复测试会话",
+    "reason": "从非标准来源提取会话凭据以授权后续操作，缺少用户明确授权；专用fixture说明不足以证明授权。",
+    "executed": false,
+    "scriptCreated": false,
+    "resolution": "主线程明确停止，不再请求或换工具绕过；该未完成末段诚实记录。",
+    "correction": "曾过早称前置脚本已写，后核查整个函数调用被阻止，脚本不存在，已向主线程更正。"
+  },
+  "risks": [
+    "独立体验通过不替代主线程数据库、服务、完整集成测试、Code/Security Review和Goal判定。",
+    "测试新建三普通账号、两默认10GB逻辑配额空间及一个0B目录，保留审计；当前环境容量分配满是明确限制。",
+    "临时磁盘适配测试不等于Electron原生持久化验证。"
+  ],
+  "nextSteps": "主线程核对结果、当前attempt、scope与证据后Evaluate。停止新fixture和凭据提取指示继续有效。",
+  "changeImpact": "只写本任务exp-accept产物及本child专用fixture，无产品源码、State、历史记录或用户既有资源修改；未运行Maven/Git，未停止后台/容器；自有Chrome/5174均关闭。产物不含令牌或密码。",
+  "validationEvidence": [
+    {
+      "kind": "independent_browser_component",
+      "passed": 17,
+      "failed": 0,
+      "browser": "154.0.8037.92",
+      "contrastUnselected": 4.5082767574995675,
+      "contrastSelected": 15.862,
+      "sourceSha256": "ef5b11927235e1c917e780985906ed421cd44e0e6da1cee5886b0d06973d8d57",
+      "ref": ".ai/docs/20260930-environment-remediation/exp-accept-web-independent-results.json"
+    },
+    {
+      "kind": "independent_auth_controlled_http_disk",
+      "passed": 33,
+      "failed": 0,
+      "exitCode": 0,
+      "ref": ".ai/docs/20260930-environment-remediation/exp-accept-auth.log"
+    },
+    {
+      "kind": "real_chrome_backend_team_recycle",
+      "username": "env_exp_muow0kkf12c526",
+      "userId": "2105477981680107521",
+      "spaceId": "2105477988504240129",
+      "folderId": "2105477991222149121",
+      "deleteHttp": 200,
+      "deleteCode": 200,
+      "restoreHttp": 200,
+      "restoreCode": 200,
+      "recycleItemDisappeared": true,
+      "originalListVisibleAfterRestore": "not verified",
+      "ref": ".ai/docs/20260930-environment-remediation/exp-accept-browser-preview-failure-results.json"
+    },
+    {
+      "kind": "native_vite_preview_deep_link_retest",
+      "distBase": "/",
+      "status": "passed",
+      "exitCode": 0,
+      "paths": [
+        "/team/2105477988504240129",
+        "/team"
+      ],
+      "anonymous": true,
+      "ref": ".ai/docs/20260930-environment-remediation/exp-accept-vite-diagnostic.json"
+    },
+    {
+      "kind": "revision_and_hashes",
+      "revision": "env-code-r2",
+      "implemented": "done",
+      "matchingFiles": 8,
+      "ref": ".ai/docs/20260930-environment-remediation/exp-accept-source-manifest.json"
+    }
+  ]
+}

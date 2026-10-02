@@ -110,14 +110,25 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             log.warn("JWT 认证失败: {}", e.getMessage());
         } finally {
             try {
-            filterChain.doFilter(request, response);
+                // 公开业务沿用单租户默认值，但显式建立作用域；已验证的 JWT 租户不能被覆盖。
+                if (TenantContext.getTenantIdOrNull() == null && isDefaultTenantPublicPath(request.getRequestURI())) {
+                    TenantContext.setTenantId(1L);
+                }
+                filterChain.doFilter(request, response);
             } finally {
-            // 请求结束后清理上下文
-            TenantContext.clear();
-            UserContext.clear();
-            SecurityContextHolder.clearContext();
+                // 请求线程会复用，无论公开接口或下游异常都必须清理上下文。
+                TenantContext.clear();
+                UserContext.clear();
+                SecurityContextHolder.clearContext();
             }
         }
+    }
+
+    private boolean isDefaultTenantPublicPath(String uri) {
+        return Set.of("/api/auth/register", "/api/auth/login", "/api/auth/refresh", "/api/auth/ping",
+                        "/api/share/captcha").contains(uri)
+                || uri.startsWith("/api/share/access/")
+                || uri.matches("^/api/file/[^/]+/editor/callback$");
     }
 
     /**

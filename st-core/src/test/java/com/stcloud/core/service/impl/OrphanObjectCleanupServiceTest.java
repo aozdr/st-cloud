@@ -44,6 +44,10 @@ class OrphanObjectCleanupServiceTest {
         ReflectionTestUtils.setField(service, "uploadSessionMapper", uploadSessionMapper);
         ReflectionTestUtils.setField(service, "storageManager", storageManager);
         ReflectionTestUtils.setField(service, "graceMs", 3_600_000L);
+        com.stcloud.core.task.TenantTaskRunner runner = mock(com.stcloud.core.task.TenantTaskRunner.class);
+        lenient().doAnswer(inv -> { ((Runnable) inv.getArgument(1)).run(); return null; })
+                .when(runner).runForEachTenant(anyString(), any(Runnable.class));
+        ReflectionTestUtils.setField(service, "tenantTaskRunner", runner);
     }
 
     @Test

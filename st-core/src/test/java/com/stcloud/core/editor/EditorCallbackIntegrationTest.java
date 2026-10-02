@@ -53,7 +53,18 @@ import static org.mockito.Mockito.*;
  * TC-10（重复回调幂等）、TC-13（事件发布）、TC-14（配额差值）、TC-20（编辑标记移除）。
  */
 @Import(EditorCallbackIntegrationTest.EditorCallbackTestConfig.class)
+@org.springframework.transaction.annotation.Transactional(propagation = org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED)
 class EditorCallbackIntegrationTest extends AbstractIntegrationTest {
+
+    @org.junit.jupiter.api.AfterEach
+    void removeCommittedH2Fixtures() {
+        // 上传外部阶段不允许测试事务包裹；提交后的独立 H2 夹具须显式清理。
+        for (String table : new String[]{"file_version", "file_node", "file_object", "upload_session",
+                "object_upload_candidate", "file_orphan_candidate", "event_log"}) {
+            jdbcTemplate.update("DELETE FROM " + table + " WHERE tenant_id=1");
+        }
+        jdbcTemplate.update("DELETE FROM sys_user WHERE tenant_id=1");
+    }
 
     private static final String SECRET = "test-onlyoffice-secret-0123456789abcdef";
     private static HttpServer httpServer;

@@ -1,0 +1,38 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const base='.ai/docs/20261001-browser-acceptance/';
+const evidence=JSON.parse(fs.readFileSync(base+'network-evidence.json','utf8').replace(/^\uFEFF/,''));
+const cleanup=JSON.parse(fs.readFileSync(base+'cleanup.json','utf8').replace(/^\uFEFF/,''));
+const refresh=evidence.requests.filter(r=>r.path==='/api/auth/refresh'&&r.http===200&&r.code===200);
+const observation=label=>evidence.observations.find(o=>o.label===label);
+const pairEquals=(o,r)=>o.accessPresent&&o.refreshPresent&&o.accessSha===r.newAccessSha&&o.refreshSha===r.newRefreshSha;
+assert.equal(refresh.length,3);
+assert.equal(evidence.requests.filter(r=>r.http===401).length,12);
+const roundStarts=[observation('invalid-access-round-1').at,observation('invalid-access-round-2').at];
+for(let i=0;i<2;i++){
+ const end=i===0?roundStarts[1]:observation('before-offline').at;
+ const group=evidence.requests.filter(r=>r.at>=roundStarts[i]&&r.at<end);
+ assert.equal(group.filter(r=>r.http===401).length,6);
+ assert.equal(group.filter(r=>r.path==='/api/auth/refresh').length,1);
+ assert.equal(group.filter(r=>r.path==='/api/team/'+evidence.fixture.spaceId+'/files'&&r.http===200).length,1);
+}
+assert(pairEquals(observation('before-round-2'),refresh[0]));
+assert(pairEquals(observation('before-offline'),refresh[1]));
+assert(pairEquals(observation('before-cleanup'),refresh[2]));
+assert.equal(refresh[1].oldRefreshSha,refresh[0].newRefreshSha);
+assert.equal(refresh[2].oldRefreshSha,refresh[1].newRefreshSha);
+assert.equal(evidence.checks.filter(c=>c.name==='old-refresh-rejected'&&c.pass&&c.code===1005).length,2);
+const offline=observation('after-offline-before-reconnect');
+assert(!offline.accessPresent&&offline.refreshPresent);
+assert.equal(offline.refreshSha,observation('before-offline').refreshSha);
+assert.equal(evidence.offlineFailures,18);
+const offlineDom=fs.readFileSync(base+'offline.dom.txt','utf8');
+const onlineDom=fs.readFileSync(base+'online-recovered.dom.txt','utf8');
+assert(offlineDom.includes('网络异常或服务暂不可用')&&offlineDom.includes('用户菜单'));
+assert(onlineDom.includes('验收文件夹-'+evidence.fixture.username));
+assert.equal(evidence.status,'browser-actions-completed');
+assert(cleanup.helper5176Stopped&&cleanup.helper5175Stopped&&cleanup.origin5176CleanedViaControl&&cleanup.origin5175LoggedOutViaWeb&&cleanup.backendPreserved);
+assert(!/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/.test(JSON.stringify(evidence)));
+const result={verifiedAt:new Date().toISOString(),pass:true,fixture:evidence.fixture,rounds:[{parallel401:6,refresh:1},{parallel401:6,refresh:1}],oldRefreshRejected:2,offlineConnectionFailures:18,offlineRefreshPreserved:true,onlineRecoveryRefresh:1,restoredFolderVisible:true,pairPersistenceAcrossDocumentReload:true,temporaryOriginsCleaned:true,helpersStopped:true,backendPreserved:true,boundary:'IAB/Chromium UI + unchanged Web build + real 8080 refresh; invalid access and per-entry API resets injected; no PWA cache or native Electron acceptance'};
+fs.writeFileSync(base+'result.json',JSON.stringify(result,null,2));
+console.log(JSON.stringify(result));

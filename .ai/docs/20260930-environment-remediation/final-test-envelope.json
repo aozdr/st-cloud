@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-env-final-test-01",
+  "taskId": "TASK-20260930-environment-final-test",
+  "idempotencyKey": "TASK-20260930-environment-final-test",
+  "role": "tester",
+  "taskType": "test",
+  "objective": "当前env-code-r2独立测试汇总，首条完整DISPATCH_ACK后继续，向/root回传三元组，只给TEST_PASS proposal。",
+  "taskRefs": [
+    ".ai/tasks/TASK-20260930-environment-final-test.md",
+    ".ai/docs/20260930-environment-remediation/testcases.md",
+    ".ai/docs/20260930-environment-remediation/changereport.md"
+  ],
+  "stateRef": ".ai/state/20260930-environment-remediation.yaml",
+  "skillRefs": [
+    "-"
+  ],
+  "artifactRefs": [
+    ".ai/docs/20260930-environment-remediation/current-source-manifest.json"
+  ],
+  "scope": {
+    "exclude": [
+      "产品/配置/State/Git/Maven/依赖安装",
+      "会话凭据提取",
+      "真实业务新增删除"
+    ],
+    "include": [
+      ".ai/docs/20260930-environment-remediation/testreport.md",
+      ".ai/docs/20260930-environment-remediation/final-test-*",
+      ".ai/runtime/results/DISPATCH-env-final-test-01.json"
+    ]
+  },
+  "acceptance": [
+    "当前有效回归与真实运行证据逐项覆盖可运行场景",
+    "失败/跳过/受控与实机边界和源码身份诚实"
+  ],
+  "validation": [
+    "独立只读证据/当前SHA/8080ping",
+    "不重复共享构建、不访问用户会话"
+  ],
+  "forbidSpawn": true,
+  "forbidGitMvn": true,
+  "output": {
+    "resultRef": ".ai/runtime/results/DISPATCH-env-final-test-01.json"
+  }
+}

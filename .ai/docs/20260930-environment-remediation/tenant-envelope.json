@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-env-tenant-01",
+  "taskId": "TASK-20260930-environment-tenant",
+  "idempotencyKey": "TASK-20260930-environment-tenant",
+  "role": "executor",
+  "taskType": "implement",
+  "objective": "核查 O02，按 TASK 只修复确认允许的默认租户入口/定时扫描上下文。by=/root/tenant_paths，validatedRevision=env-code-r1，部分 IMPLEMENTED。首条 DISPATCH_ACK 后继续并向 /root 发送 ACK。共享 Maven 只由主线程运行。",
+  "taskRefs": [
+    ".ai/tasks/TASK-20260930-environment-tenant.md",
+    ".ai/docs/20260930-environment-remediation/design.md",
+    ".ai/docs/20260930-environment-remediation/requirement.md",
+    ".ai/docs/20260930-environment-remediation/testcases.md"
+  ],
+  "stateRef": ".ai/state/20260930-environment-remediation.yaml",
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      "st-auth/src/main/java/**",
+      "st-auth/src/test/java/**",
+      "st-core/src/main/java/**",
+      "st-core/src/test/java/**",
+      "st-common/src/main/java/com/stcloud/common/context/**",
+      "st-common/src/test/java/**",
+      ".ai/docs/20260930-environment-remediation/tenant-*",
+      ".ai/runtime/results/DISPATCH-env-tenant-01.json"
+    ],
+    "exclude": [
+      "已合并的上传/文本/编辑器/解压/对象候选源码及其测试",
+      "数据库",
+      ".ai/state/**",
+      "历史文档",
+      "Maven/Git",
+      "权限规则",
+      "API契约"
+    ]
+  },
+  "acceptance": [
+    "路径清单事实与推测分开",
+    "保留真遗漏告警，显式设置清理合法上下文且线程复用安全"
+  ],
+  "validation": [
+    "只做代码核查和有意义测试编写，不运行Maven",
+    "向主线程提供修改前后的行为依据"
+  ],
+  "forbidSpawn": true,
+  "forbidGitMvn": true,
+  "output": {
+    "resultRef": ".ai/runtime/results/DISPATCH-env-tenant-01.json"
+  }
+}

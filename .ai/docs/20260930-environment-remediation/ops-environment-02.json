@@ -1,0 +1,255 @@
+{
+  "checkedAtUtc": "2026-09-30T14:04:17.9289163Z",
+  "dockerVersion": "29.7.2",
+  "cpu": 16,
+  "memoryBytes": 7998173184,
+  "containers": [
+    {
+      "name": "stcloud-mysql",
+      "imageReference": "mysql:8.0",
+      "imageId": "sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b",
+      "repoDigests": [
+        "mysql@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b"
+      ],
+      "created": "2026-08-15T12:11:21.34843357Z",
+      "started": "2026-09-30T12:29:20.940937103Z",
+      "status": "running",
+      "lastExitCode": 0,
+      "oom": false,
+      "restartCount": 0,
+      "healthConfigured": false,
+      "health": null,
+      "memoryLimitBytes": 0,
+      "architecture": "amd64",
+      "os": "linux",
+      "mounts": [
+        {
+          "type": "bind",
+          "name": null,
+          "destination": "/docker-entrypoint-initdb.d",
+          "writable": true
+        },
+        {
+          "type": "volume",
+          "name": "docker_mysql_data",
+          "destination": "/var/lib/mysql",
+          "writable": true
+        }
+      ]
+    },
+    {
+      "name": "stcloud-redis",
+      "imageReference": "redis:7-alpine",
+      "imageId": "sha256:e7723ff73d963f5cc6d9c4643ea3d989527a402a319239054e9472a7fb9219a2",
+      "repoDigests": [
+        "redis@sha256:e7723ff73d963f5cc6d9c4643ea3d989527a402a319239054e9472a7fb9219a2"
+      ],
+      "created": "2026-08-15T11:49:21.243603429Z",
+      "started": "2026-09-30T12:29:20.915851971Z",
+      "status": "running",
+      "lastExitCode": 0,
+      "oom": false,
+      "restartCount": 0,
+      "healthConfigured": false,
+      "health": null,
+      "memoryLimitBytes": 0,
+      "architecture": "amd64",
+      "os": "linux",
+      "mounts": [
+        {
+          "type": "volume",
+          "name": "docker_redis_data",
+          "destination": "/data",
+          "writable": true
+        }
+      ]
+    },
+    {
+      "name": "stcloud-rustfs",
+      "imageReference": "rustfs/rustfs:latest",
+      "imageId": "sha256:41fe89380f4120a337790c02af192c3fe7bb55c3edc2e6e9357b487b47c6ab21",
+      "repoDigests": [
+        "rustfs/rustfs@sha256:41fe89380f4120a337790c02af192c3fe7bb55c3edc2e6e9357b487b47c6ab21"
+      ],
+      "created": "2026-08-15T11:49:21.257785186Z",
+      "started": "2026-09-30T12:29:20.918677197Z",
+      "status": "running",
+      "lastExitCode": 0,
+      "oom": false,
+      "restartCount": 0,
+      "healthConfigured": false,
+      "health": null,
+      "memoryLimitBytes": 0,
+      "architecture": "amd64",
+      "os": "linux",
+      "mounts": [
+        {
+          "type": "volume",
+          "name": "docker_rustfs_data",
+          "destination": "/data",
+          "writable": true
+        }
+      ]
+    },
+    {
+      "name": "stcloud-rocketmq-namesrv",
+      "imageReference": "apache/rocketmq:5.3.1",
+      "imageId": "sha256:d2b231c1b9204129e4f4dd65ec1521c81b8d6826e5f1fe8daa521dab0db5bf16",
+      "repoDigests": [
+        "apache/rocketmq@sha256:d2b231c1b9204129e4f4dd65ec1521c81b8d6826e5f1fe8daa521dab0db5bf16"
+      ],
+      "created": "2026-09-12T14:35:53.213579476Z",
+      "started": "2026-09-30T12:29:20.937783685Z",
+      "status": "running",
+      "lastExitCode": 0,
+      "oom": false,
+      "restartCount": 0,
+      "healthConfigured": false,
+      "health": null,
+      "memoryLimitBytes": 0,
+      "architecture": "amd64",
+      "os": "linux",
+      "mounts": []
+    },
+    {
+      "name": "stcloud-rocketmq-broker",
+      "imageReference": "apache/rocketmq:5.3.1",
+      "imageId": "sha256:d2b231c1b9204129e4f4dd65ec1521c81b8d6826e5f1fe8daa521dab0db5bf16",
+      "repoDigests": [
+        "apache/rocketmq@sha256:d2b231c1b9204129e4f4dd65ec1521c81b8d6826e5f1fe8daa521dab0db5bf16"
+      ],
+      "created": "2026-08-15T11:49:21.355646052Z",
+      "started": "2026-09-30T12:29:20.939160832Z",
+      "status": "running",
+      "lastExitCode": 0,
+      "oom": false,
+      "restartCount": 0,
+      "healthConfigured": false,
+      "health": null,
+      "memoryLimitBytes": 0,
+      "architecture": "amd64",
+      "os": "linux",
+      "mounts": []
+    },
+    {
+      "name": "stcloud-rocketmq-dashboard",
+      "imageReference": "apacherocketmq/rocketmq-dashboard:1.0.0",
+      "imageId": "sha256:24799aff6cf8157e13aa2473297abf36a80c4d3b52a9e379ae674c24c69c0a21",
+      "repoDigests": [
+        "apacherocketmq/rocketmq-dashboard@sha256:24799aff6cf8157e13aa2473297abf36a80c4d3b52a9e379ae674c24c69c0a21"
+      ],
+      "created": "2026-08-15T11:49:21.333042438Z",
+      "started": "2026-09-30T12:29:20.920613787Z",
+      "status": "running",
+      "lastExitCode": 0,
+      "oom": false,
+      "restartCount": 0,
+      "healthConfigured": false,
+      "health": null,
+      "memoryLimitBytes": 0,
+      "architecture": "amd64",
+      "os": "linux",
+      "mounts": [
+        {
+          "type": "volume",
+          "name": "c7e3a643d932253d1dad504f9d32c4a0c305c7f0bcbe5276d83425217c280723",
+          "destination": "/tmp",
+          "writable": true
+        }
+      ]
+    },
+    {
+      "name": "stcloud-elasticsearch",
+      "imageReference": "docker-elasticsearch",
+      "imageId": "sha256:435daf75a6e4ad41cd3d506dbc1864565d6fc3688383d534ed3b06423923b3b1",
+      "repoDigests": [
+        "docker-elasticsearch@sha256:435daf75a6e4ad41cd3d506dbc1864565d6fc3688383d534ed3b06423923b3b1"
+      ],
+      "created": "2026-08-15T11:49:21.232916832Z",
+      "started": "2026-09-30T12:29:20.929805892Z",
+      "status": "running",
+      "lastExitCode": 0,
+      "oom": false,
+      "restartCount": 0,
+      "healthConfigured": false,
+      "health": null,
+      "memoryLimitBytes": 0,
+      "architecture": "amd64",
+      "os": "linux",
+      "mounts": [
+        {
+          "type": "volume",
+          "name": "docker_es_data",
+          "destination": "/usr/share/elasticsearch/data",
+          "writable": true
+        }
+      ]
+    },
+    {
+      "name": "stcloud-onlyoffice",
+      "imageReference": "onlyoffice/documentserver:latest",
+      "imageId": "sha256:3ab6ebc7c605e5a32b7ae3ff19daed4925090245acc8100ce2230bd766c88212",
+      "repoDigests": [
+        "onlyoffice/documentserver@sha256:3ab6ebc7c605e5a32b7ae3ff19daed4925090245acc8100ce2230bd766c88212"
+      ],
+      "created": "2026-08-15T13:10:50.799923962Z",
+      "started": "2026-09-30T12:29:20.936597123Z",
+      "status": "running",
+      "lastExitCode": 0,
+      "oom": false,
+      "restartCount": 0,
+      "healthConfigured": false,
+      "health": null,
+      "memoryLimitBytes": 0,
+      "architecture": "amd64",
+      "os": "linux",
+      "mounts": [
+        {
+          "type": "volume",
+          "name": "docker_onlyoffice_logs",
+          "destination": "/var/log/onlyoffice",
+          "writable": true
+        },
+        {
+          "type": "volume",
+          "name": "docker_onlyoffice_data",
+          "destination": "/var/www/onlyoffice/Data",
+          "writable": true
+        },
+        {
+          "type": "bind",
+          "name": null,
+          "destination": "/etc/nginx/includes/ds-disable-sw.conf",
+          "writable": false
+        },
+        {
+          "type": "volume",
+          "name": "3ed04470084c4ffda89f355257f5aa95bbfb1eff57396dbd7564f973c84327b0",
+          "destination": "/usr/share/fonts/truetype/custom",
+          "writable": true
+        },
+        {
+          "type": "bind",
+          "name": null,
+          "destination": "/usr/share/fonts/winfonts",
+          "writable": false
+        },
+        {
+          "type": "volume",
+          "name": "docker_onlyoffice_cache",
+          "destination": "/var/lib/onlyoffice",
+          "writable": true
+        },
+        {
+          "type": "volume",
+          "name": "docker_onlyoffice_db",
+          "destination": "/var/lib/postgresql",
+          "writable": true
+        }
+      ]
+    }
+  ],
+  "historicalRootCause": "UNKNOWN: 当前容器状态仅证明本次启动状态；没有故障时内核/daemon/OOM 时间线，不能反推历史原因。",
+  "brokerProtection": "当前 Broker /home/rocketmq/store 无挂载；禁止直接 compose up 重建。先取得停机与持久化迁移授权，完整备份并验证消息/位点后再更新。",
+  "healthcheckActivation": "配置探针由 Test-Dependencies.ps1 手动执行。旧容器没有新 Healthcheck；本轮没有重建容器。"
+}

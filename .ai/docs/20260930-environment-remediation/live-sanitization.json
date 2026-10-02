@@ -1,0 +1,11 @@
+{
+  "dispatchId": "DISPATCH-env-live-01",
+  "checks": {
+    "artifactRefsExist": true,
+    "executedSourceSha256StillMatches": true,
+    "authStorageCredentialsCleared": true,
+    "authStorageRedactedFlag": true,
+    "jwtPatternFoundInRuntimeAndFinalEvidence": false
+  },
+  "boundary": "扫描本任务live-runtime文本文件、最终报告和最终证据日志；未删除审计用户、文件、SQLite或恢复副本。"
+}

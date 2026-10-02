@@ -46,6 +46,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -254,9 +255,11 @@ class TextFileOverwriteTransactionBoundaryTest {
         FileNode after = fileNodeMapper.selectById(node.getId());
         assertEquals(newContent.length, after.getFileSize());
         assertEquals(newMd5, after.getFileMd5());
-        assertEquals("1/" + newMd5, after.getStoragePath());
+        assertTrue(after.getStoragePath().startsWith("1/objects/" + newMd5 + "/"));
+        verify(storageService).uploadObject(eq(after.getStoragePath()), any(InputStream.class), eq((long) newContent.length), anyString());
         FileObject newObj = fileObjectMapper.selectByTenantAndMd5(1L, newMd5);
         assertNotNull(newObj, "新内容对象记录应已落库");
+        assertEquals(newObj.getStoragePath(), after.getStoragePath());
         assertEquals(1, newObj.getRefCount());
         assertEquals(8L, userQuotaMapper.getUserQuota(USER_ID).getUsed());
     }
@@ -278,10 +281,7 @@ class TextFileOverwriteTransactionBoundaryTest {
         verify(storageService).uploadObject(anyString(), any(InputStream.class),
                 eq((long) newContent.length), anyString());
         verify(storageService, org.mockito.Mockito.never()).deleteObject(anyString());
-        assertEquals(1L, jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM file_orphan_candidate WHERE tenant_id = 1 AND md5 = ? "
-                        + "AND active_uploads = 0 AND status = 1",
-                Long.class, newMd5));
+        assertEquals(1L, jdbcTemplate.queryForObject("SELECT COUNT(*) FROM object_upload_candidate WHERE tenant_id=1 AND md5=? AND state='DISCARDED'", Long.class, newMd5));
         assertEquals(0L, fileObjectMapper.selectCount(new LambdaQueryWrapper<FileObject>()
                         .eq(FileObject::getTenantId, 1L).eq(FileObject::getMd5, newMd5)).longValue(),
                 "DB 失败后新对象记录应随事务回滚");

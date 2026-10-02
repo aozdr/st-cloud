@@ -23,8 +23,16 @@ const api: ElectronAPI = {
   },
 
   // 认证
-  setAuth: (token: string, refreshToken: string) => {
-    ipcRenderer.invoke('auth:set', token, refreshToken);
+  setAuth: (token: string, refreshToken: string, sessionId?: string) => {
+    return ipcRenderer.invoke('auth:set', token, refreshToken, sessionId);
+  },
+  getAuth: () => ipcRenderer.invoke('auth:get'),
+  refreshAuth: (sessionId: string) => ipcRenderer.invoke('auth:refresh', sessionId),
+  clearAuth: (sessionId?: string) => ipcRenderer.invoke('auth:clear', sessionId),
+  onAuthChanged: (cb) => {
+    const handler = (_event: unknown, auth: Parameters<typeof cb>[0]) => cb(auth);
+    ipcRenderer.on('auth:changed', handler);
+    return () => { ipcRenderer.removeListener('auth:changed', handler); };
   },
 
   // 传输设置

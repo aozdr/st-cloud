@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-round3-p0-01",
+  "taskId": "TASK-20260912-round3-p0",
+  "idempotencyKey": "round3-p0",
+  "role": "executor",
+  "taskType": "implement",
+  "objective": "按已确认设计先测试后实现P0对象并发安全及延迟候选回收",
+  "taskRefs": [
+    ".ai/tasks/TASK-20260912-round3-p0.md",
+    ".ai/docs/20260912-code-review-round3/design.md",
+    ".ai/docs/20260912-code-review-round3/testcases.md"
+  ],
+  "stateRef": ".ai/state/20260912-code-review-round3.yaml",
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "exclude": [
+      "relay seq逻辑",
+      "其他模块",
+      ".ai/state/**",
+      "用户已有改动",
+      "既有SQL"
+    ],
+    "include": [
+      "st-core/src/main/**",
+      "st-core/src/test/**",
+      "docker/mysql/init/新增SQL",
+      ".ai/docs/20260912-code-review-round3/p0-result.md",
+      ".ai/runtime/results/DISPATCH-round3-p0-01.json"
+    ]
+  },
+  "acceptance": [
+    "P0并发对象保留及真正孤儿回收",
+    "不在事务内S3",
+    "旧canonical可复用"
+  ],
+  "validation": [
+    "主线程协调串行定向测试"
+  ],
+  "forbidSpawn": true
+}

@@ -37,6 +37,85 @@ import static org.mockito.Mockito.*;
         "stcloud.jwt.master-key=isolated-admin-redis-master-key-32-bytes"
 })
 class UserSecurityRedisIntegrationTest extends UserManageSecurityIntegrationTest {
+    private static final List<String> OWNED_KEYS = List.of("team:active:5:101", "team:active:6:101",
+            "stcloud:cache:5:7:101:view", "stcloud:cache:6:0:101:");
+    private static final List<String> RETAINED_KEYS = List.of("team:active:5:102", "team:active:5:1010",
+            "team:active:101:102", "team:active:unknown:101", "stcloud:cache:5:7:102:view",
+            "stcloud:cache:5:7:1010:view", "stcloud:cache:5:101:102:view",
+            "stcloud:cache:101:7:102:view", "stcloud:cache:sys_config:7:101:view",
+            "stcloud:cache:5:7:101:view:extra", "editor:active:77", "editor:save-lock:77",
+            "editor:save-dedup:101", "stcloud:download:used:101", "stcloud:cache:acc:101");
+
+    private void seedOwnedKeyFixture() {
+        // 所有 key 只存在于本任务独立 Redis；归属判断不读取这些占位内容。
+        for (String key : OWNED_KEYS) liveRedis.opsForValue().set(key, "fixture");
+        for (String key : RETAINED_KEYS) liveRedis.opsForValue().set(key, "fixture");
+    }
+    private void assertFixtureKeys(boolean ownedPresent) {
+        for (String key : OWNED_KEYS) assertEquals(ownedPresent, liveRedis.hasKey(key), key);
+        for (String key : RETAINED_KEYS) assertTrue(Boolean.TRUE.equals(liveRedis.hasKey(key)), key);
+    }
+
+    @Test void disablingUserDeletesOnlyExclusiveKeysAfterCommitAndIsIdempotent() {
+        var old = login(101,"original-pass"); var other = login(102,"original-pass");
+        seedOwnedKeyFixture();
+        var request = new com.stcloud.admin.dto.UpdateUserRequest(); request.setStatus(0);
+        var tx = new org.springframework.transaction.support.TransactionTemplate(
+                appContext.getBean(org.springframework.transaction.PlatformTransactionManager.class));
+        tx.executeWithoutResult(status -> {
+            users.updateUser(101L,request);
+            assertFixtureKeys(true);
+            assertTrue(Boolean.TRUE.equals(liveRedis.hasKey("stcloud:refresh:101")));
+        });
+        assertFixtureKeys(false); assertFalse(Boolean.TRUE.equals(liveRedis.hasKey("stcloud:refresh:101")));
+        assertEquals(1,version(101)); revoked(old); assertTrue(current(other));
+        // 再次停用仍清理后来出现的独占缓存，且不影响共享/相似ID的key。
+        seedOwnedKeyFixture(); users.updateUser(101L,request); assertFixtureKeys(false);
+        assertEquals(2,version(101)); assertTrue(current(other));
+    }
+
+    @Test void rollbackKeepsOwnedKeysAndTheOriginalSession() {
+        var old = login(101,"original-pass"); seedOwnedKeyFixture();
+        var tx = new org.springframework.transaction.support.TransactionTemplate(
+                appContext.getBean(org.springframework.transaction.PlatformTransactionManager.class));
+        tx.executeWithoutResult(status -> {
+            var request = new com.stcloud.admin.dto.UpdateUserRequest(); request.setStatus(0);
+            users.updateUser(101L,request); assertFixtureKeys(true); status.setRollbackOnly();
+        });
+        assertFixtureKeys(true); assertEquals(0,version(101));
+        assertEquals(1,userMapper.selectById(101L).getStatus()); assertTrue(current(old));
+        assertEquals(old.getRefreshToken(),liveRedis.opsForValue().get("stcloud:refresh:101"));
+    }
+
+    @Test void scanFailureCannotUndoDatabaseDisableAndRepeatingDisableRetriesCleanup() {
+        var old = login(101,"original-pass"); seedOwnedKeyFixture();
+        doThrow(new org.springframework.data.redis.RedisConnectionFailureException("isolated scan failure"))
+                .when(liveRedis).scan(any(org.springframework.data.redis.core.ScanOptions.class));
+        var request = new com.stcloud.admin.dto.UpdateUserRequest(); request.setStatus(0);
+        assertThrows(RuntimeException.class,()->users.updateUser(101L,request));
+        assertEquals(0,userMapper.selectById(101L).getStatus()); assertEquals(1,version(101));
+        assertFixtureKeys(true); revoked(old);
+        doCallRealMethod().when(liveRedis).scan(any(org.springframework.data.redis.core.ScanOptions.class));
+        users.updateUser(101L,request); assertFixtureKeys(false); assertEquals(2,version(101));
+    }
+
+    @ParameterizedTest @ValueSource(strings={"nickname","quota","password","enable"})
+    void nonDisableOperationsDoNotClearExclusiveCaches(String operation) {
+        login(101,"original-pass"); seedOwnedKeyFixture(); clearInvocations(liveRedis);
+        var request = new com.stcloud.admin.dto.UpdateUserRequest();
+        switch(operation) {
+            case "nickname" -> request.setNickname("updated");
+            case "quota" -> request.setStorageQuota(2000L);
+            case "password" -> request.setResetPassword("new-password");
+            default -> request.setStatus(1);
+        }
+        users.updateUser(101L,request); assertFixtureKeys(true);
+        verify(liveRedis,never()).scan(any(org.springframework.data.redis.core.ScanOptions.class));
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    org.springframework.context.ApplicationContext appContext;
+
     @Test void tc0116And21IndependentJvmRejectsRevokedSessionDespiteRedisFailure() throws Exception {
         var old = login(101,"original-pass");
         var server = org.h2.tools.Server.createTcpServer("-tcpPort","0","-tcpDaemon").start();
@@ -149,7 +228,7 @@ class UserSecurityRedisIntegrationTest extends UserManageSecurityIntegrationTest
     @org.springframework.beans.factory.annotation.Autowired org.springframework.transaction.PlatformTransactionManager transactions;
 
     @ParameterizedTest @ValueSource(strings={"register-commit","register-rollback","admin-commit","admin-rollback"})
-    void tc0122NewAccountDoesNotEscapeTransaction(String mode) throws Exception {
+    void tc0122RegistrationCommitsIndependentlyAndAdminCreationFollowsCallerTransaction(String mode) throws Exception {
         var observer = Executors.newSingleThreadExecutor();
         var captured = new java.util.concurrent.atomic.AtomicReference<LoginResponse>();
         String name = "commit-probe-" + java.util.UUID.randomUUID();
@@ -165,9 +244,11 @@ class UserSecurityRedisIntegrationTest extends UserManageSecurityIntegrationTest
                     issued = LoginResponse.builder().userId(created.getId()).build();
                 }
                 captured.set(issued);
-                assertNull(liveRedis.opsForValue().get("stcloud:refresh:" + issued.getUserId()));
+                // register 既有 NOT_SUPPORTED + REQUIRES_NEW 契约已提交自己的用户事务；
+                // 管理端 createUser 则参与调用者事务，未提交前不能对其他线程可见。
+                assertEquals(mode.startsWith("register"), liveRedis.hasKey("stcloud:refresh:" + issued.getUserId()));
                 try {
-                    assertFalse(observer.submit(() -> {
+                    assertEquals(mode.startsWith("register"), observer.submit(() -> {
                         context(); try { return security.isCurrent(issued.getUserId(),1L,version(issued.getUserId())); }
                         catch (org.springframework.dao.EmptyResultDataAccessException absent) { return false; }
                         finally { cleanup(); }
@@ -176,7 +257,7 @@ class UserSecurityRedisIntegrationTest extends UserManageSecurityIntegrationTest
                 if (mode.endsWith("rollback")) status.setRollbackOnly();
             });
             var issued = captured.get();
-            if (mode.endsWith("rollback")) {
+            if (mode.equals("admin-rollback")) {
                 assertEquals(0,jdbc.queryForObject("SELECT COUNT(*) FROM sys_user WHERE id=?",Integer.class,issued.getUserId()));
                 assertNull(liveRedis.opsForValue().get("stcloud:refresh:" + issued.getUserId()));
                 if (issued.getToken()!=null) revoked(issued);
@@ -184,7 +265,8 @@ class UserSecurityRedisIntegrationTest extends UserManageSecurityIntegrationTest
                 assertTrue(version(issued.getUserId())>=0);
                 if (mode.startsWith("register")) {
                     assertEquals(0,version(issued.getUserId()));
-                    assertEquals(issued.getRefreshToken(),liveRedis.opsForValue().get("stcloud:refresh:" + issued.getUserId()));
+                    assertTrue(java.util.Objects.equals(issued.getRefreshToken(),
+                            liveRedis.opsForValue().get("stcloud:refresh:" + issued.getUserId())));
                     assertTrue(current(issued));
                     assertTrue(current(auth.refreshToken(issued.getRefreshToken())));
                 }

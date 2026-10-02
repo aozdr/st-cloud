@@ -1,5 +1,5 @@
 import { BrowserWindow } from 'electron';
-import { apiClient, getUserId } from './api-client';
+import { apiClient, getUserId, captureAuthGeneration, assertAuthGeneration, runWithAuthGeneration } from './api-client';
 import { SyncEngine, type SyncRootInfo } from './sync-engine';
 import { SyncWsClient } from './ws-client';
 import { getAllSyncConfigs, deleteSyncConfig, upsertSyncConfig, claimLegacySyncConfigs, deleteSyncStatesByRoot, deleteBlockHashesByRoot, deleteSyncHistoryByRoot } from './database';
@@ -53,6 +53,11 @@ function maybeStopWsClient(): void {
  * 启动一个同步根的同步引擎
  */
 export async function startSync(rootId: string, cloudFolderNodeId: string, localPath: string): Promise<void> {
+  const authGeneration = captureAuthGeneration();
+  return runWithAuthGeneration(authGeneration, () => startSyncInSession(rootId, cloudFolderNodeId, localPath, authGeneration));
+}
+
+async function startSyncInSession(rootId: string, cloudFolderNodeId: string, localPath: string, authGeneration: number): Promise<void> {
   if (engines.has(rootId)) return;
 
   const info: SyncRootInfo = {
@@ -61,15 +66,20 @@ export async function startSync(rootId: string, cloudFolderNodeId: string, local
     localPath,
   };
 
-  const engine = new SyncEngine(info);
+  const engine = new SyncEngine(info, {
+    assertCurrent: () => assertAuthGeneration(authGeneration),
+    run: action => runWithAuthGeneration(authGeneration, action),
+  });
   engines.set(rootId, engine);
   try {
     // 排除规则是所有扫描/升级对账的边界；获取失败时禁止以空规则处理本地文件。
     await refreshExclusions(rootId);
+    assertAuthGeneration(authGeneration);
     await engine.start();
+    assertAuthGeneration(authGeneration);
     ensureWsClient();
   } catch (err) {
-    engines.delete(rootId);
+    if (engines.get(rootId) === engine) engines.delete(rootId);
     await engine.stop();
     maybeStopWsClient();
     throw err;
@@ -197,6 +207,11 @@ export async function setConflictStrategy(rootId: string, strategy: string): Pro
  * 应用启动时恢复所有 active 同步根
  */
 export async function resumeSyncEngines(): Promise<void> {
+  const authGeneration = captureAuthGeneration();
+  return runWithAuthGeneration(authGeneration, () => resumeSyncEnginesInSession(authGeneration));
+}
+
+async function resumeSyncEnginesInSession(authGeneration: number): Promise<void> {
   const userId = getUserId();
   if (!userId) {
     console.log('[sync] resume skipped: no user identified');
@@ -212,15 +227,18 @@ export async function resumeSyncEngines(): Promise<void> {
   let roots: CloudSyncRootVO[] = [];
   try {
     const res = await apiClient.get('/sync/roots');
+    assertAuthGeneration(authGeneration);
     const body = res.data;
     roots = body?.data ?? body ?? [];
     console.log('[sync] cloud returned', roots.length, 'root(s)', roots.map(r => r.id));
 
     for (const cfg of configs) {
+      assertAuthGeneration(authGeneration);
       const cloudRoot = roots.find((r) => String(r.id) === String(cfg.rootId));
       if (cloudRoot) {
         try {
           await startSync(cfg.rootId, cloudRoot.cloudFolderNodeId, cfg.localPath);
+          assertAuthGeneration(authGeneration);
           console.log('[sync] resumed root', cfg.rootId, '->', cloudRoot.cloudFolderName || cloudRoot.cloudFolderNodeId);
         } catch (err) {
           console.error('[sync] resume failed for root', cfg.rootId, err);
@@ -237,10 +255,13 @@ export async function resumeSyncEngines(): Promise<void> {
   // Auto-relink: if cloud has roots without local config, try to resume them
   // (covers the case where local config was deleted due to stale/precision-lost ID)
   try {
+    // 前段异常可能来自会话切换，不能继续使用旧 roots 自动关联本地目录。
+    assertAuthGeneration(authGeneration);
     const localConfigs = getAllSyncConfigs(userId);
     const orphaned = roots.filter(cr => !localConfigs.some(lc => String(lc.rootId) === String(cr.id)));
 
     for (const cloudRoot of orphaned) {
+      assertAuthGeneration(authGeneration);
       const localPath = cloudRoot.localPathHint || '';
       if (!localPath) {
         console.info('[sync] cloud root', cloudRoot.id, 'has no localPathHint, skipping auto-relink');
@@ -249,6 +270,7 @@ export async function resumeSyncEngines(): Promise<void> {
       try {
         upsertSyncConfig({ rootId: cloudRoot.id, localPath, cursor: String(cloudRoot.cursor || '0'), status: 'active' });
         await startSync(cloudRoot.id, cloudRoot.cloudFolderNodeId, localPath);
+        assertAuthGeneration(authGeneration);
         console.log('[sync] auto-relinked orphan root', cloudRoot.id, '->', cloudRoot.cloudFolderName || cloudRoot.cloudFolderNodeId);
       } catch (err) {
         console.error('[sync] auto-relink failed for root', cloudRoot.id, err);

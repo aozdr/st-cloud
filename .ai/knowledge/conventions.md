@@ -184,26 +184,26 @@ public Result<FileNodeVO> getNode(@PathVariable Long nodeId) {
 需要落地的修改请求先经 Workflow Manager 分类，再决定路径；只读咨询、诊断和审查直接交付结论：
 
 - 小型任务（Bug 修复、配置调整、样式微调）直接执行，不走开发流程
-- 中型任务（单模块增强、新增 API）按 `.ai/loop/exit-criteria.yaml` 走精简流程
-- 大型任务（跨模块、新业务模块、数据模型变更）按 `.ai/loop/exit-criteria.yaml` 走完整流程
-- 用户显式声明不走开发流程时，直接执行
+- 中型任务（边界明确的模块增强或兼容改动）默认主线程执行，按 `.ai/loop/exit-criteria.yaml` 走精简流程
+- 大型或高风险任务（复杂跨模块、核心写路径、安全/权限、数据库、API 契约或不可逆变更）保留独立评审
+- 用户指定交付方式时优先遵循；工程安全与真实验证仍须满足
 
 详见 .ai/agents/workflow-manager.md 和 .ai/workflows/feature-development.md。
 
-### 开发流程（AGENTS.md，Agent Loop V4）
+### 开发流程（AGENTS.md）
 
 遵循星云盘 AI 研发总规则，采用 **Loop 编排 + 退出标准**，按任务规模选择标准集：
 
-- **小型任务**：实现 → 验证 → 知识库检查 → 验收（ACCEPT）
+- **小型任务**：直接实现与相称验证，默认不创建 TASK/State/Dispatch
 - **中型任务**：顺序和条件以 `.ai/loop/exit-criteria.yaml` 为准
-- **大型任务**（12 项）：顺序和条件以 `.ai/loop/exit-criteria.yaml` 为准
+- **大型任务**：顺序和条件以 `.ai/loop/exit-criteria.yaml` 为准
 
 门禁依赖（不可降级）：
 
-- 体验评审、测试和评审门禁按 canonical `dependsOn` 执行；测试可在实现后提前运行，最终证据需绑定当前 revision
+- 测试在实现后即可完成，不等待独立评审；最终验收仍等待 canonical `dependsOn`，证据绑定当前 revision
 - 未通过验收（ACCEPT）不得标记 done；验收不通过打回 IMPLEMENTED 级联重跑
 
-每轮 Loop 四段：Observe（读 State）→ Plan（最高价值动作）→ Act（派发 Agent）→ Evaluate（应用 Delta + 门禁检查）。
+明确目标与风险、实现、验证并修复、对照目标交付；这些是内部决策，不要求逐轮输出固定模板，不按门禁数量派发 Agent。
 详见 `.ai/knowledge/loop-state-model.md`。
 
 ### AI Agent 角色（.ai/agents/）
@@ -211,9 +211,9 @@ public Result<FileNodeVO> getNode(@PathVariable Long nodeId) {
 | Agent | 职责 | 是否必须 |
 |-------|------|---------|
 | Workflow Manager | 统一入口，任务分类与调度 | 必须（入口） |
-| executor（执行者） | 需求/需求发现/影响分析/架构/设计/UI设计/编码实现/知识库（按 taskType 切换，核心逻辑加中文注释） | 涉及对应职责时必须 |
-| reviewer（审查者） | 代码评审/安全审查/UI评审/体验评审/质量门禁（按 taskType 切换） | 由当前 exitCriteria 或验收标准触发 |
-| tester（测试者） | 测试用例编写与测试执行，全部通过才算迭代完成 | 由当前 exitCriteria 或验收标准触发 |
+| executor（执行者） | 有独立交付与隔离收益的实现/设计工作 | 按需委派，普通任务主线程完成 |
+| reviewer（审查者） | 独立代码评审，合并安全与适用风险 | large 必需，与实现者分离 |
+| tester（测试者） | 需要专业或环境隔离的验证 | 按需，普通测试与验收由主线程完成 |
 
 > 职责要点见 `.ai/knowledge/role-context.md`。
 
@@ -222,7 +222,7 @@ public Result<FileNodeVO> getNode(@PathVariable Long nodeId) {
 - 知识库（.ai/knowledge/）基于代码扫描生成，代码变更后需同步更新
 - 需求文档使用 .ai/templates/requirement-template.md，**产出后落盘到 `.ai/docs/<task-id>/requirement.md`**
 - 设计文档使用 .ai/templates/design-template.md，**产出后落盘到 `.ai/docs/<task-id>/design.md`**
-- 测试用例使用 .ai/templates/test-case-template.md，产出后落盘到 `.ai/docs/<task-id>/testcases.md`
+- 测试计划默认合入 design.md，修改、自检、实际测试和知识同步统一记录 verification.md；模板可裁剪，额外文件按用户要求或独立决策需要产出
 - 需用户裁决或用户要求查看时在对话中告知文档路径；其余产物在最终报告集中列出，文档长期留存供回顾
 - 文档命名、存放、可见性、留存细则见 `.ai/knowledge/document-management.md`
 - 开发流程参考 .ai/workflows/feature-development.md

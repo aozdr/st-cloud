@@ -415,3 +415,23 @@ CREATE TABLE IF NOT EXISTS team_external_config (
     PRIMARY KEY (id),
     CONSTRAINT uk_space UNIQUE (space_id)
 );
+
+-- 第三轮：独立上传对象候选，与 MySQL 42 迁移保持一致。
+CREATE TABLE IF NOT EXISTS object_upload_candidate (
+    id BIGINT NOT NULL AUTO_INCREMENT,
+    tenant_id BIGINT NOT NULL,
+    md5 VARCHAR(64) NOT NULL,
+    storage_path VARCHAR(500) NOT NULL,
+    state VARCHAR(16) NOT NULL,
+    write_finished TINYINT NOT NULL DEFAULT 0,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    next_check_at DATETIME NOT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT uk_candidate_path UNIQUE (storage_path)
+);
+CREATE INDEX IF NOT EXISTS idx_candidate_scan ON object_upload_candidate (state, next_check_at);
+CREATE INDEX IF NOT EXISTS idx_fo_gc_path ON file_object (tenant_id, storage_path);
+CREATE INDEX IF NOT EXISTS idx_fn_gc_path ON file_node (tenant_id, storage_path);
+CREATE INDEX IF NOT EXISTS idx_fv_gc_path ON file_version (tenant_id, storage_path);
+CREATE INDEX IF NOT EXISTS idx_us_gc_md5 ON upload_session (tenant_id, file_md5, status);

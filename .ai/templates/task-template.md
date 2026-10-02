@@ -1,45 +1,16 @@
 # TASK：<任务简述>
 
-> 开发前置产物。本文件由 Workflow Manager 在进入 IMPLEMENTED 前，依 `.ai/docs/<task-id>/design.md` 与 `testcases.md` 生成并落盘到 `.ai/tasks/`。工程师编码输入**只接受本文件**（小型直接执行除外）。
+主线程为 medium/large 创建；不为每个门禁分别创建 TASK。
 
-## 元信息
+- Task ID / 关联 State：
+- 输入（必要源码、设计、接口或证据）：
+- 目标与完成标准：
+- include（写入白名单）：
+- exclude（优先于 include）：
+- 风险与未决实质决策：
+- 验证（design 内测试计划，无需独立 testcases.md）：
+- 产物（当前 catalog 必需文档及用户要求）：
 
-- Task ID: `TASK-<task-id>-<序号>`
-- 关联任务 State: `.ai/state/<task-id>.yaml`
-- 关联文档: `.ai/docs/<task-id>/design.md` / `testcases.md`
-- 归属 Agent: executor（taskType=implement）
-- 创建者: workflow-manager
-- 日期: YYYY-MM-DD
+主线程可直接执行；仅实际委派时构建 Envelope。完成后更新 verification.md（修改、自检、实际结果、风险和知识同步）。
 
-## 目标
-
-（本任务要达成的客观目标，1-3 句）
-
-## 修改范围
-
-- 模块 / 目录：
-- 涉及文件（尽量列全）：
-- 涉及接口 / 数据库：
-- 前后端联动：
-
-## 禁止修改范围
-
-（明确列出**不得触碰**的文件、模块、接口、配置，防止越界修改）
-
-## 验收标准
-
-- [ ] 标准 1
-- [ ] 标准 2
-- [ ] （与 design.md / requirement.md 验收标准对齐）
-
-## 测试要求
-
-- 单元 / 集成测试：
-- 前端构建 / 后端编译：
-- 手工验证点：
-
-## 输出要求
-
-编码完成后输出 Change Report 并落盘 `.ai/docs/<task-id>/changereport.md`（修改文件清单 / 与验收标准对照 / 测试结果 / 风险）。
-
-若计划产出路径尚不存在，在同一行路径前标记 `[planned-output]`；文件生成后移除标记。未标记路径由 cross-ref 门禁按已存在引用校验。
+若预告产物尚不存在，同一行标记 [planned-output]，生成后移除；不要把预告当作完成证据。

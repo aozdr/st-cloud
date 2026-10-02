@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-env-team-context-01",
+  "taskId": "TASK-20260930-environment-team-context",
+  "idempotencyKey": "TASK-20260930-environment-team-context",
+  "role": "executor",
+  "taskType": "implement",
+  "objective": "独立审查发现的O02团队上下文和旧扫描竞态，按TASK修复。首条ACK回传/root后继续；部分IMPLEMENTED env-code-r2。",
+  "taskRefs": [
+    ".ai/tasks/TASK-20260930-environment-team-context.md",
+    ".ai/docs/20260930-environment-remediation/design.md",
+    ".ai/docs/20260930-environment-remediation/changereport.md"
+  ],
+  "stateRef": ".ai/state/20260930-environment-remediation.yaml",
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      "st-team/src/main/java/com/stcloud/team/util/TeamActivityHelper.java",
+      "st-team/src/main/java/com/stcloud/team/task/ExternalMemberExpireTask.java",
+      "st-team/src/main/java/com/stcloud/team/task/FileLockExpireTask.java",
+      "st-team/src/test/**",
+      ".ai/docs/20260930-environment-remediation/team-context-*",
+      ".ai/runtime/results/DISPATCH-env-team-context-01.json"
+    ],
+    "exclude": [
+      "TeamServiceImpl",
+      "其他helper",
+      "core",
+      "迁移",
+      ".ai/state/**",
+      "历史记录"
+    ]
+  },
+  "acceptance": [
+    "异步活动按正确租户读写并精确恢复",
+    "两类过期任务按启用租户运行",
+    "延期/重新锁定后的旧扫描不清理；外部成员space锁"
+  ],
+  "validation": [
+    "新测试，主线程运行Maven",
+    "不执行真实清理/Maven/Git"
+  ],
+  "forbidSpawn": true,
+  "forbidGitMvn": true,
+  "output": {
+    "resultRef": ".ai/runtime/results/DISPATCH-env-team-context-01.json"
+  }
+}

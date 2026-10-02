@@ -1,0 +1,104 @@
+{
+  "dispatchId": "DISPATCH-review-fixes-security-03",
+  "taskId": "TASK-20261001-review-fixes-security",
+  "status": "completed",
+  "by": "/root/review_fixes_security_r3",
+  "completedAt": "2026-10-01T12:35:39Z",
+  "artifactRefs": [".ai/docs/20261001-review-fixes/r3/security.md"],
+  "background": "独立复核跨标签完整凭据、旧响应/退出竞态及墓碑空间的租户和成员权限，复放r1/r2已复现失败。",
+  "inputs": [
+    ".ai/tasks/TASK-20261001-review-fixes-security.md",
+    ".ai/tasks/TASK-20261001-review-fixes-main.md",
+    ".ai/docs/20261001-review-fixes/design.md",
+    ".ai/docs/20261001-review-fixes/testcases.md",
+    ".ai/docs/20261001-review-fixes/changereport.md",
+    ".ai/docs/20261001-review-fixes/source-manifest-r3.json",
+    ".ai/docs/20261001-review-fixes/r3/corrections.md",
+    ".ai/docs/20261001-review-fixes/core-test-evidence.json"
+  ],
+  "analysis": [
+    "事实：开始与结束六个当前文件SHA256均与review-fixes-code-r3清单匹配；core三文件SHA256与本轮r1相同。",
+    "事实：完整pair单次JSON保存；启动共享基线绑定实际采用的同一次读取；会话变更推进generation，同会话低修订不回滚。",
+    "事实：不含token的轮换marker保护成功pair尚未落盘的窗口；协调存储完全不可写时不消费refresh。",
+    "事实：旧拒绝按server/session/revision标记失效，不删除完整共享新pair；普通永久拒绝仍传播失效，重载不恢复旧修订。",
+    "事实：墓碑空间锁保留租户约束；用户入口仍要求有效空间和有效成员，系统purge锁后仅处理RECYCLED根并按租户/空间递归。事务内未新增外部网络调用。"
+  ],
+  "validation": [
+    {
+      "command": "node --test st-web/src/store/auth-tabs.test.mjs",
+      "workingDirectory": "D:/code/st-cloud",
+      "exitCode": 0,
+      "tests": 25,
+      "passed": 25,
+      "failed": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "environment": "当前TS源码独立VM；内存共享存储/事件/锁；真实本机HTTP/CAS"
+    },
+    {
+      "command": "node -（stdin独立复放，不落盘测试文件）",
+      "workingDirectory": "D:/code/st-cloud/st-desktop",
+      "exitCode": 0,
+      "assertionGroups": 12,
+      "passed": 12,
+      "environment": "真实本机HTTP/CAS；当前harness；暂停storage事件的内存共享存储；无云端/文件写入",
+      "outputs": [
+        {"mode":"locks","case":"r1-startup-rotation","passed":true,"before":"refresh-1","after":"refresh-2","calls":["refresh-1"]},
+        {"mode":"locks","case":"r1-startup-logout","passed":true,"before":null,"after":null,"calls":[]},
+        {"mode":"locks","case":"r1-pair-write-failure","passed":true,"aAfterRepeatedRejection":"refresh-1","recovered":"refresh-2","calls":["refresh-0","refresh-0","refresh-0","refresh-1"]},
+        {"mode":"locks","case":"new-login-during-marker-read","passed":true,"httpStatus":401,"sharedAfter":"new-refresh","reloaded":"new-refresh","calls":["refresh-0"]},
+        {"mode":"locks","case":"new-login-during-rejection-write","passed":true,"httpStatus":401,"sharedAfter":"new-refresh","reloaded":"new-refresh","calls":["refresh-0"]},
+        {"mode":"locks","case":"ordinary-rejection-reload","passed":true,"memory":null,"reloaded":null,"retainedPair":"refresh-0","rejectedRevision":0,"calls":["refresh-0"]},
+        {"mode":"tickets","case":"r1-startup-rotation","passed":true,"before":"refresh-1","after":"refresh-2","calls":["refresh-1"]},
+        {"mode":"tickets","case":"r1-startup-logout","passed":true,"before":null,"after":null,"calls":[]},
+        {"mode":"tickets","case":"r1-pair-write-failure","passed":true,"aAfterRepeatedRejection":"refresh-1","recovered":"refresh-2","calls":["refresh-0","refresh-0","refresh-0","refresh-1"]},
+        {"mode":"tickets","case":"new-login-during-marker-read","passed":true,"httpStatus":401,"sharedAfter":"new-refresh","reloaded":"new-refresh","calls":["refresh-0"]},
+        {"mode":"tickets","case":"new-login-during-rejection-write","passed":true,"httpStatus":401,"sharedAfter":"new-refresh","reloaded":"new-refresh","calls":["refresh-0"]},
+        {"mode":"tickets","case":"ordinary-rejection-reload","passed":true,"memory":null,"reloaded":null,"retainedPair":"refresh-0","rejectedRevision":0,"calls":["refresh-0"]}
+      ]
+    },
+    {
+      "kind": "source-manifest-check",
+      "checks": 2,
+      "matchedEachCheck": 6,
+      "sha256": {
+        "st-web/src/auth-session.ts": "11CEA8ADDE9ACDC20602E24149990EFEAA01FC980F0D56845E02A6411F74EE43",
+        "st-web/src/store/auth-tabs.test.mjs": "84439EC727C07DA095FCE83666DE8E95BDCAE445F4B3A05CB26C43754AE2D4EA",
+        "st-desktop/src/auth-test-harness.cjs": "23FAEF8156D3023E186E7A85A0BD3C4AEA5130C8E593AB0BA3E445369DABD530",
+        "st-core/src/main/java/com/stcloud/core/mapper/TeamStorageMapper.java": "3A68D170939B01E82709CB7F663FE2250C771483A99DDCC4273E99A4BA0903C5",
+        "st-core/src/main/java/com/stcloud/core/service/impl/RecycleBinServiceImpl.java": "13ED56385336CA23C3595B04A182F439BDA45A75C680C5468C44714A8A5519A4",
+        "st-core/src/test/java/com/stcloud/core/service/impl/TeamRecycleBinIntegrationTest.java": "72C2CDE2CCAD04E27B931006E87386EEA6ECE993C12CC10255DA43DA98024984"
+      }
+    },
+    {
+      "kind": "existing-current-task-H2-evidence-check",
+      "executedBy": "workflow-manager",
+      "childReranMaven": false,
+      "countsMatchedXml": true,
+      "tests": 26,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "coreHashesUnchangedSinceEvidence": true,
+      "evidenceRef": ".ai/docs/20261001-review-fixes/core-test-evidence.json"
+    }
+  ],
+  "findings": [],
+  "decision": "SECURITY_REVIEW建议pass；r1/r2真实失败已在当前r3关闭，本轮未发现可复现新增凭据或权限回归。",
+  "criterionProposal": {
+    "id": "SECURITY_REVIEW",
+    "outcome": "pass",
+    "by": "/root/review_fixes_security_r3",
+    "dispatchId": "DISPATCH-review-fixes-security-03",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-review-fixes-security-03.json",
+    "validatedRevision": "review-fixes-code-r3"
+  },
+  "stateDelta": "仅上述proposal；未修改State或判定Goal。",
+  "blockerProposals": [],
+  "risks": [
+    "本child未执行真实浏览器UI、MySQL/S3或Maven；后端动态结论限本轮主线程26项证据和未变化core三SHA。",
+    "持久化失败后重载依赖最后成功写入；没有测量真实故障概率，不推断上线表现。"
+  ],
+  "nextSteps": ["主线程核对当前attempt、证据和修订后Evaluate；其他标准由各自有效证据判定。"],
+  "changeImpact": "仅新增本Dispatch白名单内security.md和独立result；未改源码/测试/State/数据库/Git index/部署，未派发。"
+}

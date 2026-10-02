@@ -1,13 +1,45 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://st-cloud.local/schema/loop-state.schema.json",
-  "title": "Agent Loop V2 State",
+  "title": "Agent Loop State (definitions V2/V3)",
   "type": "object",
   "additionalProperties": false,
   "required": ["schemaVersion", "definitionVersion", "taskId", "scale", "status", "goal", "revision", "exitCriteria", "artifacts", "blockers", "acceptanceEvidence", "dispatchLedger", "history"],
   "properties": {
     "schemaVersion": { "const": 2 },
-    "definitionVersion": { "const": 2 },
+    "definitionVersion": { "enum": [2, 3] },
+    "risk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ui", "security", "database", "apiContract", "irreversible"],
+      "properties": {
+        "ui": { "type": "boolean" },
+        "security": { "type": "boolean" },
+        "database": { "type": "boolean" },
+        "apiContract": { "type": "boolean" },
+        "irreversible": { "type": "boolean" }
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["validatedRevision", "checks"],
+      "properties": {
+        "validatedRevision": { "type": "string", "minLength": 1 },
+        "checks": {
+          "type": "array", "minItems": 3,
+          "items": {
+            "type": "object", "additionalProperties": false,
+            "required": ["dimension", "outcome", "evidenceRef"],
+            "properties": {
+              "dimension": { "enum": ["tests", "selfReview", "knowledge", "ui", "security", "database", "apiContract", "irreversible"] },
+              "outcome": { "enum": ["pass", "fail", "blocked"] },
+              "evidenceRef": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    },
     "legacy": { "type": "boolean" },
     "taskId": { "type": "string", "minLength": 1 },
     "scale": { "enum": ["small", "medium", "large"] },

@@ -1,0 +1,30 @@
+{
+  "verifiedAt": "2026-10-01T11:13:55.361Z",
+  "pass": true,
+  "fixture": {
+    "userId": "2105477981680107521",
+    "username": "env_exp_muow0kkf12c526",
+    "spaceId": "2105477988504240129",
+    "folderId": "2105477991222149121"
+  },
+  "rounds": [
+    {
+      "parallel401": 6,
+      "refresh": 1
+    },
+    {
+      "parallel401": 6,
+      "refresh": 1
+    }
+  ],
+  "oldRefreshRejected": 2,
+  "offlineConnectionFailures": 18,
+  "offlineRefreshPreserved": true,
+  "onlineRecoveryRefresh": 1,
+  "restoredFolderVisible": true,
+  "pairPersistenceAcrossDocumentReload": true,
+  "temporaryOriginsCleaned": true,
+  "helpersStopped": true,
+  "backendPreserved": true,
+  "boundary": "IAB/Chromium UI + unchanged Web build + real 8080 refresh; invalid access and per-entry API resets injected; no PWA cache or native Electron acceptance"
+}

@@ -1,0 +1,35 @@
+{
+  "dispatchId": "DISPATCH-env-team-context-01",
+  "taskId": "TASK-20260930-environment-team-context",
+  "status": "completed",
+  "artifactRefs": [
+    "st-team/src/main/java/com/stcloud/team/util/TeamActivityHelper.java",
+    "st-team/src/main/java/com/stcloud/team/task/ExternalMemberExpireTask.java",
+    "st-team/src/main/java/com/stcloud/team/task/FileLockExpireTask.java",
+    "st-team/src/test/java/com/stcloud/team/util/TeamActivityTenantTest.java",
+    "st-team/src/test/java/com/stcloud/team/task/TeamExpirationTaskIntegrationTest.java",
+    ".ai/docs/20260930-environment-remediation/team-context-remediation.md"
+  ],
+  "criterionProposal": {
+    "id": "IMPLEMENTED",
+    "outcome": "pass",
+    "by": "/root/team_context",
+    "dispatchId": "DISPATCH-env-team-context-01",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-env-team-context-01.json",
+    "validatedRevision": "env-code-r2"
+  },
+  "blockerProposals": [],
+  "背景": "独立审查发现团队活动异步租户遗漏及后台旧扫描竞态。",
+  "输入": "原 Envelope、TASK、env-design-r1；scope 三个生产类和新测试。",
+  "分析": "事实：原活动线程未传租户；原调度只依赖默认租户且按 ID 无条件清理。扫描后延期、转内部、重锁可被旧快照误清理。",
+  "决策": "活动传递 ID/模式并 finally 精确恢复；两个调度复用 TenantTaskRunner；外部成员 RC 短事务空间锁后条件删；文件锁按锁身份和过期快照 CAS 清理。",
+  "State Delta": "仅部分 IMPLEMENTED/env-code-r2 proposal，未修改 State；未声称测试通过。",
+  "风险": "新测试未运行，H2 不能替代 MySQL 锁等待证据；按 Envelope 禁止运行 Maven、Git 和真实清理。",
+  "下一步": "主线程串行运行 TeamActivityTenantTest（4项）和 TeamExpirationTaskIntegrationTest（4项），合并真实 MySQL 并发证据后独立复审。",
+  "变更影响": "无 API/数据库变化；实际遗漏诊断保留；启用租户扫描、旧快照 CAS 保护和活动租户隔离。",
+  "validation": {
+    "performed": ["读取当前协议/schema/TASK/设计及最小相关 State", "源码和构造调用点静态检查"],
+    "notPerformed": ["Maven 编译/测试（Envelope 明确禁止）", "真实调度及真实数据清理"],
+    "testsAdded": 8
+  }
+}

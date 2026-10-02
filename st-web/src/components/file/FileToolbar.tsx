@@ -1,5 +1,5 @@
 import { memo, useState } from 'react';
-import { FolderPlus, Upload, Download, Trash2, Copy, FolderInput, X, RefreshCw, ArrowDownUp, List, LayoutGrid, Columns3, Edit3, Plus, ChevronDown, FileType, FileText, FileSpreadsheet, Presentation } from 'lucide-react';
+import { FolderPlus, Upload, Download, Trash2, Copy, FolderInput, X, RefreshCw, ArrowDownUp, List, LayoutGrid, Columns3, Edit3, Plus, ChevronDown, FileType, FileText, FileSpreadsheet, Presentation, MoreHorizontal } from 'lucide-react';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
 import { Popover, PopoverTrigger, PopoverContent } from '../ui/popover';
 import { cn, formatSize } from '../../lib/utils';
@@ -26,6 +26,7 @@ interface FileToolbarProps {
   sortDir: SortDir;
   onSortDirToggle: () => void;
   view: ViewMode;
+  waterfallAvailable: boolean;
   onViewChange: (v: ViewMode) => void;
   onNewFolder: () => void;
   /** 新建空白文件：txt/docx/xlsx/pptx（成功后 Office 类型由 FileBrowser 决定跳转编辑） */
@@ -48,13 +49,14 @@ interface FileToolbarProps {
 function FileToolbar({
   has, selectedCount, filesCount, allSelected, selectedSize, canEditSelected, onEdit,
   sortBy, onSortChange, sortDir, onSortDirToggle,
-  view, onViewChange,
+  view, waterfallAvailable, onViewChange,
   onNewFolder, onNewFile, onUploadClick, onDownload, onMove, onCopy, onDelete,
   onSelectAll, onClearSelection, onRefresh, refreshing = false, onBatchRename,
   foldersFirst, onToggleFoldersFirst,
 }: FileToolbarProps) {
   const hasSelection = selectedCount > 0;
   const [newMenuOpen, setNewMenuOpen] = useState(false);
+  const [actionsOpen, setActionsOpen] = useState(false);
 
   return (
     <div className="flex items-center overflow-x-auto min-w-0">
@@ -117,11 +119,18 @@ function FileToolbar({
         )}
       </div>
 
-      {/* 中：选中文件时的操作按钮（未选中留空；选中后以紧凑一组展示，避免大分辨率下内部断裂） */}
+      {/* 中：选中文件时只保留高频操作，低频批量动作放入更多菜单。 */}
       <div className="flex items-center gap-1.5 flex-1 min-w-0">
         {hasSelection && (
           <>
-            <div className="w-px h-5 bg-surface-2 mx-1.5 flex-shrink-0" />
+            <div className="w-px h-5 bg-border-light mx-1.5 flex-shrink-0" />
+            <div className="flex items-center gap-1.5 px-2 py-1 bg-primary-50 dark:bg-primary-500/10 rounded-md text-xs text-primary-600 flex-shrink-0">
+              <span className="font-medium">已选 {selectedCount} 项</span>
+              {selectedSize > 0 && <span className="text-primary-400">· {formatSize(selectedSize)}</span>}
+              <button onClick={onClearSelection} aria-label="取消选择" className="text-primary-400 hover:text-primary-600 cursor-pointer ml-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded">
+                <X className="w-3.5 h-3.5" aria-hidden />
+              </button>
+            </div>
             {canEditSelected && (
               <button onClick={onEdit} className="btn-ghost flex-shrink-0 whitespace-nowrap">
                 <Edit3 className="w-4 h-4" aria-hidden />
@@ -146,37 +155,43 @@ function FileToolbar({
                 <span>复制到</span>
               </button>
             )}
-            {selectedCount > 1 && has('file:rename') && (
-              <button onClick={onBatchRename} className="btn-ghost flex-shrink-0 whitespace-nowrap">
-                <Edit3 className="w-4 h-4" aria-hidden />
-                <span>批量重命名</span>
-              </button>
-            )}
+            <Popover open={actionsOpen} onOpenChange={setActionsOpen}>
+              <PopoverTrigger asChild>
+                <button className="btn-ghost flex-shrink-0 whitespace-nowrap" aria-label="更多批量操作">
+                  <MoreHorizontal className="w-4 h-4" aria-hidden />
+                  <span className="hidden sm:inline">更多</span>
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-44 p-1" align="start" sideOffset={4}>
+                {selectedCount > 1 && has('file:rename') && (
+                  <button onClick={() => { setActionsOpen(false); onBatchRename(); }} className="w-full flex items-center gap-2.5 px-3 py-1.5 text-sm text-fg hover:bg-surface-2 rounded-md cursor-pointer transition-colors">
+                    <Edit3 className="w-4 h-4" aria-hidden />
+                    <span>批量重命名</span>
+                  </button>
+                )}
+                {!allSelected && filesCount > 1 && (
+                  <button onClick={() => { setActionsOpen(false); onSelectAll(); }} className="w-full text-left px-3 py-1.5 text-sm text-fg hover:bg-surface-2 rounded-md cursor-pointer transition-colors">
+                    全选当前页
+                  </button>
+                )}
+                <button onClick={() => { setActionsOpen(false); onClearSelection(); }} className="w-full text-left px-3 py-1.5 text-sm text-muted hover:bg-surface-2 rounded-md cursor-pointer transition-colors">
+                  取消选择
+                </button>
+              </PopoverContent>
+            </Popover>
             {has('file:delete') && (
               <button onClick={onDelete} className="btn-ghost text-red-600 dark:text-red-400 hover:bg-red-500/10 flex-shrink-0 whitespace-nowrap">
                 <Trash2 className="w-4 h-4" aria-hidden />
                 <span>删除</span>
               </button>
             )}
-            {!allSelected && filesCount > 1 && (
-              <button onClick={onSelectAll} className="text-xs text-primary-600 hover:text-primary-600 cursor-pointer font-medium whitespace-nowrap">
-                全选
-              </button>
-            )}
-            <div className="flex items-center gap-2 px-2.5 py-1 bg-primary-500/10 rounded-md text-sm text-primary-600">
-              <span className="font-medium">已选 {selectedCount} 项</span>
-              {selectedSize > 0 && <span className="text-primary-400">· {formatSize(selectedSize)}</span>}
-              <button onClick={onClearSelection} aria-label="取消选择" className="text-primary-400 hover:text-primary-600 cursor-pointer ml-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded">
-                <X className="w-3.5 h-3.5" aria-hidden />
-              </button>
-            </div>
           </>
         )}
       </div>
 
       {/* 右：排序 / 刷新 / 视图切换 */}
       <div className="flex items-center gap-1.5 md:gap-3 flex-shrink-0">
-        {!hasSelection && view === 'grid' && (
+        {!hasSelection && (
           <div className="flex items-center gap-1.5">
             <ArrowDownUp className="w-3.5 h-3.5 text-muted" aria-hidden />
             <Select value={sortBy} onValueChange={(v) => onSortChange(v as SortBy)}>
@@ -198,7 +213,7 @@ function FileToolbar({
             </button>
             <label className="flex items-center gap-1 text-xs text-muted cursor-pointer select-none whitespace-nowrap">
               <Switch checked={foldersFirst} onCheckedChange={onToggleFoldersFirst} aria-label="文件夹优先" />
-              <span>文件夹优先</span>
+              <span className="hidden xl:inline">文件夹优先</span>
             </label>
           </div>
         )}
@@ -219,12 +234,12 @@ function FileToolbar({
             >
               <LayoutGrid className="w-4 h-4" aria-hidden />
             </button>
-            <button
+            {waterfallAvailable && <button
               onClick={() => onViewChange('waterfall')} aria-label="瀑布流视图" title="瀑布流视图"
               className={cn('p-1.5 rounded-md cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', view === 'waterfall' ? 'bg-surface text-primary-600 shadow-soft' : 'text-muted hover:text-fg')}
             >
               <Columns3 className="w-4 h-4" aria-hidden />
-            </button>
+            </button>}
           </div>
         )}
       </div>

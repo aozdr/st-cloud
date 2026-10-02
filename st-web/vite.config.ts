@@ -3,10 +3,9 @@ import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
 import path from 'path'
 
-export default defineConfig({
-  // 相对资源路径：Electron 打包后以 file:// 协议加载 index.html，
-  // 绝对路径 /assets/... 会 404 导致黑屏
-  base: './',
+export default defineConfig(({ mode }) => ({
+  // Web 的深层路由刷新必须从站点根目录取资源；桌面打包保留相对路径契约。
+  base: mode === 'desktop' ? './' : '/',
   plugins: [
     react(),
     VitePWA({
@@ -111,4 +110,4 @@ export default defineConfig({
       },
     },
   },
-})
+}))

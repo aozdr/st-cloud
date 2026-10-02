@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-env-security-01",
+  "taskId": "TASK-20260930-environment-security",
+  "idempotencyKey": "TASK-20260930-environment-security",
+  "role": "reviewer",
+  "taskType": "security",
+  "objective": "独立安全审查env-code-r2。首条完整DISPATCH_ACK后继续，向/root回传三元组；按TASK只给SECURITY_REVIEW建议。",
+  "taskRefs": [
+    ".ai/tasks/TASK-20260930-environment-security.md",
+    ".ai/docs/20260930-environment-remediation/design.md",
+    ".ai/docs/20260930-environment-remediation/changereport.md"
+  ],
+  "stateRef": ".ai/state/20260930-environment-remediation.yaml",
+  "skillRefs": [
+    "-"
+  ],
+  "artifactRefs": [
+    ".ai/docs/20260930-environment-remediation/current-source-manifest.json"
+  ],
+  "scope": {
+    "include": [
+      ".ai/docs/20260930-environment-remediation/security.md",
+      ".ai/runtime/results/DISPATCH-env-security-01.json"
+    ],
+    "exclude": [
+      "产品写入",
+      ".ai/state/**",
+      "Git/Maven/依赖安装",
+      "生产",
+      "凭据提取/输出"
+    ]
+  },
+  "acceptance": [
+    "本次变更安全边界无未解决重大缺陷",
+    "问题有精确源码和触发，基线风险如实记录"
+  ],
+  "validation": [
+    "独立只读代码和当前证据核查",
+    "不运行共享构建/真实权限修改/会话凭据提取"
+  ],
+  "forbidSpawn": true,
+  "forbidGitMvn": true,
+  "output": {
+    "resultRef": ".ai/runtime/results/DISPATCH-env-security-01.json"
+  }
+}

@@ -31,7 +31,7 @@ import org.springframework.context.annotation.Import;
         WebMvcAutoConfiguration.class,
 })
 @MapperScan("com.stcloud.core.mapper")
-@Import({MyBatisPlusConfig.class, MyMetaObjectHandler.class})
+@Import({MyBatisPlusConfig.class, MyMetaObjectHandler.class, com.stcloud.core.service.impl.upload.ObjectUploadCandidateService.class, com.stcloud.core.task.TenantTaskRunner.class})
 public class CoreTestApplication {
 
     @Bean

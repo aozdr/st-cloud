@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-env-exp-accept-01",
+  "taskId": "TASK-20260930-environment-exp-accept",
+  "idempotencyKey": "TASK-20260930-environment-exp-accept",
+  "role": "reviewer",
+  "taskType": "exp-review",
+  "objective": "独立当前体验验收，按TASK，首条ACK回传/root后继续；等待主线程冻结r2后提出EXP_ACCEPT建议。",
+  "taskRefs": [
+    ".ai/tasks/TASK-20260930-environment-exp-accept.md",
+    ".ai/docs/20260930-environment-remediation/uispec.md",
+    ".ai/docs/20260930-environment-remediation/web-remediation.md",
+    ".ai/docs/20260930-environment-remediation/desktop-remediation.md"
+  ],
+  "stateRef": ".ai/state/20260930-environment-remediation.yaml",
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      ".ai/docs/20260930-environment-remediation/exp-accept*",
+      ".ai/runtime/results/DISPATCH-env-exp-accept-01.json"
+    ],
+    "exclude": [
+      "产品写入",
+      ".ai/state/**",
+      "历史记录",
+      "用户既有资源"
+    ]
+  },
+  "acceptance": [
+    "真实浏览器团队删除 回收查看 恢复",
+    "核对认证/胶卷体验和边界",
+    "实机Electron缺口诚实"
+  ],
+  "validation": [
+    "真实Chrome/React/8080，专用fixture，截图和HTTP",
+    "不运行Maven/Git或停用户/主线程进程"
+  ],
+  "forbidSpawn": true,
+  "forbidGitMvn": true,
+  "output": {
+    "resultRef": ".ai/runtime/results/DISPATCH-env-exp-accept-01.json"
+  }
+}

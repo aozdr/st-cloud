@@ -1,0 +1,64 @@
+{
+  "dispatchId": "DISPATCH-review-fixes-security-02",
+  "taskId": "TASK-20261001-review-fixes-security",
+  "status": "completed",
+  "by": "/root/review_fixes_security_r2",
+  "completedAt": "2026-10-01T12:22:06Z",
+  "artifactRefs": [
+    ".ai/docs/20261001-review-fixes/r2/security.md"
+  ],
+  "criterionProposal": {
+    "id": "SECURITY_REVIEW",
+    "outcome": "pass",
+    "by": "/root/review_fixes_security_r2",
+    "dispatchId": "DISPATCH-review-fixes-security-02",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-review-fixes-security-02.json",
+    "validatedRevision": "review-fixes-code-r2"
+  },
+  "findings": [],
+  "evidence": [
+    {
+      "kind": "revision",
+      "manifestRef": ".ai/docs/20261001-review-fixes/source-manifest-r2.json",
+      "sha256MatchesAtStart": "6/6",
+      "sha256MatchesAtEnd": "6/6"
+    },
+    {
+      "kind": "test",
+      "command": "node --test st-web/src/store/auth-tabs.test.mjs",
+      "exitCode": 0,
+      "tests": 21,
+      "passed": 21,
+      "failed": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "environment": "当前源码、独立VM、共享存储/锁/事件模拟、真实本机HTTP/CAS"
+    },
+    {
+      "kind": "independent-reproduction",
+      "command": "node stdin，工作目录 st-desktop",
+      "exitCode": 0,
+      "assertionGroups": 8,
+      "modes": ["locks", "tickets"],
+      "cases": ["r1-startup-rotation", "r1-startup-logout", "r1-pair-write-failure", "clean-permanent-rejection"],
+      "result": "启动采用R1且不提交R0；启动退出无请求；B两次旧R0拒绝后A仍持有R1，恢复保存R2后B同步且marker清空；普通无pending401仍清空会话",
+      "environment": "当前harness、只读Node stdin、内存CAS响应、无文件/真实云盘数据写入"
+    },
+    {
+      "kind": "static-permission-review",
+      "result": "墓碑空间锁保留tenant_id；用户仍按有效空间和成员授权；系统purge锁后仅RECYCLED并限制租户/空间子树；S3保持AFTER_COMMIT/Outbox"
+    }
+  ],
+  "background": "独立复核r2凭据完整性和回收权限，确认r1两项竞态关闭",
+  "inputs": ["TASK/security/main", "design/testcases", "相关State只读", "changereport/source-manifest-r2/r2-corrections", "r1失败报告", "当前源码及测试断言"],
+  "analysis": "独立21项回归和8组定向复放均通过；未发现本轮新增可复现安全或权限回归",
+  "decision": "建议SECURITY_REVIEW通过，仅proposal",
+  "risks": [
+    "未执行真实浏览器UI、MySQL行锁或S3删除",
+    "pair未保存只保证本页内存；网络结果不确定保留marker，可能需显式登录",
+    "全部协调存储不可写按定版行为阻止续期并保留原pair"
+  ],
+  "nextStep": "主线程校验结果并Evaluate，不替代全局完成判定",
+  "changeImpact": "仅新增两份白名单审查产物，未写源码、测试、State、数据库、Git index或部署；未运行Maven或派发",
+  "blockerProposals": []
+}

@@ -9,6 +9,7 @@ import com.stcloud.admin.dto.UpdateUserRequest;
 import com.stcloud.admin.dto.UserManageVO;
 import com.stcloud.admin.service.RoleService;
 import com.stcloud.admin.service.UserManageService;
+import com.stcloud.admin.service.UserRedisKeyCleanupService;
 import com.stcloud.auth.service.AuthService;
 import com.stcloud.auth.service.UserSecurityService;
 import com.stcloud.auth.entity.SysRole;
@@ -50,6 +51,8 @@ public class UserManageServiceImpl implements UserManageService {
     private AuthService authService;
     @Resource
     private UserSecurityService userSecurityService;
+    @Resource
+    private UserRedisKeyCleanupService userRedisKeyCleanupService;
     @Resource
     private com.stcloud.core.service.CloudStorageService cloudStorageService;
 
@@ -122,8 +125,13 @@ public class UserManageServiceImpl implements UserManageService {
         if (revoke) {
             userSecurityService.increment(user.getTenantId(), userId);
             Long revokedUserId = userId;
+            boolean clearOwnedKeys = Integer.valueOf(UserStatus.DISABLED.getCode()).equals(request.getStatus());
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override public void afterCommit() { authService.revokeRefreshToken(revokedUserId); }
+                @Override public void afterCommit() {
+                    authService.revokeRefreshToken(revokedUserId);
+                    // 停用提交后才清理独占 key；回滚、改密、启用不扩大清理范围，也不读取共享内容。
+                    if (clearOwnedKeys) userRedisKeyCleanupService.clearUserOwnedKeys(revokedUserId);
+                }
             });
         }
         log.info("管理员{}更新用户: userId={}", UserContext.getUserId(), userId);

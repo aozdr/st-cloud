@@ -58,7 +58,7 @@ test('TC04-21: delta 与目录大小完整矩阵，下载按实际字节验证�
     '../sync-utils': {}, './sync-shared': shared,
   });
   const reconcile = load('sync-reconcile.ts', {
-    fs, path, '../api-client': { apiClient },
+    fs, path, crypto: require('node:crypto'), '../api-client': { apiClient },
     '../database': { ...database, getAllSyncStates: () => [...states.values()] },
     '../utils/md5': { calculateFileMd5: async () => '' },
     './sync-shared': shared, './sync-recovery': {},

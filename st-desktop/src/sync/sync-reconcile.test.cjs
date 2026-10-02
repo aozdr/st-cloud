@@ -41,7 +41,7 @@ function fixture(t) {
     throw Error('Unexpected URL ' + url);
   } };
   const dependencies = {
-    fs, path, '../api-client': { apiClient },
+    fs, path, crypto: require('node:crypto'), '../api-client': { apiClient },
     '../database': {
       getSyncState: (_root, rel) => states.get(rel),
       getAllSyncStates: () => [...states.values()],
@@ -91,7 +91,8 @@ function fixture(t) {
   engine.root = ctx.root;
   engine.processCloudDelta = async () => {};
   engine.scanLocalChanges = async () => {};
-  return { root, states, deleted, requestedPages, downloads, logs, ctx, cursorWrites,
+  return { root, states, deleted, requestedPages, downloads, logs, ctx, cursorWrites, dependencies,
+    setCursor: value => { cursor = value; },
     currentCursor: () => cursor, runWithCursor: () => engine.syncOnce(),
     respond: fn => { listResponse = fn; }, run: () => exports.fullReconcile(ctx) };
 }
@@ -105,6 +106,8 @@ test('TC04-33: 不完整列举和第二页故障不清理原文件或状态，�
     [() => ({ code: 200, data: { records: [], pages: -1 } }), /云端目录响应不完整/],
     [() => ({ code: 200, data: { records: [], pages: null } }), /云端目录响应不完整/],
     [() => ({ code: 200, data: { records: [], pages: 1.5 } }), /云端目录响应不完整/],
+    ...['', ' ', '01', '1.5', '-1', '9007199254740992', Number.MAX_SAFE_INTEGER + 1].map(pages =>
+      [() => ({ code: 200, data: { records: [], pages } }), /云端目录响应不完整/]),
     [page => page === 1 ? { code: 200, data: { records: [], pages: 2 } }
       : { code: 200, data: { records: [], pages: 1 } }, /云端目录响应不完整/],
     [page => page === 1 ? { code: 200, data: { records: [], pages: 2 } }
@@ -154,4 +157,91 @@ test('空目录 pages=0 且无旧状态可以完成对账', async t => {
   f.respond(() => ({ code: 200, data: { records: [], pages: 0 } }));
   assert.equal(await f.run(), true);
   assert.deepEqual(f.deleted, []);
+});
+
+test('后端Long字符串分页保持多页下载，不能把第二页漏当空目录', async t => {
+  const f = fixture(t);
+  f.respond(page => ({ code: 200, data: { pages: '2', records: page === 1 ? [] : [
+    { id: 'old', parentId: 'root', nodeType: 1, name: 'old.txt', fileSize: 12,
+      fileMd5: 'old-md5', updatedAt: '2020-01-01T00:00:00Z' },
+    { id: 'new', parentId: 'root', nodeType: 1, name: 'new.txt', fileSize: 9,
+      fileMd5: 'new-md5', updatedAt: '2020-01-01T00:00:00Z' },
+  ] } }));
+  assert.equal(await f.run(), true);
+  assert.deepEqual(f.requestedPages, [1, 2]);
+  assert.equal(fs.readFileSync(path.join(f.root, 'new.txt'), 'utf8'), 'new-cloud');
+  assert.equal(f.states.get('/old.txt').nodeId, 'old');
+});
+
+test('根映射和同节点重复斜杠历史映射可原地恢复，保持原字节与规范映射', async t => {
+  const f = fixture(t);
+  f.states.set('/', { localPath: '/', nodeId: 'root', status: 'synced' });
+  f.states.set('//old.txt', { localPath: '//old.txt', nodeId: 'old', md5: 'old-md5' });
+  f.respond(() => ({ code: 200, data: { pages: '1', records: [
+    { id: 'old', parentId: 'root', nodeType: 1, name: 'old.txt', fileSize: 12,
+      fileMd5: 'old-md5', updatedAt: '2020-01-01T00:00:00Z' },
+  ] } }));
+  assert.equal(await f.run(), true);
+  assert.equal(f.states.has('//old.txt'), false);
+  assert.equal(f.states.get('/old.txt').nodeId, 'old');
+  assert.equal(f.states.get('/').nodeId, 'root');
+  assert.equal(fs.readFileSync(path.join(f.root, 'old.txt'), 'utf8'), 'old-original');
+  assert.deepEqual(f.downloads, []);
+});
+
+function realRecovery(f) {
+  const userData = path.join(path.dirname(f.root), 'userData');
+  fs.mkdirSync(userData);
+  const recoveryCode = ts.transpileModule(fs.readFileSync(path.join(__dirname, 'sync-recovery.ts'), 'utf8'), {
+    compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020, esModuleInterop: true },
+  }).outputText;
+  const recovery = {};
+  vm.runInNewContext(recoveryCode, { exports: recovery, require: name => ({ fs, path,
+    electron: { app: { getPath: () => userData } },
+    '../database': { getAllSyncConfigs: () => [] },
+  })[name] });
+  Object.assign(f.dependencies['./sync-recovery'], recovery);
+  f.ctx.markEngineWritten = () => {};
+  return { recovery, userData };
+}
+
+test('同节点重复往返移动独立保全各轮原件，保留旧固定ID副本', async t => {
+  const f = fixture(t);
+  const { recovery, userData } = realRecovery(f);
+  const fixed = recovery.preserveAndRemove('root-1', 'legacy-old', f.root,
+    path.join(f.root, 'old.txt'), '/old.txt', () => {});
+  fs.writeFileSync(path.join(f.root, 'old.txt'), 'current-original');
+  for (const [cursor, name] of [['10', 'new.txt'], ['11', 'old.txt'], ['12', 'new.txt'], ['13', 'old.txt']]) {
+    f.setCursor(cursor);
+    f.respond(() => ({ code: 200, data: { pages: '1', records: [{ id: 'old', parentId: 'root',
+      nodeType: 1, name, fileSize: 9, fileMd5: 'new-md5', updatedAt: '2020-01-01T00:00:00Z' }] } }));
+    assert.equal(await f.run(), true, JSON.stringify(f.logs));
+    assert.equal(f.states.size, 1);
+    assert.equal(f.states.get('/' + name).nodeId, 'old');
+    assert.equal(fs.readFileSync(path.join(f.root, name), 'utf8'), 'new-cloud');
+  }
+  const bases = path.join(userData, 'sync-recovery/root-1');
+  const rounds = fs.readdirSync(bases).filter(name => name !== 'legacy-old');
+  assert.equal(rounds.length, 4);
+  for (const name of rounds) assert.equal(JSON.parse(fs.readFileSync(path.join(bases, name, 'manifest.json'))).status, 'complete');
+  assert.equal(fs.readFileSync(path.join(fixed, 'files/old.txt'), 'utf8'), 'old-original');
+  assert.ok(rounds.some(name => fs.existsSync(path.join(bases, name, 'files/old.txt'))
+    && fs.readFileSync(path.join(bases, name, 'files/old.txt'), 'utf8') === 'current-original'));
+});
+
+test('升级前固定ID已移动但pending清单可续写，重试不重复搬移', async t => {
+  const f = fixture(t);
+  const { recovery } = realRecovery(f);
+  const backup = recovery.preserveAndRemove('root-1', 'legacy-old', f.root,
+    path.join(f.root, 'old.txt'), '/old.txt', () => {});
+  const manifestPath = path.join(backup, 'manifest.json');
+  const manifest = JSON.parse(fs.readFileSync(manifestPath));
+  fs.writeFileSync(manifestPath, JSON.stringify({ ...manifest, status: 'pending' }));
+  f.respond(() => ({ code: 200, data: { pages: '1', records: [{ id: 'old', parentId: 'root',
+    nodeType: 1, name: 'new.txt', fileSize: 9, fileMd5: 'new-md5', updatedAt: '2020-01-01T00:00:00Z' }] } }));
+  assert.equal(await f.run(), true, JSON.stringify(f.logs));
+  assert.equal(JSON.parse(fs.readFileSync(manifestPath)).status, 'complete');
+  assert.equal(fs.readFileSync(path.join(backup, 'files/old.txt'), 'utf8'), 'old-original');
+  assert.equal(await f.run(), true);
+  assert.equal(f.states.has('/old.txt'), false);
 });

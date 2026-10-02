@@ -1,0 +1,31 @@
+*** Begin Patch
+*** Update File: D:/code/st-cloud/st-desktop/src/ipc-handlers.ts
+@@
+-import { setAuth, setBaseUrl, getAuth, clearAuth, refreshAuth } from './api-client';
++import { setAuth, setBaseUrl, getAuth, clearAuth, refreshAuth, onAuthChanged } from './api-client';
+@@
+   const queueAuthLifecycle = () => {
+@@
+   };
++  // 刷新拒绝也会直接清空主进程认证；仅有 refresh 的恢复成功需要启动引擎。
++  let previousAuth = getAuth();
++  onAuthChanged((auth) => {
++    if (previousAuth.sessionId !== auth.sessionId || previousAuth.serverUrl !== auth.serverUrl
++        || !!previousAuth.token !== !!auth.token) queueAuthLifecycle();
++    previousAuth = auth;
++  });
+   ipcMain.handle('auth:set', (_event, token: string, refreshToken: string, sessionId?: string) => {
+-    const previous = getAuth();
+     const auth = setAuth(token, refreshToken, sessionId);
+-    if (previous.sessionId !== auth.sessionId) queueAuthLifecycle();
+     return auth;
+@@
+   ipcMain.handle('auth:clear', (_event, sessionId?: string) => {
+-    const previous = getAuth();
+     const auth = clearAuth(sessionId);
+-    if (previous.token && !auth.token) queueAuthLifecycle();
+     return auth;
+@@
+     setBaseUrl(getServerUrl());
+-    queueAuthLifecycle();
+*** End Patch

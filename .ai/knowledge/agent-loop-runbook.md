@@ -1,177 +1,67 @@
-# Agent Loop V5 操作手册
+# Loop 操作手册
 
-> 本手册只在中型及以上落地任务或用户明确要求持久化 Loop 时按需读取；小型直接任务、只读咨询和审查不加载完整手册。
+只在 medium/large 或用户明确要求审计时使用。small 默认直接完成；完整计划只用于复杂或高风险任务。
 
-## 主线程激活规则
+## 1. 建立任务一次
 
-需要落地的中型及以上修改需求，按 Workflow Manager 执行 Observe → Goal → Scale → Plan → Dispatch/Act；只读咨询、诊断和审查直接交付结论。小型低风险修改说明目标、范围和相称验证后直接完成，不初始化持久化 State。
+创建 TASK（include/exclude、验收、验证）及 design.md。design 包含目标、影响、方案、异常、风险和测试计划；large 先明确 requirement.md。只存在实质未决决策时设置 confirmationRequired=true 并请求用户裁决。不为无 UI 任务创建体验派发或 skip 文件。
 
-`当前没有收到具体任务`只允许作为已经创建的 child 的 Dispatch 异常；没有真实用户需求时按 AGENTS.md 返回 `DISPATCH_MISSING`，不扫描项目猜任务。
+使用 `.ai/scripts/loopctl.ps1` 初始化，默认新任务 definitionVersion=3：
 
-## 用户只需要做什么？
-
-正常开发场景下，用户只描述目标：
-
-> 增加文件分享密码功能
-
-对中型及以上任务，Workflow Manager 应自动完成：
-
-```text
-Goal
-→ Scale
-→ State
-→ Plan
-→ TASK
-→ Dispatch
-→ Agent 执行
-→ Evaluate
-→ Rework
-→ Review
-→ Test
-→ 验收(ACCEPT)
-→ Knowledge
+```powershell
+& ./.ai/scripts/loopctl.ps1 init .ai/state/<task-id>.yaml -TaskId <task-id> -Scale medium -Objective '目标' -CompletionCriteria @('可验证完成标准')
 ```
 
-用户不需要手工输入：
+风险参数按实际设置：-HasUi、-SecuritySensitive、-DatabaseChange、-ApiContractChange、-IrreversibleChange。后四种为 true 时必须 large；核心文件写路径/复杂跨模块也采用 large。State 必须如实记录风险，不用 false 降级。
 
-- Agent 名称
-- TASK 文件
-- State 文件
-- Dispatch 字段
+## 2. 更新修订和证据
 
-## 如何判断 Loop 是否真的在运行？
+用 stale -RevisionKind design/code -RevisionValue <revision> 设置或更新修订。revision 可以是本次变更集的稳定标识或摘要，不使用仍有未提交改动的 HEAD 代替当前内容。先登记 design.md 等真实 artifacts；产物元信息更新不等于门禁完成，只有主线程调用 Evaluate。
 
-看到：
+主线程结果用 evaluate-direct -ProposalPath <result.json> -Actor workflow-manager，不创建伪 Dispatch：
 
-```text
-Observe
-Plan
-Dispatch
-Act
-Evaluate
+```json
+{
+  "taskId": "<task-id>",
+  "criterionProposal": {
+    "id": "VERIFIED", "outcome": "pass", "by": "workflow-manager",
+    "evidenceRef": ".ai/docs/<task-id>/verification.md",
+    "validatedRevision": "<code-revision>"
+  },
+  "verification": {
+    "validatedRevision": "<code-revision>",
+    "checks": [
+      {"dimension":"tests","outcome":"pass","evidenceRef":".ai/docs/<task-id>/verification.md"},
+      {"dimension":"selfReview","outcome":"pass","evidenceRef":".ai/docs/<task-id>/verification.md"},
+      {"dimension":"knowledge","outcome":"pass","evidenceRef":".ai/docs/<task-id>/verification.md"}
+    ]
+  }
+}
 ```
 
-才表示 Loop 在运行。
+risk=true 的 ui/security/database/apiContract/irreversible 追加对应维度的通过证据；允许同一文件按章节存储多个维度，必须分别写明检查内容和结果。tests 可使用相称的静态验证；knowledge 无稳定知识变化时记录原因。数据库维度必须包含 AGENTS.md 规定的 H2 和 MySQL 两次对比。测试失败修复后更新修订，再验证。
 
-如果只出现：
+large CODE_REVIEW 必须通过独立 reviewer 的真实 Dispatch 结果 Evaluate；独立 review 合并代码、安全及适用风险，不为每个检查维度再启动 Agent。委派机制见 `.ai/knowledge/agent-dispatch-protocol.md`。
 
-```text
-Agent Definition
-等待任务
+## 3. 一次验证并收敛
+
+verification.md 汇总修改、自检、命令/结果、UI/安全/DB 等适用检查、知识同步与剩余风险。测试完成无需等待 review；ACCEPT 等待 DAG 所有依赖。
+
+ACCEPT proposal 的 acceptanceEvidence 对每条 Goal 填 criterion/evidenceRef/validatedRevision。最后调用 complete；缺证据、错修订、未确认事项、blocker 或未结束派发会失败。失败只修实际缺口，不创建形式性任务。
+
+## 4. 检查范围
+
+```powershell
+# 当前规则与当前任务
+& ./.ai/scripts/verify-loop.ps1 -StatePath .ai/state/<task-id>.yaml
+# 修改 Loop 运行工具后运行新旧状态机测试
+& ./.ai/tests/loop-v2/run-tests.ps1
+# 全量历史审计（显式选择；不作为每轮开发前置）
+& ./.ai/scripts/verify-loop.ps1 -AuditHistory
 ```
 
-说明 Dispatch 没有发生。
+预提交/CI 的统一完整入口仍为 `.ai/scripts/run-loop-gate.ps1`。Worktree 生命周期未变，修改该工具才需要额外专项验证。
 
-## 子 Agent 正常启动后的第一句话
+## 5. 接续
 
-必须严格输出：
-
-```text
-DISPATCH_ACK
-dispatchId: <Envelope.dispatchId>
-taskId: <Envelope.taskId>
-role: <Envelope.role>
-```
-
-不能出现：
-
-```text
-请告诉我任务是什么
-请下达任务
-等待任务
-```
-
-ACK 后再校验 Envelope、读取选定的 skillRefs 和最小 State 快照并执行；ACK 前不得调用工具。
-
-## 调度失败处理
-
-如果出现：
-
-```text
-当前没有收到具体任务
-```
-
-Workflow Manager 应自动进入：
-
-```text
-Observe
-→ 检查 Dispatch
-→ 修复缺失字段
-→ 重新 Dispatch
-```
-
-而不是要求用户重新描述需求；若异常来自缺少真实用户需求，则按 AGENTS.md 的 `DISPATCH_MISSING` 处理。
-
-## 调度检查清单（Workflow Manager 每轮派发时）
-
-派发前：
-
-- [ ] **依赖就绪**：启动 TASK 前只检查其声明依赖已 Evaluate 且不存在 scope/构建资源冲突；无关 child 不阻塞当前 TASK
-- [ ] Envelope 已通过 `.ai/schema/dispatch.schema.json` 校验；不在本手册复制必填字段列表
-- [ ] Envelope 含 `forbidSpawn: true`
-- [ ] 派发消息 = Role Definition + Dispatch Envelope，未只贴角色定义
-- [ ] **自包含派发**：消息含角色声明 + 任务类型 + 当前任务所需 skillRefs + scope 白/黑名单；技能标识由运行时注册表解析
-- [ ] **上下文隔离已裁剪**：未携带编排器主会话历史（最小 fork）
-- [ ] **fork 运行时约束**：项目不固定 `fork_turns`；以当前 Codex Runtime 实际可用参数为准。无论上下文继承策略如何，任务来源只能是 child 实际收到的 Dispatch Message，不得从父线程历史猜任务
-- [ ] **任务类型匹配**：前端/后端任务派 executor（taskType=implement，scope 隔离目录）、评审派 reviewer、测试派 tester，未交叉
-- [ ] 每个 Envelope 的 `taskRefs` 只服务一个可独立验收的 TASK；独立 TASK 保持分开并按依赖并行
-
-派发后：
-
-- [ ] `list_agents` 校验层级 = 1（WM -> 专业 Agent）；出现两级以上立即 interrupt 并重派
-- [ ] 仅对当前阶段依赖、共享资源或最终收敛所需的 child 使用 `wait_agent`；超时只表示本次等待结束，需按状态继续等待，不把超时当作完成；无关 child 不阻塞阶段推进，子 Agent 之间不互等、不互相派发
-- [ ] 子 Agent 首条消息严格为 `DISPATCH_ACK` 三元组，未出现“等待任务”类回复
-- [ ] **子 Agent 未发起确认请求**：未调用 request_user_input / 未向用户提问 / 未返回“请确认”类交互；需要用户决策时只返回 confirmationRequest / delegationRequest / BLOCKED / DISPATCH_INVALID
-- [ ] 子 Agent 的写入不超出 `scope.include`，`scope.exclude` 始终禁止；读取仅限完成 TASK 所需的相关文件
-
-返回后处理（高危确认）：
-
-- [ ] 子 Agent 返回 `confirmationRequest` 时：Workflow Manager 将 reason/operation/affected/risk/proposedPlan 呈现给用户确认，**不把确认动作交回子 Agent**；确认后生成新的 Dispatch 指示继续
-
-返回后：
-
-- [ ] artifact / changereport 真实存在
-- [ ] acceptance 全部满足
-- [ ] validation 有真实结果
-- [ ] dependsOn 与 blocker 已检查
-- [ ] 以上全过才勾选 exitCriteria done
-
-## 需求/设计文档确认门禁（20260815 起）
-
-派发 REQ_ANALYSIS / DESIGN / TECH_DESIGN 相关 TASK 时额外检查：
-
-- [ ] 存在未决范围、兼容性或风险时，`requirement.md` / `design.md` 含「遗留问题点」章节（Grill Me 收敛，≤3 个）；无未决事项时不强制补写该章节
-- [ ] 仅当 criterion 设置 `confirmationRequired: true` 时，才需向用户呈现文档并确认影响范围、兼容性或风险方面的未决问题（State 记录 `userConfirmedAt`）
-- [ ] 涉及 UI 才派发 EXP_DESIGN/EXP_ACCEPT；无 UI 时在 State 标记 `applicable: false` 并保存 skip 证据
-- [ ] 未确认的实质决策未被用于下游 TASK（已明确确认的决策可复用）
-- [ ] 文档未出现空话套话/互联网黑话（简洁性检查）
-
-用户确认动作只由 Workflow Manager 向用户发起；子 Agent 不得发起文档确认请求。
-
-## Dispatch 示例
-
-不要在本手册复制 Envelope 字段或示例；使用 [Dispatch 模板](../templates/dispatch-template.md)，并以 `.ai/schema/dispatch.schema.json` 校验后的结果为准。
-
-## 一个健康的 Rework
-
-```text
-Security Review
-→ B1: 分享下载缺鉴权
-→ Workflow Manager 创建修复 TASK
-→ Backend 修复
-→ code changed
-→ CODE_REVIEW stale
-→ SECURITY_REVIEW stale
-→ TEST_PASS stale
-→ Reviewer + Security Reviewer
-→ Tester
-→ 验收(ACCEPT)
-```
-
-不要：
-
-```text
-Security Review
-→ Backend 自己叫 Reviewer
-→ Reviewer 自己叫 Tester
-```
+存在有效当前 State 时直接继续缺口；不重建已有完成项。V2 State 默认绑定 `.ai/loop/exit-criteria.v2.yaml`，V3 不静默迁移历史。V1 迁移工具仅供旧版本维护，新工作优先新建 V3 并核对必要证据。

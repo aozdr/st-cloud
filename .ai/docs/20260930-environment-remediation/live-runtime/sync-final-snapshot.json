@@ -1,0 +1,93 @@
+{
+  "executedAt": "2026-10-01T02:22:09.906Z",
+  "cursorBefore": "344",
+  "cursorAfter": "345",
+  "states": [
+    {
+      "rootId": "2105298514185756673",
+      "localPath": "/",
+      "nodeId": "2105298513682440193",
+      "cloudMtime": "2026-09-30 22:07:34",
+      "status": "synced",
+      "failCount": 0
+    },
+    {
+      "rootId": "2105298514185756673",
+      "localPath": "/destination",
+      "nodeId": "2105298513967652866",
+      "cloudMtime": "2026-09-30 22:07:34",
+      "status": "synced",
+      "failCount": 0
+    },
+    {
+      "rootId": "2105298514185756673",
+      "localPath": "/destination/renamed.txt",
+      "nodeId": "2105298514835873794",
+      "md5": "80645dbec1dfa82c15a36de9004fd3d9",
+      "size": 154,
+      "localMtime": 1790821242955.227,
+      "cloudMtime": "2026-10-01 10:20:39",
+      "status": "synced",
+      "failCount": 0
+    }
+  ],
+  "recoveries": [
+    {
+      "operationId": "legacy-2105298514835873794",
+      "originalPath": "/note.txt",
+      "status": "complete",
+      "files": [
+        {
+          "relative": "note.txt",
+          "sha256": "3b5e97cf90d1f48795ec6d17b12ea97579f021b929b330930119963b7d906520"
+        }
+      ]
+    },
+    {
+      "operationId": "legacy-2105298514835873794-6061282017938fff2fcfbeb8c96de9d68a019babb8d254eef37bd947a7c93cb2",
+      "originalPath": "/note.txt",
+      "status": "complete",
+      "files": [
+        {
+          "relative": "note.txt",
+          "sha256": "3b5e97cf90d1f48795ec6d17b12ea97579f021b929b330930119963b7d906520"
+        }
+      ]
+    },
+    {
+      "operationId": "legacy-2105298514835873794-6f35a5fdd89dae022c4ab3366a9afaac9f8e0c564e56c2a41ae899f0a51b2b9d",
+      "originalPath": "/note.txt",
+      "status": "complete",
+      "files": [
+        {
+          "relative": "note.txt",
+          "sha256": "3b5e97cf90d1f48795ec6d17b12ea97579f021b929b330930119963b7d906520"
+        }
+      ]
+    },
+    {
+      "operationId": "legacy-2105298514835873794-a9ae30ad6f23fe3c641796bbb67d95222ef101037b6e47a7b8148222da13faf8",
+      "originalPath": "/destination/renamed.txt",
+      "status": "complete",
+      "files": [
+        {
+          "relative": "destination/renamed.txt",
+          "sha256": "a421a7d80ce43bfb2f9ad8d0bbe64e53f7e8f450b61f34b30e3bdb18f7c465de"
+        }
+      ]
+    },
+    {
+      "operationId": "legacy-2105298514835873794-b967b0500bd2111c054d0323a6bdff04dfe42dc8505a9abc45047bae147eb66d",
+      "originalPath": "/destination/renamed.txt",
+      "status": "complete",
+      "files": [
+        {
+          "relative": "destination/renamed.txt",
+          "sha256": "5d130fbe9abca98e0bfa75c69847078c8cd96e7e0ba93d6d8a7344ac5d769217"
+        }
+      ]
+    }
+  ],
+  "canonicalMappings": true,
+  "originalRecoveryPreserved": true
+}

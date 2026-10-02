@@ -1,0 +1,37 @@
+[
+  {
+    "module": "st-core",
+    "path": "com/stcloud/core/service/impl/RecycleBinServiceImpl.class",
+    "r1": "a1b2c9bb8035a182b117c9ddbeeca8fc0bd419d7c8c2fc0d1953b6b3a24b773e",
+    "final": "a1b2c9bb8035a182b117c9ddbeeca8fc0bd419d7c8c2fc0d1953b6b3a24b773e",
+    "unchanged": true
+  },
+  {
+    "module": "st-auth",
+    "path": "com/stcloud/auth/service/AuthService.class",
+    "r1": "9ae91eb87b0bde29437308fb8bb82c154cfd9d19b97a1e7d613e2f260af27482",
+    "final": "9ae91eb87b0bde29437308fb8bb82c154cfd9d19b97a1e7d613e2f260af27482",
+    "unchanged": true
+  },
+  {
+    "module": "st-preview",
+    "path": "com/stcloud/preview/service/impl/PreviewServiceImpl.class",
+    "r1": "244b9739f1f10ab17b6dc59ee02b9f53c7447619a011ae3b426a8cc89d1d0d86",
+    "final": "244b9739f1f10ab17b6dc59ee02b9f53c7447619a011ae3b426a8cc89d1d0d86",
+    "unchanged": true
+  },
+  {
+    "module": "st-team",
+    "path": "com/stcloud/team/service/impl/TeamServiceImpl.class",
+    "r1": "f3deb59a749e847bc57880edf7b1f6db22327f8bb49ff27f83f2ec3e0ffc8b6e",
+    "final": "e4004ecb878be2eabc03345f311760b704a30914556f95cada5997bd363aaba7",
+    "unchanged": false
+  },
+  {
+    "module": "st-sync",
+    "path": "com/stcloud/sync/listener/SyncChangeMessageConsumer.class",
+    "r1": "f0e4b642a17731923e8e11a5fc38bff519f1cbccffef61e71506a571ae64eb37",
+    "final": "b6c6734906beadfbf52ec24e0b893a8eb7cb9e69975d77d1d3ecf73c8aa1d0a0",
+    "unchanged": false
+  }
+]

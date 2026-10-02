@@ -18,6 +18,7 @@ import com.stcloud.core.service.StorageService;
 import com.stcloud.core.service.impl.upload.UploadCommitManager;
 import com.stcloud.core.service.impl.upload.UploadStorageManager;
 import jakarta.annotation.Resource;
+import com.stcloud.core.service.impl.upload.ObjectUploadCandidateService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -46,9 +47,9 @@ public class TextFileServiceImpl implements TextFileService {
     @Resource
     private UploadCommitManager uploadCommitManager;
     @Resource
+    private ObjectUploadCandidateService objectUploadCandidateService;
+    @Resource
     private UploadStorageManager uploadStorageManager;
-    @org.springframework.beans.factory.annotation.Autowired(required = false)
-    private com.stcloud.core.service.impl.OrphanObjectCleanupService orphanObjectCleanupService;
 
     @Override
     public void overwriteContent(Long nodeId, byte[] content) {
@@ -88,19 +89,8 @@ public class TextFileServiceImpl implements TextFileService {
         if (existing != null) {
             storagePath = existing.getStoragePath();
         } else {
-            storagePath = tenantId + "/" + md5;
-            if (orphanObjectCleanupService != null) {
-                orphanObjectCleanupService.beginUpload(tenantId, md5, storagePath);
-            }
-            try {
-                storageService.uploadObject(storagePath, new ByteArrayInputStream(content), newSize, contentType);
-                uploadedNew = true;
-            } catch (RuntimeException e) {
-                if (orphanObjectCleanupService != null) {
-                    orphanObjectCleanupService.markFailed(tenantId, storagePath);
-                }
-                throw e;
-            }
+            storagePath = objectUploadCandidateService.upload(tenantId, md5, new ByteArrayInputStream(content), newSize, contentType);
+            uploadedNew = true;
         }
 
         try {
@@ -109,24 +99,16 @@ public class TextFileServiceImpl implements TextFileService {
         } catch (RuntimeException e) {
             // 6. 事务失败只登记候选，避免 current == null 竞态误删并发成功对象。
             if (uploadedNew) {
-                if (orphanObjectCleanupService != null) {
-                    orphanObjectCleanupService.markFailed(tenantId, storagePath);
-                }
+                cleanupOrphanUpload(tenantId, md5, storagePath);
             }
             throw e;
-        }
-        if (uploadedNew) {
-            if (orphanObjectCleanupService != null) {
-                orphanObjectCleanupService.markCommitted(tenantId, storagePath);
-            }
         }
         log.info("文本内容保存成功: nodeId={}, size={}", nodeId, newSize);
     }
 
     private void cleanupOrphanUpload(Long tenantId, String md5, String storagePath) {
-        if (orphanObjectCleanupService != null) {
-            orphanObjectCleanupService.markFailed(tenantId, storagePath);
-        }
+        // 仅放弃未采用候选，由持久 GC 延迟回收。
+        objectUploadCandidateService.discard(tenantId, storagePath);
     }
 
     /** 增大写入前的配额预检（与版本恢复/上传口径一致） */

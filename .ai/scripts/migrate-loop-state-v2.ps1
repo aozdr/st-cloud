@@ -11,7 +11,7 @@ $ErrorActionPreference = 'Stop'
 $aiRoot = Split-Path $PSScriptRoot -Parent
 if (-not $StateDirectory) { $StateDirectory = Join-Path $aiRoot 'state' }
 if (-not $ArchiveDirectory) { $ArchiveDirectory = Join-Path $aiRoot 'archive\state-v1' }
-$definitionPath = Join-Path $aiRoot 'loop\exit-criteria.yaml'
+$definitionPath = Join-Path $aiRoot 'loop\exit-criteria.v2.yaml'
 $loopctl = Join-Path $PSScriptRoot 'loopctl.ps1'
 
 function Read-Scalar([string]$Raw, [string]$Name, [string]$Default) {

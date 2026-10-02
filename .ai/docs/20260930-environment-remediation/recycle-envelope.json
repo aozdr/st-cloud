@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-env-recycle-01",
+  "taskId": "TASK-20260930-environment-recycle-tests",
+  "idempotencyKey": "TASK-20260930-environment-recycle-tests",
+  "role": "tester",
+  "taskType": "testcases",
+  "objective": "补V06真实MySQL并发交错，按TASK。首条DISPATCH_ACK并回传/root后继续。部分TESTCASES proposal env-design-r1。",
+  "taskRefs": [
+    ".ai/tasks/TASK-20260930-environment-recycle-tests.md",
+    ".ai/docs/20260930-environment-remediation/design.md",
+    ".ai/docs/20260930-environment-remediation/testcases.md"
+  ],
+  "stateRef": ".ai/state/20260930-environment-remediation.yaml",
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      "st-core/src/test/java/com/stcloud/core/service/impl/TeamRecycle*Test.java",
+      ".ai/docs/20260930-environment-remediation/recycle-*",
+      ".ai/runtime/results/DISPATCH-env-recycle-01.json"
+    ],
+    "exclude": [
+      "产品实现源码",
+      ".ai/state/**",
+      "历史记录",
+      "数据库迁移"
+    ]
+  },
+  "acceptance": [
+    "管理员撤权与恢复/删除交错",
+    "恢复与永久删除竞争",
+    "明确锁等待及最终状态/副作用断言"
+  ],
+  "validation": [
+    "仅写测试，主线程运行Maven",
+    "不执行数据删除/迁移/Git"
+  ],
+  "forbidSpawn": true,
+  "forbidGitMvn": true,
+  "output": {
+    "resultRef": ".ai/runtime/results/DISPATCH-env-recycle-01.json"
+  }
+}

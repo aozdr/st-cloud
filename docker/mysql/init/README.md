@@ -1,6 +1,6 @@
 # 数据库初始化脚本
 
-本目录包含星云盘的全部数据库初始化脚本（02 ~ 36），按文件名编号顺序执行。`09b` 为 09 的补充脚本，排序位于 09 与 10 之间。
+本目录包含星云盘的全部数据库初始化脚本（02 ~ 47），按文件名编号顺序执行。`09b` 为 09 的补充脚本，排序位于 09 与 10 之间。两个 `42` 脚本分别管理历史规范路径和新独立上传路径，已有库按真实结构执行缺少项。
 
 ## 执行方式
 
@@ -67,6 +67,11 @@ done
 | 36 | `36_editor_version_source.sql` | `file_version.source` 版本来源（0 上传覆盖 / 1 在线编辑器保存） |
 | 37 | `37_add_edit_permission.sql` | 新增 `edit` 编辑文档权限点（团队文件夹/分享 JSON 补全，幂等） |
 | 42 | `42_file_orphan_candidate.sql` | 规范对象孤儿回收候选表（宽限期 + 删除前安全复核） |
+| 42 | `42_object_upload_candidate.sql` | 新独立 UUID 上传路径候选及 GC 引用检查索引 |
+| 43 | `43_file_watch.sql` | 文件关注、持久投递队列和通知事件字段；已有库执行前检查字段，禁止盲目重放 |
+| 44 | `44_team_role_bigint.sql` | 团队成员/邀请角色扩为 BIGINT，保留完整自定义角色 ID |
+| 45/46 | `45_user_security_version.sql` / `46_user_security_version_retry.sql` | 会话安全版本及幂等补列，不重置已有值 |
+| 47 | `47_environment_gc_indexes_retry.sql` | 按实际索引存在性补齐 GC 索引，支持中断后重试 |
 
 ## 默认数据
 

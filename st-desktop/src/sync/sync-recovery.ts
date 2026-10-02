@@ -27,7 +27,8 @@ function assertNoRecoveryLinks(anchor: string, target: string): void {
 /** 源已移动时仍须完成已有恢复清单；没有本事件清单时保持删除重放的空操作语义。 */
 export function resumeRecoveryIfPresent(rootId: string, operationId: string, rootPath: string,
                                        sourcePath: string, relativePath: string,
-                                       markWritten: (relative: string) => void): string | null {
+                                       markWritten: (relative: string) => void,
+                                       options?: { ignoreUnrelatedPath?: boolean }): string | null {
   if (!/^[\w-]+$/.test(rootId) || !/^[\w-]+$/.test(operationId)) throw new Error('恢复事件标识非法');
   const realRoot = fs.realpathSync(rootPath);
   const bases = [path.join(app.getPath('userData'), 'sync-recovery'),
@@ -35,7 +36,14 @@ export function resumeRecoveryIfPresent(rootId: string, operationId: string, roo
   const exists = bases.some(base => {
     const manifestPath = path.join(base, rootId, operationId, 'manifest.json');
     assertNoRecoveryLinks(path.dirname(base), manifestPath);
-    return fs.existsSync(manifestPath);
+    if (!fs.existsSync(manifestPath)) return false;
+    // 仅升级兼容的旧节点 ID 清单需要按原路径筛选；损坏清单与身份不符仍由正常校验拒绝。
+    if (options?.ignoreUnrelatedPath) {
+      const previous = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+      if (previous.rootId !== rootId || previous.operationId !== operationId) throw new Error('恢复清单与当前事件不一致');
+      if (previous.originalPath !== relativePath) return false;
+    }
+    return true;
   });
   if (!exists) return null;
   return preserveAndRemove(rootId, operationId, rootPath, sourcePath, relativePath, markWritten);

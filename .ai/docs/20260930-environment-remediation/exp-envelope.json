@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-env-exp-design-01",
+  "taskId": "TASK-20260930-environment-exp-design",
+  "idempotencyKey": "TASK-20260930-environment-exp-design",
+  "role": "reviewer",
+  "taskType": "exp-review",
+  "objective": "独立审视本任务体验设计，按 TASK 输出 EXP_DESIGN proposal，validatedRevision=env-design-r1。首条输出 DISPATCH_ACK；ACK 后继续完成。",
+  "taskRefs": [
+    ".ai/tasks/TASK-20260930-environment-exp-design.md",
+    ".ai/docs/20260930-environment-remediation/requirement.md",
+    ".ai/docs/20260930-environment-remediation/impact.md",
+    ".ai/docs/20260930-environment-remediation/uispec.md",
+    ".ai/docs/20260930-environment-remediation/design.md"
+  ],
+  "stateRef": ".ai/state/20260930-environment-remediation.yaml",
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      ".ai/docs/20260930-environment-remediation/exp-design.md",
+      ".ai/runtime/results/DISPATCH-env-exp-design-01.json"
+    ],
+    "exclude": [
+      "产品源码",
+      ".ai/state/**",
+      "历史文档"
+    ]
+  },
+  "acceptance": [
+    "覆盖全部现有界面和认证状态，列明风险与验收行为"
+  ],
+  "validation": [
+    "只读对照需求、设计、uispec，不运行构建"
+  ],
+  "forbidSpawn": true,
+  "forbidGitMvn": true,
+  "output": {
+    "resultRef": ".ai/runtime/results/DISPATCH-env-exp-design-01.json"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "criterionProposal": {
+    "id": "IMPLEMENTED",
+    "evidenceRef": ".ai/docs/20260930-environment-remediation/changereport.md",
+    "by": "workflow-manager",
+    "validatedRevision": "env-code-r2",
+    "outcome": "pass"
+  },
+  "taskId": "20260930-environment-remediation"
+}

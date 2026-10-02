@@ -19,20 +19,20 @@
     --color-primary-950: 32 46 99;
 
     /* ---- Semantic tokens: LIGHT ---- */
-    --bg: 247 248 252;          /* #F7F8FC */
+    --bg: 247 248 250;          /* #F7F8FA */
     --surface: 255 255 255;
-    --surface-2: 244 246 250;   /* #F4F6FA */
-    --fg: 31 36 48;             /* #1F2430 */
-    --muted: 105 115 134;       /* #697386 */
-    --border: 232 235 241;      /* #E8EBF1 */
+    --surface-2: 246 247 249;   /* #F6F7F9 */
+    --fg: 32 36 45;             /* #20242D */
+    --muted: 104 112 128;       /* #687080 */
+    --border: 232 234 240;      /* #E8EAF0 */
     --ring: var(--color-primary-600);
-    --nav-active-bg: 238 240 255;   /* #EEF0FF 激活导航底（UI_DESIGN_SPEC brand.primaryLight） */
+    --nav-active-bg: 238 242 255;   /* #EEF2FF */
 
     /* ---- UI_DESIGN_SPEC v1.0 扩展中性 Token ---- */
-    --bg-hover: 247 249 253;    /* #F7F9FD */
-    --bg-active: 238 240 255;   /* #EEF0FF（UI_DESIGN_SPEC background.selected） */
-    --border-light: 238 240 244; /* #EEF0F4 */
-    --text-tertiary: 146 154 170; /* #929AAA */
+    --bg-hover: 248 249 251;    /* #F8F9FB */
+    --bg-active: 238 242 255;   /* #EEF2FF */
+    --border-light: 240 241 244; /* #F0F1F4 */
+    --text-tertiary: 154 161 174; /* #9AA1AE */
     --text-disabled: 184 190 201; /* #B8BEC9 */
 
     /* ---- 语义色 ---- */
@@ -65,8 +65,8 @@
     --shadow-primary: 0 4px 16px rgba(79, 110, 247, 0.12);
 
     /* 布局常量 */
-    --sidebar-width: 240px;
-    --header-height: 68px;
+    --sidebar-width: 224px;
+    --header-height: 60px;
 
     color-scheme: light;
   }
@@ -74,18 +74,18 @@
   .dark {
     /* ---- DARK: 蓝灰中性深色（参考阿里云盘/Google Drive 深色模式） ---- */
     /* 层级分明：bg 最深 -> surface 略浅 -> surface-2 更浅，形成卡片浮起感 */
-    --bg: 15 15 17;
-    --surface: 22 22 26;
-    --surface-2: 32 32 38;
-    --fg: 230 231 235;
-    --muted: 150 155 166;
-    --border: 42 42 48;
+    --bg: 17 18 22;
+    --surface: 27 29 34;
+    --surface-2: 34 37 43;
+    --fg: 234 236 240;
+    --muted: 157 163 175;
+    --border: 43 46 53;
     --ring: var(--color-primary-600);
     --nav-active-bg: 48 110 255;    /* primary，搭配 /15 透明度使用 */
-    --bg-hover: 24 24 28;
+    --bg-hover: 34 37 43;
     --bg-active: 48 110 255;
-    --border-light: 38 38 44;
-    --text-tertiary: 120 125 135;
+    --border-light: 43 46 53;
+    --text-tertiary: 141 148 160;
     --text-disabled: 90 94 104;
     --success: 52 211 153;
     --success-light: 10 45 30;
@@ -141,24 +141,16 @@
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 h-10 px-4 bg-primary-600 text-white text-sm font-medium rounded-[9px] transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 h-9 px-4 bg-primary-600 text-white text-sm font-medium rounded-lg transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .btn-primary:hover {
     background-color: rgb(var(--color-primary-700));
   }
   .btn-primary:active {
     background-color: rgb(var(--color-primary-800));
-    transform: scale(0.98);
-  }
-  .btn-secondary:active {
-    transform: scale(0.98);
-  }
-  .btn-danger:active,
-  .btn-ghost:active {
-    transform: scale(0.98);
   }
   .btn-secondary {
-    @apply inline-flex items-center justify-center gap-2 h-10 px-4 text-sm font-medium rounded-[9px] border cursor-pointer transition-colors duration-150;
+    @apply inline-flex items-center justify-center gap-2 h-9 px-4 text-sm font-medium rounded-lg border cursor-pointer transition-colors duration-150;
     background-color: rgb(var(--surface));
     color: rgb(var(--fg));
     border-color: rgb(var(--border));
@@ -235,16 +227,6 @@
   }
   .card-hover:hover {
     background-color: rgb(var(--bg-hover));
-  }
-  .glass {
-    background: rgba(255, 255, 255, 0.06);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-  }
-  .glass-dark {
-    background: rgba(0, 0, 0, 0.2);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
   }
   .pt-safe { padding-top: env(safe-area-inset-top); }
   .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
@@ -372,17 +354,9 @@
 }
 
 /* 品牌渐变区始终深色：hero banner / login 背景，不跟随 light/dark 切换 */
+/* 品牌区域使用纯色 surface，避免营销页式渐变抢夺文件内容的视觉层级。 */
 .brand-gradient {
-  background:
-    radial-gradient(ellipse at 20% 0%, rgb(var(--color-primary-500) / 0.15) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 100%, rgb(var(--color-primary-500) / 0.10) 0%, transparent 50%),
-    rgb(var(--bg));
-}
-
-/* PikPak 风浅灰侧边栏：浅色模式下浅灰底+深色文字 */
-.sidebar-gradient {
   background: rgb(var(--surface));
-  border-right: 1px solid rgb(var(--border));
 }
 
   @media (prefers-reduced-motion: reduce) {

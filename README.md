@@ -137,7 +137,7 @@ docker-compose up -d
 | mysql | 3306 | MySQL 8.0，首次启动自动执行 `mysql/init/` 下全部脚本（脚本首行 `SET NAMES utf8mb4;`） |
 | redis | 6379 | Redis 7（缓存/会话/编辑锁/限速） |
 | rustfs | 9000 / 9001 | S3 兼容对象存储 |
-| rocketmq-namesrv | 19876 | RocketMQ NameServer（容器内 9876，宿主机映射 19876，避开 Windows 保留端口段） |
+| rocketmq-namesrv | 9876 | RocketMQ NameServer（宿主机与容器均使用 9876） |
 | rocketmq-broker | 10909-10912 | RocketMQ Broker（自动创建 topic） |
 | rocketmq-dashboard | 9080 | RocketMQ 控制台（可选） |
 | elasticsearch | 9200 | ES 8.12，自定义镜像内置 ingest-attachment + IK 插件 |

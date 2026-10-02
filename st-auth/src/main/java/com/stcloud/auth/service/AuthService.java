@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -59,6 +60,12 @@ public class AuthService {
      */
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public LoginResponse register(RegisterRequest request) {
+        Long tenantId = TenantContext.getTenantIdOrNull();
+        // 公开注册沿用默认租户入口；已有上下文的调用保持原租户选择。
+        return inTenant(tenantId != null ? tenantId : 1L, () -> registerInTenant(request));
+    }
+
+    private LoginResponse registerInTenant(RegisterRequest request) {
         // 密码哈希与 Redis 不进入数据库写事务；用户及默认角色提交后才能签发会话。
         String passwordHash = BCrypt.hashpw(request.getPassword());
         TransactionTemplate registration = new TransactionTemplate(transactionManager);
@@ -153,6 +160,12 @@ public class AuthService {
      * 用户登录
      */
     public LoginResponse login(LoginRequest request, String ip) {
+        Long tenantId = TenantContext.getTenantIdOrNull();
+        // 无令牌登录显式使用现有默认租户，不能依赖数据库拦截器隐式兜底。
+        return inTenant(tenantId != null ? tenantId : 1L, () -> loginInTenant(request, ip));
+    }
+
+    private LoginResponse loginInTenant(LoginRequest request, String ip) {
         SysUser user = userMapper.selectOne(
                 new LambdaQueryWrapper<SysUser>()
                         .eq(SysUser::getUsername, request.getUsername()));
@@ -210,6 +223,13 @@ public class AuthService {
             throw new BusinessException(ResultCode.TOKEN_INVALID);
         }
 
+        // 仅在签名、用途和安全版本都通过后使用令牌租户，跨请求刷新不再落入默认租户1。
+        Long tenantId = userSecurityService.exactNonNegativeLong(claims.get("tenantId"));
+        return inTenant(tenantId, () -> refreshInTenant(refreshToken, claims));
+    }
+
+    private LoginResponse refreshInTenant(String refreshToken, io.jsonwebtoken.Claims claims) {
+
         Long userId = jwtUtils.getUserId(refreshToken);
         String cachedToken = stringRedisTemplate.opsForValue().get(REFRESH_TOKEN_PREFIX + userId);
         if (cachedToken == null || !cachedToken.equals(refreshToken)) {
@@ -248,6 +268,17 @@ public class AuthService {
         if (!Long.valueOf(1L).equals(replaced)) throw new BusinessException(ResultCode.TOKEN_INVALID);
 
         return buildLoginResponse(newToken, newRefreshToken, user, userPerms);
+    }
+
+    /** 临时认证上下文只覆盖当前操作，失败与成功都精确恢复原始租户，避免线程复用串租户。 */
+    private <T> T inTenant(Long tenantId, Supplier<T> action) {
+        Long previousTenantId = TenantContext.getTenantIdOrNull();
+        try {
+            TenantContext.setTenantId(tenantId);
+            return action.get();
+        } finally {
+            TenantContext.setTenantId(previousTenantId);
+        }
     }
 
     /**

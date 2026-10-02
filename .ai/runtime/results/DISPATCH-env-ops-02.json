@@ -1,0 +1,43 @@
+{
+  "dispatchId": "DISPATCH-env-ops-02",
+  "taskId": "TASK-20260930-environment-ops",
+  "idempotencyKey": "TASK-20260930-environment-ops",
+  "status": "completed",
+  "artifactRefs": [
+    ".ai/docs/20260930-environment-remediation/ops-remediation.md",
+    ".ai/docs/20260930-environment-remediation/ops-environment-02.json",
+    ".ai/docs/20260930-environment-remediation/ops-dependencies.log",
+    ".ai/docs/20260930-environment-remediation/ops-dependencies-final.log",
+    "docker/docker-compose.yml",
+    "docker/.env.example",
+    "docker/scripts/Test-Dependencies.ps1",
+    "docker/scripts/Get-DockerEvidence.ps1",
+    "docker/scripts/MqDependencyProbe.java",
+    "docker/scripts/s3-dependency-probe.py"
+  ],
+  "criterionProposal": {
+    "id": "IMPLEMENTED",
+    "outcome": "pass",
+    "by": "/root/ops_retry",
+    "dispatchId": "DISPATCH-env-ops-02",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-env-ops-02.json",
+    "validatedRevision": "env-code-r1"
+  },
+  "blockerProposals": [],
+  "scope": "仅本 TASK 的部分 IMPLEMENTED 建议，最终标准由主线程 Evaluate。",
+  "facts": {
+    "背景": "旧 attempt 中断后独立核对配置、脚本与当前 Docker，不采信缺失日志的口头通过。",
+    "输入": "TASK、env-design-r1、State 修订信息与当前 Docker 运行身份。",
+    "分析": "8 个固定镜像身份与实际功能探针通过；MQ SEND_OK 后按队列/offset 核对 payload；S3 签名 HEAD、PUT/GET 核对内容。",
+    "决策": "保留既有镜像；补 ES timed_out=false、无凭据身份快照、日期化专用 S3 审计目录；不重建现有容器。",
+    "State Delta": "仅 proposal，未写 State。",
+    "风险": "历史故障根因未知；旧容器未加载新自动 healthcheck；Broker store 无持久卷；ES 自建 digest 只在本机可用。",
+    "下一步": "主线程集成；授权持久化迁移及停机窗口后再更新容器，先备份并验证消息和位点。",
+    "变更影响": "仅 docker 配置、探针与本 TASK 的证据；无产品/数据库/Git/Maven 修改。"
+  },
+  "validation": [
+    {"evidenceRef": ".ai/docs/20260930-environment-remediation/ops-dependencies.log", "exitCode": 0, "result": "8 container probes, MQ/S3 real round trip passed"},
+    {"evidenceRef": ".ai/docs/20260930-environment-remediation/ops-dependencies-final.log", "exitCode": 0, "result": "final configuration read-only probes passed"},
+    {"evidenceRef": ".ai/docs/20260930-environment-remediation/ops-environment-02.json", "exitCode": 0, "result": "actual current identities and mount/health status saved"}
+  ]
+}

@@ -1,0 +1,45 @@
+{
+  "dispatchId": "DISPATCH-review-fixes-code-01",
+  "taskId": "TASK-20261001-review-fixes-code",
+  "status": "completed",
+  "artifactRefs": [".ai/docs/20261001-review-fixes/codereview.md"],
+  "criterionProposal": {
+    "id": "CODE_REVIEW",
+    "outcome": "fail",
+    "by": "/root/review_fixes_code",
+    "dispatchId": "DISPATCH-review-fixes-code-01",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-review-fixes-code-01.json",
+    "validatedRevision": "review-fixes-code-r1"
+  },
+  "blockerProposals": [],
+  "background": "独立核对本轮多标签认证与软删除团队空间回收清理修复，仅报告本轮可复现用户影响。",
+  "input": {
+    "envelopeValidated": true,
+    "skillRefs": ["-"],
+    "sourceManifest": ".ai/docs/20261001-review-fixes/source-manifest.json",
+    "sha256Matched": "6/6",
+    "revision": "review-fixes-code-r1"
+  },
+  "findings": [{
+    "priority": "P2",
+    "file": "st-web/src/auth-session.ts",
+    "start": 45,
+    "end": 47,
+    "title": "初始化共享记录基线与实际采用的认证快照不一致",
+    "facts": "启动页首次采用R0后，其他页完成R1落盘，第二次读将observedStorage设为R1而内存仍为R0。第53行随后跳过同步，Web Locks与ticket模式均提交旧R0，在HTTP401后删除有效共享R1。同窗口中的跨页退出也因null基线被忽略。",
+    "evidence": "当前源码VM+共享storage注入合法启动交错，真实loopback HTTP返回401；两种模式calls=[refresh-0],sharedAfter=null,memoryAfter=null。退出变体shared=null,memoryRefresh=refresh-0,sessionAccess=access-0。独立脚本均退出0。",
+    "recommendation": "observedStorage绑定loadCredentials实际解析采用的同一原始记录；随后同步最新记录并新增启动续期/退出交错回归。"
+  }],
+  "validation": [
+    {"kind": "hash", "outcome": "pass", "detail": "六个产品/测试文件SHA256与冻结清单一致。"},
+    {"command": "node --test st-web/src/store/auth-tabs.test.mjs", "exitCode": 0, "passed": 14, "failed": 0, "skipped": 0},
+    {"command": "只读PowerShell here-string经stdin执行Node启动续期交错复现", "exitCode": 0, "modes": ["locks", "tickets"], "assertionOutcome": "证实P2误清有效共享会话"},
+    {"command": "只读PowerShell here-string经stdin执行Node启动退出交错复现", "exitCode": 0, "assertionOutcome": "证实共享退出后旧内存/sessionStorage留存"},
+    {"kind": "source-trace", "outcome": "pass", "detail": "回收租户扫描、保留期、墓碑空间锁、用户权限、RECYCLED状态、引用释放与提交后物理删除路径未发现新增可复现问题。"}
+  ],
+  "decision": "建议CODE_REVIEW/fail，修复该单一P2并在新修订下重新独立复核。",
+  "stateDelta": "仅criterionProposal，未修改Loop State。",
+  "risks": ["初始化窗口发生频率未在真实浏览器测量；源码执行已证实合法交错的结果。", "未运行Maven、H2、MySQL或S3；不声明这些环境已被本child独立验证。"],
+  "nextSteps": ["主线程修复启动快照一致性", "增加启动续期及退出交错用例", "冻结新修订并重新派发独立复核"],
+  "changeImpact": "仅写入codereview.md与本独立result，无源码、测试源码、State、数据库、Git index或部署修改。"
+}

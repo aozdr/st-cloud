@@ -41,6 +41,8 @@ public class OrphanObjectCleanupService {
     private UploadSessionMapper uploadSessionMapper;
     @Resource
     private UploadStorageManager storageManager;
+    @Resource
+    private com.stcloud.core.task.TenantTaskRunner tenantTaskRunner;
 
     @Value("${stcloud.upload.orphan.grace-ms:3600000}")
     private long graceMs;
@@ -86,6 +88,11 @@ public class OrphanObjectCleanupService {
 
     @Scheduled(fixedDelayString = "${stcloud.upload.orphan.cleanup-interval-ms:60000}")
     public void scheduledCleanup() {
+        // 后台扫描逐启用租户执行，保留禁用租户数据，不隐式只扫描租户1。
+        tenantTaskRunner.runForEachTenant("规范对象孤儿回收", this::cleanupCurrentTenant);
+    }
+
+    private void cleanupCurrentTenant() {
         LocalDateTime cutoff = LocalDateTime.now().minusNanos(Math.max(0L, graceMs) * 1_000_000L);
         List<OrphanObjectCandidate> candidates = candidateMapper.selectDue(cutoff, 100);
         for (OrphanObjectCandidate candidate : candidates) {

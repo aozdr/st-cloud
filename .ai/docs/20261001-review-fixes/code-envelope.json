@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-review-fixes-code-01",
+  "taskId": "TASK-20261001-review-fixes-code",
+  "idempotencyKey": "TASK-20261001-review-fixes-code",
+  "role": "reviewer",
+  "taskType": "review",
+  "objective": "独立复核本轮两处修复的实现与真实云盘行为；只提出可复现、影响用户或存储生命周期的问题",
+  "taskRefs": [
+    ".ai/tasks/TASK-20261001-review-fixes-code.md",
+    ".ai/docs/20261001-review-fixes/design.md",
+    ".ai/docs/20261001-review-fixes/testcases.md"
+  ],
+  "stateRef": ".ai/state/20261001-review-fixes.yaml",
+  "artifactRefs": [
+    ".ai/docs/20261001-review-fixes/changereport.md",
+    ".ai/docs/20261001-review-fixes/source-manifest.json"
+  ],
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      ".ai/docs/20261001-review-fixes/codereview.md",
+      ".ai/runtime/results/DISPATCH-review-fixes-code-01.json"
+    ],
+    "exclude": [
+      "源码",
+      "测试源码",
+      ".ai/state/**",
+      "数据库",
+      "Git index",
+      "部署",
+      "历史证据"
+    ]
+  },
+  "acceptance": [
+    "依据真实云盘场景和当前实现独立复核，必须区分事实与推测",
+    "生成 codereview.md 及独立结果，proposal id=CODE_REVIEW，当前修订 review-fixes-code-r1"
+  ],
+  "validation": [
+    "核对源码 SHA256 与 source-manifest.json；沿真实调用链检查，必要时只读 Node 复现",
+    "不得运行 Maven 或修改 State"
+  ],
+  "forbidSpawn": true,
+  "forbidGitMvn": true,
+  "output": {
+    "artifactRef": ".ai/runtime/results/DISPATCH-review-fixes-code-01.json"
+  }
+}

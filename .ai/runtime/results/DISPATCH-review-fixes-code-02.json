@@ -1,0 +1,60 @@
+{
+  "dispatchId": "DISPATCH-review-fixes-code-02",
+  "taskId": "TASK-20261001-review-fixes-code",
+  "status": "completed",
+  "by": "/root/review_fixes_code_r2",
+  "background": "独立复核本轮浏览器多标签续期与软删除团队空间回收清理，r1两项根因已关闭，r2仍有旧拒绝清除新登录的交错。",
+  "inputs": [
+    ".ai/tasks/TASK-20261001-review-fixes-code.md",
+    ".ai/docs/20261001-review-fixes/design.md",
+    ".ai/docs/20261001-review-fixes/testcases.md",
+    ".ai/docs/20261001-review-fixes/changereport.md",
+    ".ai/docs/20261001-review-fixes/source-manifest-r2.json",
+    ".ai/docs/20261001-review-fixes/r2/corrections.md"
+  ],
+  "artifactRefs": [".ai/docs/20261001-review-fixes/r2/codereview.md"],
+  "analysis": {
+    "facts": [
+      "开始及结束SHA256校验均6/6匹配review-fixes-code-r2。",
+      "独立Node多页回归21/21通过，退出0，失败/跳过0；T08/T09/T10对应新增用例通过。",
+      "正常401清理在locks/tickets均通过只读Node断言。",
+      "真实本机HTTP401与marker读取期间另一页新登录交错，两种模式均导致已落盘new-refresh被删除，随后A/B均退出。",
+      "回收墓碑锁保留租户条件，用户授权仍限定有效空间/成员，系统purge仍检查RECYCLED，物理删除走提交后事件。"
+    ],
+    "limits": [
+      "未测量真实浏览器竞态频率；事件/锁/存储由独立VM模拟，HTTP为本机真实服务。",
+      "未独立运行H2、MySQL、S3或真实浏览器UI；未运行Maven。"
+    ]
+  },
+  "findings": [
+    {
+      "id": "R2-P2-OLD-REJECTION-CLEARS-NEW-LOGIN",
+      "priority": 2,
+      "file": "st-web/src/auth-session.ts",
+      "start": 336,
+      "end": 341,
+      "relatedLines": [354, 366, 370, 146, 152],
+      "title": "拒绝清理检查期间的新登录仍被旧会话删除",
+      "trigger": "A旧会话真实401通过isCurrentAuth后，mayClear读取marker期间B完成beginAuthSession/saveLoginCredentials；storage事件尚未送达。",
+      "impact": "A无条件beginAuthSession删除B刚落盘的新pair，所有页误登出，违反A2。",
+      "evidence": [
+        {"mode":"locks","httpStatus":401,"calls":["old-refresh"],"newPairBeforeClear":"new-refresh","sharedAfter":null,"aAfter":null,"bAfter":null},
+        {"mode":"tickets","httpStatus":401,"calls":["old-refresh"],"newPairBeforeClear":"new-refresh","sharedAfter":null,"aAfter":null,"bAfter":null}
+      ]
+    }
+  ],
+  "decision": "CODE_REVIEW建议fail；r1两项根因已关闭，但r2仍存在当前承诺内的旧拒绝清除新登录竞态。",
+  "criterionProposal": {
+    "id": "CODE_REVIEW",
+    "outcome": "fail",
+    "by": "/root/review_fixes_code_r2",
+    "dispatchId": "DISPATCH-review-fixes-code-02",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-review-fixes-code-02.json",
+    "validatedRevision": "review-fixes-code-r2"
+  },
+  "stateDelta": "仅上述proposal；未修改State或判定Goal。",
+  "blockerProposals": [],
+  "risks": ["新登录与旧拒绝清理重叠时仍可能误登出；未发现本轮回收新增越权或事务内网络调用。"],
+  "nextSteps": ["主线程定向修正清理与新登录发布的交错，补两种模式回归，冻结新修订后重新复核。"],
+  "changeImpact": "仅新增scope白名单内codereview.md与独立result；未修改源码/测试源码/State/数据库/Git index/部署，未派发。"
+}

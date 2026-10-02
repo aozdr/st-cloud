@@ -14,12 +14,17 @@ import FileThumbnail from '../file/FileThumbnail';
 const PlyrPlayer = lazy(() => import('./PlyrPlayer'));
 
 function ShareFilmstripThumbnail({ src, name, supported }: { src: string; name: string; supported: boolean }) {
-  const [failedUrl, setFailedUrl] = useState<string | null>(null);
-  // 失败仅影响该 URL；分享来源或内容版本变化后重新加载，按钮名称与导航不受影响。
-  return !supported || failedUrl === src
-    ? <ImageIcon className="w-5 h-5 text-white/60 mx-auto mt-1" aria-hidden />
+  const source = useMemo(() => ({ src }), [src]);
+  const currentSource = useRef(source);
+  currentSource.current = source;
+  const [failedSource, setFailedSource] = useState<typeof source | null>(null);
+  // 失败绑定当前请求身份；版本/分享来源变化后重试，旧 error 回调不得改写新请求状态。
+  return !supported || failedSource === source
+    ? <ImageIcon className="w-5 h-5 text-white/90 mx-auto mt-1" aria-hidden />
     : <img src={src} alt={name} className="w-full h-full object-cover" loading="lazy"
-        onError={() => setFailedUrl(src)} />;
+        onError={() => {
+          if (currentSource.current === source) setFailedSource(source);
+        }} />;
 }
 
 interface Props {

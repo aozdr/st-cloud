@@ -1,79 +1,11 @@
-# Agent Loop 退出标准定义（机器可读，唯一事实源）
-#
-# 本文件定义 small / medium / large 三档退出标准与各标准的归属。
-# 规则：文档只引用本文件，不再自行声明项数；`.ai/scripts/verify-loop.ps1` 以本文件为准校验。
-# 数量口径：large=12 / medium=8（含 1 项条件标准）/ small=4
-version: 2
-updated: "2026-09-11"
+# Agent Loop 退出标准（当前新任务的唯一事实源）
+# V2 定义冻结在 exit-criteria.v2.yaml，仅用于旧 State 的兼容校验。
+version: 3
+updated: "2026-10-01"
 
 scales:
-  large:
-    label: "大型"
-    docs:
-      stateModel: "### 大型任务（12 项）"
-      workflow: "- **大型（12 项）**"
-      checklist: "large=12"
-    criteria:
-      - id: REQ_ANALYSIS
-        dependsOn: []
-      - id: IMPACT_ANALYSIS
-        dependsOn: [REQ_ANALYSIS]
-      - id: EXP_DESIGN
-        dependsOn: [REQ_ANALYSIS]
-        skippable: true
-        conditional: true
-      - id: TECH_DESIGN
-        dependsOn: [IMPACT_ANALYSIS, EXP_DESIGN]
-      - id: TESTCASES
-        dependsOn: [TECH_DESIGN]
-      - id: IMPLEMENTED
-        dependsOn: [TECH_DESIGN, TESTCASES]
-      - id: CODE_REVIEW
-        dependsOn: [IMPLEMENTED]
-      - id: SECURITY_REVIEW
-        dependsOn: [IMPLEMENTED]
-      - id: EXP_ACCEPT
-        dependsOn: [IMPLEMENTED]
-        skippable: true
-        conditional: true
-      - id: TEST_PASS
-        dependsOn: [CODE_REVIEW, SECURITY_REVIEW]
-      - id: KNOWLEDGE
-        dependsOn: [TEST_PASS, SECURITY_REVIEW, EXP_ACCEPT]
-      - id: ACCEPT
-        dependsOn: [KNOWLEDGE]
-
-  medium:
-    label: "中型"
-    docs:
-      stateModel: "### 中型任务（8 项，含 1 项条件标准）"
-      workflow: "- **中型（8 项，含 1 项条件标准）**"
-      checklist: "medium=8（含 1 条件项）"
-    criteria:
-      - id: DESIGN
-        dependsOn: []
-      - id: TESTCASES
-        dependsOn: [DESIGN]
-      - id: IMPLEMENTED
-        dependsOn: [DESIGN, TESTCASES]
-      - id: CODE_REVIEW
-        dependsOn: [IMPLEMENTED]
-      - id: SECURITY_REVIEW
-        dependsOn: [IMPLEMENTED]
-        skippable: true
-      - id: TEST_PASS
-        dependsOn: [CODE_REVIEW, SECURITY_REVIEW]
-      - id: KNOWLEDGE
-        dependsOn: [TEST_PASS]
-      - id: ACCEPT
-        dependsOn: [KNOWLEDGE]
-
   small:
-    label: "小型"
-    docs:
-      stateModel: "### 小型任务（4 项）"
-      workflow: "- **小型（4 项）**"
-      checklist: "small=4"
+    label: "小型（默认对话内直接完成，显式审计才初始化 State）"
     criteria:
       - id: IMPLEMENTED
         dependsOn: []
@@ -83,104 +15,90 @@ scales:
         dependsOn: [VERIFIED]
       - id: ACCEPT
         dependsOn: [KNOWLEDGE]
+  medium:
+    label: "中型（默认主线程执行）"
+    criteria:
+      - id: DESIGN
+        dependsOn: []
+      - id: IMPLEMENTED
+        dependsOn: [DESIGN]
+      - id: VERIFIED
+        dependsOn: [IMPLEMENTED]
+      - id: ACCEPT
+        dependsOn: [VERIFIED]
+  large:
+    label: "大型或高风险（保留独立评审）"
+    criteria:
+      - id: REQ_ANALYSIS
+        dependsOn: []
+      - id: TECH_DESIGN
+        dependsOn: [REQ_ANALYSIS]
+      - id: IMPLEMENTED
+        dependsOn: [TECH_DESIGN]
+      - id: CODE_REVIEW
+        dependsOn: [IMPLEMENTED]
+      - id: VERIFIED
+        dependsOn: [IMPLEMENTED]
+      - id: ACCEPT
+        dependsOn: [CODE_REVIEW, VERIFIED]
 
-# 标准目录：desc / owner（产物 owner，非执行者）/ taskType / artifacts（必需产物）/ 门禁标记
-# conditional: true 表示该标准按 State 的适用性或 confirmationRequired 字段触发；不适用时必须留下跳过证据。
 catalog:
   REQ_ANALYSIS:
-    desc: "需求已分析（requirement.md；涉及 UI 时加 uispec.md）；存在未决范围或风险时经 Grill Me 收敛（遗留问题点 ≤3），必要的用户决策已确认"
+    desc: "目标、用户场景、边界、业务规则、异常与验收已明确；只有未决实质决策需确认"
     owner: executor
     taskType: requirement
-    artifacts: [requirement.md]  # 涉及 UI 时由 State 另登记 uiSpec 产物
-    conditionalArtifacts: [uispec.md]  # 仅当 UI 条件标准 applicable=true 时要求
-    grill: true
-    conditional: true
+    artifacts: [requirement.md]
     userConfirm: true
-  IMPACT_ANALYSIS:
-    desc: "影响范围已分析（前端/后端/数据模型/权限/测试/文档）"
-    owner: executor
-    taskType: impact
-    artifacts: [impact.md]
-  EXP_DESIGN:
-    desc: "涉及 UI 时体验评审已通过（技术方案覆盖 uiSpec 全部页面与状态）；无 UI 时记录不适用原因"
-    owner: reviewer
-    taskType: exp-review
-    artifacts: [exp-review.md]
     conditional: true
   TECH_DESIGN:
-    desc: "技术设计已评审：大型先 architecture-review.md，再 design.md；存在未决范围或风险时对 design.md 使用 Grill Me，必要的用户决策已确认"
+    desc: "设计覆盖影响、兼容、迁移、回滚、UI（适用时）与测试计划；必要决策已确认"
     owner: executor
     taskType: design
-    artifacts: [architecture-review.md, design.md]
-    grill: true
-    conditional: true
+    artifacts: [design.md]
     userConfirm: true
-  TESTCASES:
-    desc: "测试用例已编写（每个验收标准至少一条用例）"
-    owner: tester
-    taskType: testcases
-    artifacts: [testcases.md]
+    conditional: true
+  DESIGN:
+    desc: "精简设计含目标、范围、方案、风险、验收与测试计划；必要决策已确认"
+    owner: executor
+    taskType: design
+    artifacts: [design.md]
+    userConfirm: true
+    conditional: true
   IMPLEMENTED:
-    desc: "实现阶段已完成（TASK 落盘、change report 落盘）"
+    desc: "TASK 范围内实现完成；变更说明在 verification.md 汇总，无需另派实现完成检查"
     owner: executor
     taskType: implement
-    artifacts: [changereport.md]
+    artifacts: []
   CODE_REVIEW:
-    desc: "Code Review 通过"
+    desc: "独立审查代码、权限、安全、数据一致性和适用风险；不得由实现者自检代替"
     owner: reviewer
     taskType: review
     artifacts: [codereview.md]
-  SECURITY_REVIEW:
-    desc: "安全审查通过（large 必选；medium 在不涉及安全敏感面时可凭审批证据跳过）"
-    owner: reviewer
-    taskType: security
-    artifacts: [security.md]
-  EXP_ACCEPT:
-    desc: "涉及 UI 时体验验收通过（按定版 uiSpec 实现）；无 UI 时记录不适用原因"
-    owner: reviewer
-    taskType: exp-review
-    artifacts: [exp-review.md]
-    conditional: true
-  TEST_PASS:
-    desc: "测试执行通过（按用例逐项执行并记录）"
-    owner: tester
+  VERIFIED:
+    desc: "当前修订的相称验证、自检和知识同步完成；risk 触发的 UI/安全/DB/API/不可逆维度均有证据"
+    owner: executor
     taskType: test
-    artifacts: [testreport.md]
+    artifacts: [verification.md]
   KNOWLEDGE:
-    desc: "知识库已同步（架构/数据模型/接口/业务规则与代码一致）；无相关变化时记录无需更新"
+    desc: "仅用于显式 small 审计；稳定规则按需同步，无变化记录原因"
     owner: executor
     taskType: knowledge
     artifacts: []
   ACCEPT:
-    desc: "验收通过：对照 goal.completionCriteria 逐项核对"
-    owner: reviewer
+    desc: "主线程逐项核对 Goal，当前修订证据完整、无 blocker 和未结束派发"
+    owner: executor
     taskType: accept
     artifacts: []
-  DESIGN:
-    desc: "设计已定；存在未决范围或风险时对 design.md 使用 Grill Me（遗留问题点 ≤3），必要的用户决策已确认"
-    owner: executor
-    taskType: design
-    artifacts: [design.md]
-    grill: true
-    conditional: true
-    userConfirm: true
-  VERIFIED:
-    desc: "按变更风险完成编译、测试或相称的静态验证"
-    owner: tester
-    taskType: test
-    artifacts: []
 
-# 角色分离：默认硬规则。用户明确指定同一执行者完成剩余工作时，仅当前任务可用
-# State.singleAgentAuthorization 记录原话、执行者、标准和证据，保留自检身份；不能声称独立评审。
+# 只有高风险独立评审要求身份分离；测试、知识同步和最终核验由主线程负责。
 separationOfDuty:
   producers: [IMPLEMENTED]
-  verifiers: [CODE_REVIEW, SECURITY_REVIEW, EXP_ACCEPT, TEST_PASS, ACCEPT]
+  verifiers: [CODE_REVIEW]
   field: "by"
-  rule: "同一执行者（exitCriteria[*].by）不得同时承担 IMPLEMENTED 与评审/验收标准；用户明确授权并在当前 State 逐项记录 singleAgentAuthorization 时例外，结果须标为自检"
+  rule: "CODE_REVIEW 必须由独立 reviewer 完成，V3 不接受单人授权绕过"
 
-# State 生命周期状态取值（.ai/state/<task-id>.yaml 的顶层 status）
 stateStatus:
   allowed: [running, blocked_escalation, done, incomplete, abandoned]
-  doneRequires: "全部适用 exitCriteria=done；不适用的条件标准为 skipped 且有 skip 证据；每个 done 标准的 catalog.artifacts 均有真实 ref"
-  incomplete: "当前 State 曾标 done 但校验发现产物或门禁缺口，按当前流程补齐"
-  abandoned: "中途放弃或长期停滞未收敛"
+  doneRequires: "所有标准完成；产物和逐项 Goal 证据真实且匹配当前 revision，无 blocker/未结束 dispatch"
+  incomplete: "完成态校验发现缺口，定向补齐"
+  abandoned: "用户取消或明确不再继续"

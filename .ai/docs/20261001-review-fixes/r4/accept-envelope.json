@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-review-fixes-accept-01",
+  "taskId": "TASK-20261001-review-fixes-accept",
+  "idempotencyKey": "TASK-20261001-review-fixes-accept",
+  "role": "reviewer",
+  "taskType": "accept",
+  "objective": "对照用户两处修复及 A1–A4，独立核对 r4 当前源码和有效证据",
+  "taskRefs": [
+    ".ai/tasks/TASK-20261001-review-fixes-accept.md",
+    ".ai/docs/20261001-review-fixes/requirement.md",
+    ".ai/docs/20261001-review-fixes/design.md"
+  ],
+  "stateRef": ".ai/state/20261001-review-fixes.yaml",
+  "artifactRefs": [
+    ".ai/docs/20261001-review-fixes/source-manifest-r4.json",
+    ".ai/docs/20261001-review-fixes/r4/codereview.md",
+    ".ai/docs/20261001-review-fixes/r4/security.md",
+    ".ai/docs/20261001-review-fixes/testreport.md",
+    ".ai/docs/20261001-review-fixes/knowledge-sync.md"
+  ],
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      ".ai/docs/20261001-review-fixes/acceptance.md",
+      ".ai/runtime/results/DISPATCH-review-fixes-accept-01.json"
+    ],
+    "exclude": [
+      "源码",
+      "测试源码",
+      ".ai/state/**",
+      "数据库",
+      "Git index",
+      "部署",
+      "历史证据"
+    ]
+  },
+  "acceptance": [
+    "逐项核对 A1–A4，当前 revision=review-fixes-code-r4，来源和边界清楚",
+    "通过/失败须有真实证据，不替主线程完成 Goal 判定"
+  ],
+  "validation": [
+    "核对源码 SHA256、独立审查与测试证据，仅读取最小 State 快照",
+    "不得运行构建、数据库操作或修改 State"
+  ],
+  "forbidSpawn": true,
+  "forbidGitMvn": true,
+  "output": {
+    "artifactRef": ".ai/runtime/results/DISPATCH-review-fixes-accept-01.json"
+  }
+}

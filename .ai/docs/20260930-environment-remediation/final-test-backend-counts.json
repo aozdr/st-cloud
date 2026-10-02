@@ -1,0 +1,40 @@
+{
+  "classes": 125,
+  "total": 853,
+  "failures": 0,
+  "errors": 0,
+  "skipped": 46,
+  "executed": 807,
+  "consistentWithRootCounts": true,
+  "buildSuccess": true,
+  "skipClasses": [
+    {
+      "class": "com.stcloud.auth.UserSecurityServiceMysqlIntegrationTest",
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 4
+    },
+    {
+      "class": "com.stcloud.search.service.impl.NgramSearchIntegrationTest",
+      "tests": 5,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 5
+    },
+    {
+      "class": "com.stcloud.share.ShareMysqlIntegrationTest",
+      "tests": 19,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 19
+    },
+    {
+      "class": "com.stcloud.admin.UserSecurityRedisIntegrationTest",
+      "tests": 18,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 18
+    }
+  ]
+}

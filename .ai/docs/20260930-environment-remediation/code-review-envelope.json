@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-env-code-review-01",
+  "taskId": "TASK-20260930-environment-code-review",
+  "idempotencyKey": "TASK-20260930-environment-code-review",
+  "role": "reviewer",
+  "taskType": "review",
+  "objective": "独立审查当前env-code-r1。首条ACK并向/root回传三元组后继续。仅CODE_REVIEW proposal。",
+  "taskRefs": [
+    ".ai/tasks/TASK-20260930-environment-code-review.md",
+    ".ai/docs/20260930-environment-remediation/design.md",
+    ".ai/docs/20260930-environment-remediation/changereport.md",
+    ".ai/docs/20260930-environment-remediation/testcases.md"
+  ],
+  "stateRef": ".ai/state/20260930-environment-remediation.yaml",
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      ".ai/docs/20260930-environment-remediation/codereview.md",
+      ".ai/runtime/results/DISPATCH-env-code-review-01.json"
+    ],
+    "exclude": [
+      "产品源码/配置/测试写入",
+      ".ai/state/**",
+      "历史记录"
+    ]
+  },
+  "acceptance": [
+    "当前实现无未解决重大代码缺陷",
+    "问题带具体源码触发与证据，边界诚实"
+  ],
+  "validation": [
+    "独立只读审查源码/diff/当前证据，不运行Maven",
+    "不修改产品或Git"
+  ],
+  "forbidSpawn": true,
+  "forbidGitMvn": true,
+  "output": {
+    "resultRef": ".ai/runtime/results/DISPATCH-env-code-review-01.json"
+  }
+}

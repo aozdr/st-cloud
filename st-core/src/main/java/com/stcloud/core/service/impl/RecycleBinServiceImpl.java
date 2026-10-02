@@ -217,8 +217,13 @@ public class RecycleBinServiceImpl implements RecycleBinService {
         LambdaQueryWrapper<FileNode> wrapper = accessibleRecycleQuery();
         List<FileNode> nodes = fileNodeMapper.selectList(wrapper);
         for (FileNode node : nodes) {
-            if (!hasRecycledAncestor(node)) {
-                permanentDeleteNodeAndChildren(node);
+            // 同一批清空可能已由父根递归删除子节点，跳过本事务已完成的工作。
+            if (fileNodeMapper.selectById(node.getId()) == null) {
+                continue;
+            }
+            FileNode current = getAuthorizedRecycleNode(node.getId());
+            if (current.getStatus() == NodeStatus.RECYCLED.getCode() && !hasRecycledAncestor(current)) {
+                permanentDeleteNodeAndChildren(current);
             }
         }
     }
@@ -273,7 +278,7 @@ public class RecycleBinServiceImpl implements RecycleBinService {
     }
 
     private FileNode getAuthorizedRecycleNode(Long nodeId) {
-        FileNode node = fileNodeMapper.selectById(nodeId);
+        FileNode node = lockRecycleNode(nodeId);
         if (node == null) {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
         }
@@ -286,6 +291,17 @@ public class RecycleBinServiceImpl implements RecycleBinService {
             throw new BusinessException(ResultCode.FORBIDDEN);
         }
         return node;
+    }
+
+    private FileNode lockRecycleNode(Long nodeId) {
+        FileNode snapshot = fileNodeMapper.selectById(nodeId);
+        if (snapshot == null) return null;
+        // 所有回收写入口统一空间→节点锁序；墓碑空间仍可供系统清理，用户权限另按有效成员关系检查。
+        if (isTeamNode(snapshot)
+                && teamStorageMapper.lockRecycleSpace(snapshot.getTenantId(), snapshot.getSpaceId()) == null) {
+            throw new BusinessException(ResultCode.FILE_NOT_FOUND);
+        }
+        return fileNodeMapper.selectByIdForUpdate(nodeId);
     }
 
     @Override
@@ -303,7 +319,8 @@ public class RecycleBinServiceImpl implements RecycleBinService {
     @Override
     @Transactional
     public void purgeNode(Long nodeId) {
-        FileNode node = fileNodeMapper.selectById(nodeId);
+        // 回收清理与恢复竞争时，必须锁后读取当前状态，不能删除刚恢复的节点。
+        FileNode node = lockRecycleNode(nodeId);
         if (node == null || node.getStatus() != NodeStatus.RECYCLED.getCode()) {
             // 已被恢复或已清理，跳过
             return;
@@ -315,7 +332,7 @@ public class RecycleBinServiceImpl implements RecycleBinService {
     @Transactional
     public void permanentDeleteAdmin(List<Long> nodeIds) {
         for (Long nodeId : nodeIds) {
-            FileNode node = fileNodeMapper.selectById(nodeId);
+            FileNode node = lockRecycleNode(nodeId);
             if (node == null) {
                 continue;
             }

@@ -1,0 +1,10 @@
+{
+  "capturedBeforeImplementation": true,
+  "files": {
+    "st-web/src/auth-session.ts": "16878FEB1F7411E56C08093C5CE806CEA8DF7D53F05F59EC26E537A0AB09EC32",
+    "st-desktop/src/auth-test-harness.cjs": "B9CE0077B8DB9368C08E7242DE7FF378D437A504ABB39D1371F674D3A028B009",
+    "st-core/src/main/java/com/stcloud/core/mapper/TeamStorageMapper.java": "F5570D234D8A1219B3D4B2E021266716F0B115BCCAF69F41352D9FBF6EECFC82",
+    "st-core/src/main/java/com/stcloud/core/service/impl/RecycleBinServiceImpl.java": "708887D6191C71A4DFF098F4BF0BDA805175D44AA6C727BAAB2DBF5EE1FE1A66",
+    "st-core/src/test/java/com/stcloud/core/service/impl/TeamRecycleBinIntegrationTest.java": "7099B65E174E531E342D6D492531293CDBF5D805C45FD0E24DCF60C8F0431A15"
+  }
+}

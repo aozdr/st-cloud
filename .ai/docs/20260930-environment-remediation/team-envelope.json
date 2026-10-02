@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-env-team-01",
+  "taskId": "TASK-20260930-environment-team-tests",
+  "idempotencyKey": "TASK-20260930-environment-team-tests",
+  "role": "tester",
+  "taskType": "testcases",
+  "objective": "按 TASK 补 V02 实际 MySQL/Spring 服务事务的隔离级别及邀请等待撤销/过期并发用例。by=/root/team_tests，validatedRevision=env-design-r1，proposal 为部分 TESTCASES。首条 ACK 后继续，向 /root 发 ACK。只编写测试，由主线程统一运行 Maven。",
+  "taskRefs": [
+    ".ai/tasks/TASK-20260930-environment-team-tests.md",
+    ".ai/docs/20260930-environment-remediation/design.md",
+    ".ai/docs/20260930-environment-remediation/testcases.md"
+  ],
+  "stateRef": ".ai/state/20260930-environment-remediation.yaml",
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      "st-team/src/test/java/**",
+      ".ai/docs/20260930-environment-remediation/team-*",
+      ".ai/runtime/results/DISPATCH-env-team-01.json"
+    ],
+    "exclude": [
+      "生产代码",
+      "其他模块",
+      ".ai/state/**",
+      "历史记录",
+      "数据库写入",
+      "Maven/Git"
+    ]
+  },
+  "acceptance": [
+    "实际服务事务READ_COMMITTED断言",
+    "等待锁时撤销/过期及角色引用并发可确定复现"
+  ],
+  "validation": [
+    "检查可编译用例并提供主线程运行命令，不运行共享Maven缓存"
+  ],
+  "forbidSpawn": true,
+  "forbidGitMvn": true,
+  "output": {
+    "resultRef": ".ai/runtime/results/DISPATCH-env-team-01.json"
+  }
+}

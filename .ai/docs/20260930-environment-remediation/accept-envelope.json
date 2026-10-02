@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-env-accept-01",
+  "taskId": "TASK-20260930-environment-accept",
+  "idempotencyKey": "TASK-20260930-environment-accept",
+  "role": "reviewer",
+  "taskType": "accept",
+  "objective": "按当前requirement五条完成标准独立审计env-code-r2。首条完整DISPATCH_ACK后才调用工具，随后执行TASK，只提出ACCEPT建议，不判定整个Goal。",
+  "taskRefs": [
+    ".ai/tasks/TASK-20260930-environment-accept.md",
+    ".ai/docs/20260930-environment-remediation/requirement.md",
+    ".ai/docs/20260930-environment-remediation/testreport.md",
+    ".ai/docs/20260930-environment-remediation/remaining-status.md"
+  ],
+  "stateRef": ".ai/state/20260930-environment-remediation.yaml",
+  "skillRefs": ["-"],
+  "artifactRefs": [
+    ".ai/docs/20260930-environment-remediation/current-source-manifest.json",
+    ".ai/docs/20260930-environment-remediation/backend-running-final.json",
+    ".ai/docs/20260930-environment-remediation/changereport.md",
+    ".ai/knowledge/local-environment-baseline.md",
+    ".ai/runtime/results/DISPATCH-env-code-review-02.json",
+    ".ai/runtime/results/DISPATCH-env-security-01.json",
+    ".ai/runtime/results/DISPATCH-env-final-test-01.json"
+  ],
+  "scope": {
+    "include": [
+      ".ai/docs/20260930-environment-remediation/acceptance.md",
+      ".ai/docs/20260930-environment-remediation/acceptance-*",
+      ".ai/runtime/results/DISPATCH-env-accept-01.json"
+    ],
+    "exclude": ["产品/配置/State/Git/Maven/安装", "会话凭据提取", "真实业务变更", "容器/进程变更"]
+  },
+  "acceptance": [
+    "五条当前完成标准分别有有效证据，当前已知阻断缺陷已经修复",
+    "条件跳过、批次重叠、受控注入、模块复用及实机/部署边界如实记录",
+    "新流程独立审查和串行集成证据完整，只返回ACCEPT/env-code-r2 proposal"
+  ],
+  "validation": ["只读当前证据和必要哈希，不重复构建或浏览器操作", "最小State依赖与revision核对"],
+  "forbidSpawn": true,
+  "forbidGitMvn": true,
+  "output": {"resultRef": ".ai/runtime/results/DISPATCH-env-accept-01.json"}
+}

@@ -55,9 +55,9 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="flex h-screen flex-col bg-[#F6F8FA]">
+    <div className="flex h-screen flex-col bg-bg">
       {/* 顶部栏 */}
-      <header className="h-14 flex items-center justify-between px-5 bg-white border-b border-border flex-shrink-0">
+      <header className="h-[60px] flex items-center justify-between px-5 bg-surface border-b border-border flex-shrink-0">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
             <Shield className="w-4 h-4 text-white" aria-hidden />
@@ -70,14 +70,14 @@ export default function AdminPage() {
             onClick={() => setMenuOpen((o) => !o)}
             className="flex items-center gap-2 px-2 py-1 rounded-md hover:bg-surface transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400"
           >
-            <span className="w-7 h-7 rounded-full bg-[#C9CFDA] text-[#3A4A5A] flex items-center justify-center text-xs font-semibold">
+            <span className="w-7 h-7 rounded-full bg-surface-2 text-muted flex items-center justify-center text-xs font-semibold">
               {avatarChar}
             </span>
             <span className="text-sm text-fg">{display}</span>
             <ChevronDown className="w-4 h-4 text-muted" aria-hidden />
           </button>
           {menuOpen && (
-            <div className="absolute right-0 top-10 z-50 w-44 bg-white border border-border rounded-lg shadow-md p-1">
+            <div className="absolute right-0 top-10 z-50 w-44 bg-surface border border-border rounded-lg shadow-float p-1">
               <div className="px-3 py-2 text-sm text-fg border-b border-border">{display}</div>
               <button
                 type="button"
@@ -94,7 +94,7 @@ export default function AdminPage() {
 
       {/* 主体：左侧导航 + 内容区 */}
       <div className="flex flex-1 min-h-0">
-        <aside className="w-60 flex flex-col bg-white border-r border-border flex-shrink-0">
+        <aside className="w-56 flex flex-col bg-bg border-r border-border flex-shrink-0">
           <nav className="flex-1 py-4">
             {tabs
               .filter((t) => t.can)

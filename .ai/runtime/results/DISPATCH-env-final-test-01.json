@@ -1,0 +1,154 @@
+{
+  "dispatchId": "DISPATCH-env-final-test-01",
+  "taskId": "TASK-20260930-environment-final-test",
+  "status": "completed",
+  "summary": "独立核对 env-code-r2：780项源码身份一致；当前全后端853项中807执行通过/46条件跳过、失败错误0；桌面基线及当前受影响补验、Web、真实认证/同步/S3/MQ证据有效；最终8080 PID10028与JAR/manifest匹配。边界和先前失败如实保留。",
+  "artifactRefs": [
+    ".ai/docs/20260930-environment-remediation/testreport.md",
+    ".ai/docs/20260930-environment-remediation/final-test-source-check.json",
+    ".ai/docs/20260930-environment-remediation/final-test-backend-counts.json",
+    ".ai/docs/20260930-environment-remediation/final-test-runtime-check.json",
+    ".ai/docs/20260930-environment-remediation/final-test-module-reuse.json"
+  ],
+  "criterionProposal": {
+    "id": "TEST_PASS",
+    "outcome": "pass",
+    "by": "/root/final_test",
+    "dispatchId": "DISPATCH-env-final-test-01",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-env-final-test-01.json",
+    "validatedRevision": "env-code-r2"
+  },
+  "validation": [
+    {
+      "kind": "readonly-source-identity",
+      "revision": "env-code-r2",
+      "fileCount": 780,
+      "mismatchCount": 0,
+      "evidenceRef": ".ai/docs/20260930-environment-remediation/final-test-source-check.json"
+    },
+    {
+      "kind": "independent-current-backend-log-aggregation",
+      "classes": 125,
+      "declaredTests": 853,
+      "executedPass": 807,
+      "skipped": 46,
+      "failures": 0,
+      "errors": 0,
+      "buildSuccess": true,
+      "evidenceRef": ".ai/docs/20260930-environment-remediation/final-test-backend-counts.json"
+    },
+    {
+      "kind": "current-runtime-readonly",
+      "pid": 10028,
+      "port": 8080,
+      "hostListenerPidMatches": true,
+      "jarSha256Matches": true,
+      "sourceManifestSha256Matches": true,
+      "pingHttp": 200,
+      "pingBusinessCode": 200,
+      "evidenceRef": ".ai/docs/20260930-environment-remediation/final-test-runtime-check.json"
+    },
+    {
+      "kind": "module-reuse-boundary",
+      "authSourceFiles": 4,
+      "syncSourceFiles": 26,
+      "experienceSourceAndEntries": 8,
+      "mismatchCount": 0,
+      "sameBackendModules": [
+        "st-common",
+        "st-auth",
+        "st-core",
+        "st-share",
+        "st-preview"
+      ],
+      "changedBackendModules": [
+        "st-team",
+        "st-sync"
+      ],
+      "evidenceRef": ".ai/docs/20260930-environment-remediation/final-test-module-reuse.json"
+    },
+    {
+      "kind": "desktop-current-evidence",
+      "baselineFullPass": 167,
+      "currentAffectedRecoveryPass": 34,
+      "currentSqljsRestartPass": 20,
+      "tsPass": 21,
+      "independentAuthPass": 33,
+      "deduplicatedTotal": null,
+      "boundary": "167早于恢复ID修复，后续34/20当前补验覆盖受影响路径；数量重叠，禁止相加为唯一全量"
+    },
+    {
+      "kind": "web-current-evidence",
+      "filmstripControlledHttpInRealChromePass": 17,
+      "contrast": [
+        4.508,
+        15.862
+      ],
+      "webAndDesktopBuildSuccess": true,
+      "deepRouteActualVitePreviewFixed": true,
+      "evidenceRef": ".ai/docs/20260930-environment-remediation/exp-accept-report.md"
+    },
+    {
+      "kind": "actual-final-backend-business",
+      "imageOriginalByteRoundtrip": true,
+      "thumbnailHttp": 200,
+      "thumbnailMime": "image/jpeg",
+      "chromeImageWidth": 64,
+      "chromeImageHeight": 32,
+      "refreshRounds": 2,
+      "oldRefreshRejected": true,
+      "mqJournalId": "348",
+      "outboxStatus": 1,
+      "retryCount": 0,
+      "normalTenantWarnings": 0,
+      "evidenceRefs": [
+        ".ai/docs/20260930-environment-remediation/final-runtime-smoke.json",
+        ".ai/docs/20260930-environment-remediation/final-runtime-mq.tsv",
+        ".ai/docs/20260930-environment-remediation/final-runtime-tenant.log"
+      ]
+    },
+    {
+      "kind": "schema-and-dependencies",
+      "sharedTableColumnComparison": 22,
+      "mysqlTableCount": 38,
+      "developmentVersion": "20260930.1",
+      "schemaAfterPass": true,
+      "mysql46FirstAndRepeatExit": 0,
+      "preservedSecurityVersion": 73,
+      "s3SignedHeadPutGetCurrentPass": true,
+      "dependenciesFunctionalPass": 8,
+      "boundary": "列比较不是全38表逐字段核对；自动healthcheck尚未重建启用"
+    }
+  ],
+  "retainedFailures": [
+    "迁移前7处结构/登记差异，迁移后及46分支通过",
+    "测试库缺默认tenant/role配置，后续补基础配置",
+    "TeamCopy测试缺候选Bean，最终14项通过",
+    "SyncTenantScope重设Mockito抛异常桩错误，doReturn修复后3项及完整回归通过",
+    "桌面受控VM缺crypto测试适配，当前34项通过",
+    "真实分页字符串/根双斜杠/重复legacy恢复ID缺陷，复用污染SQLite两轮通过",
+    "最终图片脚本chunkIndex=0违反1起始契约，脚本修正后图片/缩略图/MQ通过",
+    "Web相对base深链加载失败，原生Vite复验修复通过",
+    "体验中途容量0B，之后精确0B本轮空间配额CAS缩至各1MiB释放19.998GiB；未完成页面末段仍保留"
+  ],
+  "limitations": [
+    "后端46条显式专用条件专项未启用，不计为执行通过",
+    "原生Electron窗口/IPC、长期压力、全部图片转换未验证",
+    "浏览器恢复后返回原团队列表及体验child自己的真实后端两轮/断网仍未完成",
+    "live使用r1 JAR，仅按相同模块身份复用并结合r2团队/MQ补验",
+    "Docker自动健康检查待安全重建，Broker无卷需备份迁移，本机ES镜像远程复现未验证",
+    "历史Docker137/OOM根因未知，生产迁移/多实例密钥一致性未部署验证",
+    "O05审计资源未清理；child没有会话提取或业务写入"
+  ],
+  "blockerProposals": [],
+  "reworkRequests": [],
+  "stateDelta": "仅提出TEST_PASS/env-code-r2通过建议，未写State或执行Evaluate，未判定Goal完成。",
+  "scopeCompliance": {
+    "productConfigStateModified": false,
+    "gitMavenRun": false,
+    "dependenciesInstalled": false,
+    "sessionCredentialsExtracted": false,
+    "businessResourcesWrittenOrDeleted": false,
+    "containersOrProcessesMutated": false
+  }
+}

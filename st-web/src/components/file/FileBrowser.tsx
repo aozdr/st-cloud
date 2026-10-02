@@ -11,6 +11,7 @@ import FileDetailPanel from './FileDetailPanel';
 import FileBrowserDialogs from './FileBrowserDialogs';
 import FileBrowserPagination from './FileBrowserPagination';
 import { useFileBrowser, type FileBrowserProps } from '../../hooks/useFileBrowser';
+import { isImage } from '../../lib/utils';
 
 export default function FileBrowser({
   source,
@@ -66,13 +67,17 @@ export default function FileBrowser({
 
   // 文件夹大小批量懒加载（去抖），列表表格/网格显示文件夹总占用
   const folderSizes = useFolderSizes(filteredFiles);
+  const waterfallAvailable = filteredFiles.length > 0 && filteredFiles.every((file) => file.nodeType === 1 && isImage(file.suffix));
+
+  // 仅回退当前展示，不把加载中的空列表或混合目录写回用户的持久视图偏好。
+  const effectiveView = view === 'waterfall' && !waterfallAvailable ? 'grid' : view;
 
   /** 详情是否打开：页面级详情走 detailOpen prop；未传时回退到内部详情状态 */
   const listDetailOpen = onOpenDetail ? (detailOpen ?? false) : !!detailFile;
 
   return (
     <div
-      className="flex flex-col h-full bg-[#FEFEFD] dark:bg-surface overflow-hidden"
+      className="flex flex-col h-full bg-surface overflow-hidden"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
@@ -118,7 +123,7 @@ export default function FileBrowser({
           setBlankContextMenu({ x: e.clientX, y: e.clientY });
         }}
       >
-        <div ref={bandRef} className="bg-[#FEFEFD] dark:bg-surface px-5 md:px-8 pt-3 pb-3">
+        <div ref={bandRef} className="bg-surface px-5 md:px-8 pt-3 pb-3">
           <FileToolbar
             refreshing={isRefreshing}
             has={has}
@@ -132,8 +137,9 @@ export default function FileBrowser({
             onSortChange={handleToolbarSortChange}
             sortDir={sortDir}
             onSortDirToggle={handleSortDirToggle}
-            view={view}
-            onViewChange={setView}
+            view={effectiveView}
+            waterfallAvailable={waterfallAvailable}
+            onViewChange={(next) => setView(next === 'waterfall' && !waterfallAvailable ? 'grid' : next)}
             onNewFolder={handleNewFolderClick}
             onNewFile={handleNewFile}
             onUploadClick={handleUploadClick}
@@ -196,7 +202,7 @@ export default function FileBrowser({
             )}
           </div>
         </div>
-        <div className="bg-[#FEFEFD] dark:bg-surface px-5 md:px-8 pt-1 pb-8">
+        <div className="bg-surface px-5 md:px-8 pt-1 pb-8">
           {isMobile && mobileSelectMode && (
             <MultiSelectBar
               selectedCount={selectedIds.size}
@@ -211,7 +217,7 @@ export default function FileBrowser({
               canShare={enableShare && has('file:share')}
             />
           )}
-          <div className="bg-[#FEFEFD] dark:bg-surface overflow-hidden">
+          <div className="bg-surface overflow-hidden">
           {isMobile && (ptr.pullDistance > 0 || ptr.refreshing) && (
             <div
               className="flex items-center justify-center text-muted"
@@ -243,7 +249,7 @@ export default function FileBrowser({
         ) : (
           <div key={`${refreshKey}:${parentId}`} className="animate-file-enter">
             <FileList
-              view={view}
+              view={effectiveView}
               iconSize={iconSize}
               scrollRef={fileListRef}
               files={filteredFiles}

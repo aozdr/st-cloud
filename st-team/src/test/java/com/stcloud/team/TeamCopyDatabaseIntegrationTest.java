@@ -43,6 +43,9 @@ class TeamCopyDatabaseIntegrationTest extends AbstractTeamIntegrationTest {
             return new ReliableEventPublisher(events,publisher,new ObjectMapper().findAndRegisterModules());
         }
         @Bean StorageService storageService() { return mock(StorageService.class); }
+        @Bean com.stcloud.core.service.impl.upload.ObjectUploadCandidateService objectUploadCandidateService() {
+            return mock(com.stcloud.core.service.impl.upload.ObjectUploadCandidateService.class);
+        }
     }
     @Autowired FileObjectMapper objects;
     @Autowired EventLogMapper events;

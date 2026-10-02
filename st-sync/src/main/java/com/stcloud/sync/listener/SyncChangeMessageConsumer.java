@@ -40,6 +40,20 @@ public class SyncChangeMessageConsumer implements RocketMQListener<EventMessage>
             log.warn("收到空同步变更消息，忽略");
             return;
         }
+        Long previousTenant = TenantContext.getTenantIdOrNull();
+        String previousMode = TenantContext.getTenantModeOrNull();
+        try {
+            // 去重查询也受租户拦截器约束，必须先使用消息租户；旧消息缺租户仍保留诊断兜底。
+            Long eventTenant = message.getFileNode().getTenantId();
+            TenantContext.setTenantId(eventTenant != null ? eventTenant : TenantContext.getTenantId());
+            consumeInTenant(message);
+        } finally {
+            TenantContext.setTenantId(previousTenant);
+            TenantContext.setTenantMode(previousMode);
+        }
+    }
+
+    private void consumeInTenant(EventMessage message) {
         Long eventLogId = message.getEventLogId();
         if (eventLogId != null && alreadyProcessed(eventLogId)) {
             log.debug("同步变更消息已处理过，幂等跳过: eventLogId={}", eventLogId);

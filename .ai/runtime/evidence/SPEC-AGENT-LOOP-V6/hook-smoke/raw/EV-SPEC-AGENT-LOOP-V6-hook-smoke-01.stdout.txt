@@ -1,0 +1,54 @@
+﻿ M .ai/agents/workflow-manager.md
+ M .ai/knowledge/agent-dispatch-protocol.md
+ M .ai/knowledge/agent-loop-runbook.md
+ M .ai/knowledge/agent-output-standard.md
+ M .ai/knowledge/conventions.md
+ M .ai/knowledge/document-management.md
+ M .ai/knowledge/file-dispatch-runtime.md
+ M .ai/knowledge/loop-state-model.md
+ M .ai/knowledge/loop-verification-checklist.md
+ M .ai/knowledge/parallel-dispatch-runtime-v7.md
+ M .ai/knowledge/parallel-dispatch-runtime-v8.md
+ M .ai/knowledge/role-context.md
+ M .ai/knowledge/skill-mapping.md
+ M .ai/knowledge/task-isolation-migration.md
+ M .ai/scripts/verify-loop.ps1
+ M .ai/state/README.md
+ M .ai/tasks/README.md
+ M .ai/templates/adr-template.md
+ M .ai/templates/architecture-review-template.md
+ M .ai/templates/code-review-template.md
+ M .ai/templates/design-template.md
+ M .ai/templates/discovery-template.md
+ M .ai/templates/dispatch-template.md
+ M .ai/templates/requirement-template.md
+ M .ai/templates/task-template.md
+ M .ai/templates/test-case-template.md
+ M .ai/templates/ui-design-template.md
+ M .ai/workflows/feature-development.md
+ M .gitignore
+ M AGENTS.md
+ M AI-AGENT-LOOP-VERSION.txt
+?? .ai/context/
+?? .ai/hooks/
+?? .ai/knowledge/agent-task-context.md
+?? .ai/mcp/
+?? .ai/runtime/
+?? .ai/scripts/verification-engine.ps1
+?? .ai/skills/
+?? .ai/specs/
+?? .ai/state/20260821-frontend-review-fixes.yaml
+?? .ai/state/20260908-agent-loop-v6-migration.yaml
+?? .ai/state/archive/
+?? .ai/tasks/TASK-20260908-agent-loop-v6-migration-01.md
+?? .ai/tasks/active/
+?? .ai/tasks/archive/
+?? .ai/templates/acceptance.yaml
+?? .ai/templates/context.md
+?? .ai/templates/dispatch-schema.yaml
+?? .ai/templates/evidence.yaml
+?? .ai/templates/fix-task.md
+?? .ai/templates/spec.md
+?? .ai/templates/state.yaml
+?? .ai/templates/task-schema.yaml
+?? .ai/templates/test-cases.yaml

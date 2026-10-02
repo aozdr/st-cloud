@@ -1,0 +1,23 @@
+[
+  {
+    "class": "com.stcloud.admin.UserRedisKeyCleanupServiceTest",
+    "tests": 4,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "class": "com.stcloud.admin.UserManageSecurityIntegrationTest",
+    "tests": 17,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  },
+  {
+    "class": "com.stcloud.admin.UserSecurityRedisIntegrationTest",
+    "tests": 57,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 0
+  }
+]

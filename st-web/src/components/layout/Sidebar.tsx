@@ -1,6 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { Cloud, FolderClosed, Trash2, Share2, Users, Settings, ArrowUpDown, Palette, FolderSync, Home, Upload, PanelLeftClose, PanelLeftOpen, X, Star, Copy, EyeOff, GripVertical, Bell } from 'lucide-react';
-import { memo, useEffect, useState, useCallback } from 'react';
+import { Fragment, memo, useEffect, useState, useCallback } from 'react';
 import { formatSize, cn } from '../../lib/utils';
 import { isElectron } from '../../lib/electron';
 import { usePermission } from '../../lib/permission';
@@ -22,28 +22,28 @@ interface NavItem {
   icon: typeof Trash2;
   label: string;
   end: boolean;
+  section?: string;
 }
 
 /** 默认导航顺序（受运行环境与权限影响） */
 function buildNavItems(isElectronEnv: boolean, canAdmin: boolean): NavItem[] {
   return [
     { key: 'home', to: '/', icon: Home, label: '首页', end: true },
-    { key: 'files', to: '/files', icon: FolderClosed, label: '全部文件', end: false },
-    // Electron 专属功能紧跟「全部文件」：文件同步 → 传输管理
+    { key: 'files', to: '/files', icon: FolderClosed, label: '全部文件', end: false, section: '文件' },
+    { key: 'favorites', to: '/favorites', icon: Star, label: '我的收藏', end: false, section: '文件' },
+    { key: 'following', to: '/following', icon: Bell, label: '我的关注', end: false, section: '文件' },
+    { key: 'shares', to: '/shares', icon: Share2, label: '我的分享', end: false, section: '文件' },
+    { key: 'team', to: '/team', icon: Users, label: '团队空间', end: false, section: '文件' },
+    { key: 'recycle', to: '/recycle', icon: Trash2, label: '回收站', end: false, section: '工具' },
+    { key: 'duplicates', to: '/duplicates', icon: Copy, label: '重复检测', end: false, section: '工具' },
+    { key: 'hidden', to: '/hidden', icon: EyeOff, label: '隐藏文件', end: false, section: '工具' },
     ...(isElectronEnv
       ? [
-          { key: 'sync', to: '/sync', icon: FolderSync, label: '文件同步', end: false },
-          { key: 'transfers', to: '/transfers', icon: ArrowUpDown, label: '传输管理', end: false },
+          { key: 'sync', to: '/sync', icon: FolderSync, label: '文件同步', end: false, section: '桌面端' },
+          { key: 'transfers', to: '/transfers', icon: ArrowUpDown, label: '传输管理', end: false, section: '桌面端' },
         ]
       : []),
-    { key: 'favorites', to: '/favorites', icon: Star, label: '我的收藏', end: false },
-    { key: 'following', to: '/following', icon: Bell, label: '我的关注', end: false },
-    { key: 'shares', to: '/shares', icon: Share2, label: '我的分享', end: false },
-    { key: 'team', to: '/team', icon: Users, label: '团队空间', end: false },
-    { key: 'recycle', to: '/recycle', icon: Trash2, label: '回收站', end: false },
-    { key: 'duplicates', to: '/duplicates', icon: Copy, label: '重复检测', end: false },
-    { key: 'hidden', to: '/hidden', icon: EyeOff, label: '隐藏文件', end: false },
-    ...(canAdmin ? [{ key: 'admin', to: '/admin', icon: Settings, label: '系统管理', end: false }] : []),
+    ...(canAdmin ? [{ key: 'admin', to: '/admin', icon: Settings, label: '系统管理', end: false, section: '管理' }] : []),
   ];
 }
 
@@ -159,14 +159,14 @@ function Sidebar({ mobileOpen, onClose }: SidebarProps) {
 
   const navItemClass = (isActive: boolean) =>
     cn(
-      'group relative flex items-center gap-3 px-3 h-10 rounded-lg text-sm font-medium transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+      'group relative flex items-center gap-2.5 px-2.5 h-[38px] rounded-lg text-sm transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
       collapsed && 'lg:justify-center lg:px-0',
       isActive
-        ? 'text-primary-600 bg-[rgb(var(--nav-active-bg))] dark:bg-[rgb(var(--nav-active-bg)/0.15)] font-medium'
-        : 'text-muted hover:text-fg hover:bg-white dark:hover:bg-white/10'
+        ? 'text-primary-600 bg-primary-100/70 dark:bg-primary-500/15 font-medium'
+        : 'text-muted hover:text-fg hover:bg-bg-hover dark:hover:bg-white/10'
     );
 
-  const widthClass = collapsed ? 'lg:w-16' : 'lg:w-60';
+  const widthClass = collapsed ? 'lg:w-16' : 'lg:w-[224px]';
 
   return (
     <>
@@ -181,21 +181,21 @@ function Sidebar({ mobileOpen, onClose }: SidebarProps) {
 
       <aside
         className={cn(
-          'bg-[#F4F6FC] dark:bg-surface-2 rounded-r-2xl flex flex-col overflow-hidden flex-shrink-0',
-          'fixed inset-y-0 left-0 z-50 w-60 transition-transform duration-300 lg:static lg:z-auto pt-safe pb-safe',
+          'bg-bg dark:bg-surface-2 border-r border-border-light flex flex-col overflow-hidden flex-shrink-0',
+          'fixed inset-y-0 left-0 z-50 w-56 transition-transform duration-300 lg:static lg:z-auto pt-safe pb-safe',
           widthClass,
           mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         )}
         aria-label="侧边导航"
       >
         {/* Logo：在侧栏顶部居中展示，放大填充原品牌位置，略微下移留出呼吸空间 */}
-        <div className="mt-4 h-12 mb-6 relative flex-shrink-0 flex items-center">
-          <div className="flex items-center justify-center gap-3 flex-1 min-w-0">
-            <div className="w-10 h-10 bg-primary-600 rounded-[10px] flex items-center justify-center flex-shrink-0">
-              <Cloud className="w-6 h-6 text-white" aria-hidden />
+        <div className="h-16 px-4 relative flex-shrink-0 flex items-center">
+          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+            <div className="w-9 h-9 bg-primary-600 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Cloud className="w-5 h-5 text-white" aria-hidden />
             </div>
-            {!collapsed && <span className="text-xl font-semibold text-fg tracking-tight hidden lg:block">星云盘</span>}
-            <span className="text-xl font-semibold text-fg tracking-tight lg:hidden">星云盘</span>
+            {!collapsed && <span className="text-base font-semibold text-fg tracking-tight hidden lg:block">星云盘</span>}
+            <span className="text-base font-semibold text-fg tracking-tight lg:hidden">星云盘</span>
           </div>
           {/* Mobile close */}
           <button
@@ -213,7 +213,7 @@ function Sidebar({ mobileOpen, onClose }: SidebarProps) {
             onClick={handleUploadClick}
             aria-label="上传文件"
             className={cn(
-              'w-full flex items-center justify-center gap-2 h-10 px-4 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 active:bg-primary-800 transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
+              'w-full flex items-center justify-center gap-2 h-9 px-4 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 active:bg-primary-800 transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
               collapsed && 'lg:px-0'
             )}
           >
@@ -225,9 +225,14 @@ function Sidebar({ mobileOpen, onClose }: SidebarProps) {
 
         {/* Navigation */}
         <nav className="flex-1 px-3 overflow-y-auto scrollbar-hide" aria-label="主导航">
-          {navItems.map((item) => (
+          {navItems.map((item, index) => (
+            <Fragment key={item.key}>
+            {item.section && navItems[index - 1]?.section !== item.section && (
+              <div className={cn('px-2.5 pt-4 pb-1.5 text-[11px] font-medium uppercase tracking-wide text-tertiary', collapsed && 'lg:hidden')}>
+                {item.section}
+              </div>
+            )}
             <NavLink
-              key={item.key}
               to={item.to}
               end={item.end}
               draggable={!collapsed}
@@ -250,11 +255,12 @@ function Sidebar({ mobileOpen, onClose }: SidebarProps) {
                   <span className="lg:hidden">{item.label}</span>
                   {/* 拖拽排序提示：悬停显示抓手图标 */}
                   {!collapsed && (
-                    <GripVertical className="w-3.5 h-3.5 text-muted/40 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-auto" aria-hidden />
+                    <GripVertical className="w-3.5 h-3.5 text-muted/40 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity flex-shrink-0 ml-auto" aria-hidden />
                   )}
                 </>
               )}
             </NavLink>
+            </Fragment>
           ))}
         </nav>
 
@@ -299,7 +305,7 @@ function Sidebar({ mobileOpen, onClose }: SidebarProps) {
                     {isLowSpace ? '空间不足' : `${usedPercent}%`}
                   </span>
                 </div>
-                <div className="h-1.5 bg-[#E7EAF1] dark:bg-white/20 rounded-full overflow-hidden">
+                <div className="h-1.5 bg-surface-2 dark:bg-white/20 rounded-full overflow-hidden">
                   <div
                     className={cn('h-full rounded-full transition-[width] duration-500', isLowSpace ? 'bg-danger' : 'bg-primary-600')}
                     style={{ width: `${Math.min(usedPercent, 100)}%` }}

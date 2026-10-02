@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-review-fixes-code-04",
+  "taskId": "TASK-20261001-review-fixes-code",
+  "idempotencyKey": "TASK-20261001-review-fixes-code",
+  "role": "reviewer",
+  "taskType": "review",
+  "objective": "独立复核本轮两处修复的实现与真实云盘行为；只提出可复现、影响用户或存储生命周期的问题",
+  "taskRefs": [
+    ".ai/tasks/TASK-20261001-review-fixes-code.md",
+    ".ai/docs/20261001-review-fixes/design.md",
+    ".ai/docs/20261001-review-fixes/testcases.md"
+  ],
+  "stateRef": ".ai/state/20261001-review-fixes.yaml",
+  "artifactRefs": [
+    ".ai/docs/20261001-review-fixes/changereport.md",
+    ".ai/docs/20261001-review-fixes/source-manifest-r4.json",
+    ".ai/docs/20261001-review-fixes/r4/corrections.md"
+  ],
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      ".ai/docs/20261001-review-fixes/r4/codereview.md",
+      ".ai/runtime/results/DISPATCH-review-fixes-code-04.json"
+    ],
+    "exclude": [
+      "源码",
+      "测试源码",
+      ".ai/state/**",
+      "数据库",
+      "Git index",
+      "部署",
+      "历史证据"
+    ]
+  },
+  "acceptance": [
+    "核对 r1/r2 真实失败已关闭，按当前 r4 来源独立检查真实云盘行为",
+    "生成独立结果，proposal id=CODE_REVIEW，当前修订 review-fixes-code-r4"
+  ],
+  "validation": [
+    "只做 r4 相对 r3 的增量复核：低共享分支/拒绝标记及对应新测试，其他来源按 SHA/旧报告核对",
+    "当前 manifest六SHA和多页27回归；源码只读，不运行Maven/State修改"
+  ],
+  "forbidSpawn": true,
+  "forbidGitMvn": true,
+  "output": {
+    "artifactRef": ".ai/runtime/results/DISPATCH-review-fixes-code-04.json"
+  }
+}

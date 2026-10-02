@@ -1,0 +1,31 @@
+{
+  "revision": "review-fixes-code-r3",
+  "designRevision": "review-fixes-design-r1",
+  "files": [
+    {
+      "path": "st-web/src/auth-session.ts",
+      "sha256": "11CEA8ADDE9ACDC20602E24149990EFEAA01FC980F0D56845E02A6411F74EE43"
+    },
+    {
+      "path": "st-web/src/store/auth-tabs.test.mjs",
+      "sha256": "84439EC727C07DA095FCE83666DE8E95BDCAE445F4B3A05CB26C43754AE2D4EA"
+    },
+    {
+      "path": "st-desktop/src/auth-test-harness.cjs",
+      "sha256": "23FAEF8156D3023E186E7A85A0BD3C4AEA5130C8E593AB0BA3E445369DABD530"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/mapper/TeamStorageMapper.java",
+      "sha256": "3A68D170939B01E82709CB7F663FE2250C771483A99DDCC4273E99A4BA0903C5"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/impl/RecycleBinServiceImpl.java",
+      "sha256": "13ED56385336CA23C3595B04A182F439BDA45A75C680C5468C44714A8A5519A4"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/service/impl/TeamRecycleBinIntegrationTest.java",
+      "sha256": "72C2CDE2CCAD04E27B931006E87386EEA6ECE993C12CC10255DA43DA98024984"
+    }
+  ],
+  "note": "按旧会话/修订失效标记关闭 r2 新登录删除竞态；core 三文件从 r1 起不变，26项本轮 H2 测试仍适用。"
+}

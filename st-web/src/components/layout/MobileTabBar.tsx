@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Home, FolderClosed, ArrowUpDown, Menu as MenuIcon } from 'lucide-react';
+import { Home, FolderClosed, Search, Menu as MenuIcon } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 interface MobileTabBarProps {
@@ -9,8 +9,8 @@ interface MobileTabBarProps {
 
 /**
  * 移动端底部 Tab 导航(md 以下显示)
- * 4 项: 首页 / 文件 / 传输 / 更多(触发抽屉)
- * 传输项仅在 Capacitor/Electron 环境显示原生传输,纯浏览器显示 Web 上传进度
+ * 4 项: 首页 / 文件 / 搜索 / 更多(触发抽屉)
+ * Web/Capacitor 不把当前不可用的传输页放入主导航；Electron 使用桌面侧栏。
  */
 export default function MobileTabBar({ onMoreClick }: MobileTabBarProps) {
   const tabClass = (isActive: boolean) =>
@@ -34,9 +34,9 @@ export default function MobileTabBar({ onMoreClick }: MobileTabBarProps) {
         <span className="text-[10px] font-medium">文件</span>
       </NavLink>
 
-      <NavLink to="/transfers" className={({ isActive }) => tabClass(isActive)}>
-        <ArrowUpDown className="w-5 h-5" aria-hidden />
-        <span className="text-[10px] font-medium">传输</span>
+      <NavLink to="/search" className={({ isActive }) => tabClass(isActive)}>
+        <Search className="w-5 h-5" aria-hidden />
+        <span className="text-[10px] font-medium">搜索</span>
       </NavLink>
 
       <button

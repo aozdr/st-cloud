@@ -23,6 +23,11 @@ param(
   [string]$Objective,
   [string]$Scope = '',
   [string[]]$CompletionCriteria,
+  [switch]$HasUi,
+  [switch]$SecuritySensitive,
+  [switch]$DatabaseChange,
+  [switch]$ApiContractChange,
+  [switch]$IrreversibleChange,
   [ValidateSet('running','abandoned')] [string]$Status,
   [string]$Actor = 'workflow-manager',
   [string]$EventId,
@@ -36,6 +41,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
+$explicitDefinition = -not [string]::IsNullOrWhiteSpace($DefinitionPath)
 if (-not $DefinitionPath) { $DefinitionPath = Join-Path (Split-Path $PSScriptRoot -Parent) 'loop\exit-criteria.yaml' }
 $script:AiRoot = Split-Path $PSScriptRoot -Parent
 $script:RepoRoot = Split-Path $script:AiRoot -Parent
@@ -238,7 +244,7 @@ function Read-Definition([string]$Path) {
       if ($line -match '^  verifiers:\s*\[(.*)\]') { $result.verifiers = @(Split-InlineList $Matches[1]); continue }
     }
   }
-  if ($result.version -ne 2) { Stop-Loop 'DEFINITION_VERSION_MISMATCH' "仅支持 definition version 2，实际为 $($result.version)" }
+  if ($result.version -notin @(2,3)) { Stop-Loop 'DEFINITION_VERSION_MISMATCH' "仅支持 definition version 2/3，实际为 $($result.version)" }
   return $result
 }
 
@@ -324,6 +330,8 @@ function Get-ExpectedRevision($State, [string]$CriterionId) {
 }
 
 function Test-SingleAgentAuthorization($State, [string]$CriterionId, [string]$Actor) {
+  # V3 高风险独立评审不能由单人自检代替；V2 保持原授权行为。
+  if ([int]$State.definitionVersion -ge 3) { return $false }
   if (-not (Test-Field $State 'singleAgentAuthorization')) { return $false }
   $authorization = $State.singleAgentAuthorization
   $producer = @(ConvertTo-Array $State.exitCriteria | Where-Object id -eq 'IMPLEMENTED')
@@ -352,6 +360,27 @@ function Assert-Dispatch($Envelope) {
   if (Test-Field $Envelope 'skillRefs') { foreach ($ref in ConvertTo-Array $Envelope.skillRefs) { Assert-SkillReference ([string]$ref) } }
 }
 
+# 合并验证记录仍逐维度保存真实证据；风险触发的检查不能因文档合并而消失。
+function Assert-Verification($State) {
+  if (-not (Test-Field $State 'verification')) { Stop-Loop 'VERIFICATION_REQUIRED' 'VERIFIED 缺少分维度验证证据' }
+  if ([string]$State.verification.validatedRevision -ne [string]$State.revision.code) { Stop-Loop 'REVISION_MISMATCH' '验证记录不是当前 code revision' }
+  $checks = @($State.verification.checks)
+  if (@($checks | Group-Object dimension | Where-Object Count -gt 1).Count -gt 0) { Stop-Loop 'VERIFICATION_CHECK_DUPLICATE' '验证维度不能重复' }
+  foreach ($check in $checks) {
+    if ($check.outcome -ne 'pass') { Stop-Loop 'VERIFICATION_CHECK_FAILED' "验证维度未通过：$($check.dimension)" }
+    Assert-EvidenceExists ([string]$check.evidenceRef)
+  }
+  $required = @('tests','selfReview','knowledge')
+  foreach ($dimension in @('ui','security','database','apiContract','irreversible')) {
+    if ($State.risk.$dimension) { $required += $dimension }
+  }
+  foreach ($dimension in $required) {
+    $matches = @($State.verification.checks | Where-Object dimension -eq $dimension)
+    if ($matches.Count -ne 1 -or $matches[0].outcome -ne 'pass') { Stop-Loop 'VERIFICATION_CHECK_MISSING' "缺少通过的验证维度：$dimension" }
+    Assert-EvidenceExists ([string]$matches[0].evidenceRef)
+  }
+}
+
 function Assert-State($State, $Definition, [switch]$ForCompletion) {
   Assert-JsonSchemaDocument $State $script:StateSchemaPath
   foreach ($name in @('schemaVersion','definitionVersion','taskId','scale','status','goal','revision','exitCriteria','artifacts','blockers','acceptanceEvidence','dispatchLedger','history')) {
@@ -359,6 +388,13 @@ function Assert-State($State, $Definition, [switch]$ForCompletion) {
   }
   if ([int]$State.schemaVersion -ne 2) { Stop-Loop 'SCHEMA_VERSION_UNSUPPORTED' "schemaVersion 必须为 2" }
   if ([int]$State.definitionVersion -ne $Definition.version) { Stop-Loop 'DEFINITION_VERSION_MISMATCH' "State=$($State.definitionVersion)，定义=$($Definition.version)" }
+  if ($Definition.version -ge 3) {
+    if (-not (Test-Field $State 'risk')) { Stop-Loop 'RISK_REQUIRED' 'V3 State 必须记录风险分类' }
+    # 风险优先于文件数；敏感变更不得使用精简路径绕过独立评审。
+    if ($State.scale -ne 'large' -and ($State.risk.security -or $State.risk.database -or $State.risk.apiContract -or $State.risk.irreversible)) {
+      Stop-Loop 'RISK_SCALE_MISMATCH' '安全、数据库、API 契约或不可逆变更必须使用 large'
+    }
+  }
   if ((Test-Field $State 'legacy') -and $State.legacy -eq $true) {
     Stop-Loop 'LEGACY_STATE_REQUIRES_REINIT' '历史 State 仅作审计依据；请按当前流程重新建立 State、TASK 和产物'
   }
@@ -400,6 +436,10 @@ function Assert-State($State, $Definition, [switch]$ForCompletion) {
       Assert-EvidenceExists ([string]$criterion.evidenceRef)
     }
     if ($criterion.status -eq 'done') {
+      if ($Definition.version -ge 3) {
+        $revisionField = if ($id -in @('REQ_ANALYSIS','TECH_DESIGN','DESIGN')) { 'design' } else { 'code' }
+        Require-Text $State.revision $revisionField 'REVISION_REQUIRED'
+      }
       foreach ($field in @('by','evidenceRef','validatedRevision','completedAt')) { Require-Text $criterion $field 'DONE_EVIDENCE_MISSING' }
       if ((Test-Field $criterion 'executionKind') -and [string]$criterion.executionKind -eq 'direct') {
         Require-Text $criterion 'executionId' 'DONE_EVIDENCE_MISSING'
@@ -422,7 +462,8 @@ function Assert-State($State, $Definition, [switch]$ForCompletion) {
         foreach ($field in @('userConfirmedAt','confirmedBy','confirmationArtifact')) { Require-Text $criterion $field 'CONFIRMATION_EVIDENCE_MISSING' }
         Assert-EvidenceExists ([string]$criterion.confirmationArtifact) 'CONFIRMATION_ARTIFACT_NOT_FOUND'
       }
-      if ($ForCompletion -or $State.status -eq 'done') { Assert-CriterionArtifacts $State $Definition $criterion }
+      if ($Definition.version -ge 3 -and $id -eq 'VERIFIED') { Assert-Verification $State }
+      if ($ForCompletion -or $State.status -eq 'done' -or $Definition.version -ge 3) { Assert-CriterionArtifacts $State $Definition $criterion }
     }
   }
 
@@ -487,6 +528,9 @@ function Assert-State($State, $Definition, [switch]$ForCompletion) {
 
 function New-HistoryEvent([string]$Action, $Before, $After, [string]$Id) {
   if ([string]::IsNullOrWhiteSpace($Id)) { $Id = [guid]::NewGuid().ToString() }
+  # State 的 history 不能再引用 State 自身，否则 init/complete 序列化递归膨胀。
+  if (Test-Field $Before 'history') { $Before = [pscustomobject]@{ taskId=$Before.taskId; scale=$Before.scale; status=$Before.status; revision=$Before.revision } }
+  if (Test-Field $After 'history') { $After = [pscustomobject]@{ taskId=$After.taskId; scale=$After.scale; status=$After.status; revision=$After.revision } }
   return [pscustomobject][ordered]@{
     eventId = $Id; action = $Action; before = $Before; after = $After; actor = $Actor
     occurredAt = [DateTime]::UtcNow.ToString('o'); revision = [pscustomobject]@{ design = $After.revision.design; code = $After.revision.code }
@@ -523,6 +567,11 @@ function Get-Descendants($Definition, [string]$ScaleName, [string[]]$Roots) {
 }
 
 try {
+  # 旧 State 继续绑定冻结 V2 定义；显式 DefinitionPath 不被自动覆盖。
+  if (-not $explicitDefinition -and $StatePath -and (Test-Path -LiteralPath $StatePath) -and $Command -ne 'validate-dispatch') {
+    $stored = Read-Document $StatePath
+    if ([int]$stored.definitionVersion -eq 2) { $DefinitionPath = Join-Path $script:AiRoot 'loop\exit-criteria.v2.yaml' }
+  }
   $definition = Read-Definition $DefinitionPath
   if ($Command -eq 'validate-dispatch') { Assert-Dispatch (Read-Document $DispatchPath); Write-Output 'PASS'; exit 0 }
 
@@ -531,10 +580,13 @@ try {
     if (-not $TaskId -or -not $Scale -or -not $Objective -or @($CompletionCriteria).Count -eq 0) { Stop-Loop 'INIT_ARGUMENT_MISSING' 'init 需要 StatePath/TaskId/Scale/Objective/CompletionCriteria' }
     $criteria = @($definition.scales[$Scale] | ForEach-Object { [pscustomobject][ordered]@{ id = $_.id; status = 'pending'; dependsOn = @($_.dependsOn) } })
     $state = [pscustomobject][ordered]@{
-      schemaVersion = 2; definitionVersion = 2; taskId = $TaskId; scale = $Scale; status = 'running'
+      schemaVersion = 2; definitionVersion = $definition.version; taskId = $TaskId; scale = $Scale; status = 'running'
       goal = [pscustomobject][ordered]@{ objective = $Objective; scope = $Scope; completionCriteria = @($CompletionCriteria) }
       revision = [pscustomobject]@{ design = $null; code = $null }; exitCriteria = $criteria; artifacts = [pscustomobject]@{}
       blockers = @(); acceptanceEvidence = @(); dispatchLedger = @(); proposals = @(); history = @()
+    }
+    if ($definition.version -ge 3) {
+      $state | Add-Member risk ([pscustomobject]@{ ui=[bool]$HasUi; security=[bool]$SecuritySensitive; database=[bool]$DatabaseChange; apiContract=[bool]$ApiContractChange; irreversible=[bool]$IrreversibleChange })
     }
     $event = New-HistoryEvent 'init' $null $state $EventId; Add-History $state $event
     Assert-State $state $definition; Save-State $StatePath $state -WhatIfOnly:$DryRun; Write-Output $(if ($DryRun) { 'DRY_RUN' } else { 'CREATED' }); exit 0
@@ -591,6 +643,10 @@ try {
       if (-not (Test-Field $proposal 'acceptanceEvidence')) { Stop-Loop 'ACCEPTANCE_EVIDENCE_INCOMPLETE' 'ACCEPT proposal 缺 acceptanceEvidence' }
       $state.acceptanceEvidence = @(ConvertTo-Array $proposal.acceptanceEvidence)
     }
+    if ($definition.version -ge 3 -and $criterion.id -eq 'VERIFIED') {
+      if (-not (Test-Field $proposal 'verification')) { Stop-Loop 'VERIFICATION_REQUIRED' 'VERIFIED proposal 缺 verification' }
+      $state | Add-Member verification $proposal.verification -Force
+    }
     Assert-CriterionArtifacts $state $definition $criterion
     Add-History $state (New-HistoryEvent 'evaluate-direct' ([pscustomobject]@{ id=$criterion.id; status=$beforeStatus }) ([pscustomobject]@{ id=$criterion.id; status='done'; revision=$state.revision }) $eventKey)
     Assert-State $state $definition
@@ -644,6 +700,10 @@ try {
       if ($criterion.id -eq 'ACCEPT') {
         if (-not (Test-Field $proposal 'acceptanceEvidence')) { Stop-Loop 'ACCEPTANCE_EVIDENCE_INCOMPLETE' 'ACCEPT proposal 缺 acceptanceEvidence' }
         $state.acceptanceEvidence = @(ConvertTo-Array $proposal.acceptanceEvidence)
+      }
+      if ($definition.version -ge 3 -and $criterion.id -eq 'VERIFIED') {
+        if (-not (Test-Field $proposal 'verification')) { Stop-Loop 'VERIFICATION_REQUIRED' 'VERIFIED proposal 缺 verification' }
+        $state | Add-Member verification $proposal.verification -Force
       }
     }
     $attempt.status = 'evaluated'

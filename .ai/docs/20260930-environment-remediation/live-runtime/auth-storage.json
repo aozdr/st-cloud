@@ -1,0 +1,6 @@
+{
+  "stcloud:auth": "{\"token\":null,\"refreshToken\":null,\"sessionId\":\"ef380b45-ad12-458b-9da8-6a858b6184ad\",\"serverUrl\":\"http://127.0.0.1:8080\",\"revision\":1,\"redacted\":true,\"redactedAt\":\"2026-10-01T02:22:10.839Z\"}",
+  "refreshToken": null,
+  "accessToken": null,
+  "redacted": true
+}

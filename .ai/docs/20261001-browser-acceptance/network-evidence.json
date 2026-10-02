@@ -1,0 +1,666 @@
+{
+  "startedAt": "2026-10-01T10:43:01.306Z",
+  "fixture": {
+    "userId": "2105477981680107521",
+    "username": "env_exp_muow0kkf12c526",
+    "spaceId": "2105477988504240129",
+    "folderId": "2105477991222149121"
+  },
+  "backend": "http://127.0.0.1:8080",
+  "origin": "http://127.0.0.1:5176",
+  "mode": "native-vite-preview-with-test-only-middleware",
+  "requests": [
+    {
+      "path": "/api/file/storage",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:43:48.063Z"
+    },
+    {
+      "path": "/api/team/2105477988504240129/roles",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:43:48.066Z"
+    },
+    {
+      "path": "/api/team/2105477988504240129/members",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:43:48.070Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:43:48.071Z"
+    },
+    {
+      "path": "/api/team/2105477988504240129/files",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:43:48.072Z"
+    },
+    {
+      "path": "/api/team/2105477988504240129",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:43:48.074Z"
+    },
+    {
+      "path": "/api/notification/unread-count",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:43:48.088Z"
+    },
+    {
+      "path": "/api/favorite/ids",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:43:48.089Z"
+    },
+    {
+      "path": "/api/transfer/speed-limit",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:43:48.090Z"
+    },
+    {
+      "path": "/api/file/folder-sizes",
+      "method": "POST",
+      "http": 200,
+      "at": "2026-10-01T10:43:48.615Z"
+    },
+    {
+      "path": "/api/team/2105477988504240129",
+      "method": "GET",
+      "http": 401,
+      "at": "2026-10-01T10:44:12.092Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "http": 401,
+      "at": "2026-10-01T10:44:12.093Z"
+    },
+    {
+      "path": "/api/team/2105477988504240129/roles",
+      "method": "GET",
+      "http": 401,
+      "at": "2026-10-01T10:44:12.094Z"
+    },
+    {
+      "path": "/api/team/2105477988504240129/files",
+      "method": "GET",
+      "http": 401,
+      "at": "2026-10-01T10:44:12.094Z"
+    },
+    {
+      "path": "/api/team/2105477988504240129/members",
+      "method": "GET",
+      "http": 401,
+      "at": "2026-10-01T10:44:12.095Z"
+    },
+    {
+      "path": "/api/file/storage",
+      "method": "GET",
+      "http": 401,
+      "at": "2026-10-01T10:44:12.096Z"
+    },
+    {
+      "path": "/api/auth/refresh",
+      "method": "POST",
+      "http": 200,
+      "at": "2026-10-01T10:44:12.123Z",
+      "code": 200,
+      "oldRefreshSha": "6825d65ca9df8b000448ef0ae2de9931e9d818e67a8637224305c87ca445a34d",
+      "newRefreshSha": "8c7c62c232a4c60e091d55ac0efeec90d791f0507cd0cd3a6068566aa2233fff",
+      "newAccessSha": "dababa2c43ff5dabefcd15f0a994608ffe8d0d29668ebf51a5ab9b24ab519ec1",
+      "userId": "2105477981680107521"
+    },
+    {
+      "path": "/api/file/storage",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:44:12.138Z"
+    },
+    {
+      "path": "/api/team/2105477988504240129/roles",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:44:12.146Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:44:12.152Z"
+    },
+    {
+      "path": "/api/team/2105477988504240129/files",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:44:12.153Z"
+    },
+    {
+      "path": "/api/team/2105477988504240129/members",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:44:12.155Z"
+    },
+    {
+      "path": "/api/transfer/speed-limit",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:44:12.167Z"
+    },
+    {
+      "path": "/api/notification/unread-count",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:44:12.169Z"
+    },
+    {
+      "path": "/api/team/2105477988504240129",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:44:12.170Z"
+    },
+    {
+      "path": "/api/favorite/ids",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:44:12.171Z"
+    },
+    {
+      "path": "/api/file/folder-sizes",
+      "method": "POST",
+      "http": 200,
+      "at": "2026-10-01T10:44:12.684Z"
+    },
+    {
+      "path": "/api/file/storage",
+      "method": "GET",
+      "http": 401,
+      "at": "2026-10-01T10:44:59.029Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "http": 401,
+      "at": "2026-10-01T10:44:59.030Z"
+    },
+    {
+      "path": "/api/team/2105477988504240129/roles",
+      "method": "GET",
+      "http": 401,
+      "at": "2026-10-01T10:44:59.031Z"
+    },
+    {
+      "path": "/api/team/2105477988504240129",
+      "method": "GET",
+      "http": 401,
+      "at": "2026-10-01T10:44:59.032Z"
+    },
+    {
+      "path": "/api/team/2105477988504240129/members",
+      "method": "GET",
+      "http": 401,
+      "at": "2026-10-01T10:44:59.033Z"
+    },
+    {
+      "path": "/api/team/2105477988504240129/files",
+      "method": "GET",
+      "http": 401,
+      "at": "2026-10-01T10:44:59.034Z"
+    },
+    {
+      "path": "/api/auth/refresh",
+      "method": "POST",
+      "http": 200,
+      "at": "2026-10-01T10:44:59.072Z",
+      "code": 200,
+      "oldRefreshSha": "8c7c62c232a4c60e091d55ac0efeec90d791f0507cd0cd3a6068566aa2233fff",
+      "newRefreshSha": "4ac950554111fdac3cc6268c48560d82f856f895390aa4cb6bf95c012f1903b8",
+      "newAccessSha": "9de605d9bccce506da05c3fadd3cb775ef5082af74a25a1734a22bb491c19903",
+      "userId": "2105477981680107521"
+    },
+    {
+      "path": "/api/file/storage",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:44:59.086Z"
+    },
+    {
+      "path": "/api/team/2105477988504240129/roles",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:44:59.092Z"
+    },
+    {
+      "path": "/api/team/2105477988504240129/files",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:44:59.098Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:44:59.099Z"
+    },
+    {
+      "path": "/api/team/2105477988504240129/members",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:44:59.100Z"
+    },
+    {
+      "path": "/api/team/2105477988504240129",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:44:59.103Z"
+    },
+    {
+      "path": "/api/favorite/ids",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:44:59.118Z"
+    },
+    {
+      "path": "/api/notification/unread-count",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:44:59.120Z"
+    },
+    {
+      "path": "/api/transfer/speed-limit",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:44:59.121Z"
+    },
+    {
+      "path": "/api/file/folder-sizes",
+      "method": "POST",
+      "http": 200,
+      "at": "2026-10-01T10:44:59.633Z"
+    },
+    {
+      "path": "/api/notification/unread-count",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:45:29.127Z"
+    },
+    {
+      "path": "/api/auth/refresh",
+      "method": "POST",
+      "result": "injected-connection-reset"
+    },
+    {
+      "path": "/api/auth/refresh",
+      "method": "POST",
+      "result": "injected-connection-reset"
+    },
+    {
+      "path": "/api/auth/refresh",
+      "method": "POST",
+      "result": "injected-connection-reset"
+    },
+    {
+      "path": "/api/auth/refresh",
+      "method": "POST",
+      "result": "injected-connection-reset"
+    },
+    {
+      "path": "/api/auth/refresh",
+      "method": "POST",
+      "result": "injected-connection-reset"
+    },
+    {
+      "path": "/api/auth/refresh",
+      "method": "POST",
+      "result": "injected-connection-reset"
+    },
+    {
+      "path": "/api/file/storage",
+      "method": "GET",
+      "result": "injected-connection-reset"
+    },
+    {
+      "path": "/api/team/2105477988504240129/files",
+      "method": "GET",
+      "result": "injected-connection-reset"
+    },
+    {
+      "path": "/api/file/storage",
+      "method": "GET",
+      "result": "injected-connection-reset"
+    },
+    {
+      "path": "/api/team/2105477988504240129",
+      "method": "GET",
+      "result": "injected-connection-reset"
+    },
+    {
+      "path": "/api/team/2105477988504240129/members",
+      "method": "GET",
+      "result": "injected-connection-reset"
+    },
+    {
+      "path": "/api/team/2105477988504240129/roles",
+      "method": "GET",
+      "result": "injected-connection-reset"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "result": "injected-connection-reset"
+    },
+    {
+      "path": "/api/team/2105477988504240129/files",
+      "method": "GET",
+      "result": "injected-connection-reset"
+    },
+    {
+      "path": "/api/file/storage",
+      "method": "GET",
+      "result": "injected-connection-reset"
+    },
+    {
+      "path": "/api/team/2105477988504240129",
+      "method": "GET",
+      "result": "injected-connection-reset"
+    },
+    {
+      "path": "/api/team/2105477988504240129/members",
+      "method": "GET",
+      "result": "injected-connection-reset"
+    },
+    {
+      "path": "/api/team/2105477988504240129/roles",
+      "method": "GET",
+      "result": "injected-connection-reset"
+    },
+    {
+      "path": "/api/auth/refresh",
+      "method": "POST",
+      "http": 200,
+      "at": "2026-10-01T10:47:28.221Z",
+      "code": 200,
+      "oldRefreshSha": "4ac950554111fdac3cc6268c48560d82f856f895390aa4cb6bf95c012f1903b8",
+      "newRefreshSha": "51096989e200e4f1dc803cb260bd10975f8bd20821bb2c2a6267945e5e775007",
+      "newAccessSha": "88d1c739eac22c2f0be2e5a82ae173b2321906fe5741f1f5aee248d9e4ba49a7",
+      "userId": "2105477981680107521"
+    },
+    {
+      "path": "/api/file/storage",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:47:28.273Z"
+    },
+    {
+      "path": "/api/team/2105477988504240129/roles",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:47:28.279Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:47:28.280Z"
+    },
+    {
+      "path": "/api/team/2105477988504240129/members",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:47:28.282Z"
+    },
+    {
+      "path": "/api/team/2105477988504240129/files",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:47:28.283Z"
+    },
+    {
+      "path": "/api/team/2105477988504240129",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:47:28.286Z"
+    },
+    {
+      "path": "/api/notification/unread-count",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:47:28.299Z"
+    },
+    {
+      "path": "/api/favorite/ids",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:47:28.300Z"
+    },
+    {
+      "path": "/api/transfer/speed-limit",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:47:28.300Z"
+    },
+    {
+      "path": "/api/file/folder-sizes",
+      "method": "POST",
+      "http": 200,
+      "at": "2026-10-01T10:47:28.814Z"
+    },
+    {
+      "path": "/api/notification/unread-count",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:47:58.305Z"
+    },
+    {
+      "path": "/api/notification/unread-count",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:48:28.302Z"
+    },
+    {
+      "path": "/api/notification/unread-count",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:48:58.316Z"
+    },
+    {
+      "path": "/api/notification/unread-count",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:49:28.304Z"
+    },
+    {
+      "path": "/api/notification/unread-count",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:49:58.304Z"
+    },
+    {
+      "path": "/api/notification/unread-count",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:50:28.306Z"
+    },
+    {
+      "path": "/api/notification/unread-count",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:50:58.313Z"
+    },
+    {
+      "path": "/api/notification/unread-count",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:51:28.313Z"
+    },
+    {
+      "path": "/api/notification/unread-count",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:51:58.307Z"
+    }
+  ],
+  "checks": [
+    {
+      "name": "authorized-fixture-recovery",
+      "http": 200,
+      "code": 200,
+      "userId": "2105477981680107521",
+      "oldRefreshSha": "82f4885ddbf9762ab415e577fd6ed83258887f74102e475043a4a29a0a0016fe",
+      "newRefreshSha": "6825d65ca9df8b000448ef0ae2de9931e9d818e67a8637224305c87ca445a34d"
+    },
+    {
+      "name": "old-refresh-rejected",
+      "http": 200,
+      "code": 1005,
+      "pass": true
+    },
+    {
+      "name": "old-refresh-rejected",
+      "http": 200,
+      "code": 1005,
+      "pass": true
+    },
+    {
+      "name": "network-injection",
+      "offline": true,
+      "at": "2026-10-01T10:45:47.236Z"
+    },
+    {
+      "name": "network-injection",
+      "offline": false,
+      "at": "2026-10-01T10:47:28.150Z"
+    }
+  ],
+  "observations": [
+    {
+      "label": "restored-fixture-session",
+      "accessPresent": true,
+      "refreshPresent": true,
+      "accessSha": "e232b817f1ac1ba286ee220b27db7dba180e13e460c326aba7b1a46b3945b483",
+      "refreshSha": "6825d65ca9df8b000448ef0ae2de9931e9d818e67a8637224305c87ca445a34d",
+      "revision": 1,
+      "serverMatches": true,
+      "at": "2026-10-01T10:43:47.939Z"
+    },
+    {
+      "label": "before-round-1",
+      "accessPresent": true,
+      "refreshPresent": true,
+      "accessSha": "e232b817f1ac1ba286ee220b27db7dba180e13e460c326aba7b1a46b3945b483",
+      "refreshSha": "6825d65ca9df8b000448ef0ae2de9931e9d818e67a8637224305c87ca445a34d",
+      "revision": 1,
+      "serverMatches": true,
+      "at": "2026-10-01T10:44:11.978Z"
+    },
+    {
+      "label": "invalid-access-round-1",
+      "accessPresent": true,
+      "refreshPresent": true,
+      "accessSha": "4f11844de1db6ba395b90be83d523bac9b804582492ecae17570b706e6dde857",
+      "refreshSha": "6825d65ca9df8b000448ef0ae2de9931e9d818e67a8637224305c87ca445a34d",
+      "revision": 2,
+      "serverMatches": true,
+      "at": "2026-10-01T10:44:11.982Z"
+    },
+    {
+      "label": "manual-observation",
+      "accessPresent": true,
+      "refreshPresent": true,
+      "accessSha": "dababa2c43ff5dabefcd15f0a994608ffe8d0d29668ebf51a5ab9b24ab519ec1",
+      "refreshSha": "8c7c62c232a4c60e091d55ac0efeec90d791f0507cd0cd3a6068566aa2233fff",
+      "revision": 3,
+      "serverMatches": true,
+      "at": "2026-10-01T10:44:58.681Z"
+    },
+    {
+      "label": "before-round-2",
+      "accessPresent": true,
+      "refreshPresent": true,
+      "accessSha": "dababa2c43ff5dabefcd15f0a994608ffe8d0d29668ebf51a5ab9b24ab519ec1",
+      "refreshSha": "8c7c62c232a4c60e091d55ac0efeec90d791f0507cd0cd3a6068566aa2233fff",
+      "revision": 3,
+      "serverMatches": true,
+      "at": "2026-10-01T10:44:58.950Z"
+    },
+    {
+      "label": "invalid-access-round-2",
+      "accessPresent": true,
+      "refreshPresent": true,
+      "accessSha": "14e1537661c09af53a5e180c005cb69ec9a1308eccfba4d3a734ccecd37fc950",
+      "refreshSha": "8c7c62c232a4c60e091d55ac0efeec90d791f0507cd0cd3a6068566aa2233fff",
+      "revision": 4,
+      "serverMatches": true,
+      "at": "2026-10-01T10:44:58.956Z"
+    },
+    {
+      "label": "before-offline",
+      "accessPresent": true,
+      "refreshPresent": true,
+      "accessSha": "9de605d9bccce506da05c3fadd3cb775ef5082af74a25a1734a22bb491c19903",
+      "refreshSha": "4ac950554111fdac3cc6268c48560d82f856f895390aa4cb6bf95c012f1903b8",
+      "revision": 5,
+      "serverMatches": true,
+      "at": "2026-10-01T10:45:47.231Z"
+    },
+    {
+      "label": "offline-refresh-only",
+      "accessPresent": false,
+      "refreshPresent": true,
+      "accessSha": null,
+      "refreshSha": "4ac950554111fdac3cc6268c48560d82f856f895390aa4cb6bf95c012f1903b8",
+      "revision": 6,
+      "serverMatches": true,
+      "at": "2026-10-01T10:45:47.237Z"
+    },
+    {
+      "label": "after-offline-before-reconnect",
+      "accessPresent": false,
+      "refreshPresent": true,
+      "accessSha": null,
+      "refreshSha": "4ac950554111fdac3cc6268c48560d82f856f895390aa4cb6bf95c012f1903b8",
+      "revision": 6,
+      "serverMatches": true,
+      "at": "2026-10-01T10:47:28.146Z"
+    },
+    {
+      "label": "online-recovery",
+      "accessPresent": false,
+      "refreshPresent": true,
+      "accessSha": null,
+      "refreshSha": "4ac950554111fdac3cc6268c48560d82f856f895390aa4cb6bf95c012f1903b8",
+      "revision": 6,
+      "serverMatches": true,
+      "at": "2026-10-01T10:47:28.151Z"
+    },
+    {
+      "label": "manual-observation",
+      "accessPresent": true,
+      "refreshPresent": true,
+      "accessSha": "88d1c739eac22c2f0be2e5a82ae173b2321906fe5741f1f5aee248d9e4ba49a7",
+      "refreshSha": "51096989e200e4f1dc803cb260bd10975f8bd20821bb2c2a6267945e5e775007",
+      "revision": 7,
+      "serverMatches": true,
+      "at": "2026-10-01T10:52:45.889Z"
+    },
+    {
+      "label": "before-cleanup",
+      "accessPresent": true,
+      "refreshPresent": true,
+      "accessSha": "88d1c739eac22c2f0be2e5a82ae173b2321906fe5741f1f5aee248d9e4ba49a7",
+      "refreshSha": "51096989e200e4f1dc803cb260bd10975f8bd20821bb2c2a6267945e5e775007",
+      "revision": 7,
+      "serverMatches": true,
+      "at": "2026-10-01T10:53:34.246Z"
+    }
+  ],
+  "offlineFailures": 18,
+  "finishedAt": "2026-10-01T10:53:34.249Z",
+  "status": "browser-actions-completed"
+}

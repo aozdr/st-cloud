@@ -1,14 +1,12 @@
 import axios, { type AxiosInstance, type InternalAxiosRequestConfig, type AxiosRequestConfig } from 'axios';
-import { isElectron, syncAuthToElectron } from './electron';
+import { isElectron } from './electron';
 import { getApiBaseUrl, getServerUrlSync } from './server-config';
+import { captureAuthContext, getCurrentAuth, isCurrentAuth, refreshSession, type AuthContext } from '../auth-session';
 
 const instance: AxiosInstance = axios.create({
   baseURL: getApiBaseUrl(),
   timeout: 30000,
 });
-
-/** 401 刷新 token 用：不经业务拦截器，且走 fetch adapter 以兼容 app:// 代理 */
-const refreshClient = axios.create();
 
 /** 服务器地址变更后调用，刷新 axios baseURL */
 export function updateApiBaseUrl(): void {
@@ -38,27 +36,20 @@ class ApiError extends Error {
 // Request interceptor: inject JWT
 instance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = sessionStorage.getItem('accessToken');
+    const request = config as InternalAxiosRequestConfig & { _authContext?: AuthContext; _authToken?: string | null };
+    if (request._authContext && !isCurrentAuth(request._authContext)) throw new Error('认证会话已变更');
+    request._authContext = captureAuthContext();
+    const token = getCurrentAuth().token;
+    request._authToken = token;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      delete config.headers.Authorization;
     }
     return config;
   },
   (error) => Promise.reject(error),
 );
-
-// Response interceptor: unwrap Result.data, attach business code, handle 401
-let isRefreshing = false;
-let refreshSubscribers: Array<(token: string | null) => void> = [];
-
-function subscribeTokenRefresh(cb: (token: string | null) => void) {
-  refreshSubscribers.push(cb);
-}
-
-function onRefreshed(token: string | null) {
-  refreshSubscribers.forEach((cb) => cb(token));
-  refreshSubscribers = [];
-}
 
 instance.interceptors.response.use(
   (response) => {
@@ -80,45 +71,19 @@ instance.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      // If a refresh is already in flight, queue this request until it resolves
-      if (isRefreshing) {
-        return new Promise((resolve, reject) => {
-          subscribeTokenRefresh((token) => {
-            if (!token) return reject(error);
-            originalRequest._retry = true;
-            originalRequest.headers.Authorization = `Bearer ${token}`;
-            resolve(instance(originalRequest));
-          });
-        });
-      }
-
-      isRefreshing = true;
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry
+        && !/\/auth\/(?:login|register|refresh|logout)(?:[/?]|$)/.test(originalRequest.url || '')
+        && originalRequest._authContext && isCurrentAuth(originalRequest._authContext) && getCurrentAuth().refreshToken) {
       originalRequest._retry = true;
-      const refreshToken = localStorage.getItem('refreshToken');
-      if (refreshToken) {
-        try {
-          const res = await refreshClient.post(getApiBaseUrl() + '/auth/refresh', { refreshToken });
-          const { token, refreshToken: newRefreshToken } = res.data.data;
-          sessionStorage.setItem('accessToken', token);
-          localStorage.setItem('refreshToken', newRefreshToken);
-          syncAuthToElectron();
-          isRefreshing = false;
-          onRefreshed(token);
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-          return instance(originalRequest);
-        } catch {
-          isRefreshing = false;
-          onRefreshed(null);
-          sessionStorage.removeItem('accessToken');
-          localStorage.removeItem('refreshToken');
-          window.location.href = '/login';
-          return Promise.reject(error);
-        }
+      try {
+        // 并发共用刷新，旧 access 的迟到 401 只重放一次，不重复消耗 refresh。
+        if (!getCurrentAuth().token || originalRequest._authToken === getCurrentAuth().token) await refreshSession();
+        if (!isCurrentAuth(originalRequest._authContext) || !getCurrentAuth().token) throw new Error('认证会话已变更');
+        originalRequest.headers.Authorization = `Bearer ${getCurrentAuth().token}`;
+        return instance(originalRequest);
+      } catch {
+        return Promise.reject(error);
       }
-      isRefreshing = false;
-      onRefreshed(null);
-      window.location.href = '/login';
     }
     const msg = error.response?.data?.message || error.message || 'Network error';
     if (import.meta.env.DEV) console.error('Request error:', msg);

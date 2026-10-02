@@ -1,0 +1,10 @@
+{
+  "taskId": "20261001-review-fixes",
+  "criterionProposal": {
+    "id": "DESIGN",
+    "outcome": "pass",
+    "by": "workflow-manager",
+    "evidenceRef": ".ai/docs/20261001-review-fixes/design.md",
+    "validatedRevision": "review-fixes-design-r1"
+  }
+}

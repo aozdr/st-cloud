@@ -1,0 +1,9 @@
+{
+  "status": "complete",
+  "rootId": "2105298514185756673",
+  "operationId": "legacy-2105298514835873794-b967b0500bd2111c054d0323a6bdff04dfe42dc8505a9abc45047bae147eb66d",
+  "originalPath": "/destination/renamed.txt",
+  "entries": [
+    "destination/renamed.txt"
+  ]
+}

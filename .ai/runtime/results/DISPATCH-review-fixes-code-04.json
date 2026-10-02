@@ -1,0 +1,44 @@
+{
+  "dispatchId": "DISPATCH-review-fixes-code-04",
+  "taskId": "TASK-20261001-review-fixes-code",
+  "status": "completed",
+  "by": "/root/review_fixes_code_r4",
+  "background": "仅独立复核r4相对r3的低共享修订/当前拒绝与墓碑匹配增量；r1/r2既有失败回归核对，后端无增量。",
+  "inputs": [".ai/tasks/TASK-20261001-review-fixes-code.md", ".ai/docs/20261001-review-fixes/design.md", ".ai/docs/20261001-review-fixes/testcases.md", ".ai/docs/20261001-review-fixes/changereport.md", ".ai/docs/20261001-review-fixes/source-manifest-r4.json", ".ai/docs/20261001-review-fixes/r4/corrections.md", ".ai/docs/20261001-review-fixes/r3/codereview.md", ".ai/docs/20261001-review-fixes/r2/codereview.md"],
+  "artifactRefs": [".ai/docs/20261001-review-fixes/r4/codereview.md"],
+  "analysis": {
+    "facts": [
+      "Envelope/schema/身份/scope核对有效；开始及结束六个SHA256均匹配review-fixes-code-r4。",
+      "相对r3仅auth-session.ts及多页测试SHA变化；harness/core三项未变。",
+      "独立Node多页回归退出0，27/27通过，失败/跳过0；r1/r2真实失败的对应回归通过。",
+      "真实业务/files401触发R1 refresh401；locks/tickets与pair写失败/对照四组均使本页、另一页和重载失效，登录状态false、用户null、旧context无效、sessionStorage清空。",
+      "低共享R0不能再遮挡被拒绝的内存R1；R1墓碑也阻止更早R0恢复，r3唯一P2关闭。",
+      "独立内存存储对照确认同会话更高R2、新session及其它server不受R1墓碑影响；墓碑没有token字段。"
+    ],
+    "limits": ["未测量真实浏览器竞态频率；独立VM模拟锁/存储/事件，HTTP及当前Store/API调用真实。", "未独立运行H2/MySQL/S3/UI或Maven；未重新审计无增量后端，主线程H2证据未计作本child执行。"]
+  },
+  "validation": [
+    {"command": "node --test st-web/src/store/auth-tabs.test.mjs", "exitCode": 0, "tests": 27, "pass": 27, "fail": 0, "skipped": 0},
+    {"command": "只读Node stdin：真实HTTP /files401→refresh-1 401，当前harness原始TS与Store/API", "exitCode": 0, "cases": [
+      {"mode": "locks", "failPair": false, "calls": ["refresh-0", "refresh-1"], "refreshAfter": null, "isAuthenticated": false, "userAfter": null, "oldContextStillCurrent": false, "otherPageAfter": null, "reloadAfter": null},
+      {"mode": "locks", "failPair": true, "calls": ["refresh-0", "refresh-1"], "refreshAfter": null, "isAuthenticated": false, "userAfter": null, "oldContextStillCurrent": false, "otherPageAfter": null, "reloadAfter": null},
+      {"mode": "tickets", "failPair": false, "calls": ["refresh-0", "refresh-1"], "refreshAfter": null, "isAuthenticated": false, "userAfter": null, "oldContextStillCurrent": false, "otherPageAfter": null, "reloadAfter": null},
+      {"mode": "tickets", "failPair": true, "calls": ["refresh-0", "refresh-1"], "refreshAfter": null, "isAuthenticated": false, "userAfter": null, "oldContextStillCurrent": false, "otherPageAfter": null, "reloadAfter": null}
+    ], "identityGuards": ["higher-revision retained", "new-session retained", "other-server retained"]}
+  ],
+  "findings": [],
+  "decision": "CODE_REVIEW建议pass；r3唯一P2关闭，r1/r2已报告失败对应回归通过，未发现本轮增量可复现问题。",
+  "criterionProposal": {
+    "id": "CODE_REVIEW",
+    "outcome": "pass",
+    "by": "/root/review_fixes_code_r4",
+    "dispatchId": "DISPATCH-review-fixes-code-04",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-review-fixes-code-04.json",
+    "validatedRevision": "review-fixes-code-r4"
+  },
+  "stateDelta": "仅上述proposal；未写State或判定Goal。",
+  "blockerProposals": [],
+  "risks": ["未执行真实浏览器UI/MySQL/S3验证；不声明线上竞态频率或效果。"],
+  "nextSteps": ["由主线程核对结果、当前revision和依赖后执行Evaluate。"],
+  "changeImpact": "仅新增scope白名单codereview.md与独立result；未修改源码/测试源码/State/数据库/Git index/部署，未运行Maven或派发。"
+}

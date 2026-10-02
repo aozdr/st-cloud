@@ -1,0 +1,349 @@
+{
+  "schemaVersion": 2,
+  "definitionVersion": 2,
+  "legacy": false,
+  "taskId": "20260912-ui-ux-polish",
+  "scale": "medium",
+  "status": "incomplete",
+  "goal": {
+    "objective": "执行两份 UI/UX 计划，统一 st-web 共享 UI 的视觉系统，修复文件管理、搜索快捷键、移动导航和桌面传输悬浮窗等 P0 UX 问题，并完成 Web/Electron 验证。",
+    "scope": {
+      "include": [
+        "st-web shared UI",
+        "必要的 st-desktop main/tray 入口",
+        "本轮 .ai 文档与验证证据"
+      ],
+      "exclude": [
+        "后端 API",
+        "数据库 schema",
+        "权限业务语义",
+        "上传下载/同步协议",
+        "第二套桌面 React UI"
+      ]
+    },
+    "completionCriteria": [
+      "两份计划 P0 全部完成",
+      "不扩大范围的 P1 视觉与 UX 项完成",
+      "Web lint/build/test 与 Desktop lint/test/build:main 有真实结果",
+      "关键视口无页面级横向溢出且 Web/Electron 继续共享 st-web UI",
+      "最终 changereport、codereview、security、testreport 落盘并列出剩余风险"
+    ]
+  },
+  "revision": {
+    "design": "design-approved-20260912-ui-ux-polish",
+    "code": "implemented-20260912-ui-ux-polish"
+  },
+  "exitCriteria": [
+    {
+      "id": "DESIGN",
+      "status": "done",
+      "dependsOn": [],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20260912-ui-ux-polish/design.md",
+      "validatedRevision": "design-approved-20260912-ui-ux-polish",
+      "completedAt": "2026-09-12T21:57:06+08:00",
+      "userConfirmedAt": "2026-09-12T21:57:06+08:00",
+      "confirmedBy": "user",
+      "confirmationArtifact": ".ai/docs/20260912-ui-ux-polish/design.md",
+      "executionKind": "direct",
+      "executionId": "EVT-20260912-UI-UX-POLISH-DESIGN-APPROVED"
+    },
+    {
+      "id": "TESTCASES",
+      "status": "done",
+      "dependsOn": [
+        "DESIGN"
+      ],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20260912-ui-ux-polish/testcases.md",
+      "validatedRevision": "design-approved-20260912-ui-ux-polish",
+      "completedAt": "2026-09-12T21:57:06+08:00",
+      "executionKind": "direct",
+      "executionId": "EVT-20260912-UI-UX-POLISH-DESIGN-APPROVED"
+    },
+    {
+      "id": "IMPLEMENTED",
+      "status": "done",
+      "dependsOn": [
+        "DESIGN",
+        "TESTCASES"
+      ],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20260912-ui-ux-polish/changereport.md",
+      "validatedRevision": "implemented-20260912-ui-ux-polish",
+      "completedAt": "2026-09-12T22:31:00+08:00",
+      "executionKind": "direct",
+      "executionId": "EVT-20260912-UI-UX-POLISH-COMPLETED"
+    },
+    {
+      "id": "CODE_REVIEW",
+      "status": "stale",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20260912-ui-ux-polish/codereview.md",
+      "validatedRevision": "implemented-20260912-ui-ux-polish",
+      "completedAt": "2026-09-12T22:31:00+08:00"
+    },
+    {
+      "id": "SECURITY_REVIEW",
+      "status": "stale",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ],
+      "skipReason": "本轮不改权限、文件操作、API、数据库或安全边界；仅展示、布局与入口可达性变化。"
+    },
+    {
+      "id": "TEST_PASS",
+      "status": "stale",
+      "dependsOn": [
+        "CODE_REVIEW",
+        "SECURITY_REVIEW"
+      ],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20260912-ui-ux-polish/testreport.md",
+      "validatedRevision": "implemented-20260912-ui-ux-polish",
+      "completedAt": "2026-09-12T22:31:00+08:00"
+    },
+    {
+      "id": "KNOWLEDGE",
+      "status": "stale",
+      "dependsOn": [
+        "TEST_PASS"
+      ],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20260912-ui-ux-polish/changereport.md",
+      "validatedRevision": "implemented-20260912-ui-ux-polish",
+      "completedAt": "2026-09-12T22:31:00+08:00"
+    },
+    {
+      "id": "ACCEPT",
+      "status": "stale",
+      "dependsOn": [
+        "KNOWLEDGE"
+      ],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20260912-ui-ux-polish/testreport.md",
+      "validatedRevision": "implemented-20260912-ui-ux-polish",
+      "completedAt": "2026-09-12T22:31:00+08:00"
+    }
+  ],
+  "artifacts": {
+    "design": {
+      "status": "ready",
+      "ref": ".ai/docs/20260912-ui-ux-polish/design.md",
+      "provides": [
+        "DESIGN"
+      ]
+    },
+    "testcases": {
+      "status": "ready",
+      "ref": ".ai/docs/20260912-ui-ux-polish/testcases.md",
+      "provides": [
+        "TESTCASES"
+      ]
+    },
+    "task": {
+      "status": "ready",
+      "ref": ".ai/tasks/TASK-20260912-ui-ux-polish-01.md",
+      "provides": [
+        "IMPLEMENTED"
+      ]
+    },
+    "changereport": {
+      "status": "ready",
+      "ref": ".ai/docs/20260912-ui-ux-polish/changereport.md",
+      "provides": [
+        "IMPLEMENTED",
+        "KNOWLEDGE"
+      ]
+    },
+    "codereview": {
+      "status": "ready",
+      "ref": ".ai/docs/20260912-ui-ux-polish/codereview.md",
+      "provides": [
+        "CODE_REVIEW"
+      ]
+    },
+    "security": {
+      "status": "skipped",
+      "ref": ".ai/docs/20260912-ui-ux-polish/security.md",
+      "provides": [
+        "SECURITY_REVIEW"
+      ]
+    },
+    "testreport": {
+      "status": "ready",
+      "ref": ".ai/docs/20260912-ui-ux-polish/testreport.md",
+      "provides": [
+        "TEST_PASS",
+        "ACCEPT"
+      ]
+    }
+  },
+  "blockers": [
+    {
+      "fingerprint": "historical-v2-review-evidence-gap",
+      "status": "open",
+      "repairAttempts": [],
+      "reason": "历史 CODE_REVIEW/TEST_PASS/ACCEPT 记录为实现者自检，缺独立执行或当时单人授权证据；SECURITY_REVIEW 缺跳过审批；原 acceptanceEvidence 未逐条匹配目标。保留报告，待重新复核，不能认定历史任务已完成。"
+    }
+  ],
+  "acceptanceEvidence": [],
+  "dispatchLedger": [],
+  "proposals": [],
+  "history": [
+    {
+      "eventId": "EVT-20260912-UI-UX-POLISH-DESIGN-APPROVED",
+      "action": "user_confirmed_design_and_testcases",
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-12T21:57:06+08:00",
+      "revision": {
+        "design": "design-approved-20260912-ui-ux-polish",
+        "code": null
+      }
+    },
+    {
+      "eventId": "EVT-20260912-UI-UX-POLISH-COMPLETED",
+      "action": "implemented_reviewed_tested_accepted",
+      "actor": "workflow-manager",
+      "occurredAt": "2026-09-12T22:31:00+08:00",
+      "revision": {
+        "design": "design-approved-20260912-ui-ux-polish",
+        "code": "implemented-20260912-ui-ux-polish"
+      }
+    },
+    {
+      "eventId": "EVT-20261002-UI-UX-AUDIT-REPAIR",
+      "action": "correct_historical_execution_provenance_and_reopen_acceptance",
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-02T05:02:44.3949733Z",
+      "revision": {
+        "design": "design-approved-20260912-ui-ux-polish",
+        "code": "implemented-20260912-ui-ux-polish"
+      },
+      "before": {
+        "status": "done",
+        "exitCriteria": [
+          {
+            "id": "DESIGN",
+            "status": "done",
+            "dependsOn": [],
+            "by": "workflow-manager",
+            "dispatchId": "DIRECT-20260912-UI-UX-DESIGN",
+            "evidenceRef": ".ai/docs/20260912-ui-ux-polish/design.md",
+            "validatedRevision": "design-approved-20260912-ui-ux-polish",
+            "completedAt": "2026-09-12T21:57:06+08:00",
+            "userConfirmedAt": "2026-09-12T21:57:06+08:00",
+            "confirmedBy": "user",
+            "confirmationArtifact": ".ai/docs/20260912-ui-ux-polish/design.md"
+          },
+          {
+            "id": "TESTCASES",
+            "status": "done",
+            "dependsOn": [
+              "DESIGN"
+            ],
+            "by": "workflow-manager",
+            "dispatchId": "DIRECT-20260912-UI-UX-TESTCASES",
+            "evidenceRef": ".ai/docs/20260912-ui-ux-polish/testcases.md",
+            "validatedRevision": "design-approved-20260912-ui-ux-polish",
+            "completedAt": "2026-09-12T21:57:06+08:00"
+          },
+          {
+            "id": "IMPLEMENTED",
+            "status": "done",
+            "dependsOn": [
+              "DESIGN",
+              "TESTCASES"
+            ],
+            "by": "workflow-manager",
+            "evidenceRef": ".ai/docs/20260912-ui-ux-polish/changereport.md",
+            "validatedRevision": "implemented-20260912-ui-ux-polish",
+            "completedAt": "2026-09-12T22:31:00+08:00"
+          },
+          {
+            "id": "CODE_REVIEW",
+            "status": "done",
+            "dependsOn": [
+              "IMPLEMENTED"
+            ],
+            "by": "workflow-manager",
+            "evidenceRef": ".ai/docs/20260912-ui-ux-polish/codereview.md",
+            "validatedRevision": "implemented-20260912-ui-ux-polish",
+            "completedAt": "2026-09-12T22:31:00+08:00"
+          },
+          {
+            "id": "SECURITY_REVIEW",
+            "status": "skipped",
+            "dependsOn": [
+              "IMPLEMENTED"
+            ],
+            "skipReason": "本轮不改权限、文件操作、API、数据库或安全边界；仅展示、布局与入口可达性变化。"
+          },
+          {
+            "id": "TEST_PASS",
+            "status": "done",
+            "dependsOn": [
+              "CODE_REVIEW",
+              "SECURITY_REVIEW"
+            ],
+            "by": "workflow-manager",
+            "evidenceRef": ".ai/docs/20260912-ui-ux-polish/testreport.md",
+            "validatedRevision": "implemented-20260912-ui-ux-polish",
+            "completedAt": "2026-09-12T22:31:00+08:00"
+          },
+          {
+            "id": "KNOWLEDGE",
+            "status": "done",
+            "dependsOn": [
+              "TEST_PASS"
+            ],
+            "by": "workflow-manager",
+            "evidenceRef": ".ai/docs/20260912-ui-ux-polish/changereport.md",
+            "validatedRevision": "implemented-20260912-ui-ux-polish",
+            "completedAt": "2026-09-12T22:31:00+08:00"
+          },
+          {
+            "id": "ACCEPT",
+            "status": "done",
+            "dependsOn": [
+              "KNOWLEDGE"
+            ],
+            "by": "workflow-manager",
+            "evidenceRef": ".ai/docs/20260912-ui-ux-polish/testreport.md",
+            "validatedRevision": "implemented-20260912-ui-ux-polish",
+            "completedAt": "2026-09-12T22:31:00+08:00"
+          }
+        ],
+        "acceptanceEvidence": [
+          {
+            "criterion": "P0 UI/UX 与入口执行完成",
+            "evidenceRef": ".ai/docs/20260912-ui-ux-polish/changereport.md",
+            "validatedRevision": "implemented-20260912-ui-ux-polish"
+          },
+          {
+            "criterion": "代码审查与安全边界核对完成",
+            "evidenceRef": ".ai/docs/20260912-ui-ux-polish/codereview.md",
+            "validatedRevision": "implemented-20260912-ui-ux-polish"
+          },
+          {
+            "criterion": "Web/Desktop 自动化验证通过",
+            "evidenceRef": ".ai/docs/20260912-ui-ux-polish/testreport.md",
+            "validatedRevision": "implemented-20260912-ui-ux-polish"
+          },
+          {
+            "criterion": "四种视口页面级横向溢出检查通过",
+            "evidenceRef": ".ai/docs/20260912-ui-ux-polish/testreport.md",
+            "validatedRevision": "implemented-20260912-ui-ux-polish"
+          }
+        ]
+      },
+      "after": {
+        "status": "incomplete",
+        "reason": "直接执行身份引用已有历史事件；无虚构派发、独立审查或用户授权。后续依赖随未证实的评审失效。"
+      }
+    }
+  ]
+}

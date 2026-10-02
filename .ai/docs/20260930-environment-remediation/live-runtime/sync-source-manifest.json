@@ -1,0 +1,111 @@
+{
+  "executedAt": "2026-10-01T02:20:45.059Z",
+  "process": 17952,
+  "backend": "http://127.0.0.1:8080",
+  "files": [
+    {
+      "file": "st-desktop/src/api-client.ts",
+      "sha256": "fcc71681136b4a8f0b6283207a19c22845088b93c77a51a6593d24516dddd51f"
+    },
+    {
+      "file": "st-desktop/src/database.ts",
+      "sha256": "7d6e615b96ff46287e57bb5984c95f4b3b7035c1e356f93568ba8d61ac67a54b"
+    },
+    {
+      "file": "st-desktop/src/db-migrate.ts",
+      "sha256": "d3af1d78595913ea7dcdc168b10bf526790bc25c38f918001c7979498bf531df"
+    },
+    {
+      "file": "st-desktop/src/db/db-core.ts",
+      "sha256": "22c7dddcbeb5e8504c18ca4e6f326fe3569a6a25aa98b80858a40f1671c7cc16"
+    },
+    {
+      "file": "st-desktop/src/db/sync-meta.ts",
+      "sha256": "1e7086ddc1f09a791139bc9f645babcb91b0fcdaa57f89612c58de077a2ca3dd"
+    },
+    {
+      "file": "st-desktop/src/db/transfer-schema.ts",
+      "sha256": "5118db6f231b1a13e98f02fa0cbab001e8e0e2bd361788adc32500fb1e989d14"
+    },
+    {
+      "file": "st-desktop/src/db/transfer-tasks.ts",
+      "sha256": "cdfe805528baa684f240b6e35e4febd33e90af2aac9747ce084f5ce6cd3fe1a6"
+    },
+    {
+      "file": "st-desktop/src/file-watcher.ts",
+      "sha256": "06eba9ae39f3bd325ac15c1b1e5f93879970fe0d99aa52863135126b2f95952a"
+    },
+    {
+      "file": "st-desktop/src/server-config.ts",
+      "sha256": "c4f1e71dd985aac3a726dde80ad766587d4e9e243f2c471ff42e5179778d6177"
+    },
+    {
+      "file": "st-desktop/src/sync-engine.ts",
+      "sha256": "07a051cc19afd9456f43bed058fbdd76ccafb2640143151374f1fb942c90755e"
+    },
+    {
+      "file": "st-desktop/src/sync-manager.ts",
+      "sha256": "7b49e9257f55db62f05dd9eb013524fbd4640b4eaffaa32a5b85b6eea04fdf91"
+    },
+    {
+      "file": "st-desktop/src/sync-retry.ts",
+      "sha256": "ae5248f519c4cc8db16f59ab621b418652fbb059e32526e55b7dd4688b4e4805"
+    },
+    {
+      "file": "st-desktop/src/sync-utils.ts",
+      "sha256": "7c07a65557143fa942ca8fa7cb2146af97fc796f6ee286c774c1ff6bdeacf5da"
+    },
+    {
+      "file": "st-desktop/src/sync/sync-download.ts",
+      "sha256": "8c81a1f9251112b855f75012ed62e2791f2c237ce7bfc597726e7b1d8e008254"
+    },
+    {
+      "file": "st-desktop/src/sync/sync-reconcile.ts",
+      "sha256": "1398cada7c6e3d7d36abc3a8fd06408f2ef80346ad6676f2f70b35780d955e6c"
+    },
+    {
+      "file": "st-desktop/src/sync/sync-recovery.ts",
+      "sha256": "9cdd18316d3d324df2362e212a63b5cc069aff74b9cf5d9f3c7b6eea5c789a03"
+    },
+    {
+      "file": "st-desktop/src/sync/sync-shared.ts",
+      "sha256": "647c9c30401eff9a85443f8062f8bbdf9d338d5145f795585a864c63b95d7c0f"
+    },
+    {
+      "file": "st-desktop/src/sync/sync-upload.ts",
+      "sha256": "900f1cf4bbb20abf9f6467d038573f038424b1be2911d1679315818ae75a7f9e"
+    },
+    {
+      "file": "st-desktop/src/task-scheduler.ts",
+      "sha256": "d746d00e9e9ed9b9622c111a0bedfa2988acd9d290821049b201a4547180a2c6"
+    },
+    {
+      "file": "st-desktop/src/transfer-settings.ts",
+      "sha256": "c4353d1fb75938c42f8a4f80f794b11809591ccaa82f9117782ef245e8343428"
+    },
+    {
+      "file": "st-desktop/src/upload-manager.ts",
+      "sha256": "658170d5789c822f58a1d5ea96a7ed0eb023eade95ee2908ba19b6ab5cce7b6c"
+    },
+    {
+      "file": "st-desktop/src/upload-resume.ts",
+      "sha256": "3834195d57fc34293951ad6152eae14b3716ce00f465855cadf83c024e7810ff"
+    },
+    {
+      "file": "st-desktop/src/utils/block-hash.ts",
+      "sha256": "dc674ad4a9583ce72d0dd6e158ea78b18dd9a8bc0d8584a2a461fddac6300cf2"
+    },
+    {
+      "file": "st-desktop/src/utils/file-utils.ts",
+      "sha256": "caa1485076c7d7a3b49be5c69a347fc11f7789fd9115baf5ce956182259522bc"
+    },
+    {
+      "file": "st-desktop/src/utils/md5.ts",
+      "sha256": "c17da7b10a7abfca1fbc5db803dfb64c16df685009f2b828ba1adfe9e2b45eaf"
+    },
+    {
+      "file": "st-desktop/src/ws-client.ts",
+      "sha256": "3bf0a628bb9878ce45a3f052e205e8f7d4491428fa3ca626329bffe37ceaf4eb"
+    }
+  ]
+}

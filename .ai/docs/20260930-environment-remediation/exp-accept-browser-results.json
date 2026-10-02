@@ -1,0 +1,230 @@
+{
+  "startedAt": "2026-10-01T02:02:29.643Z",
+  "backend": "http://127.0.0.1:8080",
+  "checks": [
+    {
+      "name": "真实注册页面专用账号成功",
+      "pass": true,
+      "http": 200,
+      "businessCode": 200
+    },
+    {
+      "name": "普通Web账号Sidebar入口完整且无重复或越权入口",
+      "pass": true,
+      "navigation": [
+        {
+          "name": "首页首页",
+          "href": "/"
+        },
+        {
+          "name": "全部文件全部文件",
+          "href": "/files"
+        },
+        {
+          "name": "我的收藏我的收藏",
+          "href": "/favorites"
+        },
+        {
+          "name": "我的关注我的关注",
+          "href": "/following"
+        },
+        {
+          "name": "我的分享我的分享",
+          "href": "/shares"
+        },
+        {
+          "name": "团队空间团队空间",
+          "href": "/team"
+        },
+        {
+          "name": "回收站回收站",
+          "href": "/recycle"
+        },
+        {
+          "name": "重复检测重复检测",
+          "href": "/duplicates"
+        },
+        {
+          "name": "隐藏文件隐藏文件",
+          "href": "/hidden"
+        }
+      ]
+    },
+    {
+      "name": "Sidebar折叠偏好跨页面保持",
+      "pass": true
+    },
+    {
+      "name": "Sidebar主题设置跨页面保持深色",
+      "pass": true
+    }
+  ],
+  "requests": [
+    {
+      "method": "POST",
+      "path": "/api/auth/register",
+      "http": 200,
+      "businessCode": 200,
+      "message": "success"
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/me",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/file/storage",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/transfer/speed-limit",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/favorite/ids",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/notification/unread-count",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/notification/unread-count",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/favorite/list",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/file/storage",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/recycle/list",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/me",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/transfer/speed-limit",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/notification/unread-count",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/favorite/ids",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/notification/unread-count",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/team/spaces",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/file/storage",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/me",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/transfer/speed-limit",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/favorite/ids",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/notification/unread-count",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/notification/unread-count",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/file/storage",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/team/spaces",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/auth/me",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/transfer/speed-limit",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/favorite/ids",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/notification/unread-count",
+      "http": 200
+    },
+    {
+      "method": "GET",
+      "path": "/api/notification/unread-count",
+      "http": 200
+    },
+    {
+      "method": "POST",
+      "path": "/api/team/space",
+      "http": 200,
+      "businessCode": 2009,
+      "message": "配额超出，当前剩余可分配 0 B（云盘总容量 100.00 GB），请减少配额或扩大云盘总容量"
+    }
+  ],
+  "pageErrors": [],
+  "consoleErrors": [],
+  "fixture": {
+    "username": "env_exp_muow2v0r8b3b0b",
+    "spaceName": "EXP团队-env_exp_muow2v0r8b3b0b",
+    "folderName": "验收文件夹-env_exp_muow2v0r8b3b0b",
+    "userId": "2105478431485657089"
+  },
+  "browserVersion": "154.0.8037.92",
+  "status": "failed",
+  "failure": "team creation rejected: HTTP 200, code 2009",
+  "finishedAt": "2026-10-01T02:02:32.454Z"
+}

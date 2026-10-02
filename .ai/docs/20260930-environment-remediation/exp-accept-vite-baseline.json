@@ -1,0 +1,73 @@
+{
+  "at": "2026-10-01T02:09:24.321Z",
+  "scope": "当前dist，Vite原生preview，匿名只读",
+  "cases": [
+    {
+      "pathname": "/team/2105477988504240129",
+      "responses": [
+        {
+          "path": "/team/assets/index-Dciv9fJT.js",
+          "status": 404
+        },
+        {
+          "path": "/team/assets/react-vendor-DnVLYb7R.js",
+          "status": 404
+        },
+        {
+          "path": "/team/assets/lucide-CyMvrFOr.js",
+          "status": 404
+        },
+        {
+          "path": "/team/assets/index-JzbXVXK5.css",
+          "status": 200,
+          "contentType": "text/html",
+          "bodyPrefix": "<!doctype html>\r\n<html lang=\"zh-CN\">\r\n  <head>\r\n    <meta charset=\"UTF-8\" />\r\n  "
+        }
+      ],
+      "errors": [],
+      "bodyText": "",
+      "finalPath": "/team/2105477988504240129"
+    },
+    {
+      "pathname": "/team",
+      "responses": [
+        {
+          "path": "/assets/index-JzbXVXK5.css",
+          "status": 200,
+          "contentType": "text/css"
+        },
+        {
+          "path": "/assets/lucide-CyMvrFOr.js",
+          "status": 200,
+          "contentType": "text/javascript"
+        },
+        {
+          "path": "/assets/index-Dciv9fJT.js",
+          "status": 200,
+          "contentType": "text/javascript"
+        },
+        {
+          "path": "/assets/react-vendor-DnVLYb7R.js",
+          "status": 200,
+          "contentType": "text/javascript"
+        },
+        {
+          "path": "/assets/TitleBar-D9jIquey.js",
+          "status": 200,
+          "contentType": "text/javascript"
+        },
+        {
+          "path": "/assets/Login-Cd4CpFEl.js",
+          "status": 200,
+          "contentType": "text/javascript"
+        }
+      ],
+      "errors": [],
+      "bodyText": "星云盘\n安全同步你的文件\n\n支持大文件分片上传、秒传去重、多格式预览，\n让文件管理像本地操作一样流畅。\n\n分片上传 · 断点续传\nMD5 秒传\n© 2026 星云盘. All rights reser",
+      "finalPath": "/login"
+    }
+  ],
+  "currentSourceBase": "./",
+  "configFile": "false，避免编译配置文件产生产品临时文件；base/root/outDir与当前源码一致",
+  "browser": "154.0.8037.92"
+}

@@ -1,0 +1,48 @@
+{
+  "dispatchId": "DISPATCH-env-live-01",
+  "taskId": "TASK-20260930-environment-live",
+  "status": "completed",
+  "partial": true,
+  "artifactRefs": [
+    ".ai/docs/20260930-environment-remediation/live-report.md",
+    ".ai/docs/20260930-environment-remediation/live-auth-final.log",
+    ".ai/docs/20260930-environment-remediation/live-redis-final.log",
+    ".ai/docs/20260930-environment-remediation/live-sync-final-chain.log",
+    ".ai/docs/20260930-environment-remediation/live-sync-repeat-chain.log",
+    ".ai/docs/20260930-environment-remediation/live-sync-snapshot.log",
+    ".ai/docs/20260930-environment-remediation/live-mysql-final.tsv",
+    ".ai/docs/20260930-environment-remediation/live-redaction.log",
+    ".ai/docs/20260930-environment-remediation/live-sanitization.json",
+    ".ai/docs/20260930-environment-remediation/live-runtime/auth-source-manifest.json",
+    ".ai/docs/20260930-environment-remediation/live-runtime/sync-source-manifest.json",
+    ".ai/docs/20260930-environment-remediation/live-runtime/sync-final-snapshot.json"
+  ],
+  "criterionProposal": {
+    "id": "TEST_PASS",
+    "outcome": "pass",
+    "by": "/root/live_validation",
+    "dispatchId": "DISPATCH-env-live-01",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-env-live-01.json",
+    "validatedRevision": "env-code-r1"
+  },
+  "blockerProposals": [],
+  "background": "补当前真实认证和桌面同步专项，不关闭整体测试门禁。",
+  "inputs": ["TASK-20260930-environment-live", "env-design-r1", "当前实际桌面源码及执行SHA256", "8080 PID26304/r1不可变JAR", "专用随机账号和持久fixture"],
+  "analysis": {
+    "facts": [
+      "两轮桌面/Web共4请求并发401各仅刷新一次，旧refresh业务码1005拒绝；全新Node磁盘恢复再轮换成功。",
+      "真实Redis最新refresh与持久pair一致；成功日志无token。",
+      "真实删除恢复后的旧DELETE保留字节/映射；离线MOVE/RENAME UPDATE后新进程从SQLite恢复，游标推进。",
+      "实际manager启动网络故障清理后可重试，WS连接/通知、实际chokidar上传和S3下载MD5匹配。",
+      "分页字符串、根映射/双斜杠、重复保全ID三个真实问题由主线程修复，未清原fixture；完整链路连续两轮通过。",
+      "最终游标345，规范映射正确，5份恢复清单含旧副本完整，34条MQ journal关联Outbox已投递，6个版本保留。"
+    ],
+    "inferences": [],
+    "boundary": "Electron宿主/事件桥为适配，非Electron实机；当前后端为r1 JAR，最终r2需汇总复核模块哈希与运行证据。"
+  },
+  "decision": "AUTH01/AUTH02/SYNC01在记录的实际源码和服务上建议部分通过；未执行整体TEST_PASS Evaluate。",
+  "stateDelta": {"kind": "proposal-only", "stateWritten": false, "wholeCriterionClosed": false, "finalAggregateRevision": "env-code-r2"},
+  "risks": ["未覆盖Electron窗口、原生IPC、浏览器完整登录及长期压力。", "本任务S3验证对象为TXT，不能代表图片转换/缩略图验收。", "最终r2后端部署与运行告警不属于本专项通过结论。"],
+  "nextSteps": ["主线程核对Scope与真实证据并回收child。", "最终tester按env-code-r2和模块SHA汇总，不直接把本部分proposal闭为整体通过。"],
+  "changeImpact": "仅本任务测试脚本/日志/哈希/独立结果；凭据已清空脱敏，既有审计用户、文件、映射、版本和恢复副本保留；未改源码/State，未运行Maven/Git。"
+}

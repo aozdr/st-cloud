@@ -1,0 +1,175 @@
+{
+  "startedAt": "2026-10-01T10:38:15.867Z",
+  "fixture": {
+    "userId": "2105477981680107521",
+    "username": "env_exp_muow0kkf12c526",
+    "spaceId": "2105477988504240129",
+    "folderId": "2105477991222149121"
+  },
+  "backend": "http://127.0.0.1:8080",
+  "origin": "http://127.0.0.1:5175",
+  "mode": "native-vite-preview-with-test-only-middleware",
+  "requests": [
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:38:58.712Z"
+    },
+    {
+      "path": "/api/file/storage",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:38:58.731Z"
+    },
+    {
+      "path": "/api/notification/unread-count",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:38:58.752Z"
+    },
+    {
+      "path": "/api/transfer/speed-limit",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:38:58.768Z"
+    },
+    {
+      "path": "/api/favorite/ids",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:38:58.772Z"
+    },
+    {
+      "path": "/api/team/2105477988504240129/roles",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:38:58.784Z"
+    },
+    {
+      "path": "/api/team/2105477988504240129/members",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:38:58.803Z"
+    },
+    {
+      "path": "/api/team/2105477988504240129/files",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:38:58.821Z"
+    },
+    {
+      "path": "/api/team/2105477988504240129",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:38:58.840Z"
+    },
+    {
+      "path": "/api/file/folder-sizes",
+      "method": "POST",
+      "http": 200,
+      "at": "2026-10-01T10:38:59.357Z"
+    },
+    {
+      "path": "/api/notification/unread-count",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:39:28.750Z"
+    },
+    {
+      "path": "/api/notification/unread-count",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:39:58.740Z"
+    },
+    {
+      "path": "/api/notification/unread-count",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:40:28.737Z"
+    },
+    {
+      "path": "/api/file/storage",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:40:40.124Z"
+    },
+    {
+      "path": "/api/favorite/list",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:40:40.130Z"
+    },
+    {
+      "path": "/api/auth/me",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:40:40.136Z"
+    },
+    {
+      "path": "/api/favorite/ids",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:40:40.152Z"
+    },
+    {
+      "path": "/api/notification/unread-count",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:40:40.153Z"
+    },
+    {
+      "path": "/api/transfer/speed-limit",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:40:40.154Z"
+    },
+    {
+      "path": "/api/notification/unread-count",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:41:10.177Z"
+    },
+    {
+      "path": "/api/notification/unread-count",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:41:40.153Z"
+    },
+    {
+      "path": "/api/notification/unread-count",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:42:10.164Z"
+    },
+    {
+      "path": "/api/notification/unread-count",
+      "method": "GET",
+      "http": 200,
+      "at": "2026-10-01T10:42:40.159Z"
+    }
+  ],
+  "checks": [
+    {
+      "name": "authorized-fixture-recovery",
+      "http": 200,
+      "code": 200,
+      "userId": "2105477981680107521",
+      "oldRefreshSha": "11de47221b841d03abdb16c6e0a68f4dc3a284c34ceda16d7c0f4fad8cf0516e",
+      "newRefreshSha": "82f4885ddbf9762ab415e577fd6ed83258887f74102e475043a4a29a0a0016fe"
+    }
+  ],
+  "observations": [
+    {
+      "label": "restored-fixture-session",
+      "accessPresent": true,
+      "refreshPresent": true,
+      "accessSha": "249a564c0da8db26e813b287e9f4907f31a8a49d28d5a36446bed4407a7d0f6e",
+      "refreshSha": "82f4885ddbf9762ab415e577fd6ed83258887f74102e475043a4a29a0a0016fe",
+      "revision": 1,
+      "serverMatches": true,
+      "at": "2026-10-01T10:38:58.524Z"
+    }
+  ],
+  "offlineFailures": 0
+}

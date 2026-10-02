@@ -1,0 +1,10 @@
+静态门禁验证：从当前 Java 源码的 matches 字符串提取并反转义，再使用 PowerShell .NET Regex 核对真实 JDBC URL；退出码 0。
+
+jdbc:mysql://127.0.0.1:3306/stcloud_review_fixes_20260930 => True (符合预期)
+jdbc:mysql://127.0.0.1:3306/stcloud_review_fixes_20260930_env_team?useSSL=false => True (符合预期)
+jdbc:mysql://127.0.0.1:3306/stcloud => False (符合预期)
+jdbc:mysql://127.0.0.1:3306/production?label=stcloud_review_fixes_20260930 => False (符合预期)
+jdbc:h2:mem:stcloud_review_fixes_20260930 => False (符合预期)
+jdbc:mysql://127.0.0.1:3306/stcloud_review_fixes_20260930production => False (符合预期)
+
+未运行 javac/Maven/MySQL；此输出仅证明 URL 门禁检查，不证明用例编译及业务运行通过。

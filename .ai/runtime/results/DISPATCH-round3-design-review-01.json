@@ -1,0 +1,18 @@
+{
+  "dispatchId": "DISPATCH-round3-design-review-01",
+  "taskId": "TASK-20260912-round3-design-review",
+  "status": "completed",
+  "artifactRefs": [".ai/docs/20260912-code-review-round3/architecture-review.md"],
+  "criterionProposal": {
+    "id": "TECH_DESIGN",
+    "outcome": "blocked",
+    "by": "round3_design_review",
+    "dispatchId": "DISPATCH-round3-design-review-01",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-round3-design-review-01.json",
+    "validatedRevision": "round3-design-v1"
+  },
+  "blockerProposals": [],
+  "confirmationRequest": "design-v1 技术路径可行；需明确 DELETE 前已知 write_finished=true 才能在成功删除后终止扫描，以及 write_finished 不包含超时等不确定结果。用户确认仍由主线程处理，不建议当前直接通过 TECH_DESIGN。",
+  "validation": ["PowerShell 7 静态读取四个 canonical 写入点、FileObjectServiceImpl/Mapper、UploadCommitManager、RelayBufferManager、Desktop resume、ShareServiceImpl、PreviewServiceImpl 与模块 pom；未构建或测试"],
+  "findings": ["GC 必须处理 DELETE 后迟到 PUT；永久 DELETING 墓碑加周期重试可保守保证最终回收", "分享不可直接复用非图片回退原图的 getThumbnailUrl", "relay 部分写入后 RuntimeException 也必须 abort", "既有已归属对象 deletePhysical 并发风险不由候选协议解决"]
+}

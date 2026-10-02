@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-review-fixes-security-02",
+  "taskId": "TASK-20261001-review-fixes-security",
+  "idempotencyKey": "TASK-20261001-review-fixes-security",
+  "role": "reviewer",
+  "taskType": "security",
+  "objective": "独立复核跨标签认证凭据完整性、旧响应/退出竞态，以及墓碑空间清理后的租户和成员权限",
+  "taskRefs": [
+    ".ai/tasks/TASK-20261001-review-fixes-security.md",
+    ".ai/docs/20261001-review-fixes/design.md",
+    ".ai/docs/20261001-review-fixes/testcases.md"
+  ],
+  "stateRef": ".ai/state/20261001-review-fixes.yaml",
+  "artifactRefs": [
+    ".ai/docs/20261001-review-fixes/changereport.md",
+    ".ai/docs/20261001-review-fixes/source-manifest-r2.json",
+    ".ai/docs/20261001-review-fixes/r2/corrections.md"
+  ],
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      ".ai/docs/20261001-review-fixes/r2/security.md",
+      ".ai/runtime/results/DISPATCH-review-fixes-security-02.json"
+    ],
+    "exclude": [
+      "源码",
+      "测试源码",
+      ".ai/state/**",
+      "数据库",
+      "Git index",
+      "部署",
+      "历史证据"
+    ]
+  },
+  "acceptance": [
+    "确认 r1 的两项可复现竞态已关闭，依据真实云盘场景独立复核 r2",
+    "生成独立结果，proposal id=SECURITY_REVIEW，当前修订 review-fixes-code-r2"
+  ],
+  "validation": [
+    "核对 source-manifest-r2.json 当前六个 SHA256，运行新多页21项回归，复核旧失败已关闭",
+    "Node 只读测试允许；不得运行 Maven 或修改 State"
+  ],
+  "forbidSpawn": true,
+  "forbidGitMvn": true,
+  "output": {
+    "artifactRef": ".ai/runtime/results/DISPATCH-review-fixes-security-02.json"
+  }
+}

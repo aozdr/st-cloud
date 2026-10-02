@@ -1,0 +1,180 @@
+{
+  "checkedAtUtc": "2026-09-30T13:54:41.9105547Z",
+  "dockerVersion": "29.7.2",
+  "cpu": 16,
+  "memoryBytes": 7998173184,
+  "containers": [
+    {
+      "name": "stcloud-mysql",
+      "imageReference": "mysql:8.0",
+      "imageId": "sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b",
+      "repoDigests": [
+        "mysql@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b"
+      ],
+      "created": "2026-08-15T12:11:21.34843357Z",
+      "started": "2026-09-30T12:29:20.940937103Z",
+      "status": "running",
+      "lastExitCode": 0,
+      "oom": false,
+      "restartCount": 0,
+      "healthConfigured": false,
+      "health": null,
+      "architecture": "amd64",
+      "os": "linux",
+      "mountDestinations": [
+        "/docker-entrypoint-initdb.d",
+        "/var/lib/mysql"
+      ]
+    },
+    {
+      "name": "stcloud-redis",
+      "imageReference": "redis:7-alpine",
+      "imageId": "sha256:e7723ff73d963f5cc6d9c4643ea3d989527a402a319239054e9472a7fb9219a2",
+      "repoDigests": [
+        "redis@sha256:e7723ff73d963f5cc6d9c4643ea3d989527a402a319239054e9472a7fb9219a2"
+      ],
+      "created": "2026-08-15T11:49:21.243603429Z",
+      "started": "2026-09-30T12:29:20.915851971Z",
+      "status": "running",
+      "lastExitCode": 0,
+      "oom": false,
+      "restartCount": 0,
+      "healthConfigured": false,
+      "health": null,
+      "architecture": "amd64",
+      "os": "linux",
+      "mountDestinations": [
+        "/data"
+      ]
+    },
+    {
+      "name": "stcloud-rustfs",
+      "imageReference": "rustfs/rustfs:latest",
+      "imageId": "sha256:41fe89380f4120a337790c02af192c3fe7bb55c3edc2e6e9357b487b47c6ab21",
+      "repoDigests": [
+        "rustfs/rustfs@sha256:41fe89380f4120a337790c02af192c3fe7bb55c3edc2e6e9357b487b47c6ab21"
+      ],
+      "created": "2026-08-15T11:49:21.257785186Z",
+      "started": "2026-09-30T12:29:20.918677197Z",
+      "status": "running",
+      "lastExitCode": 0,
+      "oom": false,
+      "restartCount": 0,
+      "healthConfigured": false,
+      "health": null,
+      "architecture": "amd64",
+      "os": "linux",
+      "mountDestinations": [
+        "/data"
+      ]
+    },
+    {
+      "name": "stcloud-rocketmq-namesrv",
+      "imageReference": "apache/rocketmq:5.3.1",
+      "imageId": "sha256:d2b231c1b9204129e4f4dd65ec1521c81b8d6826e5f1fe8daa521dab0db5bf16",
+      "repoDigests": [
+        "apache/rocketmq@sha256:d2b231c1b9204129e4f4dd65ec1521c81b8d6826e5f1fe8daa521dab0db5bf16"
+      ],
+      "created": "2026-09-12T14:35:53.213579476Z",
+      "started": "2026-09-30T12:29:20.937783685Z",
+      "status": "running",
+      "lastExitCode": 0,
+      "oom": false,
+      "restartCount": 0,
+      "healthConfigured": false,
+      "health": null,
+      "architecture": "amd64",
+      "os": "linux",
+      "mountDestinations": []
+    },
+    {
+      "name": "stcloud-rocketmq-broker",
+      "imageReference": "apache/rocketmq:5.3.1",
+      "imageId": "sha256:d2b231c1b9204129e4f4dd65ec1521c81b8d6826e5f1fe8daa521dab0db5bf16",
+      "repoDigests": [
+        "apache/rocketmq@sha256:d2b231c1b9204129e4f4dd65ec1521c81b8d6826e5f1fe8daa521dab0db5bf16"
+      ],
+      "created": "2026-08-15T11:49:21.355646052Z",
+      "started": "2026-09-30T12:29:20.939160832Z",
+      "status": "running",
+      "lastExitCode": 0,
+      "oom": false,
+      "restartCount": 0,
+      "healthConfigured": false,
+      "health": null,
+      "architecture": "amd64",
+      "os": "linux",
+      "mountDestinations": []
+    },
+    {
+      "name": "stcloud-rocketmq-dashboard",
+      "imageReference": "apacherocketmq/rocketmq-dashboard:1.0.0",
+      "imageId": "sha256:24799aff6cf8157e13aa2473297abf36a80c4d3b52a9e379ae674c24c69c0a21",
+      "repoDigests": [
+        "apacherocketmq/rocketmq-dashboard@sha256:24799aff6cf8157e13aa2473297abf36a80c4d3b52a9e379ae674c24c69c0a21"
+      ],
+      "created": "2026-08-15T11:49:21.333042438Z",
+      "started": "2026-09-30T12:29:20.920613787Z",
+      "status": "running",
+      "lastExitCode": 0,
+      "oom": false,
+      "restartCount": 0,
+      "healthConfigured": false,
+      "health": null,
+      "architecture": "amd64",
+      "os": "linux",
+      "mountDestinations": [
+        "/tmp"
+      ]
+    },
+    {
+      "name": "stcloud-elasticsearch",
+      "imageReference": "docker-elasticsearch",
+      "imageId": "sha256:435daf75a6e4ad41cd3d506dbc1864565d6fc3688383d534ed3b06423923b3b1",
+      "repoDigests": [
+        "docker-elasticsearch@sha256:435daf75a6e4ad41cd3d506dbc1864565d6fc3688383d534ed3b06423923b3b1"
+      ],
+      "created": "2026-08-15T11:49:21.232916832Z",
+      "started": "2026-09-30T12:29:20.929805892Z",
+      "status": "running",
+      "lastExitCode": 0,
+      "oom": false,
+      "restartCount": 0,
+      "healthConfigured": false,
+      "health": null,
+      "architecture": "amd64",
+      "os": "linux",
+      "mountDestinations": [
+        "/usr/share/elasticsearch/data"
+      ]
+    },
+    {
+      "name": "stcloud-onlyoffice",
+      "imageReference": "onlyoffice/documentserver:latest",
+      "imageId": "sha256:3ab6ebc7c605e5a32b7ae3ff19daed4925090245acc8100ce2230bd766c88212",
+      "repoDigests": [
+        "onlyoffice/documentserver@sha256:3ab6ebc7c605e5a32b7ae3ff19daed4925090245acc8100ce2230bd766c88212"
+      ],
+      "created": "2026-08-15T13:10:50.799923962Z",
+      "started": "2026-09-30T12:29:20.936597123Z",
+      "status": "running",
+      "lastExitCode": 0,
+      "oom": false,
+      "restartCount": 0,
+      "healthConfigured": false,
+      "health": null,
+      "architecture": "amd64",
+      "os": "linux",
+      "mountDestinations": [
+        "/var/log/onlyoffice",
+        "/var/www/onlyoffice/Data",
+        "/etc/nginx/includes/ds-disable-sw.conf",
+        "/usr/share/fonts/truetype/custom",
+        "/usr/share/fonts/winfonts",
+        "/var/lib/onlyoffice",
+        "/var/lib/postgresql"
+      ]
+    }
+  ],
+  "historicalRootCause": "UNKNOWN: 当前 State 只反映本次启动，无历史故障时 OOM / 系统日志证据。"
+}

@@ -3,11 +3,12 @@ version: '3.8'
 services:
   # MySQL 8.0
   mysql:
-    image: mysql:8.0
+    # 实装 MySQL 8.0.46；固定 digest，避免标签移动后版本漂移。
+    image: mysql@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b
     container_name: stcloud-mysql
     restart: unless-stopped
     environment:
-      MYSQL_ROOT_PASSWORD: "123456"
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-123456}
       MYSQL_DATABASE: stcloud
       TZ: Asia/Shanghai
     ports:
@@ -16,10 +17,17 @@ services:
       - mysql_data:/var/lib/mysql
       - ./mysql/init:/docker-entrypoint-initdb.d
     command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$$MYSQL_ROOT_PASSWORD\" mysql --user=root --batch --execute='SELECT 1' stcloud >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
 
   # Redis 7
   redis:
-    image: redis:7-alpine
+    # 实装 Redis 7.4.10 Alpine。
+    image: redis@sha256:e7723ff73d963f5cc6d9c4643ea3d989527a402a319239054e9472a7fb9219a2
     container_name: stcloud-redis
     restart: unless-stopped
     ports:
@@ -27,35 +35,55 @@ services:
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes --requirepass ""
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
 
   # RustFS (S3 兼容对象存储)
   rustfs:
-    image: rustfs/rustfs:latest
+    # 实装 RustFS 1.0.0-beta.12。
+    image: rustfs/rustfs@sha256:41fe89380f4120a337790c02af192c3fe7bb55c3edc2e6e9357b487b47c6ab21
     container_name: stcloud-rustfs
     restart: unless-stopped
     environment:
-      RUSTFS_ACCESS_KEY: stcloud
-      RUSTFS_SECRET_KEY: stcloud123
+      RUSTFS_ACCESS_KEY: ${STCLOUD_S3_ACCESS_KEY:-stcloud}
+      RUSTFS_SECRET_KEY: ${STCLOUD_S3_SECRET_KEY:-stcloud123}
     ports:
       - "9000:9000"
       - "9001:9001"
     volumes:
       - rustfs_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent --show-error --max-time 3 http://localhost:9000/health/ready | grep -q '\"ready\":true'"]
+      interval: 15s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
 
   # RocketMQ NameServer
   rocketmq-namesrv:
-    image: apache/rocketmq:5.3.1
+    image: apache/rocketmq@sha256:d2b231c1b9204129e4f4dd65ec1521c81b8d6826e5f1fe8daa521dab0db5bf16
     container_name: stcloud-rocketmq-namesrv
     restart: unless-stopped
     ports:
-      # 宿主机映射 19876：Windows 排除端口段（WinNAT 动态保留 9817~9916）禁止绑定 9876，
-      # 容器内仍监听 9876（broker/dashboard 走容器网络服务名），后端连 127.0.0.1:19876
-      - "19876:9876"
+      # 宿主机与容器均使用 RocketMQ NameServer 默认端口 9876
+      - "9876:9876"
     command: sh mqnamesrv
+    # 直接用低内存 Java 调用，避开 mqadmin/tools.sh 固定申请 1GB 堆。
+    healthcheck:
+      test: ["CMD-SHELL", "java -Xms16m -Xmx64m -cp '/home/rocketmq/rocketmq-5.3.1/conf:/home/rocketmq/rocketmq-5.3.1/lib/*' org.apache.rocketmq.tools.command.MQAdminStartup getNamesrvConfig -n localhost:9876 2>/dev/null | grep -q 'defaultThreadPoolNums'"]
+      interval: 30s
+      timeout: 10s
+      retries: 6
+      start_period: 30s
 
   # RocketMQ Broker
+  # 当前实装 Broker 的 /home/rocketmq/store 位于容器可写层，没有持久卷。
+  # 禁止直接 compose up 重建：须先授权停机、完整备份消息/位点并完成持久化迁移。
   rocketmq-broker:
-    image: apache/rocketmq:5.3.1
+    image: apache/rocketmq@sha256:d2b231c1b9204129e4f4dd65ec1521c81b8d6826e5f1fe8daa521dab0db5bf16
     container_name: stcloud-rocketmq-broker
     restart: unless-stopped
     ports:
@@ -63,28 +91,43 @@ services:
       - "10911:10911"
       - "10912:10912"
     depends_on:
-      - rocketmq-namesrv
+      rocketmq-namesrv:
+        condition: service_healthy
     environment:
       NAMESRV_ADDR: "rocketmq-namesrv:9876"
     command: sh -c "echo 'brokerIP1 = 127.0.0.1' >> /home/rocketmq/rocketmq-5.3.1/conf/broker.conf && echo 'namesrvAddr = rocketmq-namesrv:9876' >> /home/rocketmq/rocketmq-5.3.1/conf/broker.conf && echo 'autoCreateTopicEnable = true' >> /home/rocketmq/rocketmq-5.3.1/conf/broker.conf && sh mqbroker -c /home/rocketmq/rocketmq-5.3.1/conf/broker.conf"
+    healthcheck:
+      test: ["CMD-SHELL", "java -Xms16m -Xmx64m -cp '/home/rocketmq/rocketmq-5.3.1/conf:/home/rocketmq/rocketmq-5.3.1/lib/*' org.apache.rocketmq.tools.command.MQAdminStartup brokerStatus -b localhost:10911 2>/dev/null | grep -Eq 'brokerActive[[:space:]]*:[[:space:]]*true'"]
+      interval: 30s
+      timeout: 10s
+      retries: 6
+      start_period: 60s
 
   # RocketMQ Dashboard (可选)
   rocketmq-dashboard:
-    image: apacherocketmq/rocketmq-dashboard:1.0.0
+    image: apacherocketmq/rocketmq-dashboard@sha256:24799aff6cf8157e13aa2473297abf36a80c4d3b52a9e379ae674c24c69c0a21
     container_name: stcloud-rocketmq-dashboard
     restart: unless-stopped
     ports:
       - "9080:8080"
     depends_on:
-      - rocketmq-namesrv
+      rocketmq-namesrv:
+        condition: service_healthy
     environment:
       JAVA_OPTS: "-Drocketmq.namesrv.addr=rocketmq-namesrv:9876"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "--show-error", "--output", "/dev/null", "--max-time", "3", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 5s
+      retries: 6
+      start_period: 60s
 
   # Elasticsearch 8.x (全文搜索 + 文档解析)
   elasticsearch:
-    build:
-      context: ./elasticsearch
-      dockerfile: Dockerfile
+    # 本机 ES 8.12.0 + IK 构建产物；该 digest 不是已发布的远程仓库镜像。
+    # 新机器先按 Dockerfile 构建，再将核验后的镜像引用设为 STCLOUD_ELASTICSEARCH_IMAGE。
+    image: ${STCLOUD_ELASTICSEARCH_IMAGE:-docker-elasticsearch@sha256:435daf75a6e4ad41cd3d506dbc1864565d6fc3688383d534ed3b06423923b3b1}
+    pull_policy: never
     container_name: stcloud-elasticsearch
     restart: unless-stopped
     environment:
@@ -95,10 +138,18 @@ services:
       - "9200:9200"
     volumes:
       - es_data:/usr/share/elasticsearch/data
+    # 单节点允许 yellow；仅 HTTP 200 不足以排除 red / timed_out。
+    healthcheck:
+      test: ["CMD-SHELL", "response=$$(curl --fail --silent --show-error --max-time 5 'http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=3s') && printf '%s' \"$$response\" | grep -Eq '\"status\":\"(green|yellow)\"' && printf '%s' \"$$response\" | grep -q '\"timed_out\":false'"]
+      interval: 30s
+      timeout: 7s
+      retries: 6
+      start_period: 60s
 
   # OnlyOffice Document Server（在线文档编辑，社区版，2 核 2GB 起）
   onlyoffice:
-    image: onlyoffice/documentserver:latest
+    # 实装 OnlyOffice Document Server 9.4.0-129。
+    image: onlyoffice/documentserver@sha256:3ab6ebc7c605e5a32b7ae3ff19daed4925090245acc8100ce2230bd766c88212
     container_name: stcloud-onlyoffice
     restart: unless-stopped
     # 持久化修复：首次启动/空 Data 卷时先创建 certs 目录，避免启动脚本 find 报
@@ -124,6 +175,12 @@ services:
       - C:/Windows/Fonts:/usr/share/fonts/winfonts:ro
       # 禁用 OnlyOffice Service Worker（浏览器 SW fetch 异常导致编辑器白屏，20260815 实测）
       - ./onlyoffice/nginx/disable-sw.conf:/etc/nginx/includes/ds-disable-sw.conf:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent --show-error --max-time 3 http://localhost/healthcheck | grep -qx 'true'"]
+      interval: 30s
+      timeout: 5s
+      retries: 6
+      start_period: 90s
 
 volumes:
   mysql_data:

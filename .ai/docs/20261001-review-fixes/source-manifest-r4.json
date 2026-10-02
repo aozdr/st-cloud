@@ -1,0 +1,31 @@
+{
+  "revision": "review-fixes-code-r4",
+  "designRevision": "review-fixes-design-r1",
+  "files": [
+    {
+      "path": "st-web/src/auth-session.ts",
+      "sha256": "243A6B8BED7B4C2E93A65D3DE1B70730429E0B00AC5D4C95CC2202044C521159"
+    },
+    {
+      "path": "st-web/src/store/auth-tabs.test.mjs",
+      "sha256": "B1C546F66D35DA5AB97DAFE7D475A00D22C6150EBDD89ABBA7BE7E8A54BD6F49"
+    },
+    {
+      "path": "st-desktop/src/auth-test-harness.cjs",
+      "sha256": "23FAEF8156D3023E186E7A85A0BD3C4AEA5130C8E593AB0BA3E445369DABD530"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/mapper/TeamStorageMapper.java",
+      "sha256": "3A68D170939B01E82709CB7F663FE2250C771483A99DDCC4273E99A4BA0903C5"
+    },
+    {
+      "path": "st-core/src/main/java/com/stcloud/core/service/impl/RecycleBinServiceImpl.java",
+      "sha256": "13ED56385336CA23C3595B04A182F439BDA45A75C680C5468C44714A8A5519A4"
+    },
+    {
+      "path": "st-core/src/test/java/com/stcloud/core/service/impl/TeamRecycleBinIntegrationTest.java",
+      "sha256": "72C2CDE2CCAD04E27B931006E87386EEA6ECE993C12CC10255DA43DA98024984"
+    }
+  ],
+  "note": "r3低共享修订忽略本页明确拒绝问题已修；拒绝匹配对应及更早修订。60Node/26H2证据，core与r1相同。"
+}

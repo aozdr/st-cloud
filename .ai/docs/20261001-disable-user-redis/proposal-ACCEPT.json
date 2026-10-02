@@ -1,0 +1,32 @@
+{
+  "taskId": "20261001-disable-user-redis",
+  "criterionProposal": {
+    "outcome": "pass",
+    "evidenceRef": ".ai/docs/20261001-disable-user-redis/acceptance.md",
+    "id": "ACCEPT",
+    "validatedRevision": "disable-redis-code-r1",
+    "by": "workflow-manager"
+  },
+  "acceptanceEvidence": [
+    {
+      "criterion": "A1",
+      "validatedRevision": "disable-redis-code-r1",
+      "evidenceRef": ".ai/docs/20261001-disable-user-redis/acceptance.md"
+    },
+    {
+      "criterion": "A2",
+      "validatedRevision": "disable-redis-code-r1",
+      "evidenceRef": ".ai/docs/20261001-disable-user-redis/acceptance.md"
+    },
+    {
+      "criterion": "A3",
+      "validatedRevision": "disable-redis-code-r1",
+      "evidenceRef": ".ai/docs/20261001-disable-user-redis/acceptance.md"
+    },
+    {
+      "criterion": "A4",
+      "validatedRevision": "disable-redis-code-r1",
+      "evidenceRef": ".ai/docs/20261001-disable-user-redis/acceptance.md"
+    }
+  ]
+}

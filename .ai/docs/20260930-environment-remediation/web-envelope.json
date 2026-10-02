@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-env-web-01",
+  "taskId": "TASK-20260930-environment-web",
+  "idempotencyKey": "TASK-20260930-environment-web",
+  "role": "executor",
+  "taskType": "implement",
+  "objective": "按 TASK 完成 V04 浏览器专项。首条输出 DISPATCH_ACK并向/root回传ACK三元组，然后继续工作。部分IMPLEMENTED proposal，by=/root/web_validation，revision env-code-r1。",
+  "taskRefs": [
+    ".ai/tasks/TASK-20260930-environment-web.md",
+    ".ai/docs/20260930-environment-remediation/design.md",
+    ".ai/docs/20260930-environment-remediation/testcases.md"
+  ],
+  "stateRef": ".ai/state/20260930-environment-remediation.yaml",
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      "st-web/src/components/preview/PreviewModal.tsx",
+      "st-web/src/components/preview/*test*",
+      ".ai/docs/20260930-environment-remediation/web-*",
+      ".ai/runtime/results/DISPATCH-env-web-01.json"
+    ],
+    "exclude": [
+      ".ai/state/**",
+      "其他产品源码",
+      "后端",
+      "数据库",
+      "历史记录"
+    ]
+  },
+  "acceptance": [
+    "Tab Space Enter 左右键 焦点名称",
+    "同一挂载updatedAt URL变化和旧error",
+    "对比度量化并保存新证据"
+  ],
+  "validation": [
+    "真实Chromium/React；现有Node、esbuild和bundled Playwright，不安装依赖",
+    "不运行Maven/Git"
+  ],
+  "forbidSpawn": true,
+  "forbidGitMvn": true,
+  "output": {
+    "resultRef": ".ai/runtime/results/DISPATCH-env-web-01.json"
+  }
+}

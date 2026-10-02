@@ -89,10 +89,10 @@ function FileTableView({
   );
 
   return (
-    <div className="bg-[#FEFEFD] dark:bg-surface overflow-x-auto">
+    <div className="bg-surface overflow-x-auto">
       <div role="table" className="w-full min-w-[760px]">
         {/* 表头 */}
-        <div role="row" className="flex items-center bg-[#F8FAFC] dark:bg-surface-2 border-t border-b border-border">
+        <div role="row" className="flex items-center bg-surface-2 border-t border-b border-border">
           <div role="columnheader" className="w-11 px-4 h-10 flex items-center">
             <button
               onClick={onSelectAll}
@@ -105,7 +105,7 @@ function FileTableView({
                   ? 'bg-primary-600 border-primary-600'
                   : someSelected
                     ? 'bg-primary-100 border-primary-300'
-                    : 'border-[#CDD2DC] hover:border-primary-400 bg-surface',
+                    : 'border-border hover:border-primary-400 bg-surface',
               )}
             >
               {allSelected && <Check className="w-3 h-3 text-white" strokeWidth={3} aria-hidden />}
@@ -136,12 +136,12 @@ function FileTableView({
                 data-file-id={file.id}
                 style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: rowHeight, transform: `translateY(${vi.start - scrollMargin}px)` }}
                 className={cn(
-                  'flex items-center border-b border-border last:border-0 transition-colors duration-150',
+                  'group flex items-center border-b border-border last:border-0 transition-colors duration-150 focus-within:bg-bg-hover',
                   isSelected
-                    ? 'bg-[#EEF0FF] dark:bg-primary-950/40'
+                    ? 'bg-primary-50 dark:bg-primary-950/40'
                     : dragOverFolderId === file.id
                       ? 'bg-primary-500/10 ring-2 ring-primary-400 ring-inset'
-                      : 'hover:bg-[#F8FAFF] dark:hover:bg-surface-2',
+                      : 'hover:bg-bg-hover dark:hover:bg-surface-2',
                   focusedId === file.id && !isSelected && dragOverFolderId !== file.id && 'bg-primary-500/5',
                   cutIds?.has(file.id) && 'opacity-50',
                 )}
@@ -160,7 +160,7 @@ function FileTableView({
                     aria-label="选择"
                     className={cn(
                       'w-4 h-4 rounded border flex items-center justify-center transition-[background-color,border-color,opacity] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100',
-                      isSelected ? 'bg-primary-600 border-primary-600 opacity-100' : 'border-[#CDD2DC] bg-surface opacity-0 group-hover:opacity-100',
+                      isSelected ? 'bg-primary-600 border-primary-600 opacity-100' : 'border-border bg-surface opacity-0 group-hover:opacity-100 group-focus-within:opacity-100',
                     )}
                   >
                     {isSelected && <Check className="w-3 h-3 text-white" strokeWidth={3} aria-hidden />}
@@ -189,8 +189,8 @@ function FileTableView({
                     aria-label={isFavorite(file.id) ? '取消收藏' : '收藏'}
                     title={isFavorite(file.id) ? '取消收藏' : '收藏'}
                     className={cn(
-                      'inline-flex w-8 h-8 rounded-lg items-center justify-center transition-[background-color,color,opacity] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100',
-                      isFavorite(file.id) ? 'text-amber-400 opacity-100' : 'text-tertiary hover:text-amber-400 opacity-0 group-hover:opacity-100',
+                      'inline-flex w-8 h-8 rounded-lg items-center justify-center transition-[background-color,color,opacity] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100 hover:bg-surface-2',
+                      isFavorite(file.id) || isSelected ? 'text-amber-400 opacity-100' : 'text-tertiary hover:text-amber-400 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100',
                     )}
                   >
                     <Star className="w-4 h-4" fill={isFavorite(file.id) ? 'currentColor' : 'none'} aria-hidden />
@@ -200,7 +200,7 @@ function FileTableView({
                       onClick={(e) => { e.stopPropagation(); onItemMenu(e, file); }}
                       onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); onContextMenu(e, file); }}
                       aria-label="更多操作"
-                      className="w-8 h-8 rounded-lg inline-flex items-center justify-center text-tertiary hover:text-fg hover:bg-surface-2 opacity-0 group-hover:opacity-100 transition-[background-color,color,opacity] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100"
+                      className={cn('w-8 h-8 rounded-lg inline-flex items-center justify-center text-tertiary hover:text-fg hover:bg-surface-2 transition-[background-color,color,opacity] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100', isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100')}
                     >
                       <MoreHorizontal className="w-4 h-4" aria-hidden />
                     </button>

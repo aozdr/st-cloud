@@ -332,10 +332,7 @@ class EditorCallbackTransactionBoundaryTest {
                 eq((long) callbackContent.length), anyString());
         verify(storageService, org.mockito.Mockito.never()).deleteObject(anyString());
         String md5 = cn.hutool.crypto.digest.DigestUtil.md5Hex(callbackContent);
-        assertEquals(1L, jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM file_orphan_candidate WHERE tenant_id = 1 AND md5 = ? "
-                        + "AND active_uploads = 0 AND status = 1",
-                Long.class, md5));
+        assertEquals(1L, jdbcTemplate.queryForObject("SELECT COUNT(*) FROM object_upload_candidate WHERE tenant_id=1 AND md5=? AND state='DISCARDED'", Long.class, md5));
         FileNode after = fileNodeMapper.selectById(node.getId());
         assertEquals(1024L, after.getFileSize(), "DB 失败后节点内容不应变化");
     }

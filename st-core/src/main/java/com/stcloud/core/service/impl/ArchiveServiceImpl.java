@@ -19,6 +19,7 @@ import com.stcloud.core.service.impl.upload.UploadCommitManager;
 import com.stcloud.core.service.impl.upload.UploadStorageManager;
 import com.stcloud.core.util.FileNameSanitizer;
 import jakarta.annotation.Resource;
+import com.stcloud.core.service.impl.upload.ObjectUploadCandidateService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -53,9 +54,9 @@ public class ArchiveServiceImpl implements ArchiveService {
     @Resource
     private UploadCommitManager uploadCommitManager;
     @Resource
+    private ObjectUploadCandidateService objectUploadCandidateService;
+    @Resource
     private UploadStorageManager uploadStorageManager;
-    @org.springframework.beans.factory.annotation.Autowired(required = false)
-    private OrphanObjectCleanupService orphanObjectCleanupService;
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private ArchiveSafetyProperties archiveSafetyProperties = new ArchiveSafetyProperties();
 
@@ -162,31 +163,19 @@ public class ArchiveServiceImpl implements ArchiveService {
                         String md5 = content.md5();
                         String contentType = guessContentType(suffix);
 
-                        // 去重预查（事务外）：同租户同 md5 复用物理对象（秒传），否则上传到规范路径 {tenantId}/{md5}
+                        // 去重预查（事务外）：同租户同 md5 复用物理对象（秒传），否则上传到独立候选路径
                         FileObject existing = fileObjectService.findByTenantAndMd5(tenantId, md5);
                         String storagePath;
                         boolean uploadedNew = false;
                         if (existing != null) {
                             storagePath = existing.getStoragePath();
                         } else {
-                            storagePath = tenantId + "/" + md5;
-                            if (orphanObjectCleanupService != null) {
-                                orphanObjectCleanupService.beginUpload(tenantId, md5, storagePath);
-                            }
                             try (InputStream contentStream = Files.newInputStream(content.path())) {
-                                storageService.uploadObject(storagePath, contentStream,
+                                storagePath = objectUploadCandidateService.upload(tenantId, md5, contentStream,
                                         content.size(), contentType);
                                 uploadedNew = true;
                             } catch (IOException e) {
-                                if (orphanObjectCleanupService != null) {
-                                    orphanObjectCleanupService.markFailed(tenantId, storagePath);
-                                }
                                 throw new BusinessException(ResultCode.FILE_UPLOAD_FAILED);
-                            } catch (RuntimeException e) {
-                                if (orphanObjectCleanupService != null) {
-                                    orphanObjectCleanupService.markFailed(tenantId, storagePath);
-                                }
-                                throw e;
                             }
                         }
                         item.put("size", content.size());
@@ -221,13 +210,6 @@ public class ArchiveServiceImpl implements ArchiveService {
                 // 事务失败只释放候选活动计数，禁止立即删除规范对象。
                 cleanupUploadedEntries(tenantId, entries);
                 throw e;
-            }
-            for (Map<String, Object> item : entries) {
-                if (Boolean.TRUE.equals(item.get("uploadedNew"))) {
-                    if (orphanObjectCleanupService != null) {
-                        orphanObjectCleanupService.markCommitted(tenantId, (String) item.get("storagePath"));
-                    }
-                }
             }
             // 进度回调在全部落库成功后按文件数触发（语义与改造前一致：成功才计数）
             for (int i = 0; i < count; i++) {
@@ -450,9 +432,8 @@ public class ArchiveServiceImpl implements ArchiveService {
     }
 
     private void cleanupOrphanUpload(Long tenantId, String md5, String storagePath) {
-        if (orphanObjectCleanupService != null) {
-            orphanObjectCleanupService.markFailed(tenantId, storagePath);
-        }
+        // 仅放弃未采用的候选，延迟 GC 按持久引用回收，不立即删除物理对象。
+        objectUploadCandidateService.discard(tenantId, storagePath);
     }
 
     /** 校验个人存储配额（与上传/复制路径一致） */

@@ -43,8 +43,8 @@ interface TransferTaskCardProps {
 /**
  * 单条传输任务卡片（视觉升级版）：
  * - 左侧 3px 类型色条（上传蓝 / 下载绿），扫一眼即可分辨方向
- * - 活跃进度条用品牌渐变 + 光泽流动动画
- * - 悬浮抬升 + 阴影加深，强化可交互感
+ * - 活跃进度条使用单色状态色，保持传输列表稳定
+ * - 普通任务卡片不使用悬浮抬升或重阴影
  */
 function TransferTaskCard({ task, onPause, onResume, onCancel, onOpenFile, onShowInFolder, onDelete }: TransferTaskCardProps) {
   const cfg = statusConfig[task.status];
@@ -57,13 +57,11 @@ function TransferTaskCard({ task, onPause, onResume, onCancel, onOpenFile, onSho
   const suffix = dotIdx > 0 ? task.fileName.slice(dotIdx + 1) : null;
   const fileCfg = getFileTypeConfig(1, suffix);
   const accentText = isUpload ? 'text-blue-600 dark:text-blue-400' : 'text-emerald-600 dark:text-emerald-400';
-  const stripe = isUpload ? 'bg-gradient-to-b from-blue-500 to-blue-400' : 'bg-gradient-to-b from-emerald-500 to-emerald-400';
-  const barFill = isUpload
-    ? 'bg-gradient-to-r from-blue-600 to-sky-400'
-    : 'bg-gradient-to-r from-emerald-600 to-teal-400';
+  const stripe = isUpload ? 'bg-primary-500' : 'bg-success';
+  const barFill = isUpload ? 'bg-primary-600' : 'bg-success';
 
   return (
-    <div className="group relative bg-surface rounded-xl border border-border mb-2.5 overflow-hidden transition-all duration-200 hover:shadow-card hover:-translate-y-0.5 hover:border-primary-200/60 focus-within:ring-2 focus-within:ring-ring/40">
+    <div className="group relative bg-surface rounded-xl border border-border-light mb-2.5 overflow-hidden transition-colors duration-150 hover:bg-bg-hover focus-within:ring-2 focus-within:ring-ring/40">
       {/* 左侧类型色条 */}
       <div className={`absolute left-0 top-0 bottom-0 w-[3px] ${stripe}`} aria-hidden />
 
@@ -112,7 +110,7 @@ function TransferTaskCard({ task, onPause, onResume, onCancel, onOpenFile, onSho
               <div className="flex-1 h-2 bg-surface-2 rounded-full overflow-hidden">
                 <div
                   className={`h-full rounded-full transition-[width] duration-500 ease-out ${
-                    isPaused ? 'bg-amber-400' : `${barFill} ${isPaused ? '' : 'progress-sheen'}`
+                    isPaused ? 'bg-amber-400' : barFill
                   }`}
                   style={{ width: `${Math.max(task.progress, 2)}%` }}
                 />
@@ -161,9 +159,7 @@ function TransferTaskCard({ task, onPause, onResume, onCancel, onOpenFile, onSho
         <div className="flex flex-col items-end justify-between gap-1.5 flex-shrink-0">
           {isActive && (
             <div className={`px-2 py-0.5 rounded-md text-xs font-bold tabular-nums text-white shadow-sm flex items-center gap-1 ${
-              isUpload
-                ? 'bg-gradient-to-r from-blue-500 to-sky-500 shadow-blue-500/20'
-                : 'bg-gradient-to-r from-emerald-500 to-teal-500 shadow-emerald-500/20'
+              isUpload ? 'bg-primary-600' : 'bg-success'
             }`}>
               {isUpload ? <ArrowUp className="w-3 h-3" aria-hidden /> : <ArrowDown className="w-3 h-3" aria-hidden />}
               {formatSpeed(task.speed)}

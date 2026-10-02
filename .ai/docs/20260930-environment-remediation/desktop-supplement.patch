@@ -1,0 +1,81 @@
+*** Begin Patch
+*** Update File: D:/code/st-cloud/st-desktop/src/types.ts
+@@
+-export interface ElectronAPI {
++export interface DesktopAuthSnapshot {
++  token: string | null;
++  refreshToken: string | null;
++  sessionId: string;
++  serverUrl: string;
++  revision: number;
++}
++
++export interface ElectronAPI {
+@@
+-  setAuth: (token: string, refreshToken: string) => void;
++  setAuth: (token: string, refreshToken: string, sessionId?: string) => Promise<DesktopAuthSnapshot>;
++  getAuth: () => Promise<DesktopAuthSnapshot>;
++  refreshAuth: (sessionId: string) => Promise<DesktopAuthSnapshot>;
++  clearAuth: (sessionId?: string) => Promise<DesktopAuthSnapshot>;
++  onAuthChanged: (cb: (auth: DesktopAuthSnapshot) => void) => () => void;
+*** Update File: D:/code/st-cloud/st-desktop/src/ipc-handlers.ts
+@@
+-import { setAuth, setBaseUrl } from './api-client';
++import { setAuth, setBaseUrl, getAuth, clearAuth, refreshAuth } from './api-client';
+@@
+-  ipcMain.handle('auth:set', async (_event, token: string, refreshToken: string) => {
+-    // 切换用户时先停止所有同步引擎，防止旧用户引擎用新 token 访问导致失败日志
+-    await stopAllSync();
+-    setAuth(token, refreshToken);
+-    // 按新用户身份恢复同步引擎
+-    resumeSyncEngines().catch((err) => {
+-      console.warn('[sync] resume after auth change failed:', String(err).substring(0, 100));
+-    });
+-  });
++  // 认证代次立即推进；引擎切换串行，避免旧 IPC 等待结束后覆盖新登录。
++  let authLifecycle = Promise.resolve();
++  const queueAuthLifecycle = () => {
++    authLifecycle = authLifecycle.then(async () => {
++      await stopAllSync();
++      if (getAuth().token) await resumeSyncEngines();
++    }).catch(() => { console.warn('[sync] auth lifecycle failed'); });
++  };
++  ipcMain.handle('auth:set', (_event, token: string, refreshToken: string, sessionId?: string) => {
++    const previous = getAuth();
++    const auth = setAuth(token, refreshToken, sessionId);
++    if (previous.sessionId !== auth.sessionId) queueAuthLifecycle();
++    return auth;
++  });
++  ipcMain.handle('auth:get', () => getAuth());
++  ipcMain.handle('auth:refresh', (_event, sessionId: string) => refreshAuth(sessionId));
++  ipcMain.handle('auth:clear', (_event, sessionId?: string) => {
++    const previous = getAuth();
++    const auth = clearAuth(sessionId);
++    if (previous.token && !auth.token) queueAuthLifecycle();
++    return auth;
++  });
+@@
+   ipcMain.handle('server:setUrl', (_event, url: string) => {
+     saveServerUrl(url);
+     setBaseUrl(getServerUrl());
++    queueAuthLifecycle();
+   });
+*** Update File: D:/code/st-cloud/st-web/src/lib/electron.ts
+@@
+-/**
+- * Electron 环境检测与 IPC 封装
+- */
++/** Electron 环境检测与 IPC 封装 */
++import { syncDesktopAuth } from '../auth-session';
+@@
+ export function syncAuthToElectron(): void {
+-  if (!isElectron()) return;
+-  const token = sessionStorage.getItem('accessToken');
+-  const refreshToken = localStorage.getItem('refreshToken');
+-  if (token && refreshToken) {
+-    window.electronAPI!.setAuth(token, refreshToken);
+-  }
++  // 新桥接会接收主进程最新令牌，旧接口仍可只接收两项参数。
++  void syncDesktopAuth().catch(() => { console.warn('桌面认证同步暂时失败'); });
+ }
+*** End Patch

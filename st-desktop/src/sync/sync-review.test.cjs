@@ -58,20 +58,25 @@ function fixture(t, options = {}) {
   const md5 = {calculateFileMd5:async file=>hash(fs.readFileSync(file))};
   const download = load('sync/sync-download.ts',{fs,os,path,crypto,'../api-client':{apiClient},'../database':database,
     '../utils/md5':md5,'../sync-utils':utils,'./sync-shared':shared});
-  const actualReconcile = load('sync/sync-reconcile.ts',{fs,path,'../api-client':{apiClient},'../database':database,
+  const actualReconcile = load('sync/sync-reconcile.ts',{fs,path,crypto,'../api-client':{apiClient},'../database':database,
     '../utils/md5':md5,'./sync-shared':shared,'./sync-recovery':recovery});
   const reconcile = {...actualReconcile,async fullReconcile(ctx) {
     effects.reconciliations++;
+    if (options.reconcileGate) await options.reconcileGate;
     return broken === 'reconcile'?false:actualReconcile.fullReconcile(ctx);
   }};
   const engineModule = load('sync-engine.ts',{fs,path,crypto,'./api-client':{apiClient},'./database':database,
     './file-watcher':{FileWatcher:class {setHandler() {} async start(){effects.watcherStarts++;} async stop(){effects.watcherStops++;}}},
     './utils/md5':md5,'./sync-retry':{},'./sync-utils':utils,'./sync/sync-shared':shared,
     './sync/sync-upload':{},'./sync/sync-download':download,'./sync/sync-reconcile':reconcile,'./sync/sync-recovery':recovery
-  },{setInterval:()=>{effects.timers++;return 1;},clearInterval:()=>{effects.timers--;}});
+  },{setInterval:callback=>{effects.timers++;effects.tick=callback;return 1;},clearInterval:()=>{effects.timers--;}});
   const engine = new engineModule.SyncEngine({rootId:'R',localPath:root,cloudFolderNodeId:'ROOT'});
   engine.scanLocalChanges=async()=>{};
-  const manager = load('sync-manager.ts',{electron:{BrowserWindow:{getAllWindows:()=>[]}},'./api-client':{apiClient},
+  let authGeneration = 1;
+  const assertAuthGeneration = expected => { if (expected !== authGeneration) throw Error('认证会话已变更'); };
+  const manager = load('sync-manager.ts',{electron:{BrowserWindow:{getAllWindows:()=>[]}},'./api-client':{apiClient,
+    captureAuthGeneration:()=>authGeneration, assertAuthGeneration,
+    runWithAuthGeneration:(expected, action)=>{assertAuthGeneration(expected);return action();}},
     './sync-engine':engineModule,'./database':database,'./ws-client':{SyncWsClient:class {onChange(){}onStatus(){}start(){}stop(){}}}});
   t.after(()=>manager.stopAllSync());
   function local(rel, bytes, nodeId = 'N', changed = false) {
@@ -80,9 +85,33 @@ function fixture(t, options = {}) {
       localMtime:changed?1:fs.statSync(absolute).mtimeMs,status:'synced'});
   }
   return {root,userData,states,requests,logs,effects,engine,manager,local,config:()=>config,
-    recover:()=>{broken=false;},changes:value=>{changes=value;}};
+    changeAuth:()=>{authGeneration++;},recover:()=>{broken=false;},changes:value=>{changes=value;}};
 }
 const move = type=>({logId:'2',nodeId:'N',nodeType:1,changeType:type,path:'/new.txt',oldPath:'/old.txt',size:1,md5:hash('a'),updatedAt:'2026-09-01'});
+
+test('账号切换后旧引擎定时器收敛异常且不发送请求', async t => {
+  const h = fixture(t);
+  await h.manager.startSync('R','ROOT',h.root);
+  const before = h.requests.length;
+  h.changeAuth();
+  h.effects.tick();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(h.requests.length, before);
+});
+
+test('会话在启动对账期间变化，不提交同步版本或启动监听器', async t => {
+  let release;
+  const reconcileGate = new Promise(resolve => { release = resolve; });
+  const h = fixture(t, {upgrade:true,reconcileGate});
+  const starting = h.manager.startSync('R','ROOT',h.root);
+  while (!h.effects.reconciliations) await new Promise(resolve => setImmediate(resolve));
+  h.changeAuth(); release();
+  await assert.rejects(starting, /认证会话已变更/);
+  assert.equal(h.config().syncVersion, 3);
+  assert.equal(h.effects.watcherStarts, 0);
+  assert.equal(h.effects.timers, 0);
+  assert.equal(h.manager.isSyncing('R'), false);
+});
 
 for (const code of [2008,403]) test('F3 DELETE status '+code,async t=>{
   const h=fixture(t,{detailCode:code,changes:[{...move('DELETE'),path:'/old.txt',oldPath:null}]});

@@ -1,0 +1,83 @@
+﻿Agent Loop 静态校验
+根目录: D:\code\st-cloud\.ai
+
+[1/7] 依赖图（无环 / 终点仅 KNOWLEDGE / 起点唯一）
+  [PASS] 解析到 12 项 exitCriteria
+  [PASS] 终点仅 ACCEPT（验收为最终收敛点）
+  [PASS] 起点唯一：REQ_ANALYSIS
+  [PASS] 依赖图无环（拓扑处理 12/12）
+
+[2/7] exitCriteria 的 Agent 归属
+  [PASS] TEST_PASS 有 Agent 归属
+  [PASS] IMPLEMENTED 有 Agent 归属
+  [PASS] KNOWLEDGE 有 Agent 归属
+  [PASS] EXP_DESIGN 有 Agent 归属
+  [PASS] EXP_ACCEPT 有 Agent 归属
+  [PASS] REQ_ANALYSIS 有 Agent 归属
+  [PASS] IMPACT_ANALYSIS 有 Agent 归属
+  [PASS] TESTCASES 有 Agent 归属
+  [PASS] ACCEPT 有 Agent 归属
+  [PASS] SECURITY_REVIEW 有 Agent 归属
+  [PASS] CODE_REVIEW 有 Agent 归属
+  [PASS] TECH_DESIGN 有 Agent 归属
+
+[3/7] 关键门禁 dependsOn 映射（等价旧版 5 条禁止项）
+  [PASS] TECH_DESIGN 依赖 IMPACT_ANALYSIS+EXP_DESIGN
+  [PASS] IMPLEMENTED 依赖 TECH_DESIGN+TESTCASES
+  [PASS] CODE_REVIEW 依赖 IMPLEMENTED
+  [PASS] SECURITY_REVIEW 依赖 IMPLEMENTED
+  [PASS] TEST_PASS 依赖 CODE_REVIEW+SECURITY_REVIEW
+  [PASS] KNOWLEDGE 依赖 TEST_PASS+SECURITY_REVIEW+EXP_ACCEPT
+  [PASS] ACCEPT 依赖 KNOWLEDGE（验收为最终收敛点）
+
+[4/7] cross-ref 路径存在
+  [PASS] checked=213 悬空引用=0
+
+[5/7] 残留权威线性表述（WARN 供人工确认）
+  [WARN] knowledge\loop-state-model.md:3 命中 '阶段间单向传递' -- 若属旧版对比则合法: > 本文件定义星云盘 Agent Loop 的核心数据结构：**Loop State**。编排器（Workflow Manager）与所有 Agent 围绕同一份 State 协作，取代旧的"阶段间单向传递文档"模式。本文件是 Loop 架构的事实源，AGENTS.md、workflow-manager.md、feature-development.md 均引用此处定义。
+  [WARN] workflows\feature-development.md:5 命中 '线性 15 步流水线' -- 若属旧版对比则合法: 旧版：线性 15 步流水线，阶段单向传递，走完即结束。
+
+[6/7] Task / ADR / Change Report 配置一致性
+  [PASS] task-template.md 存在
+  [PASS] .ai/tasks/ 目录存在
+  [PASS] .ai/decisions/ADR/ 目录存在
+  [PASS] adr-template.md 存在
+  [PASS] skill-mapping.md 存在
+  [PASS] AGENTS.md 含工程约束
+  [PASS] knowledge\role-context.md 含 Task 驱动规则
+  [PASS] agents\workflow-manager.md 含 Task 驱动规则
+  [PASS] loop-state-model 含 task/changereport artifacts
+
+[7/7] V6 能力层结构
+  [PASS] Context 目录存在
+  [PASS] Spec 目录存在
+  [PASS] Skill Procedure 目录存在
+  [PASS] Tool Gateway 目录存在
+  [PASS] Hook 目录存在
+  [PASS] Evidence 目录存在
+  [PASS] task-template 含 specRef
+  [PASS] task-template 含 context:
+  [PASS] task-template 含 acceptance:
+  [PASS] task-template 含 validation:
+  [PASS] task-template 含 tools:
+  [PASS] task-template 含 output:
+  [PASS] task-template 含 forbidSpawn:
+  [PASS] dispatch-template 含 context:
+  [PASS] dispatch-template 含 tools:
+  [PASS] dispatch-template 含 output:
+  [PASS] loop-state-model 含 spec:
+  [PASS] loop-state-model 含 gates:
+  [PASS] loop-state-model 含 stale:
+  [PASS] loop-state-model 含 evidence:
+  [PASS] mcp/registry.yaml 存在
+  [PASS] mcp/permissions.yaml 存在
+  [PASS] Hook 可解析: hooks\pre-task\check.ps1
+  [PASS] Hook 可解析: hooks\pre-edit\check.ps1
+  [PASS] Hook 可解析: hooks\post-edit\check.ps1
+  [PASS] Hook 可解析: hooks\pre-review\check.ps1
+  [PASS] Hook 可解析: hooks\verify\run.ps1
+  [PASS] verification-engine.ps1 存在
+
+========== 汇总 ==========
+FAIL=0  WARN=2
+结果: PASS

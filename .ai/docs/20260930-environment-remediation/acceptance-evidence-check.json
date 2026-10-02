@@ -1,0 +1,72 @@
+{
+  "dispatchId": "DISPATCH-env-accept-01",
+  "taskId": "TASK-20260930-environment-accept",
+  "by": "/root/acceptance_review",
+  "checkedAt": "2026-10-01T10:54:37+08:00",
+  "revision": "env-code-r2",
+  "dispatchValidation": "PASS",
+  "ackAudit": {
+    "dispatchId": "DISPATCH-env-accept-01",
+    "taskId": "TASK-20260930-environment-accept",
+    "role": "reviewer",
+    "firstOutputWasAck": true,
+    "toolsCalledOnlyAfterAck": true
+  },
+  "sourceIdentity": {
+    "checkedFiles": 780,
+    "mismatches": [],
+    "manifestSha256": "CA61A5A014F4C0F3AEC0C0A36C0F2B4AEB353377AEF97FE87CDE8F28BF2B0EFE",
+    "manifestMatchesRuntime": true,
+    "jarSha256": "C5FF8F3094EDD8AFCC524B9AFCC4E5DE53EEB1F7AE641C2E8DB88AC9A6C81971",
+    "jarMatchesRuntime": true
+  },
+  "independentlyAggregatedBackend": {
+    "classResultLines": 125,
+    "declaredTests": 853,
+    "executedPass": 807,
+    "skipped": 46,
+    "failures": 0,
+    "errors": 0,
+    "buildSuccess": true,
+    "evidenceRef": ".ai/docs/20260930-environment-remediation/backend-full-r3.log",
+    "boundary": "r3是测试批次，当前代码修订是env-code-r2；条件跳过不计为执行通过。"
+  },
+  "currentSchema": {
+    "evidenceRef": ".ai/docs/20260930-environment-remediation/schema-final-20261001.log",
+    "result": "PASS (no diff)",
+    "exitCode": 0,
+    "sharedTableColumnSets": 22,
+    "mysqlTableInventory": 38,
+    "allSqlRegistered": true,
+    "boundary": "不是全38张表逐字段比较。"
+  },
+  "currentDependencies": {
+    "evidenceRef": ".ai/docs/20260930-environment-remediation/ops-current-20261001.log",
+    "functionalPass": 8,
+    "mqReadPass": true,
+    "s3AuthenticatedHeadPass": true,
+    "automaticHealthcheckDeployed": false
+  },
+  "finalImageMq": {
+    "evidenceRef": ".ai/docs/20260930-environment-remediation/final-runtime-smoke.json",
+    "originalBytes": 149,
+    "originalRoundtrip": true,
+    "thumbnailHttp": 200,
+    "thumbnailMime": "image/jpeg",
+    "thumbnailBytes": 660,
+    "chromeWidth": 64,
+    "chromeHeight": 32,
+    "mqJournalId": "348",
+    "outboxStatus": 1,
+    "outboxRetryCount": 0
+  },
+  "stateDependencyCheck": {
+    "designRevision": "env-design-r1",
+    "codeRevision": "env-code-r2",
+    "criteriaBeforeAcceptDone": 11,
+    "acceptStatus": "pending",
+    "knowledgeStatus": "done",
+    "openBlockerCount": 0,
+    "stateModified": false
+  }
+}

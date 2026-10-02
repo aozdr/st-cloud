@@ -1,0 +1,8 @@
+{
+  "pid": 26304,
+  "port": 8080,
+  "jar": "D:\\code\\st-cloud\\.ai\\docs\\20260930-environment-remediation\\live-runtime-backend-r1.jar",
+  "sha256": "F1EB01D19674FCE542CCA3BA31A848932F909628279CCF66401576CA5663F5D4",
+  "startedAt": "2026-10-01T09:58:41.1471946+08:00",
+  "note": "系统/会话切换后原21224消失；本轮独立jar副本恢复测试服务，最终r2将另行更新"
+}

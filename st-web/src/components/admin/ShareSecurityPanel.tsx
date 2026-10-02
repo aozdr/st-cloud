@@ -138,10 +138,10 @@ function ShareSecurityPanel() {
                 [c.configKey]: prev[c.configKey] === 'true' ? 'false' : 'true',
               }))
             }
-            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 ${values[c.configKey] === 'true' ? 'bg-primary-600' : 'bg-stone-300'}`}
+            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 ${values[c.configKey] === 'true' ? 'bg-primary-600' : 'bg-surface-2'}`}
           >
             <span
-              className={`inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${values[c.configKey] === 'true' ? 'translate-x-5' : 'translate-x-1'}`}
+              className={`inline-block h-5 w-5 rounded-full bg-surface shadow-soft transition-transform ${values[c.configKey] === 'true' ? 'translate-x-5' : 'translate-x-1'}`}
             />
           </button>
         ) : (
@@ -174,7 +174,7 @@ function ShareSecurityPanel() {
     const Icon = g.icon;
     const cols = g.key === 'captcha' ? 'sm:grid-cols-3' : 'sm:grid-cols-2';
     return (
-      <section key={g.key} className="border border-border/60 rounded-2xl bg-white dark:bg-surface p-3 shadow-[0_4px_16px_rgba(15,23,42,0.06)]">
+      <section key={g.key} className="border border-border/60 rounded-xl bg-surface p-3">
         <div className="flex items-center gap-2">
           <Icon className="w-4 h-4 text-primary-600" aria-hidden />
           <h3 className="text-base font-semibold text-fg">{g.title}</h3>
@@ -203,7 +203,7 @@ function ShareSecurityPanel() {
             type="button"
             onClick={load}
             disabled={loading}
-            className="flex items-center gap-1.5 px-3 py-2 text-sm text-stone-600 bg-white border border-border rounded-md hover:bg-stone-50 transition-colors cursor-pointer disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400"
+            className="flex items-center gap-1.5 px-3 py-2 text-sm text-muted bg-surface border border-border rounded-md hover:bg-surface-2 transition-colors cursor-pointer disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400"
           >
             <RefreshCw className="w-4 h-4" aria-hidden />
             刷新

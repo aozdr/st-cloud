@@ -1,4 +1,4 @@
-﻿#requires -Version 5.1
+#requires -Version 5.1
 <#
 .SYNOPSIS
   H2 schema.sql 与 MySQL 实际 schema 列对比脚本。
@@ -16,7 +16,11 @@ param(
     [string]$Database = "stcloud",
     [string]$MysqlPath = "E:\utils\mysql-8.0.44-winx64\bin\mysql.exe",
     [string]$SchemaSql = "st-core\src\test\resources\schema.sql",
-    [string]$InitDir = "docker\mysql\init"
+    [string]$InitDir = "docker\mysql\init",
+    [string]$DockerContainer = "",
+    [string]$DockerPath = "docker",
+    [string]$JdbcClasspath = "",
+    [string]$JavaPath = "java"
 )
 
 $ErrorActionPreference = 'Stop'
@@ -27,6 +31,52 @@ function Write-Section($msg) { Write-Host "`n===== $msg =====" -ForegroundColor 
 function Write-Pass($msg) { Write-Host "  [PASS] $msg" -ForegroundColor Green }
 function Write-Diff($msg) { Write-Host "  [DIFF] $msg" -ForegroundColor Yellow; $script:FailCount++ }
 
+# Docker 模式使用容器已有密码环境变量，不把凭据输出到日志；查询失败不得伪报 schema 对齐。
+function Invoke-SchemaQuery([string]$Query) {
+    if ($JdbcClasspath) {
+        # Windows 旧环境未装 mysql CLI 时复用 Maven 缓存驱动；不把密码写入命令行。
+        $jdbcSource = Join-Path $PSScriptRoot 'MysqlJdbc.java'
+        $jdbcProcess = New-Object System.Diagnostics.ProcessStartInfo
+        $jdbcProcess.FileName = $JavaPath
+        $jdbcProcess.Arguments = "--class-path `"$JdbcClasspath`" `"$jdbcSource`" `"$Query`""
+        $jdbcProcess.EnvironmentVariables['MYSQL_PWD'] = $MysqlPass
+        $jdbcProcess.EnvironmentVariables['STCLOUD_TEST_MYSQL_HOST'] = $MysqlHost
+        $jdbcProcess.EnvironmentVariables['STCLOUD_TEST_MYSQL_PORT'] = [string]$MysqlPort
+        $jdbcProcess.EnvironmentVariables['STCLOUD_TEST_MYSQL_USER'] = $MysqlUser
+        $jdbcProcess.EnvironmentVariables['STCLOUD_TEST_MYSQL_DATABASE'] = $Database
+        $jdbcProcess.UseShellExecute = $false
+        $jdbcProcess.RedirectStandardOutput = $true
+        $jdbcProcess.RedirectStandardError = $true
+        $jdbcProcess.StandardOutputEncoding = [System.Text.Encoding]::UTF8
+        $child = [System.Diagnostics.Process]::Start($jdbcProcess)
+        $errorRead = $child.StandardError.ReadToEndAsync()
+        $queryText = $child.StandardOutput.ReadToEnd()
+        $child.WaitForExit()
+        $queryError = $errorRead.GetAwaiter().GetResult()
+        if ($child.ExitCode -ne 0) { throw "JDBC MySQL query failed (exit $($child.ExitCode)): $queryError" }
+        return $queryText
+    }
+    if ($DockerContainer) {
+        $queryOutput = & $DockerPath exec $DockerContainer sh -c 'MYSQL_PWD="$MYSQL_ROOT_PASSWORD" exec mysql --batch --user="$1" --database="$2" -e "$3"' -- $MysqlUser $Database $Query 2>&1
+        if ($LASTEXITCODE -ne 0) { throw "Docker MySQL query failed (exit $LASTEXITCODE): $queryOutput" }
+        return ($queryOutput -join "`n")
+    }
+    $queryProcess = New-Object System.Diagnostics.ProcessStartInfo
+    $queryProcess.FileName = $MysqlPath
+    $queryProcess.Arguments = "--host=$MysqlHost --port=$MysqlPort --user=$MysqlUser --database=$Database -e `"$Query`""
+    $queryProcess.EnvironmentVariables['MYSQL_PWD'] = $MysqlPass
+    $queryProcess.UseShellExecute = $false
+    $queryProcess.RedirectStandardOutput = $true
+    $queryProcess.RedirectStandardError = $true
+    $queryProcess.StandardOutputEncoding = [System.Text.Encoding]::UTF8
+    $queryChild = [System.Diagnostics.Process]::Start($queryProcess)
+    $errorRead = $queryChild.StandardError.ReadToEndAsync()
+    $queryText = $queryChild.StandardOutput.ReadToEnd()
+    $queryChild.WaitForExit()
+    $queryError = $errorRead.GetAwaiter().GetResult()
+    if ($queryChild.ExitCode -ne 0) { throw "MySQL query failed (exit $($queryChild.ExitCode)): $queryError" }
+    return $queryText
+}
 # ---------- 1. Parse H2 schema.sql ----------
 Write-Section "1. Parse H2 schema.sql"
 if (-not (Test-Path $SchemaSql)) {
@@ -65,16 +115,7 @@ Write-Host "  H2 schema.sql: $($h2Tables.Count) tables"
 Write-Section "2. Query MySQL schema"
 $mysqlTables = @{}
 $query = "SELECT TABLE_NAME, COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA='$Database' ORDER BY TABLE_NAME, ORDINAL_POSITION;"
-$psi = New-Object System.Diagnostics.ProcessStartInfo
-$psi.FileName = $MysqlPath
-$psi.Arguments = "--host=$MysqlHost --port=$MysqlPort --user=$MysqlUser --password=$MysqlPass --database=$Database -e `"$query`""
-$psi.UseShellExecute = $false
-$psi.RedirectStandardOutput = $true
-$psi.RedirectStandardError = $true
-$psi.StandardOutputEncoding = [System.Text.Encoding]::UTF8
-$proc = [System.Diagnostics.Process]::Start($psi)
-$stdout = $proc.StandardOutput.ReadToEnd()
-$proc.WaitForExit()
+$stdout = Invoke-SchemaQuery $query
 foreach ($line in ($stdout -split "`n")) {
     $parts = $line -split "`t"
     if ($parts.Count -ge 2 -and $parts[0].Trim() -ne 'TABLE_NAME') {
@@ -109,16 +150,7 @@ foreach ($tbl in $mysqlOnly) { Write-Host "  [INFO] [$tbl] only in MySQL (H2 sch
 # ---------- 4. Pending SQL files ----------
 Write-Section "4. Pending SQL files (not in schema_version)"
 $allSqlFiles = Get-ChildItem $InitDir -Filter "*.sql" | Sort-Object Name | Select-Object -ExpandProperty Name
-$psi2 = New-Object System.Diagnostics.ProcessStartInfo
-$psi2.FileName = $MysqlPath
-$psi2.Arguments = "--host=$MysqlHost --port=$MysqlPort --user=$MysqlUser --password=$MysqlPass --database=$Database -e `"SELECT applied_sql_files FROM schema_version;`""
-$psi2.UseShellExecute = $false
-$psi2.RedirectStandardOutput = $true
-$psi2.RedirectStandardError = $true
-$psi2.StandardOutputEncoding = [System.Text.Encoding]::UTF8
-$proc2 = [System.Diagnostics.Process]::Start($psi2)
-$stdout2 = $proc2.StandardOutput.ReadToEnd()
-$proc2.WaitForExit()
+$stdout2 = Invoke-SchemaQuery 'SELECT applied_sql_files FROM schema_version;'
 $appliedSet = [System.Collections.Generic.HashSet[string]]([System.StringComparer]::OrdinalIgnoreCase)
 foreach ($line in ($stdout2 -split "`n")) {
     foreach ($f in ($line -split ',')) { $f = $f.Trim(); if ($f -and $f -ne 'applied_sql_files') { [void]$appliedSet.Add($f) } }

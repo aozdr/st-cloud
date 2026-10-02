@@ -1,0 +1,19 @@
+{
+  "jarSha256": "C5FF8F3094EDD8AFCC524B9AFCC4E5DE53EEB1F7AE641C2E8DB88AC9A6C81971",
+  "pidExpected": 10028,
+  "sourceRevision": "env-code-r2",
+  "checkedAt": "2026-10-01T02:41:36.8252367Z",
+  "pingUrl": "/api/auth/ping",
+  "sourceManifestMatchesRuntime": true,
+  "initialWrongRouteHttp": 401,
+  "http": 200,
+  "listenerMatchesRecorded": true,
+  "initialWrongRoute": "/api/ping",
+  "jarMatchesRecorded": true,
+  "sourceManifestSha256": "CA61A5A014F4C0F3AEC0C0A36C0F2B4AEB353377AEF97FE87CDE8F28BF2B0EFE",
+  "listenerPid": 10028,
+  "pingBody": "{\"code\":200,\"message\":\"success\",\"data\":null,\"traceId\":null}",
+  "processName": "java",
+  "listenerCheckedAt": "2026-10-01T02:41:58.0317540Z",
+  "initialSandboxListenerEnumeration": "不可见，随后经宿主只读检查确认"
+}
