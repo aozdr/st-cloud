@@ -19,6 +19,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Run the same strict loop gate as pre-commit
+      - name: Run the loop static/state gate (integration suites run in pre-commit)
         shell: pwsh
-        run: ./.ai/scripts/run-loop-gate.ps1
+        run: ./.ai/scripts/run-loop-gate.ps1 -SkipIntegrationTests
