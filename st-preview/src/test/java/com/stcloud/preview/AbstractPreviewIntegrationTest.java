@@ -54,6 +54,17 @@ public abstract class AbstractPreviewIntegrationTest {
      * @param status 0=正常 1=回收站
      */
     protected FileNode insertFileNode(Long tenantId, Long ownerId, String name, String storagePath, int status) {
+        return insertFileNode(tenantId, ownerId, null, name, storagePath, status);
+    }
+
+    /**
+     * 构建并插入一个指定归属范围的测试文件节点。
+     *
+     * @param spaceId 团队空间 ID；null 表示个人节点
+     * @param status  0=正常 1=回收站
+     */
+    protected FileNode insertFileNode(Long tenantId, Long ownerId, Long spaceId,
+                                      String name, String storagePath, int status) {
         FileNode node = new FileNode();
         node.setTenantId(tenantId);
         node.setParentId(0L);
@@ -69,6 +80,7 @@ public abstract class AbstractPreviewIntegrationTest {
         node.setUploadStatus(2);
         node.setUploaderId(ownerId);
         node.setOwnerId(ownerId);
+        node.setSpaceId(spaceId);
         node.setVersion(0);
         fileNodeMapper.insert(node);
         return node;

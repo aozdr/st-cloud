@@ -85,17 +85,24 @@ public class EditorCallbackServiceImpl implements EditorCallbackService {
             throw new EditorCallbackRejectedException(500, "编辑服务未配置签名密钥");
         }
         Claims claims = verifyToken(request.getToken(), secret, nodeId);
-        // 签名字段与请求体一致性复核（防 body 与签名分离篡改）
-        if (claims != null) {
-            Object claimKey = claims.get("key");
-            if (claimKey != null && request.getKey() != null && !claimKey.toString().equals(request.getKey())) {
-                throw new EditorCallbackRejectedException(403, "回调 key 与签名不一致");
-            }
-            Object claimStatus = claims.get("status");
-            if (claimStatus instanceof Number n
-                    && request.getStatus() != null && n.intValue() != request.getStatus()) {
-                throw new EditorCallbackRejectedException(403, "回调 status 与签名不一致");
-            }
+        // 回调凭证必须绑定本次保存的文件。OnlyOffice 回调 JWT 的 payload 就是回调 body，
+        // 必然带 key；而浏览器可见的编辑器 config token 也是同密钥签发，但顶层只有
+        // document/editorConfig、没有 key。修复前"claim 存在才比较"的写法会让 config token
+        // 被当作合法回调凭证复用：任意登录用户可用自己的 token 覆盖同租户任意文件。
+        Object claimKey = claims.get("key");
+        if (claimKey == null || claimKey.toString().isBlank()) {
+            throw new EditorCallbackRejectedException(403, "回调签名未绑定文件");
+        }
+        if (request.getKey() == null || !claimKey.toString().equals(request.getKey())) {
+            throw new EditorCallbackRejectedException(403, "回调 key 与签名不一致");
+        }
+        if (!claimKey.toString().startsWith(nodeId + "_")) {
+            throw new EditorCallbackRejectedException(403, "回调签名与目标文件不匹配");
+        }
+        Object claimStatus = claims.get("status");
+        if (claimStatus instanceof Number n
+                && request.getStatus() != null && n.intValue() != request.getStatus()) {
+            throw new EditorCallbackRejectedException(403, "回调 status 与签名不一致");
         }
 
         Integer status = request.getStatus();

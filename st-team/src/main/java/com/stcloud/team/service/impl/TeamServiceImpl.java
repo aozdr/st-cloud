@@ -195,7 +195,7 @@ public class TeamServiceImpl implements TeamService {
     public Result<TeamMemberVO> inviteMember(Long spaceId, InviteMemberRequest request) {
         // 空间锁后读取当前权限/角色/引用，避免等待期间已提交的变更被旧快照遮蔽。
         lockRoleWrites(spaceId);
-        checkPermission(spaceId, 0);
+        checkMemberManage(spaceId);
         // 按用户ID查找用户（前端搜索选择后传入 userId，避免手动输入用户名拼写错误）
         SysUser user = sysUserMapper.selectById(request.getUserId());
         if (user == null) throw new BusinessException(ResultCode.USER_NOT_FOUND);
@@ -209,6 +209,10 @@ public class TeamServiceImpl implements TeamService {
         member.setUserId(user.getId());
         Long roleId = request.getRole() != null ? request.getRole() : 2L;
         requireAssignableRole(spaceId, roleId);
+        // 直接邀请成内置管理员只允许空间拥有者或当前内置管理员
+        if (Long.valueOf(0L).equals(roleId) && !canGrantAdmin(spaceId, UserContext.getUserId())) {
+            throw new BusinessException(ResultCode.TEAM_PERMISSION_DENIED, "仅空间拥有者或管理员可邀请管理员");
+        }
         member.setRole(roleId);
         member.setJoinedAt(LocalDateTime.now());
         teamMemberMapper.insert(member);
@@ -225,7 +229,7 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     public Result<List<UserSearchVO>> searchUsers(Long spaceId, String keyword) {
-        checkPermission(spaceId, 0);
+        checkMemberManage(spaceId);
         if (keyword == null || keyword.trim().isEmpty()) {
             return Result.success(List.of());
         }
@@ -282,11 +286,19 @@ public class TeamServiceImpl implements TeamService {
     public Result<Void> updateMemberRole(Long spaceId, Long memberId, Long role) {
         // 空间锁后读取当前权限/角色/引用，避免等待期间已提交的变更被旧快照遮蔽。
         lockRoleWrites(spaceId);
-        checkPermission(spaceId, 0);
+        checkMemberManage(spaceId);
         requireAssignableRole(spaceId, role);
         TeamMember member = teamMemberMapper.selectById(memberId);
         if (member == null || !member.getSpaceId().equals(spaceId)) {
             throw new BusinessException(ResultCode.TEAM_MEMBER_NOT_FOUND);
+        }
+        // 禁止修改自己的角色：否则持有 manage_members 的自定义角色可以一步把自己升为内置管理员
+        if (member.getUserId().equals(UserContext.getUserId())) {
+            throw new BusinessException(ResultCode.TEAM_PERMISSION_DENIED, "不能修改自己的角色");
+        }
+        // 授予内置管理员（role=0）只允许空间拥有者或当前内置管理员，避免成员管理者自行扩权
+        if (Long.valueOf(0L).equals(role) && !canGrantAdmin(spaceId, UserContext.getUserId())) {
+            throw new BusinessException(ResultCode.TEAM_PERMISSION_DENIED, "仅空间拥有者或管理员可授予管理员角色");
         }
         TeamSpace space = teamSpaceMapper.selectById(spaceId);
         if (space != null && space.getOwnerId().equals(member.getUserId()) && !Long.valueOf(0L).equals(role)) {
@@ -308,13 +320,17 @@ public class TeamServiceImpl implements TeamService {
     public Result<Void> removeMember(Long spaceId, Long memberId) {
         // 成员失效与回收权限决策共用空间锁，锁等待后再核对当前管理员权限。
         lockRoleWrites(spaceId);
-        checkPermission(spaceId, 0);
+        checkMemberManage(spaceId);
         TeamMember member = teamMemberMapper.selectById(memberId);
         if (member == null || !member.getSpaceId().equals(spaceId)) {
             throw new BusinessException(ResultCode.TEAM_MEMBER_NOT_FOUND);
         }
         if (member.getUserId().equals(UserContext.getUserId())) {
             throw new BusinessException(ResultCode.BAD_REQUEST, "不能移除自己，请使用退出空间");
+        }
+        // 拥有者不能被移出：否则空间 owner_id 会指向一个已失效成员，所有者立即失去访问
+        if (isSpaceOwner(spaceId, member.getUserId())) {
+            throw new BusinessException(ResultCode.TEAM_PERMISSION_DENIED, "不能移除空间拥有者，请先移交所有权");
         }
         teamMemberMapper.deleteById(memberId);
         // 成员移除：权限缓存失效
@@ -353,7 +369,7 @@ public class TeamServiceImpl implements TeamService {
     public Result<TeamInviteVO> createInvite(Long spaceId, CreateInviteRequest request) {
         // 空间锁后读取当前权限/角色/引用，避免等待期间已提交的变更被旧快照遮蔽。
         lockRoleWrites(spaceId);
-        checkPermission(spaceId, 0);
+        checkMemberManage(spaceId);
         // 生成 32 位随机邀请码（大小写字母+数字）
         String inviteCode = generateInviteCode();
         TeamInvite invite = new TeamInvite();
@@ -361,6 +377,10 @@ public class TeamServiceImpl implements TeamService {
         invite.setInviteCode(inviteCode);
         Long roleId = request.getRole() != null ? request.getRole() : 2L;
         requireAssignableRole(spaceId, roleId);
+        // 邀请链接不能由成员管理者用来批量下发内置管理员
+        if (Long.valueOf(0L).equals(roleId) && !canGrantAdmin(spaceId, UserContext.getUserId())) {
+            throw new BusinessException(ResultCode.TEAM_PERMISSION_DENIED, "仅空间拥有者或管理员可创建管理员邀请");
+        }
         invite.setRole(roleId);
         invite.setCreatedBy(UserContext.getUserId());
         invite.setExpireAt(request.getExpireAt());
@@ -374,7 +394,7 @@ public class TeamServiceImpl implements TeamService {
 
     @Override
     public Result<IPage<TeamInviteVO>> listInvites(Long spaceId, int page, int size) {
-        checkPermission(spaceId, 0);
+        checkMemberManage(spaceId);
         Page<TeamInvite> pageParam = new Page<>(page, size);
         IPage<TeamInvite> invitePage = teamInviteMapper.selectPage(pageParam,
                 new LambdaQueryWrapper<TeamInvite>()
@@ -387,7 +407,7 @@ public class TeamServiceImpl implements TeamService {
     @Override
     @Transactional
     public Result<Void> revokeInvite(Long spaceId, Long inviteId) {
-        checkPermission(spaceId, 0);
+        checkMemberManage(spaceId);
         TeamInvite invite = teamInviteMapper.selectById(inviteId);
         if (invite == null || !invite.getSpaceId().equals(spaceId)) {
             throw new BusinessException(ResultCode.TEAM_INVITE_NOT_FOUND);
@@ -633,6 +653,60 @@ public class TeamServiceImpl implements TeamService {
         if (!spaceId.equals(teamSpaceMapper.lockRoleWrites(spaceId))) {
             throw new BusinessException(ResultCode.TEAM_NOT_FOUND);
         }
+    }
+
+    /**
+     * 成员管理入口的权限门禁：空间拥有者、内置管理员（role=0），
+     * 或权限集含 manage_members / manage_settings 的成员。
+     *
+     * <p>不能复用 {@code checkPermission(spaceId, 0)}：那个门禁代表"空间设置级"管理员，
+     * 同时守改设置、改角色、写文件夹 ACL 等操作。把 manage_members 单独收敛在成员管理入口，
+     * 避免"管理成员"被 legacy 等级映射放大成"管理整个空间"。</p>
+     */
+    private void checkMemberManage(Long spaceId) {
+        Long userId = UserContext.getUserId();
+        TeamMember member = teamMemberMapper.selectOne(new LambdaQueryWrapper<TeamMember>()
+                .eq(TeamMember::getSpaceId, spaceId).eq(TeamMember::getUserId, userId));
+        if (member == null) {
+            throw new BusinessException(ResultCode.TEAM_PERMISSION_DENIED, "您不是该空间的成员");
+        }
+        requireActiveMembership(spaceId, member);
+        if (Long.valueOf(0L).equals(member.getRole()) || isSpaceOwner(spaceId, userId)) {
+            return;
+        }
+        Set<String> perms = resolveRolePermissions(member);
+        if (perms.contains(FolderPermissionService.PERM_MANAGE_MEMBERS)
+                || perms.contains(FolderPermissionService.PERM_MANAGE_SETTINGS)) {
+            return;
+        }
+        throw new BusinessException(ResultCode.TEAM_PERMISSION_DENIED, "需要成员管理权限");
+    }
+
+    /** 指定用户是否为空间拥有者（以 team_space.owner_id 为准，不依赖成员角色）。 */
+    private boolean isSpaceOwner(Long spaceId, Long userId) {
+        if (spaceId == null || userId == null) {
+            return false;
+        }
+        TeamSpace space = teamSpaceMapper.selectById(spaceId);
+        return space != null && java.util.Objects.equals(space.getOwnerId(), userId);
+    }
+
+    /** 指定用户是否已是该空间内置管理员（role=0）。 */
+    private boolean isBuiltInAdmin(Long spaceId, Long userId) {
+        if (spaceId == null || userId == null) {
+            return false;
+        }
+        TeamMember member = teamMemberMapper.selectOne(new LambdaQueryWrapper<TeamMember>()
+                .eq(TeamMember::getSpaceId, spaceId).eq(TeamMember::getUserId, userId));
+        return member != null && Long.valueOf(0L).equals(member.getRole());
+    }
+
+    /**
+     * 是否允许授予内置管理员（role=0）：只有空间拥有者或当前内置管理员。
+     * 两者本身已具备空间最高权限，授予不会产生越权；自定义角色（含 manage_members）不允许。
+     */
+    private boolean canGrantAdmin(Long spaceId, Long userId) {
+        return isSpaceOwner(spaceId, userId) || isBuiltInAdmin(spaceId, userId);
     }
 
     private void invalidateSpaceAfterCommit(Long spaceId) {

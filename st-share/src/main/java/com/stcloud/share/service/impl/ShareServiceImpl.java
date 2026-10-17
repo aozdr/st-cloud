@@ -87,6 +87,8 @@ public class ShareServiceImpl implements ShareService {
     private static final int SHARE_CODE_MAX_LENGTH = 16;
     private static final int SHARE_CODE_MAX_RETRY = 8;
     private static final SecureRandom SHARE_CODE_RANDOM = new SecureRandom();
+    /** 分享子树归属判定的最大上溯深度：防御异常 parentId 成环导致的死循环。 */
+    private static final int MAX_SHARE_TREE_DEPTH = 64;
 
     // S-09 分享流式传输默认限速：5MB/s
     private static final long STREAM_RATE_BYTES_PER_SEC = 5 * 1024 * 1024L;
@@ -816,13 +818,46 @@ public class ShareServiceImpl implements ShareService {
     }
 
     /**
-     * S-03 分享子树路径边界判断：节点路径必须等于根路径，或以「根路径 + /」为前缀，
-     * 避免同名前缀（如 /a.txt 匹配 /a.txt2、/doc 匹配 /documents）导致的越权访问。
+     * 分享子树路径边界判断：节点必须在分享根之下。
+     *
+     * <p>判定依据是 parentId 祖先链，而不是 path 字符串前缀：path 由"父路径 + 名字"拼接，
+     * 不同用户/空间的同名目录会得到完全相同的 path（例如各自根目录下的 /Documents），
+     * 用 startsWith 会把他人节点误判为分享子树，从而绕过分享状态、下载开关与下载限次。</p>
      */
     private boolean isWithinShare(FileNode root, FileNode node) {
-        return node.getPath() != null && root.getPath() != null
-                && (node.getPath().equals(root.getPath())
-                    || node.getPath().startsWith(root.getPath() + "/"));
+        if (root == null || node == null || root.getId() == null || node.getId() == null) {
+            return false;
+        }
+        FileNode current = node;
+        for (int depth = 0; depth < MAX_SHARE_TREE_DEPTH; depth++) {
+            if (current == null || !sameShareScope(root, current)) {
+                return false;
+            }
+            if (root.getId().equals(current.getId())) {
+                return true;
+            }
+            Long parentId = current.getParentId();
+            if (parentId == null || parentId <= 0) {
+                return false;
+            }
+            current = fileNodeMapper.selectById(parentId);
+        }
+        return false;
+    }
+
+    /**
+     * 分享归属范围一致性：同租户，且团队看空间、个人看所有者，二者不能互相串用。
+     */
+    private boolean sameShareScope(FileNode root, FileNode node) {
+        if (root.getTenantId() == null || !root.getTenantId().equals(node.getTenantId())) {
+            return false;
+        }
+        boolean rootTeam = root.getSpaceId() != null && root.getSpaceId() > 0;
+        boolean nodeTeam = node.getSpaceId() != null && node.getSpaceId() > 0;
+        if (rootTeam) {
+            return nodeTeam && root.getSpaceId().equals(node.getSpaceId());
+        }
+        return !nodeTeam && root.getOwnerId() != null && root.getOwnerId().equals(node.getOwnerId());
     }
 
     // ==================== 权限模型：分享权限集解析/上限校验 ====================

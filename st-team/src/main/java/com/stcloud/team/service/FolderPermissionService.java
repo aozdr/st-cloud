@@ -187,18 +187,23 @@ public class FolderPermissionService {
 
     /**
      * 权限集推导旧角色等级（兼容旧 checkPermission/首值语义）：
-     * 含空间管理权限 → 0；含任一内容操作权限 → 1；仅 view → 2；否则 -1。
+     * 含空间设置权限 → 0；含任一内容操作权限 → 1；仅查看或仅成员管理 → 2；否则 -1。
+     *
+     * <p>{@code manage_members} 只授予"管理成员"，不等同于空间管理员：
+     * 修复前把它与 {@code manage_settings} 一起映射为 0，导致持有该权限点的自定义角色
+     * 可以通过空间级管理员门禁（改设置/改角色/写文件夹 ACL），进而给自己或新用户授予
+     * 内置管理员角色，形成提权链。成员管理入口应使用 TeamServiceImpl#checkMemberManage 精确判定。</p>
      */
     public static int legacyLevelOf(Set<String> permissions) {
         Set<String> perms = permissions == null ? Set.of() : permissions;
-        if (perms.contains(PERM_MANAGE_SETTINGS) || perms.contains(PERM_MANAGE_MEMBERS)) {
+        if (perms.contains(PERM_MANAGE_SETTINGS)) {
             return 0;
         }
         if (perms.contains(PERM_UPLOAD) || perms.contains(PERM_DOWNLOAD) || perms.contains(PERM_DELETE)
                 || perms.contains(PERM_RENAME) || perms.contains(PERM_MOVE) || perms.contains(PERM_SHARE)) {
             return 1;
         }
-        if (perms.contains(PERM_VIEW)) {
+        if (perms.contains(PERM_VIEW) || perms.contains(PERM_MANAGE_MEMBERS)) {
             return 2;
         }
         return -1;

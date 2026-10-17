@@ -1,6 +1,9 @@
 package com.stcloud.preview.service.impl;
 
+import com.stcloud.common.access.TeamFileAccessPolicy;
 import com.stcloud.common.config.S3StorageConfig;
+import com.stcloud.common.context.TenantContext;
+import com.stcloud.common.context.UserContext;
 import com.stcloud.common.exception.BusinessException;
 import com.stcloud.common.response.ResultCode;
 import com.stcloud.core.entity.FileNode;
@@ -14,6 +17,8 @@ import com.stcloud.preview.dto.PreviewResultVO;
 import com.stcloud.preview.service.PreviewService;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
@@ -68,6 +73,14 @@ public class PreviewServiceImpl implements PreviewService {
 
     @Resource
     private ThumbnailRenderer thumbnailRenderer;
+
+    /**
+     * 团队文件访问策略：st-preview 只依赖 st-core/st-common，st-team 在运行时提供实现。
+     * 使用 ObjectProvider 是为了在缺少 st-team（例如本模块单测上下文）时构造器不失败；
+     * 一旦遇到团队节点而策略缺失，按拒绝处理（fail-closed），绝不放行。
+     */
+    @Autowired
+    private ObjectProvider<TeamFileAccessPolicy> teamFileAccessPolicyProvider;
 
     @Override
     public PreviewResultVO preview(Long nodeId) {
@@ -230,13 +243,36 @@ public class PreviewServiceImpl implements PreviewService {
         return presigned.url().toString();
     }
 
+    /**
+     * 预览入口的统一资源鉴权：存在性 → 归属核权 → 可访问性（祖先链）→ 排除文件夹。
+     *
+     * <p>预览接口对外只有登录态（isAuthenticated），nodeId 又直接来自请求路径，
+     * 因此不能只校验"节点存在且状态正常"：个人节点必须是当前用户自己的，
+     * 团队节点必须交给团队访问策略即时核权（成员有效性、祖先链、文件夹权限）。
+     * 团队策略缺失（例如只装配了 st-common/st-core）时按拒绝处理，避免放行。</p>
+     */
     private FileNode getFileNode(Long nodeId) {
+        Long tenantId = TenantContext.getTenantIdOrNull();
+        Long userId = UserContext.getUserId();
+        if (nodeId == null || tenantId == null || userId == null) {
+            throw new BusinessException(ResultCode.UNAUTHORIZED);
+        }
         FileNode node = fileNodeMapper.selectById(nodeId);
-        if (node == null || node.getStatus() != 0) {
+        if (node == null || !Integer.valueOf(0).equals(node.getStatus())
+                || !tenantId.equals(node.getTenantId())) {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
         }
+        if (node.getSpaceId() != null && node.getSpaceId() > 0) {
+            TeamFileAccessPolicy policy = teamFileAccessPolicyProvider.getIfAvailable();
+            if (policy == null || !policy.canView(tenantId, userId, node.getSpaceId(), nodeId)) {
+                throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "无权预览该文件");
+            }
+        } else if (!userId.equals(node.getOwnerId())) {
+            // 个人节点：预览与下载口径一致，只允许文件所有者
+            throw new BusinessException(ResultCode.FORBIDDEN.getCode(), "无权预览该文件");
+        }
         fileService.validateAccessible(nodeId);
-        if (node.getNodeType() == 0) {
+        if (node.isFolder()) {
             throw new BusinessException(ResultCode.BAD_REQUEST, "文件夹不支持预览");
         }
         return node;

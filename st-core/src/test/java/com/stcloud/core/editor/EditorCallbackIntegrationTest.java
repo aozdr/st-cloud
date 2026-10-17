@@ -365,5 +365,45 @@ class EditorCallbackIntegrationTest extends AbstractIntegrationTest {
             p.setMaxSaveSize(old);
         }
     }
+
+    // ==================== P0-3：回调凭证必须绑定文件 ====================
+
+    @Test
+    void configTokenWithoutFileClaim_rejected() {
+        FileNode node = insertDocx(1L, 1L);
+        setUpUser(1L, 1L);
+        long originalSize = node.getFileSize();
+        // 浏览器可见的编辑器 config token：payload 是 config 本身，顶层只有 document/editorConfig，
+        // 没有 key/status。修复前它同样能通过验签，被当作合法回调凭证覆盖他人文件。
+        String configToken = Jwts.builder()
+                .claims(Map.of("type", "desktop",
+                        "document", Map.of("key", node.getId() + "_0", "title", "报告.docx")))
+                .signWith(Keys.hmacShaKeyFor(SECRET.getBytes(StandardCharsets.UTF_8)))
+                .compact();
+        com.stcloud.core.editor.dto.OnlyOfficeCallbackRequest req =
+                request(node.getId(), 2, node.getId() + "_0", configToken);
+
+        assertThrows(EditorCallbackRejectedException.class,
+                () -> editorCallbackService.handleCallback(node.getId(), req));
+
+        FileNode after = fileNodeMapper.selectById(node.getId());
+        assertEquals(originalSize, after.getFileSize(), "被拒绝的回调不得改写文件");
+        verify(storageService, never()).uploadObject(anyString(), any(), anyLong(), anyString());
+    }
+
+    @Test
+    void tokenBoundToAnotherFile_rejected() {
+        FileNode node = insertDocx(1L, 1L);
+        setUpUser(1L, 1L);
+        // 签名有效、key 与请求体一致，但绑定的是另一个文件的 key：不能重放到本节点
+        String otherKey = "999999_0";
+        com.stcloud.core.editor.dto.OnlyOfficeCallbackRequest req =
+                request(node.getId(), 2, otherKey, signToken(999999L, 2, callbackUrl(), otherKey));
+
+        assertThrows(EditorCallbackRejectedException.class,
+                () -> editorCallbackService.handleCallback(node.getId(), req));
+
+        verify(storageService, never()).uploadObject(anyString(), any(), anyLong(), anyString());
+    }
 }
 
