@@ -399,3 +399,38 @@ Redis key、API 契约与数据库。
 | T-11 | 单测 | SpeedLimitService 只读一次快照并按最严格规则合并 |
 | T-12 | 集成（真实 Redis） | 两 store 实例 8 线程 x 5s，总发放 <= rate x T + 2 quantum 且 >= 0.9 rate x T |
 | T-13 | 集成（H2） | redis 模式 relay 缺会话 seq>1 409 且不留空会话，finalize 409 |
+
+## 17. code-v5 残余项收口（review-05 非阻塞项）
+
+### 17.1 R-1 同类边界：seq != 1 一律拒绝
+
+`ensureRelaySession` 的守卫由 `seq > 1` 改为 `seq != 1`：只有第一片允许创建本地缓冲；
+`seq <= 0` 属协议外输入，若先创建再被 `tryAcquireSeq` 判 OUT_OF_ORDER，同样会留下可被 finalize
+合并的空会话。回归用例 `RelayUploadIntegrationTest#tc017` 断言 409 且无会话/无临时文件。
+
+### 17.2 finalize 认领后二次探测
+
+`hasSession` 首次探测与 `transitionSession(→MERGING)` 之间，超时清理仍可能移除缓冲；认领成功后
+`cleanupExpired` 不会动 MERGING 会话，因此在 try 内二次 `hasSession` 探测，缺失时抛 409（由既有
+失败路径做 abort/清理），避免把 `CHUNK_NOT_FOUND(404)` 暴露给客户端（review-05 NB-8）。
+
+### 17.3 R-3 refresh 异常独立用例
+
+`CreditBucketTest#refreshFailureDegradesLocally`：supplier 抛 RuntimeException 时只 1 次 EVAL、
+记 stale/degraded 并按当前 rate 平滑放行，覆盖此前仅由「重试耗尽」隐式覆盖的分支。
+
+### 17.4 文档/部署残留
+
+- `S3StorageConfig` Javadoc 改为「endpoint=服务端内网、public-endpoint=客户端可达」，与实现一致。
+- `SpeedLimitCache` 三个旧 accessor 标注兼容用途，新代码统一走 `snapshot()`。
+- `Dockerfile.web` 固定 `nginx@sha256:4c41e2d0…`（1.31.8/trixie），避免 mutable tag 让健康检查工具漂移。
+- `docker-compose.cluster.yml` 的预签名地址改为必填（`${STCLOUD_PUBLIC_S3_ENDPOINT:?…}`），
+  缺失时 compose 直接报错，不再回落到 `host.docker.internal`。
+- README 环境变量表沿用 code-v4 已修正的两列表格（默认值并入说明列）；v5 只补充集群段落说明。
+
+### 17.5 桌面安装包元数据
+
+winCodeSign 的 darwin 符号链接需要 Windows 创建符号链接权限，7z 解压失败；改为
+`signAndEditExecutable=false` 打包后，用缓存中的 `rcedit-x64.exe` 手动写入图标/版本信息
+（ProductName=星云盘、FileVersion=1.0.0），再用 `--prepackaged release/win-unpacked` 生成 NSIS，
+避免重新打包覆盖已改写的 exe。

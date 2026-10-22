@@ -21,8 +21,8 @@ public class S3StorageConfig {
     private String endpoint = "http://127.0.0.1:9000";
     /**
      * 对外预签名地址：浏览器/客户端能访问的地址。
-     * 留空时回退 endpoint；容器内网部署时应设为内网地址（如 http://rustfs:9000），
-     * 而 endpoint 设为对外地址，避免服务端读 S3 走宿主机 NAT 成为瓶颈。
+     * 留空时回退 endpoint。容器化部署时应把它设为客户端可达地址（如 http://192.168.2.5:9000），
+     * 而 endpoint 设为服务端内网地址（如 http://rustfs:9000），避免服务端读 S3 走宿主机 NAT 成为瓶颈。
      */
     private String publicEndpoint;
     private String accessKey = "stcloud";

@@ -28,7 +28,9 @@ x-app: &app
     SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-123456}
     # 服务端内部读写走容器网络；预签名 URL 走客户端可达地址
     STCLOUD_STORAGE_ENDPOINT: http://rustfs:9000
-    STCLOUD_STORAGE_PUBLIC_ENDPOINT: ${STCLOUD_PUBLIC_S3_ENDPOINT:-http://host.docker.internal:9000}
+    # 预签名地址必须由运维显式提供（客户端可达地址）：缺失时 compose 直接报错，
+    # 不再回落到 host.docker.internal（代理/VPN 环境下客户端不可达）。
+    STCLOUD_STORAGE_PUBLIC_ENDPOINT: ${STCLOUD_PUBLIC_S3_ENDPOINT:?set STCLOUD_PUBLIC_S3_ENDPOINT in docker/.env to the client-reachable S3 URL}
     STCLOUD_ELASTICSEARCH_URIS: http://elasticsearch:9200
     ROCKETMQ_NAME_SERVER: rocketmq-namesrv:9876
     # OnlyOffice 容器内的回调地址：走同一 Docker 网络的 nginx 服务名

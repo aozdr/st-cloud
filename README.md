@@ -252,7 +252,8 @@ docker compose -f docker-compose.yml -f docker-compose.cluster.yml up -d --build
   在途下载会在 60s 宽限后被截断，客户端用 Range 续传，避免两个节点同时服务同一用户。
 - S3 内外地址拆分：服务端读写走 `STCLOUD_STORAGE_ENDPOINT=http://rustfs:9000`（容器网络直连），
   预签名 URL 走 `STCLOUD_STORAGE_PUBLIC_ENDPOINT`（客户端可达地址，如 `http://192.168.2.5:9000`）；
-  cluster 编排用 `STCLOUD_PUBLIC_S3_ENDPOINT` 作为运维别名注入。拆分前容器经宿主机 NAT 回环读 S3
+  cluster 编排用 `STCLOUD_PUBLIC_S3_ENDPOINT` 作为运维别名注入，未设置时 compose 直接报错而不是回落到
+  不可达的默认地址。拆分前容器经宿主机 NAT 回环读 S3
   的 40MB 下载约 4MB/s，拆分后约 18.6MB/s。不要用 `host.docker.internal` 作为预签名地址：
   部分环境的代理/VPN 会把它解析成不可达地址。
 - OnlyOffice 的 `public-base-url` 同样要指向 Nginx。

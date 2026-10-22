@@ -141,6 +141,27 @@ class CreditBucketTest {
         assertTrue(interrupted.get(), "应恢复线程中断标记");
     }
 
+    @Test
+    @DisplayName("refresh 解析抛异常：进入 5s 本地降级且不重复 EVAL")
+    void refreshFailureDegradesLocally() {
+        AtomicInteger grants = new AtomicInteger();
+        RateLimitStats stats = new RateLimitStats();
+        CreditBucket bucket = new CreditBucket(stats);
+        LimitSupplier supplier = () -> {
+            throw new IllegalStateException("resolver down");
+        };
+
+        long start = System.nanoTime();
+        bucket.acquire(8192L, 1_000_000L, 8192L, staleStore(grants), "rl:{t:6}:down", 8L, 60_000L,
+                true, supplier, null);
+        long elapsedMs = (System.nanoTime() - start) / 1_000_000L;
+
+        assertEquals(1, grants.get(), "refresh 异常后不应继续 EVAL");
+        assertEquals(1L, stats.snapshot().get("stale"));
+        assertEquals(1L, stats.snapshot().get("degraded"), "refresh 异常必须计入降级");
+        assertTrue(elapsedMs < 1000L, "降级后应按当前 rate 平滑放行，实际 " + elapsedMs + "ms");
+    }
+
     /** 每次都返回 stale 的假 store（rate/ver 回给调用方不需要被采纳）。 */
     private static CreditStore staleStore(AtomicInteger grants) {
         return new CreditStore() {

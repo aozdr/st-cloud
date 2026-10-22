@@ -262,3 +262,44 @@ R-2/R-3 不阻塞；若希望本轮收口，只需 R-1 一行 + R-4 两例。
 1. 阻塞 0，`CODE_REVIEW` 可置 pass（validatedRevision=`20261022-multi-node-ratelimit-code-v4`）。
 2. 下一补丁优先级：残留 1（一行加固）→ 残留 2/3/4（文档与部署默认值一致）→ 残留 5（补 1 例）。
 3. 本段结论只对上述快照有效；代码再变需重新复核。
+
+## code-v5 独立复审（review-06）
+
+- 评审：reviewer-ratelimit-06；dispatchId `DISPATCH-20261022-ratelimit-review-06`；快照 `20261022-multi-node-ratelimit-code-v5`（工作区未提交，HEAD=`2007c41`）。
+- 变更面：`git status --porcelain=v1` / `git diff --stat` 核对为 11 个已改文件（187+/18-）+ 1 个未跟踪 dispatch envelope；`git diff` 未出现 controller/公开接口/DDL/前端变更。本段只读评审：未执行 mvn/gradle、未做 git 写操作、未修改源码/测试/TASK/design/verification/State，只追加本段并写入结果 JSON。评审收尾时 `verification.md`（+48）与 `state` 被实施侧/主线程并行更新（非本评审写入），源码与测试的 diff 面在评审开始与收尾时一致，故本段结论对 code-v5 源码面有效。
+- **结论：APPROVE，阻塞项 0**（validatedRevision=`20261022-multi-node-ratelimit-code-v5`）。依据为静态核对（调用顺序、CAS 语义、断言与实现映射）+ 本地只读镜像/compose 校验；v5 执行证据由实施侧记录并已回填 `verification.md:388-432`，本评审未复跑 mvn/docker，只引用该记录（见非阻塞 6）。
+
+### 逐项核对
+
+| 项 | 结论 | 证据（file:line） |
+|----|------|------------------|
+| a1 `seq != 1` 守卫在 createSession 之前 | PASS | `UploadServiceImpl.java:855-859` 抛 CONFLICT，`createSession` 在其后 `:860-861`；调用点 `:657` 位于读 body（`:696` 起）与 `tryAcquireSeq`（`:664`）之前，拒绝时不占磁盘 |
+| a2 tc017 判别力 | PASS | `RelayUploadIntegrationTest.java:568-594`：init 不建会话（`:581`）→ seq=0 409（`:583-585`）→ 无会话（`:586`）→ 无临时文件（`:587`，`hasTempFile` `:596-600`）。旧实现（`git diff` 删除的 `if (seq > 1)`）下 seq=0 会走到 `createSession`，而 `RelaySession` 构造即 `CREATE` 临时文件（`RelayBufferManager.java:79-80`、`:92-95`），故 `:586`/`:587` 两条断言都失败；`:585` 的 409 断言两版都成立（旧版由 `tryAcquireSeq` OUT_OF_ORDER 抛同码），不构成判别力，真正有判别力的是会话/文件两条 |
+| a3 客户端无回归 | PASS | web 端 relay seq 从 1 起（`st-web/src/hooks/useUpload.tsx:142`）；单机模式在 `UploadServiceImpl.java:846-850` 提前返回，既有单机行为不变；已存在会话时 `:843-845` 早退，seq≥2 的后续小块不受守卫影响 |
+| b1 认领后二次探测收敛为 409 | PASS | `UploadServiceImpl.java:787-789` 在 MERGING 认领（`:779-781`，CAS）之后、`finalize`（`:791`）之前二次 `hasSession`，缺失抛 CONFLICT；该异常进入既有 catch（`:802`）后由 `:806` 的 `[MERGING]` 认领转 ABORTED 并清理，客户端看到 409 而非 `CHUNK_NOT_FOUND(404)`（`RelayBufferManager.java:302-308`） |
+| b2 失败清理不误伤并发胜者 | PASS | catch 仅认领自己持有的状态：merge 前 `[MERGING]`、merge 后 `[FAILED]`（`UploadServiceImpl.java:803-806`），`transitionStatus` 是 `status IN (...)` 的 CAS（`UploadSessionMapper.java:19-26`）；CAS 失败整块 cleanup 跳过（`:807-822`），不会 abort 并发胜者 multipart；`finally` 只移除 registry 登记（`:824-828`），与 code-v4 语义一致 |
+| b3 竞态是否真的存在（非阻塞，注释精度） | PASS（注释略强） | 认领成功后缓冲实际不可被删：`abortSession` 在 DB 状态=MERGING 时直接返回（`RelayBufferManager.java:276-279`），其清理以 0/4→3 的 CAS 为前提（`:281`、`:297-299`）；若清理先赢 CAS，则 finalize 的 0/4→1 认领失败并在 `:780` 直接 409。因此 `UploadServiceImpl.java:784-786` 描述的时间窗已被 CAS 收敛，本次二次探测属纵深防御（开销一次 `ConcurrentHashMap` 查询，无害） |
+| c refresh 异常用例与实现一致 | PASS | `CreditBucketTest.java:144-163`：supplier 抛 RuntimeException → `refresh()` 捕获返回 null（`CreditBucket.java:149-158`）→ `fresh == null` 分支 `degrade(); continue`（`:85-89`）→ 降级窗口按 rate 本机补充（`:49-70`），不再 EVAL。断言 1 次 EVAL（`:159`）、stale=1（`:160`）、degraded=1（`:161`）、<1s（`:162`）与实现逐条对应；`staleStore` 返回 `stale=true`（`:166-173`），先命中 `grant.stale()` 分支，不累加 granted/denied；异常在 `refresh()` 内被吸收，不计 storeErrors，与断言一致；`RateLimitStats` 键名与累加匹配（`RateLimitStats.java:30-36`、`:42-49`） |
+| d1 S3StorageConfig Javadoc | PASS | `S3StorageConfig.java:22-27` 与实现一致：`endpoint` 只给 `S3Client`（`:36-46`），`publicEndpoint` 只给 `S3Presigner` 且空值回退 endpoint（`:48-61`）；与 `application.yml:74-77` 一致。diff 仅注释，无行为变化 |
+| d2 SpeedLimitCache accessor 注释 | PASS | `SpeedLimitCache.java:42-45`、`:53`、`:69-72` 引用的 `snapshot(Long, List)`（`:81-94`）与 `LimitSnapshot#version()`（`:96-98`）真实存在；生产解析确已走 snapshot（`SpeedLimitService.java:27-35`）。diff 仅注释，无行为变化 |
+| e1 nginx digest 固定 | PASS | `docker/Dockerfile.web:4-6` 固定 `sha256:4c41e2d0a3a5…`；本地只读校验 `docker image inspect`：`Id` 与 `RepoDigests` 同为该 digest、`NGINX_VERSION=1.31.8`、`trixie`、`linux/amd64`，按 `nginx@sha256:…` 可直接解析到本地镜像；健康检查（`:15-17`）未改，基础镜像与 v4 实际使用的一致，无行为漂移 |
+| e2 compose 必填可解析且 fail-fast | PASS | `docker/docker-compose.cluster.yml:29-33` 用 `${STCLOUD_PUBLIC_S3_ENDPOINT:?…}`：`docker/.env` 含该键时 `compose config --quiet` 退出 0，解析值在 app1/app2/x-app 三处均为客户端可达地址；改用不含该键、以及含空值的临时 env-file 后，`compose config` 均退出 1 且报 `required variable STCLOUD_PUBLIC_S3_ENDPOINT is missing a value: set STCLOUD_PUBLIC_S3_ENDPOINT in docker/.env …`（注：PowerShell 里 `$env:X=''` 会移除变量，无法复现缺失场景，故用 env-file 验证） |
+| e3 README 表格与部署说明 | PASS | `README.md:282-291` 表头两列、各行两格；`README.md:255-256` 与 `docker/.env.example:49-52` 的「必填、缺失报错」表述与 compose 实测一致。注：表格两列化实际发生在 v4 提交 `2007c41`，v5 的 README diff 只有集群段落（见非阻塞 3） |
+| f 回归与安全面 | PASS | `git diff` 无 controller/公开接口/DDL 变更；`seq != 1` 是收紧而非放宽（在创建缓冲、读 body 之前拒绝协议外输入）；compose 改动只在部署面；错误消息与日志不含凭证；二次探测只增加一次 map 查询。`UploadServiceImpl.java:860-861` 的 `createSession` 参数与 v4 相同（`config.rateBytes()`/`config.relayChunkSize()`），无协议变化 |
+
+### 非阻塞残留（8 项，按优先级）
+
+1. **「二次探测抵消的竞态」在当前不变量下不可达**（低，注释/文档精度）：如 b3 所述，清理必须先赢状态 CAS，认领成功后清理会被 MERGING 守卫挡回；若清理先赢 CAS，则 `:779` 已经 409。建议下一补丁把 `UploadServiceImpl.java:784-786` 与 `design.md:413-415` 改成「纵深防御：即使未来出现不经状态 CAS 的缓冲清理，也收敛为 409」，避免读者误判当前存在 404 竞态。
+2. **`:787` 探测与 `:791` finalize 之间仍是理论窗口**（低）：该窗口内若缓冲消失，`finalize` 会抛 `CHUNK_NOT_FOUND`（`RelayBufferManager.java:302-308`）→ 404。当前无删除 `upload_session` 行的生产路径（grep 仅测试清理），且所有清理以状态 CAS 为前提，故不可达；留作后续硬化即可。
+3. **design §17.4 归因偏差**（低，文档）：`design.md:429` 称 v5 把 README 环境变量表补齐为两列，但 v5 README diff 只有 `README.md:255-256` 段落，表格两列化在 v4 提交 `2007c41`；建议改为「沿用 v4 两列表格」。
+4. **digest 的架构/缓存面**（低，部署）：本地核验对象是 `linux/amd64` 单平台镜像；若该 digest 对应单平台 manifest，arm64 宿主或清缓存后拉取会失败。建议 CI 增一步 `docker buildx imagetools inspect` 或实际 pull 校验，并在 README 注明 amd64 前提。
+5. **`.env.example` 示例行仍为注释**（低，部署）：新克隆 + cluster 部署会 fail-fast（已实测报错文案指向 `docker/.env`），属预期；发布说明或 README 快速开始里再提一句即可。
+6. **v5 执行证据为实施侧记录，本评审未复跑**（低，门禁）：评审收尾时 `verification.md:388-432` 已回填 v5 证据（`RelayUploadIntegrationTest` 20 例含 tc017、`CreditBucketTest` 6 例、compose config exit 0、全量 864 例）；记录对应同一 code-v5 快照，但本评审按只读约束未执行 mvn/docker，证据真实性由 VERIFIED 门禁与主线程复核，建议确认两条新用例名与当前测试文件一致（本段已静态核对存在）。
+7. **tc017 未覆盖「拒绝后可恢复」**（低，测试强度）：用例未断言随后用 seq=1 重试仍能创建缓冲并成功（新实现允许，旧实现因已建空会话会走另一分支）；补一条正向断言可同时锁定恢复路径。
+8. **既有残留（不在 v5 变更面）**（低）：seq=1 重放落到第二个节点时仍会惰性建缓冲并重复 append（依赖 Nginx 按 uploadId 粘滞，属 v4 设计前提）；`design.md:431-436`（§17.5 桌面安装包）与本任务仓库范围无关，属文档噪声。
+
+### 放行建议
+
+1. 阻塞 0，`CODE_REVIEW` 可置 pass（validatedRevision=`20261022-multi-node-ratelimit-code-v5`）。
+2. 下一补丁优先级：残留 1（注释精度）→ 3（文档归因）→ 4/5（部署校验与说明）→ 2/6/7（硬化与用例补强）。
+3. 本段结论只对快照 `20261022-multi-node-ratelimit-code-v5` 有效；代码再变需重新复核。

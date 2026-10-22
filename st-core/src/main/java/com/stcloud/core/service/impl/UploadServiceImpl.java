@@ -781,6 +781,12 @@ public class UploadServiceImpl implements UploadService {
         }
         boolean mergeStarted = false;
         try {
+            // 首次 hasSession 探测与上面的 MERGING 认领之间，超时清理仍可能移除本地缓冲；
+            // 认领成功后 cleanupExpired 不会动 MERGING 会话，这里再探测一次把竞态收敛为 409，
+            // 避免把 CHUNK_NOT_FOUND(404) 暴露给客户端（review-05 NB-8）。
+            if (!relayBufferManager.hasSession(uploadId)) {
+                throw new BusinessException(ResultCode.CONFLICT, "中转会话已丢失，请重新上传");
+            }
             // 上传末片（余量 < 5MB，无下限），然后复用 merge 逻辑完成合并
             int lastPart = relayBufferManager.finalize(uploadId, session.getStoragePath(), session.getS3UploadId());
             if (lastPart > 0) {
@@ -825,9 +831,10 @@ public class UploadServiceImpl implements UploadService {
     /**
      * 多节点中转：本地会话缺失时按 Redis 配置 + 持久化会话惰性创建；配置过期则要求重新初始化。
      * <p>
-     * seq &gt; 1 的请求不允许在这里创建本地会话：前面节点的数据不在本节点缓冲里，继续接收会静默丢数据；
-     * 更严重的是，创建出来的空会话会被随后的 relay-finalize 当成完整缓冲合并，造成文件静默截断（R-1）。
-     * 因此先判 seq 再决定是否创建，缺失时直接 409，不在本节点留下任何缓冲状态。
+     * 只有 seq == 1 的请求允许在这里创建本地会话：
+     * seq &gt; 1 说明前面节点的数据不在本节点缓冲里，继续接收会静默丢数据；
+     * seq &lt;= 0 属于协议外输入；两者若先创建再拒绝，空会话会被随后的 relay-finalize
+     * 当成完整缓冲合并，造成文件静默截断（R-1）。因此先判 seq 再决定是否创建。
      *
      * @return true 表示本次新建了本地会话
      */
@@ -845,8 +852,9 @@ public class UploadServiceImpl implements UploadService {
         if (config == null) {
             throw new BusinessException(ResultCode.CONFLICT, "中转会话已过期，请重新上传");
         }
-        if (seq > 1) {
-            // 不创建空会话：否则该会话会被 finalize 在空缓冲上合并（R-1）。
+        if (seq != 1) {
+            // 不创建空会话：只有第一片可以创建缓冲；seq>1 是节点故障/超时丢失，
+            // seq<=0 是协议外输入，两者都不能留下会被 finalize 合并的空会话（R-1）。
             throw new BusinessException(ResultCode.CONFLICT, "中转会话已丢失，请重新上传");
         }
         relayBufferManager.createSession(uploadId, config.rateBytes(),

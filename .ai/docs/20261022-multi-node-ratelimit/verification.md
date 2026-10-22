@@ -358,6 +358,8 @@ RelayUploadIntegrationTest +1、RedisCreditStoreTest +1。RedisCreditStoreTest �
 
 ## 14. 剩余风险
 
+> code-v4 评审遗留项中的 1–7 已在 code-v5 逐项收口（见 §15），当前只保留第 8 项长期限制。
+
 独立评审（codereview.md「code-v4 独立复审」）结论 APPROVE_WITH_CHANGES、阻塞 0，书面接受以下残留：
 
 1. **seq <= 0 空会话边界（低，与 R-1 同类）**：`ensureRelaySession` 只拦 `seq > 1`，协议外 `seq <= 0`
@@ -382,3 +384,60 @@ RelayUploadIntegrationTest +1、RedisCreditStoreTest +1。RedisCreditStoreTest �
   relay-chunk 失败时终止上传，符合该语义。
 - 桌面安装包已重新打包（§13.1）；用户机器上的旧安装包仍走旧客户端限速逻辑，需重新安装。
 - 桌面打包因 winCodeSign 符号链接权限使用 `signAndEditExecutable=false`，exe 图标/版本元数据未改写。
+
+## 15. code-v5 残余项收口（review-05 非阻塞项）
+
+### 15.1 变更
+
+| 残留 | 修复 | 证据 |
+|------|------|------|
+| seq <= 0 空会话 | `ensureRelaySession` 守卫改为 `seq != 1`；只有第一片创建缓冲 | `UploadServiceImpl.java` 注释 + `RelayUploadIntegrationTest#tc017`（409、无会话、无临时文件） |
+| finalize 认领竞态 | MERGING 认领后二次 `hasSession` 探测，缺失抛 409 走既有 abort 清理 | `UploadServiceImpl.relayFinalizeInternal` |
+| refresh 异常无独立用例 | 新增 `CreditBucketTest#refreshFailureDegradesLocally` | 1 次 EVAL、stale=1、degraded=1、<1s |
+| S3StorageConfig Javadoc 反向 | 改为 endpoint=服务端内网、public-endpoint=客户端可达 | `S3StorageConfig.java` |
+| 旧 accessor 用途不明 | 三个方法加 Javadoc：兼容保留，新代码用 snapshot | `SpeedLimitCache.java` |
+| nginx tag 漂移 | `FROM nginx@sha256:4c41e2d0…`（1.31.8/trixie，本地镜像 ID 4c41e2d0a3a5） | `docker/Dockerfile.web` |
+| compose 预签名默认不可达 | 改为必填 `${STCLOUD_PUBLIC_S3_ENDPOINT:?…}`，缺失 fail-fast | `docker/docker-compose.cluster.yml` |
+| README 表格列数 | 默认值并入说明列，保持两列 | `README.md` |
+| 桌面 exe 元数据缺失 | rcedit 写入图标/ProductName=星云盘/1.0.0，`--prepackaged` 生成 NSIS | `st-desktop/release/星云盘 Setup 1.0.0.exe`（82,617,490 B） |
+
+### 15.2 命令与结果
+
+| 命令 | 结果 |
+|------|------|
+| `mvn -q -pl st-common test -Dtest=CreditBucketTest,SpeedLimitServiceTest,UserTransferLimiterTest` | exit 0；CreditBucket 6、SpeedLimitService 2、UserTransferLimiter 9，全 pass |
+| `mvn -q -pl st-core -am test -Dtest=RelayUploadIntegrationTest` | exit 0；20 用例 0 failure（含 tc017） |
+| `docker compose -f docker-compose.yml -f docker-compose.cluster.yml config --quiet`（docker/.env 已设别名） | exit 0 |
+| `rcedit-x64.exe 星云盘.exe --set-icon … --set-file-version 1.0.0 …` | 退出 0；VersionInfo ProductName=星云盘、FileVersion=1.0.0 |
+| `electron-builder --win nsis --prepackaged release/win-unpacked` | 生成 82,617,490 B 安装包 |
+| `mvn -q test`（全量） | 见 §15.3（执行后回填） |
+
+### 15.3 全量回归
+
+| 命令 | 结果 |
+|------|------|
+| `mvn -q test`（11 模块） | exit code 0；132 个测试类、864 用例、0 failure / 0 error、80 skipped，约 3 分 20 秒 |
+
+分模块：Common 51、Auth 38、Core 287、Search 77、Team 175、Preview 18、Share 113、Sync 45、Admin 55、API 5。
+相对 code-v4（862）新增 2 例：CreditBucketTest#refreshFailureDegradesLocally、RelayUploadIntegrationTest#tc017。
+
+## 16. code-v5 运行态与交付
+
+| 项 | 命令/操作 | 结果 |
+|----|-----------|------|
+| 后端镜像 | `mvn -q -pl st-api -am -DskipTests package` + `docker build -f docker/Dockerfile -t stcloud-app:local .` + 重建 app1/app2 | 两节点 healthy |
+| seq<=0 现场 | 临时 upload=4096KB/s、10MB/2片 init（relay）后发 `seq=0` | `{"code":409,"message":"中转会话已丢失，请重新上传"}`；随后 finalize 也 409 |
+| 规则恢复 | 恢复 upload=0 / download=51200 | 两节点均 version=22、0/51200 |
+| Web 镜像 | 固定 nginx digest 后 `docker build -f docker/Dockerfile.web` + 重建 nginx | nginx healthy；`GET /` 200；admin 登录 200 |
+| 桌面安装包 | rcedit + `--prepackaged` 重建 NSIS | `release/星云盘 Setup 1.0.0.exe` 82,617,490 B；exe ProductName=星云盘、FileVersion=1.0.0 |
+
+## 17. code-v5 独立评审（review-06）
+
+- 结论：**APPROVE，阻塞 0**（`DISPATCH-20261022-ratelimit-review-06`，validatedRevision=code-v5）。
+- 逐项通过：seq != 1 守卫先于 createSession 且 tc017 有判别力；finalize 认领后二次探测把丢失会话收敛为 409
+  且 CAS 清理不误伤并发胜者；refresh 异常用例与实现逐条对应；Javadoc/accessor 注释、nginx digest、
+  compose 必填、README 两列表格均一致。
+- 评审同时指出：由于「清理先赢状态 CAS」的不变量，二次探测抵消的竞态当前不可达，属纵深防御；注释措辞略强。
+- 8 项非阻塞残留：注释精度（1）、探测与 finalize 之间理论窗口（2）、design 归因（3）、digest 架构面（4）、
+  .env.example 注释（5）、v5 用例证据（6，已由 §15.3 与 §16 补齐）、tc017 未覆盖恢复路径（7）、
+  seq=1 重放依赖粘滞（8）。其中 3 已在文档修正、6 已补齐；1/2/4/5/7/8 作为下一补丁清理项，不影响本轮验收。

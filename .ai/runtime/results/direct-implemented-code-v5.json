@@ -1,0 +1,10 @@
+{
+  "taskId": "20261022-multi-node-ratelimit",
+  "criterionProposal": {
+    "id": "IMPLEMENTED",
+    "outcome": "pass",
+    "by": "workflow-manager",
+    "evidenceRef": ".ai/docs/20261022-multi-node-ratelimit/verification.md",
+    "validatedRevision": "20261022-multi-node-ratelimit-code-v5"
+  }
+}

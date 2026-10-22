@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20261022-ratelimit-review-06",
+  "taskCode": "multi-node-ratelimit-code-v5-review",
+  "taskId": "20261022-multi-node-ratelimit",
+  "idempotencyKey": "20261022-multi-node-ratelimit",
+  "role": "reviewer",
+  "taskType": "review",
+  "objective": "独立复审 code-v5 残余项收口：seq != 1 守卫与 tc017、finalize 认领后二次探测、refresh 异常用例、S3StorageConfig Javadoc、SpeedLimitCache accessor 标注、nginx digest 固定、compose 预签名必填、README 表格；确认无阻塞并给出结论。",
+  "taskRefs": [
+    ".ai/tasks/TASK-20261022-multi-node-ratelimit-01.md",
+    ".ai/docs/20261022-multi-node-ratelimit/design.md",
+    ".ai/docs/20261022-multi-node-ratelimit/verification.md",
+    ".ai/docs/20261022-multi-node-ratelimit/codereview.md"
+  ],
+  "stateRef": ".ai/state/20261022-multi-node-ratelimit.yaml",
+  "artifactRefs": [
+    ".ai/docs/20261022-multi-node-ratelimit/codereview.md"
+  ],
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      "st-common/src/main/java/com/stcloud/common/ratelimit/",
+      "st-common/src/main/java/com/stcloud/common/config/S3StorageConfig.java",
+      "st-common/src/test/java/com/stcloud/common/ratelimit/",
+      "st-core/src/main/java/com/stcloud/core/service/impl/UploadServiceImpl.java",
+      "st-core/src/test/java/com/stcloud/core/service/impl/RelayUploadIntegrationTest.java",
+      "docker/Dockerfile.web",
+      "docker/docker-compose.cluster.yml",
+      "docker/.env.example",
+      "README.md",
+      ".ai/docs/20261022-multi-node-ratelimit/codereview.md"
+    ],
+    "exclude": [
+      "不得修改任何源代码、测试、TASK、design.md、verification.md 或 State",
+      "不得执行 mvn/gradle 等构建或测试命令",
+      "不得执行 git 写操作（只允许只读 git status/diff/log）",
+      "不得修改 docker 容器、compose 或运行环境",
+      "不得创建/指挥其他 Agent，不得向用户确认"
+    ]
+  },
+  "acceptance": [
+    "seq != 1 守卫在 createSession 之前；tc017 断言无会话/无临时文件，判别力成立",
+    "finalize 认领后二次 hasSession 探测把丢失会话收敛为 409，且失败路径清理正确",
+    "refresh 抛异常用例只 1 次 EVAL、stale=1、degraded=1、<1s",
+    "S3StorageConfig/SpeedLimitCache/README 文档与实现一致；nginx digest 固定有效；compose 必填变量在 .env 存在时 config 通过",
+    "结论明确（APPROVE / APPROVE_WITH_CHANGES / REQUEST_CHANGES），列 file:line 证据"
+  ],
+  "validation": [
+    "只读 git status / git diff（含 --stat）核对 code-v4 变更面",
+    "读取相关实现、测试与文档",
+    "在 .ai/docs/20261022-multi-node-ratelimit/codereview.md 追加 `## code-v4 独立复审` 段落（不覆盖历史）",
+    "写入 .ai/runtime/results/DISPATCH-20261022-ratelimit-review-04.json（dispatchId/taskId/status/artifactRefs/criterionProposal/blockerProposals）"
+  ],
+  "forbidSpawn": true,
+  "forbidGitMvn": false,
+  "etaMinutes": 8,
+  "output": {
+    "artifact": ".ai/docs/20261022-multi-node-ratelimit/codereview.md",
+    "result": ".ai/runtime/results/DISPATCH-20261022-ratelimit-review-06.json"
+  }
+}

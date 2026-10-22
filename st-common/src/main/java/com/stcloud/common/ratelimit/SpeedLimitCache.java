@@ -39,6 +39,10 @@ public class SpeedLimitCache {
 
     private final Map<Long, TenantEntry> entries = new ConcurrentHashMap<>();
 
+    /**
+     * 兼容保留：生产解析已改用 {@link #snapshot(Long, List)}，保证规则与版本同源；
+     * 本方法仅供外部/测试按单值读取，新代码不要再组合调用这三个 accessor。
+     */
     public SysRateLimit getUserRule(Long userId) {
         if (userId == null) {
             return null;
@@ -46,6 +50,7 @@ public class SpeedLimitCache {
         return getEntry().userRules.get(userId);
     }
 
+    /** 兼容保留，见 {@link #getUserRule(Long)}；新代码用 snapshot。 */
     public List<SysRateLimit> getRoleRules(List<String> roleCodes) {
         if (roleCodes == null || roleCodes.isEmpty()) {
             return Collections.emptyList();
@@ -61,7 +66,7 @@ public class SpeedLimitCache {
         return matched;
     }
 
-    /** 当前配置版本；用于共享桶的 ver 校验。 */
+    /** 兼容保留：当前配置版本；共享桶校验应使用 {@link LimitSnapshot#version()} 同源读取。 */
     public long getVersion() {
         return getEntry().version;
     }

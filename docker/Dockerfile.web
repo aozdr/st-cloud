@@ -1,7 +1,9 @@
 # 前端运行镜像：打包宿主机构建产物 st-web/dist。
 # 构建前先执行：cd st-web && npm run build
 # 只复用本地 nginx 镜像，不引入 Node 构建镜像。
-FROM nginx:latest
+# 固定 nginx:latest（1.31.8，Debian trixie）digest：避免 mutable tag 让健康检查依赖的工具再次漂移。
+# 本地镜像 ID 4c41e2d0a3a5；升级时同时复核 curl 是否仍随镜像提供。
+FROM nginx@sha256:4c41e2d0a3a55b325ed572cd0200bdb72af1433c3daa2bca6ef8eea68ce504a2
 
 COPY docker/nginx/nginx.conf /etc/nginx/nginx.conf
 COPY docker/nginx/conf.d /etc/nginx/conf.d

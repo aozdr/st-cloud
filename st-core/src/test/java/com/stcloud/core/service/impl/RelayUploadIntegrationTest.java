@@ -561,6 +561,38 @@ class RelayUploadIntegrationTest extends AbstractIntegrationTest {
         }
     }
 
+    /**
+     * R-1 同类边界（review-05 残留 1）：协议外 seq<=0 也必须在创建本地会话之前拒绝，
+     * 否则会被 tryAcquireSeq 判 OUT_OF_ORDER，却留下可被 finalize 合并的空会话。
+     */
+    @Test
+    void tc017_redisModeSeqZeroRejectedWithoutCreatingSession() {
+        setServerLimit(100);
+        RelaySessionRegistry registry = mock(RelaySessionRegistry.class);
+        when(registry.register(anyString(), anyLong(), anyLong())).thenReturn(true);
+        when(registry.get(anyString()))
+                .thenReturn(new RelaySessionRegistry.RelayConfig(100L * 1024L, 204800L));
+        ReflectionTestUtils.setField(uploadService, "relaySessionRegistry", registry);
+        String uploadId = null;
+        try {
+            UploadInitResponse resp = init("tc017.txt", 100L * 1024, 1, null);
+            final String id = resp.getUploadId();
+            uploadId = id;
+            assertFalse(relayBufferManager.hasSession(id), "init 只登记配置");
+
+            BusinessException error = assertThrows(BusinessException.class,
+                    () -> postChunk(id, new byte[8192], 0));
+            assertEquals(ResultCode.CONFLICT.getCode(), error.getCode());
+            assertFalse(relayBufferManager.hasSession(id), "seq<=0 不得创建空会话");
+            assertFalse(hasTempFile(id), "seq<=0 不得留下临时文件");
+        } finally {
+            ReflectionTestUtils.setField(uploadService, "relaySessionRegistry", null);
+            if (uploadId != null) {
+                relayBufferManager.cleanup(uploadId);
+            }
+        }
+    }
+
     private boolean hasTempFile(String uploadId) {
         java.nio.file.Path dir = java.nio.file.Paths.get(relayConfig.getTempDir());
         java.nio.file.Path file = dir.resolve(uploadId.replaceAll("[^a-zA-Z0-9]", "") + ".tmp");
