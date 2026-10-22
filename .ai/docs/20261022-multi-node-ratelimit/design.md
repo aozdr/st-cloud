@@ -345,3 +345,57 @@ services:
 ## 15. 开放决策
 
 见 requirement.md 第 8 节，默认按推荐项执行；如无异议，按本设计进入 P0。
+
+## 16. code-v4 残余项修复（R-1/R-2/R-3）
+
+独立评审 code-v3 给出的书面接受残留，按「先安全、再可观测、最后补证据」处理，不改变总体架构、
+Redis key、API 契约与数据库。
+
+### 16.1 R-1：relay 缺会话时不得创建空缓冲
+
+- 现状：`ensureRelaySession` 先 `createSession` 再判断 `seq > 1`，409 分支留下空会话；
+  后续 finalize 的 `hasSession` 只读探测会命中该空会话，在空缓冲上完成合并，文件静默截断。
+- 决策：把 seq 判断前移到创建之前。本地会话缺失且 `seq > 1` 时直接 409，**不创建任何本地状态**；
+  只有 `seq == 1` 才按 Redis 登记配置惰性创建。这样 R-1 的根因（空会话）不会产生，
+  也不再依赖「409 前 cleanup」这种补偿式修复。
+- 兼容：单机模式（registry 为 null）行为不变；init 仍只在无法登记时回落本地会话。
+- 回归：`RelayUploadIntegrationTest#tc016` 覆盖「init 只登记 → 首片惰性创建 → 会话丢失 → seq>1 409
+  → 无空会话/无临时文件 → finalize 409 → 未调用 completeMultipartUpload」。
+
+### 16.2 R-2：限速规则与版本一次快照
+
+- 现状：`resolve()` 三次 `getEntry()`，缓存 TTL 边界会跨读两份 entry，产出「新 ver + 旧 rate」。
+- 决策：`SpeedLimitCache.snapshot(userId, roles)` 在一次 `getEntry()` 内同时取出用户规则、角色规则与
+  version；`resolve()` 只调用该快照。旧的单值读取方法保留，避免破坏外部调用。
+- 兼容：解析语义（用户 + 角色取最严格值，0 表示不限速）不变。
+
+### 16.3 R-3：stale 耗尽改为 5s 本地降级
+
+- 现状：连续 stale 超过重试上限、刷新值未前进或 refresh 不可用时直接 `return`，该块完全不受限，
+  只记 `stale`，运维不可见。
+- 决策：上述三种情况统一置 5s 本地降级（`degradedUntilMs`）并累加 `degraded`，然后按当前 rate
+  平滑放行；不再直接放行，也不会形成 EVAL 风暴（降级期间不再调用 `grant`）。
+- 权衡：降级窗口内最坏 N x rate（与现有 fail-open 同一量级），由指标暴露；5s 后重新回到共享桶。
+- 边界：刷新后确认 `rate <= 0`（不限速）仍直接放行，属于正确语义而非降级。
+
+### 16.4 R-6 关闭
+
+- `getChunkUrl` 的 `clientLimit` 参数已重新参与客户端限速门控（`getChunkUrlInternal`），
+  评审文档中的 R-6 由 code-v4 复核对齐。
+
+### 16.5 部署与文档顺带修复
+
+- `docker/Dockerfile.web` 健康检查改用 curl：`nginx:latest`（Debian trixie）已不带 wget，
+  原健康检查导致容器长期 unhealthy。
+- nginx access log 增加 `upstream=$upstream_addr`，用于核对 relay 粘滞、节点分布与共享限速。
+- application.yml/README/.env.example 明确 `STCLOUD_STORAGE_ENDPOINT`（服务端内部）与
+  `STCLOUD_STORAGE_PUBLIC_ENDPOINT`（预签名）的拆分及 compose 别名 `STCLOUD_PUBLIC_S3_ENDPOINT`。
+
+### 16.6 测试计划（增补）
+
+| 编号 | 类型 | 内容 |
+|------|------|------|
+| T-10 | 单测 | CreditBucket stale 同值/重试耗尽 → 5s 降级 + degraded；拒绝等待期中断退出 |
+| T-11 | 单测 | SpeedLimitService 只读一次快照并按最严格规则合并 |
+| T-12 | 集成（真实 Redis） | 两 store 实例 8 线程 x 5s，总发放 <= rate x T + 2 quantum 且 >= 0.9 rate x T |
+| T-13 | 集成（H2） | redis 模式 relay 缺会话 seq>1 409 且不留空会话，finalize 409 |

@@ -1,0 +1,110 @@
+{
+  "dispatchId": "DISPATCH-20261022-ratelimit-review-04",
+  "taskId": "20261022-multi-node-ratelimit",
+  "status": "completed",
+  "conclusion": "APPROVE_WITH_CHANGES",
+  "blockingCount": 0,
+  "artifactRefs": [
+    ".ai/docs/20261022-multi-node-ratelimit/codereview.md"
+  ],
+  "criterionProposal": {
+    "id": "CODE_REVIEW",
+    "outcome": "pass",
+    "by": "reviewer-ratelimit-04",
+    "dispatchId": "DISPATCH-20261022-ratelimit-review-04",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20261022-ratelimit-review-04.json",
+    "validatedRevision": "20261022-multi-node-ratelimit-code-v4"
+  },
+  "blockerProposals": [],
+  "reviewedItems": [
+    {
+      "id": "R-1",
+      "verdict": "pass",
+      "evidence": "UploadServiceImpl.java:834-855（seq>1 409 在 createSession 之前，:848-853）；finalize 只读探测 :773-777；RelayBufferManager.java:115-117；单机分支 :839-843；用例 RelayUploadIntegrationTest.java:527-568（无会话 :548、无临时文件 :549、finalize 409 :551-554、never completeMultipartUpload :555）"
+    },
+    {
+      "id": "R-2",
+      "verdict": "pass",
+      "evidence": "SpeedLimitCache.java:69-93（snapshot + LimitSnapshot）；SpeedLimitService.java:26-35；合并语义 :48-54；旧方法保留 :42-67；SpeedLimitServiceTest.java:32-61"
+    },
+    {
+      "id": "R-3",
+      "verdict": "pass",
+      "evidence": "CreditBucket.java:83-99（上限/null/同值三路径）、:139-147（degrade）、:90-93（rate<=0 正确放行）、:120-130（store 异常）；failOpen=false 仍抛出 :123-125；CreditBucketTest.java:87-142"
+    },
+    {
+      "id": "R-4",
+      "verdict": "pass",
+      "evidence": "CreditBucketTest.java:87-103、:105-123、:125-142（新增 3 例，旧实现下 degraded 断言必失败）"
+    },
+    {
+      "id": "R-5",
+      "verdict": "pass",
+      "evidence": "RelayUploadIntegrationTest.java:527-562（tc016 mock RelaySessionRegistry 覆盖 ensureRelaySession 的 seq>1 分支）"
+    },
+    {
+      "id": "T-12",
+      "verdict": "pass",
+      "evidence": "RedisCreditStoreTest.java:175-230；上界 rate x elapsed + 2 x quantum≈5.21MB（实测约 5.0-5.1MB），下界 4.5MB；Lua 补充上限见 RedisCreditStore.java:57-70；类受 test.redis.port 门控 :29"
+    },
+    {
+      "id": "DEPLOY_DOCS",
+      "verdict": "pass_with_nonblocking",
+      "evidence": "Dockerfile.web:13-15（docker history 证实 nginx:latest 内含 curl、无 wget）；nginx.conf:15-17；application.yml:73-77 + S3StorageConfig.java:48-61；compose 别名 docker-compose.cluster.yml:29-31；README:253-257/288-289；.env.example:32-35/49-51"
+    },
+    {
+      "id": "SECURITY_DATA",
+      "verdict": "pass",
+      "evidence": "无新增公开接口（diff 无 controller）；409 早于读 body（UploadServiceImpl.java:696-707）；预签名走 publicEndpoint（S3StorageConfig.java:50-51）；日志仅 $upstream_addr；重复 confirm 幂等路径未改（UploadServiceImpl.java:436-438）"
+    }
+  ],
+  "nonBlockingFindings": [
+    {
+      "id": "NB-1",
+      "summary": "seq <= 0 时仍先 createSession 再 OUT_OF_ORDER 409，可留空会话（R-1 同类边界）",
+      "evidence": "UploadServiceImpl.java:848-853、:664-677"
+    },
+    {
+      "id": "NB-2",
+      "summary": "cluster 预签名默认 host.docker.internal 与 README/.env.example 建议冲突",
+      "evidence": "docker/docker-compose.cluster.yml:31；README.md:256-257"
+    },
+    {
+      "id": "NB-3",
+      "summary": "FROM nginx:latest 未固定 digest，健康检查依赖镜像自带 curl",
+      "evidence": "docker/Dockerfile.web:4"
+    },
+    {
+      "id": "NB-4",
+      "summary": "S3StorageConfig Javadoc 与 endpoint/publicEndpoint 现语义相反",
+      "evidence": "S3StorageConfig.java:22-26"
+    },
+    {
+      "id": "NB-5",
+      "summary": "README 环境变量表 2 列内写 3 列，默认值列不会被渲染",
+      "evidence": "README.md:282-289"
+    },
+    {
+      "id": "NB-6",
+      "summary": "旧缓存读取方法已无生产调用方，仅测试 never() 引用",
+      "evidence": "SpeedLimitCache.java:42-67"
+    },
+    {
+      "id": "NB-7",
+      "summary": "refresh 抛异常/supplier 缺失的降级分支无独立用例",
+      "evidence": "CreditBucket.java:86-89、:149-158"
+    },
+    {
+      "id": "NB-8",
+      "summary": "finalize hasSession→transitionSession 并发窗口可能得到 404 而非 409；降级窗口 N x rate 与故障期聚合压测仍属未验证项",
+      "evidence": "UploadServiceImpl.java:775-781；RelayBufferManager.java:302-308；verification.md §14"
+    }
+  ],
+  "limitations": [
+    "未执行 mvn/gradle 或测试命令（dispatch scope 禁止），测试结论为静态判读 + verification.md §9-§11 记录交叉核对，本 reviewer 未复跑",
+    "未执行 docker run/build/stop 等写操作；仅以只读 docker history 核对 nginx:latest 内的 curl/wget",
+    "未修改源代码、测试、TASK、design.md、verification.md、State 或 compose 运行环境"
+  ],
+  "reviewMethod": "read/grep + 只读 git status/git diff + 只读 docker history",
+  "reviewedAt": "2026-10-22T21:35:00+08:00"
+}

@@ -66,3 +66,22 @@
 - 验证：.ai/docs/20261022-multi-node-ratelimit/verification.md（实现后）
 - 评审：.ai/docs/20261022-multi-node-ratelimit/codereview.md（独立 reviewer）
 - 核心逻辑（信用扣减、窗口幂等、降级）加中文注释
+
+## 范围修订（2026-10-22，code-v4）
+
+原 exclude 写明「无 UI 变更」，但限速语义修复实际需要客户端配合（服务端规则是上限，客户端自设限速取更严格值；
+relay-chunk 透传 clientLimit）。已交付的客户端改动列入本 TASK 增补范围，不再视为越界：
+
+- `st-web/src/store/transfer.ts`、`st-web/src/hooks/useUpload.tsx`、
+  `st-web/src/hooks/file-browser/useFileDownload.ts`：客户端限速语义修正（0=不限速，不把服务端上限同步成客户端值）。
+- `st-desktop/src/upload-manager.ts`：上传 relay 每片携带当前 clientLimit，暂停恢复后仍生效。
+- `st-web/.env.development` / `.env.test` / `.env.production`：前端服务地址与产物目录（无密钥，已入库）。
+
+同轮补充（仍属原 include 的 st-common/st-core/docker 范围）：
+
+- R-1/R-2/R-3 修复与 R-4/R-5/T-12 回归用例，细节见 design.md §16。
+- `docker/Dockerfile.web` 健康检查改 curl；nginx access log 加 `upstream=$upstream_addr`。
+- 文档：S3 内外地址拆分（`STCLOUD_STORAGE_ENDPOINT` / `STCLOUD_STORAGE_PUBLIC_ENDPOINT`，compose 别名
+  `STCLOUD_PUBLIC_S3_ENDPOINT`）。
+
+原 exclude 的数据库/RBAC/S3 路径/状态机/分享/团队/搜索约束仍然有效。

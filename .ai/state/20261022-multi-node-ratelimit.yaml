@@ -18,7 +18,7 @@
   },
   "revision": {
     "design": "20261022-multi-node-ratelimit-v1",
-    "code": "20261022-multi-node-ratelimit-code-v3"
+    "code": "20261022-multi-node-ratelimit-code-v4"
   },
   "exitCriteria": [
     {
@@ -53,10 +53,10 @@
       ],
       "by": "workflow-manager",
       "evidenceRef": ".ai/docs/20261022-multi-node-ratelimit/verification.md",
-      "validatedRevision": "20261022-multi-node-ratelimit-code-v3",
+      "validatedRevision": "20261022-multi-node-ratelimit-code-v4",
       "executionKind": "direct",
-      "executionId": "direct:20261022-multi-node-ratelimit:IMPLEMENTED:20261022-multi-node-ratelimit-v1:20261022-multi-node-ratelimit-code-v3",
-      "completedAt": "2026-10-22T11:40:07.8972248Z"
+      "executionId": "direct:20261022-multi-node-ratelimit:IMPLEMENTED:20261022-multi-node-ratelimit-v1:20261022-multi-node-ratelimit-code-v4",
+      "completedAt": "2026-10-22T13:30:03.863365Z"
     },
     {
       "id": "CODE_REVIEW",
@@ -64,11 +64,11 @@
       "dependsOn": [
         "IMPLEMENTED"
       ],
-      "by": "reviewer-ratelimit-03",
-      "dispatchId": "DISPATCH-20261022-ratelimit-review-03",
-      "evidenceRef": ".ai/runtime/results/DISPATCH-20261022-ratelimit-review-03.json",
-      "validatedRevision": "20261022-multi-node-ratelimit-code-v3",
-      "completedAt": "2026-10-22T11:46:41.2754601Z"
+      "by": "reviewer-ratelimit-05",
+      "dispatchId": "DISPATCH-20261022-ratelimit-review-05",
+      "evidenceRef": ".ai/runtime/results/DISPATCH-20261022-ratelimit-review-05.json",
+      "validatedRevision": "20261022-multi-node-ratelimit-code-v4",
+      "completedAt": "2026-10-22T13:40:01.4597235Z"
     },
     {
       "id": "VERIFIED",
@@ -78,10 +78,10 @@
       ],
       "by": "workflow-manager",
       "evidenceRef": ".ai/docs/20261022-multi-node-ratelimit/verification.md",
-      "validatedRevision": "20261022-multi-node-ratelimit-code-v3",
+      "validatedRevision": "20261022-multi-node-ratelimit-code-v4",
       "executionKind": "direct",
-      "executionId": "direct:20261022-multi-node-ratelimit:VERIFIED:20261022-multi-node-ratelimit-v1:20261022-multi-node-ratelimit-code-v3",
-      "completedAt": "2026-10-22T11:40:11.0802527Z"
+      "executionId": "direct:20261022-multi-node-ratelimit:VERIFIED:20261022-multi-node-ratelimit-v1:20261022-multi-node-ratelimit-code-v4",
+      "completedAt": "2026-10-22T13:32:53.7630029Z"
     },
     {
       "id": "ACCEPT",
@@ -92,10 +92,10 @@
       ],
       "by": "workflow-manager",
       "evidenceRef": ".ai/docs/20261022-multi-node-ratelimit/verification.md",
-      "validatedRevision": "20261022-multi-node-ratelimit-code-v3",
+      "validatedRevision": "20261022-multi-node-ratelimit-code-v4",
       "executionKind": "direct",
-      "executionId": "direct:20261022-multi-node-ratelimit:ACCEPT:20261022-multi-node-ratelimit-v1:20261022-multi-node-ratelimit-code-v3",
-      "completedAt": "2026-10-22T11:46:55.3256905Z"
+      "executionId": "direct:20261022-multi-node-ratelimit:ACCEPT:20261022-multi-node-ratelimit-v1:20261022-multi-node-ratelimit-code-v4",
+      "completedAt": "2026-10-22T13:40:14.451586Z"
     }
   ],
   "artifacts": {
@@ -134,32 +134,32 @@
     {
       "criterion": "mode=local 现有单测通过且单节点行为不变",
       "evidenceRef": ".ai/docs/20261022-multi-node-ratelimit/verification.md",
-      "validatedRevision": "20261022-multi-node-ratelimit-code-v3"
+      "validatedRevision": "20261022-multi-node-ratelimit-code-v4"
     },
     {
       "criterion": "mode=redis 双实例并发总发放不超过 rate x T 加 2 倍 quantum",
       "evidenceRef": ".ai/docs/20261022-multi-node-ratelimit/verification.md",
-      "validatedRevision": "20261022-multi-node-ratelimit-code-v3"
+      "validatedRevision": "20261022-multi-node-ratelimit-code-v4"
     },
     {
       "criterion": "nginx 下 relay 同一 uploadId 粘滞且跨节点 confirm 幂等释放",
       "evidenceRef": ".ai/docs/20261022-multi-node-ratelimit/verification.md",
-      "validatedRevision": "20261022-multi-node-ratelimit-code-v3"
+      "validatedRevision": "20261022-multi-node-ratelimit-code-v4"
     },
     {
       "criterion": "Redis 故障降级不中断传输且指标可见",
       "evidenceRef": ".ai/docs/20261022-multi-node-ratelimit/verification.md",
-      "validatedRevision": "20261022-multi-node-ratelimit-code-v3"
+      "validatedRevision": "20261022-multi-node-ratelimit-code-v4"
     },
     {
       "criterion": "nginx 流式下载不缓冲且 WebSocket 可升级",
       "evidenceRef": ".ai/docs/20261022-multi-node-ratelimit/verification.md",
-      "validatedRevision": "20261022-multi-node-ratelimit-code-v3"
+      "validatedRevision": "20261022-multi-node-ratelimit-code-v4"
     },
     {
       "criterion": "mvn 构建与 st-common/st-core 测试通过",
       "evidenceRef": ".ai/docs/20261022-multi-node-ratelimit/verification.md",
-      "validatedRevision": "20261022-multi-node-ratelimit-code-v3"
+      "validatedRevision": "20261022-multi-node-ratelimit-code-v4"
     }
   ],
   "dispatchLedger": [
@@ -218,6 +218,44 @@
       "returnedAt": "2026-10-22T11:46:26.7052531Z",
       "updatedAt": "2026-10-22T11:46:26.7067499Z",
       "evaluatedAt": "2026-10-22T11:46:41.276379Z"
+    },
+    {
+      "dispatchId": "DISPATCH-20261022-ratelimit-review-04",
+      "taskId": "20261022-multi-node-ratelimit",
+      "idempotencyKey": "20261022-multi-node-ratelimit",
+      "role": "reviewer",
+      "taskType": "review",
+      "criterionId": "CODE_REVIEW",
+      "childId": "reviewer-ratelimit-04",
+      "status": "failed",
+      "envelopeRef": ".ai/runtime/dispatch/DISPATCH-20261022-ratelimit-review-04.json",
+      "plannedAt": "2026-10-22T13:30:30.6988368Z",
+      "spawnedAt": "2026-10-22T13:30:46.7820816Z",
+      "ackedAt": "2026-10-22T13:30:47.04359Z",
+      "runningAt": "2026-10-22T13:30:47.2782388Z",
+      "failedAt": "2026-10-22T13:37:04.8113701Z",
+      "failureReason": "reviewer produced no result within the review window",
+      "updatedAt": "2026-10-22T13:37:04.816152Z"
+    },
+    {
+      "dispatchId": "DISPATCH-20261022-ratelimit-review-05",
+      "taskId": "20261022-multi-node-ratelimit",
+      "idempotencyKey": "20261022-multi-node-ratelimit",
+      "role": "reviewer",
+      "taskType": "review",
+      "criterionId": "CODE_REVIEW",
+      "childId": "reviewer-ratelimit-05",
+      "status": "evaluated",
+      "envelopeRef": ".ai/runtime/dispatch/DISPATCH-20261022-ratelimit-review-05.json",
+      "plannedAt": "2026-10-22T13:37:15.4326934Z",
+      "spawnedAt": "2026-10-22T13:37:35.2215441Z",
+      "ackedAt": "2026-10-22T13:37:35.5170521Z",
+      "runningAt": "2026-10-22T13:37:35.841543Z",
+      "resultRef": ".ai/runtime/results/DISPATCH-20261022-ratelimit-review-05.json",
+      "scopeVerified": true,
+      "returnedAt": "2026-10-22T13:40:01.1642999Z",
+      "updatedAt": "2026-10-22T13:40:01.1660122Z",
+      "evaluatedAt": "2026-10-22T13:40:01.4598343Z"
     }
   ],
   "proposals": [],
@@ -924,6 +962,340 @@
         "design": "20261022-multi-node-ratelimit-v1",
         "code": "20261022-multi-node-ratelimit-code-v3"
       }
+    },
+    {
+      "eventId": "stale:code:20261022-multi-node-ratelimit-code-v4",
+      "action": "stale-cascade",
+      "before": {
+        "roots": [
+          "IMPLEMENTED",
+          "CODE_REVIEW",
+          "VERIFIED",
+          "ACCEPT"
+        ]
+      },
+      "after": {
+        "affected": [
+          "IMPLEMENTED",
+          "CODE_REVIEW",
+          "VERIFIED",
+          "ACCEPT"
+        ],
+        "revision": {
+          "design": "20261022-multi-node-ratelimit-v1",
+          "code": "20261022-multi-node-ratelimit-code-v4"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-22T13:29:57.3379525Z",
+      "revision": {
+        "design": "20261022-multi-node-ratelimit-v1",
+        "code": "20261022-multi-node-ratelimit-code-v4"
+      }
+    },
+    {
+      "eventId": "direct:20261022-multi-node-ratelimit:IMPLEMENTED:20261022-multi-node-ratelimit-v1:20261022-multi-node-ratelimit-code-v4",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "IMPLEMENTED",
+        "status": "stale"
+      },
+      "after": {
+        "id": "IMPLEMENTED",
+        "status": "done",
+        "revision": {
+          "design": "20261022-multi-node-ratelimit-v1",
+          "code": "20261022-multi-node-ratelimit-code-v4"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-22T13:30:03.8672359Z",
+      "revision": {
+        "design": "20261022-multi-node-ratelimit-v1",
+        "code": "20261022-multi-node-ratelimit-code-v4"
+      }
+    },
+    {
+      "eventId": "dispatch-plan:DISPATCH-20261022-ratelimit-review-04",
+      "action": "dispatch-plan",
+      "before": null,
+      "after": {
+        "dispatchId": "DISPATCH-20261022-ratelimit-review-04",
+        "criterionId": "CODE_REVIEW",
+        "status": "planned",
+        "revision": {
+          "design": "20261022-multi-node-ratelimit-v1",
+          "code": "20261022-multi-node-ratelimit-code-v4"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-22T13:30:30.7014562Z",
+      "revision": {
+        "design": "20261022-multi-node-ratelimit-v1",
+        "code": "20261022-multi-node-ratelimit-code-v4"
+      }
+    },
+    {
+      "eventId": "d990e26a-ab61-4f71-a961-913113b7464b",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20261022-ratelimit-review-04",
+        "status": "planned"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20261022-ratelimit-review-04",
+        "status": "spawned",
+        "revision": {
+          "design": "20261022-multi-node-ratelimit-v1",
+          "code": "20261022-multi-node-ratelimit-code-v4"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-22T13:30:46.7907685Z",
+      "revision": {
+        "design": "20261022-multi-node-ratelimit-v1",
+        "code": "20261022-multi-node-ratelimit-code-v4"
+      }
+    },
+    {
+      "eventId": "2acde2c7-f392-4424-a90a-efcfb80a130c",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20261022-ratelimit-review-04",
+        "status": "spawned"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20261022-ratelimit-review-04",
+        "status": "acked",
+        "revision": {
+          "design": "20261022-multi-node-ratelimit-v1",
+          "code": "20261022-multi-node-ratelimit-code-v4"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-22T13:30:47.0439754Z",
+      "revision": {
+        "design": "20261022-multi-node-ratelimit-v1",
+        "code": "20261022-multi-node-ratelimit-code-v4"
+      }
+    },
+    {
+      "eventId": "c3ad0026-b288-4d06-896b-2e19c990cceb",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20261022-ratelimit-review-04",
+        "status": "acked"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20261022-ratelimit-review-04",
+        "status": "running",
+        "revision": {
+          "design": "20261022-multi-node-ratelimit-v1",
+          "code": "20261022-multi-node-ratelimit-code-v4"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-22T13:30:47.2787267Z",
+      "revision": {
+        "design": "20261022-multi-node-ratelimit-v1",
+        "code": "20261022-multi-node-ratelimit-code-v4"
+      }
+    },
+    {
+      "eventId": "direct:20261022-multi-node-ratelimit:VERIFIED:20261022-multi-node-ratelimit-v1:20261022-multi-node-ratelimit-code-v4",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "VERIFIED",
+        "status": "stale"
+      },
+      "after": {
+        "id": "VERIFIED",
+        "status": "done",
+        "revision": {
+          "design": "20261022-multi-node-ratelimit-v1",
+          "code": "20261022-multi-node-ratelimit-code-v4"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-22T13:32:53.7696668Z",
+      "revision": {
+        "design": "20261022-multi-node-ratelimit-v1",
+        "code": "20261022-multi-node-ratelimit-code-v4"
+      }
+    },
+    {
+      "eventId": "13d3e2a8-445d-4af4-9cc6-6e662aab0c0f",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20261022-ratelimit-review-04",
+        "status": "running"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20261022-ratelimit-review-04",
+        "status": "failed",
+        "revision": {
+          "design": "20261022-multi-node-ratelimit-v1",
+          "code": "20261022-multi-node-ratelimit-code-v4"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-22T13:37:04.8197827Z",
+      "revision": {
+        "design": "20261022-multi-node-ratelimit-v1",
+        "code": "20261022-multi-node-ratelimit-code-v4"
+      }
+    },
+    {
+      "eventId": "dispatch-plan:DISPATCH-20261022-ratelimit-review-05",
+      "action": "dispatch-plan",
+      "before": null,
+      "after": {
+        "dispatchId": "DISPATCH-20261022-ratelimit-review-05",
+        "criterionId": "CODE_REVIEW",
+        "status": "planned",
+        "revision": {
+          "design": "20261022-multi-node-ratelimit-v1",
+          "code": "20261022-multi-node-ratelimit-code-v4"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-22T13:37:15.4350486Z",
+      "revision": {
+        "design": "20261022-multi-node-ratelimit-v1",
+        "code": "20261022-multi-node-ratelimit-code-v4"
+      }
+    },
+    {
+      "eventId": "8b1c7aa8-cbc2-48e1-886f-719418c0879b",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20261022-ratelimit-review-05",
+        "status": "planned"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20261022-ratelimit-review-05",
+        "status": "spawned",
+        "revision": {
+          "design": "20261022-multi-node-ratelimit-v1",
+          "code": "20261022-multi-node-ratelimit-code-v4"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-22T13:37:35.2350646Z",
+      "revision": {
+        "design": "20261022-multi-node-ratelimit-v1",
+        "code": "20261022-multi-node-ratelimit-code-v4"
+      }
+    },
+    {
+      "eventId": "ad38a397-40b0-42ef-9bc1-e6a78c0867b4",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20261022-ratelimit-review-05",
+        "status": "spawned"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20261022-ratelimit-review-05",
+        "status": "acked",
+        "revision": {
+          "design": "20261022-multi-node-ratelimit-v1",
+          "code": "20261022-multi-node-ratelimit-code-v4"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-22T13:37:35.5174681Z",
+      "revision": {
+        "design": "20261022-multi-node-ratelimit-v1",
+        "code": "20261022-multi-node-ratelimit-code-v4"
+      }
+    },
+    {
+      "eventId": "68d0bc15-6391-4110-bc9c-f2fffce3b3df",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20261022-ratelimit-review-05",
+        "status": "acked"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20261022-ratelimit-review-05",
+        "status": "running",
+        "revision": {
+          "design": "20261022-multi-node-ratelimit-v1",
+          "code": "20261022-multi-node-ratelimit-code-v4"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-22T13:37:35.8419933Z",
+      "revision": {
+        "design": "20261022-multi-node-ratelimit-v1",
+        "code": "20261022-multi-node-ratelimit-code-v4"
+      }
+    },
+    {
+      "eventId": "f1dd6fb9-622b-4f12-af3c-ee2ba1afc577",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20261022-ratelimit-review-05",
+        "status": "running"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20261022-ratelimit-review-05",
+        "status": "returned",
+        "revision": {
+          "design": "20261022-multi-node-ratelimit-v1",
+          "code": "20261022-multi-node-ratelimit-code-v4"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-22T13:40:01.1688011Z",
+      "revision": {
+        "design": "20261022-multi-node-ratelimit-v1",
+        "code": "20261022-multi-node-ratelimit-code-v4"
+      }
+    },
+    {
+      "eventId": "DISPATCH-20261022-ratelimit-review-05:CODE_REVIEW:evaluate",
+      "action": "evaluate",
+      "before": {
+        "id": "CODE_REVIEW",
+        "status": "stale"
+      },
+      "after": {
+        "id": "CODE_REVIEW",
+        "status": "done",
+        "revision": {
+          "design": "20261022-multi-node-ratelimit-v1",
+          "code": "20261022-multi-node-ratelimit-code-v4"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-22T13:40:01.4600353Z",
+      "revision": {
+        "design": "20261022-multi-node-ratelimit-v1",
+        "code": "20261022-multi-node-ratelimit-code-v4"
+      }
+    },
+    {
+      "eventId": "direct:20261022-multi-node-ratelimit:ACCEPT:20261022-multi-node-ratelimit-v1:20261022-multi-node-ratelimit-code-v4",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "ACCEPT",
+        "status": "stale"
+      },
+      "after": {
+        "id": "ACCEPT",
+        "status": "done",
+        "revision": {
+          "design": "20261022-multi-node-ratelimit-v1",
+          "code": "20261022-multi-node-ratelimit-code-v4"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-22T13:40:14.4546131Z",
+      "revision": {
+        "design": "20261022-multi-node-ratelimit-v1",
+        "code": "20261022-multi-node-ratelimit-code-v4"
+      }
     }
   ],
   "risk": {
@@ -934,7 +1306,7 @@
     "irreversible": false
   },
   "verification": {
-    "validatedRevision": "20261022-multi-node-ratelimit-code-v3",
+    "validatedRevision": "20261022-multi-node-ratelimit-code-v4",
     "checks": [
       {
         "dimension": "tests",
@@ -947,17 +1319,17 @@
         "evidenceRef": ".ai/docs/20261022-multi-node-ratelimit/verification.md"
       },
       {
-        "dimension": "knowledge",
-        "outcome": "pass",
-        "evidenceRef": ".ai/docs/20261022-multi-node-ratelimit/verification.md"
-      },
-      {
         "dimension": "security",
         "outcome": "pass",
         "evidenceRef": ".ai/docs/20261022-multi-node-ratelimit/verification.md"
       },
       {
         "dimension": "apiContract",
+        "outcome": "pass",
+        "evidenceRef": ".ai/docs/20261022-multi-node-ratelimit/verification.md"
+      },
+      {
+        "dimension": "knowledge",
         "outcome": "pass",
         "evidenceRef": ".ai/docs/20261022-multi-node-ratelimit/verification.md"
       }

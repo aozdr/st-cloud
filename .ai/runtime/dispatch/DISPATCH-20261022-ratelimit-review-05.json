@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20261022-ratelimit-review-05",
+  "taskCode": "multi-node-ratelimit-code-v4-review-retry",
+  "taskId": "20261022-multi-node-ratelimit",
+  "idempotencyKey": "20261022-multi-node-ratelimit",
+  "role": "reviewer",
+  "taskType": "review",
+  "objective": "独立复审 code-v4 变更（R-1/R-2/R-3 修复、R-4/R-5/T-12 用例、Dockerfile.web/nginx/S3 文档），逐项给出 PASS/FAIL 与 file:line 证据，输出结论；时间盒 8 分钟。",
+  "taskRefs": [
+    ".ai/tasks/TASK-20261022-multi-node-ratelimit-01.md",
+    ".ai/docs/20261022-multi-node-ratelimit/design.md",
+    ".ai/docs/20261022-multi-node-ratelimit/verification.md",
+    ".ai/docs/20261022-multi-node-ratelimit/codereview.md"
+  ],
+  "stateRef": ".ai/state/20261022-multi-node-ratelimit.yaml",
+  "artifactRefs": [
+    ".ai/docs/20261022-multi-node-ratelimit/codereview.md"
+  ],
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      "st-common/src/main/java/com/stcloud/common/ratelimit/",
+      "st-common/src/test/java/com/stcloud/common/ratelimit/",
+      "st-core/src/main/java/com/stcloud/core/service/impl/UploadServiceImpl.java",
+      "st-core/src/test/java/com/stcloud/core/service/impl/RelayUploadIntegrationTest.java",
+      "docker/Dockerfile.web",
+      "docker/nginx/nginx.conf",
+      "st-api/src/main/resources/application.yml",
+      "README.md",
+      "docker/.env.example",
+      ".ai/docs/20261022-multi-node-ratelimit/codereview.md"
+    ],
+    "exclude": [
+      "不得修改任何源代码、测试、TASK、design.md、verification.md 或 State",
+      "不得执行 mvn/gradle 等构建或测试命令",
+      "不得执行 git 写操作（只允许只读 git status/diff/log）",
+      "不得修改 docker 容器、compose 或运行环境",
+      "不得创建/指挥其他 Agent，不得向用户确认"
+    ]
+  },
+  "acceptance": [
+    "R-1：seq>1 在创建本地会话之前 409，finalize 只读探测；tc016 覆盖断言（无会话/无临时文件/未 completeMultipartUpload）",
+    "R-2：resolve() 只读一次 snapshot，规则与 version 同源；SpeedLimitServiceTest 覆盖",
+    "R-3：stale 重试上限/同值/刷新失败统一 5s 降级并记 degraded，不直接放行、不 EVAL 风暴；CreditBucketTest 覆盖",
+    "R-4/R-5/T-12：用例真实存在且断言与修复语义一致",
+    "部署/文档改动正确且无回归风险（nginx healthcheck 工具、upstream 日志、S3 endpoint 配置回退）",
+    "结论明确（APPROVE / APPROVE_WITH_CHANGES / REQUEST_CHANGES），并列出 file:line 证据"
+  ],
+  "validation": [
+    "只读 git status / git diff（含 --stat）核对 code-v4 变更面",
+    "读取相关实现、测试与文档",
+    "在 .ai/docs/20261022-multi-node-ratelimit/codereview.md 追加 `## code-v4 独立复审` 段落（不覆盖历史）",
+    "写入 .ai/runtime/results/DISPATCH-20261022-ratelimit-review-04.json（dispatchId/taskId/status/artifactRefs/criterionProposal/blockerProposals）"
+  ],
+  "forbidSpawn": true,
+  "forbidGitMvn": false,
+  "etaMinutes": 8,
+  "output": {
+    "artifact": ".ai/docs/20261022-multi-node-ratelimit/codereview.md",
+    "result": ".ai/runtime/results/DISPATCH-20261022-ratelimit-review-05.json"
+  }
+}

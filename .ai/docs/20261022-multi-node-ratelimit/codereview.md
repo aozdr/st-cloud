@@ -126,3 +126,139 @@ R-2/R-3 不阻塞；若希望本轮收口，只需 R-1 一行 + R-4 两例。
 1. 阻塞项为 0，可置 `CODE_REVIEW = pass`；
 2. 建议同分支下一个补丁：R-1（一行 cleanup）、R-2（单次 entry 快照）、R-4（stale 同值退出用例）；
 3. 两节点 + Nginx 端到端压测、Redis 断连演练仍属 TASK 层已声明的未验证项（verification §6），不在本评审新增约束内。
+
+## code-v4 独立复审
+
+> 归属 exitCriteria: CODE_REVIEW
+> dispatchId: DISPATCH-20261022-ratelimit-review-04
+> taskId: 20261022-multi-node-ratelimit
+> validatedRevision: 20261022-multi-node-ratelimit-code-v4（工作区未提交）
+> reviewer: reviewer-ratelimit-04（独立 reviewer，只读）
+> 快照：2026-10-22T21:35+08:00；`git status --porcelain` = 16 个 M + 3 个 ??，其中新增用例 `st-common/src/test/java/com/stcloud/common/ratelimit/SpeedLimitServiceTest.java` 属本 revision。
+> 方式：read/grep、只读 `git status` / `git diff`，以及只读 `docker history nginx:latest --no-trunc`（核对基础镜像自带工具）。**未执行 mvn/gradle**、未执行 docker 写操作（不 run/build/stop）、未改代码/测试/TASK/design.md/verification.md/State、未创建其他 Agent。
+> 范围：只复核 code-v4 增量的六个验收面，不重复 review-03 的全量评审；测试结论为静态判读 + 与 verification.md §9–§11 记录的交叉核对，**本 reviewer 未复跑**。
+
+### 1. 结论
+
+**APPROVE_WITH_CHANGES**（criterionProposal.outcome = **pass**，**阻塞 0**；非阻塞残留 8 项见 §8）
+
+| 验收面 | 结论 | 关键证据 |
+|---|---|---|
+| R-1：seq>1 建会话前 409、finalize 只读探测 | 符合 | `UploadServiceImpl.java:848-853`（先判 seq 再 `createSession` `:852-853`）、`:773-777` |
+| R-1 回归：tc016 断言真实覆盖 | 符合 | `RelayUploadIntegrationTest.java:527-568` |
+| R-2：resolve 单次快照、规则与 version 同源 | 符合 | `SpeedLimitCache.java:69-93`、`SpeedLimitService.java:26-35` |
+| R-2 覆盖 | 符合 | `SpeedLimitServiceTest.java:32-61` |
+| R-3：stale 三路径统一 5s 降级 + degraded | 符合 | `CreditBucket.java:83-99`、`:139-147`、`:120-130` |
+| R-3 覆盖 | 符合 | `CreditBucketTest.java:87-142` |
+| R-4/R-5/T-12 用例存在且语义一致 | 符合 | §5 |
+| 部署/文档 | 基本符合，3 项文档级残留 | §6、§8（2/4/5） |
+| 安全与数据一致性 | 未发现新问题 | §7 |
+
+### 2. R-1 复核：409 不落在任何本地状态创建之前
+
+- 调用点 `UploadServiceImpl.java:655-657`：`ensureRelaySession(session, seq)` 在 Content-Length 校验、`tryAcquireSeq`、读取 body 之前执行；其前只有 `chunkManager.getFirstChunk`、`fileNodeMapper.selectById` 等只读查询（`:641-654`）。
+- 新实现 `UploadServiceImpl.java:834-855`：`hasSession` 只读命中（`:836-838`）→ `registry == null` 维持单机历史行为（`:839-843`）→ `config == null` 409（`:844-847`）→ **`seq > 1` 直接 409（`:848-851`）→ 之后才 `createSession`（`:852-853`）**。
+- 顺序为何重要：`RelayBufferManager.createSession` 会立即建临时文件并打开输出流（`RelayBufferManager.java:86-100`、`:79-80`），空会话会被 finalize 当作完整缓冲。修复后 409 分支不留会话、不留临时文件、不消耗磁盘，也不进入 `tryAcquireSeq`。
+- finalize 只读探测：`UploadServiceImpl.java:773-777` 用 `hasSession`（`RelayBufferManager.java:115-117`，仅 `containsKey`）在 `transitionSession`（`:779`）与 merge 之前 409，故缺会话的重复 finalize 稳定 409、不会空合并。
+- 单机/并发回归：local 模式（registry 为 null）分支未变（`:839-843`），init 的回落本地会话逻辑未变（`:277-285`）；并发 seq=1 由 `createSession` 的 synchronized + containsKey（`RelayBufferManager.java:86-91`）与 `tryAcquireSeq`（`:145-158`）保证，本轮未改这些语义。
+- 用例 `RelayUploadIntegrationTest.java:527-562`：mock 注册表（`:530-534`）→ init 后断言无本地会话（`:540`）→ seq=1 惰性建会话（`:541-542`）→ 模拟丢失 `cleanup`（`:543`）→ seq=2 断言 409（`:545-547`）→ 无会话（`:548`）→ 无临时文件（`:549`，命名规则与 `RelayBufferManager.java:310-313`、`:93` 一致，辅助方法 `:564-568`）→ finalize 409（`:551-554`）→ `never().completeMultipartUpload`（`:555`）；finally 恢复注入（`:556-561`）。
+  - 判别力：旧实现（先 create 再判 seq）会在 `:548`、`:549`、`:555` 三处失败，属有效回归用例，而非重复断言。
+
+### 3. R-2 复核
+
+- `SpeedLimitCache.java:76-89`：一次 `getEntry()`，同 entry 取用户规则、命中角色规则与 version；`LimitSnapshot` 见 `:91-93`；`getEntry` 的 TTL 双检（`:100-114`）与 load 的版本前后双读（`:116-138`）仍在。
+- `SpeedLimitService.java:26-35`：只调一次 `cache.snapshot(...)`；合并语义未变——`mostRestrictive` 仍为 `>0` 取最小、全 0 不限速（`:48-54`），规则顺序仍是 [用户规则, 角色规则]。
+- 旧方法保留：`SpeedLimitCache.java:42-67`（getUserRule/getRoleRules/getVersion），生产已无调用方（见 §8-6），兼容目的成立。
+- 覆盖 `SpeedLimitServiceTest.java:32-49`：`times(1).snapshot(...)`、`never()` 旧三个读取方法、最严格值 1024/4096、version=13；`:51-61` 覆盖匿名不访问缓存。该用例无法直接构造 TTL 边界跨读（需真缓存并发），属设计级保障 + 单次读取契约断言，可接受。
+
+### 4. R-3 复核
+
+- 常量与降级窗口：`CreditBucket.java:13-14`、`:139-147`（记 `degraded` + 置 `degradedUntilMs`，写读均在 `lock` 内，见 `:49`）。
+- 三条路径统一降级（`:83-99`）：① 重试上限 `++staleRetries > 2` → `fresh = null` → `degrade()`（`:85-89`）；② refresh 抛异常或无 supplier → `refresh` 返回 null → 同一分支 `degrade()`（`:149-158` 捕获 RuntimeException）；③ 同 rate 同 ver 未前进 → `degrade()`（`:94-99`）。三者都 `continue`，进入本地按 rate 补充（`:49-59`），**不再直接 return 放行**。
+- 仍允许直接放行的只有「确认不限速」：`currentRate <= 0`（`:36-38`）与刷新后 `rateBytes <= 0`（`:90-93`），与设计 §16.3 边界一致，属正确语义。
+- 不产生 EVAL 风暴：降级期间 `needCredit` 恒为 false（`:64-70`），不再 `store.grant`（`:74`）；5s 窗口后才可能再 EVAL，最多 1 次/5s/桶。`onStale`（evictCache）仍在 refresh 之前（`:80-85`、`UserTransferLimiter.java:249-253`），因此同值路径只在存储端版本真落后时出现，不是常态抖动。
+- failOpen=false 语义保持：catch 内仍先 `throw e`（`:123-125`）；fail-open 分支改为 `storeError()` + `degrade()`（`:126-130`），与原「storeError + degraded + 置 5s 窗口」一一对应，计数不重复。
+- 覆盖 `CreditBucketTest.java:87-103`（同值：grants=1、stale=1、degraded=1、耗时 <1s）、`:105-123`（耗尽：grants=3、refreshes=2、degraded=1）、`:125-142`（denied 等待期中断退出并保留中断标记）。三例在旧实现下均会失败（旧实现 degraded 恒 0），断言与修复语义一致。
+
+### 5. 用例（R-4 / R-5 / T-12）
+
+- R-4：`CreditBucketTest.java:87-142` 新增 3 例，补齐 review 要求的「同值必须退出（带耗时断言）」与中断用例，并额外给出重试上限断言。
+- R-5：`RelayUploadIntegrationTest.java:527-562`（tc016）注入 mock `RelaySessionRegistry`，覆盖「注册表存在、本地会话丢失」分支；这是旧用例 tc015（`RelayUploadIntegrationTest.java:463-472` 命中的是 `tryAcquireSeq` 的 OUT_OF_ORDER）覆盖不到的 `ensureRelaySession` 路径。
+- T-12：`RedisCreditStoreTest.java:175-230`。边界判读：首轮 `initBytes = quantum = 100KB`（`:201-202`），快照期内补充速率 1MB/s、cap 1MB（Lua 见 `RedisCreditStore.java:57-70`：`tokens <= cap`、按 `elapsed x storedRate` 补），故 `total <= init + rate x T`；上界用实测 `elapsedMs`（`:212-217`，只会放大、不会收紧）→ `rate x elapsed + 2 x quantum ≈ 5.21MB`，实测约 5.0–5.1MB；下界 `0.9 x rate x 5s = 4.5MB`，需至少 45 次授予，8 线程 50ms 退避裕度充足；`future.get(15s)` 与 `shutdownNow`（`:215`、`:219`）使 flaky 风险低。
+  - 注意：该类受 `@EnabledIfSystemProperty(test.redis.port)` 门控（`RedisCreditStoreTest.java:29`），默认全量测试会 skip，T-12 证据依赖显式运行（verification §9.4/§10 记录 total=5000000、elapsed=5001ms、upper=5201000、lower=4500000），与上述静态边界一致。
+
+### 6. 部署与文档
+
+- 健康检查：`docker/Dockerfile.web:13-15` 改为 `curl -fsS -o /dev/null http://127.0.0.1/`。只读 `docker history nginx:latest --no-trunc` 显示官方构建层最终 `apt-get install --no-install-recommends ... $nginxPackages gettext-base curl`，全程未安装 wget（本地镜像 ID 4c41e2d0a3a5、`DYNPKG_RELEASE=1~trixie`）→ 旧 wget 探活必然失败，curl 在镜像内且为手工安装（不被随后 auto-remove 清除），改动方向正确。运行态 healthy 复测记录见 verification §9.5（实现方记录，本 reviewer 未重建镜像）。
+- upstream 日志：`docker/nginx/nginx.conf:15-17` 仅追加常量 `upstream=` 与 nginx 内建 `$upstream_addr`，无用户输入拼接、无换行注入面；该变量只含后端 IP:port，不含 token/查询串，泄漏面未扩大（原格式已记 `$request`）。
+- S3 绑定与回退：`st-api/src/main/resources/application.yml:73-77`（`endpoint <- STCLOUD_STORAGE_ENDPOINT`、`public-endpoint <- STCLOUD_STORAGE_PUBLIC_ENDPOINT`，空默认）；回退在 `S3StorageConfig.java:48-61`（blank → endpoint）；`S3Client` 仍只用 endpoint（`:36-46`）→ 服务端内网直连、预签名用对外地址，绑定/回退正确，未配置时与旧行为等价。
+- 别名一致性：`docker/docker-compose.cluster.yml:29-31` 映射 `STCLOUD_PUBLIC_S3_ENDPOINT -> STCLOUD_STORAGE_PUBLIC_ENDPOINT`；`README.md:253-257`、`:274-275`、`:288-289` 与 `docker/.env.example:32-35`、`:49-51` 描述一致。三处文档级残留见 §8-2/4/5。
+- 未新增/修改公开接口、compose 服务、数据库或状态机；本轮 diff 仅 16 个文件（无 controller）。
+
+### 7. 安全与数据一致性
+
+- 无新增公开接口：`git status` 变更面不含 controller/路由；relay 相关仍只有既有的 `relay-chunk` / `relay-finalize`。
+- 409 分支不消耗磁盘：在 `createSession` 之前抛出（§2），且早于读取 body 的循环（`UploadServiceImpl.java:696-707`）。
+- 预签名不回泄内网地址：默认取 `publicEndpoint`，仅空白时回退 endpoint（`S3StorageConfig.java:50-51`）；残余风险在部署侧（endpoint 设内网名且 public-endpoint 留空），见 §8-2、§8-4。
+- 重复 confirm 幂等未受影响：`UploadServiceImpl.java:436-438` 走 `releaseUpload(userId, chunkKey)`（`UserTransferLimiter.java:98-120`），窗口释放按 chunkKey 幂等，本轮无改动。
+- 指标：R-3 的 `degraded` 计数集中在 `degrade()`（`CreditBucket.java:139-147`），store 异常与 stale 僵持共用同一窗口语义，运维可观测。
+
+### 8. 非阻塞残留（8 项）
+
+1. **R-1 同类的 seq ≤ 0 边界未收口**（低）：`UploadServiceImpl.java:848-851` 只拦 `seq > 1`，因此 `seq <= 0` 且本地无会话时仍会 `createSession`（`:852-853`），随后被 `tryAcquireSeq` 判 OUT_OF_ORDER 409（`:664-677`，无 cleanup），留下空会话；若同 uploadId 再 finalize，仍可在空缓冲上合并。触发需客户端发送协议外 seq（仓库 web/desktop 从 1 起）；建议一行加固（`if (seq != 1)` 或入口 `@Min(1)`），与 review-03 的接受口径一致，不升为阻塞。
+2. **cluster 预签名默认值与文档冲突**（低，部署）：`docker/docker-compose.cluster.yml:31` 默认 `http://host.docker.internal:9000`，而 `README.md:256-257`、`docker/.env.example:50` 明确不要使用该地址；未设置别名时预签名 URL 只能宿主机访问。compose 不在本轮 diff，建议统一默认值或改必填（`:?`）。
+3. **基础镜像未固定**（低）：`docker/Dockerfile.web:4` `FROM nginx:latest`，健康检查依赖基础镜像自带 curl；仓库其它镜像均按 digest 固定（如 `docker/docker-compose.yml:7`、`:30`、`:47`），建议同样固定，避免 mutable tag 让健康检查再次失效。
+4. **S3StorageConfig Javadoc 与现语义相反**（低，文档）：`S3StorageConfig.java:22-26` 写「publicEndpoint 设内网地址、endpoint 设对外地址」，与 `application.yml:73-77` 及实际回退（`:48-61`）正好相反，易误导运维；建议下一补丁同步注释。
+5. **README 表格列数不匹配**（低，文档）：`README.md:288-289` 新增两行在「环境变量（生产必设）」2 列表（`:282-283`）内多写第 3 列（默认值），GFM 按表头列数截断，默认值不会呈现；建议并入说明列或给该表加列。
+6. **旧缓存读取方法已无生产调用方**（低）：`SpeedLimitCache.java:42-67` 仅测试 `never()` 引用；保留兼容可接受，后续可标注用途或清理。
+7. **R-3「refresh 异常」缺独立用例**（低，测试强度）：仅通过重试耗尽共用 `fresh == null` 分支覆盖，`LimitSupplier` 抛 RuntimeException / supplier 为 null 的降级无独立断言；建议补 1 例。
+8. **既有并发/容量语义残留**（低）：finalize 的 `hasSession` 与 `transitionSession` 之间无锁（`UploadServiceImpl.java:775-781`），并发 cleanup 可能让 finalize 得到 404 CHUNK_NOT_FOUND（`RelayBufferManager.java:302-308`）而非 409；5s 降级窗口最坏 N x rate（与既有 fail-open 同级，verification §14 已记录），故障期双节点聚合压测、节点故障迁移（客户端重放 seq=1 落到新节点）仍未覆盖，属 TASK 层已声明的未验证项。
+
+### 9. 放行建议
+
+1. 阻塞为 0，可置 `CODE_REVIEW = pass`（criterionProposal.outcome = pass）。
+2. 下一补丁优先级：§8-1（一行 seq 加固）、§8-2/§8-5（默认值与文档一致）、§8-4（注释纠偏）；§8-3 建议随镜像基线一起固定。
+3. 本段结论只对快照 `20261022-multi-node-ratelimit-code-v4` 有效；代码再变需重新复核。
+
+
+## code-v4 独立复审（review-05）
+
+- 评审：reviewer-ratelimit-05；dispatchId `DISPATCH-20261022-ratelimit-review-05`；快照 `20261022-multi-node-ratelimit-code-v4`（工作区未提交）。
+- 变更面：`git status --porcelain=v1` / `git diff --stat` 核对为 17 个已改文件 + 新增 `SpeedLimitServiceTest.java`；本段只读评审，未执行 mvn/gradle，未修改源码/测试/其他文档（除本段追加）。
+- **结论：APPROVE，阻塞项 0。** 依据为静态核对（调用顺序、逻辑分支、断言）+ `verification.md` §10/§12 已记录的执行证据；本轮未重复执行构建，故不复述测试通过数。
+
+### 逐项核对
+
+| 项 | 结论 | 证据（file:line） |
+|----|------|------------------|
+| R-1 seq>1 先拒后建 | PASS | `ensureRelaySession(session, seq)` 在读取 body 之前调用（`UploadServiceImpl.java:657`，读取循环始于 `:696`）；顺序为 hasSession → registry 配置 → `seq > 1` 抛 CONFLICT（`:848-851`）→ 仅 seq==1 才 `createSession`（`:852-853`） |
+| R-1 finalize 只读探测 | PASS | `UploadServiceImpl.java:773-777` 仅 `hasSession` 判定后 409，无 create 路径；注释覆盖「第二次 finalize 在空缓冲上合并」 |
+| R-1 tc016 断言覆盖 | PASS | `RelayUploadIntegrationTest.java:528-562`：init 不建会话（`:540`）→ 首片惰性创建（`:541-542`）→ cleanup 模拟丢失（`:543`）→ seq=2 409（`:545-547`）→ 无会话（`:548`）→ 无临时文件（`:549`，`hasTempFile` `:564-568` 与 `RelayBufferManager.java:93/311-313` 的 sanitize+".tmp" 一致，非空断言）→ finalize 409（`:551-554`）→ `never().completeMultipartUpload`（`:555`）；`s3-test-upload-id` 与 `:212` mock 值一致，不会因 s3UploadId 不匹配而「碰巧」通过 |
+| R-2 一次快照 | PASS | `SpeedLimitCache.java:76-89` 在单次 `getEntry()` 内同时取 userRule / 命中角色规则 / version；`SpeedLimitService.resolve()` 只调 `cache.snapshot(...)`（`SpeedLimitService.java:27`），无第二、三次 `getEntry` |
+| R-2 合并语义兼容 | PASS | 用户规则在前、角色规则按 roles 顺序追加（`SpeedLimitCache.java:79-87`），与旧 `getRoleRules`（`:49-62`）的 null/空处理及遍历顺序等价；`mostRestrictive` 取最小正值（`SpeedLimitService.java:48-54`）与顺序无关；旧 accessor 保留（`:42-67`），生产代码已无调用方（grep 仅测试 `never()` 引用） |
+| R-2 用例 | PASS | `SpeedLimitServiceTest.java:32-49` 断言最严格合并 + 同源 version=13 + snapshot 恰一次 + 三个旧 accessor `never()`；`:51-61` 匿名不访问缓存 |
+| R-3 三条 stale 路径统一降级 | PASS | `CreditBucket.java:85-99`：`++staleRetries > 2` 与 `refresh()` 返回 null（含 supplier 抛 RuntimeException，`:149-158`）共用 `fresh == null → degrade(); continue`（`:86-89`）；刷新值未前进 `degrade(); continue`（`:94-99`）；三处均不再 `return` 放行 |
+| R-3 degrade 语义 | PASS | `CreditBucket.java:140-147`：`stats.degraded()` + `degradedUntilMs = now + 5000`；store 异常路径复用同一 `degrade()`（`:120-130`，`stats.storeError()` 保留），窗口内按 rate 本机补充（`:49-70`） |
+| R-3 failOpen=false 仍抛 | PASS | `CreditBucket.java:123-125` 未改，直接 `throw e` |
+| 用例：CreditBucket 3 例 | PASS | `:89-102` 同值 stale：1 次 EVAL、stale=1、degraded=1、<1s；`:107-122` 持续前进：grants=3（EVAL 上界）、refreshes=2、degraded=1；`:127-141` denied 等待期中断退出且保留中断标记（对应 `sleep` `:161-168`） |
+| 用例：RedisCreditStore 8x5s | PASS（有 flaky 风险） | 双 store 实例 + 8 线程 5s，上界 rate×elapsed+2×quantum、下界 0.9×rate×5s；记录值 total=5,000,000 / upper=5,201,000 / lower=4,500,000（verification §9.4）。风险：真实 Redis + 5s 实时窗口，共享/高负载下下界可能抖动；该用例按 redis 可用性 gated（全量回归 skipped，单独执行通过） |
+| Dockerfile.web 健康检查 | PASS（有残留） | `docker/Dockerfile.web:14-15` `curl -fsS -o /dev/null`：HTTP≥400 返回非 0，比 wget 更严格；基础镜像 `nginx:latest` 未固定（`:4`），curl 依赖可变基线 |
+| nginx upstream 日志 | PASS | `docker/nginx/nginx.conf:16` 追加 `upstream=$upstream_addr`，语法正确、仅内部地址，无 token；原格式已含 `$request`，无新增敏感面 |
+| application.yml S3 绑定/回退 | PASS | `application.yml:74` endpoint←STCLOUD_STORAGE_ENDPOINT，`:77` public-endpoint←STCLOUD_STORAGE_PUBLIC_ENDPOINT（空默认）；`S3StorageConfig.java:18/27/50-51` 松散绑定 + isBlank 回退 endpoint，预签名不回泄内网地址 |
+| 安全/一致性 | PASS | 无 controller/路由改动（无新增公开接口）；409 在 `createSession` 与读 body 之前（`UploadServiceImpl.java:657` vs `:696`），不占磁盘；重复 confirm 幂等路径（`tryAcquireSeq` `:664-671`）未改；「刷新后确认不限速」放行（`:90-93`）属语义性放行而非 stale 放行 |
+
+### 非阻塞残留（7 项，按优先级）
+
+1. **R-1 同类边界：`seq <= 0` 仍会创建空会话**（低，建议下一补丁一行加固）：守卫只拦 `seq > 1`（`UploadServiceImpl.java:848-851`），`seq <= 0` 且本地无会话时仍 `createSession`（`:852-853`），随后 `tryAcquireSeq` 判非 ACQUIRED 后 409（`:672-677`）且无 cleanup，留下空会话；若同 uploadId 再 finalize，仍可在空缓冲上合并。触发需协议外 seq（仓库 web/desktop 从 1 起），故不阻塞；建议 `if (seq != 1)` 或入口 `@Min(1)`。
+2. **`S3StorageConfig` Javadoc 与现语义相反**（低，文档）：`S3StorageConfig.java:22-26` 写「publicEndpoint 设内网、endpoint 设对外」，与 `application.yml:73-77`、README 部署说明及实际回退（`:48-61`）相反，易误导运维。
+3. **cluster 预签名默认值与文档冲突**（低，部署）：`docker/docker-compose.cluster.yml:31` 默认 `http://host.docker.internal:9000`，而 README 与 `docker/.env.example:49-51` 明确要求不要用该地址；未设置别名时预签名 URL 仅宿主机可达。compose 不在本轮 diff，建议统一默认值或改必填。
+4. **README 环境变量表列数不匹配**（低，文档）：新增两行为 3 列（`README.md:288-289`），所在表头为 2 列，GFM 会截断默认值列。
+5. **R-3 `refresh()` 返回 null 的分支无独立用例**（低，测试强度）：exhaustion 用例走的是 `staleRetries>2` 产生的 null，supplier 抛异常/为 null 的降级仅被同一分支隐式覆盖；建议补 1 例断言 degraded 且无 EVAL 风暴。
+6. **RedisCreditStoreTest 5s 实时窗口稳定性**（低）：下界 0.9×rate×5s 依赖真实 Redis 吞吐，CI/共享 Redis 并发下需观察；已用 println 输出 total/elapsed。
+7. **旧缓存 accessor 无生产调用方**（低，清理项）：`SpeedLimitCache.java:42-67` 仅被 `SpeedLimitServiceTest` 的 `never()` 引用，保留兼容可接受，建议后续标注用途或移除。
+
+### 放行建议
+
+1. 阻塞 0，`CODE_REVIEW` 可置 pass（validatedRevision=`20261022-multi-node-ratelimit-code-v4`）。
+2. 下一补丁优先级：残留 1（一行加固）→ 残留 2/3/4（文档与部署默认值一致）→ 残留 5（补 1 例）。
+3. 本段结论只对上述快照有效；代码再变需重新复核。

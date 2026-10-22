@@ -66,6 +66,32 @@ public class SpeedLimitCache {
         return getEntry().version;
     }
 
+    /**
+     * 一次取到「用户规则 + 角色规则 + 配置版本」的同一份快照（R-2）。
+     * <p>
+     * resolve() 原先分三次调用 getEntry()，缓存恰好在 TTL 边界过期时会跨读两份 entry，
+     * 产生「新版本 + 旧速率」的组合；共享桶会接受更高的 ver，导致之后真正的新速率同 ver 恒 stale。
+     * 快照保证三者来自同一次加载。
+     */
+    public LimitSnapshot snapshot(Long userId, List<String> roleCodes) {
+        TenantEntry entry = getEntry();
+        SysRateLimit userRule = userId != null ? entry.userRules.get(userId) : null;
+        List<SysRateLimit> matched = new ArrayList<>();
+        if (roleCodes != null) {
+            for (String code : roleCodes) {
+                SysRateLimit rule = entry.roleRules.get(code);
+                if (rule != null) {
+                    matched.add(rule);
+                }
+            }
+        }
+        return new LimitSnapshot(userRule, matched, entry.version);
+    }
+
+    /** 限速解析所需的一致性快照；roleRules 只包含命中的角色规则。 */
+    public record LimitSnapshot(SysRateLimit userRule, List<SysRateLimit> roleRules, long version) {
+    }
+
     /** 失效全部缓存 */
     public void evict() {
         entries.clear();

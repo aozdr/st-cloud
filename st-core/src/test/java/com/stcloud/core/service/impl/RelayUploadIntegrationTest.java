@@ -24,6 +24,7 @@ import com.stcloud.core.service.StorageService;
 import com.stcloud.core.service.UploadService;
 import com.stcloud.core.service.VersionService;
 import com.stcloud.core.service.impl.upload.RelayBufferManager;
+import com.stcloud.core.service.impl.upload.RelaySessionRegistry;
 import com.stcloud.core.service.impl.upload.UploadChunkManager;
 import com.stcloud.core.service.impl.upload.UploadCommitManager;
 import com.stcloud.core.service.impl.upload.UploadInitCommitManager;
@@ -517,5 +518,52 @@ class RelayUploadIntegrationTest extends AbstractIntegrationTest {
                 .eq(FileChunk::getChunkIndex, 1));
         assertNotNull(first);
         assertEquals(1, first.getStatus(), "触发 uploadPart 后 file_chunk 状态应置为已上传(1)");
+    }
+
+    /**
+     * R-5（code-v4）：redis 模式下本地会话丢失时，seq>1 的 relay-chunk 必须 409，
+     * 且不能创建空会话——否则随后的 relay-finalize 会在空缓冲上合并，静默截断文件（R-1）。
+     */
+    @Test
+    void tc016_redisModeSessionLost_seqGreaterThanOneRejectsWithoutEmptySession() {
+        setServerLimit(100); // 100KB/s -> relayChunkSize=204800
+        RelaySessionRegistry registry = mock(RelaySessionRegistry.class);
+        when(registry.register(anyString(), anyLong(), anyLong())).thenReturn(true);
+        when(registry.get(anyString()))
+                .thenReturn(new RelaySessionRegistry.RelayConfig(100L * 1024L, 204800L));
+        ReflectionTestUtils.setField(uploadService, "relaySessionRegistry", registry);
+        String uploadId = null;
+        try {
+            UploadInitResponse resp = init("tc016.txt", 100L * 1024, 1, null);
+            final String id = resp.getUploadId();
+            uploadId = id;
+            assertFalse(relayBufferManager.hasSession(id), "init 只登记配置，不在本节点创建缓冲");
+            postChunk(id, new byte[8192], 1); // 首片在本节点惰性创建并提交
+            assertTrue(relayBufferManager.hasSession(id), "首个 relay-chunk 应惰性创建会话");
+            relayBufferManager.cleanup(id); // 模拟节点故障/会话超时丢失
+
+            BusinessException chunkError = assertThrows(BusinessException.class,
+                    () -> postChunk(id, new byte[8192], 2));
+            assertEquals(ResultCode.CONFLICT.getCode(), chunkError.getCode());
+            assertFalse(relayBufferManager.hasSession(id), "409 分支不得留下空会话");
+            assertFalse(hasTempFile(id), "409 分支不得留下临时文件");
+
+            BusinessException finalizeError = assertThrows(BusinessException.class,
+                    () -> uploadService.relayFinalize(id, "s3-test-upload-id"));
+            assertEquals(ResultCode.CONFLICT.getCode(), finalizeError.getCode(),
+                    "缺会话的 finalize 必须 409，不能合并空缓冲");
+            verify(storageService, never()).completeMultipartUpload(anyString(), anyString());
+        } finally {
+            ReflectionTestUtils.setField(uploadService, "relaySessionRegistry", null);
+            if (uploadId != null) {
+                relayBufferManager.cleanup(uploadId);
+            }
+        }
+    }
+
+    private boolean hasTempFile(String uploadId) {
+        java.nio.file.Path dir = java.nio.file.Paths.get(relayConfig.getTempDir());
+        java.nio.file.Path file = dir.resolve(uploadId.replaceAll("[^a-zA-Z0-9]", "") + ".tmp");
+        return Files.exists(file);
     }
 }

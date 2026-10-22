@@ -23,18 +23,16 @@ public class SpeedLimitService {
         if (user == null || user.getUserId() == null) {
             return SpeedLimitResult.unlimited();
         }
+        // 规则与版本必须来自同一份缓存快照，否则 TTL 边界会产出「新 ver + 旧 rate」（R-2）
+        SpeedLimitCache.LimitSnapshot snapshot = cache.snapshot(user.getUserId(), user.getRoles());
         List<SysRateLimit> rules = new ArrayList<>();
-        SysRateLimit userRule = cache.getUserRule(user.getUserId());
-        if (userRule != null) {
-            rules.add(userRule);
+        if (snapshot.userRule() != null) {
+            rules.add(snapshot.userRule());
         }
-        List<SysRateLimit> roleRules = cache.getRoleRules(user.getRoles());
-        if (roleRules != null) {
-            rules.addAll(roleRules);
-        }
+        rules.addAll(snapshot.roleRules());
         int upload = mostRestrictive(rules, SysRateLimit::getUploadSpeedLimit);
         int download = mostRestrictive(rules, SysRateLimit::getDownloadSpeedLimit);
-        return new SpeedLimitResult(upload, download, cache.getVersion());
+        return new SpeedLimitResult(upload, download, snapshot.version());
     }
 
     public static int capRate(int serverRateKb, Integer clientRateKb) {

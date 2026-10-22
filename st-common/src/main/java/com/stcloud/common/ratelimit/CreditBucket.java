@@ -10,6 +10,9 @@ package com.stcloud.common.ratelimit;
  */
 final class CreditBucket {
 
+    /** 版本僵持或依赖异常时的本地降级窗口：期间按 rate 本机补充，避免整块放行。 */
+    private static final long DEGRADED_WINDOW_MS = 5000L;
+
     private final Object lock = new Object();
     private double tokens;
     private double credit;
@@ -77,16 +80,22 @@ final class CreditBucket {
                         if (onStale != null) {
                             onStale.run();
                         }
-                        // 防御：连续 stale 且刷新结果不前进时退出，避免 EVAL 风暴
-                        if (++staleRetries > 2) {
-                            return;
+                        // 防御：连续 stale 且刷新结果不前进时退出 EVAL 循环，改为 5s 本地降级，
+                        // 既避免 EVAL 风暴，也不把这一块直接放行（R-3）。
+                        CreditLimit fresh = ++staleRetries > 2 ? null : refresh(refreshed);
+                        if (fresh == null) {
+                            degrade();
+                            continue;
                         }
-                        CreditLimit fresh = refresh(refreshed);
-                        if (fresh == null || fresh.rateBytes() <= 0L) {
+                        if (fresh.rateBytes() <= 0L) {
+                            // 刷新后确认「不限速」：直接放行，不再占用共享额度
                             return;
                         }
                         if (fresh.rateBytes() == currentRate && fresh.ver() == currentVer) {
-                            return;
+                            // 存储端仍判定旧版本，但本地解析结果没有前进：按当前 rate 降级 5s，
+                            // 不无限重试；degraded 指标让运维可见（R-3）。
+                            degrade();
+                            continue;
                         }
                         currentRate = fresh.rateBytes();
                         currentVer = fresh.ver();
@@ -116,17 +125,24 @@ final class CreditBucket {
                     }
                     if (stats != null) {
                         stats.storeError();
-                        stats.degraded();
                     }
-                    synchronized (lock) {
-                        degradedUntilMs = System.currentTimeMillis() + 5000L;
-                    }
+                    degrade();
                 }
                 continue;
             }
             if (!sleep(Math.min(waitMs, 1000L))) {
                 return;
             }
+        }
+    }
+
+    /** 本地降级：5s 内忽略共享信用、按当前 rate 本机补充，并累加 degraded 指标。 */
+    private void degrade() {
+        if (stats != null) {
+            stats.degraded();
+        }
+        synchronized (lock) {
+            degradedUntilMs = System.currentTimeMillis() + DEGRADED_WINDOW_MS;
         }
     }
 

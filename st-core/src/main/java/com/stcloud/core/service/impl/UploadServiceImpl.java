@@ -653,11 +653,8 @@ public class UploadServiceImpl implements UploadService {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
         }
         // 多节点：init 不创建本地会话，首个 relay-chunk 在本节点惰性创建缓冲；
-        // 若会话已丢失（节点故障/超时）且不是第一片，明确 409，避免在空缓冲上继续。
-        boolean relaySessionCreated = ensureRelaySession(session);
-        if (relaySessionCreated && seq > 1) {
-            throw new BusinessException(ResultCode.CONFLICT, "中转会话已丢失，请重新上传");
-        }
+        // 若会话已丢失（节点故障/超时）且不是第一片，明确 409，且不得创建空会话（R-1）。
+        ensureRelaySession(session, seq);
         // Content-Length 校验：缺失长度也必须在读取过程中受上限约束，防止超大请求打满临时盘。
         long relayChunkSize = relayBufferManager.getRelayChunkSize(uploadId);
         if (chunkBytes < 0 || relayChunkSize > 0 && chunkBytes > relayChunkSize) {
@@ -825,9 +822,18 @@ public class UploadServiceImpl implements UploadService {
         }
     }
 
-    /** 多节点中转：本地会话缺失时按 Redis 配置 + 持久化会话惰性创建；配置过期则要求重新初始化。 */
-    private boolean ensureRelaySession(UploadSession session) {
-        if (relayBufferManager.hasSession(session.getUploadId())) {
+    /**
+     * 多节点中转：本地会话缺失时按 Redis 配置 + 持久化会话惰性创建；配置过期则要求重新初始化。
+     * <p>
+     * seq &gt; 1 的请求不允许在这里创建本地会话：前面节点的数据不在本节点缓冲里，继续接收会静默丢数据；
+     * 更严重的是，创建出来的空会话会被随后的 relay-finalize 当成完整缓冲合并，造成文件静默截断（R-1）。
+     * 因此先判 seq 再决定是否创建，缺失时直接 409，不在本节点留下任何缓冲状态。
+     *
+     * @return true 表示本次新建了本地会话
+     */
+    private boolean ensureRelaySession(UploadSession session, int seq) {
+        String uploadId = session.getUploadId();
+        if (relayBufferManager.hasSession(uploadId)) {
             return false;
         }
         if (relaySessionRegistry == null) {
@@ -835,11 +841,15 @@ public class UploadServiceImpl implements UploadService {
             // 不能因为未启用跨节点登记就拒绝请求（保持历史行为）。
             return false;
         }
-        RelaySessionRegistry.RelayConfig config = relaySessionRegistry.get(session.getUploadId());
+        RelaySessionRegistry.RelayConfig config = relaySessionRegistry.get(uploadId);
         if (config == null) {
             throw new BusinessException(ResultCode.CONFLICT, "中转会话已过期，请重新上传");
         }
-        relayBufferManager.createSession(session.getUploadId(), config.rateBytes(),
+        if (seq > 1) {
+            // 不创建空会话：否则该会话会被 finalize 在空缓冲上合并（R-1）。
+            throw new BusinessException(ResultCode.CONFLICT, "中转会话已丢失，请重新上传");
+        }
+        relayBufferManager.createSession(uploadId, config.rateBytes(),
                 session.getStoragePath(), session.getS3UploadId(), config.relayChunkSize());
         return true;
     }

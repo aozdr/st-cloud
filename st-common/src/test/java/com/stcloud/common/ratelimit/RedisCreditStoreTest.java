@@ -171,4 +171,61 @@ class RedisCreditStoreTest {
         assertTrue(total <= rate + quantum + rate / 5, "总发放 " + total + " 超过上限");
         assertTrue(total >= rate / 2, "总发放 " + total + " 偏低，脚本可能未生效");
     }
+
+    @Test
+    @DisplayName("两实例 8 线程并发 5 秒：总发放不超过 rate x T + 2 x quantum")
+    void twoInstancesEightThreadsRespectRateForFiveSeconds() throws Exception {
+        String bucket = key("down");
+        long rate = 1_000_000L;
+        long quantum = 100_000L;
+        long capacity = 1_000_000L;
+        long durationMs = 5_000L;
+        int threadsPerInstance = 4;
+        int threads = threadsPerInstance * 2;
+        // 两个独立 store 实例模拟两个后端节点，共享同一 Redis key
+        RedisCreditStore nodeA = new RedisCreditStore(template);
+        RedisCreditStore nodeB = new RedisCreditStore(template);
+        RedisCreditStore[] stores = {nodeA, nodeB};
+        ExecutorService pool = Executors.newFixedThreadPool(threads);
+        AtomicLong grantedBytes = new AtomicLong();
+        CountDownLatch start = new CountDownLatch(1);
+        List<Future<?>> futures = new ArrayList<>();
+        long elapsedMs;
+        try {
+            for (int i = 0; i < threads; i++) {
+                final RedisCreditStore node = stores[i / threadsPerInstance];
+                futures.add(pool.submit(() -> {
+                    start.await();
+                    long end = System.currentTimeMillis() + durationMs;
+                    while (System.currentTimeMillis() < end) {
+                        CreditGrant grant = node.grant(bucket, quantum, rate, capacity,
+                                quantum, 1L, 60_000L);
+                        if (grant.granted()) {
+                            grantedBytes.addAndGet(quantum);
+                        } else {
+                            Thread.sleep(Math.min(Math.max(grant.waitMs(), 1L), 50L));
+                        }
+                    }
+                    return null;
+                }));
+            }
+            long startMs = System.currentTimeMillis();
+            start.countDown();
+            for (Future<?> future : futures) {
+                future.get(15L, TimeUnit.SECONDS);
+            }
+            elapsedMs = System.currentTimeMillis() - startMs;
+        } finally {
+            pool.shutdownNow();
+            template.delete(bucket);
+        }
+        long total = grantedBytes.get();
+        long upper = rate * elapsedMs / 1000 + 2 * quantum;
+        long lower = (long) (0.9D * rate * durationMs / 1000D);
+        System.out.println("twoInstancesEightThreads: total=" + total + " bytes, elapsed=" + elapsedMs
+                + "ms, upper=" + upper + ", lower=" + lower);
+        assertTrue(total <= upper,
+                "总发放 " + total + " 字节超过上限 " + upper + "（rate x " + elapsedMs + "ms + 2 x quantum）");
+        assertTrue(total >= lower, "总发放 " + total + " 字节低于下限 " + lower + "，脚本可能未生效");
+    }
 }

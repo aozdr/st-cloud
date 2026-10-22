@@ -250,8 +250,12 @@ docker compose -f docker-compose.yml -f docker-compose.cluster.yml up -d --build
 - 流式下载/预览关闭了 Nginx 缓冲并透传 Range；同步 WebSocket 支持 Upgrade。
 - 滚动发布：先更新一个实例（`docker compose ... up -d --no-deps --scale app1=1 app1`），
   在途下载会在 60s 宽限后被截断，客户端用 Range 续传，避免两个节点同时服务同一用户。
-- 生产必须把 `STCLOUD_PUBLIC_S3_ENDPOINT` 配成浏览器可达的对象存储地址，否则预签名直传不可用；
-  OnlyOffice 的 `public-base-url` 同样要指向 Nginx。
+- S3 内外地址拆分：服务端读写走 `STCLOUD_STORAGE_ENDPOINT=http://rustfs:9000`（容器网络直连），
+  预签名 URL 走 `STCLOUD_STORAGE_PUBLIC_ENDPOINT`（客户端可达地址，如 `http://192.168.2.5:9000`）；
+  cluster 编排用 `STCLOUD_PUBLIC_S3_ENDPOINT` 作为运维别名注入。拆分前容器经宿主机 NAT 回环读 S3
+  的 40MB 下载约 4MB/s，拆分后约 18.6MB/s。不要用 `host.docker.internal` 作为预签名地址：
+  部分环境的代理/VPN 会把它解析成不可达地址。
+- OnlyOffice 的 `public-base-url` 同样要指向 Nginx。
 
 > 注意：`st-web/dist` 需要先 `cd st-web && npm run build`；未构建时只有 `/api` 可用。
 
@@ -267,7 +271,8 @@ docker compose -f docker-compose.yml -f docker-compose.cluster.yml up -d --build
 | `stcloud.tenant.mode` | 租户模式 SAAS / PRIVATE | SAAS |
 | `stcloud.jwt.expiration` | Access Token 有效期 | 7 天 |
 | `stcloud.jwt.refresh-expiration` | Refresh Token 有效期 | 30 天 |
-| `stcloud.storage.*` | S3 对象存储（endpoint / bucket） | RustFS 127.0.0.1:9000 |
+| `stcloud.storage.*` | S3 对象存储（endpoint / public-endpoint / bucket） | RustFS 127.0.0.1:9000 |
+| `stcloud.storage.public-endpoint` | 预签名 URL 使用的客户端可达地址，留空回退 endpoint | 空 |
 | `stcloud.elasticsearch.uris` | ES 地址 | 127.0.0.1:9200 |
 | `STCLOUD_SEARCH_TEAM_CURSOR_SECRET` | 团队搜索游标签名密钥；多实例部署需配置相同的随机值 | 未配置时单实例使用进程内随机密钥，重启后旧游标失效 |
 | `stcloud.onlyoffice.url` | OnlyOffice 前端地址 | http://localhost:8081 |
@@ -280,6 +285,8 @@ docker compose -f docker-compose.yml -f docker-compose.cluster.yml up -d --build
 | `STCLOUD_S3_ACCESS_KEY` / `STCLOUD_S3_SECRET_KEY` | 对象存储凭证（开发默认 stcloud / stcloud123） |
 | `STCLOUD_ONLYOFFICE_SECRET` | OnlyOffice 签名密钥（≥32 字节），docker-compose 与后端共用 |
 | `STCLOUD_RATE_LIMIT_MODE` | 传输限速模式：`local`（默认，单机）/ `redis`（多节点共享信用桶） |
+| `STCLOUD_STORAGE_ENDPOINT` | 服务端内部 S3 读写地址；容器部署用 `http://rustfs:9000`，默认 `http://127.0.0.1:9000` |
+| `STCLOUD_STORAGE_PUBLIC_ENDPOINT` | 预签名 URL 的客户端可达地址（cluster 编排别名 `STCLOUD_PUBLIC_S3_ENDPOINT`），默认空即回退 endpoint |
 | `MYSQL_ROOT_PASSWORD` | docker-compose 中 MySQL root 密码（默认 123456） |
 
 示例见 [docker/.env.example](docker/.env.example)。

@@ -70,7 +70,11 @@ stcloud:
 
   # 对象存储 (RustFS)
   storage:
-    endpoint: http://127.0.0.1:9000
+    # 服务端内部读写地址：容器部署走服务网络（http://rustfs:9000），本地开发用 127.0.0.1
+    endpoint: ${STCLOUD_STORAGE_ENDPOINT:http://127.0.0.1:9000}
+    # 对外预签名地址：必须是浏览器/客户端可达的地址，留空回退 endpoint。
+    # 拆分原因：容器经宿主机 NAT 回环读写 S3 只有约 4MB/s，直连服务网络后 40MB 下载约 18.6MB/s。
+    public-endpoint: ${STCLOUD_STORAGE_PUBLIC_ENDPOINT:}
     access-key: ${STCLOUD_S3_ACCESS_KEY:stcloud}
     secret-key: ${STCLOUD_S3_SECRET_KEY:stcloud123}
     region: us-east-1
