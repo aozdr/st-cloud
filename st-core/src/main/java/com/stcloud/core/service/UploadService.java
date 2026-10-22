@@ -74,9 +74,17 @@ public interface UploadService {
     RelayChunkResponse relayChunk(String uploadId, String s3UploadId, int seq,
                                   java.io.InputStream inputStream, long chunkBytes);
 
+    /** 中转小块，携带当前客户端自设限速（KB/s，可空）。 */
+    RelayChunkResponse relayChunk(String uploadId, String s3UploadId, int seq,
+                                  java.io.InputStream inputStream, long chunkBytes, Integer clientLimit);
+
     /** 团队空间中转上传小块。 */
     RelayChunkResponse relayTeamChunk(Long spaceId, String uploadId, String s3UploadId, int seq,
                                       java.io.InputStream inputStream, long chunkBytes);
+
+    /** 团队中转小块，携带当前客户端自设限速（KB/s，可空）。 */
+    RelayChunkResponse relayTeamChunk(Long spaceId, String uploadId, String s3UploadId, int seq,
+                                      java.io.InputStream inputStream, long chunkBytes, Integer clientLimit);
 
     /**
      * 中转模式完成上传（末片 uploadPart + 合并）

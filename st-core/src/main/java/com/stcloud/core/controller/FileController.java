@@ -222,11 +222,12 @@ public class FileController {
             @RequestParam String uploadId,
             @RequestParam String s3UploadId,
             @RequestParam int seq,
+            @RequestParam(required = false) Integer clientLimit,
             HttpServletRequest request) throws IOException {
         // Content-Length 由服务层按会话 relayChunkSize 校验，防超大请求
         long contentLength = request.getContentLengthLong();
         return Result.success(uploadService.relayChunk(uploadId, s3UploadId, seq,
-                request.getInputStream(), contentLength));
+                request.getInputStream(), contentLength, clientLimit));
     }
 
     @Operation(summary = "中转上传：完成末片并合并")

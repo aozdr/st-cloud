@@ -1,0 +1,79 @@
+# 多节点后端 + Nginx 入口（叠加在 docker-compose.yml 之上）
+# 用法：docker compose -f docker-compose.yml -f docker-compose.cluster.yml up -d --build
+#
+# 说明：app 镜像使用 docker/Dockerfile 直接打包宿主机已构建的 jar，
+# 因此不会拉取 Maven 镜像；构建前先执行 mvn -q -pl st-api -am -DskipTests package。
+x-app: &app
+  image: stcloud-app:local
+  restart: unless-stopped
+  extra_hosts:
+    - "host.docker.internal:host-gateway"
+  environment:
+    SPRING_PROFILES_ACTIVE: prod
+    TZ: Asia/Shanghai
+    STCLOUD_MASTER_KEY: ${STCLOUD_MASTER_KEY}
+    STCLOUD_SEARCH_TEAM_CURSOR_SECRET: ${STCLOUD_SEARCH_TEAM_CURSOR_SECRET}
+    # 多节点必须用 redis；单机保持默认 local 即可
+    STCLOUD_RATE_LIMIT_MODE: ${STCLOUD_RATE_LIMIT_MODE:-redis}
+    SPRING_DATA_REDIS_HOST: redis
+    SPRING_DATA_REDIS_PORT: "6379"
+    SPRING_DATA_REDIS_TIMEOUT: 2s
+    # 与基础编排共用同一套凭证/密钥，避免容器内回落到代码默认值
+    STCLOUD_S3_ACCESS_KEY: ${STCLOUD_S3_ACCESS_KEY:-stcloud}
+    STCLOUD_S3_SECRET_KEY: ${STCLOUD_S3_SECRET_KEY:-stcloud123}
+    STCLOUD_ONLYOFFICE_SECRET: ${STCLOUD_ONLYOFFICE_SECRET}
+    STCLOUD_ONLYOFFICE_URL: ${STCLOUD_ONLYOFFICE_URL:-http://localhost:8081}
+    SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/stcloud?useUnicode=true&characterEncoding=utf-8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+    SPRING_DATASOURCE_USERNAME: root
+    SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-123456}
+    # 服务端内部读写走容器网络；预签名 URL 走客户端可达地址
+    STCLOUD_STORAGE_ENDPOINT: http://rustfs:9000
+    STCLOUD_STORAGE_PUBLIC_ENDPOINT: ${STCLOUD_PUBLIC_S3_ENDPOINT:-http://host.docker.internal:9000}
+    STCLOUD_ELASTICSEARCH_URIS: http://elasticsearch:9200
+    ROCKETMQ_NAME_SERVER: rocketmq-namesrv:9876
+    # OnlyOffice 容器内的回调地址：走同一 Docker 网络的 nginx 服务名
+    STCLOUD_ONLYOFFICE_PUBLIC_BASE_URL: ${STCLOUD_ONLYOFFICE_PUBLIC_BASE_URL:-http://nginx}
+  depends_on:
+    mysql:
+      condition: service_healthy
+    redis:
+      condition: service_healthy
+    rustfs:
+      condition: service_healthy
+  healthcheck:
+    # 镜像内没有 curl，用 bash 的 /dev/tcp 探活
+    test: ["CMD-SHELL", "bash -c 'exec 3<>/dev/tcp/127.0.0.1/8080'"]
+    interval: 15s
+    timeout: 3s
+    retries: 12
+    start_period: 60s
+  # 给长下载留出截断窗口；客户端用 Range 续传
+  stop_grace_period: 60s
+
+services:
+  app1:
+    <<: *app
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+
+  app2:
+    <<: *app
+
+
+  # 容器化后 broker 不能再宣告 127.0.0.1（那会指向客户端自己）；改用服务名
+  rocketmq-broker:
+    command: sh -c "echo 'brokerIP1 = rocketmq-broker' >> /home/rocketmq/rocketmq-5.3.1/conf/broker.conf && echo 'namesrvAddr = rocketmq-namesrv:9876' >> /home/rocketmq/rocketmq-5.3.1/conf/broker.conf && echo 'autoCreateTopicEnable = true' >> /home/rocketmq/rocketmq-5.3.1/conf/broker.conf && sh mqbroker -c /home/rocketmq/rocketmq-5.3.1/conf/broker.conf"
+
+  nginx:
+    # 前端 dist + nginx 配置一起打进镜像，不挂载宿主机目录
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.web
+    image: stcloud-web:local
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - app1
+      - app2

@@ -1,5 +1,7 @@
 server:
   port: 8080
+  # 发布时先停止接收新请求，等待在途请求（长下载会被截断，客户端用 Range 续传）
+  shutdown: graceful
   servlet:
     context-path: /
   tomcat:
@@ -11,6 +13,13 @@ spring:
     active: dev
   application:
     name: st-cloud
+  lifecycle:
+    timeout-per-shutdown-phase: 60s
+  data:
+    redis:
+      # 生产缺省超时是 60s，网络黑洞会把 pacing 线程拖死；统一收紧
+      timeout: 2s
+      connect-timeout: 2s
   servlet:
     multipart:
       max-file-size: 10GB
@@ -48,6 +57,16 @@ stcloud:
     expiration: 604800000
     # refresh token 有效期（毫秒），默认 30 天
     refresh-expiration: 2592000000
+
+  # 传输限速：local=进程内（仅单节点）；redis=本地 8KB 平滑 + Redis 全局信用
+  rate-limit:
+    mode: ${STCLOUD_RATE_LIMIT_MODE:local}
+    quantum-ms: 100
+    quantum-min-bytes: 65536
+    quantum-max-bytes: 1048576
+    key-ttl-ms: 600000
+    fail-open: true
+    upload-window: 1
 
   # 对象存储 (RustFS)
   storage:

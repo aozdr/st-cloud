@@ -226,7 +226,7 @@ async function relayUploadChunks(
       if (state.cancelled) return;
       try {
         await apiClient.post(`${uploadBase}/relay-chunk`, chunkData, {
-          params: { uploadId, s3UploadId, seq },
+          params: { uploadId, s3UploadId, seq, clientLimit: getTransferSettings().uploadSpeedLimit },
           headers: { 'Content-Type': 'application/octet-stream' },
           timeout: 300000,
         });

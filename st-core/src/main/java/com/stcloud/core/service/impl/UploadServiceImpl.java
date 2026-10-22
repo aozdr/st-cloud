@@ -4,6 +4,9 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import cn.hutool.crypto.digest.DigestUtil;
 import com.stcloud.common.context.UserContext;
 import com.stcloud.common.exception.BusinessException;
+import com.stcloud.common.ratelimit.CreditLimit;
+import com.stcloud.common.ratelimit.LimitSupplier;
+import com.stcloud.common.ratelimit.SpeedLimitResult;
 import com.stcloud.common.ratelimit.SpeedLimitService;
 import com.stcloud.common.ratelimit.UserTransferLimiter;
 import com.stcloud.common.response.ResultCode;
@@ -22,6 +25,7 @@ import com.stcloud.core.service.FileService;
 import com.stcloud.core.service.UploadService;
 import com.stcloud.core.service.VersionService;
 import com.stcloud.core.service.impl.upload.RelayBufferManager;
+import com.stcloud.core.service.impl.upload.RelaySessionRegistry;
 import com.stcloud.core.service.impl.upload.UploadChunkManager;
 import com.stcloud.core.service.impl.upload.UploadCommitManager;
 import com.stcloud.core.service.impl.upload.UploadInitCommitManager;
@@ -30,6 +34,7 @@ import com.stcloud.core.service.impl.upload.UploadStorageManager;
 import jakarta.annotation.Resource;
 import com.stcloud.core.service.impl.upload.ObjectUploadCandidateService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -82,6 +87,9 @@ public class UploadServiceImpl implements UploadService {
     private UploadStorageManager storageManager;
     @Resource
     private RelayBufferManager relayBufferManager;
+    /** 多节点时的中转配置登记；单机 local 模式下为 null。 */
+    @Autowired(required = false)
+    private RelaySessionRegistry relaySessionRegistry;
     @org.springframework.beans.factory.annotation.Autowired(required = false)
     private UploadProperties uploadProperties = new UploadProperties();
     /** 编辑保护锁服务：生产必有；测试上下文手工装配时缺失，保护检查跳过（保持既有测试兼容） */
@@ -156,7 +164,8 @@ public class UploadServiceImpl implements UploadService {
         }
 
         // F6：解析有效限速（KB/s）；simpleUpload 服务端中转同样需要节流，修复小文件绕过限速
-        int rateKb = SpeedLimitService.capRate(speedLimitService.resolve().getUploadSpeedLimit(), null);
+        SpeedLimitResult limit = speedLimitService.resolve();
+        int rateKb = SpeedLimitService.capRate(limit.getUploadSpeedLimit(), null);
         long rateBytes = (long) rateKb * 1024L;
 
         uploadManager.checkQuotaForUpload(userId, spaceId, fileSize);
@@ -183,7 +192,7 @@ public class UploadServiceImpl implements UploadService {
         if (existing != null) {
             storagePath = existing.getStoragePath();
         } else {
-            storagePath = objectUploadCandidateService.upload(tenantId, md5, pacedInputStream(getInputStream(file), rateBytes, userId),
+            storagePath = objectUploadCandidateService.upload(tenantId, md5, pacedInputStream(getInputStream(file), rateBytes, userId, limit.getVersion()),
                     fileSize, file.getContentType());
             uploadedNew = true;
         }
@@ -266,7 +275,13 @@ public class UploadServiceImpl implements UploadService {
         String s3UploadId = storageManager.initMultipart(storagePath);
         try {
             if (relay) {
-                relayBufferManager.createSession(uploadId, rateBytes, storagePath, s3UploadId, relayChunkSize);
+                // 多节点：init 时请求还没有 uploadId 可供 Nginx 哈希，不能在此创建本地会话；
+                // 改为登记配置，首个 relay-chunk 落到某个节点后再惰性创建临时文件。
+                if (relaySessionRegistry == null
+                        || !relaySessionRegistry.register(uploadId, rateBytes, relayChunkSize)) {
+                    // Redis 不可用或未启用多节点：回落本地会话，至少保证同节点可继续
+                    relayBufferManager.createSession(uploadId, rateBytes, storagePath, s3UploadId, relayChunkSize);
+                }
             }
             UploadInitCommitManager.InitResult committed = uploadInitCommitManager.commitInit(
                     new UploadInitCommitManager.InitCommand(request, userId, tenantId, parentPath,
@@ -285,6 +300,9 @@ public class UploadServiceImpl implements UploadService {
             if (relay) {
                 try {
                     relayBufferManager.cleanup(uploadId);
+                if (relaySessionRegistry != null) {
+                    relaySessionRegistry.remove(uploadId);
+                }
                 } catch (RuntimeException cleanupError) {
                     log.warn("上传初始化失败后的中转清理未完成: uploadId={}", uploadId, cleanupError);
                 }
@@ -342,16 +360,16 @@ public class UploadServiceImpl implements UploadService {
 
     @Override
     public ChunkUrlResponse getChunkUrl(String uploadId, String s3UploadId, int chunkIndex, Integer clientLimit) {
-        return getChunkUrlInternal(requireOwnedSession(uploadId, s3UploadId, null, false), chunkIndex);
+        return getChunkUrlInternal(requireOwnedSession(uploadId, s3UploadId, null, false), chunkIndex, clientLimit);
     }
 
     @Override
     public ChunkUrlResponse getTeamChunkUrl(Long spaceId, String uploadId, String s3UploadId,
                                             int chunkIndex, Integer clientLimit) {
-        return getChunkUrlInternal(requireTeamSession(spaceId, uploadId, s3UploadId, null, false), chunkIndex);
+        return getChunkUrlInternal(requireTeamSession(spaceId, uploadId, s3UploadId, null, false), chunkIndex, clientLimit);
     }
 
-    private ChunkUrlResponse getChunkUrlInternal(UploadSession session, int chunkIndex) {
+    private ChunkUrlResponse getChunkUrlInternal(UploadSession session, int chunkIndex, Integer clientLimit) {
         assertSessionOperable(session);
         Long userId = session.getUserId();
         FileChunk chunk = chunkManager.getChunk(session.getUploadId(), chunkIndex);
@@ -365,11 +383,24 @@ public class UploadServiceImpl implements UploadService {
         if (node == null) {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
         }
-        int rateKb = SpeedLimitService.capRate(speedLimitService.resolve().getUploadSpeedLimit(),
-                session.getClientLimit());
+        // 共享桶只用服务端 rate；客户端自设限速在本地 pacing 中执行
+        SpeedLimitResult limit = speedLimitService.resolve();
+        int rateKb = limit.getUploadSpeedLimit();
         long rateBytes = rateKb * 1024L;
         long chunkBytes = chunk.getChunkSize() != null ? chunk.getChunkSize() : 5L * 1024 * 1024;
-        UserTransferLimiter.AcquireResult result = userTransferLimiter.tryAcquireUpload(userId, chunkBytes, rateBytes);
+        // 客户端自设限速：取当前请求值（未传则回退会话初始化值），只在本节点门控，不进共享桶
+        Integer effectiveClientKb = clientLimit != null ? clientLimit : session.getClientLimit();
+        long clientRateBytes = effectiveClientKb != null && effectiveClientKb > 0
+                ? effectiveClientKb * 1024L : 0L;
+        if (clientRateBytes > 0 && (rateBytes <= 0 || clientRateBytes < rateBytes)) {
+            UserTransferLimiter.AcquireResult clientGate =
+                    userTransferLimiter.tryAcquireClientLimit(userId, chunkBytes, clientRateBytes);
+            if (!clientGate.isAllowed()) {
+                return ChunkUrlResponse.builder().url(null).retryAfterMs(clientGate.getRetryAfterMs()).build();
+            }
+        }
+        UserTransferLimiter.AcquireResult result = userTransferLimiter.tryAcquireUpload(userId,
+                session.getUploadId() + ":" + chunkIndex, chunkBytes, rateBytes, limit.getVersion());
         if (!result.isAllowed()) {
             return ChunkUrlResponse.builder().url(null).retryAfterMs(result.getRetryAfterMs()).build();
         }
@@ -404,7 +435,7 @@ public class UploadServiceImpl implements UploadService {
         }
         // 分片状态落库：0-待上传 -> 1-已上传（幂等，重复 confirm 不报错）
         chunkManager.markChunkUploaded(session.getUploadId(), chunkIndex);
-        userTransferLimiter.releaseUpload(userId);
+        userTransferLimiter.releaseUpload(userId, session.getUploadId() + ":" + chunkIndex);
     }
 
     @Override
@@ -544,12 +575,18 @@ public class UploadServiceImpl implements UploadService {
         FileChunk firstChunk = chunkManager.getFirstChunk(uploadId);
         if (firstChunk == null) {
             relayBufferManager.cleanup(uploadId);
+                if (relaySessionRegistry != null) {
+                    relaySessionRegistry.remove(uploadId);
+                }
             return;
         }
         FileNode node = fileNodeMapper.selectById(session.getFileNodeId());
         if (node == null) {
             chunkManager.deleteByUploadId(uploadId);
             relayBufferManager.cleanup(uploadId);
+                if (relaySessionRegistry != null) {
+                    relaySessionRegistry.remove(uploadId);
+                }
             return;
         }
         // 已完成上传不允许中止（幂等守卫，防止误删已完成文件）
@@ -567,24 +604,40 @@ public class UploadServiceImpl implements UploadService {
         chunkManager.deleteByUploadId(uploadId);
         // 中转模式：同时清理缓冲临时文件
         relayBufferManager.cleanup(uploadId);
+                if (relaySessionRegistry != null) {
+                    relaySessionRegistry.remove(uploadId);
+                }
     }
 
     @Override
     public RelayChunkResponse relayChunk(String uploadId, String s3UploadId, int seq,
                                          java.io.InputStream inputStream, long chunkBytes) {
+        return relayChunk(uploadId, s3UploadId, seq, inputStream, chunkBytes, null);
+    }
+
+    @Override
+    public RelayChunkResponse relayChunk(String uploadId, String s3UploadId, int seq,
+                                         java.io.InputStream inputStream, long chunkBytes, Integer clientLimit) {
         return relayChunkInternal(requireOwnedSession(uploadId, s3UploadId, null, false), seq,
-                inputStream, chunkBytes);
+                inputStream, chunkBytes, clientLimit);
     }
 
     @Override
     public RelayChunkResponse relayTeamChunk(Long spaceId, String uploadId, String s3UploadId, int seq,
                                              java.io.InputStream inputStream, long chunkBytes) {
+        return relayTeamChunk(spaceId, uploadId, s3UploadId, seq, inputStream, chunkBytes, null);
+    }
+
+    @Override
+    public RelayChunkResponse relayTeamChunk(Long spaceId, String uploadId, String s3UploadId, int seq,
+                                             java.io.InputStream inputStream, long chunkBytes, Integer clientLimit) {
         return relayChunkInternal(requireTeamSession(spaceId, uploadId, s3UploadId, null, false), seq,
-                inputStream, chunkBytes);
+                inputStream, chunkBytes, clientLimit);
     }
 
     private RelayChunkResponse relayChunkInternal(UploadSession session, int seq,
-                                                  java.io.InputStream inputStream, long chunkBytes) {
+                                                  java.io.InputStream inputStream, long chunkBytes,
+                                                  Integer clientLimit) {
         assertSessionOperable(session);
         Long userId = session.getUserId();
         String uploadId = session.getUploadId();
@@ -598,6 +651,12 @@ public class UploadServiceImpl implements UploadService {
         FileNode node = fileNodeMapper.selectById(session.getFileNodeId());
         if (node == null) {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
+        }
+        // 多节点：init 不创建本地会话，首个 relay-chunk 在本节点惰性创建缓冲；
+        // 若会话已丢失（节点故障/超时）且不是第一片，明确 409，避免在空缓冲上继续。
+        boolean relaySessionCreated = ensureRelaySession(session);
+        if (relaySessionCreated && seq > 1) {
+            throw new BusinessException(ResultCode.CONFLICT, "中转会话已丢失，请重新上传");
         }
         // Content-Length 校验：缺失长度也必须在读取过程中受上限约束，防止超大请求打满临时盘。
         long relayChunkSize = relayBufferManager.getRelayChunkSize(uploadId);
@@ -619,8 +678,19 @@ public class UploadServiceImpl implements UploadService {
                             ? "中转小块正在处理中，请勿并发提交同一 seq"
                             : "中转 seq 必须严格连续提交");
         }
-        // 从会话获取有效限速，pacing 阻塞接收（瞬时速率不超限）
-        long rateBytes = relayBufferManager.getRate(uploadId);
+        // pacing 使用当前生效限速（relay 小块大小仍按 init 冻结值，保持协议稳定）
+        SpeedLimitResult currentLimit = speedLimitService.resolve();
+        long paceRateBytes = currentLimit.getUploadSpeedLimit() * 1024L;
+        long rateLimitVersion = currentLimit.getVersion();
+        Integer effectiveClientKb = clientLimit != null ? clientLimit : session.getClientLimit();
+        long clientRateBytes = effectiveClientKb != null && effectiveClientKb > 0
+                ? effectiveClientKb * 1024L : 0L;
+        boolean clientSlower = clientRateBytes > 0
+                && (paceRateBytes <= 0 || clientRateBytes < paceRateBytes);
+        LimitSupplier paceSupplier = () -> {
+            SpeedLimitResult fresh = speedLimitService.resolve();
+            return new CreditLimit(fresh.getUploadSpeedLimit() * 1024L, fresh.getVersion());
+        };
         byte[] buffer = new byte[8192];
         int partNumber = 0;
         long receivedBytes = 0L;
@@ -631,7 +701,10 @@ public class UploadServiceImpl implements UploadService {
                 if (relayChunkSize > 0 && receivedBytes > relayChunkSize) {
                     throw new BusinessException(ResultCode.BUSINESS_ERROR.getCode(), "中转小块超过 relayChunkSize");
                 }
-                userTransferLimiter.acquireUploadPace(userId, n, rateBytes);
+                if (clientSlower) {
+                    userTransferLimiter.acquireClientLimit(userId, n, clientRateBytes);
+                }
+                userTransferLimiter.acquireUploadPace(userId, n, paceRateBytes, rateLimitVersion, paceSupplier);
                 partNumber = relayBufferManager.appendChunk(uploadId, buffer, 0, n,
                         node.getStoragePath(), session.getS3UploadId());
             }
@@ -656,6 +729,10 @@ public class UploadServiceImpl implements UploadService {
                 chunkManager.markChunkUploaded(uploadId, partNumber);
             }
             relayBufferManager.commitSeq(uploadId, seq);
+            if (relaySessionRegistry != null) {
+                // 活动续期，避免超过 sessionTimeout 后失去恢复能力
+                relaySessionRegistry.refresh(uploadId);
+            }
         } catch (RuntimeException e) {
             relayBufferManager.releaseSeq(uploadId, seq);
             try {
@@ -696,6 +773,11 @@ public class UploadServiceImpl implements UploadService {
         if (node == null) {
             throw new BusinessException(ResultCode.FILE_NOT_FOUND);
         }
+        // 末片只读探测：绝不能在这里新建空会话，否则第二次 finalize 会在空缓冲上合并成功，
+        // 静默丢掉上一节点未 flush 的尾部余量。
+        if (!relayBufferManager.hasSession(uploadId)) {
+            throw new BusinessException(ResultCode.CONFLICT, "中转会话已丢失，请重新上传");
+        }
         // 中转末片也须先赢得会话合并权，避免其他 merge/abort 在 flush 与 complete 之间抢占。
         if (!transitionSession(session, List.of(SESSION_ACTIVE, SESSION_FAILED), SESSION_MERGING)) {
             throw new BusinessException(ResultCode.CONFLICT, "上传会话正在合并或已停止");
@@ -721,6 +803,9 @@ public class UploadServiceImpl implements UploadService {
             List<Integer> abortable = mergeStarted ? List.of(SESSION_FAILED) : List.of(SESSION_MERGING);
             if (transitionSession(session, abortable, SESSION_ABORTED)) {
                 relayBufferManager.cleanup(uploadId);
+                if (relaySessionRegistry != null) {
+                    relaySessionRegistry.remove(uploadId);
+                }
                 try {
                     storageManager.abortMultipart(session.getStoragePath(), session.getS3UploadId());
                 } catch (Exception abortEx) {
@@ -733,21 +818,49 @@ public class UploadServiceImpl implements UploadService {
                 chunkManager.deleteByUploadId(uploadId);
             }
             throw e;
+        } finally {
+            if (relaySessionRegistry != null) {
+                relaySessionRegistry.remove(uploadId);
+            }
         }
     }
 
+    /** 多节点中转：本地会话缺失时按 Redis 配置 + 持久化会话惰性创建；配置过期则要求重新初始化。 */
+    private boolean ensureRelaySession(UploadSession session) {
+        if (relayBufferManager.hasSession(session.getUploadId())) {
+            return false;
+        }
+        if (relaySessionRegistry == null) {
+            // 单机模式：init 已创建本地会话；这里缺失属于异常，交给后续缓冲调用报错，
+            // 不能因为未启用跨节点登记就拒绝请求（保持历史行为）。
+            return false;
+        }
+        RelaySessionRegistry.RelayConfig config = relaySessionRegistry.get(session.getUploadId());
+        if (config == null) {
+            throw new BusinessException(ResultCode.CONFLICT, "中转会话已过期，请重新上传");
+        }
+        relayBufferManager.createSession(session.getUploadId(), config.rateBytes(),
+                session.getStoragePath(), session.getS3UploadId(), config.relayChunkSize());
+        return true;
+    }
+
     /** 限速 InputStream（F6）：按 8KB 步进调用 acquireUploadPace 阻塞 pacing，使 simpleUpload 服务端接收不绕过限速 */
-    private java.io.InputStream pacedInputStream(java.io.InputStream delegate, long rateBytes, Long userId) {
+    private java.io.InputStream pacedInputStream(java.io.InputStream delegate, long rateBytes, Long userId,
+                                                 long version) {
         if (rateBytes <= 0) {
             return delegate;
         }
+        LimitSupplier supplier = () -> {
+            SpeedLimitResult fresh = speedLimitService.resolve();
+            return new CreditLimit(fresh.getUploadSpeedLimit() * 1024L, fresh.getVersion());
+        };
         return new java.io.InputStream() {
             @Override
             public int read() throws IOException {
                 byte[] one = new byte[1];
                 int n = delegate.read(one);
                 if (n > 0) {
-                    userTransferLimiter.acquireUploadPace(userId, n, rateBytes);
+                    userTransferLimiter.acquireUploadPace(userId, n, rateBytes, version, supplier);
                 }
                 return n;
             }
@@ -756,7 +869,7 @@ public class UploadServiceImpl implements UploadService {
             public int read(byte[] b, int off, int len) throws IOException {
                 int n = delegate.read(b, off, Math.min(len, 8192));
                 if (n > 0) {
-                    userTransferLimiter.acquireUploadPace(userId, n, rateBytes);
+                    userTransferLimiter.acquireUploadPace(userId, n, rateBytes, version, supplier);
                 }
                 return n;
             }

@@ -7,12 +7,17 @@ import com.stcloud.admin.service.SpeedLimitManageService;
 import com.stcloud.common.entity.SysRateLimit;
 import com.stcloud.common.exception.BusinessException;
 import com.stcloud.common.mapper.SysRateLimitMapper;
+import com.stcloud.common.ratelimit.RateLimitProperties;
 import com.stcloud.common.ratelimit.SpeedLimitCache;
 import com.stcloud.common.response.ResultCode;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,6 +31,11 @@ public class SpeedLimitManageServiceImpl implements SpeedLimitManageService {
 
     @Resource
     private SpeedLimitCache speedLimitCache;
+
+    @Autowired(required = false)
+    private StringRedisTemplate redis;
+    @Autowired(required = false)
+    private RateLimitProperties rateLimitProperties;
 
     @Override
     public List<SpeedLimitVO> listRules() {
@@ -51,7 +61,7 @@ public class SpeedLimitManageServiceImpl implements SpeedLimitManageService {
         applyRequest(rule, request);
         rule.setEnabled(request.getEnabled() != null ? request.getEnabled() : 1);
         rateLimitMapper.insert(rule);
-        speedLimitCache.evict();
+        evictAndPublish();
         log.info("创建限速规则: {}", rule.getRuleName());
         return toVO(rule);
     }
@@ -69,7 +79,7 @@ public class SpeedLimitManageServiceImpl implements SpeedLimitManageService {
             rule.setEnabled(request.getEnabled());
         }
         rateLimitMapper.updateById(rule);
-        speedLimitCache.evict();
+        evictAndPublish();
         log.info("更新限速规则: id={}", id);
         return toVO(rule);
     }
@@ -82,7 +92,7 @@ public class SpeedLimitManageServiceImpl implements SpeedLimitManageService {
             throw new BusinessException(ResultCode.BUSINESS_ERROR, "限速规则不存在");
         }
         rateLimitMapper.deleteById(id);
-        speedLimitCache.evict();
+        evictAndPublish();
         log.info("删除限速规则: id={}", id);
     }
 
@@ -95,8 +105,42 @@ public class SpeedLimitManageServiceImpl implements SpeedLimitManageService {
         }
         rule.setEnabled(rule.getEnabled() == 1 ? 0 : 1);
         rateLimitMapper.updateById(rule);
-        speedLimitCache.evict();
+        evictAndPublish();
         log.info("切换限速规则状态: id={}, enabled={}", id, rule.getEnabled());
+    }
+
+    /** 本机内存失效立即执行；Redis 版本号与广播放到事务提交后，避免回滚仍递增版本。 */
+    private void evictAndPublish() {
+        speedLimitCache.evict();
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    // 提交后递增版本并再次失效，覆盖「事务内读请求把提交前规则写回缓存」的窗口
+                    publishInvalidation();
+                }
+            });
+        } else {
+            publishInvalidation();
+        }
+    }
+
+    /** 先递增版本再失效/广播，避免其他节点缓存「新规则 + 旧版本」；Redis 不可用时只失效本机。 */
+    private void publishInvalidation() {
+        if (redis == null) {
+            speedLimitCache.evict();
+            return;
+        }
+        try {
+            redis.opsForValue().increment(SpeedLimitCache.VERSION_KEY);
+            speedLimitCache.evict();
+            String channel = rateLimitProperties != null
+                    ? rateLimitProperties.getInvalidationChannel() : "stcloud:rate-limit:evict";
+            redis.convertAndSend(channel, "evict");
+        } catch (RuntimeException e) {
+            speedLimitCache.evict();
+            log.warn("限速配置广播失败，依赖 TTL 兜底：{}", e.getMessage());
+        }
     }
 
     private void validate(CreateSpeedLimitRequest request) {

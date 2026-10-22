@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:prod": "tsc -b && vite build",
+    "build:test": "tsc -b && vite build --mode test --outDir dist-test",
     "lint": "eslint .",
     "test:hash": "node --test src/lib/hash-contract.test.mjs",
     "preview": "vite preview"

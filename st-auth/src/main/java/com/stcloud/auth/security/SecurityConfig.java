@@ -41,12 +41,14 @@ public class SecurityConfig {
                         .requestMatchers("/api/share/access/**").permitAll()
                         .requestMatchers("/api/share/captcha").permitAll()
                         .requestMatchers("/api/sync/ws").permitAll()
+                        // 负载均衡/编排探活：只返回进程存活，不依赖数据库与 Redis
+                        .requestMatchers("/api/health").permitAll()
                         // OnlyOffice 保存回调：匿名可达，验签由 EditorCallbackService 完成（伪造回调被拒）
                         .requestMatchers("/api/file/*/editor/callback").permitAll()
                         // Swagger/Knife4j
                         .requestMatchers("/doc.html", "/webjars/**", "/v3/api-docs/**", "/swagger-ui/**", "/swagger-resources/**").permitAll()
-                        // 健康检查
-                        .requestMatchers("/actuator/**").permitAll()
+                        // 健康检查（只放行 health，避免 metrics 等端点匿名暴露）
+                        .requestMatchers("/actuator/health").permitAll()
                         // 其余接口需要认证
                         .anyRequest().authenticated()
                 )

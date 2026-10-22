@@ -111,6 +111,11 @@ public class RelayBufferManager {
         return session != null ? session.relayChunkSize : 0L;
     }
 
+    /** 当前节点是否持有该上传的中转缓冲（多节点下用于惰性创建）。 */
+    public boolean hasSession(String uploadId) {
+        return sessions.containsKey(uploadId);
+    }
+
     /**
      * 追加一个小块到缓冲。累积达到分片下限时触发 uploadPart。
      * 返回触发的 partNumber（0=未触发）。

@@ -1,0 +1,11 @@
+.git
+**/node_modules
+**/target
+# 只放行后端可执行 jar 与前端构建产物，供两个运行镜像 COPY
+!st-api/target/
+!st-api/target/st-api-*.jar
+**/dist
+!st-web/dist/
+!st-web/dist/**
+st-desktop/release
+st-web/dist-desktop-check

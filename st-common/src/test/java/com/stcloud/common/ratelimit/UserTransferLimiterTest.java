@@ -2,6 +2,7 @@ package com.stcloud.common.ratelimit;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.Duration;
 
@@ -10,10 +11,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 
 /**
- * UserTransferLimiter 重构（双桶复用公共 TokenBucket）后的行为不变验证：
- * 快速路径立即放行、低速阻塞 pacing、中断可退出、不限速直接放行。
+ * UserTransferLimiter 单节点行为验证：快速路径、阻塞 pacing、中断、不限速，
+ * 以及上传窗口按 chunkKey 幂等释放（重复 confirm 不释放其他分片）。
  */
-@DisplayName("UserTransferLimiter 双桶复用 TokenBucket 行为不变")
+@DisplayName("UserTransferLimiter 单节点行为与窗口幂等")
 class UserTransferLimiterTest {
 
     @Test
@@ -51,13 +52,13 @@ class UserTransferLimiterTest {
     @DisplayName("阻塞等待期间线程中断可安全退出并保留中断标记")
     void acquireExitsOnInterrupt() throws InterruptedException {
         UserTransferLimiter limiter = new UserTransferLimiter();
-        Thread t = new Thread(() -> limiter.acquireDownload(4L, 1_000_000L, 1_000L));
-        t.start();
+        Thread thread = new Thread(() -> limiter.acquireDownload(4L, 1_000_000L, 1_000L));
+        thread.start();
         Thread.sleep(200L);
-        t.interrupt();
-        t.join(5_000L);
-        assertFalse(t.isAlive(), "中断后 acquire 应立即返回");
-        assertTrue(t.isInterrupted(), "应恢复线程中断标记");
+        thread.interrupt();
+        thread.join(5_000L);
+        assertFalse(thread.isAlive(), "中断后 acquire 应立即返回");
+        assertTrue(thread.isInterrupted(), "应恢复线程中断标记");
     }
 
     @Test
@@ -81,5 +82,65 @@ class UserTransferLimiterTest {
         limiter.releaseUpload(6L);
         UserTransferLimiter.AcquireResult third = limiter.tryAcquireUpload(6L, 1024L, 1_000_000L);
         assertTrue(third.isAllowed(), "确认释放后应恢复允许");
+    }
+
+    @Test
+    @DisplayName("客户端限速门控：预算用尽后返回重试，不阻塞请求")
+    void clientLimitGateReturnsRetryWhenExhausted() {
+        UserTransferLimiter limiter = new UserTransferLimiter();
+        long chunk = 8192L;
+        long rate = 8192L;
+        assertTrue(limiter.tryAcquireClientLimit(9L, chunk, rate).isAllowed());
+        UserTransferLimiter.AcquireResult second = limiter.tryAcquireClientLimit(9L, chunk, rate);
+        assertFalse(second.isAllowed(), "预算用尽时应返回重试");
+        assertTrue(second.getRetryAfterMs() >= 500L, "应给出接近 chunk/rate 的等待时间");
+    }
+
+    @Test
+    @DisplayName("Redis 故障时上传门控 fail-open 到本地窗口")
+    void uploadGateFallsBackToLocalWhenStoreFails() {
+        UserTransferLimiter limiter = new UserTransferLimiter();
+        RateLimitProperties props = new RateLimitProperties();
+        props.setMode("redis");
+        props.setFailOpen(true);
+        ReflectionTestUtils.setField(limiter, "properties", props);
+        ReflectionTestUtils.setField(limiter, "creditStore", new CreditStore() {
+            @Override
+            public CreditGrant grant(String bucketKey, long needBytes, long rateBps, long capacityBytes,
+                                     long initBytes, long ver, long ttlMs) {
+                throw new IllegalStateException("redis down");
+            }
+
+            @Override
+            public CreditGrant acquireUpload(String bucketKey, String windowKey, long chunkBytes, long rateBps,
+                                             long capacityBytes, long initBytes, long ver, long ttlMs,
+                                             int windowSize, String chunkKey, long windowTtlMs) {
+                throw new IllegalStateException("redis down");
+            }
+
+            @Override
+            public boolean releaseWindow(String windowKey, String chunkKey) {
+                throw new IllegalStateException("redis down");
+            }
+        });
+        UserTransferLimiter.AcquireResult result = limiter.tryAcquireUpload(8L, "u:1", 1024L, 1_000_000L, 0L);
+        assertTrue(result.isAllowed(), "Redis 故障时应回落到本地窗口而不是抛 500");
+        limiter.releaseUpload(8L, "u:1");
+    }
+
+    @Test
+    @DisplayName("上传门控：按 chunkKey 释放，重复 confirm 不会释放其他分片")
+    void uploadGateReleaseIsIdempotentByChunkKey() {
+        UserTransferLimiter limiter = new UserTransferLimiter();
+        assertTrue(limiter.tryAcquireUpload(7L, "u:1", 1024L, 1_000_000L).isAllowed());
+        limiter.releaseUpload(7L, "u:1");
+        assertTrue(limiter.tryAcquireUpload(7L, "u:2", 1024L, 1_000_000L).isAllowed(),
+                "chunk1 释放后应允许 chunk2");
+        // chunk1 的重复确认必须无效，否则会放行 chunk3 造成两片同时在途
+        limiter.releaseUpload(7L, "u:1");
+        assertFalse(limiter.tryAcquireUpload(7L, "u:3", 1024L, 1_000_000L).isAllowed(),
+                "重复确认 chunk1 不得释放 chunk2 的窗口");
+        limiter.releaseUpload(7L, "u:2");
+        assertTrue(limiter.tryAcquireUpload(7L, "u:3", 1024L, 1_000_000L).isAllowed());
     }
 }

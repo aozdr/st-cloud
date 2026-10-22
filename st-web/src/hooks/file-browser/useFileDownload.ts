@@ -65,7 +65,7 @@ export function useFileDownload({
           }
           return;
         }
-        const dlLimit = useTransferStore.getState().effective.downloadSpeedLimit;
+        const dlLimit = useTransferStore.getState().settings.downloadSpeedLimit;
         const url = await source.getDownloadUrl(nodeIds[0]);
         const sep = url.includes('?') ? '&' : '?';
         const finalUrl = dlLimit > 0 ? `${url}${sep}clientLimit=${dlLimit}` : url;

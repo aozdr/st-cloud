@@ -3,6 +3,9 @@ package com.stcloud.core.service.impl;
 import com.stcloud.common.context.UserContext;
 import com.stcloud.common.enums.NodeStatus;
 import com.stcloud.common.exception.BusinessException;
+import com.stcloud.common.ratelimit.CreditLimit;
+import com.stcloud.common.ratelimit.LimitSupplier;
+import com.stcloud.common.ratelimit.SpeedLimitResult;
 import com.stcloud.common.ratelimit.SpeedLimitService;
 import com.stcloud.common.ratelimit.UserTransferLimiter;
 import com.stcloud.common.response.ResultCode;
@@ -153,11 +156,14 @@ public class DownloadServiceImpl implements DownloadService {
                 response.flushBuffer();
                 return;
             }
-            long rateBytes = SpeedLimitService.capRate(speedLimitService.resolve().getDownloadSpeedLimit(), parseClientLimit(request.getParameter("clientLimit"))) * 1024L;
+            Integer clientLimitKb = parseClientLimit(request.getParameter("clientLimit"));
+            SpeedLimitResult limit = speedLimitService.resolve();
+            // 共享桶只用服务端 rate；客户端自设限速在本地 pacing 中执行
+            long rateBytes = limit.getDownloadSpeedLimit() * 1024L;
             try (InputStream is = ranged ? storageService.downloadObjectRange(storagePath, start, end)
                                          : storageService.downloadObject(storagePath);
                  OutputStream os = response.getOutputStream()) {
-                pacedTransfer(is, os, userId, rateBytes);
+                pacedTransfer(is, os, userId, rateBytes, limit.getVersion(), clientLimitKb);
                 os.flush();
             }
         } catch (IOException e) {
@@ -170,11 +176,29 @@ public class DownloadServiceImpl implements DownloadService {
      * 按用户级共享令牌桶节奏化传输下载字节，rateBytesPerSec<=0 时不限速。
      * 多个并发下载共享同一用户的令牌桶，保证聚合速率不超上限。
      */
-    private void pacedTransfer(InputStream is, OutputStream os, Long userId, long rateBytesPerSec) throws IOException {
+    private void pacedTransfer(InputStream is, OutputStream os, Long userId, long rateBytesPerSec,
+                               long version, Integer clientLimitKb) throws IOException {
         byte[] buffer = new byte[8192];
+        // 配置版本过期时由信用桶回调重新解析，避免在途流整段沿用旧速率
+        LimitSupplier refreshed = () -> {
+            SpeedLimitResult fresh = speedLimitService.resolve();
+            return new CreditLimit(fresh.getDownloadSpeedLimit() * 1024L, fresh.getVersion());
+        };
+        long lastRefreshNs = System.nanoTime();
         int n;
         while ((n = is.read(buffer)) != -1) {
-            userTransferLimiter.acquireDownload(userId, n, rateBytesPerSec);
+            // 每秒重新解析一次，让管理端改速在长下载上也能生效
+            if (System.nanoTime() - lastRefreshNs > 1_000_000_000L) {
+                SpeedLimitResult current = speedLimitService.resolve();
+                rateBytesPerSec = current.getDownloadSpeedLimit() * 1024L;
+                version = current.getVersion();
+                lastRefreshNs = System.nanoTime();
+            }
+            if (clientLimitKb != null && clientLimitKb > 0
+                    && (rateBytesPerSec <= 0 || clientLimitKb * 1024L < rateBytesPerSec)) {
+                userTransferLimiter.acquireClientLimit(userId, n, clientLimitKb * 1024L);
+            }
+            userTransferLimiter.acquireDownload(userId, n, rateBytesPerSec, version, refreshed);
             os.write(buffer, 0, n);
         }
     }
@@ -183,7 +207,8 @@ public class DownloadServiceImpl implements DownloadService {
     public void downloadAsZip(List<Long> nodeIds, OutputStream outputStream) {
         List<ZipPlanEntry> plan = buildZipPlan(nodeIds);
         Long userId = UserContext.getUserId();
-        long rateBytes = speedLimitService.resolve().getDownloadSpeedLimit() * 1024L;
+        SpeedLimitResult limit = speedLimitService.resolve();
+        long rateBytes = limit.getDownloadSpeedLimit() * 1024L;
 
         try (ZipOutputStream zos = new ZipOutputStream(outputStream)) {
             for (ZipPlanEntry item : plan) {
@@ -194,7 +219,7 @@ public class DownloadServiceImpl implements DownloadService {
                 }
                 zos.putNextEntry(new ZipEntry(item.entryName()));
                 try (InputStream is = storageService.downloadObject(item.node().getStoragePath())) {
-                    pacedTransfer(is, zos, userId, rateBytes);
+                    pacedTransfer(is, zos, userId, rateBytes, limit.getVersion(), null);
                 }
                 zos.closeEntry();
             }

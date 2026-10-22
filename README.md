@@ -176,6 +176,26 @@ npm run dev
 
 前端监听 `http://localhost:5173`，`/api` 请求由 Vite 代理到后端。
 
+### 前端环境配置（测试 / 正式）
+
+前端地址按构建模式读取 `st-web/.env.*`，避免“改好 Docker 又弄坏本地”：
+
+| 场景 | 命令 | 配置文件 | 产物 |
+|------|------|----------|------|
+| 本地开发 | `npm run dev` | `.env.development` | Vite dev server（`/api` 代理到 `127.0.0.1:8080`） |
+| 测试环境 | `npm run build:test` | `.env.test` | `dist-test/` |
+| 正式环境 | `npm run build` / `npm run build:prod` | `.env.production` | `dist/` |
+
+`VITE_SERVER_URL` 留空表示**同源**：开发走 Vite 代理，正式走 nginx 反代 `/api`；
+前后端分域部署时填后端地址（不要带 `/api`），例如：
+
+```bash
+# .env.test
+VITE_SERVER_URL=https://test-api.example.com
+```
+
+运行时仍可通过 `/server-config` 页面覆盖；桌面端默认仍为 `http://127.0.0.1:8080`。
+
 ### 5. 桌面客户端与打包
 
 桌面客户端（Electron）源码位于 `st-desktop/`，完整说明见 [st-desktop/README.md](st-desktop/README.md)。
@@ -213,6 +233,28 @@ npm run dev
 
 > 生产环境务必立即修改默认密码。
 
+## 多节点部署（Nginx 负载均衡）
+
+默认 `stcloud.rate-limit.mode=local` 是进程内令牌桶，只适合单实例。多实例必须启用 Redis 共享信用桶，
+并由 Nginx 提供统一入口。仓库提供了参考编排（基础设施仍由原 compose 提供）：
+
+```bash
+cd docker
+docker compose -f docker-compose.yml -f docker-compose.cluster.yml up -d --build
+```
+
+- 入口 `http://localhost/`：静态资源来自 `st-web/dist`，`/api` 由 Nginx 转发到 `app1/app2`。
+- `app1/app2` 使用 `STCLOUD_RATE_LIMIT_MODE=redis`，聚合速率由 Redis 原子扣减保证。
+- 中转上传（`/api/file/upload/relay-*`）按 `uploadId` 一致性哈希固定到同一节点：临时文件与会话在节点本地，
+  且服务端已改为「首个 relay-chunk 惰性创建缓冲」，init 不再依赖本地状态。
+- 流式下载/预览关闭了 Nginx 缓冲并透传 Range；同步 WebSocket 支持 Upgrade。
+- 滚动发布：先更新一个实例（`docker compose ... up -d --no-deps --scale app1=1 app1`），
+  在途下载会在 60s 宽限后被截断，客户端用 Range 续传，避免两个节点同时服务同一用户。
+- 生产必须把 `STCLOUD_PUBLIC_S3_ENDPOINT` 配成浏览器可达的对象存储地址，否则预签名直传不可用；
+  OnlyOffice 的 `public-base-url` 同样要指向 Nginx。
+
+> 注意：`st-web/dist` 需要先 `cd st-web && npm run build`；未构建时只有 `/api` 可用。
+
 ## 配置说明
 
 主配置：`st-api/src/main/resources/application.yml`；开发覆盖：`application-dev.yml`。
@@ -237,6 +279,7 @@ npm run dev
 | `STCLOUD_MASTER_KEY` | JWT 主密钥，用于加解密数据库中的签名密钥（≥32 字节） |
 | `STCLOUD_S3_ACCESS_KEY` / `STCLOUD_S3_SECRET_KEY` | 对象存储凭证（开发默认 stcloud / stcloud123） |
 | `STCLOUD_ONLYOFFICE_SECRET` | OnlyOffice 签名密钥（≥32 字节），docker-compose 与后端共用 |
+| `STCLOUD_RATE_LIMIT_MODE` | 传输限速模式：`local`（默认，单机）/ `redis`（多节点共享信用桶） |
 | `MYSQL_ROOT_PASSWORD` | docker-compose 中 MySQL root 密码（默认 123456） |
 
 示例见 [docker/.env.example](docker/.env.example)。

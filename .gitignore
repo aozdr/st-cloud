@@ -33,6 +33,10 @@ docker/data/
 .env
 .env.*
 !.env.example
+# 前端三套无密钥的环境配置需要入库
+!st-web/.env.development
+!st-web/.env.test
+!st-web/.env.production
 # docs：Markdown 文档（PRD/DESIGN/newList）纳入版本管理；抓取的参考资源（PikPak*.html/js 等）不入库
 docs/*
 !docs/*.md
@@ -58,6 +62,9 @@ skill/
 plans/
 teams/
 design/
+# 设计 token 文档属于实现契约，需要入库；上面的 design/ 规则会忽略目录
+!st-web/src/design/
+!st-web/src/design/tokens.md
 # 仅忽略仓库根目录的本地 ES 工作目录；docker/elasticsearch（Dockerfile）必须提交
 /elasticsearch/
 *.zip
@@ -83,3 +90,5 @@ TRANSFER_FLOATING_WIDGET_IMPLEMENTATION.md
 .ai/docs/**/conflict-debug/
 .ai/docs/**/conflict-replay-debug/
 .ai/docs/**/commit-paths.txt
+# 前端测试环境构建产物
+st-web/dist-test/

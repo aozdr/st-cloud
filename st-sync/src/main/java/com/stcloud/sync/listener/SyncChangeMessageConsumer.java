@@ -7,8 +7,11 @@ import com.stcloud.core.event.EventMessage;
 import com.stcloud.sync.entity.SyncChangeLog;
 import com.stcloud.sync.mapper.SyncChangeLogMapper;
 import com.stcloud.sync.ws.SyncPushService;
+import com.stcloud.sync.ws.SyncPushRedisConfig;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.apache.rocketmq.spring.annotation.RocketMQMessageListener;
 import org.springframework.dao.DuplicateKeyException;
 import org.apache.rocketmq.spring.core.RocketMQListener;
@@ -32,6 +35,10 @@ public class SyncChangeMessageConsumer implements RocketMQListener<EventMessage>
 
     private final SyncChangeLogMapper syncChangeLogMapper;
     private final SyncPushService syncPushService;
+
+    /** 多节点时用于广播推送；单机/测试环境可为 null。 */
+    @Autowired(required = false)
+    private StringRedisTemplate redis;
 
     @Override
     public void onMessage(EventMessage message) {
@@ -79,8 +86,8 @@ public class SyncChangeMessageConsumer implements RocketMQListener<EventMessage>
             log.debug("同步变更日志已写入: type={}, nodeId={}, path={}, logId={}, eventLogId={}",
                     message.getChangeType(), node.getId(), node.getPath(), logEntry.getId(), eventLogId);
 
-            // 写入日志后立即推送 WebSocket 通知，触发客户端拉取增量
-            syncPushService.pushChangeNotification(node.getOwnerId(), logEntry.getId());
+            // 写入日志后推送 WebSocket 通知，触发客户端拉取增量
+            notifyPush(logEntry.getTenantId(), node.getOwnerId(), logEntry.getId());
         } catch (DuplicateKeyException e) {
             // 唯一键冲突视为重复消息（并发竞态），幂等跳过，不触发重投
             log.debug("同步变更消息唯一键冲突，幂等跳过: nodeId={}, type={}, error={}",
@@ -91,6 +98,27 @@ public class SyncChangeMessageConsumer implements RocketMQListener<EventMessage>
                     message.getFileNode().getId(), message.getChangeType(), e.getMessage());
             throw e;
         }
+    }
+
+    /**
+     * 多节点推送：优先广播到所有节点（各节点只推本地会话）；Redis 不可用时只推本节点。
+     */
+    private void notifyPush(Long tenantId, Long userId, Long logId) {
+        if (tenantId == null) {
+            // 历史数据可能缺租户：广播后各节点无法匹配会话，直接本地兜底
+            syncPushService.pushChangeNotification(userId, logId);
+            return;
+        }
+        if (redis != null) {
+            try {
+                redis.convertAndSend(SyncPushRedisConfig.CHANNEL,
+                        tenantId + ":" + userId + ":" + logId);
+                return;
+            } catch (RuntimeException e) {
+                log.warn("同步推送广播失败，降级为本地推送：{}", e.getMessage());
+            }
+        }
+        syncPushService.pushChangeNotification(userId, logId);
     }
 
     /** 幂等检查：该事件日志ID是否已写入同步日志 */

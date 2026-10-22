@@ -139,10 +139,11 @@ public class TeamUploadController {
                                                  @RequestParam String uploadId,
                                                  @RequestParam String s3UploadId,
                                                  @RequestParam int seq,
+                                                 @RequestParam(required = false) Integer clientLimit,
                                                  HttpServletRequest request) throws IOException {
         requireSessionUpload(spaceId, uploadId);
         return Result.success(uploadService.relayTeamChunk(spaceId, uploadId, s3UploadId, seq,
-                request.getInputStream(), request.getContentLengthLong()));
+                request.getInputStream(), request.getContentLengthLong(), clientLimit));
     }
 
     @Operation(summary = "完成团队中转上传")

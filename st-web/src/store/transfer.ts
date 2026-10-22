@@ -57,7 +57,8 @@ function computeEffective(settings: TransferSettings, server: ServerLimits): Tra
 const initialSettings = loadSettings();
 const initialServer: ServerLimits = { uploadSpeedLimit: 0, downloadSpeedLimit: 0 };
 const initialEffective = computeEffective(initialSettings, initialServer);
-syncToElectron(initialEffective);
+// 同步给桌面主进程的是「用户自设限速」，不是 effective（服务端上限由服务端执行）
+syncToElectron(initialSettings);
 
 interface TransferStore {
   settings: TransferSettings;
@@ -78,13 +79,13 @@ export const useTransferStore = create<TransferStore>((set, get) => ({
     const settings = { ...get().settings, ...partial };
     localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
     const effective = computeEffective(settings, get().serverLimits);
-    syncToElectron(effective);
+    // 只把用户设置同步给主进程；服务端上限不能混进客户端限速，否则设为不限速也取消不掉
+    syncToElectron(settings);
     set({ settings, effective });
   },
   setServerLimits: (limits) => {
     const serverLimits = { ...get().serverLimits, ...limits };
     const effective = computeEffective(get().settings, serverLimits);
-    syncToElectron(effective);
     set({ serverLimits, effective });
   },
   applyExternalSettings: (settings) => {

@@ -117,8 +117,8 @@ export function UploadProvider({ children }: { children: ReactNode }) {
           parentId,
           ...(replaceFileId ? { replaceFileId } : {}),
           ...(spaceId ? { spaceId } : {}),
-          ...(useTransferStore.getState().effective.uploadSpeedLimit > 0
-            ? { clientLimit: useTransferStore.getState().effective.uploadSpeedLimit }
+          ...(useTransferStore.getState().settings.uploadSpeedLimit > 0
+            ? { clientLimit: useTransferStore.getState().settings.uploadSpeedLimit }
             : {}),
         })) as { uploadId: string; s3UploadId: string; transferMode?: 'direct' | 'relay'; relayChunkSize?: number; relayRateKb?: number };
 
@@ -131,7 +131,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
           uploadedChunks: [],
           progress: 10,
           transferMode,
-          relayLimitKb: initRes.relayRateKb ?? (useTransferStore.getState().effective.uploadSpeedLimit || 0),
+          relayLimitKb: initRes.relayRateKb ?? (useTransferStore.getState().settings.uploadSpeedLimit || 0),
         });
 
         // 中转模式：限速 < 分片下限时走服务端中转，小块顺序 POST + pacing 节流
@@ -144,7 +144,12 @@ export function UploadProvider({ children }: { children: ReactNode }) {
             const end = Math.min(start + relayChunkSize, file.size);
             const blob = file.slice(start, end);
             await api.post(`${uploadBase}/relay-chunk`, blob, {
-              params: { uploadId: initRes.uploadId, s3UploadId: initRes.s3UploadId, seq },
+              params: {
+                uploadId: initRes.uploadId,
+                s3UploadId: initRes.s3UploadId,
+                seq,
+                clientLimit: useTransferStore.getState().settings.uploadSpeedLimit,
+              },
               headers: { 'Content-Type': 'application/octet-stream' },
               timeout: 300000,
             });
@@ -174,7 +179,7 @@ export function UploadProvider({ children }: { children: ReactNode }) {
           let url = '';
           while (!url) {
             const res = (await api.get(`${uploadBase}/chunk-url`, {
-              params: { uploadId: initRes.uploadId, s3UploadId: initRes.s3UploadId, chunkIndex: index, clientLimit: useTransferStore.getState().effective.uploadSpeedLimit },
+              params: { uploadId: initRes.uploadId, s3UploadId: initRes.s3UploadId, chunkIndex: index, clientLimit: useTransferStore.getState().settings.uploadSpeedLimit },
             })) as { url: string; retryAfterMs?: number };
             if (res?.url) {
               url = res.url;
