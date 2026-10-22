@@ -2,7 +2,7 @@
 
 > 当前格式以 `.ai/schema/dispatch.schema.json` 为准；运行规则见 `.ai/knowledge/agent-dispatch-protocol.md`。
 
-每个已派发 TASK 单独复制本模板，完成 schema 校验后，把整段内容直接传入 `spawn_agent.message`；small 直接路径不使用本模板。
+每个已派发 TASK 单独复制本模板，完成 schema 校验后，把整段内容直接传入当前运行时的子 Agent message：DSH 用 `subagent`（DeepSeek 模型），Codex 用 `spawn_agent`；small 直接路径不使用本模板。
 
 ```text
 DISPATCH_ENVELOPE
@@ -44,18 +44,38 @@ output:
    role: <原值>
 2. ACK 前禁止调用工具；ACK 后校验 Envelope 并执行。
 3. Dispatch Message 是唯一任务来源；只读必要 TASK/State，严格遵守 scope。
-4. 禁止创建子 Agent、修改 Loop State或向用户提问。
+4. 禁止创建子 Agent、修改 Loop State 或向用户提问。
 5. 只写本 dispatch 独立结果；返回事实、证据与 criterionProposal。
-6. ACK 不是完成结果，必须在同轮完整执行。
+6. ACK 只是送达证明，不是最终答案；ACK 后不得结束，必须继续到结果文件写出并返回完整报告。
 ```
 
 主线程调用语义：
 
 ```text
+# DSH 原生（DeepSeek）
+subagent(
+  description = <短描述>,
+  cwd = <workspace>,
+  prompt = <上面的完整消息>
+)
+
+# Codex Runtime
 spawn_agent(
   task_name = <唯一运行时名称>,
   message = <上面的完整消息>
 )
+```
+
+Loop 账本（不手工编辑 State）：
+
+```powershell
+& ./.ai/scripts/loopctl.ps1 dispatch-plan <state> -DispatchPath <envelope> -CriterionId <criterion> [-ChildId <child>]
+& ./.ai/scripts/loopctl.ps1 dispatch-transition <state> -DispatchId <id> -DispatchStatus spawned -ChildId <child>
+& ./.ai/scripts/loopctl.ps1 dispatch-transition <state> -DispatchId <id> -DispatchStatus acked
+& ./.ai/scripts/loopctl.ps1 dispatch-transition <state> -DispatchId <id> -DispatchStatus running
+& ./.ai/scripts/loopctl.ps1 dispatch-transition <state> -DispatchId <id> -DispatchStatus returned -ResultRef <result> -ScopeVerified
+& ./.ai/scripts/loopctl.ps1 dispatch-transition <state> -DispatchId <id> -DispatchStatus failed -FailureReason ACK_ONLY
+& ./.ai/scripts/loopctl.ps1 evaluate <state> -ProposalPath <result>
 ```
 
 ACK 校验只比较：
@@ -63,5 +83,7 @@ ACK 校验只比较：
 ```text
 dispatchId + taskId + role
 ```
+
+父线程判定完成以结果文件 + `criterionProposal` 为准，不以 child 的 closing message 为准；只返回 ACK 的 attempt 记 `failed (ACK_ONLY)`，用新 `dispatchId` 重派。
 
 重派规则：保持 `taskId/idempotencyKey`，生成新 `dispatchId` 和新 child；旧 attempt 的迟到结果不得进入 Evaluate。

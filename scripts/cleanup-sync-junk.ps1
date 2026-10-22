@@ -1,4 +1,5 @@
-﻿param(
+#requires -Version 7.0
+param(
     [switch]$Apply,
     [string]$Token = "",
     [string]$ServerUrl = "http://127.0.0.1:8080",
@@ -17,11 +18,11 @@
 #
 # 用法：
 #   1) 先 dry-run（默认）：仅列出匹配的垃圾节点，不删除
-#      powershell -ExecutionPolicy Bypass -File scripts/cleanup-sync-junk.ps1
+#      pwsh -NoProfile -File scripts/cleanup-sync-junk.ps1
 #   2) apply：调用 /api/admin/sync/cleanup-junk
 #      该接口复用 RecycleBinService.permanentDeleteAdmin：
 #      引用计数归零时删除 S3 物理对象（RustFS bucket: stcloud）、退还配额、清理 ES 索引。
-#      powershell -ExecutionPolicy Bypass -File scripts/cleanup-sync-junk.ps1 -Apply -Token "<管理员JWT>"
+#      pwsh -NoProfile -File scripts/cleanup-sync-junk.ps1 -Apply -Token "<管理员JWT>"
 #
 # 注：本地桌面端数据库由同步引擎升级时自动全量重置（sync_version 门控），本脚本不处理本地库。
 # ============================================================

@@ -305,9 +305,78 @@ try {
   Expect 'TC-DSP-05 旧 attempt 不得覆盖当前 attempt' ($r.ExitCode -ne 0 -and $r.Text -match 'DISPATCH_ATTEMPT_STALE') $r.Text
 
   $s = New-MediumState; $s.dispatchLedger = @(New-DesignAttempt 'lifecycle' 'planned'); $path = Save-Fixture 'TC-DSP-07.yaml' $s
-  $ok = $true; foreach ($next in @('spawned','acked','running','returned')) { $r = Invoke-Loop @('dispatch-transition',$path,'-DispatchId','lifecycle','-DispatchStatus',$next); if ($r.ExitCode -ne 0) { $ok=$false } }
+  $ok = $true; foreach ($next in @('spawned','acked','running')) { $r = Invoke-Loop @('dispatch-transition',$path,'-DispatchId','lifecycle','-DispatchStatus',$next); if ($r.ExitCode -ne 0) { $ok=$false } }
+  $rReturn = Invoke-Loop @('dispatch-transition',$path,'-DispatchId','lifecycle','-DispatchStatus','returned','-ResultRef',"$EvidenceRefRoot/proposal.json",'-ScopeVerified'); if ($rReturn.ExitCode -ne 0) { $ok=$false }
   $rBad = Invoke-Loop @('dispatch-transition',$path,'-DispatchId','lifecycle','-DispatchStatus','acked')
-  Expect 'TC-DSP-07 生命周期只允许合法前驱' ($ok -and $rBad.ExitCode -ne 0 -and $rBad.Text -match 'DISPATCH_TRANSITION_INVALID') $rBad.Text
+  Expect 'TC-DSP-07 生命周期只允许合法前驱' ($ok -and $rBad.ExitCode -ne 0 -and $rBad.Text -match 'DISPATCH_TRANSITION_INVALID') ($rBad.Text + ';' + $rReturn.Text)
+
+  $s = New-MediumState
+  $s.artifacts | Add-Member design ([pscustomobject]@{status='ready';ref="$WorkRef/design.md";provides=@('DESIGN')})
+  $path = Save-Fixture 'TC-DSP-08.yaml' $s
+  $planEnvelope = [pscustomobject][ordered]@{
+    schemaVersion=2; dispatchId='plan-1'; taskId='design-task'; idempotencyKey='design-key'
+    role='executor'; taskType='design'; objective='plan test'
+    taskRefs=@('.ai/loop/exit-criteria.yaml'); stateRef='state.yaml'
+    scope=[pscustomobject]@{include=@('.ai/**');exclude=@()}
+    acceptance=@('planned attempt exists'); validation=@('loopctl validate'); forbidSpawn=$true
+  }
+  $planEnvelopePath = Save-Fixture 'TC-DSP-08-envelope.json' $planEnvelope
+  $r = Invoke-Loop @('dispatch-plan',$path,'-DispatchPath',$planEnvelopePath,'-CriterionId','DESIGN','-ChildId','plan-child')
+  $after = Get-Content $path -Raw | ConvertFrom-Json
+  Expect 'TC-DSP-08 dispatch-plan 创建 planned attempt' ($r.ExitCode -eq 0 -and $after.dispatchLedger.Count -eq 1 -and $after.dispatchLedger[0].status -eq 'planned' -and $after.dispatchLedger[0].childId -eq 'plan-child') $r.Text
+
+  $r = Invoke-Loop @('dispatch-plan',$path,'-DispatchPath',$planEnvelopePath,'-CriterionId','DESIGN')
+  Expect 'TC-DSP-08B 重复 dispatchId 拒绝' ($r.ExitCode -ne 0 -and $r.Text -match 'DISPATCH_ALREADY_PLANNED') $r.Text
+
+  $s = New-MediumState; $criterionPath = Save-Fixture 'TC-DSP-08-CRITERION.yaml' $s
+  $r = Invoke-Loop @('dispatch-plan',$criterionPath,'-DispatchPath',$planEnvelopePath,'-CriterionId','NOPE')
+  Expect 'TC-DSP-08C 未知 criterion 拒绝' ($r.ExitCode -ne 0 -and $r.Text -match 'CRITERION_UNKNOWN') $r.Text
+
+  $s = New-MediumState; $rolePath = Save-Fixture 'TC-DSP-08-ROLE.yaml' $s
+  $wrongRole = Get-Content $planEnvelopePath -Raw | ConvertFrom-Json; $wrongRole.dispatchId='plan-role'; $wrongRole.role='reviewer'
+  $r = Invoke-Loop @('dispatch-plan',$rolePath,'-DispatchPath',(Save-Fixture 'TC-DSP-08-role-envelope.json' $wrongRole),'-CriterionId','DESIGN')
+  Expect 'TC-DSP-08D role 不匹配拒绝' ($r.ExitCode -ne 0 -and $r.Text -match 'DISPATCH_ROLE_MISMATCH') $r.Text
+
+  $s = New-MediumState; $activePath = Save-Fixture 'TC-DSP-08-ACTIVE.yaml' $s
+  $r = Invoke-Loop @('dispatch-plan',$activePath,'-DispatchPath',$planEnvelopePath,'-CriterionId','DESIGN','-ChildId','plan-child')
+  $secondEnvelope = Get-Content $planEnvelopePath -Raw | ConvertFrom-Json; $secondEnvelope.dispatchId='plan-2'
+  $r2 = Invoke-Loop @('dispatch-plan',$activePath,'-DispatchPath',(Save-Fixture 'TC-DSP-08-envelope-2.json' $secondEnvelope),'-CriterionId','DESIGN')
+  Expect 'TC-DSP-08E 同 criterion 未结束 attempt 拒绝' ($r2.ExitCode -ne 0 -and $r2.Text -match 'DISPATCH_ATTEMPT_ACTIVE') $r2.Text
+
+  $s = New-MediumState; $pendingPath = Save-Fixture 'TC-DSP-08-PENDING.yaml' $s
+  $pendingEnvelope = Get-Content $planEnvelopePath -Raw | ConvertFrom-Json; $pendingEnvelope.dispatchId='plan-pending'
+  $r = Invoke-Loop @('dispatch-plan',$pendingPath,'-DispatchPath',(Save-Fixture 'TC-DSP-08-envelope-pending.json' $pendingEnvelope),'-CriterionId','DESIGN')
+  $r2 = Invoke-Loop @('dispatch-transition',$pendingPath,'-DispatchId','plan-pending','-DispatchStatus','spawned')
+  $r3 = Invoke-Loop @('dispatch-transition',$pendingPath,'-DispatchId','plan-pending','-DispatchStatus','spawned','-ChildId','pending-child')
+  Expect 'TC-DSP-08F spawned 必须补齐 childId' ($r.ExitCode -eq 0 -and $r2.ExitCode -ne 0 -and $r2.Text -match 'DISPATCH_CHILD_ID_REQUIRED' -and $r3.ExitCode -eq 0) ($r.Text + ';' + $r2.Text + ';' + $r3.Text)
+
+  foreach ($next in @('spawned','acked','running')) {
+    $r = Invoke-Loop @('dispatch-transition',$activePath,'-DispatchId','plan-1','-DispatchStatus',$next)
+    if ($r.ExitCode -ne 0) { throw "TC-DSP-08 transition $next failed: $($r.Text)" }
+  }
+  $r = Invoke-Loop @('dispatch-transition',$activePath,'-DispatchId','plan-1','-DispatchStatus','returned')
+  Expect 'TC-DSP-08G returned 缺 resultRef 拒绝' ($r.ExitCode -ne 0 -and $r.Text -match 'DISPATCH_RESULT_REQUIRED') $r.Text
+  $r = Invoke-Loop @('dispatch-transition',$activePath,'-DispatchId','plan-1','-DispatchStatus','returned','-ResultRef',"$EvidenceRefRoot/proposal.json")
+  Expect 'TC-DSP-08H returned 缺 scopeVerified 拒绝' ($r.ExitCode -ne 0 -and $r.Text -match 'DISPATCH_SCOPE_UNVERIFIED') $r.Text
+  $r = Invoke-Loop @('dispatch-transition',$activePath,'-DispatchId','plan-1','-DispatchStatus','returned','-ResultRef',"$EvidenceRefRoot/proposal.json",'-ScopeVerified')
+  $after = Get-Content $activePath -Raw | ConvertFrom-Json
+  Expect 'TC-DSP-08I returned 记录 resultRef/scopeVerified' ($r.ExitCode -eq 0 -and $after.dispatchLedger[0].status -eq 'returned' -and $after.dispatchLedger[0].scopeVerified -eq $true -and $after.dispatchLedger[0].resultRef -eq "$EvidenceRefRoot/proposal.json") $r.Text
+
+  $proposal = [pscustomobject]@{ taskId='design-task'; dispatchId='plan-1'; criterionProposal=[pscustomobject]@{ id='DESIGN'; outcome='pass'; by='plan-child'; dispatchId='plan-1'; evidenceRef="$EvidenceRefRoot/proposal.json"; validatedRevision='design-r1' } }
+  $r = Invoke-Loop @('evaluate',$activePath,'-ProposalPath',(Save-Fixture 'TC-DSP-08-proposal.json' $proposal))
+  $after = Get-Content $activePath -Raw | ConvertFrom-Json
+  Expect 'TC-DSP-08J evaluate 绑定 planned attempt 并完成 DESIGN' ($r.ExitCode -eq 0 -and ($after.exitCriteria | Where-Object id -eq DESIGN).status -eq 'done' -and $after.dispatchLedger[0].status -eq 'evaluated') $r.Text
+
+  $s = New-MediumState; $taskTypePath = Save-Fixture 'TC-DSP-08-TASKTYPE.yaml' $s
+  $wrongType = Get-Content $planEnvelopePath -Raw | ConvertFrom-Json; $wrongType.dispatchId='plan-tasktype'; $wrongType.taskType='implement'
+  $r = Invoke-Loop @('dispatch-plan',$taskTypePath,'-DispatchPath',(Save-Fixture 'TC-DSP-08-tasktype-envelope.json' $wrongType),'-CriterionId','DESIGN')
+  Expect 'TC-DSP-08K taskType 不匹配拒绝' ($r.ExitCode -ne 0 -and $r.Text -match 'DISPATCH_TASKTYPE_MISMATCH') $r.Text
+
+  $s = New-MediumState; $doneDesign = $s.exitCriteria | Where-Object id -eq DESIGN; Complete-Criterion $doneDesign
+  $donePath = Save-Fixture 'TC-DSP-08-DONE.yaml' $s
+  $doneEnvelope = Get-Content $planEnvelopePath -Raw | ConvertFrom-Json; $doneEnvelope.dispatchId='plan-done'
+  $r = Invoke-Loop @('dispatch-plan',$donePath,'-DispatchPath',(Save-Fixture 'TC-DSP-08-done-envelope.json' $doneEnvelope),'-CriterionId','DESIGN')
+  Expect 'TC-DSP-08L criterion 已完成拒绝' ($r.ExitCode -ne 0 -and $r.Text -match 'CRITERION_ALREADY_DONE') $r.Text
 
   $s = New-MediumState
   $s.artifacts | Add-Member directDesign ([pscustomobject]@{status='ready';ref="$WorkRef/design.md";provides=@('DESIGN')})

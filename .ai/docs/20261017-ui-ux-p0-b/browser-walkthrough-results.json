@@ -1,0 +1,101 @@
+{
+  "startedAt": "2026-10-17T12:47:05.673Z",
+  "base": "http://127.0.0.1:5173",
+  "checks": [
+    {
+      "name": "authenticated files page loaded",
+      "pass": true
+    },
+    {
+      "name": "settings: focus inside + body locked",
+      "pass": true,
+      "detail": {
+        "activeInside": true,
+        "bodyOverflow": "hidden",
+        "activeTag": "BUTTON"
+      }
+    },
+    {
+      "name": "settings: Tab stays trapped",
+      "pass": true
+    },
+    {
+      "name": "settings: Escape closes + body/focus restored",
+      "pass": true,
+      "detail": {
+        "bodyOverflow": "",
+        "focusRestored": true
+      }
+    },
+    {
+      "name": "context menu: role + initial focus",
+      "pass": true,
+      "detail": {
+        "role": "menu",
+        "activeRole": "menuitem",
+        "activeText": "打开"
+      }
+    },
+    {
+      "name": "context menu: ArrowDown moves focus",
+      "pass": true,
+      "detail": {
+        "firstText": "打开",
+        "secondText": "收藏"
+      }
+    },
+    {
+      "name": "context menu: End moves to last item",
+      "pass": true,
+      "detail": {
+        "endText": "删除"
+      }
+    },
+    {
+      "name": "context menu: Escape closes",
+      "pass": true
+    },
+    {
+      "name": "create folder: initial focus + body lock",
+      "pass": true,
+      "detail": {
+        "activeTag": "INPUT",
+        "activeInside": true,
+        "bodyOverflow": "hidden"
+      }
+    },
+    {
+      "name": "create folder: Escape closes",
+      "pass": true
+    },
+    {
+      "name": "confirm dialog: focus + body lock",
+      "pass": true,
+      "detail": {
+        "activeInside": true,
+        "bodyOverflow": "hidden"
+      }
+    },
+    {
+      "name": "confirm dialog: Escape cancels + restores body",
+      "pass": true,
+      "detail": {
+        "bodyOverflow": ""
+      }
+    },
+    {
+      "name": "preview: dialog semantics + body lock",
+      "pass": true,
+      "detail": {
+        "activeInside": true,
+        "bodyOverflow": "hidden"
+      }
+    },
+    {
+      "name": "preview: Escape closes",
+      "pass": true
+    }
+  ],
+  "finishedAt": "2026-10-17T12:47:14.489Z",
+  "passed": true
+}

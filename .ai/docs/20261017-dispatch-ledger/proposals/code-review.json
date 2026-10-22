@@ -1,0 +1,12 @@
+{
+  "taskId": "TASK-20261017-DISPATCH-LEDGER-CR",
+  "dispatchId": "DISPATCH-20261017-DISPATCH-LEDGER-CR-01",
+  "criterionProposal": {
+    "id": "CODE_REVIEW",
+    "outcome": "pass",
+    "by": "reviewer-dispatch-ledger-01",
+    "dispatchId": "DISPATCH-20261017-DISPATCH-LEDGER-CR-01",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20261017-DISPATCH-LEDGER-CR-01.json",
+    "validatedRevision": "dispatch-ledger-code-r1"
+  }
+}

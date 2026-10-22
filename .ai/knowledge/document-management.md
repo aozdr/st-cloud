@@ -10,7 +10,7 @@ small 直接路径不落盘；medium 的 design.md 包含需求/范围/影响/�
 
 ## 存放与编码
 
-任务文档在 `.ai/docs/<task-id>/`；TASK 在 `.ai/tasks/`；稳定知识在 `.ai/knowledge/`；ADR 在 `.ai/decisions/ADR/`。UTF-8 无 BOM；含中文的 PowerShell 5.1 脚本使用 UTF-8 BOM。历史产物保留原位，不批量删除或重写。
+任务文档在 `.ai/docs/<task-id>/`；TASK 在 `.ai/tasks/`；稳定知识在 `.ai/knowledge/`；ADR 在 `.ai/decisions/ADR/`。UTF-8；PowerShell 统一使用 7（`pwsh`），不再以 Windows PowerShell 5.1 为兼容目标。历史产物保留原位，不批量删除或重写。
 
 一份文件可以支持多个验证维度，但必须分别记录内容、结果、实际证据及修订；不能把一段“通过”重复登记为多个检查。
 

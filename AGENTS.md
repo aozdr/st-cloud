@@ -6,6 +6,8 @@
 
 用户直接提出修改需求时，主线程负责确定目标、范围、风险和完成标准，持续完成实现与验证。只读咨询/诊断/审查直接交付结论，不创建实现 Loop。没有 TASK 是主线程的待办，不是让用户重复需求的理由。
 
+**自动入口**：实现类需求不等待用户提醒。主线程第一步按本节分级并进入 Loop；支持项目技能的运行时可加载 `st-cloud-loop`，否则直接读 `.ai/knowledge/agent-loop-runbook.md`。只有用户明确要求跳过时才跳过。
+
 - small：低风险局部修复、配置或样式调整；在对话说明目标、范围与相称验证后直接完成，不创建 TASK/State/Dispatch。只有用户要求持久化审计时才使用 small State。
 - medium：边界明确的模块增强或兼容改动；默认主线程执行，编码前创建一份 TASK 和精简 design.md（含验收与测试计划）。验证统一写 verification.md，不另建测试用例、变更报告或知识同步任务。
 - large：复杂跨模块、核心写路径、安全/权限、数据库、API 契约或不可逆变更；使用完整计划和独立评审。需求、影响、架构、UI 与测试计划按需合入 requirement.md/design.md，评审记录 codereview.md，验证记录 verification.md。额外文档只为独立决策或用户要求创建。
@@ -35,6 +37,7 @@ medium 默认单 Agent 自检；large 的 CODE_REVIEW 必须由独立 reviewer �
 5. API 变化说明向后兼容策略或升级方案。
 6. 禁止越界修改、破坏性 Git 命令、未经授权的数据删除；生产部署/迁移需要明确授权。
 7. 证据必须真实、匹配当前 revision；代码变化使旧代码证据失效。缺证据、open blocker 或未结束派发不得宣布完成。
+8. PowerShell 命令与脚本统一使用 PowerShell 7（`pwsh`），新建或修改的脚本以 `#requires -Version 7.0` 声明；不使用 `powershell.exe`/Windows PowerShell 5.1，不再以 5.1 兼容为目标。
 
 ## 4. 数据库版本管理
 

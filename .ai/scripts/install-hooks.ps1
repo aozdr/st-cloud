@@ -1,4 +1,4 @@
-﻿#requires -Version 5.1
+#requires -Version 7.0
 <#
 .SYNOPSIS
   安装 Agent Loop 预提交门禁（把仓库级 core.hooksPath 指向入库的 .ai/githooks）。

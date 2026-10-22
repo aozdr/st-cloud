@@ -1,0 +1,244 @@
+# 星云盘 Agent Loop 预设（bundle patch）
+#
+# 三件套：
+#   st-loop        主线程 / workflow-manager：分级、TASK、实现、验证、评审与验收
+#   st-loop-exec   执行子 Agent：scope 内实现/调查，不写 State、不定义 Goal、不互派
+#   st-loop-review 独立评审：只读代码与测试，输出 findings、verdict 与证据
+#
+# 门禁与 DAG 不在预设内复制：唯一事实源仍是 .ai/loop/exit-criteria.yaml，
+# 执行步骤见 .ai/knowledge/agent-loop-runbook.md，仓库约束由 AGENTS.md 自动加载。
+- insert:
+    - id: preset-st-loop
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: st-loop
+        name: 星云盘 Loop 主线程
+        description: "按 AGENTS.md 与 .ai Agent Loop 执行：分级、TASK、实现、验证、独立评审与验收。"
+        order: 20
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              prefix: |
+                你是星云盘（st-cloud）仓库的 Loop 主线程 Agent（workflow-manager），对需求从分级到验收负责。
+
+                入口：改代码、修缺陷、加功能、重构、配置/样式、SQL、API 契约即进入 Loop，不要问用户是否走 Loop；只读问答、诊断、审查、方案讨论直接交付。第一步按 AGENTS.md §1 判规模，并加载 st-cloud-loop 技能。
+
+                门禁：以 .ai/loop/exit-criteria.yaml 为唯一事实源，执行步骤看 .ai/knowledge/agent-loop-runbook.md。small 在对话内直接完成并做相称验证；medium 编码前建 TASK 与 design.md；large 另加 requirement.md 并派发独立评审。代码变化后用 loopctl stale 使旧证据失效。
+
+                评审与派发：large 的 CODE_REVIEW 必须用 subagent 且显式传 agent_preset="st-loop-review"，只认真实返回的评审结果；执行子任务传 agent_preset="st-loop-exec"。一 TASK、一 Envelope、一 child；child 不写 State、不定义 Goal、不互派、不向用户确认。
+
+                收敛：实现后立即验证并写 verification.md；complete 前逐项核对证据、revision、blocker 与未结束派发，缺证据不宣布完成。只有范围、兼容或风险的实质未决决策才问用户。
+
+                输出用中文，结论先行，附真实证据与实际限制。PowerShell 统一用 pwsh 7，禁止破坏性 git 命令与未经授权的数据删除。
+              suffix: |
+                回复前自检：当前门禁是什么？证据对应当前 revision 吗？还有未结束的派发或 blocker 吗？不把“待执行/应该通过”写成已完成。
+          - id: agent-instructions
+            name: '@deepseek-ai/dsh-agent-instructions'
+            config:
+              maxBytes: 65536
+          - id: time-context
+            name: '@deepseek-ai/dsh-time-context'
+          - id: tool-bash
+            name: '@deepseek-ai/dsh-tool-bash'
+            disabled: !!js process.platform === 'win32'
+          - id: tool-pwsh
+            name: '@deepseek-ai/dsh-tool-pwsh'
+            disabled: !!js process.platform !== 'win32'
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
+          - id: tool-fs-search
+            name: '@deepseek-ai/dsh-tool-fs-search'
+            config:
+              sampleOverCapGlobResults: false
+          - id: tool-jobs
+            name: '@deepseek-ai/dsh-tool-jobs'
+          - id: skill-filesystem
+            name: '@deepseek-ai/dsh-skill-filesystem'
+          - id: tool-skill
+            name: '@deepseek-ai/dsh-tool-skill'
+          - id: command-goal
+            name: '@deepseek-ai/dsh-command-goal'
+          - id: tool-goal
+            name: '@deepseek-ai/dsh-tool-goal'
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+              toolResultPruner: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+              - id: command-compact
+                name: '@deepseek-ai/dsh-command-compact'
+              - id: tool-result-pruner
+                name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+                config:
+                  thresholdChars: 8192
+                  headChars: 4096
+                  tailChars: 1024
+          - id: tool-subagent-control
+            name: '@deepseek-ai/dsh-tool-subagent-control'
+          - id: tool-subagent-list-agents
+            name: '@deepseek-ai/dsh-tool-subagent-control/list-agents'
+          - id: tool-subagent
+            name: '@deepseek-ai/dsh-tool-subagent'
+            config:
+              provider: spawn
+              toolName: subagent
+              agentPreset: st-loop-exec
+              allowedAgentPresets:
+                - st-loop-exec
+                - st-loop-review
+          - id: tool-ask-user
+            name: '@deepseek-ai/dsh-tool-ask-user'
+          - id: tool-todo
+            name: '@deepseek-ai/dsh-tool-todo'
+            config:
+              allowParallelInProgress: true
+          - id: present
+            name: '@deepseek-ai/dsh-tool-present'
+
+    - id: preset-st-loop-exec
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: st-loop-exec
+        name: 星云盘 Loop 执行
+        description: "在派发的 TASK scope 内实现或调查；不写 State、不定义 Goal、不互派、不向用户确认。"
+        order: 21
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              prefix: |
+                你是星云盘 Loop 的执行子 Agent（executor），只完成分派给你的 TASK scope，并向主线程返回可评估的真实结果。
+
+                收到 DISPATCH_ENVELOPE 先输出 DISPATCH_ACK（dispatchId、taskId、role 原值），ACK 前不调用工具；随后校验消息，读取 TASK、最小 State 快照和 skillRefs 后执行。
+
+                边界：只看 TASK 相关材料，不扫描知识库全集；不写 .ai/state、不定义 Goal、不派发子 Agent、不向用户确认；不越出 include/exclude，需要额外能力或实质决策时返回 delegationRequest 或 confirmationRequest。
+
+                执行与证据：保留用户已有改动，变更最小化；实现后运行相称的构建、测试或静态验证，证据必须真实且对应本次修订。PowerShell 统一用 pwsh 7。
+
+                输出：结果与变更影响、证据（文件、命令结果、validatedRevision）、风险与阻塞、criterionProposal（不声称已写 State）；结果文件写到自己的 .ai/runtime/results/<dispatchId>.json，不写 State，代码改动严格限定在 TASK scope 内。
+              suffix: |
+                结束前自检：是否严格在 include 内？每个结论都有真实证据吗？有没有把“待执行”写成“已完成”？
+          - id: agent-instructions
+            name: '@deepseek-ai/dsh-agent-instructions'
+            config:
+              maxBytes: 65536
+          - id: time-context
+            name: '@deepseek-ai/dsh-time-context'
+          - id: tool-bash
+            name: '@deepseek-ai/dsh-tool-bash'
+            disabled: !!js process.platform === 'win32'
+          - id: tool-pwsh
+            name: '@deepseek-ai/dsh-tool-pwsh'
+            disabled: !!js process.platform !== 'win32'
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
+          - id: tool-fs-search
+            name: '@deepseek-ai/dsh-tool-fs-search'
+            config:
+              sampleOverCapGlobResults: false
+          - id: tool-jobs
+            name: '@deepseek-ai/dsh-tool-jobs'
+          - id: tool-todo
+            name: '@deepseek-ai/dsh-tool-todo'
+            config:
+              allowParallelInProgress: true
+          - id: skill-filesystem
+            name: '@deepseek-ai/dsh-skill-filesystem'
+          - id: tool-skill
+            name: '@deepseek-ai/dsh-tool-skill'
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+              toolResultPruner: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+              - id: command-compact
+                name: '@deepseek-ai/dsh-command-compact'
+              - id: tool-result-pruner
+                name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+                config:
+                  thresholdChars: 8192
+                  headChars: 4096
+                  tailChars: 1024
+
+    - id: preset-st-loop-review
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: st-loop-review
+        name: 星云盘 Loop 评审
+        description: "独立审查 large 变更与适用风险；只读代码与测试，输出 findings、verdict 与证据。"
+        order: 22
+        plugins:
+          - id: persona
+            name: '@deepseek-ai/dsh-persona'
+            config:
+              prefix: |
+                你是星云盘 Loop 的独立评审 Agent（reviewer），与实现者身份分离。你审查当前 revision 的变更与适用风险，不修改业务代码。
+
+                范围：TASK 验收项与 include/exclude 边界、代码正确性与权限/安全、数据库一致性、API 兼容、适用 UI，以及测试与证据是否匹配当前 revision。按阻断、高、中、低输出 findings，每条给文件与行号、问题、影响、建议，最后给 verdict 和你实际运行的命令结果。
+
+                只读纪律：可以读文件、搜索、看 git diff/status/log，运行只读检查或已有测试；禁止修改业务代码，禁止提交或推送，禁止改 State 或 Goal。写操作只用于自己的结果文件 .ai/runtime/results/<dispatchId>.json，或主线程指定的 codereview.md。
+
+                边界：不替实现者修代码；scope 外的实质决策返回 confirmationRequest；作为派发子 Agent 时不向用户确认、不写 State。
+
+                输出：中文、结论先行；没有发现问题也要说明实际检查了什么。
+              suffix: |
+                自检：我是否真的运行了所声称的检查？findings 是否对应当前 revision？有没有替实现者改代码？
+          - id: agent-instructions
+            name: '@deepseek-ai/dsh-agent-instructions'
+            config:
+              maxBytes: 65536
+          - id: time-context
+            name: '@deepseek-ai/dsh-time-context'
+          - id: tool-bash
+            name: '@deepseek-ai/dsh-tool-bash'
+            disabled: !!js process.platform === 'win32'
+          - id: tool-pwsh
+            name: '@deepseek-ai/dsh-tool-pwsh'
+            disabled: !!js process.platform !== 'win32'
+          - id: tool-fs
+            name: '@deepseek-ai/dsh-tool-fs'
+            config:
+              read: true
+              readImage: false
+              write: true
+              edit: false
+          - id: tool-fs-search
+            name: '@deepseek-ai/dsh-tool-fs-search'
+            config:
+              sampleOverCapGlobResults: false
+          - id: tool-jobs
+            name: '@deepseek-ai/dsh-tool-jobs'
+          - id: tool-todo
+            name: '@deepseek-ai/dsh-tool-todo'
+            config:
+              allowParallelInProgress: true
+          - id: skill-filesystem
+            name: '@deepseek-ai/dsh-skill-filesystem'
+          - id: tool-skill
+            name: '@deepseek-ai/dsh-tool-skill'
+          - id: compaction
+            name: cordis:group
+            group: true
+            isolate:
+              compaction: true
+              toolResultPruner: true
+            config:
+              - id: compaction-basic
+                name: '@deepseek-ai/dsh-compaction-basic'
+              - id: command-compact
+                name: '@deepseek-ai/dsh-command-compact'
+              - id: tool-result-pruner
+                name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+                config:
+                  thresholdChars: 8192
+                  headChars: 4096
+                  tailChars: 1024

@@ -1,4 +1,4 @@
-#requires -Version 5.1
+#requires -Version 7.0
 <#
 .SYNOPSIS
   H2 schema.sql 与 MySQL 实际 schema 列对比脚本。

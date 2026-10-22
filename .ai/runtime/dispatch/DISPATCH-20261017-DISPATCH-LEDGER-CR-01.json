@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20261017-DISPATCH-LEDGER-CR-01",
+  "taskId": "TASK-20261017-DISPATCH-LEDGER-CR",
+  "idempotencyKey": "TASK-20261017-DISPATCH-LEDGER-CR",
+  "taskCode": "dispatch-ledger-code-review",
+  "role": "reviewer",
+  "taskType": "review",
+  "objective": "独立审查 Dispatch 账本命令化变更：dispatch-plan、dispatch-transition 扩展、测试与文档一致性",
+  "taskRefs": [
+    ".ai/tasks/TASK-20261017-dispatch-ledger.md",
+    ".ai/docs/20261017-dispatch-ledger/design.md",
+    ".ai/docs/20261017-dispatch-ledger/implementation.md",
+    ".ai/scripts/loopctl.ps1",
+    ".ai/tests/loop-v2/unit/state-engine.tests.ps1",
+    ".ai/knowledge/agent-dispatch-protocol.md",
+    ".ai/templates/dispatch-template.md"
+  ],
+  "stateRef": ".ai/state/20261017-dispatch-ledger.yaml",
+  "scope": {
+    "include": [
+      ".ai/docs/20261017-dispatch-ledger/codereview.md",
+      ".ai/runtime/results/DISPATCH-20261017-DISPATCH-LEDGER-CR-01.json"
+    ],
+    "exclude": [
+      "st-*/**",
+      "docker/**",
+      ".ai/state/**",
+      ".ai/scripts/**",
+      ".ai/tests/**",
+      ".ai/tasks/**",
+      ".ai/knowledge/**",
+      ".ai/templates/**",
+      ".ai/runtime/dispatch/**"
+    ]
+  },
+  "acceptance": [
+    "审查 dispatch-plan 与 dispatch-transition 的字段、校验、迁移与错误码",
+    "确认旧 State/旧调用兼容，未改 Envelope/State schema 或业务代码",
+    "确认测试覆盖正反路径并给出真实命令结果",
+    "输出 codereview.md，结论为 PASS 或 BLOCK"
+  ],
+  "validation": [
+    "读取 taskRefs 与当前 diff",
+    "运行 loop-v2 state-engine 单元测试或核对已有结果",
+    "写入独立结果 JSON 与 codereview.md"
+  ],
+  "forbidSpawn": true
+}

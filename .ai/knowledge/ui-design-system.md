@@ -4,6 +4,30 @@
 
 统一星云盘前端页面体验，避免不同功能开发产生视觉和交互差异。
 
+## 现行实现基线（2026-10-17 起）
+
+- 唯一实现基准：`st-web/src/design/tokens.md`；评审入口：`.ai/context/frontend/ui-design-system.md`。
+- 布局：Sidebar 224 / TopBar 60 / 文件表头 40 / 行 52 / 主按钮 36。
+- 主色 `#4F6EF7`；文本/链接使用 `primary-strong`（light `primary-700`，dark `primary-400`）；白字实心按钮底色 `primary-700`。
+- 浅色 `text-tertiary` 为 `#657184`（white 4.94:1，surface-2 4.61:1）。
+- 以下 PikPak 与 UI_DESIGN_SPEC v1.0 段落保留为历史演进；与本节或 `tokens.md` 冲突时，以 `tokens.md` 为准。
+
+## 弹窗与浮层可访问性（2026-10-17）
+
+- 所有模态弹窗必须使用 `useModalA11y`（`st-web/src/components/ui/useModalA11y.ts`）：focus trap、Escape、body 滚动锁、打开/关闭焦点还原。
+- 面板必须有 `role="dialog"`、`aria-modal="true"` 与可访问名称；条件渲染弹窗也必须在 `open` 变为 true 时生效。
+- 禁止使用原生 `confirm()`/`alert()`；确认操作统一使用 `useConfirm()`。
+- 文件右键菜单使用 `role="menu"`/`menuitem`，支持 ↑/↓/Home/End/Escape 与打开时聚焦首项。
+- 非模态浮层（如通知面板、下拉菜单）不强制 `aria-modal`，但必须有明确 `aria-label` 与键盘关闭方式。
+
+## 文件页信息层级（2026-10-17）
+
+- 文件页顺序：页面标题 + 项数 → 面包屑（分类页隐藏）→ 工具栏 → 文件列表。
+- 标题：根目录“全部文件”、文件夹当前名、分类名；不用面包屑代替标题。
+- 上传是 primary，新建是 secondary；移动端工具栏隐藏排序/文件夹优先，仅保留上传/新建/刷新/视图。
+- 触屏行操作不能只依赖 hover：`<md` 收藏/更多常显，命中区 ≥36px；桌面仍保持 hover 降噪。
+- 文件表格使用 `role="grid"` + `rowgroup` + `row/cell`；列头 `aria-sort`，行 `aria-selected`/`aria-rowindex`，roving tabIndex；移动端排序入口不可缺失。
+
 ## UI评审基础规范
 
 ### 页面布局

@@ -230,6 +230,7 @@ public Result<FileNodeVO> getNode(@PathVariable Long nodeId) {
 
 ## 文件编码规范
 
-- 所有文本文件统一使用 **UTF-8（无 BOM）** 编码；含非 ASCII 内容的 `.ps1` 脚本使用 **UTF-8 with BOM** 以兼容 Windows PowerShell 5.1
+- 所有文本文件统一使用 **UTF-8** 编码。
+- PowerShell 命令与脚本统一使用 **PowerShell 7（`pwsh`）**，新建或修改的脚本以 `#requires -Version 7.0` 声明；不再以 Windows PowerShell 5.1 为兼容目标，UTF-8 BOM 不强制。
 - 禁止 GBK/GB2312 编码的文档或代码文件入库；发现混用编码时需转码为 UTF-8 后再提交
 - 文档/模板/State/任务文件的产出与修改统一遵循 `.ai/knowledge/document-management.md` 的编码规范

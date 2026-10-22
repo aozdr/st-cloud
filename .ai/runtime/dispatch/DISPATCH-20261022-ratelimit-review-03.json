@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20261022-ratelimit-review-03",
+  "taskCode": "multi-node-ratelimit-rereview",
+  "taskId": "20261022-multi-node-ratelimit",
+  "idempotencyKey": "20261022-multi-node-ratelimit",
+  "role": "reviewer",
+  "taskType": "review",
+  "objective": "复核 v3 的两个阻塞项修复（共享桶 rate 语义与 relay finalize 空会话），并确认无新回归。",
+  "taskRefs": [
+    ".ai/tasks/TASK-20261022-multi-node-ratelimit-01.md",
+    ".ai/docs/20261022-multi-node-ratelimit/design.md",
+    ".ai/docs/20261022-multi-node-ratelimit/verification.md",
+    ".ai/docs/20261022-multi-node-ratelimit/codereview.md"
+  ],
+  "stateRef": ".ai/state/20261022-multi-node-ratelimit.yaml",
+  "artifactRefs": [
+    ".ai/docs/20261022-multi-node-ratelimit/codereview.md",
+    ".ai/runtime/results/DISPATCH-20261022-ratelimit-review-03.json"
+  ],
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      "st-common/src/main/java/com/stcloud/common/ratelimit/",
+      "st-core/src/main/java/com/stcloud/core/service/impl/DownloadServiceImpl.java",
+      "st-core/src/main/java/com/stcloud/core/service/impl/UploadServiceImpl.java",
+      "st-admin/src/main/java/com/stcloud/admin/service/impl/SpeedLimitManageServiceImpl.java"
+    ],
+    "exclude": [
+      "不得修改代码/State/TASK",
+      "不得执行 mvn",
+      "不得执行 git 写操作"
+    ]
+  },
+  "acceptance": [
+    "BLOCK-1 已消除：共享桶不再接收请求级 rate，stale 重试有界且不会空转",
+    "BLOCK-2 已消除：finalize 不再创建空会话，缺会话一律 409",
+    "未引入新的阻塞级问题",
+    "结论明确（APPROVE / APPROVE_WITH_CHANGES / REQUEST_CHANGES）"
+  ],
+  "validation": [
+    "read 相关文件与 git diff",
+    "对照 verification.md 的修复说明"
+  ],
+  "forbidSpawn": true,
+  "forbidGitMvn": true,
+  "etaMinutes": 6,
+  "output": {
+    "artifact": ".ai/docs/20261022-multi-node-ratelimit/codereview.md",
+    "result": ".ai/runtime/results/DISPATCH-20261022-ratelimit-review-03.json"
+  }
+}

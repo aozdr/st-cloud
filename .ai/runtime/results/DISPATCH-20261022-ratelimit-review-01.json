@@ -1,0 +1,60 @@
+{
+  "dispatchId": "DISPATCH-20261022-ratelimit-review-01",
+  "taskId": "20261022-multi-node-ratelimit",
+  "status": "completed",
+  "artifactRefs": [
+    ".ai/docs/20261022-multi-node-ratelimit/codereview.md"
+  ],
+  "criterionProposal": {
+    "id": "CODE_REVIEW",
+    "outcome": "fail",
+    "by": "reviewer-ratelimit-01",
+    "dispatchId": "DISPATCH-20261022-ratelimit-review-01",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20261022-ratelimit-review-01.json",
+    "validatedRevision": "20261022-multi-node-ratelimit-code-v1"
+  },
+  "blockerProposals": [
+    {
+      "fingerprint": "ratelimit/redis-outage-breaks-upload-path",
+      "status": "open",
+      "repairAttempts": [],
+      "severity": "blocker",
+      "verdict": "REQUEST_CHANGES",
+      "title": "Redis 故障时上传链路无 fail-open：chunk-url/confirm/relay init·chunk·finalize 直接 500",
+      "fileRefs": [
+        "st-common/src/main/java/com/stcloud/common/ratelimit/UserTransferLimiter.java:55-64",
+        "st-common/src/main/java/com/stcloud/common/ratelimit/UserTransferLimiter.java:76-82",
+        "st-core/src/main/java/com/stcloud/core/service/impl/upload/RelaySessionRegistry.java:31-32",
+        "st-core/src/main/java/com/stcloud/core/service/impl/upload/RelaySessionRegistry.java:37-38",
+        "st-core/src/main/java/com/stcloud/core/service/impl/upload/RelaySessionRegistry.java:54",
+        "st-core/src/main/java/com/stcloud/core/service/impl/UploadServiceImpl.java:388-391",
+        "st-core/src/main/java/com/stcloud/core/service/impl/UploadServiceImpl.java:424",
+        "st-core/src/main/java/com/stcloud/core/service/impl/UploadServiceImpl.java:790",
+        "st-core/src/main/java/com/stcloud/core/service/impl/UploadServiceImpl.java:773-776"
+      ],
+      "impact": "违反 FR-6 与 TASK 验收「Redis 断开：传输不中断」；上传（直传+中转）在 Redis 故障时整段不可用，比改动前更差；verification.md 的 fail-open 结论只对下载成立。",
+      "requestedFix": "tryAcquireUpload/releaseUpload 的 redis 分支按 failOpen 回落本地 UploadGate/TokenBucket 并计数；RelaySessionRegistry 三处调用失败即降级（remove 不得覆盖主异常）；基础 application.yml 显式设置 spring.data.redis.timeout；补故障降级用例。",
+      "evidenceRef": ".ai/docs/20261022-multi-node-ratelimit/codereview.md#b-1"
+    },
+    {
+      "fingerprint": "ratelimit/stale-version-never-refreshes-rate",
+      "status": "open",
+      "repairAttempts": [],
+      "severity": "blocker",
+      "verdict": "REQUEST_CHANGES",
+      "title": "配置版本 stale 不回读 rate/ver：在途下载按旧速率长期放行（版本收敛只实现一半）",
+      "fileRefs": [
+        "st-common/src/main/java/com/stcloud/common/ratelimit/CreditBucket.java:24-25",
+        "st-common/src/main/java/com/stcloud/common/ratelimit/CreditBucket.java:64-75",
+        "st-common/src/main/java/com/stcloud/common/ratelimit/CreditBucket.java:38-39",
+        "st-common/src/main/java/com/stcloud/common/ratelimit/UserTransferLimiter.java:96-107",
+        "st-common/src/main/java/com/stcloud/common/ratelimit/UserTransferLimiter.java:114-125",
+        "st-core/src/main/java/com/stcloud/core/service/impl/DownloadServiceImpl.java:156-161",
+        "st-core/src/main/java/com/stcloud/core/service/impl/DownloadServiceImpl.java:176-183"
+      ],
+      "impact": "违反 FR-5 与 TASK 验收「管理端改 rate 1s/30s 生效」：stale 被当作 Redis 故障进入 1s 降级并按旧 rate 放行，ver/rate 为入参常量，循环内永不刷新，降速场景单节点长期超发（最坏 N×旧 rate），每秒还发一次注定 stale 的脚本调用。",
+      "requestedFix": "CreditBucket 接收可刷新配置的回调，stale 时用回读的 rate/ver 刷新并重试一次，不进入 degraded；只有 store 异常才 fail-open；DownloadServiceImpl 在 pacedTransfer 内重新解析限速；stale 与 degraded 指标分离。",
+      "evidenceRef": ".ai/docs/20261022-multi-node-ratelimit/codereview.md#b-2"
+    }
+  ]
+}

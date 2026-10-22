@@ -1,0 +1,62 @@
+{
+  "startedAt": "2026-10-17T12:46:29.884Z",
+  "checks": [
+    {
+      "name": "dark mode applied",
+      "pass": true
+    },
+    {
+      "name": "dark files: no large white background",
+      "pass": true,
+      "detail": []
+    },
+    {
+      "name": "recycle page renders in dark",
+      "pass": true,
+      "detail": {
+        "dark": true,
+        "headerBg": "rgb(27, 29, 34)",
+        "bodyText": "星云盘\n上传文件\n首页\n文件\n全部文件\n我的收藏\n我的关注\n我的分享\n团队空间\n工具\n回收站\n重复检测\n隐藏文件\n管理\n系统管理\n折叠侧栏\n主题设置\n存储空间\n1%\n108.5 MB / 10.0 GB · 9.9 GB 可用\nCtrl K"
+      }
+    },
+    {
+      "name": "shares page renders in dark",
+      "pass": true,
+      "detail": {
+        "dark": true,
+        "headerBg": "rgb(27, 29, 34)",
+        "bodyText": "星云盘\n上传文件\n首页\n文件\n全部文件\n我的收藏\n我的关注\n我的分享\n团队空间\n工具\n回收站\n重复检测\n隐藏文件\n管理\n系统管理\n折叠侧栏\n主题设置\n存储空间\n1%\n108.5 MB / 10.0 GB · 9.9 GB 可用\nCtrl K"
+      }
+    },
+    {
+      "name": "mobile files: no page-level horizontal overflow",
+      "pass": true,
+      "detail": {
+        "innerWidth": 390,
+        "docScrollWidth": 390,
+        "bodyScrollWidth": 390,
+        "tableScrollWidth": 344,
+        "scrollerClientWidth": 344,
+        "pageOverflow": 0,
+        "tableOverflow": 0,
+        "hasMobileMeta": true
+      }
+    },
+    {
+      "name": "mobile files: table fits scroller",
+      "pass": true,
+      "detail": {
+        "innerWidth": 390,
+        "docScrollWidth": 390,
+        "bodyScrollWidth": 390,
+        "tableScrollWidth": 344,
+        "scrollerClientWidth": 344,
+        "pageOverflow": 0,
+        "tableOverflow": 0,
+        "hasMobileMeta": true
+      }
+    }
+  ],
+  "finishedAt": "2026-10-17T12:46:37.809Z",
+  "passed": true
+}

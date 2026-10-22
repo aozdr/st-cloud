@@ -1,0 +1,349 @@
+{
+  "schemaVersion": 2,
+  "definitionVersion": 3,
+  "taskId": "20261017-ui-ux-p1-a",
+  "scale": "medium",
+  "status": "done",
+  "goal": {
+    "objective": "完成 st-web 文件页 P1-A：标题/面包屑/工具栏层级、上传主操作、移动端工具栏收敛、行操作触屏可见与触控目标",
+    "scope": "st-web/src/components/file 文件页组件与任务文档；排除后端/桌面端、P1-B 表格 ARIA、P1-C 导航、P1-D PWA",
+    "completionCriteria": [
+      "文件页显示明确标题且面包屑位于工具栏之前",
+      "上传为 primary、新建为 secondary",
+      "移动端工具栏无裁切且 390px 无横向溢出",
+      "表格行收藏/更多在移动端可见且命中区 >=36px",
+      "分页与面包屑高频控件命中区补齐",
+      "npm run lint 与 npm run build 通过",
+      "真实浏览器 1440/390 交互与截图通过"
+    ]
+  },
+  "revision": {
+    "design": "p1a-design-18A256312566-12DB37F7F68D",
+    "code": "p1a-3457eb36cf71"
+  },
+  "exitCriteria": [
+    {
+      "id": "DESIGN",
+      "status": "done",
+      "dependsOn": [],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p1-a/design.md",
+      "validatedRevision": "p1a-design-18A256312566-12DB37F7F68D",
+      "executionKind": "direct",
+      "executionId": "direct:20261017-ui-ux-p1-a:DESIGN:p1a-design-18A256312566-12DB37F7F68D:p1a-3457eb36cf71",
+      "completedAt": "2026-10-17T12:57:41.3533532Z"
+    },
+    {
+      "id": "IMPLEMENTED",
+      "status": "done",
+      "dependsOn": [
+        "DESIGN"
+      ],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p1-a/verification.md",
+      "validatedRevision": "p1a-3457eb36cf71",
+      "executionKind": "direct",
+      "executionId": "direct:20261017-ui-ux-p1-a:IMPLEMENTED:p1a-design-18A256312566-12DB37F7F68D:p1a-3457eb36cf71",
+      "completedAt": "2026-10-17T12:57:41.4479232Z"
+    },
+    {
+      "id": "VERIFIED",
+      "status": "done",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p1-a/verification.md",
+      "validatedRevision": "p1a-3457eb36cf71",
+      "executionKind": "direct",
+      "executionId": "direct:20261017-ui-ux-p1-a:VERIFIED:p1a-design-18A256312566-12DB37F7F68D:p1a-3457eb36cf71",
+      "completedAt": "2026-10-17T12:57:41.5138419Z"
+    },
+    {
+      "id": "ACCEPT",
+      "status": "done",
+      "dependsOn": [
+        "VERIFIED"
+      ],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p1-a/verification.md",
+      "validatedRevision": "p1a-3457eb36cf71",
+      "executionKind": "direct",
+      "executionId": "direct:20261017-ui-ux-p1-a:ACCEPT:p1a-design-18A256312566-12DB37F7F68D:p1a-3457eb36cf71",
+      "completedAt": "2026-10-17T12:57:41.6566542Z"
+    }
+  ],
+  "artifacts": {
+    "design": {
+      "status": "ready",
+      "ref": ".ai/docs/20261017-ui-ux-p1-a/design.md",
+      "provides": [
+        "DESIGN"
+      ]
+    },
+    "verification": {
+      "status": "ready",
+      "ref": ".ai/docs/20261017-ui-ux-p1-a/verification.md",
+      "provides": [
+        "VERIFIED"
+      ]
+    }
+  },
+  "blockers": [],
+  "acceptanceEvidence": [
+    {
+      "criterion": "文件页显示明确标题且面包屑位于工具栏之前",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p1-a/verification.md",
+      "validatedRevision": "p1a-3457eb36cf71"
+    },
+    {
+      "criterion": "上传为 primary、新建为 secondary",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p1-a/verification.md",
+      "validatedRevision": "p1a-3457eb36cf71"
+    },
+    {
+      "criterion": "移动端工具栏无裁切且 390px 无横向溢出",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p1-a/verification.md",
+      "validatedRevision": "p1a-3457eb36cf71"
+    },
+    {
+      "criterion": "表格行收藏/更多在移动端可见且命中区 >=36px",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p1-a/verification.md",
+      "validatedRevision": "p1a-3457eb36cf71"
+    },
+    {
+      "criterion": "分页与面包屑高频控件命中区补齐",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p1-a/verification.md",
+      "validatedRevision": "p1a-3457eb36cf71"
+    },
+    {
+      "criterion": "npm run lint 与 npm run build 通过",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p1-a/verification.md",
+      "validatedRevision": "p1a-3457eb36cf71"
+    },
+    {
+      "criterion": "真实浏览器 1440/390 交互与截图通过",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p1-a/verification.md",
+      "validatedRevision": "p1a-3457eb36cf71"
+    }
+  ],
+  "dispatchLedger": [],
+  "proposals": [],
+  "history": [
+    {
+      "eventId": "b1df9c8c-8be4-46bd-82cc-5e0d8e2d6f18",
+      "action": "init",
+      "before": null,
+      "after": {
+        "taskId": "20261017-ui-ux-p1-a",
+        "scale": "medium",
+        "status": "running",
+        "revision": {
+          "design": null,
+          "code": null
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T12:50:07.2554558Z",
+      "revision": {
+        "design": null,
+        "code": null
+      }
+    },
+    {
+      "eventId": "stale:design:p1a-design-18A256312566-12DB37F7F68D",
+      "action": "stale-cascade",
+      "before": {
+        "roots": [
+          "DESIGN"
+        ]
+      },
+      "after": {
+        "affected": [
+          "DESIGN",
+          "IMPLEMENTED",
+          "VERIFIED",
+          "ACCEPT"
+        ],
+        "revision": {
+          "design": "p1a-design-18A256312566-12DB37F7F68D",
+          "code": null
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T12:57:25.3445245Z",
+      "revision": {
+        "design": "p1a-design-18A256312566-12DB37F7F68D",
+        "code": null
+      }
+    },
+    {
+      "eventId": "stale:code:p1a-3457eb36cf71",
+      "action": "stale-cascade",
+      "before": {
+        "roots": [
+          "IMPLEMENTED",
+          "VERIFIED",
+          "ACCEPT"
+        ]
+      },
+      "after": {
+        "affected": [
+          "IMPLEMENTED",
+          "VERIFIED",
+          "ACCEPT"
+        ],
+        "revision": {
+          "design": "p1a-design-18A256312566-12DB37F7F68D",
+          "code": "p1a-3457eb36cf71"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T12:57:25.3903328Z",
+      "revision": {
+        "design": "p1a-design-18A256312566-12DB37F7F68D",
+        "code": "p1a-3457eb36cf71"
+      }
+    },
+    {
+      "eventId": "direct:20261017-ui-ux-p1-a:DESIGN:p1a-design-18A256312566-12DB37F7F68D:p1a-3457eb36cf71",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "DESIGN",
+        "status": "pending"
+      },
+      "after": {
+        "id": "DESIGN",
+        "status": "done",
+        "revision": {
+          "design": "p1a-design-18A256312566-12DB37F7F68D",
+          "code": "p1a-3457eb36cf71"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T12:57:41.3684806Z",
+      "revision": {
+        "design": "p1a-design-18A256312566-12DB37F7F68D",
+        "code": "p1a-3457eb36cf71"
+      }
+    },
+    {
+      "eventId": "direct:20261017-ui-ux-p1-a:IMPLEMENTED:p1a-design-18A256312566-12DB37F7F68D:p1a-3457eb36cf71",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "IMPLEMENTED",
+        "status": "pending"
+      },
+      "after": {
+        "id": "IMPLEMENTED",
+        "status": "done",
+        "revision": {
+          "design": "p1a-design-18A256312566-12DB37F7F68D",
+          "code": "p1a-3457eb36cf71"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T12:57:41.4480864Z",
+      "revision": {
+        "design": "p1a-design-18A256312566-12DB37F7F68D",
+        "code": "p1a-3457eb36cf71"
+      }
+    },
+    {
+      "eventId": "direct:20261017-ui-ux-p1-a:VERIFIED:p1a-design-18A256312566-12DB37F7F68D:p1a-3457eb36cf71",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "VERIFIED",
+        "status": "pending"
+      },
+      "after": {
+        "id": "VERIFIED",
+        "status": "done",
+        "revision": {
+          "design": "p1a-design-18A256312566-12DB37F7F68D",
+          "code": "p1a-3457eb36cf71"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T12:57:41.5165839Z",
+      "revision": {
+        "design": "p1a-design-18A256312566-12DB37F7F68D",
+        "code": "p1a-3457eb36cf71"
+      }
+    },
+    {
+      "eventId": "direct:20261017-ui-ux-p1-a:ACCEPT:p1a-design-18A256312566-12DB37F7F68D:p1a-3457eb36cf71",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "ACCEPT",
+        "status": "pending"
+      },
+      "after": {
+        "id": "ACCEPT",
+        "status": "done",
+        "revision": {
+          "design": "p1a-design-18A256312566-12DB37F7F68D",
+          "code": "p1a-3457eb36cf71"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T12:57:41.6577784Z",
+      "revision": {
+        "design": "p1a-design-18A256312566-12DB37F7F68D",
+        "code": "p1a-3457eb36cf71"
+      }
+    },
+    {
+      "eventId": "complete",
+      "action": "complete",
+      "before": {
+        "status": "running"
+      },
+      "after": {
+        "status": "done",
+        "revision": {
+          "design": "p1a-design-18A256312566-12DB37F7F68D",
+          "code": "p1a-3457eb36cf71"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T12:57:41.8681064Z",
+      "revision": {
+        "design": "p1a-design-18A256312566-12DB37F7F68D",
+        "code": "p1a-3457eb36cf71"
+      }
+    }
+  ],
+  "risk": {
+    "ui": true,
+    "security": false,
+    "database": false,
+    "apiContract": false,
+    "irreversible": false
+  },
+  "verification": {
+    "validatedRevision": "p1a-3457eb36cf71",
+    "checks": [
+      {
+        "dimension": "tests",
+        "outcome": "pass",
+        "evidenceRef": ".ai/docs/20261017-ui-ux-p1-a/verification.md"
+      },
+      {
+        "dimension": "selfReview",
+        "outcome": "pass",
+        "evidenceRef": ".ai/docs/20261017-ui-ux-p1-a/verification.md"
+      },
+      {
+        "dimension": "knowledge",
+        "outcome": "pass",
+        "evidenceRef": ".ai/docs/20261017-ui-ux-p1-a/verification.md"
+      },
+      {
+        "dimension": "ui",
+        "outcome": "pass",
+        "evidenceRef": ".ai/docs/20261017-ui-ux-p1-a/verification.md"
+      }
+    ]
+  }
+}

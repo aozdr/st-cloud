@@ -1,4 +1,4 @@
-﻿#requires -Version 5.1
+#requires -Version 7.0
 <#
 .SYNOPSIS
   校验当前定义和指定 State；全量历史审计需要 -AuditHistory。

@@ -1,4 +1,5 @@
-﻿# Worktree V2：prepare -> commit -> merge -> verify -> cleanup，可独立重试。
+#requires -Version 7.0
+# Worktree V2：prepare -> commit -> merge -> verify -> cleanup，可独立重试。
 [CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)]
@@ -15,7 +16,7 @@ $ErrorActionPreference='Stop'
 
 function Fail([string]$Code,[string]$Detail) { throw "${Code}: $Detail" }
 function Invoke-GitV2([string]$At,[string[]]$GitArgs,[switch]$AllowFailure) {
-    # Windows PowerShell 会把 Git 写入 stderr 的正常进度信息转换成
+    # PowerShell 会把 Git 写入 stderr 的正常进度信息转换成
     # NativeCommandError；临时放宽后仍以进程退出码作为唯一成败依据。
     $previousErrorAction=$ErrorActionPreference
     $ErrorActionPreference='Continue'

@@ -1,0 +1,371 @@
+{
+  "schemaVersion": 2,
+  "definitionVersion": 3,
+  "taskId": "20261017-ui-ux-p0-b",
+  "scale": "medium",
+  "status": "done",
+  "goal": {
+    "objective": "完成 st-web P0-B：统一弹窗可访问性、替换原生 confirm、PreviewModal 语义、ContextMenu 键盘导航",
+    "scope": "st-web/src 弹窗/预览/右键菜单/团队确认；排除 P1 文件页重构与后端/桌面端",
+    "completionCriteria": [
+      "新增 useModalA11y 并接入本轮所有 modal-overlay 弹窗",
+      "所有弹窗有 role=dialog 与 aria-modal 且 Escape/focus trap/滚动锁/焦点还原生效",
+      "PreviewModal 具备 dialog 语义与焦点管理",
+      "st-web/src 中原生 confirm( 调用为 0",
+      "ContextMenu 支持方向键/Home/End/Escape 且具备 menu 语义",
+      "npm run lint 与 npm run build 通过"
+    ]
+  },
+  "revision": {
+    "design": "p0b-design-F5C122DDE006-0C46337CFFCE",
+    "code": "p0b-381ee4b99a53-393B846DC40E"
+  },
+  "exitCriteria": [
+    {
+      "id": "DESIGN",
+      "status": "done",
+      "dependsOn": [],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p0-b/design.md",
+      "validatedRevision": "p0b-design-F5C122DDE006-0C46337CFFCE",
+      "executionKind": "direct",
+      "executionId": "direct:20261017-ui-ux-p0-b:DESIGN:p0b-design-F5C122DDE006-0C46337CFFCE:p0b-381ee4b99a53-393B846DC40E",
+      "completedAt": "2026-10-17T12:42:22.5237452Z"
+    },
+    {
+      "id": "IMPLEMENTED",
+      "status": "done",
+      "dependsOn": [
+        "DESIGN"
+      ],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p0-b/verification.md",
+      "validatedRevision": "p0b-381ee4b99a53-393B846DC40E",
+      "executionKind": "direct",
+      "executionId": "direct:20261017-ui-ux-p0-b:IMPLEMENTED:p0b-design-F5C122DDE006-0C46337CFFCE:p0b-381ee4b99a53-393B846DC40E",
+      "completedAt": "2026-10-17T12:42:22.634887Z"
+    },
+    {
+      "id": "VERIFIED",
+      "status": "done",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p0-b/verification.md",
+      "validatedRevision": "p0b-381ee4b99a53-393B846DC40E",
+      "executionKind": "direct",
+      "executionId": "direct:20261017-ui-ux-p0-b:VERIFIED:p0b-design-F5C122DDE006-0C46337CFFCE:p0b-381ee4b99a53-393B846DC40E",
+      "completedAt": "2026-10-17T12:42:22.7042145Z"
+    },
+    {
+      "id": "ACCEPT",
+      "status": "done",
+      "dependsOn": [
+        "VERIFIED"
+      ],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p0-b/verification.md",
+      "validatedRevision": "p0b-381ee4b99a53-393B846DC40E",
+      "executionKind": "direct",
+      "executionId": "direct:20261017-ui-ux-p0-b:ACCEPT:p0b-design-F5C122DDE006-0C46337CFFCE:p0b-381ee4b99a53-393B846DC40E",
+      "completedAt": "2026-10-17T12:42:22.8215978Z"
+    }
+  ],
+  "artifacts": {
+    "design": {
+      "status": "ready",
+      "ref": ".ai/docs/20261017-ui-ux-p0-b/design.md",
+      "provides": [
+        "DESIGN"
+      ]
+    },
+    "verification": {
+      "status": "ready",
+      "ref": ".ai/docs/20261017-ui-ux-p0-b/verification.md",
+      "provides": [
+        "VERIFIED"
+      ]
+    }
+  },
+  "blockers": [],
+  "acceptanceEvidence": [
+    {
+      "criterion": "新增 useModalA11y 并接入本轮所有 modal-overlay 弹窗",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p0-b/verification.md",
+      "validatedRevision": "p0b-381ee4b99a53-393B846DC40E"
+    },
+    {
+      "criterion": "所有弹窗有 role=dialog 与 aria-modal 且 Escape/focus trap/滚动锁/焦点还原生效",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p0-b/verification.md",
+      "validatedRevision": "p0b-381ee4b99a53-393B846DC40E"
+    },
+    {
+      "criterion": "PreviewModal 具备 dialog 语义与焦点管理",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p0-b/verification.md",
+      "validatedRevision": "p0b-381ee4b99a53-393B846DC40E"
+    },
+    {
+      "criterion": "st-web/src 中原生 confirm( 调用为 0",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p0-b/verification.md",
+      "validatedRevision": "p0b-381ee4b99a53-393B846DC40E"
+    },
+    {
+      "criterion": "ContextMenu 支持方向键/Home/End/Escape 且具备 menu 语义",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p0-b/verification.md",
+      "validatedRevision": "p0b-381ee4b99a53-393B846DC40E"
+    },
+    {
+      "criterion": "npm run lint 与 npm run build 通过",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p0-b/verification.md",
+      "validatedRevision": "p0b-381ee4b99a53-393B846DC40E"
+    }
+  ],
+  "dispatchLedger": [],
+  "proposals": [],
+  "history": [
+    {
+      "eventId": "1935baad-6f6a-41ad-85ce-9cff58231eea",
+      "action": "init",
+      "before": null,
+      "after": {
+        "taskId": "20261017-ui-ux-p0-b",
+        "scale": "medium",
+        "status": "running",
+        "revision": {
+          "design": null,
+          "code": null
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T12:28:19.3364142Z",
+      "revision": {
+        "design": null,
+        "code": null
+      }
+    },
+    {
+      "eventId": "stale:design:p0b-design-F5C122DDE006-0C46337CFFCE",
+      "action": "stale-cascade",
+      "before": {
+        "roots": [
+          "DESIGN"
+        ]
+      },
+      "after": {
+        "affected": [
+          "DESIGN",
+          "IMPLEMENTED",
+          "VERIFIED",
+          "ACCEPT"
+        ],
+        "revision": {
+          "design": "p0b-design-F5C122DDE006-0C46337CFFCE",
+          "code": null
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T12:40:49.7262404Z",
+      "revision": {
+        "design": "p0b-design-F5C122DDE006-0C46337CFFCE",
+        "code": null
+      }
+    },
+    {
+      "eventId": "stale:code:p0b-1cb542e0ae31-393B846DC40E",
+      "action": "stale-cascade",
+      "before": {
+        "roots": [
+          "IMPLEMENTED",
+          "VERIFIED",
+          "ACCEPT"
+        ]
+      },
+      "after": {
+        "affected": [
+          "IMPLEMENTED",
+          "VERIFIED",
+          "ACCEPT"
+        ],
+        "revision": {
+          "design": "p0b-design-F5C122DDE006-0C46337CFFCE",
+          "code": "p0b-1cb542e0ae31-393B846DC40E"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T12:40:49.7725658Z",
+      "revision": {
+        "design": "p0b-design-F5C122DDE006-0C46337CFFCE",
+        "code": "p0b-1cb542e0ae31-393B846DC40E"
+      }
+    },
+    {
+      "eventId": "stale:code:p0b-381ee4b99a53-393B846DC40E",
+      "action": "stale-cascade",
+      "before": {
+        "roots": [
+          "IMPLEMENTED",
+          "VERIFIED",
+          "ACCEPT"
+        ]
+      },
+      "after": {
+        "affected": [
+          "IMPLEMENTED",
+          "VERIFIED",
+          "ACCEPT"
+        ],
+        "revision": {
+          "design": "p0b-design-F5C122DDE006-0C46337CFFCE",
+          "code": "p0b-381ee4b99a53-393B846DC40E"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T12:42:13.4121927Z",
+      "revision": {
+        "design": "p0b-design-F5C122DDE006-0C46337CFFCE",
+        "code": "p0b-381ee4b99a53-393B846DC40E"
+      }
+    },
+    {
+      "eventId": "direct:20261017-ui-ux-p0-b:DESIGN:p0b-design-F5C122DDE006-0C46337CFFCE:p0b-381ee4b99a53-393B846DC40E",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "DESIGN",
+        "status": "pending"
+      },
+      "after": {
+        "id": "DESIGN",
+        "status": "done",
+        "revision": {
+          "design": "p0b-design-F5C122DDE006-0C46337CFFCE",
+          "code": "p0b-381ee4b99a53-393B846DC40E"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T12:42:22.5388828Z",
+      "revision": {
+        "design": "p0b-design-F5C122DDE006-0C46337CFFCE",
+        "code": "p0b-381ee4b99a53-393B846DC40E"
+      }
+    },
+    {
+      "eventId": "direct:20261017-ui-ux-p0-b:IMPLEMENTED:p0b-design-F5C122DDE006-0C46337CFFCE:p0b-381ee4b99a53-393B846DC40E",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "IMPLEMENTED",
+        "status": "pending"
+      },
+      "after": {
+        "id": "IMPLEMENTED",
+        "status": "done",
+        "revision": {
+          "design": "p0b-design-F5C122DDE006-0C46337CFFCE",
+          "code": "p0b-381ee4b99a53-393B846DC40E"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T12:42:22.6350396Z",
+      "revision": {
+        "design": "p0b-design-F5C122DDE006-0C46337CFFCE",
+        "code": "p0b-381ee4b99a53-393B846DC40E"
+      }
+    },
+    {
+      "eventId": "direct:20261017-ui-ux-p0-b:VERIFIED:p0b-design-F5C122DDE006-0C46337CFFCE:p0b-381ee4b99a53-393B846DC40E",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "VERIFIED",
+        "status": "pending"
+      },
+      "after": {
+        "id": "VERIFIED",
+        "status": "done",
+        "revision": {
+          "design": "p0b-design-F5C122DDE006-0C46337CFFCE",
+          "code": "p0b-381ee4b99a53-393B846DC40E"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T12:42:22.7068679Z",
+      "revision": {
+        "design": "p0b-design-F5C122DDE006-0C46337CFFCE",
+        "code": "p0b-381ee4b99a53-393B846DC40E"
+      }
+    },
+    {
+      "eventId": "direct:20261017-ui-ux-p0-b:ACCEPT:p0b-design-F5C122DDE006-0C46337CFFCE:p0b-381ee4b99a53-393B846DC40E",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "ACCEPT",
+        "status": "pending"
+      },
+      "after": {
+        "id": "ACCEPT",
+        "status": "done",
+        "revision": {
+          "design": "p0b-design-F5C122DDE006-0C46337CFFCE",
+          "code": "p0b-381ee4b99a53-393B846DC40E"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T12:42:22.8232308Z",
+      "revision": {
+        "design": "p0b-design-F5C122DDE006-0C46337CFFCE",
+        "code": "p0b-381ee4b99a53-393B846DC40E"
+      }
+    },
+    {
+      "eventId": "complete",
+      "action": "complete",
+      "before": {
+        "status": "running"
+      },
+      "after": {
+        "status": "done",
+        "revision": {
+          "design": "p0b-design-F5C122DDE006-0C46337CFFCE",
+          "code": "p0b-381ee4b99a53-393B846DC40E"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T12:42:27.2704803Z",
+      "revision": {
+        "design": "p0b-design-F5C122DDE006-0C46337CFFCE",
+        "code": "p0b-381ee4b99a53-393B846DC40E"
+      }
+    }
+  ],
+  "risk": {
+    "ui": true,
+    "security": false,
+    "database": false,
+    "apiContract": false,
+    "irreversible": false
+  },
+  "verification": {
+    "validatedRevision": "p0b-381ee4b99a53-393B846DC40E",
+    "checks": [
+      {
+        "dimension": "tests",
+        "outcome": "pass",
+        "evidenceRef": ".ai/docs/20261017-ui-ux-p0-b/verification.md"
+      },
+      {
+        "dimension": "selfReview",
+        "outcome": "pass",
+        "evidenceRef": ".ai/docs/20261017-ui-ux-p0-b/verification.md"
+      },
+      {
+        "dimension": "knowledge",
+        "outcome": "pass",
+        "evidenceRef": ".ai/docs/20261017-ui-ux-p0-b/verification.md"
+      },
+      {
+        "dimension": "ui",
+        "outcome": "pass",
+        "evidenceRef": ".ai/docs/20261017-ui-ux-p0-b/verification.md"
+      }
+    ]
+  }
+}

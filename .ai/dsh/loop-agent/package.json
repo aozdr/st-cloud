@@ -1,0 +1,12 @@
+{
+  "name": "@st-cloud/dsh-loop-agent",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "星云盘 Agent Loop 预设：主线程 / 执行 / 独立评审",
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}

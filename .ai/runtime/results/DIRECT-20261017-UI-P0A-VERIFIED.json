@@ -1,0 +1,35 @@
+{
+  "taskId": "20261017-ui-ux-p0-a",
+  "criterionProposal": {
+    "id": "VERIFIED",
+    "outcome": "pass",
+    "by": "workflow-manager",
+    "evidenceRef": ".ai/docs/20261017-ui-ux-p0-a/verification.md",
+    "validatedRevision": "p0a-885d0ddcf9a2-3B5DFC9F2708"
+  },
+  "verification": {
+    "validatedRevision": "p0a-885d0ddcf9a2-3B5DFC9F2708",
+    "checks": [
+      {
+        "dimension": "tests",
+        "outcome": "pass",
+        "evidenceRef": ".ai/docs/20261017-ui-ux-p0-a/verification.md"
+      },
+      {
+        "dimension": "selfReview",
+        "outcome": "pass",
+        "evidenceRef": ".ai/docs/20261017-ui-ux-p0-a/verification.md"
+      },
+      {
+        "dimension": "knowledge",
+        "outcome": "pass",
+        "evidenceRef": ".ai/docs/20261017-ui-ux-p0-a/verification.md"
+      },
+      {
+        "dimension": "ui",
+        "outcome": "pass",
+        "evidenceRef": ".ai/docs/20261017-ui-ux-p0-a/verification.md"
+      }
+    ]
+  }
+}

@@ -1,0 +1,549 @@
+{
+  "schemaVersion": 2,
+  "definitionVersion": 3,
+  "taskId": "20261017-dispatch-ledger",
+  "scale": "large",
+  "status": "done",
+  "goal": {
+    "objective": "为 Loop Dispatch 增加命令驱动的账本初始化与 returned 证据记录，并用只读 reviewer 跑通完整链路",
+    "scope": ".ai/scripts/loopctl.ps1; .ai/tests/loop-v2/**; .ai/knowledge/agent-dispatch-protocol.md; .ai/templates/dispatch-template.md; .ai/docs/20261017-dispatch-ledger/**; .ai/tasks/TASK-20261017-dispatch-ledger.md",
+    "completionCriteria": [
+      "dispatch-plan 原子登记 planned attempt 并拒绝非法输入",
+      "dispatch-transition 记录 childId/resultRef/scopeVerified 并保持合法前驱链",
+      "单元测试覆盖正反路径且 loop-v2 全量通过",
+      "只读 reviewer child 通过真实 Envelope 完成 CODE_REVIEW 并由主线程 Evaluate",
+      "protocol 与 template 文档与新命令一致"
+    ]
+  },
+  "revision": {
+    "design": "dispatch-ledger-design-r1",
+    "code": "dispatch-ledger-code-r1"
+  },
+  "exitCriteria": [
+    {
+      "id": "REQ_ANALYSIS",
+      "status": "done",
+      "dependsOn": [],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20261017-dispatch-ledger/requirement.md",
+      "validatedRevision": "dispatch-ledger-design-r1",
+      "executionKind": "direct",
+      "executionId": "direct:20261017-dispatch-ledger:REQ_ANALYSIS:dispatch-ledger-design-r1:",
+      "completedAt": "2026-10-17T11:16:43.7504971Z"
+    },
+    {
+      "id": "TECH_DESIGN",
+      "status": "done",
+      "dependsOn": [
+        "REQ_ANALYSIS"
+      ],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20261017-dispatch-ledger/design.md",
+      "validatedRevision": "dispatch-ledger-design-r1",
+      "executionKind": "direct",
+      "executionId": "direct:20261017-dispatch-ledger:TECH_DESIGN:dispatch-ledger-design-r1:",
+      "completedAt": "2026-10-17T11:16:43.8523664Z"
+    },
+    {
+      "id": "IMPLEMENTED",
+      "status": "done",
+      "dependsOn": [
+        "TECH_DESIGN"
+      ],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20261017-dispatch-ledger/implementation.md",
+      "validatedRevision": "dispatch-ledger-code-r1",
+      "executionKind": "direct",
+      "executionId": "direct:20261017-dispatch-ledger:IMPLEMENTED:dispatch-ledger-design-r1:dispatch-ledger-code-r1",
+      "completedAt": "2026-10-17T11:20:24.6836038Z"
+    },
+    {
+      "id": "CODE_REVIEW",
+      "status": "done",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ],
+      "by": "reviewer-dispatch-ledger-01",
+      "dispatchId": "DISPATCH-20261017-DISPATCH-LEDGER-CR-01",
+      "evidenceRef": ".ai/runtime/results/DISPATCH-20261017-DISPATCH-LEDGER-CR-01.json",
+      "validatedRevision": "dispatch-ledger-code-r1",
+      "completedAt": "2026-10-17T11:31:00.8963538Z"
+    },
+    {
+      "id": "VERIFIED",
+      "status": "done",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20261017-dispatch-ledger/verification.md",
+      "validatedRevision": "dispatch-ledger-code-r1",
+      "executionKind": "direct",
+      "executionId": "direct:20261017-dispatch-ledger:VERIFIED:dispatch-ledger-design-r1:dispatch-ledger-code-r1",
+      "completedAt": "2026-10-17T11:33:56.8538994Z"
+    },
+    {
+      "id": "ACCEPT",
+      "status": "done",
+      "dependsOn": [
+        "CODE_REVIEW",
+        "VERIFIED"
+      ],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20261017-dispatch-ledger/verification.md",
+      "validatedRevision": "dispatch-ledger-code-r1",
+      "executionKind": "direct",
+      "executionId": "direct:20261017-dispatch-ledger:ACCEPT:dispatch-ledger-design-r1:dispatch-ledger-code-r1",
+      "completedAt": "2026-10-17T11:34:04.2333057Z"
+    }
+  ],
+  "artifacts": {
+    "requirement": {
+      "status": "ready",
+      "ref": ".ai/docs/20261017-dispatch-ledger/requirement.md",
+      "provides": [
+        "REQ_ANALYSIS"
+      ]
+    },
+    "design": {
+      "status": "ready",
+      "ref": ".ai/docs/20261017-dispatch-ledger/design.md",
+      "provides": [
+        "TECH_DESIGN"
+      ]
+    },
+    "codereview": {
+      "status": "ready",
+      "ref": ".ai/docs/20261017-dispatch-ledger/codereview.md",
+      "provides": [
+        "CODE_REVIEW"
+      ]
+    },
+    "verification": {
+      "status": "ready",
+      "ref": ".ai/docs/20261017-dispatch-ledger/verification.md",
+      "provides": [
+        "VERIFIED"
+      ]
+    }
+  },
+  "blockers": [],
+  "acceptanceEvidence": [
+    {
+      "criterion": "dispatch-plan 原子登记 planned attempt 并拒绝非法输入",
+      "evidenceRef": ".ai/docs/20261017-dispatch-ledger/verification.md",
+      "validatedRevision": "dispatch-ledger-code-r1"
+    },
+    {
+      "criterion": "dispatch-transition 记录 childId/resultRef/scopeVerified 并保持合法前驱链",
+      "evidenceRef": ".ai/docs/20261017-dispatch-ledger/verification.md",
+      "validatedRevision": "dispatch-ledger-code-r1"
+    },
+    {
+      "criterion": "单元测试覆盖正反路径且 loop-v2 全量通过",
+      "evidenceRef": ".ai/docs/20261017-dispatch-ledger/verification.md",
+      "validatedRevision": "dispatch-ledger-code-r1"
+    },
+    {
+      "criterion": "只读 reviewer child 通过真实 Envelope 完成 CODE_REVIEW 并由主线程 Evaluate",
+      "evidenceRef": ".ai/docs/20261017-dispatch-ledger/codereview.md",
+      "validatedRevision": "dispatch-ledger-code-r1"
+    },
+    {
+      "criterion": "protocol 与 template 文档与新命令一致",
+      "evidenceRef": ".ai/docs/20261017-dispatch-ledger/verification.md",
+      "validatedRevision": "dispatch-ledger-code-r1"
+    }
+  ],
+  "dispatchLedger": [
+    {
+      "dispatchId": "DISPATCH-20261017-DISPATCH-LEDGER-CR-01",
+      "taskId": "TASK-20261017-DISPATCH-LEDGER-CR",
+      "idempotencyKey": "TASK-20261017-DISPATCH-LEDGER-CR",
+      "role": "reviewer",
+      "taskType": "review",
+      "criterionId": "CODE_REVIEW",
+      "childId": "reviewer-dispatch-ledger-01",
+      "status": "evaluated",
+      "envelopeRef": ".ai/runtime/dispatch/DISPATCH-20261017-DISPATCH-LEDGER-CR-01.json",
+      "plannedAt": "2026-10-17T11:20:33.7519617Z",
+      "spawnedAt": "2026-10-17T11:20:44.2135823Z",
+      "ackedAt": "2026-10-17T11:21:06.9643688Z",
+      "runningAt": "2026-10-17T11:21:07.0894365Z",
+      "resultRef": ".ai/runtime/results/DISPATCH-20261017-DISPATCH-LEDGER-CR-01.json",
+      "scopeVerified": true,
+      "returnedAt": "2026-10-17T11:30:54.8551517Z",
+      "updatedAt": "2026-10-17T11:30:54.8568741Z",
+      "evaluatedAt": "2026-10-17T11:31:00.8973447Z"
+    }
+  ],
+  "proposals": [],
+  "history": [
+    {
+      "eventId": "574f1042-ec1a-4eec-a47c-2a472182e13e",
+      "action": "init",
+      "before": null,
+      "after": {
+        "taskId": "20261017-dispatch-ledger",
+        "scale": "large",
+        "status": "running",
+        "revision": {
+          "design": null,
+          "code": null
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T11:16:28.191198Z",
+      "revision": {
+        "design": null,
+        "code": null
+      }
+    },
+    {
+      "eventId": "stale:design:dispatch-ledger-design-r1",
+      "action": "stale-cascade",
+      "before": {
+        "roots": [
+          "REQ_ANALYSIS"
+        ]
+      },
+      "after": {
+        "affected": [
+          "REQ_ANALYSIS",
+          "TECH_DESIGN",
+          "IMPLEMENTED",
+          "CODE_REVIEW",
+          "VERIFIED",
+          "ACCEPT"
+        ],
+        "revision": {
+          "design": "dispatch-ledger-design-r1",
+          "code": null
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T11:16:33.6336198Z",
+      "revision": {
+        "design": "dispatch-ledger-design-r1",
+        "code": null
+      }
+    },
+    {
+      "eventId": "direct:20261017-dispatch-ledger:REQ_ANALYSIS:dispatch-ledger-design-r1:",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "REQ_ANALYSIS",
+        "status": "pending"
+      },
+      "after": {
+        "id": "REQ_ANALYSIS",
+        "status": "done",
+        "revision": {
+          "design": "dispatch-ledger-design-r1",
+          "code": null
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T11:16:43.7672541Z",
+      "revision": {
+        "design": "dispatch-ledger-design-r1",
+        "code": null
+      }
+    },
+    {
+      "eventId": "direct:20261017-dispatch-ledger:TECH_DESIGN:dispatch-ledger-design-r1:",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "TECH_DESIGN",
+        "status": "pending"
+      },
+      "after": {
+        "id": "TECH_DESIGN",
+        "status": "done",
+        "revision": {
+          "design": "dispatch-ledger-design-r1",
+          "code": null
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T11:16:43.8546263Z",
+      "revision": {
+        "design": "dispatch-ledger-design-r1",
+        "code": null
+      }
+    },
+    {
+      "eventId": "stale:code:dispatch-ledger-code-r1",
+      "action": "stale-cascade",
+      "before": {
+        "roots": [
+          "IMPLEMENTED",
+          "CODE_REVIEW",
+          "VERIFIED",
+          "ACCEPT"
+        ]
+      },
+      "after": {
+        "affected": [
+          "IMPLEMENTED",
+          "CODE_REVIEW",
+          "VERIFIED",
+          "ACCEPT"
+        ],
+        "revision": {
+          "design": "dispatch-ledger-design-r1",
+          "code": "dispatch-ledger-code-r1"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T11:20:24.619872Z",
+      "revision": {
+        "design": "dispatch-ledger-design-r1",
+        "code": "dispatch-ledger-code-r1"
+      }
+    },
+    {
+      "eventId": "direct:20261017-dispatch-ledger:IMPLEMENTED:dispatch-ledger-design-r1:dispatch-ledger-code-r1",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "IMPLEMENTED",
+        "status": "pending"
+      },
+      "after": {
+        "id": "IMPLEMENTED",
+        "status": "done",
+        "revision": {
+          "design": "dispatch-ledger-design-r1",
+          "code": "dispatch-ledger-code-r1"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T11:20:24.6838442Z",
+      "revision": {
+        "design": "dispatch-ledger-design-r1",
+        "code": "dispatch-ledger-code-r1"
+      }
+    },
+    {
+      "eventId": "dispatch-plan:DISPATCH-20261017-DISPATCH-LEDGER-CR-01",
+      "action": "dispatch-plan",
+      "before": null,
+      "after": {
+        "dispatchId": "DISPATCH-20261017-DISPATCH-LEDGER-CR-01",
+        "criterionId": "CODE_REVIEW",
+        "status": "planned",
+        "revision": {
+          "design": "dispatch-ledger-design-r1",
+          "code": "dispatch-ledger-code-r1"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T11:20:33.7540939Z",
+      "revision": {
+        "design": "dispatch-ledger-design-r1",
+        "code": "dispatch-ledger-code-r1"
+      }
+    },
+    {
+      "eventId": "4f6c8444-d9e7-4db1-b954-86aa8a9e57ff",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20261017-DISPATCH-LEDGER-CR-01",
+        "status": "planned"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20261017-DISPATCH-LEDGER-CR-01",
+        "status": "spawned",
+        "revision": {
+          "design": "dispatch-ledger-design-r1",
+          "code": "dispatch-ledger-code-r1"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T11:20:44.220434Z",
+      "revision": {
+        "design": "dispatch-ledger-design-r1",
+        "code": "dispatch-ledger-code-r1"
+      }
+    },
+    {
+      "eventId": "90775d9a-4d34-41a3-9b33-6d779683aff5",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20261017-DISPATCH-LEDGER-CR-01",
+        "status": "spawned"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20261017-DISPATCH-LEDGER-CR-01",
+        "status": "acked",
+        "revision": {
+          "design": "dispatch-ledger-design-r1",
+          "code": "dispatch-ledger-code-r1"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T11:21:06.971021Z",
+      "revision": {
+        "design": "dispatch-ledger-design-r1",
+        "code": "dispatch-ledger-code-r1"
+      }
+    },
+    {
+      "eventId": "a6ea683e-eb10-4932-a10a-c9e7a9545e00",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20261017-DISPATCH-LEDGER-CR-01",
+        "status": "acked"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20261017-DISPATCH-LEDGER-CR-01",
+        "status": "running",
+        "revision": {
+          "design": "dispatch-ledger-design-r1",
+          "code": "dispatch-ledger-code-r1"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T11:21:07.0897601Z",
+      "revision": {
+        "design": "dispatch-ledger-design-r1",
+        "code": "dispatch-ledger-code-r1"
+      }
+    },
+    {
+      "eventId": "cbe19bc4-0a52-4d55-ba65-7e45cf8fcf40",
+      "action": "dispatch-transition",
+      "before": {
+        "dispatchId": "DISPATCH-20261017-DISPATCH-LEDGER-CR-01",
+        "status": "running"
+      },
+      "after": {
+        "dispatchId": "DISPATCH-20261017-DISPATCH-LEDGER-CR-01",
+        "status": "returned",
+        "revision": {
+          "design": "dispatch-ledger-design-r1",
+          "code": "dispatch-ledger-code-r1"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T11:30:54.8598542Z",
+      "revision": {
+        "design": "dispatch-ledger-design-r1",
+        "code": "dispatch-ledger-code-r1"
+      }
+    },
+    {
+      "eventId": "DISPATCH-20261017-DISPATCH-LEDGER-CR-01:CODE_REVIEW:evaluate",
+      "action": "evaluate",
+      "before": {
+        "id": "CODE_REVIEW",
+        "status": "pending"
+      },
+      "after": {
+        "id": "CODE_REVIEW",
+        "status": "done",
+        "revision": {
+          "design": "dispatch-ledger-design-r1",
+          "code": "dispatch-ledger-code-r1"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T11:31:00.8992306Z",
+      "revision": {
+        "design": "dispatch-ledger-design-r1",
+        "code": "dispatch-ledger-code-r1"
+      }
+    },
+    {
+      "eventId": "direct:20261017-dispatch-ledger:VERIFIED:dispatch-ledger-design-r1:dispatch-ledger-code-r1",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "VERIFIED",
+        "status": "pending"
+      },
+      "after": {
+        "id": "VERIFIED",
+        "status": "done",
+        "revision": {
+          "design": "dispatch-ledger-design-r1",
+          "code": "dispatch-ledger-code-r1"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T11:33:56.8582736Z",
+      "revision": {
+        "design": "dispatch-ledger-design-r1",
+        "code": "dispatch-ledger-code-r1"
+      }
+    },
+    {
+      "eventId": "direct:20261017-dispatch-ledger:ACCEPT:dispatch-ledger-design-r1:dispatch-ledger-code-r1",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "ACCEPT",
+        "status": "pending"
+      },
+      "after": {
+        "id": "ACCEPT",
+        "status": "done",
+        "revision": {
+          "design": "dispatch-ledger-design-r1",
+          "code": "dispatch-ledger-code-r1"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T11:34:04.2360409Z",
+      "revision": {
+        "design": "dispatch-ledger-design-r1",
+        "code": "dispatch-ledger-code-r1"
+      }
+    },
+    {
+      "eventId": "complete",
+      "action": "complete",
+      "before": {
+        "status": "running"
+      },
+      "after": {
+        "status": "done",
+        "revision": {
+          "design": "dispatch-ledger-design-r1",
+          "code": "dispatch-ledger-code-r1"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T11:34:04.5093465Z",
+      "revision": {
+        "design": "dispatch-ledger-design-r1",
+        "code": "dispatch-ledger-code-r1"
+      }
+    }
+  ],
+  "risk": {
+    "ui": false,
+    "security": false,
+    "database": false,
+    "apiContract": false,
+    "irreversible": false
+  },
+  "verification": {
+    "validatedRevision": "dispatch-ledger-code-r1",
+    "checks": [
+      {
+        "dimension": "tests",
+        "outcome": "pass",
+        "evidenceRef": ".ai/docs/20261017-dispatch-ledger/verification.md"
+      },
+      {
+        "dimension": "selfReview",
+        "outcome": "pass",
+        "evidenceRef": ".ai/docs/20261017-dispatch-ledger/verification.md"
+      },
+      {
+        "dimension": "knowledge",
+        "outcome": "pass",
+        "evidenceRef": ".ai/docs/20261017-dispatch-ledger/verification.md"
+      }
+    ]
+  }
+}

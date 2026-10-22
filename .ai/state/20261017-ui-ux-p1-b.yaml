@@ -1,0 +1,343 @@
+{
+  "schemaVersion": 2,
+  "definitionVersion": 3,
+  "taskId": "20261017-ui-ux-p1-b",
+  "scale": "medium",
+  "status": "done",
+  "goal": {
+    "objective": "完成 st-web P1-B：文件表格 ARIA grid 语义、roving tabIndex、移动端排序入口与 1440/390 浏览器验证",
+    "scope": "st-web/src/components/file/FileTableView.tsx、FileToolbar.tsx 与任务文档；排除后端/桌面端、P1-C 导航、P2 次级页",
+    "completionCriteria": [
+      "表格容器为 role=grid 且有 aria-label/multiselectable/rowcount/colcount",
+      "columnheader aria-sort、row aria-selected、单元格 role=cell、rowgroup 完整",
+      "数据行使用 roving tabIndex",
+      "移动端有可用排序入口且 390px 不裁切/无横向溢出",
+      "npm run lint 与 npm run build 通过",
+      "真实浏览器 1440/390 ARIA/排序/溢出检查通过"
+    ]
+  },
+  "revision": {
+    "design": "p1b-design-8DF789A2936F-CB2FD32A11BE",
+    "code": "p1b-d7807e7dc8cf"
+  },
+  "exitCriteria": [
+    {
+      "id": "DESIGN",
+      "status": "done",
+      "dependsOn": [],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p1-b/design.md",
+      "validatedRevision": "p1b-design-8DF789A2936F-CB2FD32A11BE",
+      "executionKind": "direct",
+      "executionId": "direct:20261017-ui-ux-p1-b:DESIGN:p1b-design-8DF789A2936F-CB2FD32A11BE:p1b-d7807e7dc8cf",
+      "completedAt": "2026-10-17T13:02:39.4305401Z"
+    },
+    {
+      "id": "IMPLEMENTED",
+      "status": "done",
+      "dependsOn": [
+        "DESIGN"
+      ],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p1-b/verification.md",
+      "validatedRevision": "p1b-d7807e7dc8cf",
+      "executionKind": "direct",
+      "executionId": "direct:20261017-ui-ux-p1-b:IMPLEMENTED:p1b-design-8DF789A2936F-CB2FD32A11BE:p1b-d7807e7dc8cf",
+      "completedAt": "2026-10-17T13:02:39.525387Z"
+    },
+    {
+      "id": "VERIFIED",
+      "status": "done",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p1-b/verification.md",
+      "validatedRevision": "p1b-d7807e7dc8cf",
+      "executionKind": "direct",
+      "executionId": "direct:20261017-ui-ux-p1-b:VERIFIED:p1b-design-8DF789A2936F-CB2FD32A11BE:p1b-d7807e7dc8cf",
+      "completedAt": "2026-10-17T13:02:39.5908151Z"
+    },
+    {
+      "id": "ACCEPT",
+      "status": "done",
+      "dependsOn": [
+        "VERIFIED"
+      ],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p1-b/verification.md",
+      "validatedRevision": "p1b-d7807e7dc8cf",
+      "executionKind": "direct",
+      "executionId": "direct:20261017-ui-ux-p1-b:ACCEPT:p1b-design-8DF789A2936F-CB2FD32A11BE:p1b-d7807e7dc8cf",
+      "completedAt": "2026-10-17T13:02:39.7293488Z"
+    }
+  ],
+  "artifacts": {
+    "design": {
+      "status": "ready",
+      "ref": ".ai/docs/20261017-ui-ux-p1-b/design.md",
+      "provides": [
+        "DESIGN"
+      ]
+    },
+    "verification": {
+      "status": "ready",
+      "ref": ".ai/docs/20261017-ui-ux-p1-b/verification.md",
+      "provides": [
+        "VERIFIED"
+      ]
+    }
+  },
+  "blockers": [],
+  "acceptanceEvidence": [
+    {
+      "criterion": "表格容器为 role=grid 且有 aria-label/multiselectable/rowcount/colcount",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p1-b/verification.md",
+      "validatedRevision": "p1b-d7807e7dc8cf"
+    },
+    {
+      "criterion": "columnheader aria-sort、row aria-selected、单元格 role=cell、rowgroup 完整",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p1-b/verification.md",
+      "validatedRevision": "p1b-d7807e7dc8cf"
+    },
+    {
+      "criterion": "数据行使用 roving tabIndex",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p1-b/verification.md",
+      "validatedRevision": "p1b-d7807e7dc8cf"
+    },
+    {
+      "criterion": "移动端有可用排序入口且 390px 不裁切/无横向溢出",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p1-b/verification.md",
+      "validatedRevision": "p1b-d7807e7dc8cf"
+    },
+    {
+      "criterion": "npm run lint 与 npm run build 通过",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p1-b/verification.md",
+      "validatedRevision": "p1b-d7807e7dc8cf"
+    },
+    {
+      "criterion": "真实浏览器 1440/390 ARIA/排序/溢出检查通过",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p1-b/verification.md",
+      "validatedRevision": "p1b-d7807e7dc8cf"
+    }
+  ],
+  "dispatchLedger": [],
+  "proposals": [],
+  "history": [
+    {
+      "eventId": "4313ef0b-594e-4f19-891e-3fb1616b81e0",
+      "action": "init",
+      "before": null,
+      "after": {
+        "taskId": "20261017-ui-ux-p1-b",
+        "scale": "medium",
+        "status": "running",
+        "revision": {
+          "design": null,
+          "code": null
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T12:59:26.9994014Z",
+      "revision": {
+        "design": null,
+        "code": null
+      }
+    },
+    {
+      "eventId": "stale:design:p1b-design-8DF789A2936F-CB2FD32A11BE",
+      "action": "stale-cascade",
+      "before": {
+        "roots": [
+          "DESIGN"
+        ]
+      },
+      "after": {
+        "affected": [
+          "DESIGN",
+          "IMPLEMENTED",
+          "VERIFIED",
+          "ACCEPT"
+        ],
+        "revision": {
+          "design": "p1b-design-8DF789A2936F-CB2FD32A11BE",
+          "code": null
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T13:02:22.9521267Z",
+      "revision": {
+        "design": "p1b-design-8DF789A2936F-CB2FD32A11BE",
+        "code": null
+      }
+    },
+    {
+      "eventId": "stale:code:p1b-d7807e7dc8cf",
+      "action": "stale-cascade",
+      "before": {
+        "roots": [
+          "IMPLEMENTED",
+          "VERIFIED",
+          "ACCEPT"
+        ]
+      },
+      "after": {
+        "affected": [
+          "IMPLEMENTED",
+          "VERIFIED",
+          "ACCEPT"
+        ],
+        "revision": {
+          "design": "p1b-design-8DF789A2936F-CB2FD32A11BE",
+          "code": "p1b-d7807e7dc8cf"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T13:02:22.9971606Z",
+      "revision": {
+        "design": "p1b-design-8DF789A2936F-CB2FD32A11BE",
+        "code": "p1b-d7807e7dc8cf"
+      }
+    },
+    {
+      "eventId": "direct:20261017-ui-ux-p1-b:DESIGN:p1b-design-8DF789A2936F-CB2FD32A11BE:p1b-d7807e7dc8cf",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "DESIGN",
+        "status": "pending"
+      },
+      "after": {
+        "id": "DESIGN",
+        "status": "done",
+        "revision": {
+          "design": "p1b-design-8DF789A2936F-CB2FD32A11BE",
+          "code": "p1b-d7807e7dc8cf"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T13:02:39.4467676Z",
+      "revision": {
+        "design": "p1b-design-8DF789A2936F-CB2FD32A11BE",
+        "code": "p1b-d7807e7dc8cf"
+      }
+    },
+    {
+      "eventId": "direct:20261017-ui-ux-p1-b:IMPLEMENTED:p1b-design-8DF789A2936F-CB2FD32A11BE:p1b-d7807e7dc8cf",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "IMPLEMENTED",
+        "status": "pending"
+      },
+      "after": {
+        "id": "IMPLEMENTED",
+        "status": "done",
+        "revision": {
+          "design": "p1b-design-8DF789A2936F-CB2FD32A11BE",
+          "code": "p1b-d7807e7dc8cf"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T13:02:39.5255528Z",
+      "revision": {
+        "design": "p1b-design-8DF789A2936F-CB2FD32A11BE",
+        "code": "p1b-d7807e7dc8cf"
+      }
+    },
+    {
+      "eventId": "direct:20261017-ui-ux-p1-b:VERIFIED:p1b-design-8DF789A2936F-CB2FD32A11BE:p1b-d7807e7dc8cf",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "VERIFIED",
+        "status": "pending"
+      },
+      "after": {
+        "id": "VERIFIED",
+        "status": "done",
+        "revision": {
+          "design": "p1b-design-8DF789A2936F-CB2FD32A11BE",
+          "code": "p1b-d7807e7dc8cf"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T13:02:39.5937474Z",
+      "revision": {
+        "design": "p1b-design-8DF789A2936F-CB2FD32A11BE",
+        "code": "p1b-d7807e7dc8cf"
+      }
+    },
+    {
+      "eventId": "direct:20261017-ui-ux-p1-b:ACCEPT:p1b-design-8DF789A2936F-CB2FD32A11BE:p1b-d7807e7dc8cf",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "ACCEPT",
+        "status": "pending"
+      },
+      "after": {
+        "id": "ACCEPT",
+        "status": "done",
+        "revision": {
+          "design": "p1b-design-8DF789A2936F-CB2FD32A11BE",
+          "code": "p1b-d7807e7dc8cf"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T13:02:39.7304973Z",
+      "revision": {
+        "design": "p1b-design-8DF789A2936F-CB2FD32A11BE",
+        "code": "p1b-d7807e7dc8cf"
+      }
+    },
+    {
+      "eventId": "complete",
+      "action": "complete",
+      "before": {
+        "status": "running"
+      },
+      "after": {
+        "status": "done",
+        "revision": {
+          "design": "p1b-design-8DF789A2936F-CB2FD32A11BE",
+          "code": "p1b-d7807e7dc8cf"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T13:02:39.9544951Z",
+      "revision": {
+        "design": "p1b-design-8DF789A2936F-CB2FD32A11BE",
+        "code": "p1b-d7807e7dc8cf"
+      }
+    }
+  ],
+  "risk": {
+    "ui": true,
+    "security": false,
+    "database": false,
+    "apiContract": false,
+    "irreversible": false
+  },
+  "verification": {
+    "validatedRevision": "p1b-d7807e7dc8cf",
+    "checks": [
+      {
+        "dimension": "tests",
+        "outcome": "pass",
+        "evidenceRef": ".ai/docs/20261017-ui-ux-p1-b/verification.md"
+      },
+      {
+        "dimension": "selfReview",
+        "outcome": "pass",
+        "evidenceRef": ".ai/docs/20261017-ui-ux-p1-b/verification.md"
+      },
+      {
+        "dimension": "knowledge",
+        "outcome": "pass",
+        "evidenceRef": ".ai/docs/20261017-ui-ux-p1-b/verification.md"
+      },
+      {
+        "dimension": "ui",
+        "outcome": "pass",
+        "evidenceRef": ".ai/docs/20261017-ui-ux-p1-b/verification.md"
+      }
+    ]
+  }
+}

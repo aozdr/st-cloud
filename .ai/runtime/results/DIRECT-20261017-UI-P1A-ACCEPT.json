@@ -1,0 +1,19 @@
+{
+  "taskId": "20261017-ui-ux-p1-a",
+  "criterionProposal": {
+    "id": "ACCEPT",
+    "outcome": "pass",
+    "by": "workflow-manager",
+    "evidenceRef": ".ai/docs/20261017-ui-ux-p1-a/verification.md",
+    "validatedRevision": "p1a-3457eb36cf71"
+  },
+  "acceptanceEvidence": [
+    { "criterion": "文件页显示明确标题且面包屑位于工具栏之前", "evidenceRef": ".ai/docs/20261017-ui-ux-p1-a/verification.md", "validatedRevision": "p1a-3457eb36cf71" },
+    { "criterion": "上传为 primary、新建为 secondary", "evidenceRef": ".ai/docs/20261017-ui-ux-p1-a/verification.md", "validatedRevision": "p1a-3457eb36cf71" },
+    { "criterion": "移动端工具栏无裁切且 390px 无横向溢出", "evidenceRef": ".ai/docs/20261017-ui-ux-p1-a/verification.md", "validatedRevision": "p1a-3457eb36cf71" },
+    { "criterion": "表格行收藏/更多在移动端可见且命中区 >=36px", "evidenceRef": ".ai/docs/20261017-ui-ux-p1-a/verification.md", "validatedRevision": "p1a-3457eb36cf71" },
+    { "criterion": "分页与面包屑高频控件命中区补齐", "evidenceRef": ".ai/docs/20261017-ui-ux-p1-a/verification.md", "validatedRevision": "p1a-3457eb36cf71" },
+    { "criterion": "npm run lint 与 npm run build 通过", "evidenceRef": ".ai/docs/20261017-ui-ux-p1-a/verification.md", "validatedRevision": "p1a-3457eb36cf71" },
+    { "criterion": "真实浏览器 1440/390 交互与截图通过", "evidenceRef": ".ai/docs/20261017-ui-ux-p1-a/verification.md", "validatedRevision": "p1a-3457eb36cf71" }
+  ]
+}

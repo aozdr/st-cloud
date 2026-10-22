@@ -1,0 +1,58 @@
+{
+  "dispatchId": "DISPATCH-20261022-ratelimit-review-02",
+  "taskId": "20261022-multi-node-ratelimit",
+  "status": "completed",
+  "artifactRefs": [
+    ".ai/docs/20261022-multi-node-ratelimit/codereview.md"
+  ],
+  "criterionProposal": {
+    "id": "CODE_REVIEW",
+    "outcome": "fail",
+    "by": "reviewer-ratelimit-02",
+    "dispatchId": "DISPATCH-20261022-ratelimit-review-02",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20261022-ratelimit-review-02.json",
+    "validatedRevision": "20261022-multi-node-ratelimit-code-v1"
+  },
+  "blockerProposals": [
+    {
+      "id": "BLOCK-1",
+      "criterion": "CODE_REVIEW",
+      "severity": "blocker",
+      "title": "等版本 + rate 不一致即 stale 叠加请求级 clientLimit，CreditBucket 无界重试（无限紧循环），上传门控永久 retry",
+      "evidence": [
+        "st-common/src/main/java/com/stcloud/common/ratelimit/RedisCreditStore.java:103-105",
+        "st-common/src/main/java/com/stcloud/common/ratelimit/CreditBucket.java:72-87",
+        "st-core/src/main/java/com/stcloud/core/service/impl/DownloadServiceImpl.java:159-161,182-186",
+        "st-common/src/main/java/com/stcloud/common/ratelimit/UserTransferLimiter.java:60-64"
+      ],
+      "snapshotBlobs": {
+        "RedisCreditStore.java": "f79a7a02",
+        "CreditBucket.java": "bf53d1db",
+        "DownloadServiceImpl.java": "36e5c0c9",
+        "UserTransferLimiter.java": "5e4c264d"
+      },
+      "impact": "共享桶 rate 含 per-request clientLimit，ver 不变时同一用户出现多个 rate -> 脚本恒返回 stale 且不更新存储 rate -> 每次 refresh 得到同一值 -> CreditBucket 无 sleep/无上限循环（线程 100% CPU + Redis EVAL 风暴）；上传门控同场景永久 retry(200ms)，分片 URL 无法签发",
+      "action": "共享桶只接收服务端生效 rate（clientLimit 只作用于本地桶），或把 clientLimit 并入 bucket key；stale 重试加硬上限并在超限时回退本地限速；补「refresh 返回同值必须退出」用例",
+      "raisedBy": "reviewer-ratelimit-02（本快照新增，源于上一轮 stale 修复与既有 clientLimit 设计冲突）"
+    },
+    {
+      "id": "BLOCK-2",
+      "criterion": "CODE_REVIEW",
+      "severity": "blocker",
+      "title": "relay-finalize 会话丢失分支先建空会话，重复 finalize 在空缓冲上合并导致静默截断文件",
+      "evidence": [
+        "st-core/src/main/java/com/stcloud/core/service/impl/UploadServiceImpl.java:748-750",
+        "st-core/src/main/java/com/stcloud/core/service/impl/UploadServiceImpl.java:799-815",
+        "st-core/src/main/java/com/stcloud/core/service/impl/upload/RelayBufferManager.java:179-199",
+        "st-core/src/main/java/com/stcloud/core/service/impl/upload/UploadCommitManager.java:155-190"
+      ],
+      "snapshotBlobs": {
+        "UploadServiceImpl.java": "fd324360",
+        "RelaySessionRegistry.java": "ae9028dc"
+      },
+      "impact": "中转上传静默数据损坏：409 首次请求留下空会话与 relay:cfg（该 409 在 try 之外，finally 不清理），第二次 finalize 不再 409，用 S3 现有 part 合并成功但缺尾部余量，且按声明大小记账",
+      "action": "finalize 改只读探测不创建会话；增加空缓冲守卫（committedSeq==0 && accumulated==0 且 S3 已有 part 时 409）；补 relay 惰性会话与 409 用例",
+      "raisedBy": "reviewer-ratelimit-01+reviewer-ratelimit-02（复核确认，当前快照仍存在）"
+    }
+  ]
+}

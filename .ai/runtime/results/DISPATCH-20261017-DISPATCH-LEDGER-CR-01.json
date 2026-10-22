@@ -1,0 +1,16 @@
+{
+  "dispatchId": "DISPATCH-20261017-DISPATCH-LEDGER-CR-01",
+  "taskId": "TASK-20261017-DISPATCH-LEDGER-CR",
+  "status": "completed",
+  "by": "reviewer-dispatch-ledger-01",
+  "artifactRefs": [".ai/docs/20261017-dispatch-ledger/codereview.md"],
+  "criterionProposal": {
+    "id": "CODE_REVIEW",
+    "outcome": "pass",
+    "by": "reviewer-dispatch-ledger-01",
+    "dispatchId": "DISPATCH-20261017-DISPATCH-LEDGER-CR-01",
+    "evidenceRef": ".ai/runtime/results/DISPATCH-20261017-DISPATCH-LEDGER-CR-01.json",
+    "validatedRevision": "dispatch-ledger-code-r1"
+  },
+  "blockerProposals": []
+}

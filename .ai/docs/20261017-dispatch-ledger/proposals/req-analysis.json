@@ -1,0 +1,10 @@
+{
+  "taskId": "20261017-dispatch-ledger",
+  "criterionProposal": {
+    "id": "REQ_ANALYSIS",
+    "outcome": "pass",
+    "by": "workflow-manager",
+    "evidenceRef": ".ai/docs/20261017-dispatch-ledger/requirement.md",
+    "validatedRevision": "dispatch-ledger-design-r1"
+  }
+}

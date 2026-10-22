@@ -8,13 +8,13 @@
 
 以下协议仅在有收益的独立子任务或必要独立评审实际委派时加载；不是每个门禁的必经步骤。同一 reviewer 可在一次 CODE_REVIEW 中覆盖代码、安全与适用风险，测试与最终验收由主线程负责。
 
-Dispatch 只通过当前 Codex Runtime 的子 Agent 创建消息传递：
+Dispatch 只通过当前运行时的子 Agent 创建消息传递：DSH 使用原生 `subagent`（DeepSeek 模型），Codex Runtime 使用其子 Agent 创建动作。同一任务固定一种运行时，不混用：
 
 ```text
 TASK
   ↓ build + schema validate
 Dispatch Envelope
-  ↓ spawn_agent(message=<完整 Envelope>)
+  ↓ subagent / spawn_agent(message=<完整 Envelope>)
 child
   ↓ DISPATCH_ACK
 execute
@@ -22,7 +22,7 @@ execute
 Workflow Manager Evaluate
 ```
 
-写 TASK、State 或结果文件不等于已派发。只有完整 Envelope 实际传入 `spawn_agent.message` 才是一次派发。禁止添加第二传输路径，也禁止 child 自行扫描项目猜任务。
+写 TASK、State 或结果文件不等于已派发。只有完整 Envelope 实际传入子 Agent 的 message 才是一次派发。同一 attempt 固定一种运行时，禁止跨运行时或另建投递路径；child 不得自行扫描项目猜任务。
 
 ## 2. 身份与幂等
 
@@ -30,7 +30,7 @@ Workflow Manager Evaluate
 - `idempotencyKey`：同一 TASK 的稳定幂等键，所有重试保持不变。
 - `dispatchId`：单次 attempt 的唯一标识；每次重派必须生成新值。
 - `taskCode`：可选的人类可读标签，不参与身份、ACK 或幂等判断。
-- `childId`：Runtime 返回的执行实例标识，由主线程记入 dispatchLedger。
+- `childId`：当前运行时返回的执行实例标识，或主线程分配的稳定逻辑标识；同一 attempt 内固定不变，由主线程记入 dispatchLedger。
 
 主线程以 `dispatchId` 归集一次 attempt，以 `idempotencyKey` 识别它们属于同一 TASK。旧 attempt 的迟到结果不能覆盖新 attempt。
 
@@ -82,6 +82,16 @@ ACK 前 child 禁止调用工具。ACK 仅证明消息已送达，不代表任�
 planned → spawned → acked → running → returned → evaluated
                                      └→ failed
 ```
+
+操作由 `loopctl` 命令完成，不手工编辑 State：
+
+```powershell
+& ./.ai/scripts/loopctl.ps1 dispatch-plan <state> -DispatchPath <envelope> -CriterionId <criterion> -ChildId <child>
+& ./.ai/scripts/loopctl.ps1 dispatch-transition <state> -DispatchId <id> -DispatchStatus spawned -ChildId <child>
+& ./.ai/scripts/loopctl.ps1 dispatch-transition <state> -DispatchId <id> -DispatchStatus returned -ResultRef <result> -ScopeVerified
+```
+
+`spawned` 必须补齐 childId；`returned` 必须提供结果文件与 scope 确认，否则 State 校验拒绝。
 
 只有 ACK 三元组完全匹配，attempt 才能进入 `acked`。错配结果标记为 failed，关闭该 child，不得猜测修正。
 
@@ -143,7 +153,7 @@ blockerProposals: []
 
 同一 TASK 的自动重试保持 `taskId/idempotencyKey` 不变，每次创建新的 `dispatchId` 和 child。Dispatch 故障只进入 dispatchLedger，不增加业务 blocker attempts。
 
-若 Runtime 无法把 message 送达 child，报告 `DISPATCH_RUNTIME_INJECTION_FAILED` 并停止该 TASK；不得启用其他投递路径。
+若当前运行时无法把 message 送达 child，报告 `DISPATCH_RUNTIME_INJECTION_FAILED` 并停止该 TASK；不得切换投递路径。
 
 ## 9. 生命周期与 Evaluate
 
@@ -153,7 +163,7 @@ child 返回后，主线程应立即：
 2. 核对 `dispatchId/taskId` 和当前 attempt；
 3. 验证 scope、artifact、evidence、validatedRevision；
 4. 关闭 child；
-5. 调用状态迁移工具执行 Evaluate；
+5. 用 `loopctl evaluate` 执行 Evaluate；dispatch 生命周期用 `dispatch-plan`/`dispatch-transition` 记录；
 6. 更新 ledger/history 并重新 Plan。
 
 阶段切换前只需回收会阻塞当前依赖、共享资源或最终收敛的 child；无关 child 不阻塞当前阶段。最终状态是否完成只由 Workflow Manager 根据当前 State 与 Goal completionCriteria 判定。

@@ -1,0 +1,43 @@
+{
+  "taskId": "20261017-ui-ux-p0-b",
+  "criterionProposal": {
+    "id": "ACCEPT",
+    "outcome": "pass",
+    "by": "workflow-manager",
+    "evidenceRef": ".ai/docs/20261017-ui-ux-p0-b/verification.md",
+    "validatedRevision": "p0b-381ee4b99a53-393B846DC40E"
+  },
+  "acceptanceEvidence": [
+    {
+      "criterion": "新增 useModalA11y 并接入本轮所有 modal-overlay 弹窗",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p0-b/verification.md",
+      "validatedRevision": "p0b-381ee4b99a53-393B846DC40E"
+    },
+    {
+      "criterion": "所有弹窗有 role=dialog 与 aria-modal 且 Escape/focus trap/滚动锁/焦点还原生效",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p0-b/verification.md",
+      "validatedRevision": "p0b-381ee4b99a53-393B846DC40E"
+    },
+    {
+      "criterion": "PreviewModal 具备 dialog 语义与焦点管理",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p0-b/verification.md",
+      "validatedRevision": "p0b-381ee4b99a53-393B846DC40E"
+    },
+    {
+      "criterion": "st-web/src 中原生 confirm( 调用为 0",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p0-b/verification.md",
+      "validatedRevision": "p0b-381ee4b99a53-393B846DC40E"
+    },
+    {
+      "criterion": "ContextMenu 支持方向键/Home/End/Escape 且具备 menu 语义",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p0-b/verification.md",
+      "validatedRevision": "p0b-381ee4b99a53-393B846DC40E"
+    },
+    {
+      "criterion": "npm run lint 与 npm run build 通过",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p0-b/verification.md",
+      "validatedRevision": "p0b-381ee4b99a53-393B846DC40E"
+    }
+  ]
+}
+

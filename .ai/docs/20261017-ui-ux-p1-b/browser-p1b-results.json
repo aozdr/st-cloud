@@ -1,0 +1,221 @@
+{
+  "startedAt": "2026-10-17T13:01:43.216Z",
+  "checks": [
+    {
+      "name": "grid role/label/multiselect/rowcount/colcount",
+      "pass": true,
+      "detail": {
+        "role": "grid",
+        "label": "文件列表",
+        "multiselect": "true",
+        "rowcount": "16",
+        "colcount": "7",
+        "rowgroups": 2,
+        "headerSorts": [
+          {
+            "text": "",
+            "sort": null
+          },
+          {
+            "text": "名称",
+            "sort": "ascending"
+          },
+          {
+            "text": "类型",
+            "sort": null
+          },
+          {
+            "text": "大小",
+            "sort": "none"
+          },
+          {
+            "text": "修改时间",
+            "sort": "none"
+          },
+          {
+            "text": "所有者",
+            "sort": null
+          },
+          {
+            "text": "",
+            "sort": null
+          }
+        ],
+        "firstRow": {
+          "selected": "false",
+          "rowindex": "2",
+          "tabIndex": "0",
+          "cells": 7
+        },
+        "rowTabIndexes": [
+          "0",
+          "-1",
+          "-1"
+        ]
+      }
+    },
+    {
+      "name": "rowgroups >= 2",
+      "pass": true,
+      "detail": {
+        "role": "grid",
+        "label": "文件列表",
+        "multiselect": "true",
+        "rowcount": "16",
+        "colcount": "7",
+        "rowgroups": 2,
+        "headerSorts": [
+          {
+            "text": "",
+            "sort": null
+          },
+          {
+            "text": "名称",
+            "sort": "ascending"
+          },
+          {
+            "text": "类型",
+            "sort": null
+          },
+          {
+            "text": "大小",
+            "sort": "none"
+          },
+          {
+            "text": "修改时间",
+            "sort": "none"
+          },
+          {
+            "text": "所有者",
+            "sort": null
+          },
+          {
+            "text": "",
+            "sort": null
+          }
+        ],
+        "firstRow": {
+          "selected": "false",
+          "rowindex": "2",
+          "tabIndex": "0",
+          "cells": 7
+        },
+        "rowTabIndexes": [
+          "0",
+          "-1",
+          "-1"
+        ]
+      }
+    },
+    {
+      "name": "columnheader aria-sort present",
+      "pass": true,
+      "detail": [
+        {
+          "text": "",
+          "sort": null
+        },
+        {
+          "text": "名称",
+          "sort": "ascending"
+        },
+        {
+          "text": "类型",
+          "sort": null
+        },
+        {
+          "text": "大小",
+          "sort": "none"
+        },
+        {
+          "text": "修改时间",
+          "sort": "none"
+        },
+        {
+          "text": "所有者",
+          "sort": null
+        },
+        {
+          "text": "",
+          "sort": null
+        }
+      ]
+    },
+    {
+      "name": "first data row has aria-selected + rowindex + roving tabindex",
+      "pass": true,
+      "detail": {
+        "selected": "false",
+        "rowindex": "2",
+        "tabIndex": "0",
+        "cells": 7
+      }
+    },
+    {
+      "name": "data row cells use role=cell",
+      "pass": true,
+      "detail": {
+        "selected": "false",
+        "rowindex": "2",
+        "tabIndex": "0",
+        "cells": 7
+      }
+    },
+    {
+      "name": "row click updates aria-selected",
+      "pass": true,
+      "detail": {
+        "rowSelected": "2088622892169314306",
+        "selectedState": "true"
+      }
+    },
+    {
+      "name": "mobile sort trigger visible, >=36px, not clipped",
+      "pass": true,
+      "detail": {
+        "pageOverflow": 0,
+        "tableOverflow": 0,
+        "triggerVisible": true,
+        "triggerSize": [
+          36,
+          36
+        ],
+        "triggerRight": 254,
+        "innerWidth": 390
+      }
+    },
+    {
+      "name": "mobile page/table no horizontal overflow",
+      "pass": true,
+      "detail": {
+        "pageOverflow": 0,
+        "tableOverflow": 0,
+        "triggerVisible": true,
+        "triggerSize": [
+          36,
+          36
+        ],
+        "triggerRight": 254,
+        "innerWidth": 390
+      }
+    },
+    {
+      "name": "mobile sort menu changes sort column",
+      "pass": true,
+      "detail": {
+        "sort": "ascending",
+        "text": "大小"
+      }
+    },
+    {
+      "name": "mobile sort direction toggles",
+      "pass": true,
+      "detail": {
+        "before": "ascending",
+        "after": "descending"
+      }
+    }
+  ],
+  "finishedAt": "2026-10-17T13:01:51.008Z",
+  "passed": true
+}

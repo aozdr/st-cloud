@@ -1,0 +1,37 @@
+{
+  "taskId": "20261017-dispatch-ledger",
+  "criterionProposal": {
+    "id": "ACCEPT",
+    "outcome": "pass",
+    "by": "workflow-manager",
+    "evidenceRef": ".ai/docs/20261017-dispatch-ledger/verification.md",
+    "validatedRevision": "dispatch-ledger-code-r1"
+  },
+  "acceptanceEvidence": [
+    {
+      "criterion": "dispatch-plan 原子登记 planned attempt 并拒绝非法输入",
+      "evidenceRef": ".ai/docs/20261017-dispatch-ledger/verification.md",
+      "validatedRevision": "dispatch-ledger-code-r1"
+    },
+    {
+      "criterion": "dispatch-transition 记录 childId/resultRef/scopeVerified 并保持合法前驱链",
+      "evidenceRef": ".ai/docs/20261017-dispatch-ledger/verification.md",
+      "validatedRevision": "dispatch-ledger-code-r1"
+    },
+    {
+      "criterion": "单元测试覆盖正反路径且 loop-v2 全量通过",
+      "evidenceRef": ".ai/docs/20261017-dispatch-ledger/verification.md",
+      "validatedRevision": "dispatch-ledger-code-r1"
+    },
+    {
+      "criterion": "只读 reviewer child 通过真实 Envelope 完成 CODE_REVIEW 并由主线程 Evaluate",
+      "evidenceRef": ".ai/docs/20261017-dispatch-ledger/codereview.md",
+      "validatedRevision": "dispatch-ledger-code-r1"
+    },
+    {
+      "criterion": "protocol 与 template 文档与新命令一致",
+      "evidenceRef": ".ai/docs/20261017-dispatch-ledger/verification.md",
+      "validatedRevision": "dispatch-ledger-code-r1"
+    }
+  ]
+}

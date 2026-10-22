@@ -1,0 +1,30 @@
+{
+  "taskId": "20261017-dispatch-ledger",
+  "criterionProposal": {
+    "id": "VERIFIED",
+    "outcome": "pass",
+    "by": "workflow-manager",
+    "evidenceRef": ".ai/docs/20261017-dispatch-ledger/verification.md",
+    "validatedRevision": "dispatch-ledger-code-r1"
+  },
+  "verification": {
+    "validatedRevision": "dispatch-ledger-code-r1",
+    "checks": [
+      {
+        "dimension": "tests",
+        "outcome": "pass",
+        "evidenceRef": ".ai/docs/20261017-dispatch-ledger/verification.md"
+      },
+      {
+        "dimension": "selfReview",
+        "outcome": "pass",
+        "evidenceRef": ".ai/docs/20261017-dispatch-ledger/verification.md"
+      },
+      {
+        "dimension": "knowledge",
+        "outcome": "pass",
+        "evidenceRef": ".ai/docs/20261017-dispatch-ledger/verification.md"
+      }
+    ]
+  }
+}

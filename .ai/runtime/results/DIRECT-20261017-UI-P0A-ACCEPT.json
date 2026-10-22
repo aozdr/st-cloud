@@ -1,0 +1,42 @@
+{
+  "taskId": "20261017-ui-ux-p0-a",
+  "criterionProposal": {
+    "id": "ACCEPT",
+    "outcome": "pass",
+    "by": "workflow-manager",
+    "evidenceRef": ".ai/docs/20261017-ui-ux-p0-a/verification.md",
+    "validatedRevision": "p0a-885d0ddcf9a2-3B5DFC9F2708"
+  },
+  "acceptanceEvidence": [
+    {
+      "criterion": "设计基线 v3 落盘且现行基线为 224/60/40/52 + #4F6EF7",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p0-a/verification.md",
+      "validatedRevision": "p0a-885d0ddcf9a2-3B5DFC9F2708"
+    },
+    {
+      "criterion": "回收站与分享管理深色模式使用语义 token 且加载失败可见可重试",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p0-a/verification.md",
+      "validatedRevision": "p0a-885d0ddcf9a2-3B5DFC9F2708"
+    },
+    {
+      "criterion": "移动端文件列表不再强制 760px 最小宽度",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p0-a/verification.md",
+      "validatedRevision": "p0a-885d0ddcf9a2-3B5DFC9F2708"
+    },
+    {
+      "criterion": "文本主色与白字主按钮满足 WCAG AA",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p0-a/verification.md",
+      "validatedRevision": "p0a-885d0ddcf9a2-3B5DFC9F2708"
+    },
+    {
+      "criterion": "FileBrowser 使用骨架屏且 EmptyState/ErrorBoundary/Login 状态修复",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p0-a/verification.md",
+      "validatedRevision": "p0a-885d0ddcf9a2-3B5DFC9F2708"
+    },
+    {
+      "criterion": "npm run lint 与 npm run build 通过",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p0-a/verification.md",
+      "validatedRevision": "p0a-885d0ddcf9a2-3B5DFC9F2708"
+    }
+  ]
+}

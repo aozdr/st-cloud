@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20261022-ratelimit-review-01",
+  "taskCode": "multi-node-ratelimit-review",
+  "taskId": "20261022-multi-node-ratelimit",
+  "idempotencyKey": "20261022-multi-node-ratelimit",
+  "role": "reviewer",
+  "taskType": "review",
+  "objective": "独立审查限速多节点化与 Nginx 负载均衡变更，覆盖限速算法正确性、Redis 原子性与时钟、上传窗口幂等、relay 多节点亲和、配置收敛、安全暴露与测试充分性，输出 codereview.md 与结论。",
+  "taskRefs": [
+    ".ai/tasks/TASK-20261022-multi-node-ratelimit-01.md",
+    ".ai/docs/20261022-multi-node-ratelimit/requirement.md",
+    ".ai/docs/20261022-multi-node-ratelimit/design.md",
+    ".ai/docs/20261022-multi-node-ratelimit/verification.md"
+  ],
+  "stateRef": ".ai/state/20261022-multi-node-ratelimit.yaml",
+  "artifactRefs": [
+    ".ai/docs/20261022-multi-node-ratelimit/codereview.md",
+    ".ai/runtime/results/DISPATCH-20261022-ratelimit-review-01.json"
+  ],
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      "st-common/src/main/java/com/stcloud/common/ratelimit/",
+      "st-common/src/test/java/com/stcloud/common/ratelimit/",
+      "st-core/src/main/java/com/stcloud/core/service/impl/UploadServiceImpl.java",
+      "st-core/src/main/java/com/stcloud/core/service/impl/DownloadServiceImpl.java",
+      "st-core/src/main/java/com/stcloud/core/service/impl/upload/RelayBufferManager.java",
+      "st-core/src/main/java/com/stcloud/core/service/impl/upload/RelaySessionRegistry.java",
+      "st-core/src/main/java/com/stcloud/core/controller/HealthController.java",
+      "st-core/src/main/java/com/stcloud/core/controller/TransferController.java",
+      "st-admin/src/main/java/com/stcloud/admin/service/impl/SpeedLimitManageServiceImpl.java",
+      "st-sync/src/main/java/com/stcloud/sync/listener/SyncChangeMessageConsumer.java",
+      "st-sync/src/main/java/com/stcloud/sync/ws/SyncPushRedisConfig.java",
+      "st-auth/src/main/java/com/stcloud/auth/security/SecurityConfig.java",
+      "st-api/src/main/resources/application.yml",
+      "docker/nginx/",
+      "docker/docker-compose.cluster.yml",
+      "docker/Dockerfile",
+      "README.md"
+    ],
+    "exclude": [
+      "不得修改任何代码、配置、State 或 TASK",
+      "不得执行 git 写操作与 mvn 命令",
+      "不得写入 codereview.md 与结果 JSON 之外的文件"
+    ]
+  },
+  "acceptance": [
+    "覆盖限速模式切换、Lua 原子性、时钟与精度、窗口幂等、relay 惰性会话、配置版本收敛",
+    "覆盖安全暴露面（/api/health、actuator、预签名地址、nginx 头）",
+    "检查测试是否覆盖关键并发与故障路径，指出缺口",
+    "给出明确结论：APPROVE / APPROVE_WITH_CHANGES / REQUEST_CHANGES",
+    "阻塞问题必须给出 file:line 与修复建议"
+  ],
+  "validation": [
+    "阅读 TASK/requirement/design/verification",
+    "git diff 与新增文件静态审查",
+    "必要时用 grep/read 交叉验证调用链"
+  ],
+  "forbidSpawn": true,
+  "forbidGitMvn": true,
+  "etaMinutes": 10,
+  "output": {
+    "artifact": ".ai/docs/20261022-multi-node-ratelimit/codereview.md",
+    "result": ".ai/runtime/results/DISPATCH-20261022-ratelimit-review-01.json"
+  }
+}

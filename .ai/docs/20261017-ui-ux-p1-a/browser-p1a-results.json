@@ -1,0 +1,189 @@
+{
+  "startedAt": "2026-10-17T12:56:49.278Z",
+  "checks": [
+    {
+      "name": "root title is 全部文件",
+      "pass": true,
+      "detail": {
+        "title": "全部文件",
+        "documentTitle": "全部文件 - 星云盘",
+        "favicon": "/favicon.svg",
+        "themeColor": "#F7F8FA",
+        "hasBreadcrumb": true,
+        "breadcrumbBeforeToolbar": true,
+        "uploadPrimary": true,
+        "newSecondary": true,
+        "sortVisible": true
+      }
+    },
+    {
+      "name": "document title follows route",
+      "pass": true,
+      "detail": {
+        "title": "全部文件",
+        "documentTitle": "全部文件 - 星云盘",
+        "favicon": "/favicon.svg",
+        "themeColor": "#F7F8FA",
+        "hasBreadcrumb": true,
+        "breadcrumbBeforeToolbar": true,
+        "uploadPrimary": true,
+        "newSecondary": true,
+        "sortVisible": true
+      }
+    },
+    {
+      "name": "PWA favicon/theme-color updated",
+      "pass": true,
+      "detail": {
+        "title": "全部文件",
+        "documentTitle": "全部文件 - 星云盘",
+        "favicon": "/favicon.svg",
+        "themeColor": "#F7F8FA",
+        "hasBreadcrumb": true,
+        "breadcrumbBeforeToolbar": true,
+        "uploadPrimary": true,
+        "newSecondary": true,
+        "sortVisible": true
+      }
+    },
+    {
+      "name": "breadcrumb exists before toolbar",
+      "pass": true,
+      "detail": {
+        "title": "全部文件",
+        "documentTitle": "全部文件 - 星云盘",
+        "favicon": "/favicon.svg",
+        "themeColor": "#F7F8FA",
+        "hasBreadcrumb": true,
+        "breadcrumbBeforeToolbar": true,
+        "uploadPrimary": true,
+        "newSecondary": true,
+        "sortVisible": true
+      }
+    },
+    {
+      "name": "upload primary + new secondary",
+      "pass": true,
+      "detail": {
+        "title": "全部文件",
+        "documentTitle": "全部文件 - 星云盘",
+        "favicon": "/favicon.svg",
+        "themeColor": "#F7F8FA",
+        "hasBreadcrumb": true,
+        "breadcrumbBeforeToolbar": true,
+        "uploadPrimary": true,
+        "newSecondary": true,
+        "sortVisible": true
+      }
+    },
+    {
+      "name": "folder title uses current folder name",
+      "pass": true,
+      "detail": {
+        "title": "uu",
+        "breadcrumb": true
+      }
+    },
+    {
+      "name": "category title + no breadcrumb",
+      "pass": true,
+      "detail": {
+        "title": "图片",
+        "breadcrumb": false
+      }
+    },
+    {
+      "name": "admin document title works outside AppLayout",
+      "pass": true,
+      "detail": {
+        "adminTitle": "系统管理 - 星云盘"
+      }
+    },
+    {
+      "name": "mobile page/table no horizontal overflow",
+      "pass": true,
+      "detail": {
+        "pageOverflow": 0,
+        "tableOverflow": 0,
+        "uploadRight": 104,
+        "viewRight": 302,
+        "innerWidth": 390,
+        "starOpacity": "1",
+        "moreOpacity": "1",
+        "starSize": [
+          36,
+          36
+        ],
+        "moreSize": [
+          36,
+          36
+        ]
+      }
+    },
+    {
+      "name": "mobile toolbar controls not clipped",
+      "pass": true,
+      "detail": {
+        "pageOverflow": 0,
+        "tableOverflow": 0,
+        "uploadRight": 104,
+        "viewRight": 302,
+        "innerWidth": 390,
+        "starOpacity": "1",
+        "moreOpacity": "1",
+        "starSize": [
+          36,
+          36
+        ],
+        "moreSize": [
+          36,
+          36
+        ]
+      }
+    },
+    {
+      "name": "mobile row actions visible",
+      "pass": true,
+      "detail": {
+        "pageOverflow": 0,
+        "tableOverflow": 0,
+        "uploadRight": 104,
+        "viewRight": 302,
+        "innerWidth": 390,
+        "starOpacity": "1",
+        "moreOpacity": "1",
+        "starSize": [
+          36,
+          36
+        ],
+        "moreSize": [
+          36,
+          36
+        ]
+      }
+    },
+    {
+      "name": "mobile row action hit area >=36",
+      "pass": true,
+      "detail": {
+        "pageOverflow": 0,
+        "tableOverflow": 0,
+        "uploadRight": 104,
+        "viewRight": 302,
+        "innerWidth": 390,
+        "starOpacity": "1",
+        "moreOpacity": "1",
+        "starSize": [
+          36,
+          36
+        ],
+        "moreSize": [
+          36,
+          36
+        ]
+      }
+    }
+  ],
+  "finishedAt": "2026-10-17T12:56:56.669Z",
+  "passed": true
+}

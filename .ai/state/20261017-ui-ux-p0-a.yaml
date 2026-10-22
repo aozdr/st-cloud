@@ -1,0 +1,343 @@
+{
+  "schemaVersion": 2,
+  "definitionVersion": 3,
+  "taskId": "20261017-ui-ux-p0-a",
+  "scale": "medium",
+  "status": "done",
+  "goal": {
+    "objective": "完成 st-web UI/UX P0-A：设计基线落盘、深色旧页、移动端文件列表、文本/按钮对比度、核心状态修复",
+    "scope": "st-web/src 与 .ai 设计/任务文档；排除 P0-B 弹窗统一、P1 文件页重构、后端/桌面端/数据库",
+    "completionCriteria": [
+      "设计基线 v3 落盘且现行基线为 224/60/40/52 + #4F6EF7",
+      "回收站与分享管理深色模式使用语义 token 且加载失败可见可重试",
+      "移动端文件列表不再强制 760px 最小宽度",
+      "文本主色与白字主按钮满足 WCAG AA",
+      "FileBrowser 使用骨架屏且 EmptyState/ErrorBoundary/Login 状态修复",
+      "npm run lint 与 npm run build 通过"
+    ]
+  },
+  "revision": {
+    "design": "p0a-design-C8BDBF239C81-A657D59A7A53",
+    "code": "p0a-885d0ddcf9a2-3B5DFC9F2708"
+  },
+  "exitCriteria": [
+    {
+      "id": "DESIGN",
+      "status": "done",
+      "dependsOn": [],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p0-a/design.md",
+      "validatedRevision": "p0a-design-C8BDBF239C81-A657D59A7A53",
+      "executionKind": "direct",
+      "executionId": "direct:20261017-ui-ux-p0-a:DESIGN:p0a-design-C8BDBF239C81-A657D59A7A53:p0a-885d0ddcf9a2-3B5DFC9F2708",
+      "completedAt": "2026-10-17T12:22:48.6469672Z"
+    },
+    {
+      "id": "IMPLEMENTED",
+      "status": "done",
+      "dependsOn": [
+        "DESIGN"
+      ],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p0-a/verification.md",
+      "validatedRevision": "p0a-885d0ddcf9a2-3B5DFC9F2708",
+      "executionKind": "direct",
+      "executionId": "direct:20261017-ui-ux-p0-a:IMPLEMENTED:p0a-design-C8BDBF239C81-A657D59A7A53:p0a-885d0ddcf9a2-3B5DFC9F2708",
+      "completedAt": "2026-10-17T12:22:53.3939075Z"
+    },
+    {
+      "id": "VERIFIED",
+      "status": "done",
+      "dependsOn": [
+        "IMPLEMENTED"
+      ],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p0-a/verification.md",
+      "validatedRevision": "p0a-885d0ddcf9a2-3B5DFC9F2708",
+      "executionKind": "direct",
+      "executionId": "direct:20261017-ui-ux-p0-a:VERIFIED:p0a-design-C8BDBF239C81-A657D59A7A53:p0a-885d0ddcf9a2-3B5DFC9F2708",
+      "completedAt": "2026-10-17T12:22:58.9586674Z"
+    },
+    {
+      "id": "ACCEPT",
+      "status": "done",
+      "dependsOn": [
+        "VERIFIED"
+      ],
+      "by": "workflow-manager",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p0-a/verification.md",
+      "validatedRevision": "p0a-885d0ddcf9a2-3B5DFC9F2708",
+      "executionKind": "direct",
+      "executionId": "direct:20261017-ui-ux-p0-a:ACCEPT:p0a-design-C8BDBF239C81-A657D59A7A53:p0a-885d0ddcf9a2-3B5DFC9F2708",
+      "completedAt": "2026-10-17T12:23:03.8742227Z"
+    }
+  ],
+  "artifacts": {
+    "design": {
+      "status": "ready",
+      "ref": ".ai/docs/20261017-ui-ux-p0-a/design.md",
+      "provides": [
+        "DESIGN"
+      ]
+    },
+    "verification": {
+      "status": "ready",
+      "ref": ".ai/docs/20261017-ui-ux-p0-a/verification.md",
+      "provides": [
+        "VERIFIED"
+      ]
+    }
+  },
+  "blockers": [],
+  "acceptanceEvidence": [
+    {
+      "criterion": "设计基线 v3 落盘且现行基线为 224/60/40/52 + #4F6EF7",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p0-a/verification.md",
+      "validatedRevision": "p0a-885d0ddcf9a2-3B5DFC9F2708"
+    },
+    {
+      "criterion": "回收站与分享管理深色模式使用语义 token 且加载失败可见可重试",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p0-a/verification.md",
+      "validatedRevision": "p0a-885d0ddcf9a2-3B5DFC9F2708"
+    },
+    {
+      "criterion": "移动端文件列表不再强制 760px 最小宽度",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p0-a/verification.md",
+      "validatedRevision": "p0a-885d0ddcf9a2-3B5DFC9F2708"
+    },
+    {
+      "criterion": "文本主色与白字主按钮满足 WCAG AA",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p0-a/verification.md",
+      "validatedRevision": "p0a-885d0ddcf9a2-3B5DFC9F2708"
+    },
+    {
+      "criterion": "FileBrowser 使用骨架屏且 EmptyState/ErrorBoundary/Login 状态修复",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p0-a/verification.md",
+      "validatedRevision": "p0a-885d0ddcf9a2-3B5DFC9F2708"
+    },
+    {
+      "criterion": "npm run lint 与 npm run build 通过",
+      "evidenceRef": ".ai/docs/20261017-ui-ux-p0-a/verification.md",
+      "validatedRevision": "p0a-885d0ddcf9a2-3B5DFC9F2708"
+    }
+  ],
+  "dispatchLedger": [],
+  "proposals": [],
+  "history": [
+    {
+      "eventId": "e7058224-5406-45c2-a8a6-28c4b49dddc1",
+      "action": "init",
+      "before": null,
+      "after": {
+        "taskId": "20261017-ui-ux-p0-a",
+        "scale": "medium",
+        "status": "running",
+        "revision": {
+          "design": null,
+          "code": null
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T12:02:07.6788878Z",
+      "revision": {
+        "design": null,
+        "code": null
+      }
+    },
+    {
+      "eventId": "stale:design:p0a-design-C8BDBF239C81-A657D59A7A53",
+      "action": "stale-cascade",
+      "before": {
+        "roots": [
+          "DESIGN"
+        ]
+      },
+      "after": {
+        "affected": [
+          "DESIGN",
+          "IMPLEMENTED",
+          "VERIFIED",
+          "ACCEPT"
+        ],
+        "revision": {
+          "design": "p0a-design-C8BDBF239C81-A657D59A7A53",
+          "code": null
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T12:22:04.1169949Z",
+      "revision": {
+        "design": "p0a-design-C8BDBF239C81-A657D59A7A53",
+        "code": null
+      }
+    },
+    {
+      "eventId": "stale:code:p0a-885d0ddcf9a2-3B5DFC9F2708",
+      "action": "stale-cascade",
+      "before": {
+        "roots": [
+          "IMPLEMENTED",
+          "VERIFIED",
+          "ACCEPT"
+        ]
+      },
+      "after": {
+        "affected": [
+          "IMPLEMENTED",
+          "VERIFIED",
+          "ACCEPT"
+        ],
+        "revision": {
+          "design": "p0a-design-C8BDBF239C81-A657D59A7A53",
+          "code": "p0a-885d0ddcf9a2-3B5DFC9F2708"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T12:22:04.1658851Z",
+      "revision": {
+        "design": "p0a-design-C8BDBF239C81-A657D59A7A53",
+        "code": "p0a-885d0ddcf9a2-3B5DFC9F2708"
+      }
+    },
+    {
+      "eventId": "direct:20261017-ui-ux-p0-a:DESIGN:p0a-design-C8BDBF239C81-A657D59A7A53:p0a-885d0ddcf9a2-3B5DFC9F2708",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "DESIGN",
+        "status": "pending"
+      },
+      "after": {
+        "id": "DESIGN",
+        "status": "done",
+        "revision": {
+          "design": "p0a-design-C8BDBF239C81-A657D59A7A53",
+          "code": "p0a-885d0ddcf9a2-3B5DFC9F2708"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T12:22:48.6635035Z",
+      "revision": {
+        "design": "p0a-design-C8BDBF239C81-A657D59A7A53",
+        "code": "p0a-885d0ddcf9a2-3B5DFC9F2708"
+      }
+    },
+    {
+      "eventId": "direct:20261017-ui-ux-p0-a:IMPLEMENTED:p0a-design-C8BDBF239C81-A657D59A7A53:p0a-885d0ddcf9a2-3B5DFC9F2708",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "IMPLEMENTED",
+        "status": "pending"
+      },
+      "after": {
+        "id": "IMPLEMENTED",
+        "status": "done",
+        "revision": {
+          "design": "p0a-design-C8BDBF239C81-A657D59A7A53",
+          "code": "p0a-885d0ddcf9a2-3B5DFC9F2708"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T12:22:53.3961095Z",
+      "revision": {
+        "design": "p0a-design-C8BDBF239C81-A657D59A7A53",
+        "code": "p0a-885d0ddcf9a2-3B5DFC9F2708"
+      }
+    },
+    {
+      "eventId": "direct:20261017-ui-ux-p0-a:VERIFIED:p0a-design-C8BDBF239C81-A657D59A7A53:p0a-885d0ddcf9a2-3B5DFC9F2708",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "VERIFIED",
+        "status": "pending"
+      },
+      "after": {
+        "id": "VERIFIED",
+        "status": "done",
+        "revision": {
+          "design": "p0a-design-C8BDBF239C81-A657D59A7A53",
+          "code": "p0a-885d0ddcf9a2-3B5DFC9F2708"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T12:22:58.9648739Z",
+      "revision": {
+        "design": "p0a-design-C8BDBF239C81-A657D59A7A53",
+        "code": "p0a-885d0ddcf9a2-3B5DFC9F2708"
+      }
+    },
+    {
+      "eventId": "direct:20261017-ui-ux-p0-a:ACCEPT:p0a-design-C8BDBF239C81-A657D59A7A53:p0a-885d0ddcf9a2-3B5DFC9F2708",
+      "action": "evaluate-direct",
+      "before": {
+        "id": "ACCEPT",
+        "status": "pending"
+      },
+      "after": {
+        "id": "ACCEPT",
+        "status": "done",
+        "revision": {
+          "design": "p0a-design-C8BDBF239C81-A657D59A7A53",
+          "code": "p0a-885d0ddcf9a2-3B5DFC9F2708"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T12:23:03.8770129Z",
+      "revision": {
+        "design": "p0a-design-C8BDBF239C81-A657D59A7A53",
+        "code": "p0a-885d0ddcf9a2-3B5DFC9F2708"
+      }
+    },
+    {
+      "eventId": "complete",
+      "action": "complete",
+      "before": {
+        "status": "running"
+      },
+      "after": {
+        "status": "done",
+        "revision": {
+          "design": "p0a-design-C8BDBF239C81-A657D59A7A53",
+          "code": "p0a-885d0ddcf9a2-3B5DFC9F2708"
+        }
+      },
+      "actor": "workflow-manager",
+      "occurredAt": "2026-10-17T12:23:08.1080937Z",
+      "revision": {
+        "design": "p0a-design-C8BDBF239C81-A657D59A7A53",
+        "code": "p0a-885d0ddcf9a2-3B5DFC9F2708"
+      }
+    }
+  ],
+  "risk": {
+    "ui": true,
+    "security": false,
+    "database": false,
+    "apiContract": false,
+    "irreversible": false
+  },
+  "verification": {
+    "validatedRevision": "p0a-885d0ddcf9a2-3B5DFC9F2708",
+    "checks": [
+      {
+        "dimension": "tests",
+        "outcome": "pass",
+        "evidenceRef": ".ai/docs/20261017-ui-ux-p0-a/verification.md"
+      },
+      {
+        "dimension": "selfReview",
+        "outcome": "pass",
+        "evidenceRef": ".ai/docs/20261017-ui-ux-p0-a/verification.md"
+      },
+      {
+        "dimension": "knowledge",
+        "outcome": "pass",
+        "evidenceRef": ".ai/docs/20261017-ui-ux-p0-a/verification.md"
+      },
+      {
+        "dimension": "ui",
+        "outcome": "pass",
+        "evidenceRef": ".ai/docs/20261017-ui-ux-p0-a/verification.md"
+      }
+    ]
+  }
+}

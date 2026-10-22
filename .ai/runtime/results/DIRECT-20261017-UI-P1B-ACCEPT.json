@@ -1,0 +1,18 @@
+{
+  "taskId": "20261017-ui-ux-p1-b",
+  "criterionProposal": {
+    "id": "ACCEPT",
+    "outcome": "pass",
+    "by": "workflow-manager",
+    "evidenceRef": ".ai/docs/20261017-ui-ux-p1-b/verification.md",
+    "validatedRevision": "p1b-d7807e7dc8cf"
+  },
+  "acceptanceEvidence": [
+    { "criterion": "表格容器为 role=grid 且有 aria-label/multiselectable/rowcount/colcount", "evidenceRef": ".ai/docs/20261017-ui-ux-p1-b/verification.md", "validatedRevision": "p1b-d7807e7dc8cf" },
+    { "criterion": "columnheader aria-sort、row aria-selected、单元格 role=cell、rowgroup 完整", "evidenceRef": ".ai/docs/20261017-ui-ux-p1-b/verification.md", "validatedRevision": "p1b-d7807e7dc8cf" },
+    { "criterion": "数据行使用 roving tabIndex", "evidenceRef": ".ai/docs/20261017-ui-ux-p1-b/verification.md", "validatedRevision": "p1b-d7807e7dc8cf" },
+    { "criterion": "移动端有可用排序入口且 390px 不裁切/无横向溢出", "evidenceRef": ".ai/docs/20261017-ui-ux-p1-b/verification.md", "validatedRevision": "p1b-d7807e7dc8cf" },
+    { "criterion": "npm run lint 与 npm run build 通过", "evidenceRef": ".ai/docs/20261017-ui-ux-p1-b/verification.md", "validatedRevision": "p1b-d7807e7dc8cf" },
+    { "criterion": "真实浏览器 1440/390 ARIA/排序/溢出检查通过", "evidenceRef": ".ai/docs/20261017-ui-ux-p1-b/verification.md", "validatedRevision": "p1b-d7807e7dc8cf" }
+  ]
+}

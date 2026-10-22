@@ -43,6 +43,8 @@ risk=true 的 ui/security/database/apiContract/irreversible 追加对应维度�
 
 large CODE_REVIEW 必须通过独立 reviewer 的真实 Dispatch 结果 Evaluate；独立 review 合并代码、安全及适用风险，不为每个检查维度再启动 Agent。委派机制见 `.ai/knowledge/agent-dispatch-protocol.md`。
 
+派发账本用 `loopctl dispatch-plan` 登记 planned，`dispatch-transition` 推进；`spawned` 必须带 childId，`returned` 必须带 `-ResultRef` 与 `-ScopeVerified`，再用 `evaluate` 收敛。
+
 ## 3. 一次验证并收敛
 
 verification.md 汇总修改、自检、命令/结果、UI/安全/DB 等适用检查、知识同步与剩余风险。测试完成无需等待 review；ACCEPT 等待 DAG 所有依赖。

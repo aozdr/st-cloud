@@ -1,4 +1,4 @@
-﻿#requires -Version 5.1
+#requires -Version 7.0
 <#
 .SYNOPSIS
   Agent Loop V2 状态校验与迁移入口。
@@ -9,7 +9,7 @@
 [CmdletBinding()]
 param(
   [Parameter(Position = 0, Mandatory = $true)]
-  [ValidateSet('init','validate','propose','evaluate','evaluate-direct','stale','complete','transition','reconcile','validate-dispatch','dispatch-transition','report-blocker','repair-blocker')]
+  [ValidateSet('init','validate','propose','evaluate','evaluate-direct','stale','complete','transition','reconcile','validate-dispatch','dispatch-plan','dispatch-transition','report-blocker','repair-blocker')]
   [string]$Command,
   [Parameter(Position = 1)] [string]$StatePath,
   [string]$DefinitionPath,
@@ -33,6 +33,11 @@ param(
   [string]$EventId,
   [string]$DispatchId,
   [ValidateSet('planned','spawned','acked','running','returned','evaluated','failed')] [string]$DispatchStatus,
+  [string]$CriterionId,
+  [string]$ChildId,
+  [string]$ResultRef,
+  [switch]$ScopeVerified,
+  [string]$FailureReason,
   [string]$Fingerprint,
   [string]$RepairEvidence,
   [ValidateSet('resolved','open')] [string]$RepairOutcome,
@@ -596,6 +601,44 @@ try {
   Assert-State $state $definition
   if ($Command -eq 'validate') { Write-Output 'PASS'; exit 0 }
 
+  if ($Command -eq 'dispatch-plan') {
+    if ([string]::IsNullOrWhiteSpace($DispatchPath) -or [string]::IsNullOrWhiteSpace($CriterionId)) {
+      Stop-Loop 'DISPATCH_ARGUMENT_MISSING' 'dispatch-plan 需要 StatePath/DispatchPath/CriterionId'
+    }
+    $envelope = Read-Document $DispatchPath
+    Assert-Dispatch $envelope
+    $ledger = @(ConvertTo-Array $state.dispatchLedger)
+    $dispatchId = [string]$envelope.dispatchId
+    if (@($ledger | Where-Object { [string]$_.dispatchId -eq $dispatchId }).Count -gt 0) {
+      Stop-Loop 'DISPATCH_ALREADY_PLANNED' "dispatchId 已存在：$dispatchId"
+    }
+    $map = Get-PropertyMap $state.exitCriteria
+    if (-not $map.Contains($CriterionId)) { Stop-Loop 'CRITERION_UNKNOWN' "$CriterionId 不在当前 State" }
+    if (-not $definition.catalog.Contains($CriterionId)) { Stop-Loop 'CRITERION_UNKNOWN' "$CriterionId 不在 catalog" }
+    $criterion = $map[$CriterionId]
+    if ([string]$criterion.status -eq 'done') { Stop-Loop 'CRITERION_ALREADY_DONE' "$CriterionId 已完成，不得重复派发" }
+    $canonical = $definition.catalog[$CriterionId]
+    if ([string]$envelope.role -ne [string]$canonical.owner) { Stop-Loop 'DISPATCH_ROLE_MISMATCH' "role 应为 $($canonical.owner)，实际 $($envelope.role)" }
+    if ([string]$envelope.taskType -ne [string]$canonical.taskType) { Stop-Loop 'DISPATCH_TASKTYPE_MISMATCH' "taskType 应为 $($canonical.taskType)，实际 $($envelope.taskType)" }
+    $active = @($ledger | Where-Object { [string]$_.criterionId -eq $CriterionId -and [string]$_.status -in @('planned','spawned','acked','running','returned') })
+    if ($active.Count -gt 0) { Stop-Loop 'DISPATCH_ATTEMPT_ACTIVE' "$CriterionId 已有未结束 attempt：$($active[0].dispatchId)" }
+    $fullDispatch = [IO.Path]::GetFullPath($DispatchPath)
+    $repoRoot = [IO.Path]::GetFullPath($script:RepoRoot).TrimEnd([IO.Path]::DirectorySeparatorChar, [IO.Path]::AltDirectorySeparatorChar) + [IO.Path]::DirectorySeparatorChar
+    $envelopeRef = if ($fullDispatch.StartsWith($repoRoot, [StringComparison]::OrdinalIgnoreCase)) { $fullDispatch.Substring($repoRoot.Length).Replace('\','/') } else { $fullDispatch.Replace('\','/') }
+    $identity = if ([string]::IsNullOrWhiteSpace($ChildId)) { '<pending>' } else { $ChildId.Trim() }
+    $attempt = [pscustomobject][ordered]@{
+      dispatchId = $dispatchId; taskId = [string]$envelope.taskId; idempotencyKey = [string]$envelope.idempotencyKey
+      role = [string]$envelope.role; taskType = [string]$envelope.taskType; criterionId = $CriterionId
+      childId = $identity; status = 'planned'; envelopeRef = $envelopeRef
+      plannedAt = [DateTime]::UtcNow.ToString('o')
+    }
+    $state.dispatchLedger = @($ledger + $attempt)
+    $eventKey = if ($EventId) { $EventId } else { "dispatch-plan:$dispatchId" }
+    Add-History $state (New-HistoryEvent 'dispatch-plan' $null ([pscustomobject]@{ dispatchId = $dispatchId; criterionId = $CriterionId; status = 'planned'; revision = $state.revision }) $eventKey)
+    Assert-State $state $definition
+    Save-State $StatePath $state -WhatIfOnly:$DryRun; Write-Output $(if ($DryRun) { 'DRY_RUN' } else { 'PLANNED' }); exit 0
+  }
+
   if ($Command -eq 'propose') {
     $proposal = Read-Document $ProposalPath
     $body = if (Test-Field $proposal 'criterionProposal') { $proposal.criterionProposal } else { $proposal }
@@ -762,6 +805,30 @@ try {
     $attempt = $matching[0]; $before = [string]$attempt.status
     $next = @{ planned=@('spawned','failed'); spawned=@('acked','failed'); acked=@('running','failed'); running=@('returned','failed'); returned=@('evaluated','failed'); evaluated=@(); failed=@() }
     if ($next[$before] -notcontains $DispatchStatus) { Stop-Loop 'DISPATCH_TRANSITION_INVALID' "$before -> $DispatchStatus 非法" }
+    if ($DispatchStatus -eq 'spawned') {
+      if (-not [string]::IsNullOrWhiteSpace($ChildId)) { $attempt.childId = $ChildId.Trim() }
+      if ([string]::IsNullOrWhiteSpace([string]$attempt.childId) -or [string]$attempt.childId -eq '<pending>') { Stop-Loop 'DISPATCH_CHILD_ID_REQUIRED' 'spawned 必须提供 -ChildId' }
+      $attempt | Add-Member spawnedAt ([DateTime]::UtcNow.ToString('o')) -Force
+    } elseif ($DispatchStatus -eq 'acked') {
+      $attempt | Add-Member ackedAt ([DateTime]::UtcNow.ToString('o')) -Force
+    } elseif ($DispatchStatus -eq 'running') {
+      $attempt | Add-Member runningAt ([DateTime]::UtcNow.ToString('o')) -Force
+    } elseif ($DispatchStatus -eq 'returned') {
+      if ([string]::IsNullOrWhiteSpace($ResultRef)) { Stop-Loop 'DISPATCH_RESULT_REQUIRED' 'returned 必须提供 -ResultRef' }
+      if (-not $ScopeVerified) { Stop-Loop 'DISPATCH_SCOPE_UNVERIFIED' 'returned 必须确认 -ScopeVerified' }
+      Assert-EvidenceExists $ResultRef
+      $attempt | Add-Member resultRef $ResultRef -Force
+      $attempt | Add-Member scopeVerified $true -Force
+      $attempt | Add-Member returnedAt ([DateTime]::UtcNow.ToString('o')) -Force
+    } elseif ($DispatchStatus -eq 'evaluated') {
+      $attempt | Add-Member evaluatedAt ([DateTime]::UtcNow.ToString('o')) -Force
+    } elseif ($DispatchStatus -eq 'failed') {
+      $attempt | Add-Member failedAt ([DateTime]::UtcNow.ToString('o')) -Force
+      if (-not [string]::IsNullOrWhiteSpace($FailureReason)) { $attempt | Add-Member failureReason $FailureReason -Force }
+    }
+    if ($DispatchStatus -notin @('spawned','failed') -and -not [string]::IsNullOrWhiteSpace($ChildId) -and [string]$attempt.childId -ne $ChildId) {
+      Stop-Loop 'DISPATCH_CHILD_MISMATCH' "childId 已固定为 $($attempt.childId)，不得改为 $ChildId"
+    }
     $attempt.status = $DispatchStatus; $attempt | Add-Member updatedAt ([DateTime]::UtcNow.ToString('o')) -Force
     Add-History $state (New-HistoryEvent 'dispatch-transition' ([pscustomobject]@{ dispatchId=$DispatchId; status=$before }) ([pscustomobject]@{ dispatchId=$DispatchId; status=$DispatchStatus; revision=$state.revision }) $EventId)
     Assert-State $state $definition; Save-State $StatePath $state -WhatIfOnly:$DryRun; Write-Output $(if ($DryRun) { 'DRY_RUN' } else { 'DISPATCH_TRANSITIONED' }); exit 0
