@@ -43,7 +43,7 @@ export default function StatsPanel({ spaceId }: StatsPanelProps) {
       <div className="flex items-center gap-2">
         <span className="text-xs text-muted">时间范围：</span>
         {[7, 30, 90].map(d => (
-          <button key={d} onClick={() => setDays(d)} className={cn('px-2 py-1 text-xs rounded-md cursor-pointer', days === d ? 'bg-primary-600 text-white' : 'bg-surface-2 text-muted')}>{d}天</button>
+          <button key={d} onClick={() => setDays(d)} className={cn('px-2 py-1 text-xs rounded-md cursor-pointer', days === d ? 'bg-primary-700 text-white' : 'bg-surface-2 text-muted')}>{d}天</button>
         ))}
       </div>
 
@@ -94,7 +94,7 @@ export default function StatsPanel({ spaceId }: StatsPanelProps) {
           {stats.memberActivity.map((m, i) => (
             <div key={m.userId} className="flex items-center gap-2">
               <span className="text-xs text-muted w-4">{i + 1}.</span>
-              <div className="w-6 h-6 bg-primary-600 rounded-full flex items-center justify-center text-white text-xs flex-shrink-0">{m.nickname?.[0] || '?'}</div>
+              <div className="w-6 h-6 bg-primary-700 rounded-full flex items-center justify-center text-white text-xs flex-shrink-0">{m.nickname?.[0] || '?'}</div>
               <span className="text-sm text-fg flex-1">{m.nickname}</span>
               <span className="text-xs text-muted">{timeAgo(m.lastActiveAt)}</span>
             </div>

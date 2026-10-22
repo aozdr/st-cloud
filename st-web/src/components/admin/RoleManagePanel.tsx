@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef, memo } from 'react';
 import { Plus, Edit3, Trash2, X, Shield, Search, KeyRound, CheckCircle2, Ban } from 'lucide-react';
 import api from '../../lib/api';
 import { useToast } from '../ui/Toast';
 import { useConfirm } from '../ui/ConfirmDialog';
+import { useModalA11y } from '../ui/useModalA11y';
 import { PermissionTree } from '../ui/PermissionTree';
 import { cn } from '../../lib/utils';
 import type { RoleVO, PermissionVO } from '../../types';
@@ -33,15 +34,15 @@ const RoleRow = memo(function RoleRow({
 }) {
   const permCount = role.permissions?.length ?? 0;
   return (
-    <div className="flex items-center gap-4 px-5 py-4 border-b border-border last:border-b-0 hover:bg-surface-2/50 transition-colors">
+    <div className="flex items-center gap-4 px-5 py-4 border-b border-border last:border-b-0 hover:bg-bg-hover transition-colors">
       <div className="w-10 h-10 rounded-lg bg-primary-500/10 flex items-center justify-center flex-shrink-0">
-        <Shield className="w-5 h-5 text-primary-600" aria-hidden />
+        <Shield className="w-5 h-5 text-primary-strong" aria-hidden />
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold text-fg truncate">{role.roleName}</span>
           {role.builtIn && (
-            <span className="text-xs text-primary-600 bg-primary-500/10 px-2 py-0.5 rounded">内置</span>
+            <span className="text-xs text-primary-strong bg-primary-500/10 px-2 py-0.5 rounded">内置</span>
           )}
         </div>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-muted">
@@ -65,7 +66,7 @@ const RoleRow = memo(function RoleRow({
       <div className="flex items-center gap-1 flex-shrink-0">
         <button
           onClick={() => onEdit(role)}
-          className="p-2 text-muted hover:text-primary-600 hover:bg-primary-500/10 rounded-md transition-colors cursor-pointer"
+          className="p-2 text-muted hover:text-primary-strong hover:bg-primary-500/10 rounded-md transition-colors cursor-pointer"
           title="编辑" aria-label={`编辑 ${role.roleName}`}
         >
           <Edit3 className="w-4 h-4" aria-hidden />
@@ -90,6 +91,8 @@ export default function RoleManagePanel() {
   const [permGroups, setPermGroups] = useState<Record<string, PermissionVO[]>>({});
   const [selectedPermIds, setSelectedPermIds] = useState<Set<string>>(new Set());
   const [modalOpen, setModalOpen] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalA11y(panelRef, () => setModalOpen(false), { open: modalOpen });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<RoleFormState>(emptyForm);
   const [searchQuery, setSearchQuery] = useState('');
@@ -212,7 +215,7 @@ export default function RoleManagePanel() {
         </div>
         <button
           onClick={openCreate}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium text-white bg-primary-700 hover:bg-primary-800 rounded-lg transition-colors cursor-pointer"
         >
           <Plus className="w-4 h-4" /> 新建角色
         </button>
@@ -247,7 +250,7 @@ export default function RoleManagePanel() {
 
       {modalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 overscroll-contain" role="presentation" onClick={() => setModalOpen(false)}>
-          <div className="bg-surface rounded-xl w-full max-w-3xl flex flex-col max-h-[92vh] overflow-hidden shadow-lg" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={editingId ? '编辑角色' : '新建角色'}>
+          <div ref={panelRef} tabIndex={-1} className="bg-surface rounded-xl w-full max-w-3xl flex flex-col max-h-[92vh] overflow-hidden shadow-lg focus:outline-none" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={editingId ? '编辑角色' : '新建角色'}>
             {/* 头部固定 */}
             <div className="flex-shrink-0 flex items-center justify-between px-6 py-4 border-b border-border">
               <h3 className="text-base font-semibold text-fg">{editingId ? '编辑角色' : '新建角色'}</h3>

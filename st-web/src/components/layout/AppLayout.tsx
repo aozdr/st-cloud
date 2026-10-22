@@ -11,6 +11,7 @@ import { useTransferStore } from '../../store/transfer';
 import { useFavoritesStore } from '../../store/favorites';
 import { UploadProvider } from '../../hooks/useUpload';
 import { isElectron } from '../../lib/electron';
+import { useDocumentTitle } from '../../lib/useDocumentTitle';
 import TitleBar from './TitleBar';
 
 export default function AppLayout() {
@@ -24,6 +25,8 @@ export default function AppLayout() {
   const handleMenuClick = useCallback(() => setMobileSidebarOpen(true), []);
   const location = useLocation();
   const navigate = useNavigate();
+  // 标签页标题随路由变化（首页/未匹配路由回落到品牌名）
+  useDocumentTitle(location.pathname);
 
   useEffect(() => {
     if (!user) {
@@ -67,7 +70,7 @@ export default function AppLayout() {
 
   return (
     <UploadProvider>
-      <div className="flex h-screen overflow-hidden bg-bg">
+      <div className="app-viewport flex overflow-hidden bg-bg">
         {/* 侧栏整列置顶：桌面端 logo/品牌直接位于窗口顶部，填充标题栏移除后的空白 */}
         <Sidebar mobileOpen={mobileSidebarOpen} onClose={handleMobileClose} />
         <div className="flex-1 flex flex-col min-w-0">
@@ -75,7 +78,7 @@ export default function AppLayout() {
           {isElectron() && <TitleBar />}
           <TopBar onMenuClick={handleMenuClick} />
           {/* 主内容面保持连续铺满，移动端仅为底部 Tab 保留安全间距。 */}
-          <main id="main-content" className={`flex-1 min-h-0 overflow-hidden ${isElectron() ? '' : 'pb-20 md:pb-0'}`}>
+          <main id="main-content" className={`flex-1 min-h-0 overflow-hidden ${isElectron() ? '' : 'pb-bottom-nav md:pb-0'}`}>
             {/* Suspense 仅包裹 Outlet：路由切换时侧边栏/顶栏不重新挂载，仅顶部进度条提示。
                 不按 pathname 加 key：打开文件夹时页面不整页重挂载，只有文件列表原地更新（Windows 风格） */}
             <Suspense fallback={<SuspenseProgressBar />}>

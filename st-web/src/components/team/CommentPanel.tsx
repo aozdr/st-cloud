@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { X, Send, Trash2, Pencil, CornerDownRight } from 'lucide-react';
 import api from '../../lib/api';
 import { useToast } from '../ui/Toast';
+import { useConfirm } from '../ui/ConfirmDialog';
 import { cn } from '../../lib/utils';
 import type { TeamCommentItem, FileNode, UserSearch } from '../../types';
 
@@ -14,6 +15,7 @@ interface CommentPanelProps {
 
 export default function CommentPanel({ spaceId, node, onClose, canComment }: CommentPanelProps) {
   const { showToast } = useToast();
+  const { confirm } = useConfirm();
   const [comments, setComments] = useState<TeamCommentItem[]>([]);
   const [content, setContent] = useState('');
   const [replyTo, setReplyTo] = useState<TeamCommentItem | null>(null);
@@ -66,7 +68,7 @@ export default function CommentPanel({ spaceId, node, onClose, canComment }: Com
   };
 
   const handleDelete = async (commentId: string) => {
-    if (!confirm('确定删除该评论？')) return;
+    if (!(await confirm({ title: '删除评论', message: '确定删除该评论？删除后不可恢复。', confirmText: '删除', danger: true }))) return;
     try { await api.delete(`/team/${spaceId}/comments/${commentId}`); fetchComments(); showToast('已删除', 'success'); } catch { showToast('删除失败', 'error'); }
   };
 
@@ -76,7 +78,7 @@ export default function CommentPanel({ spaceId, node, onClose, canComment }: Com
 
   const renderComment = (c: TeamCommentItem, isReply = false) => (
     <div key={c.id} className={cn('flex items-start gap-2.5', isReply && 'ml-8')}>
-      <div className="w-7 h-7 bg-primary-600 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0">{c.nickname?.[0] || c.username[0]}</div>
+      <div className="w-7 h-7 bg-primary-700 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0">{c.nickname?.[0] || c.username[0]}</div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-fg">{c.nickname || c.username}</span>
@@ -84,8 +86,8 @@ export default function CommentPanel({ spaceId, node, onClose, canComment }: Com
         </div>
         <p className="text-sm text-fg mt-0.5 whitespace-pre-wrap">{c.content}</p>
         <div className="flex items-center gap-3 mt-1">
-          <button onClick={() => startReply(c)} className="text-xs text-muted hover:text-primary-600 cursor-pointer flex items-center gap-0.5"><CornerDownRight className="w-3 h-3" />回复</button>
-          <button onClick={() => handleEdit(c)} className="text-xs text-muted hover:text-primary-600 cursor-pointer flex items-center gap-0.5"><Pencil className="w-3 h-3" />编辑</button>
+          <button onClick={() => startReply(c)} className="text-xs text-muted hover:text-primary-strong cursor-pointer flex items-center gap-0.5"><CornerDownRight className="w-3 h-3" />回复</button>
+          <button onClick={() => handleEdit(c)} className="text-xs text-muted hover:text-primary-strong cursor-pointer flex items-center gap-0.5"><Pencil className="w-3 h-3" />编辑</button>
           <button onClick={() => handleDelete(c.id)} className="text-xs text-muted hover:text-red-500 cursor-pointer flex items-center gap-0.5"><Trash2 className="w-3 h-3" />删除</button>
         </div>
         {c.replies?.map(r => renderComment(r, true))}
@@ -108,12 +110,12 @@ export default function CommentPanel({ spaceId, node, onClose, canComment }: Com
           {editingId && <div className="flex items-center gap-2 mb-1.5 text-xs text-muted"><span>编辑评论</span><button onClick={() => { setEditingId(null); setContent(''); }} className="text-muted hover:text-fg cursor-pointer"><X className="w-3 h-3" /></button></div>}
           {showMention && mentionUsers.length > 0 && (
             <div className="absolute bottom-full left-3 right-3 mb-1 bg-surface rounded-md border border-border shadow-lg max-h-40 overflow-auto z-10">
-              {mentionUsers.map(u => (<button key={u.userId} onClick={() => handleSelectMention(u)} className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-surface-2 cursor-pointer text-left"><div className="w-6 h-6 bg-primary-600 rounded-full flex items-center justify-center text-white text-xs">{u.nickname?.[0] || u.username[0]}</div><span className="text-fg">{u.nickname || u.username}</span><span className="text-xs text-muted">@{u.username}</span></button>))}
+              {mentionUsers.map(u => (<button key={u.userId} onClick={() => handleSelectMention(u)} className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-surface-2 cursor-pointer text-left"><div className="w-6 h-6 bg-primary-700 rounded-full flex items-center justify-center text-white text-xs">{u.nickname?.[0] || u.username[0]}</div><span className="text-fg">{u.nickname || u.username}</span><span className="text-xs text-muted">@{u.username}</span></button>))}
             </div>
           )}
           <div className="flex gap-2">
             <textarea value={content} onChange={(e) => { setContent(e.target.value); handleMentionSearch(e.target.value, e.target.selectionStart); }} placeholder={replyTo ? `回复 ${replyTo.nickname || replyTo.username}...` : '发表评论... 输入@提及成员'} rows={2} className="flex-1 px-3 py-2 text-sm bg-surface-2 rounded-md border border-border outline-none focus:border-primary-400 focus:bg-surface transition-colors resize-none" />
-            <button onClick={handleSend} disabled={!content.trim()} className="flex items-center justify-center w-9 h-9 text-white bg-primary-600 rounded-md hover:bg-primary-700 transition-colors cursor-pointer disabled:opacity-50 flex-shrink-0"><Send className="w-4 h-4" /></button>
+            <button onClick={handleSend} disabled={!content.trim()} className="flex items-center justify-center w-9 h-9 text-white bg-primary-700 rounded-md hover:bg-primary-800 transition-colors cursor-pointer disabled:opacity-50 flex-shrink-0"><Send className="w-4 h-4" /></button>
           </div>
         </div>
       )}

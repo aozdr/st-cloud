@@ -32,8 +32,10 @@
     --bg-hover: 248 249 251;    /* #F8F9FB */
     --bg-active: 238 242 255;   /* #EEF2FF */
     --border-light: 240 241 244; /* #F0F1F4 */
-    --text-tertiary: 154 161 174; /* #9AA1AE */
+    --text-tertiary: 101 113 132; /* #657184，surface-2 上 4.61:1 */
     --text-disabled: 184 190 201; /* #B8BEC9 */
+    /* 文本主色：浅色用 700 保证白底对比度，深色切换到 400 */
+    --primary-strong: var(--color-primary-700);
 
     /* ---- 语义色 ---- */
     --success: 53 165 106;      /* #35A56A */
@@ -87,6 +89,7 @@
     --border-light: 43 46 53;
     --text-tertiary: 141 148 160;
     --text-disabled: 90 94 104;
+    --primary-strong: var(--color-primary-400);
     --success: 52 211 153;
     --success-light: 10 45 30;
     --warning: 251 191 36;
@@ -141,13 +144,13 @@
 
 @layer components {
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 h-9 px-4 bg-primary-600 text-white text-sm font-medium rounded-lg transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 h-9 px-4 bg-primary-700 text-white text-sm font-medium rounded-lg transition-colors duration-150 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed;
   }
   .btn-primary:hover {
-    background-color: rgb(var(--color-primary-700));
+    background-color: rgb(var(--color-primary-800));
   }
   .btn-primary:active {
-    background-color: rgb(var(--color-primary-800));
+    background-color: rgb(var(--color-primary-900));
   }
   .btn-secondary {
     @apply inline-flex items-center justify-center gap-2 h-9 px-4 text-sm font-medium rounded-lg border cursor-pointer transition-colors duration-150;
@@ -231,10 +234,14 @@
   .pt-safe { padding-top: env(safe-area-inset-top); }
   .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
   .pl-safe { padding-left: env(safe-area-inset-left); }
+  /* 视口高度：移动端优先 dvh，避免地址栏/工具栏导致底部被裁 */
+  .app-viewport { height: 100vh; height: 100dvh; }
+  /* 移动端底部导航占位：4rem + 安全区 */
+  .pb-bottom-nav { padding-bottom: calc(4rem + env(safe-area-inset-bottom)); }
 }
 
 .search-highlight em {
-  color: rgb(var(--color-primary-600));
+  color: rgb(var(--primary-strong));
   font-weight: 600;
   font-style: normal;
   background-color: rgb(var(--color-primary-50));

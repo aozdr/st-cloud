@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef, type Dispatch, type SetStateA
 import { X, Plus, Trash2, Shield, Pencil, Check } from 'lucide-react';
 import api from '../../lib/api';
 import { useToast } from '../ui/Toast';
+import { useModalA11y } from '../ui/useModalA11y';
 import { cn } from '../../lib/utils';
 import type { FolderPermissionItem, FileNode, UserSearch, TeamRoleInfo } from '../../types';
 import { PERMISSION_KEYS, legacyToPermissions } from '../../lib/permissions';
@@ -61,8 +62,8 @@ function PermissionToggle({ label, checked, onToggle }: { label: string; checked
         'flex items-center gap-1.5 px-2 py-1.5 rounded-md text-xs cursor-pointer select-none transition-colors',
         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
         checked
-          ? 'bg-primary-500/15 text-primary-600 border border-primary-500/30'
-          : 'bg-surface-2 text-fg border border-transparent hover:bg-surface-2/70',
+          ? 'bg-primary-500/15 text-primary-strong border border-primary-500/30'
+          : 'bg-surface-2 text-fg border border-transparent hover:bg-bg-hover',
       )}
     >
       <span
@@ -95,6 +96,8 @@ export default function FolderPermissionDialog({ spaceId, node, onClose, variant
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editPerms, setEditPerms] = useState<Record<string, boolean>>({});
   const ruleLoadId = useRef(0);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalA11y(panelRef, onClose, { open: !isPanel });
 
   const fetchRules = useCallback(async () => {
     const requestId = ++ruleLoadId.current;
@@ -261,7 +264,7 @@ export default function FolderPermissionDialog({ spaceId, node, onClose, variant
   const subjectBadge = (type: SubjectType) => {
     if (type === 'all') return { icon: '🌐', cls: 'bg-emerald-500/10 text-emerald-600' };
     if (type === 'role') return { icon: '👥', cls: 'bg-amber-500/10 text-amber-600' };
-    return { icon: '👤', cls: 'bg-primary-500/10 text-primary-600' };
+    return { icon: '👤', cls: 'bg-primary-500/10 text-primary-strong' };
   };
 
   /** 规则展示名称：自定义角色回退到角色名（后端 VO 仅映射内置角色名） */
@@ -295,7 +298,7 @@ export default function FolderPermissionDialog({ spaceId, node, onClose, variant
           {/* 权限规则列表 */}
           <div>
             <p className="text-xs font-medium text-muted mb-2">权限规则</p>
-            {loading ? <p className="text-sm text-muted">加载中...</p> : loadError ? <button onClick={fetchRules} className="text-sm text-primary-600 cursor-pointer">加载失败，点击重试</button> : rules.length === 0 ? <p className="text-sm text-muted">暂无规则，继承父文件夹权限</p> : (
+            {loading ? <p className="text-sm text-muted">加载中...</p> : loadError ? <button onClick={fetchRules} className="text-sm text-primary-strong cursor-pointer">加载失败，点击重试</button> : rules.length === 0 ? <p className="text-sm text-muted">暂无规则，继承父文件夹权限</p> : (
               <div className="space-y-1.5">
                 {rules.map((r, idx) => {
                   const badge = subjectBadge(r.subjectType);
@@ -307,13 +310,13 @@ export default function FolderPermissionDialog({ spaceId, node, onClose, variant
                           <span className="text-sm text-fg truncate">{ruleDisplayName(r)}</span>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
-                          <button onClick={() => openEditor(idx)} className="text-muted hover:text-primary-600 cursor-pointer p-1" aria-label="编辑权限"><Pencil className="w-3.5 h-3.5" /></button>
+                          <button onClick={() => openEditor(idx)} className="text-muted hover:text-primary-strong cursor-pointer p-1" aria-label="编辑权限"><Pencil className="w-3.5 h-3.5" /></button>
                           <button onClick={() => handleRemoveRule(idx)} className="text-muted hover:text-red-500 cursor-pointer p-1" aria-label="删除规则"><Trash2 className="w-3.5 h-3.5" /></button>
                         </div>
                       </div>
                       <div className="mt-1.5 flex flex-wrap gap-1">
                         {permissionChips(r).map(label => (
-                          <span key={label} className={cn('text-[11px] px-1.5 py-0.5 rounded', label === '无权限' ? 'bg-surface text-muted' : 'bg-primary-500/10 text-primary-600')}>{label}</span>
+                          <span key={label} className={cn('text-[11px] px-1.5 py-0.5 rounded', label === '无权限' ? 'bg-surface text-muted' : 'bg-primary-500/10 text-primary-strong')}>{label}</span>
                         ))}
                       </div>
                       {editingIdx === idx && (
@@ -349,7 +352,7 @@ export default function FolderPermissionDialog({ spaceId, node, onClose, variant
                   <input type="text" value={newKeyword} onChange={(e) => handleSearch(e.target.value)} placeholder="搜索用户..." aria-label="搜索用户" className="w-full px-3 py-2 text-sm bg-surface-2 rounded-md border border-border outline-none focus:border-primary-400" />
                   {searchResults.length > 0 && !selectedUser && (
                     <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-surface rounded-md border border-border shadow-lg max-h-40 overflow-auto">
-                      {searchResults.map(u => <button key={u.userId} onClick={() => { setNewRuleTouched(true); setSelectedUser(u); setNewPerms(permissionsForSubject(rules, 'member', u.userId)); setNewKeyword(u.nickname || u.username); setSearchResults([]); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-surface-2 cursor-pointer text-left"><div className="w-6 h-6 bg-primary-600 rounded-full flex items-center justify-center text-white text-xs">{u.nickname?.[0] || u.username[0]}</div><span>{u.nickname || u.username}</span><span className="text-xs text-muted">@{u.username}</span></button>)}
+                      {searchResults.map(u => <button key={u.userId} onClick={() => { setNewRuleTouched(true); setSelectedUser(u); setNewPerms(permissionsForSubject(rules, 'member', u.userId)); setNewKeyword(u.nickname || u.username); setSearchResults([]); }} className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-surface-2 cursor-pointer text-left"><div className="w-6 h-6 bg-primary-700 rounded-full flex items-center justify-center text-white text-xs">{u.nickname?.[0] || u.username[0]}</div><span>{u.nickname || u.username}</span><span className="text-xs text-muted">@{u.username}</span></button>)}
                     </div>
                   )}
                 </div>
@@ -372,7 +375,7 @@ export default function FolderPermissionDialog({ spaceId, node, onClose, variant
               <p className="text-[11px] text-muted mt-1.5">勾选「上传/下载」会自动补上「查看」；选择后可直接点「保存」，也可点下方按钮继续设置其他规则。</p>
             </div>
             <div className="mt-2 flex justify-end">
-              <button onClick={handleAddRule} className="flex items-center gap-1 px-3 py-2 text-sm text-white bg-primary-600 rounded-md hover:bg-primary-700 cursor-pointer"><Plus className="w-4 h-4" />{hasConfiguredRule ? '更新规则' : '添加规则'}</button>
+              <button onClick={handleAddRule} className="flex items-center gap-1 px-3 py-2 text-sm text-white bg-primary-700 rounded-md hover:bg-primary-800 cursor-pointer"><Plus className="w-4 h-4" />{hasConfiguredRule ? '更新规则' : '添加规则'}</button>
             </div>
           </div>
         </div>
@@ -394,7 +397,7 @@ export default function FolderPermissionDialog({ spaceId, node, onClose, variant
   }
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 overscroll-contain" role="presentation" onClick={onClose}>
-      <div className="w-full max-w-lg bg-surface rounded-xl shadow-lg border border-border overflow-hidden max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-label="文件夹权限" tabIndex={-1} className="w-full max-w-lg bg-surface rounded-xl shadow-lg border border-border overflow-hidden max-h-[90vh] overflow-y-auto focus:outline-none" onClick={(e) => e.stopPropagation()}>
         {content}
       </div>
     </div>

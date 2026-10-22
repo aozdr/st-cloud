@@ -6,6 +6,7 @@ import { useUpload } from '../../hooks/useUpload';
 import { isElectron } from '../../lib/electron';
 import { formatSize, formatDate } from '../../lib/utils';
 import type { FileVersionVO, FileNode } from '../../types';
+import { useModalA11y } from '../ui/useModalA11y';
 
 interface Props {
   node: FileNode;
@@ -22,6 +23,8 @@ export default function VersionHistoryDialog({ node, onClose, onRestored, onPrev
   const { showToast } = useToast();
   const { addFiles, addFilePaths } = useUpload();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalA11y(panelRef, onClose);
 
   useEffect(() => {
     let cancelled = false;
@@ -78,16 +81,21 @@ export default function VersionHistoryDialog({ node, onClose, onRestored, onPrev
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={onClose} role="presentation">
       <div
-        className="modal-content w-[520px] max-w-[92vw] p-6"
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="历史版本"
+        tabIndex={-1}
+        className="modal-content w-[520px] max-w-[92vw] p-6 focus:outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         <input ref={fileInputRef} type="file" className="hidden" onChange={handleFileSelect} />
 
         <div className="flex items-center justify-between mb-1">
           <h2 className="text-lg font-semibold text-fg flex items-center gap-2">
-            <History className="w-5 h-5 text-primary-600" />
+            <History className="w-5 h-5 text-primary-strong" />
             历史版本
           </h2>
           <div className="flex items-center gap-2">
@@ -130,7 +138,7 @@ export default function VersionHistoryDialog({ node, onClose, onRestored, onPrev
                     <div className="flex items-center gap-2 mb-1">
                       <span className="text-sm font-medium text-fg">V{v.versionNum}</span>
                       {isCurrent && (
-                        <span className="inline-flex items-center gap-1 text-xs text-primary-600 bg-primary-100 px-1.5 py-0.5 rounded">
+                        <span className="inline-flex items-center gap-1 text-xs text-primary-strong bg-primary-50 px-1.5 py-0.5 rounded">
                           <ShieldCheck className="w-3 h-3" />
                           当前版本
                         </span>

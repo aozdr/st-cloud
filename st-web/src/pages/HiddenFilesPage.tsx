@@ -57,7 +57,7 @@ export default function HiddenFilesPage() {
               </div>
               <button
                 onClick={() => handleUnhide(file)}
-                className="flex items-center gap-1 px-3 py-1.5 text-xs text-primary-600 hover:bg-primary-500/10 rounded-lg cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+                className="flex items-center gap-1 px-3 py-1.5 text-xs text-primary-strong hover:bg-primary-500/10 rounded-lg cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
               >
                 <Eye className="w-3.5 h-3.5" />
                 取消隐藏

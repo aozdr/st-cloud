@@ -39,7 +39,7 @@ const ICONS = {
 const ACCENTS = {
   success: { border: 'border-l-green-500', icon: 'text-green-500' },
   error: { border: 'border-l-red-500', icon: 'text-red-500' },
-  info: { border: 'border-l-primary-600', icon: 'text-primary-600' },
+  info: { border: 'border-l-primary-600', icon: 'text-primary-strong' },
   warning: { border: 'border-l-amber-500', icon: 'text-amber-500' },
 };
 

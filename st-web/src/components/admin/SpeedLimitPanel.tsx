@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Plus, Edit, Trash2, X, ArrowUp, ArrowDown } from 'lucide-react';
 import api from '../../lib/api';
 import { useToast } from '../ui/Toast';
 import { useConfirm } from '../ui/ConfirmDialog';
+import { useModalA11y } from '../ui/useModalA11y';
 import type { SpeedLimitRule, AdminUser, RoleVO, PageResult } from '../../types';
 
 type Scope = 0 | 1;
@@ -59,6 +60,8 @@ export default function SpeedLimitPanel() {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [roles, setRoles] = useState<RoleVO[]>([]);
   const [modalOpen, setModalOpen] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalA11y(panelRef, () => setModalOpen(false), { open: modalOpen });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
 
@@ -203,7 +206,7 @@ export default function SpeedLimitPanel() {
         </p>
         <button
           onClick={openCreate}
-          className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-primary-600 rounded-md hover:bg-primary-700 transition-colors cursor-pointer"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-primary-700 rounded-md hover:bg-primary-800 transition-colors cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           新建规则
@@ -227,7 +230,7 @@ export default function SpeedLimitPanel() {
               <tr key={r.id} className="border-b border-border hover:bg-surface-2 transition-colors">
                 <td className="px-4 py-3 text-muted">{r.ruleName}</td>
                 <td className="px-4 py-3 text-muted">
-                  <span className="text-xs font-medium text-primary-600 bg-primary-500/10 px-2 py-0.5 rounded mr-2">
+                  <span className="text-xs font-medium text-primary-strong bg-primary-500/10 px-2 py-0.5 rounded mr-2">
                     {r.scope === 0 ? '用户' : '角色'}
                   </span>
                   {r.targetName || r.targetCode || r.targetId}
@@ -246,7 +249,7 @@ export default function SpeedLimitPanel() {
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center justify-center gap-3">
-                    <button onClick={() => openEdit(r)} className="text-muted hover:text-primary-600 transition-colors cursor-pointer" title="编辑">
+                    <button onClick={() => openEdit(r)} className="text-muted hover:text-primary-strong transition-colors cursor-pointer" title="编辑">
                       <Edit className="w-4 h-4" />
                     </button>
                     <button onClick={() => handleDelete(r)} className="text-muted hover:text-red-500 transition-colors cursor-pointer" title="删除">
@@ -263,7 +266,7 @@ export default function SpeedLimitPanel() {
 
       {modalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 overscroll-contain" role="presentation" onClick={() => setModalOpen(false)}>
-          <div className="bg-surface rounded-lg w-full max-w-lg p-6 max-h-[90vh] overflow-auto" onClick={(e) => e.stopPropagation()}>
+          <div ref={panelRef} role="dialog" aria-modal="true" aria-label={editingId ? '编辑限速规则' : '新建限速规则'} tabIndex={-1} className="bg-surface rounded-lg w-full max-w-lg p-6 max-h-[90vh] overflow-auto focus:outline-none" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base font-semibold text-fg">{editingId ? '编辑限速规则' : '新建限速规则'}</h2>
               <button onClick={() => setModalOpen(false)} aria-label="关闭" className="text-muted hover:text-fg transition-colors cursor-pointer rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
@@ -366,7 +369,7 @@ export default function SpeedLimitPanel() {
               <button onClick={() => setModalOpen(false)} className="px-4 py-2 text-sm text-muted bg-surface-2 rounded-md hover:bg-surface-2 transition-colors cursor-pointer">
                 取消
               </button>
-              <button onClick={handleSubmit} className="px-4 py-2 text-sm text-white bg-primary-600 rounded-md hover:bg-primary-700 transition-colors cursor-pointer">
+              <button onClick={handleSubmit} className="px-4 py-2 text-sm text-white bg-primary-700 rounded-md hover:bg-primary-800 transition-colors cursor-pointer">
                 {editingId ? '保存' : '创建'}
               </button>
             </div>
@@ -418,10 +421,10 @@ function SpeedInput({ icon, title, unlimited, value, unit, onToggle, onValue, on
             placeholder="输入数值"
           />
           <div className="flex rounded-lg overflow-hidden border border-border">
-            <button onClick={() => onUnit('kb')} className={`px-3 py-2 text-sm font-medium transition-colors cursor-pointer ${unit === 'kb' ? 'bg-primary-600 text-white' : 'bg-surface text-muted hover:bg-surface-2'}`}>
+            <button onClick={() => onUnit('kb')} className={`px-3 py-2 text-sm font-medium transition-colors cursor-pointer ${unit === 'kb' ? 'bg-primary-700 text-white' : 'bg-surface text-muted hover:bg-surface-2'}`}>
               KB/s
             </button>
-            <button onClick={() => onUnit('mb')} className={`px-3 py-2 text-sm font-medium transition-colors cursor-pointer ${unit === 'mb' ? 'bg-primary-600 text-white' : 'bg-surface text-muted hover:bg-surface-2'}`}>
+            <button onClick={() => onUnit('mb')} className={`px-3 py-2 text-sm font-medium transition-colors cursor-pointer ${unit === 'mb' ? 'bg-primary-700 text-white' : 'bg-surface text-muted hover:bg-surface-2'}`}>
               MB/s
             </button>
           </div>

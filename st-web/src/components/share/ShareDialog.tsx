@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X, Link2, Lock, Globe, Copy, Download, RefreshCw } from 'lucide-react';
 import api from '../../lib/api';
 import { useToast } from '../ui/Toast';
+import { useModalA11y } from '../ui/useModalA11y';
 import type { FileShare, CreateShareRequest } from '../../types';
 import { PERMISSION_KEYS, legacyPermissionFromPerms } from '../../lib/permissions';
 import QRCode from 'qrcode';
@@ -14,6 +15,8 @@ interface Props {
 
 export default function ShareDialog({ fileNodeId, fileName, onClose }: Props) {
   const { showToast } = useToast();
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalA11y(panelRef, onClose);
   const [shareType, setShareType] = useState(0);
   const [password, setPassword] = useState(() => generateShareCode());
   const [expirePreset, setExpirePreset] = useState(2); // 默认7天
@@ -137,7 +140,12 @@ export default function ShareDialog({ fileNodeId, fileName, onClose }: Props) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 overscroll-contain" role="presentation" onClick={onClose}>
       <div
-        className="w-full max-w-md bg-surface rounded-xl shadow-lg border border-border overflow-hidden animate-scale-in"
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="分享文件"
+        tabIndex={-1}
+        className="w-full max-w-md bg-surface rounded-xl shadow-lg border border-border overflow-hidden animate-scale-in focus:outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -167,7 +175,7 @@ export default function ShareDialog({ fileNodeId, fileName, onClose }: Props) {
               />
               <button
                 onClick={copyLink}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-600 text-white text-xs font-medium rounded-lg hover:bg-primary-700 transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-primary-700 text-white text-xs font-medium rounded-lg hover:bg-primary-800 transition-colors cursor-pointer"
               >
                 <Copy className="w-3.5 h-3.5" aria-hidden />
                 复制
@@ -212,7 +220,7 @@ export default function ShareDialog({ fileNodeId, fileName, onClose }: Props) {
                   onClick={() => setShareType(0)}
                   className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition cursor-pointer ${
                     shareType === 0
-                      ? 'bg-primary-500/10 text-primary-600 ring-1 ring-primary-200'
+                      ? 'bg-primary-500/10 text-primary-strong ring-1 ring-primary-200'
                       : 'bg-surface-2 text-muted hover:bg-surface-2'
                   }`}
                 >
@@ -292,7 +300,7 @@ export default function ShareDialog({ fileNodeId, fileName, onClose }: Props) {
                     onClick={() => setExpirePreset(idx)}
                     className={`flex-1 py-2 rounded-lg text-xs font-medium transition cursor-pointer ${
                       expirePreset === idx
-                        ? 'bg-primary-500/10 text-primary-600 ring-1 ring-primary-200'
+                        ? 'bg-primary-500/10 text-primary-strong ring-1 ring-primary-200'
                         : 'bg-surface-2 text-muted hover:bg-surface-2'
                     }`}
                   >
@@ -305,7 +313,7 @@ export default function ShareDialog({ fileNodeId, fileName, onClose }: Props) {
             <button
               onClick={handleCreate}
               disabled={loading}
-              className="w-full py-2.5 bg-primary-600 text-white text-sm font-medium rounded-md hover:bg-primary-700 transition-colors cursor-pointer disabled:opacity-50"
+              className="w-full py-2.5 bg-primary-700 text-white text-sm font-medium rounded-md hover:bg-primary-800 transition-colors cursor-pointer disabled:opacity-50"
             >
               {loading ? '创建中…' : '创建分享'}
             </button>

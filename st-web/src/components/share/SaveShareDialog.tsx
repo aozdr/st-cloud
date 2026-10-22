@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { FileTreeNode, ShareSaveVO } from '../../types';
 import api from '../../lib/api';
 import { X, FolderClosed, FolderOpen, ChevronRight, Save } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useToast } from '../ui/Toast';
+import { useModalA11y } from '../ui/useModalA11y';
 
 interface Props {
   shareCode: string;
@@ -24,6 +25,8 @@ export default function SaveShareDialog({ shareCode, password, sourceName, isFol
   const [expanded, setExpanded] = useState<Set<string>>(new Set(['0']));
   const [loading, setLoading] = useState(false);
   const { showToast } = useToast();
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalA11y(panelRef, onClose);
 
   useEffect(() => {
     api.get<FileTreeNode[]>('/file/tree').then(setTree).catch(() => {});
@@ -60,7 +63,7 @@ export default function SaveShareDialog({ shareCode, password, sourceName, isFol
         <div
           className={cn(
             'flex items-center gap-1.5 px-2 py-1.5 rounded-md cursor-pointer transition-colors text-sm',
-            targetId === node.id ? 'bg-primary-500/10 text-primary-600 font-medium' : 'hover:bg-surface-2 text-muted',
+            targetId === node.id ? 'bg-primary-500/10 text-primary-strong font-medium' : 'hover:bg-surface-2 text-muted',
           )}
           style={{ paddingLeft: `${level * 20 + 8}px` }}
           onClick={() => setTargetId(node.id)}
@@ -80,7 +83,7 @@ export default function SaveShareDialog({ shareCode, password, sourceName, isFol
             <span className="w-4" />
           )}
           {targetId === node.id ? (
-            <FolderOpen className="w-4 h-4 text-primary-600 flex-shrink-0" />
+            <FolderOpen className="w-4 h-4 text-primary-strong flex-shrink-0" />
           ) : (
             <FolderClosed className="w-4 h-4 text-amber-500 flex-shrink-0" />
           )}
@@ -93,7 +96,7 @@ export default function SaveShareDialog({ shareCode, password, sourceName, isFol
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 overscroll-contain" role="presentation" onClick={onClose}>
-      <div className="w-full max-w-md bg-surface rounded-xl shadow-lg border border-border overflow-hidden animate-scale-in" onClick={(e) => e.stopPropagation()}>
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-label="保存分享内容" tabIndex={-1} className="w-full max-w-md bg-surface rounded-xl shadow-lg border border-border overflow-hidden animate-scale-in focus:outline-none" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center">
@@ -116,12 +119,12 @@ export default function SaveShareDialog({ shareCode, password, sourceName, isFol
             <div
               className={cn(
                 'flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-colors text-sm',
-                targetId === '0' ? 'bg-primary-500/10 text-primary-600 font-medium' : 'hover:bg-surface-2 text-muted',
+                targetId === '0' ? 'bg-primary-500/10 text-primary-strong font-medium' : 'hover:bg-surface-2 text-muted',
               )}
               onClick={() => setTargetId('0')}
             >
               {targetId === '0' ? (
-                <FolderOpen className="w-4 h-4 text-primary-600 flex-shrink-0" />
+                <FolderOpen className="w-4 h-4 text-primary-strong flex-shrink-0" />
               ) : (
                 <FolderClosed className="w-4 h-4 text-amber-500 flex-shrink-0" />
               )}

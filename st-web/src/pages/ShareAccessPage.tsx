@@ -246,7 +246,7 @@ export default function ShareAccessPage() {
                         className={`text-sm transition-colors cursor-pointer ${
                           i === breadcrumbs.length - 1
                             ? 'text-fg font-medium'
-                            : 'text-muted hover:text-primary-600'
+                            : 'text-muted hover:text-primary-strong'
                         }`}
                       >
                         {i === 0 && <Folder className="w-3.5 h-3.5 inline mr-1 -mt-0.5" />}
@@ -266,7 +266,7 @@ export default function ShareAccessPage() {
                       {canSaveShare && (
                         <button
                           onClick={handleSave}
-                          className="flex items-center gap-1.5 text-xs text-primary-600 hover:text-primary-600 cursor-pointer"
+                          className="flex items-center gap-1.5 text-xs text-primary-strong hover:text-primary-strong cursor-pointer"
                         >
                           <Save className="w-3.5 h-3.5" aria-hidden />
                           保存到云盘
@@ -274,7 +274,7 @@ export default function ShareAccessPage() {
                       )}
                       <button
                         onClick={() => handleDownload()}
-                        className="flex items-center gap-1.5 text-xs text-primary-600 hover:text-primary-600 cursor-pointer"
+                        className="flex items-center gap-1.5 text-xs text-primary-strong hover:text-primary-strong cursor-pointer"
                       >
                         <Download className="w-3.5 h-3.5" aria-hidden />
                         下载整个文件夹
@@ -349,7 +349,7 @@ export default function ShareAccessPage() {
                                   const fileIdx = fileList.filter(f => f.nodeType === 1).findIndex(f => f.id === file.id);
                                   setPreviewIndex(fileIdx);
                                 }}
-                                className="p-1 text-muted hover:text-primary-600 cursor-pointer transition-colors"
+                                className="p-1 text-muted hover:text-primary-strong cursor-pointer transition-colors"
                                 title="预览" aria-label="预览"
                               >
                                 <Eye className="w-4 h-4" aria-hidden />
@@ -361,7 +361,7 @@ export default function ShareAccessPage() {
                                   e.stopPropagation();
                                   handleDownload(file.id);
                                 }}
-                                className="p-1 text-muted hover:text-primary-600 cursor-pointer transition-colors"
+                                className="p-1 text-muted hover:text-primary-strong cursor-pointer transition-colors"
                                 title="下载" aria-label="下载"
                               >
                                 <Download className="w-4 h-4" aria-hidden />
@@ -373,7 +373,7 @@ export default function ShareAccessPage() {
                                   e.stopPropagation();
                                   openEditorPreview(file.id);
                                 }}
-                                className="p-1 text-muted hover:text-primary-600 cursor-pointer transition-colors"
+                                className="p-1 text-muted hover:text-primary-strong cursor-pointer transition-colors"
                                 title="在线编辑" aria-label="在线编辑"
                               >
                                 <Edit3 className="w-4 h-4" aria-hidden />
@@ -445,7 +445,7 @@ export default function ShareAccessPage() {
                 {canDownloadShare && (
                   <button
                     onClick={() => handleDownload()}
-                    className="w-full flex items-center justify-center gap-2 py-3 bg-primary-600 text-white text-sm font-medium rounded-md hover:bg-primary-700 transition-colors cursor-pointer"
+                    className="w-full flex items-center justify-center gap-2 py-3 bg-primary-700 text-white text-sm font-medium rounded-md hover:bg-primary-800 transition-colors cursor-pointer"
                   >
                     <Download className="w-4 h-4" aria-hidden />
                     下载文件
@@ -479,7 +479,7 @@ export default function ShareAccessPage() {
             <div className="p-6 space-y-5">
               <div className="flex flex-col items-center text-center py-4">
                 <div className="w-12 h-12 rounded-full bg-primary-500/10 flex items-center justify-center mb-3">
-                  <Lock className="w-5 h-5 text-primary-600" />
+                  <Lock className="w-5 h-5 text-primary-strong" />
                 </div>
                 <p className="text-sm text-muted">请输入提取码以访问分享文件</p>
               </div>
@@ -525,7 +525,7 @@ export default function ShareAccessPage() {
               <button
                 onClick={handleAccess}
                 disabled={loading}
-                className="w-full py-3 bg-primary-600 text-white text-sm font-medium rounded-md hover:bg-primary-700 transition-colors cursor-pointer disabled:opacity-50"
+                className="w-full py-3 bg-primary-700 text-white text-sm font-medium rounded-md hover:bg-primary-800 transition-colors cursor-pointer disabled:opacity-50"
               >
                 {loading ? '验证中…' : '访问文件'}
               </button>

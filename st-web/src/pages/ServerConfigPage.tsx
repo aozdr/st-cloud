@@ -52,7 +52,7 @@ export default function ServerConfigPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-surface-2">
-        <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary-strong" />
       </div>
     );
   }
@@ -70,7 +70,7 @@ export default function ServerConfigPage() {
 
         <div className="bg-surface rounded-xl border border-border shadow-sm p-6">
           <div className="flex items-center gap-2 mb-1">
-            <Server className="w-5 h-5 text-primary-600" />
+            <Server className="w-5 h-5 text-primary-strong" />
             <h1 className="text-lg font-semibold text-fg">服务器设置</h1>
           </div>
           <p className="text-sm text-muted mb-5">配置星云盘服务端地址</p>

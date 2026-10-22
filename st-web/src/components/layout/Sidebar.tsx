@@ -162,7 +162,7 @@ function Sidebar({ mobileOpen, onClose }: SidebarProps) {
       'group relative flex items-center gap-2.5 px-2.5 h-[38px] rounded-lg text-sm transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
       collapsed && 'lg:justify-center lg:px-0',
       isActive
-        ? 'text-primary-600 bg-primary-100/70 dark:bg-primary-500/15 font-medium'
+        ? 'text-primary-strong bg-primary-50 dark:bg-primary-500/15 font-medium'
         : 'text-muted hover:text-fg hover:bg-bg-hover dark:hover:bg-white/10'
     );
 
@@ -213,7 +213,7 @@ function Sidebar({ mobileOpen, onClose }: SidebarProps) {
             onClick={handleUploadClick}
             aria-label="上传文件"
             className={cn(
-              'w-full flex items-center justify-center gap-2 h-9 px-4 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 active:bg-primary-800 transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
+              'w-full flex items-center justify-center gap-2 h-9 px-4 bg-primary-700 text-white text-sm font-medium rounded-lg hover:bg-primary-800 active:bg-primary-900 transition-colors duration-150 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-bg',
               collapsed && 'lg:px-0'
             )}
           >
@@ -250,7 +250,7 @@ function Sidebar({ mobileOpen, onClose }: SidebarProps) {
             >
               {({ isActive }) => (
                 <>
-                  <item.icon className={cn('w-5 h-5 flex-shrink-0 transition-colors', isActive ? 'text-primary-600' : 'text-muted group-hover:text-fg')} aria-hidden />
+                  <item.icon className={cn('w-5 h-5 flex-shrink-0 transition-colors', isActive ? 'text-primary-strong' : 'text-muted group-hover:text-fg')} aria-hidden />
                   {!collapsed && <span className="hidden lg:inline">{item.label}</span>}
                   <span className="lg:hidden">{item.label}</span>
                   {/* 拖拽排序提示：悬停显示抓手图标 */}

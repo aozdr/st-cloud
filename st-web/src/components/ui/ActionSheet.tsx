@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, type LucideIcon } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { useModalA11y } from './useModalA11y';
 
 export interface ActionSheetItem {
   label: string;
@@ -24,6 +25,8 @@ interface ActionSheetProps {
  */
 export default function ActionSheet({ open, title, items, onClose }: ActionSheetProps) {
   const [closing, setClosing] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalA11y(panelRef, onClose, { open });
 
   useEffect(() => {
     if (open) setClosing(false);
@@ -37,7 +40,7 @@ export default function ActionSheet({ open, title, items, onClose }: ActionSheet
   };
 
   return createPortal(
-    <div className="fixed inset-0 z-[60] flex flex-col justify-end" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-[60] flex flex-col justify-end" role="dialog" aria-modal="true" aria-label={title || '操作菜单'}>
       {/* 遮罩 */}
       <div
         className="absolute inset-0 bg-black/50 animate-fade-in"
@@ -46,8 +49,10 @@ export default function ActionSheet({ open, title, items, onClose }: ActionSheet
       />
       {/* 菜单面板 */}
       <div
+        ref={panelRef}
+        tabIndex={-1}
         className={cn(
-          'relative bg-surface rounded-t-2xl shadow-float pb-safe',
+          'relative bg-surface rounded-t-2xl shadow-float pb-safe focus:outline-none',
           closing ? 'animate-sheet-down' : 'animate-sheet-up'
         )}
       >

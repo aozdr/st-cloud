@@ -52,14 +52,14 @@ function FileBreadcrumb({
           />
           <button
             onClick={onPathSubmit}
-            className="text-xs text-white bg-primary-600 rounded-md px-2 py-1 hover:bg-primary-700 cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="text-xs text-white bg-primary-700 rounded-md px-2.5 min-h-8 hover:bg-primary-800 cursor-pointer whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             转到
           </button>
           <button
             onClick={() => { setPathEditMode(false); setPathError(false); }}
             aria-label="取消"
-            className="text-muted hover:text-fg cursor-pointer p-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+            className="text-muted hover:text-fg cursor-pointer w-8 h-8 flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
           >
             <X className="w-4 h-4" aria-hidden />
           </button>
@@ -75,7 +75,7 @@ function FileBreadcrumb({
             onClick={(e) => { e.stopPropagation(); onNavigateToPath('/'); }}
             aria-label="根目录"
             title="根目录"
-            className="flex items-center gap-1 px-1.5 py-1 rounded-md text-muted hover:bg-surface-2 hover:text-primary-600 transition-colors flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex items-center gap-1 px-1.5 min-h-8 rounded-md text-muted hover:bg-surface-2 hover:text-primary-strong transition-colors flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <Home className="w-4 h-4" aria-hidden />
           </button>
@@ -88,10 +88,10 @@ function FileBreadcrumb({
                 <button
                   onClick={(e) => { e.stopPropagation(); onNavigateToPath(seg.path); }}
                   className={cn(
-                    'px-1.5 py-1 rounded-md text-[13px] transition-colors truncate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                    'px-1.5 min-h-8 inline-flex items-center rounded-md text-[13px] transition-colors truncate focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                     idx === pathSegments.length - 1
                       ? 'text-fg font-medium'
-                      : 'text-muted hover:bg-surface-2 hover:text-primary-600',
+                      : 'text-muted hover:bg-surface-2 hover:text-primary-strong',
                   )}
                   title={seg.name}
                 >
@@ -104,7 +104,7 @@ function FileBreadcrumb({
             onClick={onEnterEditMode}
             aria-label="编辑路径"
             title="编辑路径"
-            className="flex items-center justify-center w-7 h-7 rounded-md text-muted/60 hover:text-primary-600 hover:bg-surface-2 transition-colors flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="flex items-center justify-center w-8 h-8 rounded-md text-muted/60 hover:text-primary-strong hover:bg-surface-2 transition-colors flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <Pencil className="w-3.5 h-3.5" aria-hidden />
           </button>

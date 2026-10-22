@@ -12,9 +12,9 @@ import { personalFileSource } from '../lib/fileSource';
 import PreviewModal from '../components/preview/PreviewModal';
 
 const QUICK_CARDS = [
-  { label: '图片', icon: ImageIcon, type: 'image', tile: 'bg-primary-100 text-primary-600' },
+  { label: '图片', icon: ImageIcon, type: 'image', tile: 'bg-primary-100 text-primary-strong' },
   { label: '视频', icon: Video, type: 'video', tile: 'bg-violet-500/15 text-violet-600' },
-  { label: '文档', icon: FileText, type: 'document', tile: 'bg-primary-50 text-primary-600' },
+  { label: '文档', icon: FileText, type: 'document', tile: 'bg-primary-50 text-primary-strong' },
   { label: '音乐', icon: Music, type: 'audio', tile: 'bg-orange-500/15 text-orange-600' },
   { label: '压缩包', icon: Archive, type: 'archive', tile: 'bg-violet-500/15 text-violet-600' },
 ];
@@ -123,7 +123,7 @@ export default function HomePage() {
         <section>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-semibold text-fg">快捷访问</h2>
-            <button onClick={() => navigate('/files')} className="text-xs text-muted hover:text-primary-600 flex items-center gap-1 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded">
+            <button onClick={() => navigate('/files')} className="text-xs text-muted hover:text-primary-strong flex items-center gap-1 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded">
               全部文件 <ChevronRight className="w-3 h-3" aria-hidden />
             </button>
           </div>
@@ -152,7 +152,7 @@ export default function HomePage() {
                 <h2 className="text-base font-semibold text-fg">我的收藏</h2>
                 <span className="text-xs text-muted tabular-nums">{favFiles.length}</span>
               </div>
-              <button onClick={() => navigate('/favorites')} className="text-xs text-muted hover:text-primary-600 flex items-center gap-1 cursor-pointer transition-colors">
+              <button onClick={() => navigate('/favorites')} className="text-xs text-muted hover:text-primary-strong flex items-center gap-1 cursor-pointer transition-colors">
                 查看全部 <ChevronRight className="w-3 h-3" aria-hidden />
               </button>
             </div>

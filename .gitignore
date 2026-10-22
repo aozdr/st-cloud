@@ -92,3 +92,7 @@ TRANSFER_FLOATING_WIDGET_IMPLEMENTATION.md
 .ai/docs/**/commit-paths.txt
 # 前端测试环境构建产物
 st-web/dist-test/
+
+# 本地构建/调试产物
+.run/
+st-web/dist-desktop-check/

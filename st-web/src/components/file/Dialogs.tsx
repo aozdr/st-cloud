@@ -3,6 +3,7 @@ import type { BlankFileType, FileNode } from '../../types';
 import { X, FolderPlus, FolderOpen, Pencil, FilePlus, Upload } from 'lucide-react';
 import { getFileTypeConfig, cn } from '../../lib/utils';
 import { useToast } from '../ui/Toast';
+import { useModalA11y } from '../ui/useModalA11y';
 
 /** 各类型默认文件名（与后端 DEFAULT_NAMES 一致；用户可修改） */
 const DEFAULT_FILE_NAMES: Record<BlankFileType, string> = {
@@ -32,7 +33,9 @@ export function CreateFileDialog({ open, type, onCreate, onClose }: {
   const inputRef = useRef<HTMLInputElement>(null);
   // 打开后待全选标记：默认文件名提交后执行一次全选，便于用户直接输入覆盖
   const selectPendingRef = useRef(false);
+  const panelRef = useRef<HTMLDivElement>(null);
   const { showToast } = useToast();
+  useModalA11y(panelRef, onClose, { open: open && !!type, initialFocusRef: inputRef });
 
   useEffect(() => {
     if (open && type) {
@@ -67,11 +70,11 @@ export function CreateFileDialog({ open, type, onCreate, onClose }: {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content w-[480px] max-w-[92vw]" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-overlay" onClick={onClose} role="presentation">
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-label={`新建${FILE_TYPE_LABELS[type]}`} tabIndex={-1} className="modal-content w-[480px] max-w-[92vw] focus:outline-none" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
           <div className="flex items-center gap-2">
-            <FilePlus className="w-4 h-4 text-primary-600" />
+            <FilePlus className="w-4 h-4 text-primary-strong" />
             <h3 className="text-base font-semibold text-fg">新建{FILE_TYPE_LABELS[type]}</h3>
           </div>
           <button onClick={onClose} aria-label="关闭" className="text-muted hover:text-fg cursor-pointer rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
@@ -116,6 +119,8 @@ export function CreateFolderDialog({ open, parentId, onCreate, onClose, onSucces
     if (open) setName('');
   }, [open]);
   const { showToast } = useToast();
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalA11y(panelRef, onClose, { open });
 
   if (!open) return null;
 
@@ -133,11 +138,11 @@ export function CreateFolderDialog({ open, parentId, onCreate, onClose, onSucces
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content w-[480px] max-w-[92vw]" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-overlay" onClick={onClose} role="presentation">
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-label="新建文件夹" tabIndex={-1} className="modal-content w-[480px] max-w-[92vw] focus:outline-none" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
           <div className="flex items-center gap-2">
-            <FolderPlus className="w-4 h-4 text-primary-600" />
+            <FolderPlus className="w-4 h-4 text-primary-strong" />
             <h3 className="text-base font-semibold text-fg">新建文件夹</h3>
           </div>
           <button onClick={onClose} aria-label="关闭" className="text-muted hover:text-fg cursor-pointer rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
@@ -182,6 +187,8 @@ export function RenameDialog({ node, onRename, onClose, onSuccess }: {
     if (node) setName(node.name);
   }, [node]);
   const { showToast } = useToast();
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalA11y(panelRef, onClose, { open: !!node });
 
   if (!node) return null;
 
@@ -205,11 +212,11 @@ export function RenameDialog({ node, onRename, onClose, onSuccess }: {
   const Icon = config.icon;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content w-[480px] max-w-[92vw]" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-overlay" onClick={onClose} role="presentation">
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-label="重命名" tabIndex={-1} className="modal-content w-[480px] max-w-[92vw] focus:outline-none" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
           <div className="flex items-center gap-2">
-            <Pencil className="w-4 h-4 text-primary-600" />
+            <Pencil className="w-4 h-4 text-primary-strong" />
             <h3 className="text-base font-semibold text-fg">重命名</h3>
           </div>
           <button onClick={onClose} aria-label="关闭" className="text-muted hover:text-fg cursor-pointer rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
@@ -253,7 +260,7 @@ export function EmptyState({ onCreateFolder, onCreateUpload }: {
     <div className="flex flex-col items-center justify-center h-full py-20 px-4">
       {/* UI_DESIGN_SPEC §30：56px 图标 + 16px 标题 + 13px 描述，不做大插画 */}
       <div className="w-14 h-14 rounded-2xl bg-primary-100 flex items-center justify-center mb-4">
-        <FolderPlus className="w-6 h-6 text-primary-600" aria-hidden />
+        <FolderPlus className="w-6 h-6 text-primary-strong" aria-hidden />
       </div>
       <h3 className="text-base font-semibold text-fg mb-1">此文件夹为空</h3>
       <p className="text-[13px] text-tertiary mb-5 text-center">上传文件或创建文件夹开始管理你的内容</p>

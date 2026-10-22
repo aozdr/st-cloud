@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import type { FileTreeNode } from '../../types';
 import { X, FolderClosed, ChevronRight, FolderOpen } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import { useToast } from '../ui/Toast';
+import { useModalA11y } from '../ui/useModalA11y';
 
 interface Props {
   nodeIds: string[];
@@ -19,6 +20,8 @@ export default function MoveDialog({ nodeIds, mode, loadTree, onConfirm, onClose
   const [targetId, setTargetId] = useState('0');
   const [expanded, setExpanded] = useState<Set<string>>(new Set(['0']));
   const [loading, setLoading] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalA11y(panelRef, onClose);
 
   useEffect(() => {
     loadTree().then(setTree).catch(() => {});
@@ -50,7 +53,7 @@ export default function MoveDialog({ nodeIds, mode, loadTree, onConfirm, onClose
         <div
           className={cn(
             'flex items-center gap-1.5 px-2 py-1.5 rounded-md cursor-pointer transition-colors text-sm',
-            targetId === node.id ? 'bg-primary-500/10 text-primary-600 font-medium' : 'hover:bg-surface-2 text-muted'
+            targetId === node.id ? 'bg-primary-500/10 text-primary-strong font-medium' : 'hover:bg-surface-2 text-muted'
           )}
           style={{ paddingLeft: `${level * 20 + 8}px` }}
           onClick={() => setTargetId(node.id)}
@@ -66,7 +69,7 @@ export default function MoveDialog({ nodeIds, mode, loadTree, onConfirm, onClose
             <span className="w-4" />
           )}
           {targetId === node.id ? (
-            <FolderOpen className="w-4 h-4 text-primary-600 flex-shrink-0" />
+            <FolderOpen className="w-4 h-4 text-primary-strong flex-shrink-0" />
           ) : (
             <FolderClosed className="w-4 h-4 text-amber-500 flex-shrink-0" />
           )}
@@ -78,8 +81,8 @@ export default function MoveDialog({ nodeIds, mode, loadTree, onConfirm, onClose
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content w-[480px] max-w-[92vw] max-h-[70vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-overlay" onClick={onClose} role="presentation">
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-label={mode === 'move' ? '移动到' : '复制到'} tabIndex={-1} className="modal-content w-[480px] max-w-[92vw] max-h-[70vh] flex flex-col focus:outline-none" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
           <h3 className="text-base font-semibold text-fg">
             {mode === 'move' ? '移动到' : '复制到'}
@@ -94,12 +97,12 @@ export default function MoveDialog({ nodeIds, mode, loadTree, onConfirm, onClose
           <div
             className={cn(
               'flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer transition-colors text-sm',
-              targetId === '0' ? 'bg-primary-500/10 text-primary-600 font-medium' : 'hover:bg-surface-2 text-muted'
+              targetId === '0' ? 'bg-primary-500/10 text-primary-strong font-medium' : 'hover:bg-surface-2 text-muted'
             )}
             onClick={() => setTargetId('0')}
           >
             {targetId === '0' ? (
-              <FolderOpen className="w-4 h-4 text-primary-600 flex-shrink-0" />
+              <FolderOpen className="w-4 h-4 text-primary-strong flex-shrink-0" />
             ) : (
               <FolderClosed className="w-4 h-4 text-amber-500 flex-shrink-0" />
             )}

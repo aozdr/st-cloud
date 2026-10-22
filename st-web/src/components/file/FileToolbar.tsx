@@ -12,6 +12,12 @@ export type ViewMode = 'list' | 'grid' | 'waterfall';
 /** 网格视图图标大小：小 / 中 / 大 */
 export type IconSize = 'sm' | 'md' | 'lg';
 
+const SORT_OPTIONS: Array<{ value: SortBy; label: string }> = [
+  { value: 'name', label: '名称' },
+  { value: 'size', label: '大小' },
+  { value: 'time', label: '修改时间' },
+];
+
 interface FileToolbarProps {
   has: (perm: string) => boolean;
   selectedCount: number;
@@ -57,15 +63,23 @@ function FileToolbar({
   const hasSelection = selectedCount > 0;
   const [newMenuOpen, setNewMenuOpen] = useState(false);
   const [actionsOpen, setActionsOpen] = useState(false);
+  const [sortMenuOpen, setSortMenuOpen] = useState(false);
 
   return (
     <div className="flex items-center overflow-x-auto min-w-0">
-      {/* 左：新建 / 上传文件 */}
+      {/* 左：上传（主操作）/ 新建 */}
       <div className="flex items-center gap-1.5 flex-shrink-0">
+        {has('file:upload') && (
+          <button onClick={onUploadClick} className="btn-primary flex-shrink-0 whitespace-nowrap">
+            <Upload className="w-4 h-4" aria-hidden />
+            <span className="hidden sm:inline">上传文件</span>
+            <span className="sm:hidden">上传</span>
+          </button>
+        )}
         {has('file:upload') && (
           <Popover open={newMenuOpen} onOpenChange={setNewMenuOpen}>
             <PopoverTrigger asChild>
-              <button className="btn-primary flex-shrink-0 whitespace-nowrap">
+              <button className="btn-secondary flex-shrink-0 whitespace-nowrap">
                 <Plus className="w-4 h-4" aria-hidden />
                 <span>新建</span>
                 <ChevronDown className="w-3.5 h-3.5" aria-hidden />
@@ -111,23 +125,17 @@ function FileToolbar({
             </PopoverContent>
           </Popover>
         )}
-        {has('file:upload') && (
-          <button onClick={onUploadClick} className="btn-ghost flex-shrink-0 whitespace-nowrap">
-            <Upload className="w-4 h-4" aria-hidden />
-            <span>上传文件</span>
-          </button>
-        )}
       </div>
 
       {/* 中：选中文件时只保留高频操作，低频批量动作放入更多菜单。 */}
-      <div className="flex items-center gap-1.5 flex-1 min-w-0">
+      <div className="hidden md:flex items-center gap-1.5 flex-1 min-w-0">
         {hasSelection && (
           <>
             <div className="w-px h-5 bg-border-light mx-1.5 flex-shrink-0" />
-            <div className="flex items-center gap-1.5 px-2 py-1 bg-primary-50 dark:bg-primary-500/10 rounded-md text-xs text-primary-600 flex-shrink-0">
+            <div className="flex items-center gap-1.5 px-2 py-1 bg-primary-50 dark:bg-primary-500/10 rounded-md text-xs text-primary-strong flex-shrink-0">
               <span className="font-medium">已选 {selectedCount} 项</span>
               {selectedSize > 0 && <span className="text-primary-400">· {formatSize(selectedSize)}</span>}
-              <button onClick={onClearSelection} aria-label="取消选择" className="text-primary-400 hover:text-primary-600 cursor-pointer ml-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded">
+              <button onClick={onClearSelection} aria-label="取消选择" className="text-primary-400 hover:text-primary-strong cursor-pointer ml-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded">
                 <X className="w-3.5 h-3.5" aria-hidden />
               </button>
             </div>
@@ -192,7 +200,7 @@ function FileToolbar({
       {/* 右：排序 / 刷新 / 视图切换 */}
       <div className="flex items-center gap-1.5 md:gap-3 flex-shrink-0">
         {!hasSelection && (
-          <div className="flex items-center gap-1.5">
+          <div className="hidden md:flex items-center gap-1.5">
             <ArrowDownUp className="w-3.5 h-3.5 text-muted" aria-hidden />
             <Select value={sortBy} onValueChange={(v) => onSortChange(v as SortBy)}>
               <SelectTrigger className="h-7 w-auto gap-1 text-xs border-border px-2.5 py-0.5 font-medium text-muted hover:border-border">
@@ -217,6 +225,57 @@ function FileToolbar({
             </label>
           </div>
         )}
+        {/* 移动端排序入口：桌面端排序控件在 <md 隐藏，用 Popover 补齐排序能力 */}
+        {!hasSelection && (
+          <div className="md:hidden">
+            <Popover open={sortMenuOpen} onOpenChange={setSortMenuOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  className="btn-ghost w-9 h-9 px-0 flex-shrink-0"
+                  aria-label="排序"
+                  title="排序"
+                >
+                  <ArrowDownUp className="w-4 h-4" aria-hidden />
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-60 p-2 md:hidden" align="end" sideOffset={4}>
+                <div className="px-2 pt-1 pb-1.5 text-xs font-medium text-muted">排序方式</div>
+                <div className="flex flex-col gap-0.5">
+                  {SORT_OPTIONS.map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => { onSortChange(option.value); setSortMenuOpen(false); }}
+                      aria-pressed={sortBy === option.value}
+                      className={cn(
+                        'w-full flex items-center justify-between px-2 py-2 rounded-md text-sm text-left cursor-pointer transition-colors',
+                        sortBy === option.value ? 'bg-surface-2 text-primary-strong font-medium' : 'text-fg hover:bg-surface-2',
+                      )}
+                    >
+                      <span>{option.label}</span>
+                      {sortBy === option.value && <span aria-hidden className="text-primary-strong">●</span>}
+                    </button>
+                  ))}
+                </div>
+                <div className="my-1 border-t border-border" />
+                <button
+                  onClick={onSortDirToggle}
+                  aria-label="切换排序方向"
+                  className="w-full flex items-center justify-between px-2 py-2 rounded-md text-sm text-fg hover:bg-surface-2 cursor-pointer transition-colors"
+                >
+                  <span>排序方向</span>
+                  <span className="inline-flex items-center gap-1 text-xs text-muted">
+                    {sortDir === 'asc' ? '升序' : '降序'}
+                    <span aria-hidden>{sortDir === 'asc' ? '↑' : '↓'}</span>
+                  </span>
+                </button>
+                <label className="flex items-center justify-between gap-2 px-2 py-2 text-sm text-fg cursor-pointer select-none">
+                  <span>文件夹优先</span>
+                  <Switch checked={foldersFirst} onCheckedChange={onToggleFoldersFirst} aria-label="文件夹优先" />
+                </label>
+              </PopoverContent>
+            </Popover>
+          </div>
+        )}
         <button onClick={onRefresh} disabled={refreshing} aria-label="刷新" className="btn-ghost" title="刷新">
           <RefreshCw className={cn('w-4 h-4', refreshing && 'animate-spin')} aria-hidden />
         </button>
@@ -224,19 +283,19 @@ function FileToolbar({
           <div className="flex items-center bg-surface-2 rounded-lg p-0.5">
             <button
               onClick={() => onViewChange('list')} aria-label="列表视图" title="列表视图"
-              className={cn('p-1.5 rounded-md cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', view === 'list' ? 'bg-surface text-primary-600 shadow-soft' : 'text-muted hover:text-fg')}
+              className={cn('w-9 h-9 flex items-center justify-center rounded-md cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', view === 'list' ? 'bg-surface text-primary-strong shadow-soft' : 'text-muted hover:text-fg')}
             >
               <List className="w-4 h-4" aria-hidden />
             </button>
             <button
               onClick={() => onViewChange('grid')} aria-label="网格视图" title="网格视图"
-              className={cn('p-1.5 rounded-md cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', view === 'grid' ? 'bg-surface text-primary-600 shadow-soft' : 'text-muted hover:text-fg')}
+              className={cn('w-9 h-9 flex items-center justify-center rounded-md cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', view === 'grid' ? 'bg-surface text-primary-strong shadow-soft' : 'text-muted hover:text-fg')}
             >
               <LayoutGrid className="w-4 h-4" aria-hidden />
             </button>
             {waterfallAvailable && <button
               onClick={() => onViewChange('waterfall')} aria-label="瀑布流视图" title="瀑布流视图"
-              className={cn('p-1.5 rounded-md cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', view === 'waterfall' ? 'bg-surface text-primary-600 shadow-soft' : 'text-muted hover:text-fg')}
+              className={cn('w-9 h-9 flex items-center justify-center rounded-md cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring', view === 'waterfall' ? 'bg-surface text-primary-strong shadow-soft' : 'text-muted hover:text-fg')}
             >
               <Columns3 className="w-4 h-4" aria-hidden />
             </button>}

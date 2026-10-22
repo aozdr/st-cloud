@@ -200,7 +200,7 @@ export const PermissionTree = memo<Props>(function PermissionTree({ groups, sele
                     label={`全选${labelOf(mod)}权限`}
                   />
                   <span className="flex-1 text-sm font-medium text-fg">{labelOf(mod)}</span>
-                  <span className={cn('text-xs tabular-nums', state.selectedCount > 0 && state.selectedCount < state.total ? 'text-primary-600' : 'text-muted')}>
+                  <span className={cn('text-xs tabular-nums', state.selectedCount > 0 && state.selectedCount < state.total ? 'text-primary-strong' : 'text-muted')}>
                     {state.selectedCount}/{state.total}
                   </span>
                 </div>

@@ -55,7 +55,7 @@ function applyDarkToDOM(isDark: boolean) {
   root.style.colorScheme = isDark ? 'dark' : 'light';
   const meta = document.querySelector('meta[name="theme-color"]');
   if (meta) {
-    meta.setAttribute('content', isDark ? '#0F0F11' : '#ffffff');
+    meta.setAttribute('content', isDark ? '#111216' : '#F7F8FA');
   }
   // 同步 Electron 桌面端标题栏与 Windows 三键颜色（网页端无 electronAPI 时忽略）
   window.electronAPI?.setTitleBarTheme?.(isDark);

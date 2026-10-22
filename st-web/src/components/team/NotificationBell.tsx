@@ -26,7 +26,7 @@ const iconTones: Record<string, string> = {
   MENTION: 'bg-info-light text-info',
   TEAM_INVITE: 'bg-success-light text-success',
   MEMBER_CHANGE: 'bg-warning-light text-warning',
-  FILE_CHANGE: 'bg-primary-500/10 text-primary-600',
+  FILE_CHANGE: 'bg-primary-500/10 text-primary-strong',
 };
 
 function timeAgo(iso: string): string {
@@ -272,7 +272,7 @@ export default function NotificationBell() {
 
   return (
     <div className="relative" ref={ref}>
-      <button ref={triggerRef} onClick={handleOpen} className={cn('relative inline-flex h-9 w-9 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface-2 hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer', showList && 'bg-primary-500/10 text-primary-600')} aria-label={unread > 0 ? `通知，${unread} 条未读` : '通知，无未读消息'} aria-haspopup="dialog" aria-expanded={showList} aria-controls="notification-panel">
+      <button ref={triggerRef} onClick={handleOpen} className={cn('relative inline-flex h-9 w-9 items-center justify-center rounded-full text-muted transition-colors hover:bg-surface-2 hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring cursor-pointer', showList && 'bg-primary-500/10 text-primary-strong')} aria-label={unread > 0 ? `通知，${unread} 条未读` : '通知，无未读消息'} aria-haspopup="dialog" aria-expanded={showList} aria-controls="notification-panel">
         <Bell className="h-5 w-5" aria-hidden />
         {unread > 0 && <span className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border-2 border-surface bg-danger px-0.5 text-[10px] font-semibold leading-none text-white tabular-nums">{unread > 99 ? '99+' : unread}</span>}
       </button>
@@ -286,7 +286,7 @@ export default function NotificationBell() {
         >
           <div className="flex items-start justify-between gap-3 px-4 pb-3 pt-4">
             <div className="flex min-w-0 items-center gap-3">
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary-500/10 text-primary-600"><BellRing className="h-5 w-5" aria-hidden /></div>
+              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-primary-500/10 text-primary-strong"><BellRing className="h-5 w-5" aria-hidden /></div>
               <div>
                 <h2 className="text-base font-semibold text-fg">通知</h2>
                 <p className="mt-0.5 text-xs text-muted">最近收到的消息</p>
@@ -295,8 +295,8 @@ export default function NotificationBell() {
             <button type="button" onClick={() => { setShowList(false); triggerRef.current?.focus(); }} className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-muted transition-colors hover:bg-surface-2 hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" aria-label="关闭通知"><X className="h-4 w-4" aria-hidden /></button>
           </div>
           <div className="flex items-center justify-between gap-3 border-y border-border bg-surface-2/60 px-4 py-2.5">
-            <span className="text-xs text-muted">{unread > 0 ? <><strong className="font-semibold tabular-nums text-primary-600">{unread}</strong> 条未读</> : '已读完所有消息'}</span>
-            {unread > 0 && <button type="button" onClick={() => void handleMarkAll()} disabled={markingAll} className="rounded-md px-2 py-1 text-xs font-medium text-primary-600 transition-colors hover:bg-primary-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50">{markingAll ? '处理中…' : '全部标记已读'}</button>}
+            <span className="text-xs text-muted">{unread > 0 ? <><strong className="font-semibold tabular-nums text-primary-strong">{unread}</strong> 条未读</> : '已读完所有消息'}</span>
+            {unread > 0 && <button type="button" onClick={() => void handleMarkAll()} disabled={markingAll} className="rounded-md px-2 py-1 text-xs font-medium text-primary-strong transition-colors hover:bg-primary-500/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50">{markingAll ? '处理中…' : '全部标记已读'}</button>}
           </div>
           <div className="min-h-0 flex-1 overflow-auto sm:max-h-96 sm:flex-none">
             {isListLoading ? (
@@ -338,7 +338,7 @@ export default function NotificationBell() {
             )}
           </div>
           <div className="border-t border-border bg-surface px-4 py-2.5">
-            <button type="button" onClick={() => { setShowList(false); navigate('/following'); }} className="flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-xs font-medium text-muted transition-colors hover:bg-surface-2 hover:text-primary-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <button type="button" onClick={() => { setShowList(false); navigate('/following'); }} className="flex w-full items-center justify-between rounded-lg px-2 py-1.5 text-xs font-medium text-muted transition-colors hover:bg-surface-2 hover:text-primary-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
               <span>管理我的关注</span><ChevronRight className="h-4 w-4" aria-hidden />
             </button>
           </div>

@@ -145,7 +145,7 @@ export default function FollowingPage() {
       <div className="mx-auto w-full max-w-5xl px-4 pb-10 pt-6 sm:px-8 sm:pt-8">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-4">
-            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-primary-500/10 text-primary-600 ring-1 ring-primary-500/10">
+            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-primary-500/10 text-primary-strong ring-1 ring-primary-500/10">
               <BellRing className="h-6 w-6" strokeWidth={1.8} aria-hidden />
             </div>
             <div className="min-w-0">
@@ -166,7 +166,7 @@ export default function FollowingPage() {
               <h2 className="text-sm font-semibold text-fg">关注的内容</h2>
               <p className="mt-0.5 text-xs text-muted">点击名称可打开，取消关注后不再接收该内容的变更提醒</p>
             </div>
-            <button type="button" onClick={() => void reloadLoadedPages(page)} disabled={loading || loadingMore} className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-border text-muted transition-colors hover:border-primary-300 hover:bg-primary-500/5 hover:text-primary-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50" aria-label="刷新关注列表" title="刷新关注列表">
+            <button type="button" onClick={() => void reloadLoadedPages(page)} disabled={loading || loadingMore} className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg border border-border text-muted transition-colors hover:border-primary-300 hover:bg-primary-500/5 hover:text-primary-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50" aria-label="刷新关注列表" title="刷新关注列表">
               <RefreshCw className="h-4 w-4" aria-hidden />
             </button>
           </div>
@@ -185,7 +185,7 @@ export default function FollowingPage() {
             </div>
           ) : empty ? (
             <div className="flex flex-col items-center justify-center px-6 py-16 text-center">
-              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-500/10 text-primary-600"><BellRing className="h-8 w-8" strokeWidth={1.5} aria-hidden /></div>
+              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary-500/10 text-primary-strong"><BellRing className="h-8 w-8" strokeWidth={1.5} aria-hidden /></div>
               <p className="text-base font-semibold text-fg">还没有关注内容</p>
               <p className="mt-1 max-w-sm text-sm text-muted">在文件或文件夹的右键菜单中选择“关注变更”，这里就会显示它</p>
               <button type="button" onClick={() => navigate('/files')} className="btn-primary mt-5">去浏览文件</button>
@@ -200,13 +200,13 @@ export default function FollowingPage() {
                   const isTeam = Boolean(available && record.spaceId);
                   return (
                     <div key={record.watchId} className={cn('flex items-start gap-3 px-4 py-4 transition-colors sm:items-center sm:gap-4 sm:px-6', available ? 'hover:bg-bg-hover' : 'bg-surface-2/40')}>
-                      <div className={cn('flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl', available ? 'bg-primary-500/10 text-primary-600' : 'bg-surface-2 text-muted')}>
+                      <div className={cn('flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl', available ? 'bg-primary-500/10 text-primary-strong' : 'bg-surface-2 text-muted')}>
                         {record.nodeType === 0 ? <FolderOpen className="h-5 w-5" strokeWidth={1.8} aria-hidden /> : <FileText className="h-5 w-5" strokeWidth={1.8} aria-hidden />}
                       </div>
                       {available && target ? (
                         <button type="button" onClick={() => navigate(target)} className="min-w-0 flex-1 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                           <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                            <span className="max-w-full truncate text-sm font-semibold text-fg transition-colors hover:text-primary-600">{record.name || '未命名内容'}</span>
+                            <span className="max-w-full truncate text-sm font-semibold text-fg transition-colors hover:text-primary-strong">{record.name || '未命名内容'}</span>
                             <span className="rounded-md bg-surface-2 px-1.5 py-0.5 text-[11px] font-medium text-muted">{isTeam ? '团队空间' : '个人文件'}</span>
                           </span>
                           <span className="mt-1.5 block truncate text-xs text-muted">{record.path || '根目录'}</span>

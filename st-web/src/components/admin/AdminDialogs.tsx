@@ -119,7 +119,7 @@ export function QuotaEditDialog({ user, onClose, onSave }: {
                   setUnit('GB');
                 }
               }}
-              className="px-3 py-1.5 text-xs text-muted bg-surface-2 border border-border hover:bg-primary-500/10 hover:text-primary-600 hover:border-primary-300 rounded-md cursor-pointer transition-colors"
+              className="px-3 py-1.5 text-xs text-muted bg-surface-2 border border-border hover:bg-primary-500/10 hover:text-primary-strong hover:border-primary-300 rounded-md cursor-pointer transition-colors"
             >
               {preset.label}
             </button>
@@ -214,7 +214,7 @@ export function CloudCapacityEditDialog({ currentCapacity, used, onClose, onSave
                   setUnit('GB');
                 }
               }}
-              className="px-3 py-1.5 text-xs text-muted bg-surface-2 border border-border hover:bg-primary-500/10 hover:text-primary-600 hover:border-primary-300 rounded-md cursor-pointer transition-colors"
+              className="px-3 py-1.5 text-xs text-muted bg-surface-2 border border-border hover:bg-primary-500/10 hover:text-primary-strong hover:border-primary-300 rounded-md cursor-pointer transition-colors"
             >
               {preset.label}
             </button>

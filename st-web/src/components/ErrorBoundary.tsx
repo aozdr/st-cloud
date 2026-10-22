@@ -46,11 +46,7 @@ export default class ErrorBoundary extends Component<Props, State> {
               刷新页面
             </button>
           </div>
-          {this.state.error && (
-            <pre className="mt-6 max-w-2xl w-full text-left text-xs text-muted bg-surface border border-border rounded-lg p-4 overflow-auto">
-              {this.state.error.message}
-            </pre>
-          )}
+          {/* 错误详情只写控制台，避免向用户暴露内部堆栈/接口信息 */}
         </div>
       );
     }

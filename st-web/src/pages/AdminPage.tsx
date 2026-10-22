@@ -14,6 +14,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { usePermission } from '../lib/permission';
+import { useDocumentTitle } from '../lib/useDocumentTitle';
 import { useAuthStore } from '../store/auth';
 import SpeedLimitPanel from '../components/admin/SpeedLimitPanel';
 import RoleManagePanel from '../components/admin/RoleManagePanel';
@@ -27,6 +28,7 @@ const AuditLogPanel = lazy(() => import('../components/admin/AuditLogPanel'));
 type Tab = 'dashboard' | 'users' | 'storage' | 'audit' | 'speedLimit' | 'roles' | 'security';
 
 export default function AdminPage() {
+  useDocumentTitle('/admin');
   const { has, hasAny } = usePermission();
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
@@ -108,7 +110,7 @@ export default function AdminPage() {
                     onClick={() => setTab(t.v)}
                     className={`w-full flex items-center gap-3 pl-7 pr-3 py-2.5 text-sm transition-colors cursor-pointer border-l-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-400 ${
                       active
-                        ? 'border-l-primary-600 bg-primary-600/10 text-primary-600 font-medium'
+                        ? 'border-l-primary-600 bg-primary-600/10 text-primary-strong font-medium'
                         : 'border-l-transparent text-muted hover:text-fg hover:bg-surface'
                     }`}
                   >

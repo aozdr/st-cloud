@@ -101,7 +101,7 @@ function WheelColumn({
                 className={cn(
                   'text-sm transition',
                   item === value
-                    ? 'text-primary-600 font-semibold scale-110'
+                    ? 'text-primary-strong font-semibold scale-110'
                     : 'text-muted hover:text-fg'
                 )}
               >

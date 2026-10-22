@@ -171,14 +171,14 @@ function TransferTaskCard({ task, onPause, onResume, onCancel, onOpenFile, onSho
               <>
                 <button
                   onClick={() => onOpenFile(task.savePath!)}
-                  className="p-1.5 text-muted hover:text-primary-600 hover:bg-primary-500/10 rounded-md cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="p-1.5 text-muted hover:text-primary-strong hover:bg-primary-500/10 rounded-md cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   title="打开文件" aria-label="打开文件"
                 >
                   <FileText className="w-4 h-4" aria-hidden />
                 </button>
                 <button
                   onClick={() => onShowInFolder(task.savePath!)}
-                  className="p-1.5 text-muted hover:text-primary-600 hover:bg-primary-500/10 rounded-md cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="p-1.5 text-muted hover:text-primary-strong hover:bg-primary-500/10 rounded-md cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   title="打开所在文件夹" aria-label="打开所在文件夹"
                 >
                   <FolderOpen className="w-4 h-4" aria-hidden />

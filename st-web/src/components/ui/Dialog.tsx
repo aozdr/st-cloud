@@ -1,5 +1,7 @@
-import { type ReactNode, useEffect, useRef } from 'react';
+import { type ReactNode, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import { useModalA11y } from './useModalA11y';
 
 interface DialogProps {
   onClose: () => void;
@@ -12,45 +14,9 @@ interface DialogProps {
 
 export function Dialog({ onClose, title, description, children, footer, width = 'max-w-md' }: DialogProps) {
   const panelRef = useRef<HTMLDivElement>(null);
+  useModalA11y(panelRef, onClose);
 
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
-  }, [onClose]);
-
-  // Focus trap: focus the panel on open, trap Tab within
-  useEffect(() => {
-    const panel = panelRef.current;
-    if (!panel) return;
-    // 记录打开前的焦点元素，关闭时还原（可访问性要求：键盘用户焦点回到触发按钮）
-    const previouslyFocused = document.activeElement as HTMLElement | null;
-    const focusable = panel.querySelectorAll<HTMLElement>(
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-    );
-    focusable[0]?.focus();
-    const onKeydown = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab' || focusable.length === 0) return;
-      const first = focusable[0];
-      const last = focusable[focusable.length - 1];
-      if (e.shiftKey && document.activeElement === first) {
-        e.preventDefault();
-        last.focus();
-      } else if (!e.shiftKey && document.activeElement === last) {
-        e.preventDefault();
-        first.focus();
-      }
-    };
-    panel.addEventListener('keydown', onKeydown);
-    return () => {
-      panel.removeEventListener('keydown', onKeydown);
-      previouslyFocused?.focus?.();
-    };
-  }, []);
-
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={onClose} role="presentation">
       <div
         ref={panelRef}
@@ -83,6 +49,7 @@ export function Dialog({ onClose, title, description, children, footer, width = 
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, Plus, FolderClosed, X, HardDrive, Pin } from 'lucide-react';
 import api from '../lib/api';
 import { useToast } from '../components/ui/Toast';
+import { useModalA11y } from '../components/ui/useModalA11y';
 import { formatSize, cn } from '../lib/utils';
 import type { TeamSpace, PageResult } from '../types';
 
@@ -13,6 +14,8 @@ export default function TeamPage() {
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
   const [form, setForm] = useState({ spaceName: '', description: '' });
+  const createPanelRef = useRef<HTMLDivElement>(null);
+  useModalA11y(createPanelRef, () => setShowCreate(false), { open: showCreate });
 
   const fetchSpaces = useCallback(async () => {
     setLoading(true);
@@ -69,7 +72,7 @@ export default function TeamPage() {
         </div>
         <button
           onClick={() => setShowCreate(true)}
-          className="flex items-center gap-1.5 px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-md hover:bg-primary-700 transition-colors cursor-pointer"
+          className="flex items-center gap-1.5 px-4 py-2 bg-primary-700 text-white text-sm font-medium rounded-md hover:bg-primary-800 transition-colors cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           创建空间
@@ -98,14 +101,14 @@ export default function TeamPage() {
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="w-12 h-12 bg-primary-500/10 rounded-lg flex items-center justify-center">
-                    <FolderClosed className="w-6 h-6 text-primary-600" />
+                    <FolderClosed className="w-6 h-6 text-primary-strong" />
                   </div>
                   <span className="text-xs text-muted">{space.memberCount} 成员</span>
-                  <button onClick={(e) => handleTogglePin(e, space.id)} className="ml-1 p-0.5 text-muted hover:text-primary-600 cursor-pointer" aria-label="置顶">
-                    <Pin className={cn('w-3.5 h-3.5', space.isPinned === 1 && 'fill-primary-600 text-primary-600')} />
+                  <button onClick={(e) => handleTogglePin(e, space.id)} className="ml-1 p-0.5 text-muted hover:text-primary-strong cursor-pointer" aria-label="置顶">
+                    <Pin className={cn('w-3.5 h-3.5', space.isPinned === 1 && 'fill-primary-600 text-primary-strong')} />
                   </button>
                 </div>
-                <h3 className="text-sm font-semibold text-fg mb-1 group-hover:text-primary-600 transition-colors">
+                <h3 className="text-sm font-semibold text-fg mb-1 group-hover:text-primary-strong transition-colors">
                   {space.spaceName}
                 </h3>
                 <p className="text-xs text-muted mb-3 line-clamp-2 min-h-[2rem]">
@@ -131,7 +134,7 @@ export default function TeamPage() {
       {/* Create space dialog */}
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 overscroll-contain" role="presentation" onClick={() => setShowCreate(false)}>
-          <div className="w-full max-w-md bg-surface rounded-xl shadow-lg border border-border overflow-hidden" onClick={(e) => e.stopPropagation()}>
+          <div ref={createPanelRef} role="dialog" aria-modal="true" aria-label="创建团队空间" tabIndex={-1} className="w-full max-w-md bg-surface rounded-xl shadow-lg border border-border overflow-hidden focus:outline-none" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between px-5 py-4 border-b border-border">
               <h2 className="text-base font-semibold text-fg">创建团队空间</h2>
               <button onClick={() => setShowCreate(false)} className="text-muted hover:text-fg cursor-pointer" aria-label="关闭">
@@ -162,7 +165,7 @@ export default function TeamPage() {
               </div>
               <button
                 onClick={handleCreate}
-                className="w-full py-2.5 bg-primary-600 text-white text-sm font-medium rounded-md hover:bg-primary-700 transition-colors cursor-pointer"
+                className="w-full py-2.5 bg-primary-700 text-white text-sm font-medium rounded-md hover:bg-primary-800 transition-colors cursor-pointer"
               >
                 创建空间
               </button>

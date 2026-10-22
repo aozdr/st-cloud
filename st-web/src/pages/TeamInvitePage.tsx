@@ -43,7 +43,7 @@ export default function TeamInvitePage() {
       <div className="w-full max-w-sm bg-surface rounded-xl shadow-lg border border-border p-8 text-center">
         {status === 'loading' && (
           <>
-            <Loader2 className="w-12 h-12 text-primary-600 mx-auto mb-4 animate-spin" />
+            <Loader2 className="w-12 h-12 text-primary-strong mx-auto mb-4 animate-spin" />
             <p className="text-sm text-muted">正在验证邀请...</p>
           </>
         )}
@@ -53,7 +53,7 @@ export default function TeamInvitePage() {
             <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
             <h2 className="text-base font-semibold text-fg mb-2">加入成功</h2>
             <p className="text-sm text-muted mb-6">已成功加入团队空间</p>
-            <button onClick={handleEnterSpace} className="w-full py-2.5 bg-primary-600 text-white text-sm font-medium rounded-md hover:bg-primary-700 transition-colors cursor-pointer flex items-center justify-center gap-1.5">
+            <button onClick={handleEnterSpace} className="w-full py-2.5 bg-primary-700 text-white text-sm font-medium rounded-md hover:bg-primary-800 transition-colors cursor-pointer flex items-center justify-center gap-1.5">
               <FolderOpen className="w-4 h-4" />
               进入空间
             </button>
@@ -65,7 +65,7 @@ export default function TeamInvitePage() {
             <Info className="w-12 h-12 text-blue-500 mx-auto mb-4" />
             <h2 className="text-base font-semibold text-fg mb-2">提示</h2>
             <p className="text-sm text-muted mb-6">您已是该空间的成员</p>
-            <button onClick={handleEnterSpace} className="w-full py-2.5 bg-primary-600 text-white text-sm font-medium rounded-md hover:bg-primary-700 transition-colors cursor-pointer">
+            <button onClick={handleEnterSpace} className="w-full py-2.5 bg-primary-700 text-white text-sm font-medium rounded-md hover:bg-primary-800 transition-colors cursor-pointer">
               进入空间
             </button>
           </>
@@ -84,10 +84,10 @@ export default function TeamInvitePage() {
 
         {status === 'unauthorized' && (
           <>
-            <FolderOpen className="w-12 h-12 text-primary-600 mx-auto mb-4" />
+            <FolderOpen className="w-12 h-12 text-primary-strong mx-auto mb-4" />
             <h2 className="text-base font-semibold text-fg mb-2">团队空间邀请</h2>
             <p className="text-sm text-muted mb-6">您被邀请加入团队空间<br />请先登录后加入</p>
-            <button onClick={handleLoginRedirect} className="w-full py-2.5 bg-primary-600 text-white text-sm font-medium rounded-md hover:bg-primary-700 transition-colors cursor-pointer">
+            <button onClick={handleLoginRedirect} className="w-full py-2.5 bg-primary-700 text-white text-sm font-medium rounded-md hover:bg-primary-800 transition-colors cursor-pointer">
               登录后加入
             </button>
           </>

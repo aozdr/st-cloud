@@ -1,4 +1,6 @@
+import { useRef } from 'react';
 import { X } from 'lucide-react';
+import { useModalA11y } from './useModalA11y';
 
 interface Props {
   open: boolean;
@@ -21,12 +23,20 @@ const SHORTCUTS: { keys: string; desc: string }[] = [
 ];
 
 export default function ShortcutHelpDialog({ open, onClose }: Props) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalA11y(panelRef, onClose, { open });
+
   if (!open) return null;
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={onClose} role="presentation">
       <div
-        className="modal-content w-[420px] max-w-[92vw]"
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="键盘快捷键"
+        tabIndex={-1}
+        className="modal-content w-[420px] max-w-[92vw] focus:outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">

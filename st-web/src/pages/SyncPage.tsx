@@ -3,6 +3,7 @@ import { RefreshCw, FolderSync, Trash2, Play, Square, Plus, HardDrive, Cloud, Al
 import api from '../lib/api';
 import { isElectron } from '../lib/electron';
 import { useToast } from '../components/ui/Toast';
+import { useModalA11y } from '../components/ui/useModalA11y';
 import { formatDate } from '../lib/utils';
 import type { SyncRootVO, FileNode, SyncExclusionVO, SyncHistoryEntry, SyncStats } from '../types';
 
@@ -14,10 +15,10 @@ interface SyncLogEntry {
 }
 
 const LOG_CONFIG = {
-  upload:   { icon: FileUp,     color: 'text-primary-600',   bg: 'bg-primary-500/10',   label: '上传' },
+  upload:   { icon: FileUp,     color: 'text-primary-strong',   bg: 'bg-primary-500/10',   label: '上传' },
   download: { icon: FileDown,   color: 'text-green-600 dark:text-green-400',     bg: 'bg-green-500/15',     label: '下载' },
   delete:   { icon: FileX,      color: 'text-red-600 dark:text-red-400',       bg: 'bg-red-500/15',        label: '删除' },
-  create:   { icon: FilePlus,   color: 'text-primary-600',   bg: 'bg-primary-500/10',    label: '新建' },
+  create:   { icon: FilePlus,   color: 'text-primary-strong',   bg: 'bg-primary-500/10',    label: '新建' },
   rename:   { icon: FileEdit,   color: 'text-amber-600 dark:text-amber-400',     bg: 'bg-amber-500/15',      label: '重命名' },
   move:     { icon: FolderInput,color: 'text-blue-600',      bg: 'bg-blue-500/15',       label: '移动' },
   copy:     { icon: FolderInput,color: 'text-muted',    bg: 'bg-surface-2',     label: '复制' },
@@ -52,6 +53,8 @@ export default function SyncPage() {
   const [rootStats, setRootStats] = useState<Record<string, SyncStats>>({});
   const [rootHistory, setRootHistory] = useState<Record<string, SyncHistoryEntry[]>>({});
   const [historyFilter, setHistoryFilter] = useState<string>('all');
+  const exclusionsPanelRef = useRef<HTMLDivElement>(null);
+  useModalA11y(exclusionsPanelRef, () => setShowExclusions(null), { open: !!showExclusions });
 
   const fetchRoots = useCallback(async () => {
     setLoading(true);
@@ -215,7 +218,7 @@ export default function SyncPage() {
     <div className="flex flex-col h-full bg-surface">
       <div className="flex items-center justify-between px-5 py-2.5 border-b border-border">
         <div className="flex items-center gap-2">
-          <FolderSync className="w-5 h-5 text-primary-600" />
+          <FolderSync className="w-5 h-5 text-primary-strong" />
           <h1 className="text-base font-semibold text-fg">文件同步</h1>
         </div>
         <div className="flex items-center gap-2">
@@ -253,7 +256,7 @@ export default function SyncPage() {
               <div className="flex items-center gap-4 p-4 cursor-pointer" onClick={() => handleExpandRoot(root.id)}>
                 {expandedRoot === root.id ? <ChevronDown className="w-4 h-4 text-muted flex-shrink-0" /> : <ChevronRight className="w-4 h-4 text-muted flex-shrink-0" />}
                   <div className={'w-10 h-10 rounded-lg flex items-center justify-center ' + (isActive ? 'bg-primary-500/10' : 'bg-surface-2')}>
-                    <HardDrive className={'w-5 h-5 ' + (isActive ? 'text-primary-600' : 'text-muted')} />
+                    <HardDrive className={'w-5 h-5 ' + (isActive ? 'text-primary-strong' : 'text-muted')} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
@@ -303,7 +306,7 @@ export default function SyncPage() {
                   <div className="mt-2 ml-14 p-3 rounded-lg bg-surface-2 border border-border space-y-3">
                     {/* 统计卡 */}
                     <div className="flex items-center gap-4 text-xs">
-                      <span className="flex items-center gap-1.5"><BarChart3 className="w-3.5 h-3.5 text-primary-600" /><span className="text-muted">已同步</span> <span className="font-semibold text-fg">{rootStats[root.id]?.synced ?? 0}</span></span>
+                      <span className="flex items-center gap-1.5"><BarChart3 className="w-3.5 h-3.5 text-primary-strong" /><span className="text-muted">已同步</span> <span className="font-semibold text-fg">{rootStats[root.id]?.synced ?? 0}</span></span>
                       <span className="flex items-center gap-1.5"><AlertTriangle className="w-3.5 h-3.5 text-amber-600" /><span className="text-muted">冲突</span> <span className="font-semibold text-fg">{rootStats[root.id]?.conflict ?? 0}</span></span>
                       <span className="flex items-center gap-1.5"><AlertCircle className="w-3.5 h-3.5 text-red-600" /><span className="text-muted">错误</span> <span className="font-semibold text-fg">{rootStats[root.id]?.error ?? 0}</span></span>
                       <span className="flex items-center gap-1.5"><Settings className="w-3.5 h-3.5 text-muted" /><span className="text-muted">已排除</span> <span className="font-semibold text-fg">{rootStats[root.id]?.excluded ?? 0}</span></span>
@@ -315,7 +318,7 @@ export default function SyncPage() {
                         <span className="text-xs font-medium text-muted">同步历史</span>
                         <div className="flex gap-1 ml-auto">
                           {['all','upload','download','delete','conflict'].map((k) => (
-                            <button key={k} onClick={() => setHistoryFilter(k)} className={'text-xs px-1.5 py-0.5 rounded ' + (historyFilter === k ? 'bg-primary-500/10 text-primary-600' : 'text-muted hover:bg-surface')}>{k === 'all' ? '全部' : k}</button>
+                            <button key={k} onClick={() => setHistoryFilter(k)} className={'text-xs px-1.5 py-0.5 rounded ' + (historyFilter === k ? 'bg-primary-500/10 text-primary-strong' : 'text-muted hover:bg-surface')}>{k === 'all' ? '全部' : k}</button>
                           ))}
                         </div>
                       </div>
@@ -365,7 +368,7 @@ export default function SyncPage() {
                     key={tab.key}
                     onClick={() => setLogFilter(tab.key)}
                     className={'px-2.5 py-1 text-xs rounded-md transition-colors cursor-pointer ' +
-                      (logFilter === tab.key ? 'bg-primary-500/10 text-primary-600 font-medium' : 'text-muted hover:bg-surface-2')}
+                      (logFilter === tab.key ? 'bg-primary-500/10 text-primary-strong font-medium' : 'text-muted hover:bg-surface-2')}
                   >
                     {tab.label}
                     {count > 0 && <span className="ml-1 opacity-60">{count}</span>}
@@ -404,8 +407,8 @@ export default function SyncPage() {
       </div>
 
       {showExclusions && (
-        <div className="modal-overlay" onClick={() => setShowExclusions(null)}>
-          <div className="modal-content w-[480px] max-w-[92vw] p-6" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-overlay" onClick={() => setShowExclusions(null)} role="presentation">
+          <div ref={exclusionsPanelRef} role="dialog" aria-modal="true" aria-label="选择性同步" tabIndex={-1} className="modal-content w-[480px] max-w-[92vw] p-6 focus:outline-none" onClick={(e) => e.stopPropagation()}>
             <h2 className="text-lg font-semibold text-fg mb-4">选择性同步</h2>
             <p className="text-sm text-muted mb-4">排除的路径不会在本地与云端之间同步。</p>
 
@@ -459,6 +462,8 @@ function RegisterDialog({ onClose, onSuccess }: { onClose: () => void; onSuccess
   const [folders, setFolders] = useState<FileNode[]>([]);
   const [selectedFolder, setSelectedFolder] = useState<FileNode | null>(null);
   const [localPath, setLocalPath] = useState('');
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalA11y(panelRef, onClose);
 
   useEffect(() => {
     api.get<{ records?: FileNode[] }>('/file/list', { params: { parentId: '0', page: 1, size: 100 } })
@@ -489,8 +494,8 @@ function RegisterDialog({ onClose, onSuccess }: { onClose: () => void; onSuccess
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content w-[480px] max-w-[92vw] p-6" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-overlay" onClick={onClose} role="presentation">
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-label="添加文件同步" tabIndex={-1} className="modal-content w-[480px] max-w-[92vw] p-6 focus:outline-none" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-lg font-semibold text-fg mb-5">添加文件同步</h2>
 
         <label className="block text-sm font-medium text-muted mb-2">云端文件夹</label>
@@ -502,7 +507,7 @@ function RegisterDialog({ onClose, onSuccess }: { onClose: () => void; onSuccess
               <button
                 key={f.id}
                 onClick={() => setSelectedFolder(f)}
-                className={'w-full flex items-center gap-2 px-3 py-2 text-sm cursor-pointer transition-colors ' + (selectedFolder?.id === f.id ? 'bg-primary-500/10 text-primary-600' : 'hover:bg-surface-2 text-muted')}
+                className={'w-full flex items-center gap-2 px-3 py-2 text-sm cursor-pointer transition-colors ' + (selectedFolder?.id === f.id ? 'bg-primary-500/10 text-primary-strong' : 'hover:bg-surface-2 text-muted')}
               >
                 <Cloud className="w-4 h-4 text-muted" />
                 <span>{f.name}</span>

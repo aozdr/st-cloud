@@ -61,10 +61,10 @@ export default function StorageManageTab() {
       <div className="bg-surface rounded-lg border border-border p-5">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <HardDrive className="w-4 h-4 text-primary-600" />
+            <HardDrive className="w-4 h-4 text-primary-strong" />
             <span className="text-sm font-medium text-muted">云盘总容量</span>
           </div>
-          <button onClick={() => setCloudCapacityOpen(true)} className="text-xs text-primary-600 hover:underline cursor-pointer">编辑</button>
+          <button onClick={() => setCloudCapacityOpen(true)} className="text-xs text-primary-strong hover:underline cursor-pointer">编辑</button>
         </div>
         {(() => {
           const used = stats?.cloudStorageUsed || 0;
@@ -92,7 +92,7 @@ export default function StorageManageTab() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="bg-surface rounded-lg border border-border p-4">
           <div className="flex items-center gap-2 mb-2">
-            <HardDrive className="w-4 h-4 text-primary-600" />
+            <HardDrive className="w-4 h-4 text-primary-strong" />
             <span className="text-xs font-medium text-muted">总存储用量</span>
           </div>
           <p className="text-2xl font-bold text-fg">{formatSize(stats?.totalStorageUsed || 0)}</p>
@@ -176,7 +176,7 @@ export default function StorageManageTab() {
                   <TableCell className="text-center">
                     <button
                       onClick={() => setQuotaTarget(user)}
-                      className="text-muted hover:text-primary-600 transition-colors cursor-pointer"
+                      className="text-muted hover:text-primary-strong transition-colors cursor-pointer"
                       title="修改配额" aria-label="修改配额"
                     >
                       <Edit3 className="w-4 h-4" aria-hidden />

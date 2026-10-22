@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { useToast } from '../ui/Toast';
+import { useModalA11y } from '../ui/useModalA11y';
 import api from '../../lib/api';
 import type { FileNode } from '../../types';
 
@@ -18,6 +19,8 @@ interface Props {
  */
 export default function BatchRenameDialog({ files, onClose, onSuccess }: Props) {
   const { showToast } = useToast();
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalA11y(panelRef, onClose);
   const [mode, setMode] = useState<'prefix' | 'replace' | 'regex'>('prefix');
   const [prefix, setPrefix] = useState('文件');
   const [startNum, setStartNum] = useState(1);
@@ -106,9 +109,14 @@ export default function BatchRenameDialog({ files, onClose, onSuccess }: Props) 
   const preview = getPreview();
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" role="presentation" onClick={onClose}>
       <div
-        className="w-full max-w-lg bg-surface rounded-xl shadow-lg border border-border overflow-hidden animate-scale-in"
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="批量重命名"
+        tabIndex={-1}
+        className="w-full max-w-lg bg-surface rounded-xl shadow-lg border border-border overflow-hidden animate-scale-in focus:outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-border">
@@ -131,7 +139,7 @@ export default function BatchRenameDialog({ files, onClose, onSuccess }: Props) 
                 onClick={() => setMode(opt.v)}
                 className={`flex-1 py-2 rounded-lg text-sm font-medium transition cursor-pointer ${
                   mode === opt.v
-                    ? 'bg-primary-500/10 text-primary-600 ring-1 ring-primary-200'
+                    ? 'bg-primary-500/10 text-primary-strong ring-1 ring-primary-200'
                     : 'bg-surface-2 text-muted hover:text-fg'
                 }`}
               >
@@ -234,7 +242,7 @@ export default function BatchRenameDialog({ files, onClose, onSuccess }: Props) 
               <div key={idx} className="flex items-center gap-2 text-xs">
                 <span className="text-muted truncate flex-1">{item.old}</span>
                 <span className="text-muted">→</span>
-                <span className="text-primary-600 font-medium truncate flex-1">{item.newName}</span>
+                <span className="text-primary-strong font-medium truncate flex-1">{item.newName}</span>
               </div>
             ))}
             {files.length > 5 && (
@@ -245,7 +253,7 @@ export default function BatchRenameDialog({ files, onClose, onSuccess }: Props) 
           <button
             onClick={handleConfirm}
             disabled={loading}
-            className="w-full py-2.5 bg-primary-600 text-white text-sm font-medium rounded-md hover:bg-primary-700 transition-colors cursor-pointer disabled:opacity-50"
+            className="w-full py-2.5 bg-primary-700 text-white text-sm font-medium rounded-md hover:bg-primary-800 transition-colors cursor-pointer disabled:opacity-50"
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">

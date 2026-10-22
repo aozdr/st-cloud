@@ -23,6 +23,7 @@ export interface FileListProps {
   isFavorite: (id: string) => boolean;
   onToggleFavorite: (node: FileNode) => void;
   onContextMenu: (e: React.MouseEvent, node: FileNode) => void;
+  onItemMenu?: (e: React.MouseEvent, node: FileNode) => void;
   onNavigate: (node: FileNode) => void;
   onDoubleClick: (node: FileNode) => void;
   onItemDragStart: (e: React.DragEvent, node: FileNode) => void;
@@ -37,8 +38,8 @@ export interface FileListProps {
 }
 
 /** 按当前视图渲染文件列表（统一 onDoubleClick/拖拽等行为） */
-function FileList({ view, iconSize, onSelectAll, scrollRef, folderSizes, ...common }: FileListProps) {
-  if (view === 'list') return <FileTableView {...common} onSelectAll={onSelectAll} scrollRef={scrollRef} folderSizes={folderSizes} />;
+function FileList({ view, iconSize, onSelectAll, scrollRef, folderSizes, onItemMenu, ...common }: FileListProps) {
+  if (view === 'list') return <FileTableView {...common} onItemMenu={onItemMenu} onSelectAll={onSelectAll} scrollRef={scrollRef} folderSizes={folderSizes} />;
   return <FileGrid {...common} iconSize={iconSize} folderSizes={folderSizes} waterfall={view === 'waterfall'} />;
 }
 

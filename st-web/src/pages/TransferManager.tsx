@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Pause, Play, CheckCircle2,
@@ -13,6 +13,7 @@ import type { TransferTask } from '../types';
 import TransferSettingsDialog from '../components/TransferSettingsDialog';
 import TransferTaskCard from '../components/transfer/TransferTaskCard';
 import TransferHistory, { appendHistory } from '../components/transfer/TransferHistory';
+import { useModalA11y } from '../components/ui/useModalA11y';
 
 type FilterKey = 'all' | 'active' | 'completed' | 'history';
 
@@ -30,6 +31,8 @@ export default function TransferManager() {
   const [deleteTarget, setDeleteTarget] = useState<TransferTask | null>(null);
   const [deleteSourceFile, setDeleteSourceFile] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const deletePanelRef = useRef<HTMLDivElement>(null);
+  useModalA11y(deletePanelRef, () => { if (!deleting) setDeleteTarget(null); }, { open: !!deleteTarget });
   const [transferSettingsOpen, setTransferSettingsOpen] = useState(false);
 
   // 托盘“传输设置”入口：跳转到 ?settings=1 时自动弹出设置对话框。
@@ -190,13 +193,13 @@ export default function TransferManager() {
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-9 h-9 rounded-lg bg-primary-100 flex items-center justify-center flex-shrink-0">
-              <ArrowUpDown className="w-5 h-5 text-primary-600" aria-hidden />
+              <ArrowUpDown className="w-5 h-5 text-primary-strong" aria-hidden />
             </div>
             <div className="min-w-0">
               <h1 className="text-lg font-semibold text-fg leading-tight">传输管理</h1>
               <p className="text-xs text-muted mt-0.5">
                 {activeCount > 0
-                  ? <>上传 {formatSpeed(totalUploadSpeed)} · 下载 {formatSpeed(totalDownloadSpeed)} · <span className="text-primary-600 dark:text-primary-400 font-medium tabular-nums">{activeCount}</span> 个任务进行中</>
+                  ? <>上传 {formatSpeed(totalUploadSpeed)} · 下载 {formatSpeed(totalDownloadSpeed)} · <span className="text-primary-strong dark:text-primary-400 font-medium tabular-nums">{activeCount}</span> 个任务进行中</>
                   : `共 ${tasks.length} 个任务，已完成 ${completedCount} 个`}
               </p>
             </div>
@@ -260,7 +263,7 @@ export default function TransferManager() {
               aria-pressed={isActiveTab}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 text-xs rounded-full cursor-pointer transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${
                 isActiveTab
-                  ? 'bg-primary-600 text-white font-medium'
+                  ? 'bg-primary-700 text-white font-medium'
                   : 'text-muted hover:text-fg hover:bg-surface-2'
               }`}
             >
@@ -297,7 +300,7 @@ export default function TransferManager() {
             <p className="text-xs text-muted mb-5">{emptyCopy[filter].desc}</p>
             <button
               onClick={refresh}
-              className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-primary-600 dark:text-primary-400 bg-primary-500/10 hover:bg-primary-500/15 rounded-lg cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              className="flex items-center gap-1.5 px-4 py-2 text-xs font-medium text-primary-strong dark:text-primary-400 bg-primary-500/10 hover:bg-primary-500/15 rounded-lg cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
               <RefreshCw className="w-3.5 h-3.5" aria-hidden />
               刷新列表
@@ -323,10 +326,16 @@ export default function TransferManager() {
       {deleteTarget && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-fade-in"
+          role="presentation"
           onClick={() => { if (!deleting) setDeleteTarget(null); }}
         >
           <div
-            className="bg-surface rounded-xl shadow-xl w-[440px] max-w-[90vw] p-5 animate-scale-in"
+            ref={deletePanelRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label="删除任务"
+            tabIndex={-1}
+            className="bg-surface rounded-xl shadow-xl w-[440px] max-w-[90vw] p-5 animate-scale-in focus:outline-none"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start gap-3 mb-4">

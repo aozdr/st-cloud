@@ -228,7 +228,7 @@ export default function UploadPanel() {
         >
           <FileUp className="w-5 h-5 text-muted" aria-hidden />
           {activeCount > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 bg-primary-600 text-white text-[11px] font-semibold rounded-full flex items-center justify-center">
+            <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 bg-primary-700 text-white text-[11px] font-semibold rounded-full flex items-center justify-center">
               {activeCount}
             </span>
           )}
@@ -241,7 +241,7 @@ export default function UploadPanel() {
     <div className="fixed bottom-6 right-6 w-96 bg-surface rounded-xl border border-border shadow-lg z-50 animate-slide-up overflow-hidden">
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <div className="flex items-center gap-2">
-          <FileUp className="w-4 h-4 text-primary-600" aria-hidden />
+          <FileUp className="w-4 h-4 text-primary-strong" aria-hidden />
           <span className="text-sm font-semibold text-fg">
             上传队列 {activeCount > 0 && `(${activeCount})`}
           </span>
@@ -249,7 +249,7 @@ export default function UploadPanel() {
         <div className="flex items-center gap-2">
           <button
             onClick={() => navigate('/transfers')}
-            className="flex items-center gap-1 text-xs text-muted hover:text-primary-600 cursor-pointer transition-colors"
+            className="flex items-center gap-1 text-xs text-muted hover:text-primary-strong cursor-pointer transition-colors"
           >
             <ListChecks className="w-3.5 h-3.5" aria-hidden />
             传输列表

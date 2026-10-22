@@ -1,11 +1,11 @@
-import { RefreshCw, Loader2, FolderInput } from 'lucide-react';
+import { RefreshCw, FolderInput } from 'lucide-react';
 import { cn } from '../../lib/utils';
 import FileToolbar from './FileToolbar';
 import FileBreadcrumb from './FileBreadcrumb';
 import FileList from './FileList';
 import { useFolderSizes } from '../../hooks/useFolderSizes';
 import MultiSelectBar from '../ui/MultiSelectBar';
-import { EmptyState } from './Dialogs';
+import { EmptyState, FileListSkeleton } from './Dialogs';
 import GenericEmptyState from '../EmptyState';
 import FileDetailPanel from './FileDetailPanel';
 import FileBrowserDialogs from './FileBrowserDialogs';
@@ -71,6 +71,9 @@ export default function FileBrowser({
 
   // 仅回退当前展示，不把加载中的空列表或混合目录写回用户的持久视图偏好。
   const effectiveView = view === 'waterfall' && !waterfallAvailable ? 'grid' : view;
+  const pageTitle = categoryLabel || (!parentId || parentId === '0'
+    ? '全部文件'
+    : pathSegments[pathSegments.length - 1]?.name || '全部文件');
 
   /** 详情是否打开：页面级详情走 detailOpen prop；未传时回退到内部详情状态 */
   const listDetailOpen = onOpenDetail ? (detailOpen ?? false) : !!detailFile;
@@ -88,8 +91,8 @@ export default function FileBrowser({
       {isDragging && (
         <div className="absolute inset-0 bg-primary-500/10 backdrop-blur-sm border-2 border-dashed border-primary-400 rounded-xl z-40 flex items-center justify-center pointer-events-none">
           <div className="text-center">
-            <div className="w-16 h-16 bg-primary-500/20 rounded-2xl flex items-center justify-center mx-auto mb-3"><FolderInput className="w-8 h-8 text-primary-600" aria-hidden /></div>
-            <p className="text-primary-600 font-medium">{'\u677e\u5f00\u9f20\u6807\u4e0a\u4f20\u6587\u4ef6'}</p>
+            <div className="w-16 h-16 bg-primary-500/20 rounded-2xl flex items-center justify-center mx-auto mb-3"><FolderInput className="w-8 h-8 text-primary-strong" aria-hidden /></div>
+            <p className="text-primary-strong font-medium">{'\u677e\u5f00\u9f20\u6807\u4e0a\u4f20\u6587\u4ef6'}</p>
           </div>
         </div>
       )}
@@ -124,59 +127,10 @@ export default function FileBrowser({
         }}
       >
         <div ref={bandRef} className="bg-surface px-5 md:px-8 pt-3 pb-3">
-          <FileToolbar
-            refreshing={isRefreshing}
-            has={has}
-            selectedCount={selectedIds.size}
-            filesCount={files.length}
-            allSelected={allSelected}
-            selectedSize={selectedSize}
-            canEditSelected={!!editableSelected}
-            onEdit={handleToolbarEdit}
-            sortBy={sortBy}
-            onSortChange={handleToolbarSortChange}
-            sortDir={sortDir}
-            onSortDirToggle={handleSortDirToggle}
-            view={effectiveView}
-            waterfallAvailable={waterfallAvailable}
-            onViewChange={(next) => setView(next === 'waterfall' && !waterfallAvailable ? 'grid' : next)}
-            onNewFolder={handleNewFolderClick}
-            onNewFile={handleNewFile}
-            onUploadClick={handleUploadClick}
-            onDownload={handleToolbarDownload}
-            onMove={handleToolbarMove}
-            onCopy={handleToolbarCopy}
-            onDelete={handleToolbarDelete}
-            onSelectAll={selectAll}
-            onClearSelection={clearSelection}
-            onRefresh={refresh}
-            onBatchRename={handleBatchRenameClick}
-            foldersFirst={foldersFirst}
-            onToggleFoldersFirst={handleToggleFoldersFirst}
-          />
-          <div className="mt-2 flex items-center gap-2">
-            <div className="flex-1 min-w-0">
-              {categoryLabel ? (
-                <div className="flex items-baseline gap-2 min-w-0">
-                  <h1 className="text-lg font-semibold text-fg truncate">{categoryLabel}</h1>
-                  <span className="text-xs text-tertiary whitespace-nowrap">{loading ? '加载中…' : `${total} 项`}</span>
-                </div>
-              ) : (
-                <FileBreadcrumb
-                  currentPath={currentPath}
-                  pathEditMode={pathEditMode}
-                  setPathEditMode={setPathEditMode}
-                  pathInput={pathInput}
-                  setPathInput={setPathInput}
-                  pathError={pathError}
-                  setPathError={setPathError}
-                  onPathSubmit={handlePathSubmit}
-                  onEnterEditMode={enterPathEditMode}
-                  pathSegments={pathSegments}
-                  onNavigateToPath={navigateToPath}
-                  pathInputRef={pathInputRef}
-                />
-              )}
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex items-baseline gap-2 min-w-0 flex-1">
+              <h1 className="text-lg font-semibold text-fg truncate">{pageTitle}</h1>
+              <span className="text-xs text-tertiary whitespace-nowrap">{loading ? '加载中…' : `${total} 项`}</span>
             </div>
             {view === 'grid' && (
               <div className="flex items-center bg-surface-2 rounded-lg p-0.5 flex-shrink-0" role="group" aria-label="图标大小">
@@ -192,7 +146,7 @@ export default function FileBrowser({
                     title={`${label}图标`}
                     className={cn(
                       'h-7 min-w-7 px-1.5 rounded-md text-xs cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                      iconSize === value ? 'bg-surface text-primary-600 shadow-soft font-medium' : 'text-muted hover:text-fg',
+                      iconSize === value ? 'bg-surface text-primary-strong shadow-soft font-medium' : 'text-muted hover:text-fg',
                     )}
                   >
                     {label}
@@ -200,6 +154,56 @@ export default function FileBrowser({
                 ))}
               </div>
             )}
+          </div>
+          {!categoryLabel && (
+            <div className="mt-1.5 min-w-0">
+              <FileBreadcrumb
+                currentPath={currentPath}
+                pathEditMode={pathEditMode}
+                setPathEditMode={setPathEditMode}
+                pathInput={pathInput}
+                setPathInput={setPathInput}
+                pathError={pathError}
+                setPathError={setPathError}
+                onPathSubmit={handlePathSubmit}
+                onEnterEditMode={enterPathEditMode}
+                pathSegments={pathSegments}
+                onNavigateToPath={navigateToPath}
+                pathInputRef={pathInputRef}
+              />
+            </div>
+          )}
+          <div className="mt-3">
+            <FileToolbar
+              refreshing={isRefreshing}
+              has={has}
+              selectedCount={selectedIds.size}
+              filesCount={files.length}
+              allSelected={allSelected}
+              selectedSize={selectedSize}
+              canEditSelected={!!editableSelected}
+              onEdit={handleToolbarEdit}
+              sortBy={sortBy}
+              onSortChange={handleToolbarSortChange}
+              sortDir={sortDir}
+              onSortDirToggle={handleSortDirToggle}
+              view={effectiveView}
+              waterfallAvailable={waterfallAvailable}
+              onViewChange={(next) => setView(next === 'waterfall' && !waterfallAvailable ? 'grid' : next)}
+              onNewFolder={handleNewFolderClick}
+              onNewFile={handleNewFile}
+              onUploadClick={handleUploadClick}
+              onDownload={handleToolbarDownload}
+              onMove={handleToolbarMove}
+              onCopy={handleToolbarCopy}
+              onDelete={handleToolbarDelete}
+              onSelectAll={selectAll}
+              onClearSelection={clearSelection}
+              onRefresh={refresh}
+              onBatchRename={handleBatchRenameClick}
+              foldersFirst={foldersFirst}
+              onToggleFoldersFirst={handleToggleFoldersFirst}
+            />
           </div>
         </div>
         <div className="bg-surface px-5 md:px-8 pt-1 pb-8">
@@ -230,10 +234,10 @@ export default function FileBrowser({
             </div>
           )}
           {loading ? (
-            <div className="flex flex-col items-center justify-center h-full text-muted">
-              <Loader2 className="w-6 h-6 animate-spin mb-3" aria-hidden />
-              <span className="text-sm">加载中…</span>
-            </div>
+            <FileListSkeleton
+              view={effectiveView === 'list' ? 'list' : 'grid'}
+              iconSize={iconSize}
+            />
         ) : loadError ? (
           <GenericEmptyState
             type="generic"
@@ -267,6 +271,11 @@ export default function FileBrowser({
               isFavorite={checkFav}
               onToggleFavorite={handleToggleFavorite}
               onContextMenu={handleContextMenu}
+              onItemMenu={(e, node) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setContextMenu({ x: e.clientX, y: e.clientY, node });
+              }}
               onNavigate={handleListNavigate}
               onDoubleClick={handleListDoubleClick}
               onItemDragStart={handleItemDragStart}

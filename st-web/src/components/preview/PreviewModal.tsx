@@ -10,6 +10,7 @@ import { isImage, isVideo, isPdf, isAudio, isText, getFileTypeConfig, cn } from 
 import { isEditableOfficeSuffix } from '../../lib/editor';
 import AudioPlayer from './AudioPlayer';
 import FileThumbnail from '../file/FileThumbnail';
+import { useModalA11y } from '../ui/useModalA11y';
 
 const PlyrPlayer = lazy(() => import('./PlyrPlayer'));
 
@@ -287,6 +288,9 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
     return () => window.removeEventListener('keydown', handler, true);
   }, [goPrev, goNext, onClose]);
 
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalA11y(panelRef, onClose, { open: !!file, closeOnEscape: false });
+
   if (!file) return null;
 
   const config = getFileTypeConfig(file.nodeType, file.suffix);
@@ -303,7 +307,12 @@ export default function PreviewModal({ files, currentIndex, onClose, shareContex
 
   return (
     <div
-      className={cn('fixed inset-0 flex flex-col bg-neutral-950/95 overscroll-contain animate-fade-in', isVersionMode ? 'z-[60]' : 'z-50')}
+      ref={panelRef}
+      role="dialog"
+      aria-modal="true"
+      aria-label="文件预览"
+      tabIndex={-1}
+      className={cn('fixed inset-0 flex flex-col bg-neutral-950/95 overscroll-contain animate-fade-in focus:outline-none', isVersionMode ? 'z-[60]' : 'z-50')}
       onDragOver={(e) => e.stopPropagation()}
       onDrop={(e) => e.stopPropagation()}
     >

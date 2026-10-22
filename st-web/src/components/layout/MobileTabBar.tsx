@@ -16,12 +16,12 @@ export default function MobileTabBar({ onMoreClick }: MobileTabBarProps) {
   const tabClass = (isActive: boolean) =>
     cn(
       'flex flex-col items-center justify-center gap-0.5 flex-1 min-h-[48px] transition-colors duration-200 cursor-pointer',
-      isActive ? 'text-primary-600' : 'text-muted'
+      isActive ? 'text-primary-strong' : 'text-muted'
     );
 
   return (
     <nav
-      className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-surface border-t border-border flex items-stretch h-16 pb-safe"
+      className="md:hidden fixed bottom-0 inset-x-0 z-30 bg-surface border-t border-border flex items-stretch min-h-16 pb-safe"
       aria-label="移动端主导航"
     >
       <NavLink to="/" end className={({ isActive }) => tabClass(isActive)}>

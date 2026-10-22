@@ -29,7 +29,7 @@ export default function TransferFloatingWidget() {
         className="w-full flex items-center gap-2 px-3 py-2.5 hover:bg-surface-2 transition-colors cursor-pointer"
       >
         {activeTasks.length > 0 ? (
-          <Loader2 className="w-4 h-4 text-primary-600 animate-spin flex-shrink-0" />
+          <Loader2 className="w-4 h-4 text-primary-strong animate-spin flex-shrink-0" />
         ) : (
           <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0" />
         )}
@@ -89,7 +89,7 @@ export default function TransferFloatingWidget() {
           {completedTasks.length > 0 && (
             <button
               onClick={clearCompleted}
-              className="w-full py-2 text-xs text-primary-600 hover:bg-primary-500/5 border-t border-border cursor-pointer"
+              className="w-full py-2 text-xs text-primary-strong hover:bg-primary-500/5 border-t border-border cursor-pointer"
             >
               清除已完成
             </button>

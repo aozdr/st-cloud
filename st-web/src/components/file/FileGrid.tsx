@@ -112,7 +112,7 @@ function FileGrid({
               </button>
               <FileThumbnail file={file} size={cfg.thumb} blur className="w-full h-auto" />
               <div className="px-3 py-2">
-              <div className={cn('text-xs truncate text-center', isSelected ? 'text-primary-600 font-medium' : 'text-fg')} title={file.name}>
+              <div className={cn('text-xs truncate text-center', isSelected ? 'text-primary-strong font-medium' : 'text-fg')} title={file.name}>
                 {file.name}
               </div>
             </div>
@@ -171,8 +171,8 @@ function FileGrid({
               aria-label={isFavorite(file.id) ? '取消收藏' : '收藏'}
               title={isFavorite(file.id) ? '取消收藏' : '收藏'}
               className={cn(
-                'absolute top-2 right-2 z-10 w-8 h-8 rounded-full flex items-center justify-center bg-surface/90 border border-border hover:bg-surface transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100',
-                isFavorite(file.id) || isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100',
+                'absolute top-2 right-2 z-10 w-9 h-9 rounded-full flex items-center justify-center bg-surface/90 border border-border hover:bg-surface transition-opacity focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100',
+                isFavorite(file.id) || isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 max-md:opacity-100',
               )}
             >
               <Star
@@ -202,7 +202,7 @@ function FileGrid({
                 className={cn(
                   'flex items-center justify-center gap-1 leading-5 truncate text-center',
                   cfg.name,
-                  isSelected ? 'text-primary-600 font-medium' : 'text-fg',
+                  isSelected ? 'text-primary-strong font-medium' : 'text-fg',
                 )}
                 title={file.name}
               >

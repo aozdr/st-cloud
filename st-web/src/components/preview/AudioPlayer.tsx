@@ -143,7 +143,7 @@ function AudioPlayerInner({ file, src, queue, trackIndex, onSwitchTrack }: Props
         </button>
         <button
           onClick={togglePlay}
-          className="w-12 h-12 flex items-center justify-center bg-primary-600 hover:bg-primary-700 text-white rounded-full cursor-pointer transition-colors shadow-primary"
+          className="w-12 h-12 flex items-center justify-center bg-primary-700 hover:bg-primary-800 text-white rounded-full cursor-pointer transition-colors shadow-primary"
           aria-label={playing ? '暂停' : '播放'}
         >
           {playing ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
@@ -186,7 +186,7 @@ function AudioPlayerInner({ file, src, queue, trackIndex, onSwitchTrack }: Props
               onClick={() => onSwitchTrack(idx)}
               className={cn(
                 'w-full flex items-center gap-2.5 px-5 py-2 text-left text-xs cursor-pointer transition-colors hover:bg-surface-2',
-                idx === trackIndex ? 'text-primary-600 font-medium bg-primary-500/5' : 'text-fg',
+                idx === trackIndex ? 'text-primary-strong font-medium bg-primary-500/5' : 'text-fg',
               )}
             >
               <span className="w-5 text-right tabular-nums text-muted flex-shrink-0">{idx + 1}</span>

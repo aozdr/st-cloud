@@ -24,38 +24,38 @@ const ILLUSTRATIONS: Record<string, JSX.Element> = {
   ),
   trash: (
     <svg width="96" height="80" viewBox="0 0 96 80" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-      <ellipse cx="48" cy="72" rx="32" ry="4" fill="rgb(var(--color-surface-3))" opacity="0.5" />
-      <path d="M32 24H64L60 68C60 69.1 59.1 70 58 70H38C36.9 70 36 69.1 36 68L32 24Z" fill="rgb(var(--color-surface-3))" stroke="rgb(var(--color-border))" strokeWidth="1.5" />
-      <path d="M28 22H68" stroke="rgb(var(--color-border))" strokeWidth="2" strokeLinecap="round" />
-      <path d="M40 18C40 16.9 40.9 16 42 16H54C55.1 16 56 16.9 56 18V22H40V18Z" fill="rgb(var(--color-surface-3))" stroke="rgb(var(--color-border))" strokeWidth="1.5" />
-      <line x1="42" y1="34" x2="42" y2="60" stroke="rgb(var(--color-muted))" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
-      <line x1="48" y1="34" x2="48" y2="60" stroke="rgb(var(--color-muted))" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
-      <line x1="54" y1="34" x2="54" y2="60" stroke="rgb(var(--color-muted))" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
+      <ellipse cx="48" cy="72" rx="32" ry="4" fill="rgb(var(--surface-2))" opacity="0.5" />
+      <path d="M32 24H64L60 68C60 69.1 59.1 70 58 70H38C36.9 70 36 69.1 36 68L32 24Z" fill="rgb(var(--surface-2))" stroke="rgb(var(--border))" strokeWidth="1.5" />
+      <path d="M28 22H68" stroke="rgb(var(--border))" strokeWidth="2" strokeLinecap="round" />
+      <path d="M40 18C40 16.9 40.9 16 42 16H54C55.1 16 56 16.9 56 18V22H40V18Z" fill="rgb(var(--surface-2))" stroke="rgb(var(--border))" strokeWidth="1.5" />
+      <line x1="42" y1="34" x2="42" y2="60" stroke="rgb(var(--muted))" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
+      <line x1="48" y1="34" x2="48" y2="60" stroke="rgb(var(--muted))" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
+      <line x1="54" y1="34" x2="54" y2="60" stroke="rgb(var(--muted))" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
     </svg>
   ),
   search: (
     <svg width="96" height="80" viewBox="0 0 96 80" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-      <ellipse cx="48" cy="72" rx="32" ry="4" fill="rgb(var(--color-surface-3))" opacity="0.5" />
-      <circle cx="42" cy="36" r="18" fill="none" stroke="rgb(var(--color-border))" strokeWidth="2.5" />
-      <line x1="55" y1="49" x2="66" y2="60" stroke="rgb(var(--color-border))" strokeWidth="3" strokeLinecap="round" />
+      <ellipse cx="48" cy="72" rx="32" ry="4" fill="rgb(var(--surface-2))" opacity="0.5" />
+      <circle cx="42" cy="36" r="18" fill="none" stroke="rgb(var(--border))" strokeWidth="2.5" />
+      <line x1="55" y1="49" x2="66" y2="60" stroke="rgb(var(--border))" strokeWidth="3" strokeLinecap="round" />
       <circle cx="42" cy="36" r="10" fill="rgb(var(--color-primary-100))" opacity="0.4" />
       <path d="M38 33C38 31 39.5 29.5 42 29.5" stroke="rgb(var(--color-primary-400))" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
     </svg>
   ),
   star: (
     <svg width="96" height="80" viewBox="0 0 96 80" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-      <ellipse cx="48" cy="72" rx="32" ry="4" fill="rgb(var(--color-surface-3))" opacity="0.5" />
-      <path d="M48 20L53 35L69 35L56 44L61 59L48 50L35 59L40 44L27 35L43 35Z" fill="rgb(var(--color-amber-100))" stroke="rgb(var(--color-amber-400))" strokeWidth="1.5" strokeLinejoin="round" />
-      <path d="M48 28L51 36L59 36L53 41L55 49L48 44L41 49L43 41L37 36L45 36Z" fill="rgb(var(--color-amber-400))" opacity="0.4" />
+      <ellipse cx="48" cy="72" rx="32" ry="4" fill="rgb(var(--surface-2))" opacity="0.5" />
+      <path d="M48 20L53 35L69 35L56 44L61 59L48 50L35 59L40 44L27 35L43 35Z" fill="rgb(var(--warning-light))" stroke="rgb(var(--warning))" strokeWidth="1.5" strokeLinejoin="round" />
+      <path d="M48 28L51 36L59 36L53 41L55 49L48 44L41 49L43 41L37 36L45 36Z" fill="rgb(var(--warning))" opacity="0.4" />
     </svg>
   ),
   generic: (
     <svg width="96" height="80" viewBox="0 0 96 80" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-      <ellipse cx="48" cy="72" rx="32" ry="4" fill="rgb(var(--color-surface-3))" opacity="0.5" />
-      <rect x="28" y="18" width="40" height="48" rx="4" fill="rgb(var(--color-surface-3))" stroke="rgb(var(--color-border))" strokeWidth="1.5" />
-      <line x1="36" y1="32" x2="60" y2="32" stroke="rgb(var(--color-muted))" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
-      <line x1="36" y1="42" x2="60" y2="42" stroke="rgb(var(--color-muted))" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
-      <line x1="36" y1="52" x2="52" y2="52" stroke="rgb(var(--color-muted))" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
+      <ellipse cx="48" cy="72" rx="32" ry="4" fill="rgb(var(--surface-2))" opacity="0.5" />
+      <rect x="28" y="18" width="40" height="48" rx="4" fill="rgb(var(--surface-2))" stroke="rgb(var(--border))" strokeWidth="1.5" />
+      <line x1="36" y1="32" x2="60" y2="32" stroke="rgb(var(--muted))" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
+      <line x1="36" y1="42" x2="60" y2="42" stroke="rgb(var(--muted))" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
+      <line x1="36" y1="52" x2="52" y2="52" stroke="rgb(var(--muted))" strokeWidth="1.5" strokeLinecap="round" opacity="0.5" />
     </svg>
   ),
 };

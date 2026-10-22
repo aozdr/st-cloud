@@ -4,10 +4,10 @@ import {
   useState,
   useCallback,
   useRef,
-  useEffect,
   type ReactNode,
 } from 'react';
 import { AlertTriangle } from 'lucide-react';
+import { useModalA11y } from './useModalA11y';
 
 interface PromptOptions {
   title?: string;
@@ -33,13 +33,7 @@ export function usePrompt() {
 export function PromptProvider({ children }: { children: ReactNode }) {
   const [dialog, setDialog] = useState<{ opts: PromptOptions; resolve: (v: string | null) => void } | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (dialog) {
-      const t = setTimeout(() => inputRef.current?.focus(), 50);
-      return () => clearTimeout(t);
-    }
-  }, [dialog]);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const prompt = useCallback((opts: PromptOptions) => {
     return new Promise<string | null>((resolve) => {
@@ -58,6 +52,8 @@ export function PromptProvider({ children }: { children: ReactNode }) {
     setDialog(null);
   };
 
+  useModalA11y(panelRef, handleCancel, { open: !!dialog, initialFocusRef: inputRef });
+
   return (
     <PromptContext.Provider value={{ prompt }}>
       {children}
@@ -68,6 +64,7 @@ export function PromptProvider({ children }: { children: ReactNode }) {
           role="presentation"
         >
           <div
+            ref={panelRef}
             role="dialog"
             aria-modal="true"
             aria-label={dialog.opts.title || '输入'}
@@ -94,20 +91,19 @@ export function PromptProvider({ children }: { children: ReactNode }) {
               className="w-full px-3 py-2 text-sm bg-transparent border border-border rounded-md text-fg placeholder:text-muted/60 focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/40 mb-6"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleConfirm();
-                if (e.key === 'Escape') handleCancel();
               }}
             />
 
             <div className="flex w-full gap-3">
               <button
                 onClick={handleCancel}
-                className="flex-1 px-5 py-2.5 text-sm font-medium text-fg bg-surface-2 hover:bg-muted rounded-md cursor-pointer transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="flex-1 px-5 py-2.5 text-sm font-medium text-fg bg-surface-2 hover:bg-bg-hover rounded-md cursor-pointer transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {dialog.opts.cancelText || '取消'}
               </button>
               <button
                 onClick={handleConfirm}
-                className="flex-1 px-5 py-2.5 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md cursor-pointer transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="flex-1 px-5 py-2.5 text-sm font-medium text-white bg-primary-700 hover:bg-primary-800 rounded-md cursor-pointer transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {dialog.opts.confirmText || '确定'}
               </button>

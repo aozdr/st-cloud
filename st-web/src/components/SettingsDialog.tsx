@@ -1,6 +1,8 @@
+import { useRef } from 'react';
 import { X, Check, Sun, Moon, Monitor } from 'lucide-react';
 import { THEMES } from '../themes';
 import { useThemeStore, type ThemeMode } from '../store/theme';
+import { useModalA11y } from './ui/useModalA11y';
 
 interface SettingsDialogProps {
   open: boolean;
@@ -18,12 +20,15 @@ export default function SettingsDialog({ open, onClose }: SettingsDialogProps) {
   const setTheme = useThemeStore((s) => s.setTheme);
   const mode = useThemeStore((s) => s.mode);
   const setMode = useThemeStore((s) => s.setMode);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalA11y(panelRef, onClose, { open });
 
   if (!open) return null;
 
   return (
     <div className="modal-overlay" onClick={onClose} role="presentation">
       <div
+        ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-label="设置"
@@ -57,8 +62,8 @@ export default function SettingsDialog({ open, onClose }: SettingsDialogProps) {
                   selected ? 'border-primary-600 bg-primary-500/10' : 'border-border hover:bg-surface-2'
                 }`}
               >
-                <Icon className={`w-5 h-5 ${selected ? 'text-primary-600' : 'text-muted'}`} aria-hidden />
-                <span className={`text-xs font-medium ${selected ? 'text-primary-600' : 'text-muted'}`}>{m.label}</span>
+                <Icon className={`w-5 h-5 ${selected ? 'text-primary-strong' : 'text-muted'}`} aria-hidden />
+                <span className={`text-xs font-medium ${selected ? 'text-primary-strong' : 'text-muted'}`}>{m.label}</span>
               </button>
             );
           })}

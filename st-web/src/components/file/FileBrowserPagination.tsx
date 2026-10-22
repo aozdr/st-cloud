@@ -55,7 +55,7 @@ export default function FileBrowserPagination({
             onBlur={onPageInputCommit}
             inputMode="numeric"
             aria-label="跳转到页码"
-            className="w-10 h-7 text-center text-xs text-fg bg-surface-2 rounded-md border border-border focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none tabular-nums"
+            className="w-10 h-8 text-center text-xs text-fg bg-surface-2 rounded-md border border-border focus:border-primary-400 focus:ring-2 focus:ring-primary-100 outline-none tabular-nums"
           />
           <span className="tabular-nums">/ {totalPages} 页</span>
         </div>
@@ -64,7 +64,7 @@ export default function FileBrowserPagination({
             onClick={onPrev}
             disabled={page <= 1}
             aria-label="上一页"
-            className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium text-muted rounded-md border border-border bg-surface hover:bg-surface-2 hover:text-fg disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex items-center px-2.5 min-h-9 text-xs font-medium text-muted rounded-md border border-border bg-surface hover:bg-surface-2 hover:text-fg disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             上一页
           </button>
@@ -72,7 +72,7 @@ export default function FileBrowserPagination({
             onClick={onNext}
             disabled={page >= totalPages}
             aria-label="下一页"
-            className="inline-flex items-center px-2.5 py-1.5 text-xs font-medium text-muted rounded-md border border-border bg-surface hover:bg-surface-2 hover:text-fg disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="inline-flex items-center px-2.5 min-h-9 text-xs font-medium text-muted rounded-md border border-border bg-surface hover:bg-surface-2 hover:text-fg disabled:opacity-40 disabled:cursor-not-allowed transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             下一页
           </button>

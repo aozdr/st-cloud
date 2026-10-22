@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { X, FolderOpen, Download, CheckCircle2, ListChecks } from 'lucide-react';
+import { useModalA11y } from '../ui/useModalA11y';
 
 interface Props {
   fileName: string;
@@ -26,6 +27,8 @@ export default function DownloadDialog({ fileName, fileSize, onConfirm, onClose 
   const [savePath, setSavePath] = useState('');
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(false);
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalA11y(panelRef, onClose);
 
   useEffect(() => {
     window.electronAPI?.getDownloadsPath().then((dir) => {
@@ -53,7 +56,12 @@ export default function DownloadDialog({ fileName, fileSize, onConfirm, onClose 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 overscroll-contain animate-fade-in" role="presentation" onClick={onClose}>
       <div
-        className="bg-surface rounded-xl shadow-lg w-[460px] animate-dialog-pop"
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="下载文件"
+        tabIndex={-1}
+        className="bg-surface rounded-xl shadow-lg w-[460px] animate-dialog-pop focus:outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -89,7 +97,7 @@ export default function DownloadDialog({ fileName, fileSize, onConfirm, onClose 
               {/* File info */}
               <div className="flex items-center gap-3 p-3 bg-surface-2 rounded-lg">
                 <div className="w-10 h-10 rounded-lg bg-primary-500/10 flex items-center justify-center flex-shrink-0">
-                  <Download className="w-5 h-5 text-primary-600" />
+                  <Download className="w-5 h-5 text-primary-strong" />
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-fg truncate">{fileName}</p>

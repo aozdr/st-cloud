@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { Download, Pencil, FolderInput, Copy, Trash2, FolderOpen, Eye, Edit3, Scissors, ClipboardPaste, Share2, History, Info, Star, EyeOff, Lock, Unlock, FileInput, FileOutput, FileText, Archive, RefreshCw, Upload, Bell, BellOff, type LucideIcon } from 'lucide-react';
 import type { FileNode } from '../../types';
@@ -39,6 +39,40 @@ export default function ContextMenu({ x, y, node, hasClipboard, showShare = true
   const { has } = usePermission();
   const [pos, setPos] = useState<{ left: number; top: number }>({ left: x, top: y });
   const [watchState, setWatchState] = useState<{ watching: boolean; loading: boolean; error: boolean }>({ watching: false, loading: true, error: false });
+  const previousFocusRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    previousFocusRef.current = document.activeElement as HTMLElement | null;
+    const firstItem = ref.current?.querySelector<HTMLButtonElement>('[role="menuitem"]:not([disabled])');
+    firstItem?.focus();
+    return () => previousFocusRef.current?.focus?.();
+  }, []);
+
+  const handleMenuKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    const menuItems = Array.from(
+      ref.current?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]:not([disabled])') ?? [],
+    );
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      onClose();
+      return;
+    }
+    if (event.key === 'Tab') {
+      // 菜单内使用方向键移动，Tab 不把焦点带出菜单
+      event.preventDefault();
+      return;
+    }
+    if (menuItems.length === 0) return;
+    const currentIndex = menuItems.indexOf(document.activeElement as HTMLButtonElement);
+    let nextIndex = currentIndex;
+    if (event.key === 'ArrowDown') nextIndex = currentIndex < 0 ? 0 : (currentIndex + 1) % menuItems.length;
+    else if (event.key === 'ArrowUp') nextIndex = currentIndex <= 0 ? menuItems.length - 1 : currentIndex - 1;
+    else if (event.key === 'Home') nextIndex = 0;
+    else if (event.key === 'End') nextIndex = menuItems.length - 1;
+    else return;
+    event.preventDefault();
+    menuItems[nextIndex]?.focus();
+  };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -150,18 +184,25 @@ export default function ContextMenu({ x, y, node, hasClipboard, showShare = true
   return createPortal(
     <div
       ref={ref}
-      className="fixed z-[100] w-[180px] p-1.5 bg-surface rounded-[10px] shadow-card border border-border animate-scale-in overflow-y-auto"
+      role="menu"
+      aria-label="文件操作"
+      tabIndex={-1}
+      onKeyDown={handleMenuKeyDown}
+      className="fixed z-[100] w-[180px] p-1.5 bg-surface rounded-[10px] shadow-card border border-border animate-scale-in overflow-y-auto focus:outline-none"
       style={{ left: pos.left, top: pos.top, maxHeight: 'calc(100vh - 48px)' }}
       onClick={(e) => e.stopPropagation()}
     >
       {items.map((item, idx) => {
         if (item.type === 'separator') {
-          return <div key={idx} className="my-1 border-t border-border" />;
+          return <div key={idx} role="separator" className="my-1 border-t border-border" />;
         }
         const Icon = item.icon!;
         return (
           <button
             key={idx}
+            type="button"
+            role="menuitem"
+            tabIndex={-1}
             onClick={() => onAction(item.action!, node)}
             disabled={(item.action === 'watch' || item.action === 'unwatch') && (watchState.loading || watchState.error)}
             className={`w-full flex items-center gap-2.5 px-2.5 h-9 text-sm cursor-pointer rounded-[7px] transition-colors ${

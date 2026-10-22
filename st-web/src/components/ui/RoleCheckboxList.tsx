@@ -102,7 +102,7 @@ export const RoleCheckboxList = memo<Props>(function RoleCheckboxList({
                 <span className="block text-xs text-muted font-mono truncate">{r.roleCode}</span>
               </span>
               {r.builtIn && (
-                <span className="text-xs text-primary-600 bg-primary-500/10 px-2 py-0.5 rounded">
+                <span className="text-xs text-primary-strong bg-primary-500/10 px-2 py-0.5 rounded">
                   内置
                 </span>
               )}

@@ -47,7 +47,7 @@ export function OperationProgressProvider({ children }: { children: ReactNode })
             aria-live="polite"
             className="flex items-center gap-2 px-3 py-2 bg-surface-2 rounded-lg border border-border shadow-float text-sm text-fg"
           >
-            <Loader2 className="w-4 h-4 text-primary-600 animate-spin flex-shrink-0" aria-hidden />
+            <Loader2 className="w-4 h-4 text-primary-strong animate-spin flex-shrink-0" aria-hidden />
             <span>{op.label}…</span>
           </div>
         ))}

@@ -69,16 +69,17 @@ function FileTableView({
   const renderSortHeader = (col: SortBy, label: string, align?: 'right', hiddenClass?: string) => (
     <div
       role="columnheader"
+      aria-sort={sortBy === col ? (sortDir === 'asc' ? 'ascending' : 'descending') : 'none'}
       className={cn('h-10 px-4 text-xs font-medium text-tertiary select-none text-left flex items-center', hiddenClass, align === 'right' && 'text-right justify-end')}
     >
       <button
         type="button"
         onClick={() => onSortChange(col)}
+        aria-label={`按${label}排序`}
         className={cn(
           'inline-flex items-center gap-1 transition-colors cursor-pointer hover:text-fg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
           align === 'right' && 'flex-row-reverse',
         )}
-        aria-sort={sortBy === col ? (sortDir === 'asc' ? 'ascending' : 'descending') : undefined}
       >
         <span>{label}</span>
         {sortBy === col && (sortDir === 'asc'
@@ -88,50 +89,71 @@ function FileTableView({
     </div>
   );
 
+  // 虚拟行使用 roving tabIndex：优先聚焦 focusedId 对应行，否则聚焦当前渲染窗口的首行
+  const virtualItems = virtualizer.getVirtualItems();
+  const firstVirtualIndex = virtualItems[0]?.index ?? 0;
+
   return (
     <div className="bg-surface overflow-x-auto">
-      <div role="table" className="w-full min-w-[760px]">
+      <div
+        role="grid"
+        aria-label="文件列表"
+        aria-multiselectable="true"
+        aria-rowcount={files.length + 1}
+        aria-colcount={7}
+        className="w-full min-w-0 md:min-w-[720px]"
+      >
         {/* 表头 */}
-        <div role="row" className="flex items-center bg-surface-2 border-t border-b border-border">
-          <div role="columnheader" className="w-11 px-4 h-10 flex items-center">
-            <button
-              onClick={onSelectAll}
-              aria-label="全选"
-              role="checkbox"
-              aria-checked={allSelected ? 'true' : someSelected ? 'mixed' : 'false'}
-              className={cn(
-                'w-4 h-4 rounded border flex items-center justify-center cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                allSelected
-                  ? 'bg-primary-600 border-primary-600'
-                  : someSelected
-                    ? 'bg-primary-100 border-primary-300'
-                    : 'border-border hover:border-primary-400 bg-surface',
-              )}
-            >
-              {allSelected && <Check className="w-3 h-3 text-white" strokeWidth={3} aria-hidden />}
-              {someSelected && !allSelected && <div className="w-2 h-0.5 bg-primary-600 rounded" />}
-            </button>
+        <div role="rowgroup">
+          <div role="row" aria-rowindex={1} className="flex items-center bg-surface-2 border-t border-b border-border">
+            <div role="columnheader" className="w-14 px-2 h-10 flex items-center">
+              <button
+                onClick={onSelectAll}
+                aria-label="全选"
+                role="checkbox"
+                aria-checked={allSelected ? 'true' : someSelected ? 'mixed' : 'false'}
+                className="w-9 h-9 flex items-center justify-center rounded-md cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <span
+                  className={cn(
+                    'w-4 h-4 rounded border flex items-center justify-center transition-colors',
+                    allSelected
+                      ? 'bg-primary-600 border-primary-600'
+                      : someSelected
+                        ? 'bg-primary-100 border-primary-300'
+                        : 'border-border hover:border-primary-400 bg-surface',
+                  )}
+                >
+                  {allSelected && <Check className="w-3 h-3 text-white" strokeWidth={3} aria-hidden />}
+                  {someSelected && !allSelected && <div className="w-2 h-0.5 bg-primary-600 rounded" />}
+                </span>
+              </button>
+            </div>
+            {renderSortHeader('name', '名称')}
+            <div role="columnheader" className="hidden sm:flex w-28 px-4 h-10 text-xs font-medium text-tertiary items-center select-none">类型</div>
+            {renderSortHeader('size', '大小', 'right', 'hidden sm:flex')}
+            {renderSortHeader('time', '修改时间', undefined, 'hidden md:flex')}
+            <div role="columnheader" className="hidden lg:flex w-32 px-4 h-10 text-xs font-medium text-tertiary items-center select-none">所有者</div>
+            <div role="columnheader" className="w-28 h-10" aria-label="操作" />
           </div>
-          {renderSortHeader('name', '名称')}
-          <div className="hidden sm:flex w-28 px-4 h-10 text-xs font-medium text-tertiary items-center select-none">类型</div>
-          {renderSortHeader('size', '大小', 'right', 'hidden sm:flex')}
-          {renderSortHeader('time', '修改时间', undefined, 'hidden md:flex')}
-          <div className="hidden lg:flex w-32 px-4 h-10 text-xs font-medium text-tertiary items-center select-none">所有者</div>
-          <div role="columnheader" className="w-24 h-10" aria-label="操作" />
         </div>
 
         {/* 虚拟行容器 */}
-        <div ref={listRef} className="relative" style={{ height: virtualizer.getTotalSize() }}>
-          {virtualizer.getVirtualItems().map((vi) => {
+        <div ref={listRef} role="rowgroup" className="relative" style={{ height: virtualizer.getTotalSize() }}>
+          {virtualItems.map((vi) => {
             const file = files[vi.index];
             if (!file) return null;
             const isSelected = selectedIds.has(file.id);
+            const isTabStop = focusedId ? focusedId === file.id : vi.index === firstVirtualIndex;
             const config = getFileTypeConfig(file.nodeType, file.suffix);
             const owner = file.ownerName || user?.nickname || user?.username || '我';
             return (
               <div
                 key={file.id}
                 role="row"
+                aria-selected={isSelected}
+                aria-rowindex={vi.index + 2}
+                tabIndex={isTabStop ? 0 : -1}
                 data-index={vi.index}
                 data-file-id={file.id}
                 style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: rowHeight, transform: `translateY(${vi.start - scrollMargin}px)` }}
@@ -154,43 +176,55 @@ function FileTableView({
                 onDoubleClick={() => onDoubleClick(file)}
                 onContextMenu={(e) => onContextMenu(e, file)}
               >
-                <div className="w-11 px-4 flex items-center">
+                <div role="cell" className="w-14 px-2 flex items-center">
                   <button
                     onClick={(e) => { e.stopPropagation(); onToggleSelect(file.id); }}
+                    role="checkbox"
+                    aria-checked={isSelected ? 'true' : 'false'}
                     aria-label="选择"
-                    className={cn(
-                      'w-4 h-4 rounded border flex items-center justify-center transition-[background-color,border-color,opacity] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100',
-                      isSelected ? 'bg-primary-600 border-primary-600 opacity-100' : 'border-border bg-surface opacity-0 group-hover:opacity-100 group-focus-within:opacity-100',
-                    )}
+                    className="w-9 h-9 flex items-center justify-center rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   >
-                    {isSelected && <Check className="w-3 h-3 text-white" strokeWidth={3} aria-hidden />}
+                    <span
+                      className={cn(
+                        'w-4 h-4 rounded border flex items-center justify-center transition-[background-color,border-color,opacity]',
+                        isSelected ? 'bg-primary-600 border-primary-600 opacity-100' : 'border-border bg-surface opacity-0 group-hover:opacity-100 group-focus-within:opacity-100',
+                      )}
+                    >
+                      {isSelected && <Check className="w-3 h-3 text-white" strokeWidth={3} aria-hidden />}
+                    </span>
                   </button>
                 </div>
-                <div className="flex-1 min-w-0 px-4 flex items-center gap-3">
+                <div role="cell" className="flex-1 min-w-0 px-4 flex items-center gap-3">
                   <FileThumbnail file={file} size="lg" className="flex-shrink-0" />
                   <div className="min-w-0 flex-1">
-                    <div className={cn('flex items-center gap-1 min-w-0 text-sm leading-5 font-medium', isSelected ? 'text-primary-600' : 'text-fg')}>
+                    <div className={cn('flex items-center gap-1 min-w-0 text-sm leading-5 font-medium', isSelected ? 'text-primary-strong' : 'text-fg')}>
                       <span className="min-w-0 truncate">{file.name}</span>
                       {lockedIds?.has(file.id) && <Lock className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" aria-hidden />}
                     </div>
+                    {/* 移动端：类型/大小/时间列被隐藏，用次要行保留关键信息 */}
+                    <div className="md:hidden mt-0.5 truncate text-xs leading-4 text-tertiary">
+                      {config.label} · {file.nodeType === 0
+                        ? (folderSizes?.get(file.id) ? formatSize(folderSizes.get(file.id)!.size) : '…')
+                        : formatSize(file.fileSize)} · {formatDate(file.updatedAt)}
+                    </div>
                   </div>
                 </div>
-                <div className="hidden sm:flex w-28 px-4 text-sm text-muted truncate items-center">{config.label}</div>
-                <div className="hidden sm:flex w-24 px-4 text-right text-sm text-muted tabular-nums whitespace-nowrap items-center justify-end">
+                <div role="cell" className="hidden sm:flex w-28 px-4 text-sm text-muted truncate items-center">{config.label}</div>
+                <div role="cell" className="hidden sm:flex w-24 px-4 text-right text-sm text-muted tabular-nums whitespace-nowrap items-center justify-end">
                   {file.nodeType === 0
                     ? (folderSizes?.get(file.id) ? formatSize(folderSizes.get(file.id)!.size) : '…')
                     : formatSize(file.fileSize)}
                 </div>
-                <div className="hidden md:flex w-40 px-4 text-sm text-muted tabular-nums truncate items-center">{formatDate(file.updatedAt)}</div>
-                <div className="hidden lg:flex w-32 px-4 text-sm text-muted truncate items-center">{owner}</div>
-                <div className="flex w-24 px-3 items-center justify-end gap-1">
+                <div role="cell" className="hidden md:flex w-40 px-4 text-sm text-muted tabular-nums truncate items-center">{formatDate(file.updatedAt)}</div>
+                <div role="cell" className="hidden lg:flex w-32 px-4 text-sm text-muted truncate items-center">{owner}</div>
+                <div role="cell" className="flex w-28 px-3 items-center justify-end gap-1">
                   <button
                     onClick={(e) => { e.stopPropagation(); onToggleFavorite(file); }}
                     aria-label={isFavorite(file.id) ? '取消收藏' : '收藏'}
                     title={isFavorite(file.id) ? '取消收藏' : '收藏'}
                     className={cn(
-                      'inline-flex w-8 h-8 rounded-lg items-center justify-center transition-[background-color,color,opacity] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100 hover:bg-surface-2',
-                      isFavorite(file.id) || isSelected ? 'text-amber-400 opacity-100' : 'text-tertiary hover:text-amber-400 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100',
+                      'inline-flex w-9 h-9 rounded-lg items-center justify-center transition-[background-color,color,opacity] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100 hover:bg-surface-2',
+                      isFavorite(file.id) || isSelected ? 'text-amber-400 opacity-100' : 'text-tertiary hover:text-amber-400 opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 max-md:opacity-100',
                     )}
                   >
                     <Star className="w-4 h-4" fill={isFavorite(file.id) ? 'currentColor' : 'none'} aria-hidden />
@@ -200,7 +234,7 @@ function FileTableView({
                       onClick={(e) => { e.stopPropagation(); onItemMenu(e, file); }}
                       onContextMenu={(e) => { e.preventDefault(); e.stopPropagation(); onContextMenu(e, file); }}
                       aria-label="更多操作"
-                      className={cn('w-8 h-8 rounded-lg inline-flex items-center justify-center text-tertiary hover:text-fg hover:bg-surface-2 transition-[background-color,color,opacity] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100', isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100')}
+                      className={cn('w-9 h-9 rounded-lg inline-flex items-center justify-center text-tertiary hover:text-fg hover:bg-surface-2 transition-[background-color,color,opacity] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:opacity-100', isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 max-md:opacity-100')}
                     >
                       <MoreHorizontal className="w-4 h-4" aria-hidden />
                     </button>

@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { X, FileInput, FileOutput, Loader2 } from 'lucide-react';
 import api from '../../lib/api';
 import type { FileNode } from '../../types';
 import { useToast } from '../ui/Toast';
+import { useModalA11y } from '../ui/useModalA11y';
 
 /** 默认转换文件名：原文件名（去后缀）-转换.目标后缀 */
 function defaultTargetName(node: FileNode): string {
@@ -22,6 +23,8 @@ export default function ConvertDialog({ node, onClose, onConverted }: Props) {
   const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const { showToast } = useToast();
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalA11y(panelRef, onClose, { open: !!node });
 
   useEffect(() => {
     if (node) setName(defaultTargetName(node));
@@ -49,11 +52,11 @@ export default function ConvertDialog({ node, onClose, onConverted }: Props) {
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content w-[480px] max-w-[92vw]" onClick={(e) => e.stopPropagation()}>
+    <div className="modal-overlay" onClick={onClose} role="presentation">
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-label={title} tabIndex={-1} className="modal-content w-[480px] max-w-[92vw] focus:outline-none" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
           <div className="flex items-center gap-2">
-            <Icon className="w-4 h-4 text-primary-600" />
+            <Icon className="w-4 h-4 text-primary-strong" />
             <h3 className="text-base font-semibold text-fg">{title}</h3>
           </div>
           <button

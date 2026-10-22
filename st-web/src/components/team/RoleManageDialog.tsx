@@ -6,6 +6,8 @@ import {
 } from 'lucide-react';
 import api from '../../lib/api';
 import { useToast } from '../ui/Toast';
+import { useConfirm } from '../ui/ConfirmDialog';
+import { useModalA11y } from '../ui/useModalA11y';
 import { cn } from '../../lib/utils';
 import type { TeamRoleInfo } from '../../types';
 import { PERMISSION_KEYS } from '../../lib/permissions';
@@ -53,6 +55,9 @@ function parsePermissions(raw: unknown): Record<string, boolean> {
 
 export default function RoleManageDialog({ spaceId, onClose }: RoleManageDialogProps) {
   const { showToast } = useToast();
+  const { confirm } = useConfirm();
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalA11y(panelRef, onClose);
   const [roles, setRoles] = useState<TeamRoleInfo[]>([]);
   const [editing, setEditing] = useState<TeamRoleInfo | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -104,7 +109,7 @@ export default function RoleManageDialog({ spaceId, onClose }: RoleManageDialogP
   };
 
   const handleDelete = async (roleId: string) => {
-    if (!confirm('确定删除该角色？')) return;
+    if (!(await confirm({ title: '删除角色', message: '确定删除该角色？删除后不可恢复。', confirmText: '删除', danger: true }))) return;
     try {
       await api.delete(`/team/${spaceId}/role/${roleId}`);
       showToast('已删除', 'success');
@@ -124,11 +129,11 @@ export default function RoleManageDialog({ spaceId, onClose }: RoleManageDialogP
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 overscroll-contain" role="presentation" onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-label="角色管理" className="w-full max-w-3xl bg-surface rounded-xl shadow-lg border border-border overflow-hidden max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+      <div ref={panelRef} role="dialog" aria-modal="true" aria-label="角色管理" tabIndex={-1} className="w-full max-w-3xl bg-surface rounded-xl shadow-lg border border-border overflow-hidden max-h-[90vh] flex flex-col focus:outline-none" onClick={(e) => e.stopPropagation()}>
         {/* 头部 */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
           <div className="flex items-center gap-2">
-            <Shield className="w-4 h-4 text-primary-600" />
+            <Shield className="w-4 h-4 text-primary-strong" />
             <h2 className="text-base font-semibold text-fg">角色管理</h2>
           </div>
           <button onClick={onClose} className="text-muted hover:text-fg cursor-pointer p-1 rounded-md" aria-label="关闭"><X className="w-5 h-5" /></button>
@@ -142,7 +147,7 @@ export default function RoleManageDialog({ spaceId, onClose }: RoleManageDialogP
               <span className="text-xs text-muted bg-surface-2 px-1.5 py-0.5 rounded">{roles.length}</span>
             </div>
             <div className="px-3 pb-2">
-              <button onClick={openCreate} className="w-full flex items-center justify-center gap-1 px-3 py-2 text-sm text-white bg-primary-600 rounded-md hover:bg-primary-700 cursor-pointer"><Plus className="w-4 h-4" />新建角色</button>
+              <button onClick={openCreate} className="w-full flex items-center justify-center gap-1 px-3 py-2 text-sm text-white bg-primary-700 rounded-md hover:bg-primary-800 cursor-pointer"><Plus className="w-4 h-4" />新建角色</button>
             </div>
             <div className="px-3 pb-3 flex-1 min-h-0 overflow-y-auto space-y-1">
               {roles.length === 0 ? (
@@ -166,7 +171,7 @@ export default function RoleManageDialog({ spaceId, onClose }: RoleManageDialogP
                     </span>
                     {!role.isPreset && (
                       <span className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-                        <button onClick={() => openEdit(role)} className="p-1 text-muted hover:text-primary-600 cursor-pointer" aria-label={`编辑${role.name}`}><Pencil className="w-3.5 h-3.5" /></button>
+                        <button onClick={() => openEdit(role)} className="p-1 text-muted hover:text-primary-strong cursor-pointer" aria-label={`编辑${role.name}`}><Pencil className="w-3.5 h-3.5" /></button>
                         <button onClick={() => handleDelete(role.id)} className="p-1 text-muted hover:text-red-500 cursor-pointer" aria-label={`删除${role.name}`}><Trash2 className="w-3.5 h-3.5" /></button>
                       </span>
                     )}
@@ -181,7 +186,7 @@ export default function RoleManageDialog({ spaceId, onClose }: RoleManageDialogP
               <div className="flex flex-col h-full">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-2">
-                    <Pencil className="w-4 h-4 text-primary-600" />
+                    <Pencil className="w-4 h-4 text-primary-strong" />
                     <h3 className="text-sm font-semibold text-fg">{editing ? '编辑角色' : '新建角色'}</h3>
                   </div>
                   {editing && (
@@ -219,7 +224,7 @@ export default function RoleManageDialog({ spaceId, onClose }: RoleManageDialogP
                                 return (
                                   <label key={key} className={cn('flex items-center gap-2 px-2.5 py-2 rounded-md border cursor-pointer transition-colors', checked ? 'bg-primary-500/10 border-primary-400/40' : 'bg-surface-2 border-border')}>
                                     <input type="checkbox" className="accent-primary-600 cursor-pointer" checked={checked} onChange={() => togglePerm(key)} />
-                                    <Icon className={cn('w-3.5 h-3.5 shrink-0', checked ? 'text-primary-600' : 'text-muted')} />
+                                    <Icon className={cn('w-3.5 h-3.5 shrink-0', checked ? 'text-primary-strong' : 'text-muted')} />
                                     <span className="text-sm text-fg">{PERMISSION_LABELS[key]}</span>
                                   </label>
                                 );

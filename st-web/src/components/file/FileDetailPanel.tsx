@@ -66,8 +66,8 @@ export default function FileDetailPanel({ file, onClose, variant = 'sidebar' }: 
             className={cn(
               'mt-4 inline-flex items-center justify-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60',
               watching
-                ? 'border-primary-200 bg-primary-500/10 text-primary-600 hover:bg-primary-500/15'
-                : 'border-border bg-surface text-muted hover:border-primary-300 hover:bg-primary-500/5 hover:text-primary-600',
+                ? 'border-primary-200 bg-primary-500/10 text-primary-strong hover:bg-primary-500/15'
+                : 'border-border bg-surface text-muted hover:border-primary-300 hover:bg-primary-500/5 hover:text-primary-strong',
             )}
           >
             {watching ? <BellRing className="h-3.5 w-3.5" aria-hidden /> : <Bell className="h-3.5 w-3.5" aria-hidden />}
@@ -113,7 +113,7 @@ export default function FileDetailPanel({ file, onClose, variant = 'sidebar' }: 
 
 function DetailRow({ icon: Icon, label, value }: { icon: typeof Clock; label: string; value: string }) {
   return (
-    <div className="flex items-start gap-3 rounded-lg px-1 py-1 hover:bg-surface-2/60 transition-colors">
+    <div className="flex items-start gap-3 rounded-lg px-1 py-1 hover:bg-bg-hover transition-colors">
       <Icon className="w-4 h-4 text-muted flex-shrink-0 mt-0.5" aria-hidden />
       <div className="min-w-0 flex-1">
         <div className="text-xs text-muted mb-0.5">{label}</div>

@@ -3,6 +3,7 @@ import { X, File, Folder, Download, Archive, ChevronDown, ChevronRight, FolderCl
 import api from '../../lib/api';
 import { useToast } from '../ui/Toast';
 import { usePrompt } from '../ui/PromptDialog';
+import { useModalA11y } from '../ui/useModalA11y';
 import { formatSize, cn } from '../../lib/utils';
 import type { FileNode, FileTreeNode } from '../../types';
 
@@ -44,6 +45,8 @@ function normalizeSegments(path: string): string[] {
  */
 export default function ArchiveDialog({ file, onClose, onExtracted }: Props) {
   const { showToast } = useToast();
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalA11y(panelRef, onClose);
   const { prompt } = usePrompt();
   const [entries, setEntries] = useState<ArchiveEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -256,7 +259,7 @@ export default function ArchiveDialog({ file, onClose, onExtracted }: Props) {
         <div
           className={cn(
             'flex items-center gap-1.5 px-2 py-1.5 rounded-lg cursor-pointer transition-colors text-sm',
-            targetFolderId === String(node.id) ? 'bg-primary-500/10 text-primary-600 font-medium' : 'hover:bg-surface-2 text-muted',
+            targetFolderId === String(node.id) ? 'bg-primary-500/10 text-primary-strong font-medium' : 'hover:bg-surface-2 text-muted',
           )}
           style={{ paddingLeft: `${level * 20 + 8}px` }}
           onClick={() => selectFolder(String(node.id))}
@@ -273,7 +276,7 @@ export default function ArchiveDialog({ file, onClose, onExtracted }: Props) {
             <span className="w-4" />
           )}
           {targetFolderId === String(node.id) ? (
-            <FolderOpen className="w-4 h-4 text-primary-600 flex-shrink-0" />
+            <FolderOpen className="w-4 h-4 text-primary-strong flex-shrink-0" />
           ) : (
             <FolderClosed className="w-4 h-4 text-amber-500 flex-shrink-0" />
           )}
@@ -285,14 +288,19 @@ export default function ArchiveDialog({ file, onClose, onExtracted }: Props) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={extracting ? undefined : onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" role="presentation" onClick={extracting ? undefined : onClose}>
       <div
-        className="w-full max-w-lg bg-surface rounded-xl shadow-lg border border-border overflow-hidden animate-scale-in flex flex-col max-h-[80vh]"
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="在线解压"
+        tabIndex={-1}
+        className="w-full max-w-lg bg-surface rounded-xl shadow-lg border border-border overflow-hidden animate-scale-in flex flex-col max-h-[80vh] focus:outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-border flex-shrink-0">
           <div className="flex items-center gap-2 min-w-0">
-            <Archive className="w-5 h-5 text-primary-600 flex-shrink-0" />
+            <Archive className="w-5 h-5 text-primary-strong flex-shrink-0" />
             <h2 className="text-base font-semibold text-fg truncate">{file.name}</h2>
           </div>
           <button
@@ -315,7 +323,7 @@ export default function ArchiveDialog({ file, onClose, onExtracted }: Props) {
                   type="button"
                   onClick={handleCreateFolder}
                   disabled={extracting || creatingFolder}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary-600 bg-primary-500/10 rounded-lg hover:bg-primary-500/15 transition-colors cursor-pointer disabled:opacity-50"
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary-strong bg-primary-500/10 rounded-lg hover:bg-primary-500/15 transition-colors cursor-pointer disabled:opacity-50"
                 >
                   {creatingFolder ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden />
@@ -330,12 +338,12 @@ export default function ArchiveDialog({ file, onClose, onExtracted }: Props) {
                 <div
                   className={cn(
                     'flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer transition-colors text-sm',
-                    targetFolderId === '0' ? 'bg-primary-500/10 text-primary-600 font-medium' : 'hover:bg-surface-2 text-muted',
+                    targetFolderId === '0' ? 'bg-primary-500/10 text-primary-strong font-medium' : 'hover:bg-surface-2 text-muted',
                   )}
                   onClick={() => selectFolder('0')}
                 >
                   {targetFolderId === '0' ? (
-                    <FolderOpen className="w-4 h-4 text-primary-600 flex-shrink-0" aria-hidden />
+                    <FolderOpen className="w-4 h-4 text-primary-strong flex-shrink-0" aria-hidden />
                   ) : (
                     <FolderClosed className="w-4 h-4 text-amber-500 flex-shrink-0" aria-hidden />
                   )}
@@ -450,7 +458,7 @@ export default function ArchiveDialog({ file, onClose, onExtracted }: Props) {
             <button
               onClick={handleExtract}
               disabled={extracting || entries.length === 0}
-              className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition-colors cursor-pointer disabled:opacity-50"
+              className="flex items-center gap-2 px-4 py-2 bg-primary-700 text-white text-sm font-medium rounded-lg hover:bg-primary-800 transition-colors cursor-pointer disabled:opacity-50"
             >
               <Download className="w-4 h-4" aria-hidden />
               {extracting ? '解压中…' : '开始解压'}

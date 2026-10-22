@@ -111,7 +111,7 @@ export default function TextEditorPage() {
         <button
           onClick={handleSave}
           disabled={saving || !dirty || loading}
-          className="ml-auto flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-primary-600 rounded-md hover:bg-primary-700 cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="ml-auto flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-primary-700 rounded-md hover:bg-primary-800 cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <Save className="w-4 h-4" aria-hidden />
           {saving ? '保存中…' : '保存'}

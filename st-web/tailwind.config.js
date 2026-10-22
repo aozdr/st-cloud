@@ -21,6 +21,8 @@ export default {
           900: 'rgb(var(--color-primary-900) / <alpha-value>)',
           950: 'rgb(var(--color-primary-950) / <alpha-value>)',
         },
+        // 文本/链接主色：light=primary-700，dark=primary-400
+        'primary-strong': 'rgb(var(--primary-strong) / <alpha-value>)',
         // Semantic tokens (theme-aware via CSS variables)
         bg: 'rgb(var(--bg) / <alpha-value>)',
         'bg-hover': 'rgb(var(--bg-hover) / <alpha-value>)',

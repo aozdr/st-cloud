@@ -172,7 +172,7 @@ function TopBar({ onMenuClick }: TopBarProps) {
   const btnBase = 'flex items-center justify-center rounded-full cursor-pointer transition-colors duration-200 flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring';
 
   return (
-    <header className="h-[60px] bg-surface border-b border-border-light flex items-center px-4 sm:px-8 flex-shrink-0 gap-2 sm:gap-4">
+    <header className="min-h-[60px] pt-safe bg-surface border-b border-border-light flex items-center px-4 sm:px-8 flex-shrink-0 gap-2 sm:gap-4">
       {/* Mobile menu toggle */}
       <button
         onClick={onMenuClick}
@@ -207,7 +207,7 @@ function TopBar({ onMenuClick }: TopBarProps) {
       {/* Search (desktop/tablet) */}
       <div className="flex-1 hidden sm:flex justify-center">
         <div className="relative w-full max-w-[440px] group" ref={searchRef}>
-          <div className="flex items-center h-9 bg-surface-2 border border-transparent rounded-lg transition-colors duration-150 group-focus-within:bg-surface group-focus-within:border-primary-200 group-focus-within:shadow-[0_0_0_3px_rgba(79,110,247,0.10)]">
+          <div className="flex items-center h-9 bg-surface-2 border border-transparent rounded-lg transition-colors duration-150 group-focus-within:bg-surface group-focus-within:border-primary-200 group-focus-within:shadow-[0_0_0_3px_rgb(var(--primary-strong)/0.10)]">
             <div className="relative flex-1">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted group-focus-within:text-primary-500 transition-colors" aria-hidden />
               <input
@@ -226,7 +226,7 @@ function TopBar({ onMenuClick }: TopBarProps) {
               {searchValue ? (
                 <button
                   onClick={() => { setSearchValue(''); inputRef.current?.focus(); }}
-                  className="w-6 h-6 flex items-center justify-center rounded-full text-muted hover:text-fg hover:bg-muted/40 transition-colors duration-150 cursor-pointer mr-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  className="w-6 h-6 flex items-center justify-center rounded-full text-muted hover:text-fg hover:bg-bg-hover transition-colors duration-150 cursor-pointer mr-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                   aria-label="清空搜索"
                 >
                   <X className="w-3.5 h-3.5" strokeWidth={2.5} aria-hidden />
@@ -259,7 +259,7 @@ function TopBar({ onMenuClick }: TopBarProps) {
                       <button
                         key={idx}
                         onClick={() => executeSearch(kw)}
-                        className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-muted hover:bg-surface-2 hover:text-primary-600 cursor-pointer transition-colors focus-visible:outline-none focus-visible:bg-surface-2"
+                        className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-muted hover:bg-surface-2 hover:text-primary-strong cursor-pointer transition-colors focus-visible:outline-none focus-visible:bg-surface-2"
                       >
                         <Clock className="w-3.5 h-3.5 text-muted flex-shrink-0" aria-hidden />
                         <span className="truncate">{kw}</span>
@@ -329,7 +329,7 @@ function TopBar({ onMenuClick }: TopBarProps) {
             aria-expanded={menuOpen}
             className="flex items-center gap-2 px-2 py-1.5 rounded-full hover:bg-surface-2 cursor-pointer transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
-            <div className="w-9 h-9 bg-primary-600 rounded-full flex items-center justify-center">
+            <div className="w-9 h-9 bg-primary-700 rounded-full flex items-center justify-center">
               <span className="text-sm font-medium text-white">
                 {user?.username?.charAt(0).toUpperCase() || 'U'}
               </span>

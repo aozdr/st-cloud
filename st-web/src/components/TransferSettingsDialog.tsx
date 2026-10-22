@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { X, Settings2, ArrowUp, ArrowDown, Layers } from 'lucide-react';
 import { useTransferStore } from '../store/transfer';
+import { useModalA11y } from './ui/useModalA11y';
 
 interface TransferSettingsDialogProps {
   open: boolean;
@@ -16,6 +17,8 @@ export default function TransferSettingsDialog({ open, onClose }: TransferSettin
   // 本地编辑态：value(数字) + unit(kb/mb)
   const [uploadValue, setUploadValue] = useState(() => kbToDisplay(settings.uploadSpeedLimit));
   const [downloadValue, setDownloadValue] = useState(() => kbToDisplay(settings.downloadSpeedLimit));
+  const panelRef = useRef<HTMLDivElement>(null);
+  useModalA11y(panelRef, onClose, { open });
 
   if (!open) return null;
 
@@ -38,9 +41,14 @@ export default function TransferSettingsDialog({ open, onClose }: TransferSettin
   };
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="modal-overlay" onClick={onClose} role="presentation">
       <div
-        className="modal-content w-[460px] max-w-[90vw] p-6"
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label="传输设置"
+        tabIndex={-1}
+        className="modal-content w-[460px] max-w-[90vw] p-6 focus:outline-none"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -71,7 +79,7 @@ export default function TransferSettingsDialog({ open, onClose }: TransferSettin
                 onClick={() => setSettings({ maxParallelTasks: n })}
                 className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition duration-150 cursor-pointer ${
                   settings.maxParallelTasks === n
-                    ? 'bg-primary-600 text-white shadow-sm'
+                    ? 'bg-primary-700 text-white shadow-sm'
                     : 'bg-surface-2 text-muted hover:bg-surface-2'
                 }`}
               >
@@ -195,7 +203,7 @@ function SpeedSection({ icon, title, unlimited, value, unit, onToggleUnlimited, 
             <button
               onClick={() => onUnitChange('kb')}
               className={`px-3 py-2 text-sm font-medium transition-colors cursor-pointer ${
-                unit === 'kb' ? 'bg-primary-600 text-white' : 'bg-surface text-muted hover:bg-surface-2'
+                unit === 'kb' ? 'bg-primary-700 text-white' : 'bg-surface text-muted hover:bg-surface-2'
               }`}
             >
               KB/s
@@ -203,7 +211,7 @@ function SpeedSection({ icon, title, unlimited, value, unit, onToggleUnlimited, 
             <button
               onClick={() => onUnitChange('mb')}
               className={`px-3 py-2 text-sm font-medium transition-colors cursor-pointer ${
-                unit === 'mb' ? 'bg-primary-600 text-white' : 'bg-surface text-muted hover:bg-surface-2'
+                unit === 'mb' ? 'bg-primary-700 text-white' : 'bg-surface text-muted hover:bg-surface-2'
               }`}
             >
               MB/s

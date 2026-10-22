@@ -112,7 +112,7 @@ export default function Login() {
           </p>
 
           {error && (
-            <div className="mb-4 px-4 py-3 bg-red-500/15 border border-red-200 rounded-xl text-sm text-red-700 animate-slide-up shadow-soft">
+            <div role="alert" aria-live="polite" className="mb-4 px-4 py-3 bg-danger-light border border-danger/30 rounded-lg text-sm text-danger animate-slide-up">
               {error}
             </div>
           )}
@@ -200,7 +200,10 @@ export default function Login() {
               className="btn-primary w-full justify-center py-2.5"
             >
               {loading ? (
-                <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span className="flex items-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" aria-hidden />
+                  <span>{mode === 'login' ? '登录中…' : '注册中…'}</span>
+                </span>
               ) : (
                 <>
                   {mode === 'login' ? '登录' : '注册'}
@@ -217,7 +220,7 @@ export default function Login() {
                 setMode(mode === 'login' ? 'register' : 'login');
                 setError('');
               }}
-              className="ml-1 text-primary-600 hover:text-primary-600 font-medium cursor-pointer"
+              className="ml-1 text-primary-strong hover:text-primary-strong font-medium cursor-pointer"
             >
               {mode === 'login' ? '立即注册' : '返回登录'}
             </button>
@@ -225,7 +228,7 @@ export default function Login() {
 
           {isElectron() && (
             <div className="mt-4 text-center">
-              <Link to="/server-config" className="text-xs text-muted hover:text-primary-600 cursor-pointer">
+              <Link to="/server-config" className="text-xs text-muted hover:text-primary-strong cursor-pointer">
                 服务器设置
               </Link>
             </div>

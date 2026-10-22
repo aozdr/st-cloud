@@ -50,7 +50,7 @@ const TEXT_EXTS  = ['txt', 'md', 'markdown', 'log', 'json', 'xml', 'yaml', 'yml'
 
 const FILE_TYPE_MAP: { exts: string[]; config: FileTypeConfig }[] = [
   // UI_DESIGN_SPEC §24/§39：文件夹琥珀、PDF 红、图片靛蓝、文档蓝、表格绿、压缩包紫、视频紫、音频橙
-  { exts: IMAGE_EXTS,   config: { icon: ImageIcon,    color: 'text-primary-600 dark:text-primary-400', bgColor: 'bg-primary-500/15 dark:bg-primary-500/15', label: '图片' } },
+  { exts: IMAGE_EXTS,   config: { icon: ImageIcon,    color: 'text-primary-strong dark:text-primary-400', bgColor: 'bg-primary-500/15 dark:bg-primary-500/15', label: '图片' } },
   { exts: VIDEO_EXTS,   config: { icon: Video,         color: 'text-violet-600 dark:text-violet-400', bgColor: 'bg-violet-500/15', label: '视频' } },
   { exts: AUDIO_EXTS,   config: { icon: Music,         color: 'text-orange-600 dark:text-orange-400', bgColor: 'bg-orange-500/15', label: '音频' } },
   { exts: PDF_EXTS,     config: { icon: FileText,      color: 'text-danger', bgColor: 'bg-danger-light dark:bg-danger/15', label: 'PDF' } },

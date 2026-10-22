@@ -110,7 +110,7 @@ export default function DateTimeRangePanel({
               const now = new Date();
               applyQuick(now, now);
             }}
-            className="text-xs text-primary-500 hover:text-primary-600 cursor-pointer px-2 py-1 rounded hover:bg-primary-500/10 transition-colors"
+            className="text-xs text-primary-500 hover:text-primary-strong cursor-pointer px-2 py-1 rounded hover:bg-primary-500/10 transition-colors"
           >
             今天
           </button>
@@ -121,7 +121,7 @@ export default function DateTimeRangePanel({
               start.setDate(start.getDate() - 6);
               applyQuick(start, end);
             }}
-            className="text-xs text-primary-500 hover:text-primary-600 cursor-pointer px-2 py-1 rounded hover:bg-primary-500/10 transition-colors"
+            className="text-xs text-primary-500 hover:text-primary-strong cursor-pointer px-2 py-1 rounded hover:bg-primary-500/10 transition-colors"
           >
             近7天
           </button>
@@ -132,7 +132,7 @@ export default function DateTimeRangePanel({
               start.setDate(start.getDate() - 29);
               applyQuick(start, end);
             }}
-            className="text-xs text-primary-500 hover:text-primary-600 cursor-pointer px-2 py-1 rounded hover:bg-primary-500/10 transition-colors"
+            className="text-xs text-primary-500 hover:text-primary-strong cursor-pointer px-2 py-1 rounded hover:bg-primary-500/10 transition-colors"
           >
             近30天
           </button>

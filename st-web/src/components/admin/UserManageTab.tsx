@@ -120,7 +120,7 @@ export default function UserManageTab() {
         <h2 className="text-base font-semibold text-fg">用户管理</h2>
         <button
           onClick={() => openCreateUser()}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md transition-colors cursor-pointer"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-primary-700 hover:bg-primary-800 rounded-md transition-colors cursor-pointer"
         >
           <UserPlus className="w-4 h-4" /> 新建用户
         </button>
@@ -159,7 +159,7 @@ export default function UserManageTab() {
                       {user.roles.map((r) => (
                         <span
                           key={r.id}
-                          className="inline-flex items-center gap-1 text-xs text-primary-600 bg-primary-500/10 px-2 py-0.5 rounded-md"
+                          className="inline-flex items-center gap-1 text-xs text-primary-strong bg-primary-500/10 px-2 py-0.5 rounded-md"
                         >
                           {r.roleCode === 'admin' && <Shield className="w-3 h-3" aria-hidden />}
                           {r.roleName}
@@ -188,21 +188,21 @@ export default function UserManageTab() {
                     </button>
                     <button
                       onClick={() => handleResetPassword(user.id)}
-                      className="text-muted hover:text-primary-600 transition-colors cursor-pointer"
+                      className="text-muted hover:text-primary-strong transition-colors cursor-pointer"
                       title="重置密码" aria-label="重置密码"
                     >
                       <Key className="w-4 h-4" aria-hidden />
                     </button>
                     <button
                       onClick={() => setQuotaTarget(user)}
-                      className="text-muted hover:text-primary-600 transition-colors cursor-pointer"
+                      className="text-muted hover:text-primary-strong transition-colors cursor-pointer"
                       title="修改配额" aria-label="修改配额"
                     >
                       <Edit3 className="w-4 h-4" aria-hidden />
                     </button>
                     <button
                       onClick={() => handleOpenRoleDialog(user)}
-                      className="text-muted hover:text-primary-600 transition-colors cursor-pointer"
+                      className="text-muted hover:text-primary-strong transition-colors cursor-pointer"
                       title="分配角色" aria-label="分配角色"
                     >
                       <Shield className="w-4 h-4" aria-hidden />

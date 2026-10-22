@@ -4,10 +4,10 @@ import {
   useState,
   useCallback,
   useRef,
-  useEffect,
   type ReactNode,
 } from 'react';
 import { AlertCircle, AlertTriangle, Loader2 } from 'lucide-react';
+import { useModalA11y } from './useModalA11y';
 
 interface ConfirmOptions {
   title?: string;
@@ -35,19 +35,13 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
   const [dialog, setDialog] = useState<{ opts: ConfirmOptions; resolve: (v: boolean) => void } | null>(null);
   const [pending, setPending] = useState(false);
   const confirmBtnRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const confirm = useCallback((opts: ConfirmOptions) => {
     return new Promise<boolean>((resolve) => {
       setDialog({ opts, resolve });
     });
   }, []);
-
-  useEffect(() => {
-    if (dialog) {
-      const t = setTimeout(() => confirmBtnRef.current?.focus(), 50);
-      return () => clearTimeout(t);
-    }
-  }, [dialog]);
 
   const handleConfirm = async () => {
     if (!dialog || pending) return;
@@ -74,6 +68,8 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
     setDialog(null);
   };
 
+  useModalA11y(panelRef, handleCancel, { open: !!dialog, initialFocusRef: confirmBtnRef });
+
   const danger = dialog?.opts.danger ?? false;
   const Icon = danger ? AlertCircle : AlertTriangle;
 
@@ -87,6 +83,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
           role="presentation"
         >
           <div
+            ref={panelRef}
             role="dialog"
             aria-modal="true"
             aria-label={dialog.opts.title || '确认操作'}
@@ -111,7 +108,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
             <div className="flex w-full gap-3">
               <button
                 onClick={handleCancel}
-                className="flex-1 px-5 py-2.5 text-sm font-medium text-fg bg-surface-2 hover:bg-muted rounded-md cursor-pointer transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="flex-1 px-5 py-2.5 text-sm font-medium text-fg bg-surface-2 hover:bg-bg-hover rounded-md cursor-pointer transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {dialog.opts.cancelText || '取消'}
               </button>
@@ -122,7 +119,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
                 className={`flex-1 px-5 py-2.5 text-sm font-medium text-white rounded-md cursor-pointer transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60 disabled:cursor-not-allowed ${
                   danger
                     ? 'bg-red-600 hover:bg-red-700'
-                    : 'bg-primary-600 hover:bg-primary-700'
+                    : 'bg-primary-700 hover:bg-primary-800'
                 }`}
               >
                 {pending ? (
