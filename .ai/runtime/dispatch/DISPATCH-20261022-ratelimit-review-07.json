@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 2,
+  "dispatchId": "DISPATCH-20261022-ratelimit-review-07",
+  "taskCode": "multi-node-ratelimit-code-v6-review",
+  "taskId": "20261022-multi-node-ratelimit",
+  "idempotencyKey": "20261022-multi-node-ratelimit",
+  "role": "reviewer",
+  "taskType": "review",
+  "objective": "独立复审 code-v6 两个 P1 收口：relay 首片 S3 已有 part 守卫（fail-closed/无空会话/恢复路径/tc018）、运营文档（N×rate 监控告警）与安装包 SHA256 发布校验；确认无阻塞并给出结论。",
+  "taskRefs": [
+    ".ai/tasks/TASK-20261022-multi-node-ratelimit-01.md",
+    ".ai/docs/20261022-multi-node-ratelimit/design.md",
+    ".ai/docs/20261022-multi-node-ratelimit/verification.md",
+    ".ai/docs/20261022-multi-node-ratelimit/codereview.md"
+  ],
+  "stateRef": ".ai/state/20261022-multi-node-ratelimit.yaml",
+  "artifactRefs": [
+    ".ai/docs/20261022-multi-node-ratelimit/codereview.md"
+  ],
+  "skillRefs": [
+    "-"
+  ],
+  "scope": {
+    "include": [
+      "st-core/src/main/java/com/stcloud/core/service/impl/UploadServiceImpl.java",
+      "st-core/src/main/java/com/stcloud/core/service/StorageService.java",
+      "st-core/src/main/java/com/stcloud/core/service/impl/StorageServiceImpl.java",
+      "st-core/src/main/java/com/stcloud/core/service/impl/upload/UploadStorageManager.java",
+      "st-core/src/test/java/com/stcloud/core/service/impl/RelayUploadIntegrationTest.java",
+      "README.md",
+      ".ai/docs/20261022-multi-node-ratelimit/design.md",
+      ".ai/docs/20261022-multi-node-ratelimit/codereview.md"
+    ],
+    "exclude": [
+      "不得修改任何源代码、测试、TASK、design.md、verification.md 或 State",
+      "不得执行 mvn/gradle 等构建或测试命令",
+      "不得执行 git 写操作（只允许只读 git status/diff/log）",
+      "不得修改 docker 容器、compose 或运行环境",
+      "不得创建/指挥其他 Agent，不得向用户确认"
+    ]
+  },
+  "acceptance": [
+    "守卫只在本地会话缺失且 seq==1 时触发，ListParts 非空 → 409 且不建会话/临时文件；不改变正常首传与已存在会话路径",
+    "ListParts 失败按 fail-closed 处理（STORAGE_SERVICE_ERROR），不会静默放过；S3 调用不在 DB 事务内、成本仅首片一次",
+    "tc018 有判别力（旧实现无守卫会建会话），且覆盖“清空 part 后恢复”路径",
+    "运营文档与实现一致（N×rate、stats 指标、version、限速非硬配额）；SHA256 值与安装包一致",
+    "无新的跨租户/越权/数据泄露面；结论明确（APPROVE / APPROVE_WITH_CHANGES / REQUEST_CHANGES）"
+  ],
+  "validation": [
+    "只读 git status / git diff（含 --stat）核对 code-v4 变更面",
+    "读取相关实现、测试与文档",
+    "在 .ai/docs/20261022-multi-node-ratelimit/codereview.md 追加 `## code-v4 独立复审` 段落（不覆盖历史）",
+    "写入 .ai/runtime/results/DISPATCH-20261022-ratelimit-review-04.json（dispatchId/taskId/status/artifactRefs/criterionProposal/blockerProposals）"
+  ],
+  "forbidSpawn": true,
+  "forbidGitMvn": false,
+  "etaMinutes": 8,
+  "output": {
+    "artifact": ".ai/docs/20261022-multi-node-ratelimit/codereview.md",
+    "result": ".ai/runtime/results/DISPATCH-20261022-ratelimit-review-07.json"
+  }
+}

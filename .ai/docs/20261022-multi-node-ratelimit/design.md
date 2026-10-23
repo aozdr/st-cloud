@@ -434,3 +434,28 @@ winCodeSign 的 darwin 符号链接需要 Windows 创建符号链接权限，7z 
 `signAndEditExecutable=false` 打包后，用缓存中的 `rcedit-x64.exe` 手动写入图标/版本信息
 （ProductName=星云盘、FileVersion=1.0.0），再用 `--prepackaged release/win-unpacked` 生成 NSIS，
 避免重新打包覆盖已改写的 exe。
+
+## 18. code-v6 云盘完整性纵深与运营收口（两个 P1）
+
+### 18.1 relay 首片 S3 已有 part 守卫
+
+- 风险：客户端对同一 uploadId 重放 `seq=1` 且 Nginx 因节点故障把它路由到另一节点时，
+  旧节点可能已把 5MB 分片刷到同一个 S3 multipart；新节点若创建空缓冲，会从 part 1 重新编号，
+  造成重复编号写入；若客户端后续重放不完整，还存在混片窗口。影响仅限该用户本次上传，
+  属于数据完整性纵深风险（当前 strict-seq 下“完整前缀重放后 finalize”路径不可达）。
+- 决策：`ensureRelaySession` 在 `seq == 1` 建会话之前调用 `listUploadedParts`（只读，一次）；
+  非空直接 409「检测到该上传已有分片，请重新初始化上传」。ListParts 的 `S3Exception` 映射为
+  `STORAGE_SERVICE_ERROR`，其它 S3 SDK 异常上抛为 500；两者都发生在创建会话之前，因此都不建空会话
+  （fail-closed，宁可不传也不混片）。
+- 成本：仅“本地会话缺失的首片”触发一次 S3 ListParts；集群模式 init 不建本地会话，因此每次 relay 上传在
+  每个节点首片各一次；正常首传时 part 为空，行为不变。
+- 测试：`RelayUploadIntegrationTest#tc018`（已有 part → 409 + 无会话/临时文件；清空后 seq=1 可恢复）。
+- 边界：两节点并发首片的极端竞态仍依赖 Nginx uploadId 粘滞；本守卫不替代粘滞，只消除“已知已有 part
+  仍开新会话”的确定性风险。
+
+### 18.2 运营：故障期限速放大与分发包校验
+
+- 限速是公平性/防滥用控制，不是硬配额；Redis 故障时各节点 fail-open 到本地 rate，单用户聚合最坏 N×rate。
+  在 README 部署章节明确容量假设与监控方式：每 30s 采集各节点 `/api/transfer/rate-limit/stats`（ADMIN），
+  `degraded`/`storeErrors` 增长即告警；`/api/transfer/speed-limit` 的 `version` 用于确认配置收敛。
+- 安装包发布同时提供 `release/SHA256SUMS.txt`；正式分发应使用代码签名证书（当前开发环境未签名）。

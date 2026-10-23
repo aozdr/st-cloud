@@ -835,6 +835,10 @@ public class UploadServiceImpl implements UploadService {
      * seq &gt; 1 说明前面节点的数据不在本节点缓冲里，继续接收会静默丢数据；
      * seq &lt;= 0 属于协议外输入；两者若先创建再拒绝，空会话会被随后的 relay-finalize
      * 当成完整缓冲合并，造成文件静默截断（R-1）。因此先判 seq 再决定是否创建。
+     * <p>
+     * 建会话前还会只读查询该 S3 multipart 是否已有 part：若另一节点已经写入并确认过分片，
+     * 在本节点新建空缓冲会从 part 1 重新编号并覆盖/混入旧分片（静默数据损坏）。此时直接 409；
+     * ListParts 本身失败时由 STORAGE_SERVICE_ERROR 拒绝，宁可失败也不建空会话（code-v6）。
      *
      * @return true 表示本次新建了本地会话
      */
@@ -856,6 +860,13 @@ public class UploadServiceImpl implements UploadService {
             // 不创建空会话：只有第一片可以创建缓冲；seq>1 是节点故障/超时丢失，
             // seq<=0 是协议外输入，两者都不能留下会被 finalize 合并的空会话（R-1）。
             throw new BusinessException(ResultCode.CONFLICT, "中转会话已丢失，请重新上传");
+        }
+        // 只读探测：另一节点可能已把 5MB 分片刷到同一个 S3 multipart。空缓冲从 part 1 重新编号
+        // 会覆盖旧分片并与剩余旧 part 混拼，产生静默数据损坏；此时要求客户端重新初始化上传。
+        List<Integer> uploadedParts = storageManager.listUploadedParts(
+                session.getStoragePath(), session.getS3UploadId());
+        if (uploadedParts != null && !uploadedParts.isEmpty()) {
+            throw new BusinessException(ResultCode.CONFLICT, "检测到该上传已有分片，请重新初始化上传");
         }
         relayBufferManager.createSession(uploadId, config.rateBytes(),
                 session.getStoragePath(), session.getS3UploadId(), config.relayChunkSize());

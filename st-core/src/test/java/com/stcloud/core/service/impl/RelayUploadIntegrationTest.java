@@ -49,6 +49,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -585,6 +586,43 @@ class RelayUploadIntegrationTest extends AbstractIntegrationTest {
             assertEquals(ResultCode.CONFLICT.getCode(), error.getCode());
             assertFalse(relayBufferManager.hasSession(id), "seq<=0 不得创建空会话");
             assertFalse(hasTempFile(id), "seq<=0 不得留下临时文件");
+        } finally {
+            ReflectionTestUtils.setField(uploadService, "relaySessionRegistry", null);
+            if (uploadId != null) {
+                relayBufferManager.cleanup(uploadId);
+            }
+        }
+    }
+
+    /**
+     * code-v6：另一节点重放 seq=1 时，若同一 S3 multipart 已有 part，必须 409 且不建空会话，
+     * 避免空缓冲从 part 1 覆盖/混入旧分片；清空 part 后重试 seq=1 应能正常创建（恢复路径）。
+     */
+    @Test
+    void tc018_firstChunkRejectedWhenS3AlreadyHasParts_thenRecovers() {
+        setServerLimit(100);
+        RelaySessionRegistry registry = mock(RelaySessionRegistry.class);
+        when(registry.register(anyString(), anyLong(), anyLong())).thenReturn(true);
+        when(registry.get(anyString()))
+                .thenReturn(new RelaySessionRegistry.RelayConfig(100L * 1024L, 204800L));
+        ReflectionTestUtils.setField(uploadService, "relaySessionRegistry", registry);
+        String uploadId = null;
+        try {
+            UploadInitResponse resp = init("tc018.txt", 100L * 1024, 1, null);
+            final String id = resp.getUploadId();
+            uploadId = id;
+            when(storageService.listUploadedParts(anyString(), anyString())).thenReturn(List.of(1));
+
+            BusinessException conflict = assertThrows(BusinessException.class,
+                    () -> postChunk(id, new byte[8192], 1));
+            assertEquals(ResultCode.CONFLICT.getCode(), conflict.getCode());
+            assertFalse(relayBufferManager.hasSession(id), "已有 S3 part 时不得创建本地会话");
+            assertFalse(hasTempFile(id), "已有 S3 part 时不得留下临时文件");
+
+            // 恢复路径：part 不存在时仍可惰性创建并接收首片
+            when(storageService.listUploadedParts(anyString(), anyString())).thenReturn(Collections.emptyList());
+            postChunk(id, new byte[8192], 1);
+            assertTrue(relayBufferManager.hasSession(id), "无 S3 part 时应能正常创建会话");
         } finally {
             ReflectionTestUtils.setField(uploadService, "relaySessionRegistry", null);
             if (uploadId != null) {

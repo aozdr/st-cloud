@@ -1,0 +1,40 @@
+{
+  "taskId": "20261022-multi-node-ratelimit",
+  "criterionProposal": {
+    "id": "VERIFIED",
+    "outcome": "pass",
+    "by": "workflow-manager",
+    "evidenceRef": ".ai/docs/20261022-multi-node-ratelimit/verification.md",
+    "validatedRevision": "20261022-multi-node-ratelimit-code-v6"
+  },
+  "verification": {
+    "validatedRevision": "20261022-multi-node-ratelimit-code-v6",
+    "checks": [
+      {
+        "dimension": "tests",
+        "outcome": "pass",
+        "evidenceRef": ".ai/docs/20261022-multi-node-ratelimit/verification.md"
+      },
+      {
+        "dimension": "selfReview",
+        "outcome": "pass",
+        "evidenceRef": ".ai/docs/20261022-multi-node-ratelimit/verification.md"
+      },
+      {
+        "dimension": "security",
+        "outcome": "pass",
+        "evidenceRef": ".ai/docs/20261022-multi-node-ratelimit/verification.md"
+      },
+      {
+        "dimension": "apiContract",
+        "outcome": "pass",
+        "evidenceRef": ".ai/docs/20261022-multi-node-ratelimit/verification.md"
+      },
+      {
+        "dimension": "knowledge",
+        "outcome": "pass",
+        "evidenceRef": ".ai/docs/20261022-multi-node-ratelimit/verification.md"
+      }
+    ]
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "taskId": "20261022-multi-node-ratelimit",
+  "criterionProposal": {
+    "id": "ACCEPT",
+    "outcome": "pass",
+    "by": "workflow-manager",
+    "evidenceRef": ".ai/docs/20261022-multi-node-ratelimit/verification.md",
+    "validatedRevision": "20261022-multi-node-ratelimit-code-v6"
+  },
+  "acceptanceEvidence": [
+    {
+      "criterion": "mode=local 现有单测通过且单节点行为不变",
+      "evidenceRef": ".ai/docs/20261022-multi-node-ratelimit/verification.md",
+      "validatedRevision": "20261022-multi-node-ratelimit-code-v6"
+    },
+    {
+      "criterion": "mode=redis 双实例并发总发放不超过 rate x T 加 2 倍 quantum",
+      "evidenceRef": ".ai/docs/20261022-multi-node-ratelimit/verification.md",
+      "validatedRevision": "20261022-multi-node-ratelimit-code-v6"
+    },
+    {
+      "criterion": "nginx 下 relay 同一 uploadId 粘滞且跨节点 confirm 幂等释放",
+      "evidenceRef": ".ai/docs/20261022-multi-node-ratelimit/verification.md",
+      "validatedRevision": "20261022-multi-node-ratelimit-code-v6"
+    },
+    {
+      "criterion": "Redis 故障降级不中断传输且指标可见",
+      "evidenceRef": ".ai/docs/20261022-multi-node-ratelimit/verification.md",
+      "validatedRevision": "20261022-multi-node-ratelimit-code-v6"
+    },
+    {
+      "criterion": "nginx 流式下载不缓冲且 WebSocket 可升级",
+      "evidenceRef": ".ai/docs/20261022-multi-node-ratelimit/verification.md",
+      "validatedRevision": "20261022-multi-node-ratelimit-code-v6"
+    },
+    {
+      "criterion": "mvn 构建与 st-common/st-core 测试通过",
+      "evidenceRef": ".ai/docs/20261022-multi-node-ratelimit/verification.md",
+      "validatedRevision": "20261022-multi-node-ratelimit-code-v6"
+    }
+  ]
+}

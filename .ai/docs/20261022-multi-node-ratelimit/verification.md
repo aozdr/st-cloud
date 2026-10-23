@@ -441,3 +441,63 @@ RelayUploadIntegrationTest +1、RedisCreditStoreTest +1。RedisCreditStoreTest �
 - 8 项非阻塞残留：注释精度（1）、探测与 finalize 之间理论窗口（2）、design 归因（3）、digest 架构面（4）、
   .env.example 注释（5）、v5 用例证据（6，已由 §15.3 与 §16 补齐）、tc017 未覆盖恢复路径（7）、
   seq=1 重放依赖粘滞（8）。其中 3 已在文档修正、6 已补齐；1/2/4/5/7/8 作为下一补丁清理项，不影响本轮验收。
+
+## 18. code-v6：两个 P1 收口
+
+### 18.1 relay 首片 S3 已有 part 守卫（数据完整性纵深）
+
+- `ensureRelaySession` 在 `seq == 1` 建会话前调用 `storageManager.listUploadedParts`（只读一次）；
+  非空返回 409「检测到该上传已有分片，请重新初始化上传」，不创建本地会话/临时文件；
+  ListParts 的 `S3Exception` 映射为 `STORAGE_SERVICE_ERROR`，其它 S3 SDK 异常上抛为 500；两者都在创建
+  会话之前失败，不建空会话（fail-closed）。
+- 边界：两节点并发首片仍依赖 Nginx uploadId 粘滞；守卫消除的是“已知已有 part 仍开空会话”的确定性重复写入，
+  客户端后续重放不完整时仍可能混片（strict-seq 下该路径当前不可达）。集群模式下 init 不建本地会话，
+  因此每次 relay 上传在每个节点首片各调用一次 ListParts。
+- 测试：`RelayUploadIntegrationTest#tc018`：已有 part → 409 + 无会话/无临时文件；清空 part 后 seq=1 可恢复创建。
+- 依据：`storageManager.listUploadedParts` 已有实现（`StorageService.java`）且`ListParts` 失败会抛
+  `STORAGE_SERVICE_ERROR`，无需新增 S3 能力。
+
+### 18.2 运营与分发
+
+- README 增加：Redis 故障时各节点本地限速、单用户聚合最坏 N×rate；限速不替代存储配额；
+  每 30s 采集各节点 `/api/transfer/rate-limit/stats`，`degraded`/`storeErrors` 增长告警；
+  `/api/transfer/speed-limit` 的 version 用于确认配置收敛。
+- 发布校验：生成 `st-desktop/release/SHA256SUMS.txt`：
+  `76a4a70f54a8f130490e6088cbdb910419f08d3dd8dce7c17201d76cf9661756  星云盘 Setup 1.0.0.exe`。
+  正式分发仍需代码签名证书（当前环境无证书）。
+
+### 18.3 命令与结果
+
+| 命令 | 结果 |
+|------|------|
+| `mvn -q -pl st-core -am test -Dtest=RelayUploadIntegrationTest` | exit 0；21 用例 0 failure（含 tc018） |
+| `mvn -q test`（11 模块） | exit code 0；132 个测试类、865 用例、0 failure / 0 error、80 skipped（Core 288） |
+| `mvn -q -pl st-api -am -DskipTests package` + app 镜像 + 重建 app1/app2 | 两节点 healthy |
+| `rcedit`/`SHA256SUMS` | 安装包 SHA256 见 18.2 |
+
+### 18.4 运行态验证（两节点 + Nginx）
+
+临时 upload=4096KB/s → 10MB/2×5MB relay 上传；前 5 个 1MB 分片经 Nginx（一致性哈希节点）写入 part1：
+
+| 请求 | 目标 | 结果 |
+|------|------|------|
+| seq=1..5（1MB/片） | Nginx → 会话节点 | seq5 返回 `part=1 uploaded=true` |
+| seq=1（重放首片） | 直连会话节点 | 200 duplicate confirmed（幂等，无重复写入） |
+| seq=1（重放首片） | 直连另一节点 | 409「检测到该上传已有分片，请重新初始化上传」 |
+| relay-finalize | 直连另一节点 | 409（未创建空会话，未进入 merge） |
+| 规则恢复 | - | 两节点 version=24、upload=0/download=51200 |
+
+结论：守卫在真实 S3 multipart 已含 part1 时生效，另一节点不会从 part 1 重开空缓冲；
+正常首传（无 part）与重复首片（会话节点）行为不变。
+
+## 19. code-v6 独立评审（review-07）
+
+- 结论：**APPROVE，阻塞 0**（`DISPATCH-20261022-ratelimit-review-07`，validatedRevision=code-v6）。
+- 逐项通过：守卫只在“本地无会话 + registry 有配置 + seq==1”触发，位于 createSession 之前且早于读 body；
+  ListParts 的 `S3Exception` → `STORAGE_SERVICE_ERROR`（其它 SDK 异常 → 500），两者都不建会话；
+  全类无 `@Transactional`，S3 调用不在 DB 事务内；tc018 有判别力并覆盖清空后的恢复；
+  README 的 N×rate/30s 采集/告警/version 与实现一致；SHA256 实算与 `SHA256SUMS.txt` 一致且安装包 NotSigned 与文档一致；
+  diff 无 controller/公开接口，无新增越权面。
+- 6 项非阻塞残留（均低）：影响措辞（1）、fail-closed 错误码表述（2）、集群模式“每次上传首片各一次”成本说明（3）、
+  校验和入构建脚本（4）、INFO 日志（5）、团队入口/会话状态断言（6）。
+  其中 1/2/3 的文档措辞已在评审后对齐（仅文档，代码与用例未变）；4/5/6 作为下一补丁清理项。

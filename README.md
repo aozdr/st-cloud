@@ -224,6 +224,7 @@ npm run dev
 ```
 
 `npm run dev` 会同时启动 Web 开发服务器与 Electron 窗口。生产打包：`npm run build`（NSIS 安装包输出到 `release/`）。
+发布安装包时同时生成 `release/SHA256SUMS.txt` 供用户校验；正式分发应使用代码签名证书（当前开发环境未签名，SmartScreen 可能提示）。
 
 ### 6. 登录
 
@@ -246,10 +247,14 @@ docker compose -f docker-compose.yml -f docker-compose.cluster.yml up -d --build
 - 入口 `http://localhost/`：静态资源来自 `st-web/dist`，`/api` 由 Nginx 转发到 `app1/app2`。
 - `app1/app2` 使用 `STCLOUD_RATE_LIMIT_MODE=redis`，聚合速率由 Redis 原子扣减保证。
 - 中转上传（`/api/file/upload/relay-*`）按 `uploadId` 一致性哈希固定到同一节点：临时文件与会话在节点本地，
-  且服务端已改为「首个 relay-chunk 惰性创建缓冲」，init 不再依赖本地状态。
+  且服务端已改为「首个 relay-chunk 惰性创建缓冲」，init 不再依赖本地状态；新节点收到首片时会先查该 multipart
+  是否已有分片，已有则 409 要求重新初始化，避免空缓冲从 part 1 重复写入（客户端后续重放不完整时可能混片）。
 - 流式下载/预览关闭了 Nginx 缓冲并透传 Range；同步 WebSocket 支持 Upgrade。
 - 滚动发布：先更新一个实例（`docker compose ... up -d --no-deps --scale app1=1 app1`），
   在途下载会在 60s 宽限后被截断，客户端用 Range 续传，避免两个节点同时服务同一用户。
+- 降级与容量：Redis 不可用时各节点按用户规则本地限速，单用户聚合最坏 N×rate（N=节点数）；限速是公平性/
+  防滥用控制，不替代存储配额。运维应每 30s 采集各节点 `/api/transfer/rate-limit/stats`（ADMIN），
+  `degraded`/`storeErrors` 增长即告警；`/api/transfer/speed-limit` 的 `version` 用于确认配置收敛。
 - S3 内外地址拆分：服务端读写走 `STCLOUD_STORAGE_ENDPOINT=http://rustfs:9000`（容器网络直连），
   预签名 URL 走 `STCLOUD_STORAGE_PUBLIC_ENDPOINT`（客户端可达地址，如 `http://192.168.2.5:9000`）；
   cluster 编排用 `STCLOUD_PUBLIC_S3_ENDPOINT` 作为运维别名注入，未设置时 compose 直接报错而不是回落到

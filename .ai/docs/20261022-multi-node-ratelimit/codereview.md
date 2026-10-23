@@ -303,3 +303,36 @@ R-2/R-3 不阻塞；若希望本轮收口，只需 R-1 一行 + R-4 两例。
 1. 阻塞 0，`CODE_REVIEW` 可置 pass（validatedRevision=`20261022-multi-node-ratelimit-code-v5`）。
 2. 下一补丁优先级：残留 1（注释精度）→ 3（文档归因）→ 4/5（部署校验与说明）→ 2/6/7（硬化与用例补强）。
 3. 本段结论只对快照 `20261022-multi-node-ratelimit-code-v5` 有效；代码再变需重新复核。
+
+
+## code-v6 独立复审（review-07）
+
+- 评审：reviewer-ratelimit-07；dispatchId `DISPATCH-20261022-ratelimit-review-07`；快照 `20261022-multi-node-ratelimit-code-v6`（工作区未提交，HEAD=`2007c41`）。
+- 变更面（只读 `git status --porcelain=v1` / `git diff --stat`）：6 个已改文件 260+/7-：`UploadServiceImpl.java`(+11)、`RelayUploadIntegrationTest.java`(+38)、`README.md`(+7/-2)、`design.md`(+22)、`verification.md`(+45)、`.ai/state/20261022-multi-node-ratelimit.yaml`(+144)；另有 1 个未跟踪 dispatch envelope。`git diff` 内无 controller/公开接口/DDL/前端/构建脚本变更。
+- 本段为只读评审：未执行 mvn/gradle、未做 git 写操作、未改源码/测试/TASK/design/verification/State，只追加本段并写结果 JSON。实施侧记录的 `verification.md:466-488` 运行证据（21 例 relay、全量 865 例、两节点实测）本评审未复跑，仅做静态一致性与只读命令（`Get-FileHash`/`Get-AuthenticodeSignature`/`git`）核对。
+- **结论：APPROVE，阻塞项 0**（validatedRevision=`20261022-multi-node-ratelimit-code-v6`）。守卫位置、fail-closed、数据完整性、tc018 判别力、运营文档与 SHA256 发布校验均与实现一致；非阻塞残留 6 项见末。
+
+### 逐项核对
+
+| 项 | 结论 | 证据（file:line） |
+|----|------|------------------|
+| a1 守卫只在“本地会话缺失 + registry 有配置 + seq==1”生效 | PASS | `UploadServiceImpl.java:847-849` 已有会话早退；`:850-854` registry=null（单机）早退；`:855-858` 配置过期 409；`:859-863` seq!=1 409；`:866-867` 才调 ListParts；`:868-870` 非空 409；`:871-872` createSession 在其后。调用点 `:657` |
+| a2 调用在 createSession 之前、且不改变正常首传 | PASS | 守卫位于 `:866-870`，createSession `:871-872`；S3 无 part 时返回空列表继续建会话（`tc018:622-625`）；`:868` 有 null 兜底，mock/异常实现也不会误判 |
+| a3 已存在会话 / 单机 / team / 非首片路径 | PASS | 同节点重复首片走 `:847-849` 早退（幂等确认 `:664-671`）；单机 `:850-854` 直接返回，历史行为不变；team 入口 `relayTeamChunk`(`:631-636`) 复用同一 `relayChunkInternal`(`:638-658`)，共享守卫；控制器未改（`FileController.java:218-231`、`TeamUploadController.java:135-147`） |
+| b1 fail-closed：ListParts 失败不静默放过 | PASS | `StorageServiceImpl.java:235-238`：`S3Exception` → `BusinessException(STORAGE_SERVICE_ERROR, "查询上传状态失败")`；守卫抛在 createSession 之前，异常上抛 → 不建空会话。注：非 S3 服务错误（如 `SdkClientException`）会走 500 `INTERNAL_ERROR`（`GlobalExceptionHandler.java:92-96`），仍不建会话（见非阻塞 2） |
+| b2 S3 调用不在 DB 事务内 | PASS | `UploadServiceImpl` 全类无 `@Transactional`（类声明 `:60`，全文无事务注解），`relayChunk`/`relayChunkInternal` 无事务；`UploadStorageManager.java:58-60` 直连 `StorageService`，无事务包装。符合“核心写路径不在 DB 事务内调外部网络” |
+| b3 调用在读取 body 之前 | PASS | 控制器只取 `getContentLengthLong()` 并把 `getInputStream()` 透传（`FileController.java:228-230`）；服务层 `InputStream` 首次读取在 `:696`，守卫 `:866` 早于它，也早于 Content-Length 校验 `:658-662` 与 `tryAcquireSeq` `:664` |
+| b4 S3 调用次数 | PASS | diff 只新增 1 处 ListParts（`:866`），仅“本地无会话 + registry 有配置 + seq==1”到达；每次建会话至多一次。集群模式 init 成功后不建本地会话（`:277-284`），故每次 relay 上传在节点首片各一次（见非阻塞 3）；另一处 ListParts（`:345`）为既有状态查询能力，非本轮新增 |
+| c1 已有 part 时不再从 part 1 开空会话 | PASS | `:866-870` 在 `:871` 之前拒绝，未创建临时文件（`RelayBufferManager.java:86-100` 才 CREATE），因此不进入后续 append/uploadPart/finalize |
+| c2 不误伤“正常首传”（S3 无 part） | PASS | `tc018:622-625` 把 mock 改回空列表后 seq=1 仍能建会话；`verification.md:481-488` 的实机路径（首传经 Nginx → 会话节点）无 409 |
+| c3 并发两节点首片仍依赖粘滞的边界是否被诚实记录 | PASS | `design.md:450-451` 明确“本守卫不替代 Nginx uploadId 粘滞，只消除‘已知已有 part 仍开新会话’的确定性风险”；`verification.md:452` 同口径复述，无“已解决竞态”的过度声明 |
+| d1 tc018 判别力 | PASS | `RelayUploadIntegrationTest.java:597-632`：mock 返回 `[1]` → `:616-618` 断言 CONFLICT、`:619` 无会话、`:620` 无临时文件；旧实现（无守卫）在 `:616-617` 即失败——`postChunk` 会走到 createSession（`RelayBufferManager.java:86-100`，构造即建临时文件 `:79-80`）；即便绕过 assertThrows，`:619`/`:620` 亦红。用例总数 21 个 `@Test` 方法，与 `verification.md:470` 的“21 用例（含 tc018）”一致（`:79` 是 `@TestConfiguration`，不计数） |
+| d2 恢复路径 | PASS | `:622-625` 清空 part 后 seq=1 成功建会话；`finally` `:626-631` 复位 registry 并清理缓冲，不污染其他用例 |
+| e1 README 运营/分发与实现一致 | PASS | `README.md:255-257`（N×rate、stats 每 30s 采集、degraded/storeErrors 告警、version 收敛、“限速非硬配额”）↔ `TransferController.java:30-45`（`/api/transfer/rate-limit/stats` 为 `hasRole('ADMIN')`，返回 mode+计数；`/speed-limit` 返回 `SpeedLimitResult` 含 `version`，`SpeedLimitResult.java:16`）、`RateLimitStats.java:42-50` 键名一致；`README.md:249-251` 的首片守卫描述与 `:866-870` 一致 |
+| e2 SHA256 与安装包实际一致 | PASS | 只读 `Get-FileHash -Algorithm SHA256` = `76A4A70F54A8F130490E6088CBDB910419F08D3DD8DCE7C17201D76CF9661756`，与 `st-desktop/release/SHA256SUMS.txt:1`（小写同值，sha256sum 两空格格式）一致；安装包 82,617,490 字节；`Get-AuthenticodeSignature`=`NotSigned`，与 `README.md:227`/`design.md:458`/`verification.md:464` 的“未签名”表述一致 |
+| f 安全面（无新接口/不泄露/不越权） | PASS | `git diff` 无 controller/公开接口/DDL/前端；守卫复用既有 `StorageService.listUploadedParts`（`StorageService.java:108`、`UploadStorageManager.java:58-60`），key 来自会话而非请求（`requireOwnedSession` 已按 tenant/user 绑定 `:927-933`，team 再校验 spaceId `:959-968`），无任意 key 注入；409 文案“检测到该上传已有分片，请重新初始化上传”不含 bucket/key/endpoint；未知异常 `INTERNAL_ERROR` 不带消息（`GlobalExceptionHandler.java:92-96`）；无跨租户或越权面变化 |
+
+### 非阻塞残留（6 项，按优先级）
+
+1. **“静默数据损坏”影响措辞略强**（低，文档精度）：`design.md:442-444`、`README.md:249-251` 与 `UploadServiceImpl.java:864-865` 注释称空缓冲会“覆盖旧分片并与剩余旧 part 混拼”。在当前协议下，能从 seq=1 重放的客户端会从 byte 0 完整重放，新节点以相同的 `relayChunkSize`/`partMinSize` 重写 part1..，而 `completeMultipartUpload` 使用 ListParts 全量 part（`StorageServiceImpl.java:168-197`），因此“可证损坏”需要“只重放前缀后 finalize”的客户端行为，而 strict-seq（`UploadServiceImpl.java:664-677`）使该路径当前不可达；守卫的确定收益是阻止重复编号写入与消除潜在的混片窗口。建议措辞降级为“重复写入 + 潜在混片（取决于客户端后续行为）”，与本轮“纵深防御”定位一致。
+2. **fail-closed 的错误码表述偏宽**（低，文档）：`design.md:446-447`/`verification.md:451` 写“ListParts 失败时由 STORAGE_SERVICE_ERROR 拒绝”；实际仅 `S3Exception` 映射为该码（`StorageServiceImpl.java:235-238`），网络层 `SdkClientException` 会冒泡为 500 `INTERNAL_ERROR`（`GlobalExceptionHandler.java:92-96`）。两者都不建会话（fail-closed 成立），建议注明两类失败的分工。
